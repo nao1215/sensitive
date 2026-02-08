@@ -47,6 +47,10 @@ func TestFinding_IsXXX(t *testing.T) {
 		{"IsBankAccount true", detector.Finding{DetectorName: detector.NameBankAccount}, detector.Finding.IsBankAccount, true},
 		{"IsACHTrace true", detector.Finding{DetectorName: detector.NameACHTrace}, detector.Finding.IsACHTrace, true},
 		{"IsMerchantID true", detector.Finding{DetectorName: detector.NameMerchantID}, detector.Finding.IsMerchantID, true},
+		{"IsBTC true", detector.Finding{DetectorName: detector.NameBTC}, detector.Finding.IsBTC, true},
+		{"IsBTC false", detector.Finding{DetectorName: detector.NameEmail}, detector.Finding.IsBTC, false},
+		{"IsETH true", detector.Finding{DetectorName: detector.NameETH}, detector.Finding.IsETH, true},
+		{"IsETH false", detector.Finding{DetectorName: detector.NameEmail}, detector.Finding.IsETH, false},
 	}
 
 	for _, tt := range tests {
@@ -141,6 +145,22 @@ func TestFinding_DetailAccessors_NewDetectors(t *testing.T) {
 			},
 			expect: func(f detector.Finding) bool { _, ok := f.MerchantIDDetail(); return ok },
 		},
+		{
+			name: "BTCDetail",
+			f: detector.Finding{
+				DetectorName: detector.NameBTC,
+				Detail:       &detector.BTCDetail{AddressType: detector.BTCAddressP2PKH},
+			},
+			expect: func(f detector.Finding) bool { _, ok := f.BTCDetail(); return ok },
+		},
+		{
+			name: "ETHDetail",
+			f: detector.Finding{
+				DetectorName: detector.NameETH,
+				Detail:       &detector.ETHDetail{EIP55: true},
+			},
+			expect: func(f detector.Finding) bool { _, ok := f.ETHDetail(); return ok },
+		},
 	}
 
 	for _, tt := range tests {
@@ -229,6 +249,8 @@ func TestFinding_Kind(t *testing.T) {
 		{"ACH trace is financial", detector.NameACHTrace, detector.KindFinancial},
 		{"merchant ID is financial", detector.NameMerchantID, detector.KindFinancial},
 		{"SWIFT/BIC is financial", detector.NameSWIFTBIC, detector.KindFinancial},
+		{"BTC is financial", detector.NameBTC, detector.KindFinancial},
+		{"ETH is financial", detector.NameETH, detector.KindFinancial},
 		// PII
 		{"email is PII", detector.NameEmail, detector.KindPII},
 		{"JP phone is PII", detector.NameJPPhone, detector.KindPII},

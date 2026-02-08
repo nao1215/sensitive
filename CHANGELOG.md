@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Bitcoin (BTC) address detector**: Detects P2PKH (prefix '1'), P2SH (prefix '3'), Bech32 SegWit v0 (prefix 'bc1q'), and Bech32m Taproot v1 (prefix 'bc1p') addresses. Validates Base58Check (double SHA-256 checksum) for legacy addresses and Bech32/Bech32m polynomial checksums for SegWit/Taproot addresses. Confidence: 0.95.
+- **Ethereum (ETH) address detector**: Detects Ethereum addresses (0x + 40 hex characters). Validates EIP-55 mixed-case checksums using Keccak-256. Confidence: 0.80 for all-lowercase/all-uppercase, 0.95 for EIP-55 validated addresses.
+- **Keccak-256 hash implementation**: Minimal Keccak-f[1600] sponge construction for EIP-55 checksum validation. Zero external dependencies — uses only the Go standard library.
+- **`WithBTC()` and `WithETH()` scanner options**: Enable individual cryptocurrency address detection.
+- **`BTCDetail()` and `ETHDetail()` finding accessors**: Type-safe access to detector-specific details (address type, EIP-55 validation status).
+- **`IsBTC()` and `IsETH()` finding helpers**: Quick detector type checks.
+- **Kind mapping**: Both BTC and ETH are classified as `KindFinancial`.
+
 ## [0.0.1] - 2026-02-08
 
 Initial release of the `sensitive` library.

@@ -168,6 +168,24 @@ func BenchmarkScannerWithMerchantID(b *testing.B) {
 	}
 }
 
+func BenchmarkScannerWithBTC(b *testing.B) {
+	scanner := sensitive.NewScanner(sensitive.WithBTC())
+	line := []byte(`btc: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa`)
+	b.ResetTimer()
+	for range b.N {
+		scanner.Scan(line)
+	}
+}
+
+func BenchmarkScannerWithETH(b *testing.B) {
+	scanner := sensitive.NewScanner(sensitive.WithETH())
+	line := []byte(`eth: 0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed`)
+	b.ResetTimer()
+	for range b.N {
+		scanner.Scan(line)
+	}
+}
+
 func BenchmarkScannerAllDetectors(b *testing.B) {
 	scanner := sensitive.NewScanner(sensitive.WithAll())
 	line := []byte(`user tanaka@example.com paid with 4532-0151-1283-0366 from 192.168.1.1`)

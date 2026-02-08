@@ -8,7 +8,7 @@
 ![logo](./doc/images/logo-small.png)
 
 
-**sensitive** is a Go library that detects sensitive data in text. It scans for credit card numbers, email addresses, Japanese phone numbers, Japanese My Number, JWTs, AWS access keys, IBANs, and IP addresses, returning the position, type, and confidence level of each match. It also includes international and fintech-focused detectors such as SWIFT/BIC, US ABA routing numbers, UK sort codes, payment tokens, card CVV/expiry, and ACH trace numbers. Masking is available as an optional helper, but detection is the core focus.
+**sensitive** is a Go library that detects sensitive data in text. It scans for credit card numbers, email addresses, Japanese phone numbers, Japanese My Number, JWTs, AWS access keys, IBANs, IP addresses, Bitcoin addresses, and Ethereum addresses, returning the position, type, and confidence level of each match. It also includes international and fintech-focused detectors such as SWIFT/BIC, US ABA routing numbers, UK sort codes, payment tokens, card CVV/expiry, and ACH trace numbers. Masking is available as an optional helper, but detection is the core focus.
 
 The library has zero external dependencies and relies only on the Go standard library.
 
@@ -111,6 +111,8 @@ scanner = sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
 | `WithBankAccount()` | Bank account numbers (context-based) | Context keyword + digit range (context-based, weaker) |
 | `WithACHTrace()` | ACH trace numbers | Context keyword + prefix range (context-based, weaker) |
 | `WithMerchantID()` | Merchant/terminal IDs | Context keyword + format (context-based, weaker) |
+| `WithBTC()` | Bitcoin addresses (P2PKH, P2SH, Bech32, Bech32m/Taproot) | Base58Check (double SHA-256) / Bech32 polynomial checksum |
+| `WithETH()` | Ethereum addresses (0x + 40 hex) | EIP-55 mixed-case checksum (Keccak-256) |
 | `WithAll()` | All of the above | |
 
 ## Benchmarks
@@ -147,6 +149,8 @@ Benchmark numbers are environment-sensitive. Expect variation across Go versions
 | BankAccount | 435.1 | 760 | 22 |
 | ACHTrace | 325.9 | 480 | 17 |
 | MerchantID | 343.4 | 568 | 18 |
+| BTC | 514.5 | 328 | 7 |
+| ETH | 2118 | 329 | 7 |
 
 ### Multi-detector and edge-case benchmarks
 
@@ -284,6 +288,8 @@ The available accessors and their fields:
 | `IBANDetail()` | CountryCode (ISO 3166-1 alpha-2) |
 | `IPAddrDetail()` | Version (4 or 6) |
 | `MyNumberDetail()` | CheckDigitValid |
+| `BTCDetail()` | AddressType (`BTCAddressP2PKH`, `BTCAddressP2SH`, `BTCAddressBech32`, `BTCAddressBech32m`) |
+| `ETHDetail()` | EIP55 (bool, whether EIP-55 checksum validated) |
 
 ## Masking
 

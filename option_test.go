@@ -102,6 +102,20 @@ func TestOptions_NewDetectors(t *testing.T) {
 			expectName:  detector.NameMerchantID,
 			expectMatch: true,
 		},
+		{
+			name:        "WithBTC",
+			option:      WithBTC(),
+			input:       "btc: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+			expectName:  detector.NameBTC,
+			expectMatch: true,
+		},
+		{
+			name:        "WithETH",
+			option:      WithETH(),
+			input:       "eth: 0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+			expectName:  detector.NameETH,
+			expectMatch: true,
+		},
 	}
 
 	for _, tt := range tests {

@@ -413,6 +413,12 @@ func TestMask_Integration_AllDetectorVariants(t *testing.T) {
 		// JWT
 		{"JWT", "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U", mask.Redact,
 			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"},
+		// BTC
+		{"BTC P2PKH", "btc: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", mask.Redact, "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
+		{"BTC Bech32", "btc: bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4", mask.Last4, "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"},
+		// ETH
+		{"ETH EIP-55", "eth: 0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", mask.Redact, "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"},
+		{"ETH lowercase", "eth: 0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed", mask.Last4, "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed"},
 	}
 
 	for _, tt := range tests {
@@ -491,6 +497,14 @@ func TestMask_Integration_FindingDetails(t *testing.T) {
 		}
 		detail, ok := f.MyNumberDetail()
 		return ok && detail.CheckDigitValid
+	})
+	assertFindingDetail(t, scanner, "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", func(f sensitive.Finding) bool {
+		detail, ok := f.BTCDetail()
+		return ok && detail.AddressType != ""
+	})
+	assertFindingDetail(t, scanner, "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", func(f sensitive.Finding) bool {
+		detail, ok := f.ETHDetail()
+		return ok && detail.EIP55
 	})
 }
 

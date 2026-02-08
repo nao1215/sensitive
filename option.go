@@ -155,6 +155,27 @@ func WithMerchantID() Option {
 	}
 }
 
+// WithBTC enables Bitcoin address detection.
+// BTC detection supports P2PKH (prefix '1'), P2SH (prefix '3'),
+// Bech32 SegWit v0 (prefix 'bc1q'), and Bech32m Taproot v1 (prefix 'bc1p').
+// Addresses are validated using Base58Check (double SHA-256) or Bech32/Bech32m
+// polynomial checksums.
+func WithBTC() Option {
+	return func(s *Scanner) {
+		s.detectors = append(s.detectors, detector.NewBTC())
+	}
+}
+
+// WithETH enables Ethereum address detection.
+// ETH detection recognizes 42-character addresses (0x + 40 hex chars).
+// Mixed-case addresses are validated against the EIP-55 checksum
+// using Keccak-256.
+func WithETH() Option {
+	return func(s *Scanner) {
+		s.detectors = append(s.detectors, detector.NewETH())
+	}
+}
+
 // WithAll enables all built-in detectors.
 // This is a convenience option equivalent to enabling each detector individually.
 func WithAll() Option {
@@ -177,6 +198,8 @@ func WithAll() Option {
 			detector.NewBankAccount(),
 			detector.NewACHTrace(),
 			detector.NewMerchantID(),
+			detector.NewBTC(),
+			detector.NewETH(),
 		)
 	}
 }

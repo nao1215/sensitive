@@ -162,6 +162,24 @@ func BenchmarkDetectorMerchantID(b *testing.B) {
 	}
 }
 
+func BenchmarkDetectorBTC(b *testing.B) {
+	d := detector.NewBTC()
+	data := []byte("btc: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
+	b.ResetTimer()
+	for range b.N {
+		d.Scan(data)
+	}
+}
+
+func BenchmarkDetectorETH(b *testing.B) {
+	d := detector.NewETH()
+	data := []byte("eth: 0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed")
+	b.ResetTimer()
+	for range b.N {
+		d.Scan(data)
+	}
+}
+
 // BenchmarkDetectorPAN_NoMatch measures PAN detector cost when no match is found.
 func BenchmarkDetectorPAN_NoMatch(b *testing.B) {
 	d := detector.NewPAN()

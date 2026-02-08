@@ -44,6 +44,10 @@ const (
 	NameACHTrace DetectorName = "ach_trace"
 	// NameMerchantID is the detector name for merchant and terminal IDs.
 	NameMerchantID DetectorName = "merchant_id"
+	// NameBTC is the detector name for Bitcoin addresses.
+	NameBTC DetectorName = "btc"
+	// NameETH is the detector name for Ethereum addresses.
+	NameETH DetectorName = "eth"
 )
 
 // SensitiveKind categorizes a finding into a broad semantic group for
@@ -85,6 +89,8 @@ var kindMapping = map[DetectorName]SensitiveKind{
 	NameACHTrace:     KindFinancial,
 	NameMerchantID:   KindFinancial,
 	NameSWIFTBIC:     KindFinancial,
+	NameBTC:          KindFinancial,
+	NameETH:          KindFinancial,
 	NameEmail:        KindPII,
 	NameJPPhone:      KindPII,
 	NameMyNumber:     KindPII,
@@ -258,6 +264,12 @@ func (f Finding) IsACHTrace() bool { return f.DetectorName == NameACHTrace }
 // IsMerchantID reports whether this finding is a merchant or terminal ID.
 func (f Finding) IsMerchantID() bool { return f.DetectorName == NameMerchantID }
 
+// IsBTC reports whether this finding is a Bitcoin address.
+func (f Finding) IsBTC() bool { return f.DetectorName == NameBTC }
+
+// IsETH reports whether this finding is an Ethereum address.
+func (f Finding) IsETH() bool { return f.DetectorName == NameETH }
+
 // PANDetail returns the PAN-specific detail if this finding was produced by
 // the PAN detector. The second return value indicates whether the assertion
 // succeeded. When the finding is not a PAN or Detail is nil, it returns (nil, false).
@@ -382,6 +394,28 @@ func (f Finding) MerchantIDDetail() (*MerchantIDDetail, bool) {
 	return d, ok
 }
 
+// BTCDetail returns the Bitcoin address-specific detail if this finding was
+// produced by the BTC detector. Returns (nil, false) when not applicable.
+//
+//	if detail, ok := f.BTCDetail(); ok {
+//	    fmt.Println(detail.AddressType) // "p2pkh", "bech32", etc.
+//	}
+func (f Finding) BTCDetail() (*BTCDetail, bool) {
+	d, ok := f.Detail.(*BTCDetail)
+	return d, ok
+}
+
+// ETHDetail returns the Ethereum address-specific detail if this finding was
+// produced by the ETH detector. Returns (nil, false) when not applicable.
+//
+//	if detail, ok := f.ETHDetail(); ok {
+//	    fmt.Println(detail.EIP55) // true if EIP-55 checksum validated
+//	}
+func (f Finding) ETHDetail() (*ETHDetail, bool) {
+	d, ok := f.Detail.(*ETHDetail)
+	return d, ok
+}
+
 // Level returns the confidence level of this finding as a human-readable
 // threshold value. This is useful when exact confidence scores are not needed
 // and a categorical assessment (high/medium/low) is sufficient.
@@ -436,4 +470,6 @@ var (
 	_ Detector = (*BankAccount)(nil)
 	_ Detector = (*ACHTrace)(nil)
 	_ Detector = (*MerchantID)(nil)
+	_ Detector = (*BTC)(nil)
+	_ Detector = (*ETH)(nil)
 )
