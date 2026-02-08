@@ -7,15 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-02-08
+
 ### Added
 
-- **Bitcoin (BTC) address detector**: Detects P2PKH (prefix '1'), P2SH (prefix '3'), Bech32 SegWit v0 (prefix 'bc1q'), and Bech32m Taproot v1 (prefix 'bc1p') addresses. Validates Base58Check (double SHA-256 checksum) for legacy addresses and Bech32/Bech32m polynomial checksums for SegWit/Taproot addresses. Confidence: 0.95.
-- **Ethereum (ETH) address detector**: Detects Ethereum addresses (0x + 40 hex characters). Validates EIP-55 mixed-case checksums using Keccak-256. Confidence: 0.80 for all-lowercase/all-uppercase, 0.95 for EIP-55 validated addresses.
-- **Keccak-256 hash implementation**: Minimal Keccak-f[1600] sponge construction for EIP-55 checksum validation. Zero external dependencies — uses only the Go standard library.
-- **`WithBTC()` and `WithETH()` scanner options**: Enable individual cryptocurrency address detection.
-- **`BTCDetail()` and `ETHDetail()` finding accessors**: Type-safe access to detector-specific details (address type, EIP-55 validation status).
-- **`IsBTC()` and `IsETH()` finding helpers**: Quick detector type checks.
-- **Kind mapping**: Both BTC and ETH are classified as `KindFinancial`.
+- **Stream scanning API** ([06cc2b1](https://github.com/nao1215/sensitive/commit/06cc2b1)): `ScanReader(io.Reader)` for in-memory scanning and `ScanLines(io.Reader, callback)` for memory-efficient line-by-line streaming. Ideal for log files and large text streams.
+- **Bitcoin (BTC) address detector** ([a35fec8](https://github.com/nao1215/sensitive/commit/a35fec8)): Detects P2PKH (prefix '1'), P2SH (prefix '3'), Bech32 SegWit v0 (prefix 'bc1q'), and Bech32m Taproot v1–v16 (prefix 'bc1p') addresses. Validates Base58Check (double SHA-256 checksum) for legacy addresses and Bech32/Bech32m polynomial checksums (BIP-173/BIP-350) for SegWit/Taproot addresses. Confidence: 0.95.
+- **Ethereum (ETH) address detector** ([a35fec8](https://github.com/nao1215/sensitive/commit/a35fec8)): Detects Ethereum addresses (0x + 40 hex characters). Validates EIP-55 mixed-case checksums using Keccak-256. Confidence: 0.80 for all-lowercase/all-uppercase, 0.95 for EIP-55 validated addresses.
+- **Keccak-256 hash implementation** ([a35fec8](https://github.com/nao1215/sensitive/commit/a35fec8)): Minimal Keccak-f[1600] sponge construction for EIP-55 checksum validation. Zero external dependencies — uses only the Go standard library.
+- **`WithBTC()` and `WithETH()` scanner options** ([a35fec8](https://github.com/nao1215/sensitive/commit/a35fec8)): Enable individual cryptocurrency address detection.
+- **`BTCDetail()` and `ETHDetail()` finding accessors** ([a35fec8](https://github.com/nao1215/sensitive/commit/a35fec8)): Type-safe access to detector-specific details (address type, EIP-55 validation status).
+- **`IsBTC()` and `IsETH()` finding helpers** ([a35fec8](https://github.com/nao1215/sensitive/commit/a35fec8)): Quick detector type checks.
+- **Kind mapping** ([a35fec8](https://github.com/nao1215/sensitive/commit/a35fec8)): Both BTC and ETH are classified as `KindFinancial`.
+- **Japanese phone number format expansion** ([46d2db8](https://github.com/nao1215/sensitive/commit/46d2db8)): Added IP phone (050), M2M/IoT (020), and FMC service (060) prefix detection. Enhanced `JPPhoneDetail` with `JPPhoneType` classification.
+- **Bank account full-width digit support** ([46d2db8](https://github.com/nao1215/sensitive/commit/46d2db8)): Bank account detector now normalizes full-width digits for Japanese input.
+
+### Changed
+
+- **Reduced cyclomatic complexity** ([4b0e022](https://github.com/nao1215/sensitive/commit/4b0e022)): Refactored detector implementations (PAN, email, JWT, IBAN, IP address, sort code, SWIFT/BIC, etc.) and scanner internals to reduce cyclomatic complexity and improve maintainability.
 
 ## [0.0.1] - 2026-02-08
 
@@ -61,4 +70,5 @@ Initial release of the `sensitive` library.
 - **Full-width digit normalization**: Transparent handling of Japanese full-width digits (U+FF10--U+FF19) for PAN, phone, and My Number detection.
 - **Deterministic output**: Findings are sorted by confidence (descending), then by byte offset and detector name for fully reproducible results.
 
+[0.0.2]: https://github.com/nao1215/sensitive/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/nao1215/sensitive/releases/tag/v0.0.1
