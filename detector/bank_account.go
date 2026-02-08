@@ -36,6 +36,10 @@ type BankAccountDetail struct {
 //  3. If a "名義" (holder name) keyword also appears within 50 bytes of the
 //     digit sequence, increase confidence to 0.65
 //
+// Full-width digits (e.g., 口座番号 １２３４５６７８) are normalized to
+// half-width before digit extraction, so Japanese text using full-width
+// numbers is correctly detected.
+//
 // Confidence:
 //   - 0.50: keyword + digit sequence found
 //   - 0.65: keyword + digit sequence + holder name context
@@ -78,7 +82,15 @@ func (d *BankAccount) Hints() [][]byte {
 }
 
 // Scan examines data for bank account numbers near context keywords and returns findings.
+// Full-width digits are normalized to half-width before digit extraction.
 func (d *BankAccount) Scan(data []byte) []Finding {
+	normalized, posMap := NormalizeFullWidthDigits(data)
+	return d.scanNormalized(data, normalized, posMap)
+}
+
+// scanNormalized performs bank account detection on normalized data.
+// orig is the original (possibly full-width) input used for RawValue.
+func (d *BankAccount) scanNormalized(orig []byte, data []byte, posMap []int) []Finding {
 	matches := findKeywordPositions(data, bankAccountKeywords)
 	if len(matches) == 0 {
 		return nil
@@ -89,9 +101,11 @@ func (d *BankAccount) Scan(data []byte) []Finding {
 
 	for _, m := range matches {
 		// Determine the language of the matched keyword.
+		// Keywords are not affected by digit normalization, so data[m.start:m.end]
+		// contains the same bytes as the original.
 		lang := bankAccountKeywordLang(data[m.start:m.end])
 
-		// Search for digit sequences near the keyword.
+		// Search for digit sequences near the keyword in normalized data.
 		seqs := extractDigitsNear(data, m.end, 50, 4, 17)
 		for _, seq := range seqs {
 			if _, ok := used[seq.start]; ok {
@@ -112,12 +126,14 @@ func (d *BankAccount) Scan(data []byte) []Finding {
 				confidence = 0.65
 			}
 
+			origStart, origEnd := mapOriginalRange(posMap, seq.start, seq.end)
+
 			findings = append(findings, Finding{
 				DetectorName: d.Name(),
-				Start:        seq.start,
-				End:          seq.end,
+				Start:        origStart,
+				End:          origEnd,
 				Confidence:   confidence,
-				RawValue:     string(data[seq.start:seq.end]),
+				RawValue:     string(orig[origStart:origEnd]),
 				Detail: &BankAccountDetail{
 					ContextKeyword: string(data[m.start:m.end]),
 					Language:       lang,

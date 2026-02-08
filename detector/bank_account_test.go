@@ -55,6 +55,24 @@ func TestBankAccountDetector_Scan(t *testing.T) {
 			input:   "12345678",
 			wantLen: 0,
 		},
+		{
+			name:       "full-width digits with japanese keyword",
+			input:      "口座番号 １２３４５６７８",
+			wantLen:    1,
+			wantRaw:    "１２３４５６７８",
+			wantMinCon: 0.50,
+			wantMaxCon: 0.50,
+			wantLang:   BankAccountLangJA,
+		},
+		{
+			name:       "full-width digits with holder name context",
+			input:      "口座番号 １２３４５６７８ 名義人 田中太郎",
+			wantLen:    1,
+			wantRaw:    "１２３４５６７８",
+			wantMinCon: 0.65,
+			wantMaxCon: 0.65,
+			wantLang:   BankAccountLangJA,
+		},
 	}
 
 	for _, tt := range tests {

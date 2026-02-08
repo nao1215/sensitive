@@ -133,6 +133,65 @@ func TestJPPhoneDetector_Scan(t *testing.T) {
 			input:   "0211234567",
 			wantLen: 0,
 		},
+
+		// Space-separated formats.
+		{
+			name:       "mobile with spaces",
+			input:      "call 090 1234 5678 now",
+			wantLen:    1,
+			wantRaw:    "090 1234 5678",
+			wantMinCon: 0.8,
+		},
+		{
+			name:       "landline with spaces",
+			input:      "TEL: 03 1234 5678",
+			wantLen:    1,
+			wantRaw:    "03 1234 5678",
+			wantMinCon: 0.8,
+		},
+
+		// Underscore boundary.
+		{
+			name:    "preceded by underscore",
+			input:   "_09012345678",
+			wantLen: 0,
+		},
+		{
+			name:    "followed by underscore",
+			input:   "09012345678_",
+			wantLen: 0,
+		},
+		{
+			name:    "preceded by underscore with dashes",
+			input:   "_090-1234-5678",
+			wantLen: 0,
+		},
+		{
+			name:    "followed by underscore with dashes",
+			input:   "090-1234-5678_",
+			wantLen: 0,
+		},
+
+		// 020 and 060 prefixes.
+		{
+			name:       "M2M/IoT 020 prefix",
+			input:      "device 020-1234-5678",
+			wantLen:    1,
+			wantRaw:    "020-1234-5678",
+			wantMinCon: 0.8,
+		},
+		{
+			name:       "service 060 prefix",
+			input:      "call 060-1234-5678",
+			wantLen:    1,
+			wantRaw:    "060-1234-5678",
+			wantMinCon: 0.8,
+		},
+		{
+			name:    "invalid prefix 060 (10 digits)",
+			input:   "0601234567",
+			wantLen: 0,
+		},
 	}
 
 	for _, tt := range tests {
@@ -188,6 +247,8 @@ func TestJPPhoneDetector_Detail(t *testing.T) {
 		{"03-1234-5678", detector.JPPhoneTypeLandline},
 		{"050-1234-5678", detector.JPPhoneTypeIPPhone},
 		{"0120-123-456", detector.JPPhoneTypeTollFree},
+		{"020-1234-5678", detector.JPPhoneTypeM2M},
+		{"060-1234-5678", detector.JPPhoneTypeService},
 	}
 	for _, tt := range tests {
 		findings := d.Scan([]byte(tt.input))

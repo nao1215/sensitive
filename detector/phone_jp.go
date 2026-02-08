@@ -15,6 +15,10 @@ const (
 	JPPhoneTypeIPPhone JPPhoneType = "ip_phone"
 	// JPPhoneTypeTollFree identifies toll-free numbers (0120, 0800 prefix).
 	JPPhoneTypeTollFree JPPhoneType = "toll_free"
+	// JPPhoneTypeM2M identifies M2M/IoT numbers (020 prefix, 11 digits).
+	JPPhoneTypeM2M JPPhoneType = "m2m"
+	// JPPhoneTypeService identifies FMC/unified service numbers (060 prefix, 11 digits).
+	JPPhoneTypeService JPPhoneType = "service"
 )
 
 // JPPhoneDetail holds Japanese phone number-specific detail information.
@@ -41,6 +45,8 @@ var jpPhoneRules = []jpPhoneRule{
 	{11, "80", JPPhoneTypeMobile},
 	{11, "70", JPPhoneTypeMobile},
 	{11, "50", JPPhoneTypeIPPhone},
+	{11, "20", JPPhoneTypeM2M},
+	{11, "60", JPPhoneTypeService},
 	{10, "120", JPPhoneTypeTollFree},
 	{11, "800", JPPhoneTypeTollFree},
 }
@@ -50,29 +56,32 @@ var jpPhoneRules = []jpPhoneRule{
 //
 // Rejected prefixes:
 //   - 050, 070, 080, 090: require 11 digits (mobile/IP phone), not 10
-//   - 020, 021, 051, 057, 071, 081, 091: not assigned as area codes
+//   - 020, 021, 051, 057, 060, 071, 081, 091: not assigned as area codes
 var invalidLandlinePrefixes = map[string]bool{
 	"50": true, "70": true, "80": true, "90": true,
 	"20": true, "21": true, "51": true, "57": true,
-	"71": true, "81": true, "91": true,
+	"60": true, "71": true, "81": true, "91": true,
 }
 
 // JPPhone detects Japanese phone numbers in text.
 //
 // Supported formats:
 //   - Landline: 03-1234-5678, 03(1234)5678, 0312345678
-//   - Mobile: 090-1234-5678, 09012345678
+//   - Mobile: 090-1234-5678, 090 1234 5678, 09012345678
 //   - IP phone: 050-1234-5678
 //   - Toll-free: 0120-123-456, 0800-123-4567
+//   - M2M/IoT: 020-1234-5678
+//   - Service: 060-1234-5678
 //
 // Detection logic:
-//  1. Scan for sequences starting with '0' (allowing '-', '(', ')' separators)
+//  1. Scan for sequences starting with '0' (allowing '-', '(', ')', ' ' separators)
 //  2. Count digits (must be 10-11)
 //  3. Validate prefix against known area codes and mobile prefixes
 //
 // To avoid false positives with postal codes (7-digit XXX-XXXX format) and
 // other numeric sequences, the detector requires the '0' prefix and validates
-// the total digit count strictly.
+// the total digit count strictly. Underscores are treated as word characters,
+// so identifiers like _09012345678 are not detected.
 //
 // Full-width digits (e.g., ０９０−１２３４−５６７８) are also supported
 // through normalization.
@@ -126,8 +135,10 @@ func (d *JPPhone) scanNormalized(orig []byte, data []byte, posMap []int) []Findi
 			continue
 		}
 
-		// Check that '0' is not part of a longer alphanumeric token.
-		if i > 0 && isAlphaNum(data[i-1]) {
+		// Check that '0' is not part of a longer word-like token.
+		// Underscores are treated as word characters to prevent matching
+		// identifiers like _09012345678.
+		if i > 0 && isPhoneWordChar(data[i-1]) {
 			i++
 			continue
 		}
@@ -144,8 +155,14 @@ func (d *JPPhone) scanNormalized(orig []byte, data []byte, posMap []int) []Findi
 		}
 		end := j
 
-		// Check that the sequence doesn't continue with alphanumeric chars.
-		if end < len(data) && isAlphaNum(data[end]) {
+		// Trim trailing non-digit separators (e.g., trailing spaces) so that
+		// the boundary check and RawValue do not include them.
+		for end > start && !isDigit(data[end-1]) {
+			end--
+		}
+
+		// Check that the sequence doesn't continue with word characters.
+		if end < len(data) && isPhoneWordChar(data[end]) {
 			i = end
 			continue
 		}
@@ -185,8 +202,16 @@ func (d *JPPhone) scanNormalized(orig []byte, data []byte, posMap []int) []Findi
 }
 
 // isPhoneSepChar reports whether b is a digit or phone number separator.
+// Space is included to support formats like "090 1234 5678".
 func isPhoneSepChar(b byte) bool {
-	return isDigit(b) || b == '-' || b == '(' || b == ')'
+	return isDigit(b) || b == '-' || b == '(' || b == ')' || b == ' '
+}
+
+// isPhoneWordChar reports whether b is a character that forms part of a
+// word-like token. Phone numbers adjacent to these characters are rejected
+// to avoid matching identifiers (e.g., _09012345678 or var09012345678).
+func isPhoneWordChar(b byte) bool {
+	return isAlphaNum(b) || b == '_'
 }
 
 // classifyJPPhone returns the phone type based on the prefix and digit count,

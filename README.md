@@ -96,7 +96,7 @@ scanner = sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
 |--------|---------|------------|
 | `WithPAN()` | Credit card numbers (Visa, Mastercard, Amex, JCB, Discover, Diners, UnionPay) | BIN prefix + Luhn algorithm |
 | `WithEmail()` | Email addresses | Structure + known TLD check |
-| `WithJPPhone()` | Japanese phone numbers (mobile, landline, IP phone, toll-free) | Prefix classification + digit count |
+| `WithJPPhone()` | Japanese phone numbers (mobile, landline, IP phone, toll-free, M2M/IoT, service) | Prefix classification + digit count |
 | `WithMyNumber()` | Japanese My Number (12-digit individual number) | MOD 11 check digit |
 | `WithJWT()` | JSON Web Tokens | Header decode + `alg` key check |
 | `WithAWSKey()` | AWS Access Key IDs (`AKIA...` / `ASIA...`) | Prefix + 20-char alphanumeric |
@@ -278,7 +278,7 @@ The available accessors and their fields:
 |--------|--------|
 | `PANDetail()` | Brand, BIN, Last4, Luhn, Length |
 | `EmailDetail()` | Local, Domain |
-| `JPPhoneDetail()` | PhoneType (`JPPhoneTypeMobile`, `JPPhoneTypeLandline`, `JPPhoneTypeIPPhone`, `JPPhoneTypeTollFree`) |
+| `JPPhoneDetail()` | PhoneType (`JPPhoneTypeMobile`, `JPPhoneTypeLandline`, `JPPhoneTypeIPPhone`, `JPPhoneTypeTollFree`, `JPPhoneTypeM2M`, `JPPhoneTypeService`) |
 | `JWTDetail()` | Algorithm (e.g. `HS256`, `RS256`) |
 | `AWSKeyDetail()` | KeyType (`AWSKeyTypeLongTerm` or `AWSKeyTypeTemporary`) |
 | `IBANDetail()` | CountryCode (ISO 3166-1 alpha-2) |
@@ -365,7 +365,7 @@ type Detector interface {
 
 ## Full-Width Digit Support
 
-Japanese text often uses full-width digits (０-９). Detectors that parse digit sequences directly (PAN, JPPhone, MyNumber, ABA routing) normalize full-width digits to half-width before detection, so a phone number written as `０９０－１２３４－５６７８` is correctly recognized. IBAN and UK sort code do **not** normalize full-width digits because their formats are primarily used in Western contexts where full-width encoding is uncommon. Context-based detectors (CVV, CardExpiry, ACHTrace, BankAccount, MerchantID) also do **not** normalize full-width digits. The utility function is also available for direct use:
+Japanese text often uses full-width digits (０-９). Detectors that parse digit sequences directly (PAN, JPPhone, MyNumber, ABA routing, BankAccount) normalize full-width digits to half-width before detection, so a phone number written as `０９０－１２３４－５６７８` or a bank account number written as `口座番号 １２３４５６７８` is correctly recognized. IBAN and UK sort code do **not** normalize full-width digits because their formats are primarily used in Western contexts where full-width encoding is uncommon. Context-based detectors (CVV, CardExpiry, ACHTrace, MerchantID) also do **not** normalize full-width digits. The utility function is also available for direct use:
 
 ```go
 normalized, posMap := detector.NormalizeFullWidthDigits([]byte("０９０－１２３４－５６７８"))
