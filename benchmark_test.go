@@ -227,3 +227,17 @@ func BenchmarkScannerFullWidthInput(b *testing.B) {
 		scanner.Scan(line)
 	}
 }
+
+// BenchmarkScannerHighDensity measures performance when input contains
+// many sensitive values from different detectors, exercising the detection
+// and dedup paths simultaneously.
+func BenchmarkScannerHighDensity(b *testing.B) {
+	scanner := sensitive.NewScanner(sensitive.WithAll())
+	line := []byte("cards: 4532015112830366 5425233430109903 " +
+		"email: test@example.com phone: 090-1234-5678 " +
+		"key: AKIAIOSFODNN7EXAMPLE")
+	b.ResetTimer()
+	for range b.N {
+		scanner.Scan(line)
+	}
+}

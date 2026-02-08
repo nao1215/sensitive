@@ -209,3 +209,47 @@ func TestConfidenceLevel_String(t *testing.T) {
 		})
 	}
 }
+
+func TestFinding_Kind(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		detectorName detector.DetectorName
+		wantKind     detector.SensitiveKind
+	}{
+		// Financial
+		{"PAN is financial", detector.NamePAN, detector.KindFinancial},
+		{"IBAN is financial", detector.NameIBAN, detector.KindFinancial},
+		{"ABA routing is financial", detector.NameABARouting, detector.KindFinancial},
+		{"UK sort code is financial", detector.NameUKSortCode, detector.KindFinancial},
+		{"CVV is financial", detector.NameCVV, detector.KindFinancial},
+		{"card expiry is financial", detector.NameCardExpiry, detector.KindFinancial},
+		{"bank account is financial", detector.NameBankAccount, detector.KindFinancial},
+		{"ACH trace is financial", detector.NameACHTrace, detector.KindFinancial},
+		{"merchant ID is financial", detector.NameMerchantID, detector.KindFinancial},
+		{"SWIFT/BIC is financial", detector.NameSWIFTBIC, detector.KindFinancial},
+		// PII
+		{"email is PII", detector.NameEmail, detector.KindPII},
+		{"JP phone is PII", detector.NameJPPhone, detector.KindPII},
+		{"My Number is PII", detector.NameMyNumber, detector.KindPII},
+		{"IP address is PII", detector.NameIPAddr, detector.KindPII},
+		// Credential
+		{"JWT is credential", detector.NameJWT, detector.KindCredential},
+		{"AWS key is credential", detector.NameAWSKey, detector.KindCredential},
+		{"payment token is credential", detector.NamePaymentToken, detector.KindCredential},
+		// Unknown
+		{"custom detector returns empty", detector.DetectorName("custom"), ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			f := detector.Finding{DetectorName: tt.detectorName}
+			if got := f.Kind(); got != tt.wantKind {
+				t.Errorf("Kind() = %q, want %q", got, tt.wantKind)
+			}
+		})
+	}
+}

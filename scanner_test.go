@@ -782,6 +782,55 @@ func TestScanner_IPv6_TrailingAlphaRejected(t *testing.T) {
 	}
 }
 
+func TestScanner_WithMinConfidence(t *testing.T) {
+	t.Parallel()
+
+	// Use BankAccount (confidence 0.5-0.65) and PAN (confidence ~1.0)
+	// to test threshold filtering.
+	input := "bank account 12345678 card 4532015112830366"
+
+	t.Run("threshold 0 returns all findings", func(t *testing.T) {
+		t.Parallel()
+		scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithBankAccount())
+		findings := scanner.ScanString(input)
+		if len(findings) == 0 {
+			t.Fatal("expected findings, got none")
+		}
+	})
+
+	t.Run("threshold 0.8 filters low-confidence findings", func(t *testing.T) {
+		t.Parallel()
+		scanner := sensitive.NewScanner(
+			sensitive.WithPAN(), sensitive.WithBankAccount(),
+			sensitive.WithMinConfidence(0.8),
+		)
+		findings := scanner.ScanString(input)
+		for _, f := range findings {
+			if f.Confidence < 0.8 {
+				t.Errorf("finding %q has confidence %.2f, want >= 0.8",
+					f.DetectorName, f.Confidence)
+			}
+		}
+		// PAN should still be present.
+		panFindings := filterByDetector(findings, detector.NamePAN)
+		if len(panFindings) == 0 {
+			t.Error("expected PAN finding with threshold 0.8")
+		}
+	})
+
+	t.Run("threshold 1.0 filters almost everything", func(t *testing.T) {
+		t.Parallel()
+		scanner := sensitive.NewScanner(
+			sensitive.WithPAN(), sensitive.WithBankAccount(),
+			sensitive.WithMinConfidence(1.01),
+		)
+		findings := scanner.ScanString(input)
+		if len(findings) != 0 {
+			t.Errorf("expected 0 findings with threshold 1.01, got %d", len(findings))
+		}
+	})
+}
+
 func filterByDetector(findings []sensitive.Finding, name sensitive.DetectorName) []sensitive.Finding {
 	var filtered []sensitive.Finding
 	for _, f := range findings {

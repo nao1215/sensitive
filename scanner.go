@@ -29,6 +29,7 @@ type Scanner struct {
 	hintCache      [][]hintEntry // pre-computed per detector
 	sortByPosition bool
 	skipDedup      bool
+	minConfidence  float64
 }
 
 // hintEntry caches a detector's hint in pre-lowered form to avoid
@@ -148,6 +149,17 @@ func (s *Scanner) Scan(data []byte) []Finding {
 		allFindings = dedup(allFindings)
 	}
 	sortFindings(allFindings, s.sortByPosition)
+
+	// Stage 4: Filter by minimum confidence threshold (if configured).
+	if s.minConfidence > 0 {
+		filtered := allFindings[:0]
+		for _, f := range allFindings {
+			if f.Confidence >= s.minConfidence {
+				filtered = append(filtered, f)
+			}
+		}
+		allFindings = filtered
+	}
 	return allFindings
 }
 

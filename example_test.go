@@ -3,6 +3,7 @@ package sensitive_test
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/nao1215/sensitive"
 	"github.com/nao1215/sensitive/detector"
@@ -84,6 +85,71 @@ func ExampleWithAll() {
 	fmt.Printf("found %d sensitive item(s)\n", len(findings))
 	// Output:
 	// found 3 sensitive item(s)
+}
+
+func ExampleScanner_ScanReader() {
+	scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
+	r := strings.NewReader("user tanaka@example.com paid with 4532015112830366")
+
+	findings, err := scanner.ScanReader(r)
+	if err != nil {
+		fmt.Println("error:", err)
+		return
+	}
+
+	for _, f := range findings {
+		fmt.Printf("type=%s raw=%s\n", f.DetectorName, f.RawValue)
+	}
+	// Unordered output:
+	// type=pan raw=4532015112830366
+	// type=email raw=tanaka@example.com
+}
+
+func ExampleScanner_ScanLines() {
+	scanner := sensitive.NewScanner(sensitive.WithEmail())
+	input := "normal log line\nuser tanaka@example.com logged in\nanother safe line\n"
+
+	err := scanner.ScanLines(strings.NewReader(input), func(lineNum int, _ []byte, findings []sensitive.Finding) {
+		for _, f := range findings {
+			fmt.Printf("line %d: %s=%s\n", lineNum, f.DetectorName, f.RawValue)
+		}
+	})
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	// Output:
+	// line 2: email=tanaka@example.com
+}
+
+func ExampleWithMinConfidence() {
+	// WithMinConfidence filters out findings below the threshold.
+	// BankAccount detections have lower confidence (0.50-0.65),
+	// while Email detections have high confidence (1.00).
+	scanner := sensitive.NewScanner(
+		sensitive.WithEmail(),
+		sensitive.WithBankAccount(),
+		sensitive.WithMinConfidence(0.8),
+	)
+	findings := scanner.ScanString("user tanaka@example.com bank account 12345678")
+
+	for _, f := range findings {
+		fmt.Printf("type=%s confidence=%.2f\n", f.DetectorName, f.Confidence)
+	}
+	// Output:
+	// type=email confidence=1.00
+}
+
+func ExampleFinding_Kind() {
+	scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail(), sensitive.WithAWSKey())
+	findings := scanner.ScanString("user tanaka@example.com paid with 4532015112830366 key AKIAIOSFODNN7EXAMPLE")
+
+	for _, f := range findings {
+		fmt.Printf("%s: %s\n", f.DetectorName, f.Kind())
+	}
+	// Unordered output:
+	// pan: financial
+	// email: pii
+	// awskey: credential
 }
 
 // This example demonstrates how to use the mask package with the scanner

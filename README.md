@@ -159,6 +159,65 @@ Benchmark numbers are environment-sensitive. Expect variation across Go versions
 | `BenchmarkScannerHintMatchNoDetection` | All detectors enabled, hints match but no valid sensitive data found |
 | `BenchmarkScannerFullWidthInput` | All detectors enabled, full-width digit input requiring normalization |
 
+## Scanning Streams
+
+For log files and other line-oriented input, use `ScanLines` to process data incrementally without loading the entire content into memory. The callback is invoked only for lines that contain findings:
+
+```go
+f, _ := os.Open("access.log")
+defer f.Close()
+
+scanner := sensitive.NewScanner(sensitive.WithAll())
+err := scanner.ScanLines(f, func(lineNum int, line []byte, findings []sensitive.Finding) {
+    for _, finding := range findings {
+        fmt.Printf("line %d: %s (%s)\n", lineNum, finding.DetectorName, finding.RawValue)
+    }
+})
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+If the entire content fits in memory, `ScanReader` is a simpler alternative:
+
+```go
+f, _ := os.Open("data.txt")
+defer f.Close()
+
+findings, err := scanner.ScanReader(f)
+```
+
+## Confidence Filtering
+
+Use `WithMinConfidence` to control the strictness of detection. Findings below the threshold are filtered out:
+
+```go
+// Strict mode: only high-confidence findings (>= 0.8).
+scanner := sensitive.NewScanner(sensitive.WithAll(), sensitive.WithMinConfidence(0.8))
+
+// Loose mode: include medium-confidence and above (>= 0.4).
+scanner = sensitive.NewScanner(sensitive.WithAll(), sensitive.WithMinConfidence(0.4))
+```
+
+This is useful for suppressing noise from context-based weak detectors (BankAccount, CVV, CardExpiry, etc.) while keeping strong checksum-validated results.
+
+## Classifying Findings by Kind
+
+Each finding has a `Kind()` method that returns a broad semantic category (`financial`, `pii`, or `credential`), enabling downstream classification without switching on all detector names:
+
+```go
+for _, f := range findings {
+    switch f.Kind() {
+    case detector.KindFinancial:
+        // PAN, IBAN, ABA routing, sort code, CVV, card expiry, etc.
+    case detector.KindPII:
+        // email, phone, My Number, IP address
+    case detector.KindCredential:
+        // JWT, AWS key, payment token
+    }
+}
+```
+
 ## Working with Findings
 
 Each `Finding` contains the detector name, byte offsets, confidence score (0.0--1.0), the raw matched string, and a Detail struct with detector-specific information.

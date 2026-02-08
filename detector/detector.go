@@ -46,6 +46,54 @@ const (
 	NameMerchantID DetectorName = "merchant_id"
 )
 
+// SensitiveKind categorizes a finding into a broad semantic group for
+// downstream classification, auditing, and statistics. Use [Finding.Kind]
+// to obtain the kind from a finding.
+//
+//	switch f.Kind() {
+//	case detector.KindFinancial:
+//	    // PAN, IBAN, ABA routing, sort code, etc.
+//	case detector.KindPII:
+//	    // email, phone, My Number, IP address
+//	case detector.KindCredential:
+//	    // JWT, AWS key, payment token
+//	}
+type SensitiveKind string
+
+const (
+	// KindFinancial indicates financial instrument data (PAN, IBAN, ABA routing,
+	// sort code, CVV, card expiry, bank account, ACH trace, merchant ID, SWIFT/BIC).
+	KindFinancial SensitiveKind = "financial"
+	// KindPII indicates personally identifiable information
+	// (email, phone number, My Number, IP address).
+	KindPII SensitiveKind = "pii"
+	// KindCredential indicates authentication credentials or tokens
+	// (JWT, AWS access key, payment processor token).
+	KindCredential SensitiveKind = "credential"
+)
+
+// kindMapping maps each built-in detector name to its semantic kind.
+// Custom detectors not in this map return "" (empty SensitiveKind) from Kind().
+var kindMapping = map[DetectorName]SensitiveKind{
+	NamePAN:          KindFinancial,
+	NameIBAN:         KindFinancial,
+	NameABARouting:   KindFinancial,
+	NameUKSortCode:   KindFinancial,
+	NameCVV:          KindFinancial,
+	NameCardExpiry:   KindFinancial,
+	NameBankAccount:  KindFinancial,
+	NameACHTrace:     KindFinancial,
+	NameMerchantID:   KindFinancial,
+	NameSWIFTBIC:     KindFinancial,
+	NameEmail:        KindPII,
+	NameJPPhone:      KindPII,
+	NameMyNumber:     KindPII,
+	NameIPAddr:       KindPII,
+	NameJWT:          KindCredential,
+	NameAWSKey:       KindCredential,
+	NamePaymentToken: KindCredential,
+}
+
 // ConfidenceLevel represents a human-readable confidence threshold.
 // Use [Finding.Level] to obtain this from a finding.
 type ConfidenceLevel int
@@ -351,6 +399,21 @@ func (f Finding) Level() ConfidenceLevel {
 	default:
 		return ConfidenceLow
 	}
+}
+
+// Kind returns the semantic category of this finding (e.g., [KindFinancial],
+// [KindPII], [KindCredential]). This enables downstream consumers to classify
+// findings by broad category for logging, auditing, and statistics without
+// switching on all individual detector names.
+//
+// Custom detectors not registered in the built-in kind mapping return ""
+// (empty SensitiveKind).
+//
+//	if f.Kind() == detector.KindCredential {
+//	    alertSecurityTeam(f)
+//	}
+func (f Finding) Kind() SensitiveKind {
+	return kindMapping[f.DetectorName]
 }
 
 // ensure that all detectors implement the Detector interface.

@@ -204,6 +204,25 @@ func WithoutDedup() Option {
 	}
 }
 
+// WithMinConfidence sets the minimum confidence threshold for reported findings.
+// Findings with confidence below the threshold are filtered out after detection
+// and deduplication. This allows callers to select a strict mode (e.g., 0.8 for
+// high-confidence only) or a loose mode (e.g., 0.4 to include medium-confidence
+// matches).
+//
+// A value of 0 (the default) disables filtering and returns all findings.
+//
+//	// Strict mode: only high-confidence findings.
+//	scanner := sensitive.NewScanner(sensitive.WithAll(), sensitive.WithMinConfidence(0.8))
+//
+//	// Loose mode: include medium-confidence and above.
+//	scanner := sensitive.NewScanner(sensitive.WithAll(), sensitive.WithMinConfidence(0.4))
+func WithMinConfidence(threshold float64) Option {
+	return func(s *Scanner) {
+		s.minConfidence = threshold
+	}
+}
+
 // WithDetector adds a custom Detector to the Scanner.
 // This allows users to extend the Scanner with their own detection logic.
 // If d is nil, the option is a no-op (the nil detector is silently ignored).
