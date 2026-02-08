@@ -102,20 +102,7 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		}
 		confidence := 0.85
 
-		origStart := posMap[i]
-		origEnd := posMap[end-1] + 1
-		// Adjust origEnd for multi-byte characters.
-		if end-1 < len(posMap) {
-			for origEnd < len(orig) && origEnd > origStart {
-				// Find the true end by checking the next position map entry.
-				if end < len(posMap) {
-					origEnd = posMap[end]
-					break
-				}
-				origEnd = len(orig)
-				break
-			}
-		}
+		origStart, origEnd := mapOriginalRange(posMap, i, end)
 
 		findings = append(findings, Finding{
 			DetectorName: d.Name(),

@@ -69,68 +69,20 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 	var findings []Finding
 
 	for i := 0; i < len(data)-7; i++ {
-		// First 4 characters must be alphabetic (bank code).
-		if !isAlpha(data[i]) || !isAlpha(data[i+1]) || !isAlpha(data[i+2]) || !isAlpha(data[i+3]) {
+		countryCode, ok := validateSWIFTStructure(data, i)
+		if !ok {
 			continue
 		}
 
-		// Characters 5-6 must be alphabetic (country code).
-		if !isAlpha(data[i+4]) || !isAlpha(data[i+5]) {
+		end, branchCode, ok := determineSWIFTLength(data, i)
+		if !ok {
 			continue
 		}
 
-		// Characters 7-8 must be alphanumeric (location code).
-		if !isAlphaNum(data[i+6]) || !isAlphaNum(data[i+7]) {
+		// Pure alpha codes require nearby context keywords to avoid
+		// false positives with common English words.
+		if !hasDigitInRange(data, i+6, end) && !hasSWIFTContext(data, i, end) {
 			continue
-		}
-
-		// Word boundary check: preceding character must not be alphanumeric.
-		if i > 0 && isAlphaNum(data[i-1]) {
-			continue
-		}
-
-		// Validate ISO 3166-1 alpha-2 country code.
-		countryCode := string([]byte{toUpperByte(data[i+4]), toUpperByte(data[i+5])})
-		if !swiftCountryCodes[countryCode] {
-			continue
-		}
-
-		// Determine if this is an 8-char or 11-char SWIFT/BIC code.
-		end := i + 8
-		branchCode := ""
-
-		if i+11 <= len(data) && isAlphaNum(data[i+8]) && isAlphaNum(data[i+9]) && isAlphaNum(data[i+10]) {
-			// Potential 11-character code. Check that it doesn't continue further.
-			if i+11 < len(data) && isAlphaNum(data[i+11]) {
-				continue
-			}
-			end = i + 11
-			branchCode = string([]byte{
-				toUpperByte(data[i+8]),
-				toUpperByte(data[i+9]),
-				toUpperByte(data[i+10]),
-			})
-		} else if i+8 < len(data) && isAlphaNum(data[i+8]) {
-			// 9 or 10 alphanumeric characters — not a valid SWIFT/BIC length.
-			continue
-		}
-
-		// Exclude patterns that look like common English words or abbreviations.
-		// SWIFT/BIC codes typically contain digits in the location or branch code.
-		// Pure alpha codes of length 8 are common words; require at least one digit
-		// in the location/branch portion OR the code must appear near SWIFT/BIC context.
-		hasDigit := false
-		for k := i + 6; k < end; k++ {
-			if isDigit(data[k]) {
-				hasDigit = true
-				break
-			}
-		}
-		if !hasDigit {
-			// Pure alpha code: check for SWIFT/BIC context keywords nearby.
-			if !hasSWIFTContext(data, i, end) {
-				continue
-			}
 		}
 
 		bankCode := string([]byte{
@@ -162,6 +114,60 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 	}
 
 	return findings
+}
+
+// validateSWIFTStructure checks the first 8 characters at data[i] for valid
+// SWIFT/BIC structure: 4 alpha (bank) + 2 alpha (country) + 2 alphanumeric
+// (location), with word boundary check and ISO country code validation.
+func validateSWIFTStructure(data []byte, i int) (countryCode string, ok bool) {
+	if !isAlpha(data[i]) || !isAlpha(data[i+1]) || !isAlpha(data[i+2]) || !isAlpha(data[i+3]) {
+		return "", false
+	}
+	if !isAlpha(data[i+4]) || !isAlpha(data[i+5]) {
+		return "", false
+	}
+	if !isAlphaNum(data[i+6]) || !isAlphaNum(data[i+7]) {
+		return "", false
+	}
+	if i > 0 && isAlphaNum(data[i-1]) {
+		return "", false
+	}
+	cc := string([]byte{toUpperByte(data[i+4]), toUpperByte(data[i+5])})
+	if !swiftCountryCodes[cc] {
+		return "", false
+	}
+	return cc, true
+}
+
+// determineSWIFTLength determines whether the SWIFT/BIC code at data[i] is
+// 8 or 11 characters. Returns (end, branchCode, true) for valid lengths,
+// or (0, "", false) for invalid lengths (9 or 10 characters).
+func determineSWIFTLength(data []byte, i int) (end int, branchCode string, ok bool) {
+	if i+11 <= len(data) && isAlphaNum(data[i+8]) && isAlphaNum(data[i+9]) && isAlphaNum(data[i+10]) {
+		if i+11 < len(data) && isAlphaNum(data[i+11]) {
+			return 0, "", false
+		}
+		branch := string([]byte{
+			toUpperByte(data[i+8]),
+			toUpperByte(data[i+9]),
+			toUpperByte(data[i+10]),
+		})
+		return i + 11, branch, true
+	}
+	if i+8 < len(data) && isAlphaNum(data[i+8]) {
+		return 0, "", false
+	}
+	return i + 8, "", true
+}
+
+// hasDigitInRange reports whether data[start:end] contains at least one digit.
+func hasDigitInRange(data []byte, start, end int) bool {
+	for k := start; k < end; k++ {
+		if isDigit(data[k]) {
+			return true
+		}
+	}
+	return false
 }
 
 // hasSWIFTContext checks whether SWIFT/BIC context keywords appear near the

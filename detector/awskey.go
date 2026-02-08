@@ -60,50 +60,23 @@ func (d *AWSKey) Scan(data []byte) []Finding {
 	var findings []Finding
 
 	for i := 0; i < len(data)-19; i++ {
-		// Check for AKIA or ASIA prefix.
-		if data[i] != 'A' {
-			continue
-		}
-		if i+3 >= len(data) {
+		keyType, ok := matchAWSPrefix(data, i)
+		if !ok {
 			continue
 		}
 
-		isAKIA := data[i+1] == 'K' && data[i+2] == 'I' && data[i+3] == 'A'
-		isASIA := data[i+1] == 'S' && data[i+2] == 'I' && data[i+3] == 'A'
-		if !isAKIA && !isASIA {
-			continue
-		}
-
-		// Check that the preceding character is not alphanumeric
-		// (to avoid matching substrings of longer tokens).
+		// Word boundary: preceding character must not be alphanumeric.
 		if i > 0 && isAlphaNum(data[i-1]) {
 			continue
 		}
 
-		// Validate that the next 16 characters (after prefix) are uppercase alphanumeric.
-		if i+20 > len(data) {
+		if !validateAWSKeyBody(data, i+4) {
 			continue
 		}
 
-		valid := true
-		for k := i + 4; k < i+20; k++ {
-			if !isUpperAlphaNum(data[k]) {
-				valid = false
-				break
-			}
-		}
-		if !valid {
-			continue
-		}
-
-		// Check that the character after the key is not alphanumeric.
+		// Word boundary: following character must not be alphanumeric.
 		if i+20 < len(data) && isAlphaNum(data[i+20]) {
 			continue
-		}
-
-		keyType := AWSKeyTypeLongTerm
-		if isASIA {
-			keyType = AWSKeyTypeTemporary
 		}
 
 		findings = append(findings, Finding{
@@ -115,10 +88,38 @@ func (d *AWSKey) Scan(data []byte) []Finding {
 			Detail:       &AWSKeyDetail{KeyType: keyType},
 		})
 
-		i += 19 // Skip past the matched key.
+		i += 19
 	}
 
 	return findings
+}
+
+// matchAWSPrefix checks whether data[i:i+4] is "AKIA" or "ASIA".
+func matchAWSPrefix(data []byte, i int) (AWSKeyType, bool) {
+	if data[i] != 'A' {
+		return "", false
+	}
+	if data[i+1] == 'K' && data[i+2] == 'I' && data[i+3] == 'A' {
+		return AWSKeyTypeLongTerm, true
+	}
+	if data[i+1] == 'S' && data[i+2] == 'I' && data[i+3] == 'A' {
+		return AWSKeyTypeTemporary, true
+	}
+	return "", false
+}
+
+// validateAWSKeyBody checks that 16 characters starting at data[start] are
+// uppercase alphanumeric (A-Z, 0-9).
+func validateAWSKeyBody(data []byte, start int) bool {
+	if start+16 > len(data) {
+		return false
+	}
+	for k := start; k < start+16; k++ {
+		if !isUpperAlphaNum(data[k]) {
+			return false
+		}
+	}
+	return true
 }
 
 // isUpperAlphaNum reports whether b is an uppercase ASCII letter or digit.

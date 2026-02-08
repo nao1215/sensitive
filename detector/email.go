@@ -58,72 +58,18 @@ func (d *Email) Scan(data []byte) []Finding {
 			continue
 		}
 
-		// Walk backward to find the start of the local part.
-		localStart := i
-		for localStart > 0 && isLocalPartChar(data[localStart-1]) {
-			localStart--
-		}
-		// Local part must not be empty and must not start/end with '.'.
-		if localStart == i {
-			continue
-		}
-		if data[localStart] == '.' || data[i-1] == '.' {
-			continue
-		}
-		// Local part must not contain consecutive dots (RFC 5321).
-		if hasConsecutiveDots(data[localStart:i]) {
+		localStart, ok := findLocalPartStart(data, i)
+		if !ok {
 			continue
 		}
 
-		// Walk forward to find the end of the domain part.
-		domainEnd := i + 1
-		for domainEnd < len(data) && isDomainChar(data[domainEnd]) {
-			domainEnd++
-		}
-		// Trim trailing '.' if any.
-		for domainEnd > i+1 && data[domainEnd-1] == '.' {
-			domainEnd--
-		}
-		// Trim trailing '-' if any.
-		for domainEnd > i+1 && data[domainEnd-1] == '-' {
-			domainEnd--
-		}
-
-		domain := data[i+1 : domainEnd]
-		if len(domain) == 0 {
+		domainEnd, domain, ok := findDomainEnd(data, i)
+		if !ok {
 			continue
 		}
 
-		// Domain must contain at least one '.'.
-		dotIdx := -1
-		for k := len(domain) - 1; k >= 0; k-- {
-			if domain[k] == '.' {
-				dotIdx = k
-				break
-			}
-		}
-		if dotIdx < 0 {
-			continue
-		}
-
-		// TLD must be at least 2 characters.
-		tld := domain[dotIdx+1:]
-		if len(tld) < 2 {
-			continue
-		}
-		// TLD must be all alpha.
-		allAlpha := true
-		for _, b := range tld {
-			if !isAlpha(b) {
-				allAlpha = false
-				break
-			}
-		}
-		if !allAlpha {
-			continue
-		}
-		// Domain labels must not start or end with '-' (RFC 5321).
-		if hasInvalidLabelBoundary(domain) {
+		tld, ok := validateTLD(domain)
+		if !ok {
 			continue
 		}
 
@@ -151,6 +97,87 @@ func (d *Email) Scan(data []byte) []Finding {
 	}
 
 	return findings
+}
+
+// findLocalPartStart walks backward from atIdx to find the start of the local
+// part. It returns (start, false) if the local part is empty, starts or ends
+// with '.', or contains consecutive dots.
+func findLocalPartStart(data []byte, atIdx int) (start int, ok bool) {
+	localStart := atIdx
+	for localStart > 0 && isLocalPartChar(data[localStart-1]) {
+		localStart--
+	}
+	// Local part must not be empty and must not start/end with '.'.
+	if localStart == atIdx {
+		return 0, false
+	}
+	if data[localStart] == '.' || data[atIdx-1] == '.' {
+		return 0, false
+	}
+	// Local part must not contain consecutive dots (RFC 5321).
+	if hasConsecutiveDots(data[localStart:atIdx]) {
+		return 0, false
+	}
+	return localStart, true
+}
+
+// findDomainEnd walks forward from atIdx+1 to find the end of the domain part,
+// trimming any trailing '.' and '-' characters. It returns (0, nil, false) if
+// the domain is empty after trimming.
+func findDomainEnd(data []byte, atIdx int) (end int, domain []byte, ok bool) {
+	domainEnd := atIdx + 1
+	for domainEnd < len(data) && isDomainChar(data[domainEnd]) {
+		domainEnd++
+	}
+	// Trim trailing '.' if any.
+	for domainEnd > atIdx+1 && data[domainEnd-1] == '.' {
+		domainEnd--
+	}
+	// Trim trailing '-' if any.
+	for domainEnd > atIdx+1 && data[domainEnd-1] == '-' {
+		domainEnd--
+	}
+
+	domain = data[atIdx+1 : domainEnd]
+	if len(domain) == 0 {
+		return 0, nil, false
+	}
+	return domainEnd, domain, true
+}
+
+// validateTLD finds the last '.' in domain, checks that the TLD is at least 2
+// characters long and composed entirely of alphabetic characters, and verifies
+// that no domain label starts or ends with '-'. It returns (nil, false) if any
+// of these checks fail.
+func validateTLD(domain []byte) (tld []byte, ok bool) {
+	// Domain must contain at least one '.'.
+	dotIdx := -1
+	for k := len(domain) - 1; k >= 0; k-- {
+		if domain[k] == '.' {
+			dotIdx = k
+			break
+		}
+	}
+	if dotIdx < 0 {
+		return nil, false
+	}
+
+	// TLD must be at least 2 characters.
+	tld = domain[dotIdx+1:]
+	if len(tld) < 2 {
+		return nil, false
+	}
+	// TLD must be all alpha.
+	for _, b := range tld {
+		if !isAlpha(b) {
+			return nil, false
+		}
+	}
+	// Domain labels must not start or end with '-' (RFC 5321).
+	if hasInvalidLabelBoundary(domain) {
+		return nil, false
+	}
+	return tld, true
 }
 
 // isLocalPartChar reports whether b is a valid character in the local part

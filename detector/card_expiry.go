@@ -81,49 +81,66 @@ func (d *CardExpiry) Scan(data []byte) []Finding {
 	return findings
 }
 
+// expiryCandidate holds a parsed expiry date pattern.
+type expiryCandidate struct {
+	dateEnd  int
+	monthStr string
+	yearStr  string
+}
+
+// parseExpiryCandidate checks whether data[i:] starts with a valid MM/YY or
+// MM/YYYY pattern. Returns the parsed candidate and true, or false if invalid.
+func parseExpiryCandidate(data []byte, i int) (expiryCandidate, bool) {
+	if !isDigit(data[i]) || !isDigit(data[i+1]) {
+		return expiryCandidate{}, false
+	}
+	sep := data[i+2]
+	if sep != '/' && sep != '-' {
+		return expiryCandidate{}, false
+	}
+	if i+5 > len(data) {
+		return expiryCandidate{}, false
+	}
+	if !isDigit(data[i+3]) || !isDigit(data[i+4]) {
+		return expiryCandidate{}, false
+	}
+
+	dateEnd := i + 5
+	if i+7 <= len(data) && isDigit(data[i+5]) && isDigit(data[i+6]) {
+		dateEnd = i + 7
+	}
+
+	month := int(data[i]-'0')*10 + int(data[i+1]-'0')
+	if month < 1 || month > 12 {
+		return expiryCandidate{}, false
+	}
+
+	monthStr := string(data[i : i+2])
+	var yearStr string
+	if dateEnd == i+7 {
+		yearStr = string(data[i+3 : i+7])
+	} else {
+		yearStr = string(data[i+3 : i+5])
+	}
+
+	return expiryCandidate{dateEnd: dateEnd, monthStr: monthStr, yearStr: yearStr}, true
+}
+
 // searchRange scans data[start:end] for card expiry date patterns (MM/YY,
 // MM/YYYY, MM-YY, MM-YYYY) and appends any valid findings to results.
 // The used map tracks already-reported date positions to avoid duplicates.
 func (d *CardExpiry) searchRange(data []byte, start, end int, used map[int]struct{}, results *[]Finding) {
 	for i := start; i < end-4; i++ {
-		// Look for MM/YY or MM-YY pattern.
-		if !isDigit(data[i]) || !isDigit(data[i+1]) {
+		c, ok := parseExpiryCandidate(data, i)
+		if !ok {
 			continue
-		}
-
-		sep := data[i+2]
-		if sep != '/' && sep != '-' {
-			continue
-		}
-
-		// Determine year length (2 or 4 digits).
-		if i+5 > len(data) {
-			continue
-		}
-		if !isDigit(data[i+3]) || !isDigit(data[i+4]) {
-			continue
-		}
-
-		yearLen := 2
-		dateEnd := i + 5
-
-		// Check for 4-digit year.
-		if i+7 <= len(data) && isDigit(data[i+5]) && isDigit(data[i+6]) {
-			yearLen = 4
-			dateEnd = i + 7
 		}
 
 		// Word boundary: no digit before or after.
 		if i > 0 && isDigit(data[i-1]) {
 			continue
 		}
-		if dateEnd < len(data) && isDigit(data[dateEnd]) {
-			continue
-		}
-
-		// Validate month (01-12).
-		month := int(data[i]-'0')*10 + int(data[i+1]-'0')
-		if month < 1 || month > 12 {
+		if c.dateEnd < len(data) && isDigit(data[c.dateEnd]) {
 			continue
 		}
 
@@ -132,27 +149,19 @@ func (d *CardExpiry) searchRange(data []byte, start, end int, used map[int]struc
 		}
 		used[i] = struct{}{}
 
-		monthStr := string(data[i : i+2])
-		var yearStr string
-		if yearLen == 2 {
-			yearStr = string(data[i+3 : i+5])
-		} else {
-			yearStr = string(data[i+3 : i+7])
-		}
-
 		*results = append(*results, Finding{
 			DetectorName: d.Name(),
 			Start:        i,
-			End:          dateEnd,
+			End:          c.dateEnd,
 			Confidence:   0.85,
-			RawValue:     string(data[i:dateEnd]),
+			RawValue:     string(data[i:c.dateEnd]),
 			Detail: &CardExpiryDetail{
-				Month: monthStr,
-				Year:  yearStr,
+				Month: c.monthStr,
+				Year:  c.yearStr,
 			},
 		})
 
-		i = dateEnd - 1
+		i = c.dateEnd - 1
 	}
 }
 

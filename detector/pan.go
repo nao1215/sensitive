@@ -139,55 +139,8 @@ func (d *PAN) scanNormalized(orig []byte, data []byte, posMap []int) []Finding {
 
 		// Check digit count: valid PANs are 13-19 digits.
 		digitLen := len(digits)
-		if digitLen >= 13 && digitLen <= 19 {
-			confidence := 0.0
-			confidence += 0.3 // digit count in valid range
-
-			brand := identifyBrand(digits)
-			if brand != "" {
-				confidence += 0.3 // known BIN prefix
-
-				luhnOK := passesLuhn(digits)
-				if luhnOK {
-					if isExpectedLength(brand, digitLen) {
-						confidence += 0.4 // Luhn + expected length
-					} else {
-						// Luhn passes but length does not match the brand.
-						// In financial contexts this is almost certainly not
-						// a genuine card of this brand. Drop confidence below
-						// the detection threshold.
-						confidence = 0.4
-					}
-				}
-
-				// Only report findings with BIN match (confidence >= 0.6).
-				if confidence >= 0.6 {
-					binStr := string(digits[:min(6, len(digits))])
-					last4 := string(digits[max(0, len(digits)-4):])
-
-					origStart := posMap[start]
-					origEnd := posMap[end-1] + 1
-					// For multi-byte characters, we need the end of the last byte.
-					if end < len(posMap) {
-						origEnd = posMap[end]
-					}
-
-					findings = append(findings, Finding{
-						DetectorName: d.Name(),
-						Start:        origStart,
-						End:          origEnd,
-						Confidence:   confidence,
-						RawValue:     string(orig[origStart:origEnd]),
-						Detail: &PANDetail{
-							Brand:  brand,
-							BIN:    binStr,
-							Last4:  last4,
-							Luhn:   luhnOK,
-							Length: digitLen,
-						},
-					})
-				}
-			}
+		if f, ok := d.evaluateCandidate(orig, posMap, digits, digitLen, start, end); ok {
+			findings = append(findings, f)
 		}
 
 		// Move past the current candidate to continue scanning.
@@ -195,6 +148,61 @@ func (d *PAN) scanNormalized(orig []byte, data []byte, posMap []int) []Finding {
 	}
 
 	return findings
+}
+
+// evaluateCandidate checks whether a digit sequence is a valid PAN and returns
+// a Finding if it meets the confidence threshold. It returns (Finding, false)
+// when the candidate should be skipped.
+func (d *PAN) evaluateCandidate(orig []byte, posMap []int, digits []byte, digitLen, start, end int) (Finding, bool) {
+	if digitLen < 13 || digitLen > 19 {
+		return Finding{}, false
+	}
+
+	confidence := 0.3 // digit count in valid range
+
+	brand := identifyBrand(digits)
+	if brand == "" {
+		return Finding{}, false
+	}
+	confidence += 0.3 // known BIN prefix
+
+	luhnOK := passesLuhn(digits)
+	if luhnOK {
+		if isExpectedLength(brand, digitLen) {
+			confidence += 0.4 // Luhn + expected length
+		} else {
+			// Luhn passes but length does not match the brand.
+			// In financial contexts this is almost certainly not
+			// a genuine card of this brand. Drop confidence below
+			// the detection threshold.
+			confidence = 0.4
+		}
+	}
+
+	// Only report findings with BIN match (confidence >= 0.6).
+	if confidence < 0.6 {
+		return Finding{}, false
+	}
+
+	binStr := string(digits[:min(6, len(digits))])
+	last4 := string(digits[max(0, len(digits)-4):])
+
+	origStart, origEnd := mapOriginalRange(posMap, start, end)
+
+	return Finding{
+		DetectorName: d.Name(),
+		Start:        origStart,
+		End:          origEnd,
+		Confidence:   confidence,
+		RawValue:     string(orig[origStart:origEnd]),
+		Detail: &PANDetail{
+			Brand:  brand,
+			BIN:    binStr,
+			Last4:  last4,
+			Luhn:   luhnOK,
+			Length: digitLen,
+		},
+	}, true
 }
 
 // passesLuhn implements the Luhn algorithm (MOD 10) for check digit validation.
@@ -241,42 +249,9 @@ func identifyBrand(digits []byte) CardBrand {
 		}
 		return ""
 	case '3':
-		if digits[1] == '4' || digits[1] == '7' {
-			return BrandAmex
-		}
-		if digits[1] == '6' || digits[1] == '8' {
-			return BrandDiners
-		}
-		// JCB: 3528-3589
-		if digits[1] == '5' && len(digits) >= 4 {
-			v := (digits[2]-'0')*10 + (digits[3] - '0')
-			if v >= 28 && v <= 89 {
-				return BrandJCB
-			}
-		}
-		// Diners: 300-305
-		if digits[1] == '0' && len(digits) >= 3 {
-			if digits[2] >= '0' && digits[2] <= '5' {
-				return BrandDiners
-			}
-		}
-		return ""
+		return matchPrefix3(digits)
 	case '6':
-		if len(digits) >= 4 {
-			if digits[1] == '0' && digits[2] == '1' && digits[3] == '1' {
-				return BrandDiscover
-			}
-			if digits[1] == '4' && digits[2] >= '4' && digits[2] <= '9' {
-				return BrandDiscover
-			}
-		}
-		if digits[1] == '5' {
-			return BrandDiscover
-		}
-		if digits[1] == '2' {
-			return BrandUnionPay
-		}
-		return ""
+		return matchPrefix6(digits)
 	case '2':
 		// Mastercard 2-series: prefix range 2221–2720.
 		// Use full 4-digit comparison for clarity and precision.
@@ -287,6 +262,60 @@ func identifyBrand(digits []byte) CardBrand {
 			}
 		}
 		return ""
+	}
+	return ""
+}
+
+// matchPrefix3 identifies card brands whose numbers start with '3'.
+//
+// Prefix rules handled:
+//   - Amex: 34 or 37
+//   - Diners Club: 36, 38, or 300-305
+//   - JCB: 3528-3589 (digits[1]=='5', then two-digit sub-range 28-89)
+func matchPrefix3(digits []byte) CardBrand {
+	switch digits[1] {
+	case '4', '7':
+		return BrandAmex
+	case '6', '8':
+		return BrandDiners
+	case '5':
+		// JCB: 3528-3589
+		if len(digits) >= 4 {
+			v := (digits[2]-'0')*10 + (digits[3] - '0')
+			if v >= 28 && v <= 89 {
+				return BrandJCB
+			}
+		}
+	case '0':
+		// Diners: 300-305
+		if len(digits) >= 3 && digits[2] >= '0' && digits[2] <= '5' {
+			return BrandDiners
+		}
+	}
+	return ""
+}
+
+// matchPrefix6 identifies card brands whose numbers start with '6'.
+//
+// Prefix rules handled:
+//   - Discover: 6011, 644-649, or 65
+//   - UnionPay: 62
+func matchPrefix6(digits []byte) CardBrand {
+	switch digits[1] {
+	case '0':
+		// Discover: 6011
+		if len(digits) >= 4 && digits[2] == '1' && digits[3] == '1' {
+			return BrandDiscover
+		}
+	case '4':
+		// Discover: 644-649
+		if len(digits) >= 3 && digits[2] >= '4' && digits[2] <= '9' {
+			return BrandDiscover
+		}
+	case '5':
+		return BrandDiscover
+	case '2':
+		return BrandUnionPay
 	}
 	return ""
 }

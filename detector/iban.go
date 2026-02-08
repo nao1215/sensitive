@@ -69,23 +69,8 @@ func (d *IBAN) Scan(data []byte) []Finding {
 			continue
 		}
 
-		// Extract the IBAN (alphanumeric characters, optionally with spaces).
-		// Normalize letters to uppercase for MOD 97 validation.
 		start := i
-		var ibanChars []byte
-		j := i
-		for j < len(data) && (isAlphaNum(data[j]) || data[j] == ' ') {
-			if isAlphaNum(data[j]) {
-				ibanChars = append(ibanChars, toUpperByte(data[j]))
-			}
-			j++
-		}
-		end := j
-
-		// Trim trailing spaces from the raw value end position.
-		for end > start && data[end-1] == ' ' {
-			end--
-		}
+		ibanChars, end := extractIBANChars(data, i)
 
 		if len(ibanChars) != expectedLen {
 			continue
@@ -148,6 +133,25 @@ func validateIBANMod97(iban []byte) bool {
 		}
 	}
 	return mod == 1
+}
+
+// extractIBANChars extracts alphanumeric characters from data[start:],
+// treating spaces as optional separators and normalizing to uppercase.
+// Returns the extracted characters and the trimmed end position (excluding
+// trailing spaces).
+func extractIBANChars(data []byte, start int) (ibanChars []byte, end int) {
+	j := start
+	for j < len(data) && (isAlphaNum(data[j]) || data[j] == ' ') {
+		if isAlphaNum(data[j]) {
+			ibanChars = append(ibanChars, toUpperByte(data[j]))
+		}
+		j++
+	}
+	end = j
+	for end > start && data[end-1] == ' ' {
+		end--
+	}
+	return ibanChars, end
 }
 
 // toUpperByte converts an ASCII lowercase letter to uppercase.

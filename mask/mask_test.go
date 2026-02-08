@@ -451,70 +451,54 @@ func TestMask_Integration_FalsePositivesNoMask(t *testing.T) {
 	}
 }
 
+// assertFindingDetail scans input and verifies that at least one finding
+// passes the given check function.
+func assertFindingDetail(t *testing.T, scanner *sensitive.Scanner, input string, check func(sensitive.Finding) bool) {
+	t.Helper()
+	findings := scanner.ScanString(input)
+	for _, f := range findings {
+		if check(f) {
+			return
+		}
+	}
+	t.Errorf("no finding passed check for input %q", input)
+}
+
 func TestMask_Integration_FindingDetails(t *testing.T) {
 	t.Parallel()
 
 	scanner := sensitive.NewScanner(sensitive.WithAll())
 
-	// Scan PAN and verify detail is accessible before masking.
-	findings := scanner.ScanString("4532015112830366")
-	if len(findings) > 0 {
-		if detail, ok := findings[0].PANDetail(); ok {
-			if detail.Brand == "" {
-				t.Error("PANDetail Brand is empty")
-			}
+	assertFindingDetail(t, scanner, "4532015112830366", func(f sensitive.Finding) bool {
+		detail, ok := f.PANDetail()
+		return ok && detail.Brand != ""
+	})
+	assertFindingDetail(t, scanner, "090-1234-5678", func(f sensitive.Finding) bool {
+		detail, ok := f.JPPhoneDetail()
+		return ok && detail.PhoneType != ""
+	})
+	assertFindingDetail(t, scanner, "DE89370400440532013000", func(f sensitive.Finding) bool {
+		detail, ok := f.IBANDetail()
+		return ok && detail.CountryCode != ""
+	})
+	assertFindingDetail(t, scanner, "192.168.1.1", func(f sensitive.Finding) bool {
+		detail, ok := f.IPAddrDetail()
+		return ok && detail.Version != 0
+	})
+	assertFindingDetail(t, scanner, "123456789018", func(f sensitive.Finding) bool {
+		if f.DetectorName != detector.NameMyNumber {
+			return false
 		}
-	}
-
-	// Scan JP phone and verify detail.
-	findings = scanner.ScanString("090-1234-5678")
-	if len(findings) > 0 {
-		if detail, ok := findings[0].JPPhoneDetail(); ok {
-			if detail.PhoneType == "" {
-				t.Error("JPPhoneDetail PhoneType is empty")
-			}
-		}
-	}
-
-	// Scan IBAN and verify detail.
-	findings = scanner.ScanString("DE89370400440532013000")
-	if len(findings) > 0 {
-		if detail, ok := findings[0].IBANDetail(); ok {
-			if detail.CountryCode == "" {
-				t.Error("IBANDetail CountryCode is empty")
-			}
-		}
-	}
-
-	// Scan IP and verify detail.
-	findings = scanner.ScanString("192.168.1.1")
-	if len(findings) > 0 {
-		if detail, ok := findings[0].IPAddrDetail(); ok {
-			if detail.Version == 0 {
-				t.Error("IPAddrDetail Version is 0")
-			}
-		}
-	}
-
-	// Scan MyNumber and verify detail.
-	findings = scanner.ScanString("123456789018")
-	for _, f := range findings {
-		if f.DetectorName == detector.NameMyNumber {
-			if detail, ok := f.MyNumberDetail(); ok {
-				if !detail.CheckDigitValid {
-					t.Error("MyNumberDetail CheckDigitValid is false")
-				}
-			}
-		}
-	}
+		detail, ok := f.MyNumberDetail()
+		return ok && detail.CheckDigitValid
+	})
 }
 
-func TestMask_Integration_FindingHelpers(t *testing.T) {
+func TestMask_Integration_FindingHelpers_IsAndLevel(t *testing.T) {
 	t.Parallel()
 
 	scanner := sensitive.NewScanner(sensitive.WithAll())
 
-	// Exercise Is* helpers and Level/String on PAN finding.
 	panFindings := scanner.ScanString("4532015112830366")
 	if len(panFindings) > 0 {
 		f := panFindings[0]
@@ -535,8 +519,11 @@ func TestMask_Integration_FindingHelpers(t *testing.T) {
 			t.Errorf("Level().String() = %q, want %q", level.String(), "high")
 		}
 	}
+}
 
-	// Exercise Level for medium confidence.
+func TestMask_Integration_FindingHelpers_ConfidenceLevels(t *testing.T) {
+	t.Parallel()
+
 	medF := sensitive.Finding{Confidence: 0.5}
 	if medF.Level() != detector.ConfidenceMedium {
 		t.Errorf("Level() for 0.5 = %v, want medium", medF.Level())
@@ -545,7 +532,6 @@ func TestMask_Integration_FindingHelpers(t *testing.T) {
 		t.Errorf("String() = %q, want medium", medF.Level().String())
 	}
 
-	// Exercise Level for low confidence.
 	lowF := sensitive.Finding{Confidence: 0.1}
 	if lowF.Level() != detector.ConfidenceLow {
 		t.Errorf("Level() for 0.1 = %v, want low", lowF.Level())
@@ -554,41 +540,38 @@ func TestMask_Integration_FindingHelpers(t *testing.T) {
 		t.Errorf("String() = %q, want low", lowF.Level().String())
 	}
 
-	// Exercise ConfidenceLevel unknown.
 	unknown := detector.ConfidenceLevel(99)
 	if unknown.String() != "unknown" {
 		t.Errorf("ConfidenceLevel(99).String() = %q, want unknown", unknown.String())
 	}
+}
 
-	// Exercise EmailDetail.
-	emailFindings := scanner.ScanString("tanaka@example.com")
-	for _, f := range emailFindings {
-		if f.IsEmail() {
-			if _, ok := f.EmailDetail(); !ok {
-				t.Error("EmailDetail() returned false for email finding")
-			}
-		}
-	}
+func TestMask_Integration_FindingHelpers_DetailAccessors(t *testing.T) {
+	t.Parallel()
 
-	// Exercise JWTDetail.
-	jwtFindings := scanner.ScanString("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U")
-	for _, f := range jwtFindings {
-		if f.IsJWT() {
-			if _, ok := f.JWTDetail(); !ok {
-				t.Error("JWTDetail() returned false for JWT finding")
-			}
-		}
-	}
+	scanner := sensitive.NewScanner(sensitive.WithAll())
 
-	// Exercise AWSKeyDetail.
-	awsFindings := scanner.ScanString("AKIAIOSFODNN7EXAMPLE")
-	for _, f := range awsFindings {
-		if f.IsAWSKey() {
-			if _, ok := f.AWSKeyDetail(); !ok {
-				t.Error("AWSKeyDetail() returned false for AWS finding")
-			}
+	assertFindingDetail(t, scanner, "tanaka@example.com", func(f sensitive.Finding) bool {
+		if !f.IsEmail() {
+			return false
 		}
-	}
+		_, ok := f.EmailDetail()
+		return ok
+	})
+	assertFindingDetail(t, scanner, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U", func(f sensitive.Finding) bool {
+		if !f.IsJWT() {
+			return false
+		}
+		_, ok := f.JWTDetail()
+		return ok
+	})
+	assertFindingDetail(t, scanner, "AKIAIOSFODNN7EXAMPLE", func(f sensitive.Finding) bool {
+		if !f.IsAWSKey() {
+			return false
+		}
+		_, ok := f.AWSKeyDetail()
+		return ok
+	})
 }
 
 func TestMask_Integration_WithRegexDetector(t *testing.T) {

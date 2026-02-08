@@ -560,61 +560,47 @@ func TestScanner_Integration_MaskAllStrategies(t *testing.T) {
 	}
 }
 
+// assertScannerDetail scans input and verifies that at least one finding
+// passes the given check function.
+func assertScannerDetail(t *testing.T, scanner *sensitive.Scanner, input string, check func(sensitive.Finding) bool) {
+	t.Helper()
+	findings := scanner.ScanString(input)
+	for _, f := range findings {
+		if check(f) {
+			return
+		}
+	}
+	t.Errorf("no finding passed check for input %q", input)
+}
+
 func TestScanner_Integration_FindingDetail(t *testing.T) {
 	t.Parallel()
 
 	scanner := sensitive.NewScanner(sensitive.WithAll())
 
-	// Test PANDetail
-	panFindings := scanner.ScanString("4532015112830366")
-	if len(panFindings) > 0 {
-		if detail, ok := panFindings[0].PANDetail(); ok {
-			if detail.Brand != detector.BrandVisa {
-				t.Errorf("PANDetail Brand = %q, want %q", detail.Brand, detector.BrandVisa)
-			}
+	assertScannerDetail(t, scanner, "4532015112830366", func(f sensitive.Finding) bool {
+		detail, ok := f.PANDetail()
+		return ok && detail.Brand == detector.BrandVisa
+	})
+	assertScannerDetail(t, scanner, "090-1234-5678", func(f sensitive.Finding) bool {
+		detail, ok := f.JPPhoneDetail()
+		return ok && detail.PhoneType == "mobile"
+	})
+	assertScannerDetail(t, scanner, "123456789018", func(f sensitive.Finding) bool {
+		if f.DetectorName != detector.NameMyNumber {
+			return false
 		}
-	}
-
-	// Test JPPhoneDetail
-	phoneFindings := scanner.ScanString("090-1234-5678")
-	if len(phoneFindings) > 0 {
-		if detail, ok := phoneFindings[0].JPPhoneDetail(); ok {
-			if detail.PhoneType != "mobile" {
-				t.Errorf("JPPhoneDetail PhoneType = %q, want mobile", detail.PhoneType)
-			}
-		}
-	}
-
-	// Test MyNumberDetail
-	myFindings := scanner.ScanString("123456789018")
-	matched := filterByDetector(myFindings, detector.NameMyNumber)
-	if len(matched) > 0 {
-		if detail, ok := matched[0].MyNumberDetail(); ok {
-			if !detail.CheckDigitValid {
-				t.Error("MyNumberDetail CheckDigitValid = false, want true")
-			}
-		}
-	}
-
-	// Test IBANDetail
-	ibanFindings := scanner.ScanString("DE89370400440532013000")
-	if len(ibanFindings) > 0 {
-		if detail, ok := ibanFindings[0].IBANDetail(); ok {
-			if detail.CountryCode != "DE" {
-				t.Errorf("IBANDetail CountryCode = %q, want DE", detail.CountryCode)
-			}
-		}
-	}
-
-	// Test IPAddrDetail
-	ipFindings := scanner.ScanString("192.168.1.1")
-	if len(ipFindings) > 0 {
-		if detail, ok := ipFindings[0].IPAddrDetail(); ok {
-			if detail.Version != 4 {
-				t.Errorf("IPAddrDetail Version = %d, want 4", detail.Version)
-			}
-		}
-	}
+		detail, ok := f.MyNumberDetail()
+		return ok && detail.CheckDigitValid
+	})
+	assertScannerDetail(t, scanner, "DE89370400440532013000", func(f sensitive.Finding) bool {
+		detail, ok := f.IBANDetail()
+		return ok && detail.CountryCode == "DE"
+	})
+	assertScannerDetail(t, scanner, "192.168.1.1", func(f sensitive.Finding) bool {
+		detail, ok := f.IPAddrDetail()
+		return ok && detail.Version == 4
+	})
 }
 
 func TestScanner_UKSortCode_SpaceSeparatedDetectedViaHint(t *testing.T) {

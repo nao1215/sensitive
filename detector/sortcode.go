@@ -58,65 +58,92 @@ func (d *UKSortCode) Hints() [][]byte {
 	}
 }
 
+// isSortCodePattern checks whether data starting at position i matches the
+// DD<sep>DD<sep>DD structure where <sep> is a hyphen or space. It returns the
+// separator byte and true when the pattern is valid. The caller must ensure
+// that i+1 < len(data) before calling.
+func isSortCodePattern(data []byte, i int) (sep byte, ok bool) {
+	if !isDigit(data[i]) || !isDigit(data[i+1]) {
+		return 0, false
+	}
+
+	sep = data[i+2]
+	if sep != '-' && sep != ' ' {
+		return 0, false
+	}
+
+	if i+7 >= len(data) {
+		return 0, false
+	}
+	if !isDigit(data[i+3]) || !isDigit(data[i+4]) {
+		return 0, false
+	}
+	if data[i+5] != sep {
+		return 0, false
+	}
+	if !isDigit(data[i+6]) || !isDigit(data[i+7]) {
+		return 0, false
+	}
+
+	return sep, true
+}
+
+// isValidSortCodeBoundary checks word boundaries around a candidate sort code
+// at data[i:end] using the given separator. It returns false if the candidate
+// is preceded by an alphanumeric character, is part of a longer separated
+// sequence, is followed by a digit, or is followed by the same separator.
+func isValidSortCodeBoundary(data []byte, i, end int, sep byte) bool {
+	// Word boundary: preceding character must not be a digit or letter.
+	if i > 0 && isAlphaNum(data[i-1]) {
+		return false
+	}
+
+	// Avoid matching part of a longer separated sequence (e.g., "12-34-56-78").
+	if i >= 3 && data[i-1] == sep && isDigit(data[i-2]) && isDigit(data[i-3]) {
+		return false
+	}
+
+	// Word boundary: following character must not be a digit.
+	// Allow letter to follow (e.g., "12-34-56 is the sort code").
+	if end < len(data) && isDigit(data[end]) {
+		return false
+	}
+
+	// Avoid matching patterns that continue with another separator group
+	// (e.g., "DD-DD-DD-DD" is part of a longer sequence, not a sort code).
+	if end < len(data) && data[end] == sep {
+		return false
+	}
+
+	return true
+}
+
+// isAllZeroSortCode checks whether all six digits in the candidate sort code
+// starting at position i are zero (i.e. "00-00-00" or "00 00 00"). No valid
+// UK sort code has all six digits as zero.
+func isAllZeroSortCode(data []byte, i int) bool {
+	return data[i] == '0' && data[i+1] == '0' &&
+		data[i+3] == '0' && data[i+4] == '0' &&
+		data[i+6] == '0' && data[i+7] == '0'
+}
+
 // Scan examines data for UK sort codes and returns findings.
 func (d *UKSortCode) Scan(data []byte) []Finding {
 	var findings []Finding
 
 	for i := 0; i < len(data)-7; i++ {
-		// Must start with two digits.
-		if !isDigit(data[i]) || !isDigit(data[i+1]) {
-			continue
-		}
-
-		// Third character must be a separator (hyphen or space).
-		sep := data[i+2]
-		if sep != '-' && sep != ' ' {
-			continue
-		}
-
-		// Check the remaining pattern: DD<sep>DD<sep>DD.
-		if i+7 >= len(data) {
-			continue
-		}
-		if !isDigit(data[i+3]) || !isDigit(data[i+4]) {
-			continue
-		}
-		if data[i+5] != sep {
-			continue
-		}
-		if !isDigit(data[i+6]) || !isDigit(data[i+7]) {
+		sep, ok := isSortCodePattern(data, i)
+		if !ok {
 			continue
 		}
 
 		end := i + 8
 
-		// Word boundary: preceding character must not be a digit or letter.
-		if i > 0 && isAlphaNum(data[i-1]) {
+		if !isValidSortCodeBoundary(data, i, end, sep) {
 			continue
 		}
 
-		// Avoid matching part of a longer separated sequence (e.g., "12-34-56-78").
-		if i >= 3 && data[i-1] == sep && isDigit(data[i-2]) && isDigit(data[i-3]) {
-			continue
-		}
-
-		// Word boundary: following character must not be a digit.
-		// Allow letter to follow (e.g., "12-34-56 is the sort code").
-		if end < len(data) && isDigit(data[end]) {
-			continue
-		}
-
-		// Avoid matching patterns that continue with another separator group
-		// (e.g., "DD-DD-DD-DD" is part of a longer sequence, not a sort code).
-		if end < len(data) && data[end] == sep {
-			continue
-		}
-
-		// Reject all-zero sort codes (00-00-00). No valid UK sort code
-		// has all six digits as zero.
-		if data[i] == '0' && data[i+1] == '0' &&
-			data[i+3] == '0' && data[i+4] == '0' &&
-			data[i+6] == '0' && data[i+7] == '0' {
+		if isAllZeroSortCode(data, i) {
 			continue
 		}
 

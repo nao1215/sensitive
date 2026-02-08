@@ -137,61 +137,68 @@ func (s *Scanner) Scan(data []byte) []Finding {
 
 	// Stage 1 & 2: Hint-based pre-filter + Detector.Scan.
 	for i, d := range s.detectors {
-		entries := s.hintCache[i]
-		if len(entries) > 0 {
-			matched := false
-			for _, e := range entries {
-				if e.needFold {
-					if !foldedReady {
-						foldedData = asciiLowerCopy(data)
-						foldedReady = true
-					}
-					if bytes.Contains(foldedData, e.lowered) {
-						matched = true
-						break
-					}
-				} else {
-					if bytes.Contains(data, e.lowered) {
-						matched = true
-						break
-					}
-				}
-			}
-			if !matched {
-				continue
-			}
+		if !matchesAnyHint(s.hintCache[i], data, &foldedData, &foldedReady) {
+			continue
 		}
-		// Stage 2: Run the detector on data that passed the hint filter.
-		findings := d.Scan(data)
-		allFindings = append(allFindings, findings...)
+		allFindings = append(allFindings, d.Scan(data)...)
 	}
 
 	// Stage 3: Deduplicate overlapping findings (unless disabled) and sort.
 	if !s.skipDedup {
 		allFindings = dedup(allFindings)
 	}
-	if s.sortByPosition {
-		sort.Slice(allFindings, func(i, j int) bool {
-			if allFindings[i].Start != allFindings[j].Start {
-				return allFindings[i].Start < allFindings[j].Start
+	sortFindings(allFindings, s.sortByPosition)
+	return allFindings
+}
+
+// matchesAnyHint reports whether data matches any hint in entries.
+// If a hint requires case-folded matching, foldedData is lazily populated.
+func matchesAnyHint(entries []hintEntry, data []byte, foldedData *[]byte, foldedReady *bool) bool {
+	if len(entries) == 0 {
+		return true
+	}
+	for _, e := range entries {
+		if e.needFold {
+			if !*foldedReady {
+				*foldedData = asciiLowerCopy(data)
+				*foldedReady = true
 			}
-			if allFindings[i].Confidence != allFindings[j].Confidence {
-				return allFindings[i].Confidence > allFindings[j].Confidence
+			if bytes.Contains(*foldedData, e.lowered) {
+				return true
 			}
-			return allFindings[i].DetectorName < allFindings[j].DetectorName
+		} else {
+			if bytes.Contains(data, e.lowered) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// sortFindings sorts findings by confidence (descending) or position
+// (ascending), with tiebreakers for full determinism.
+func sortFindings(findings []Finding, byPosition bool) {
+	if byPosition {
+		sort.Slice(findings, func(i, j int) bool {
+			if findings[i].Start != findings[j].Start {
+				return findings[i].Start < findings[j].Start
+			}
+			if findings[i].Confidence != findings[j].Confidence {
+				return findings[i].Confidence > findings[j].Confidence
+			}
+			return findings[i].DetectorName < findings[j].DetectorName
 		})
 	} else {
-		sort.Slice(allFindings, func(i, j int) bool {
-			if allFindings[i].Confidence != allFindings[j].Confidence {
-				return allFindings[i].Confidence > allFindings[j].Confidence
+		sort.Slice(findings, func(i, j int) bool {
+			if findings[i].Confidence != findings[j].Confidence {
+				return findings[i].Confidence > findings[j].Confidence
 			}
-			if allFindings[i].Start != allFindings[j].Start {
-				return allFindings[i].Start < allFindings[j].Start
+			if findings[i].Start != findings[j].Start {
+				return findings[i].Start < findings[j].Start
 			}
-			return allFindings[i].DetectorName < allFindings[j].DetectorName
+			return findings[i].DetectorName < findings[j].DetectorName
 		})
 	}
-	return allFindings
 }
 
 // ScanString is a convenience method that scans a string for sensitive data.

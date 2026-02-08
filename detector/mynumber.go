@@ -70,19 +70,7 @@ func (d *MyNumber) scanNormalized(orig []byte, data []byte, posMap []int) []Find
 
 		// Extract digits, allowing '-' and ' ' as separators.
 		start := i
-		var digits []byte
-		j := i
-		for j < len(data) && (isDigit(data[j]) || data[j] == '-' || data[j] == ' ') {
-			if isDigit(data[j]) {
-				digits = append(digits, data[j])
-			}
-			j++
-		}
-		// Trim trailing separators so end points to the last digit.
-		end := j
-		for end > start && !isDigit(data[end-1]) {
-			end--
-		}
+		digits, end := extractMyNumberDigits(data, start)
 
 		// Must be exactly 12 digits, not followed by more digits.
 		if len(digits) != 12 {
@@ -95,11 +83,7 @@ func (d *MyNumber) scanNormalized(orig []byte, data []byte, posMap []int) []Find
 		}
 
 		if isValidMyNumber(digits) {
-			origStart := posMap[start]
-			origEnd := posMap[end-1] + 1
-			if end < len(posMap) {
-				origEnd = posMap[end]
-			}
+			origStart, origEnd := mapOriginalRange(posMap, start, end)
 
 			findings = append(findings, Finding{
 				DetectorName: d.Name(),
@@ -114,6 +98,24 @@ func (d *MyNumber) scanNormalized(orig []byte, data []byte, posMap []int) []Find
 	}
 
 	return findings
+}
+
+// extractMyNumberDigits extracts digits from data[start:], allowing '-' and ' '
+// as separators. Returns the extracted digits and the end position trimmed to
+// the last digit (trailing separators are excluded).
+func extractMyNumberDigits(data []byte, start int) (digits []byte, end int) {
+	j := start
+	for j < len(data) && (isDigit(data[j]) || data[j] == '-' || data[j] == ' ') {
+		if isDigit(data[j]) {
+			digits = append(digits, data[j])
+		}
+		j++
+	}
+	end = j
+	for end > start && !isDigit(data[end-1]) {
+		end--
+	}
+	return digits, end
 }
 
 // isValidMyNumber validates a 12-digit My Number using the check digit algorithm.

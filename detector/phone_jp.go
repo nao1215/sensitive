@@ -25,6 +25,38 @@ type JPPhoneDetail struct {
 	PhoneType JPPhoneType
 }
 
+// jpPhoneRule defines a prefix-based classification rule for Japanese phone numbers.
+// Each rule matches a specific digit length and a prefix (starting at digits[1])
+// to produce a JPPhoneType.
+type jpPhoneRule struct {
+	digitLen int
+	prefix   string // matches digits[1:1+len(prefix)]
+	result   JPPhoneType
+}
+
+// jpPhoneRules is the table of prefix-based classification rules for Japanese
+// phone numbers. Rules are evaluated in order; the first match wins.
+var jpPhoneRules = []jpPhoneRule{
+	{11, "90", JPPhoneTypeMobile},
+	{11, "80", JPPhoneTypeMobile},
+	{11, "70", JPPhoneTypeMobile},
+	{11, "50", JPPhoneTypeIPPhone},
+	{10, "120", JPPhoneTypeTollFree},
+	{11, "800", JPPhoneTypeTollFree},
+}
+
+// invalidLandlinePrefixes contains digit pairs (digits[1:3]) that are NOT valid
+// Japanese landline area code prefixes.
+//
+// Rejected prefixes:
+//   - 050, 070, 080, 090: require 11 digits (mobile/IP phone), not 10
+//   - 020, 021, 051, 057, 071, 081, 091: not assigned as area codes
+var invalidLandlinePrefixes = map[string]bool{
+	"50": true, "70": true, "80": true, "90": true,
+	"20": true, "21": true, "51": true, "57": true,
+	"71": true, "81": true, "91": true,
+}
+
 // JPPhone detects Japanese phone numbers in text.
 //
 // Supported formats:
@@ -132,15 +164,11 @@ func (d *JPPhone) scanNormalized(orig []byte, data []byte, posMap []int) []Findi
 
 		confidence := 0.8
 		// Higher confidence for mobile and well-known prefixes.
-		if phoneType == JPPhoneTypeMobile || phoneType == JPPhoneTypeIPPhone || phoneType == JPPhoneTypeTollFree {
+		if phoneType != JPPhoneTypeLandline {
 			confidence = 0.9
 		}
 
-		origStart := posMap[start]
-		origEnd := posMap[end-1] + 1
-		if end < len(posMap) {
-			origEnd = posMap[end]
-		}
+		origStart, origEnd := mapOriginalRange(posMap, start, end)
 
 		findings = append(findings, Finding{
 			DetectorName: d.Name(),
@@ -168,31 +196,13 @@ func classifyJPPhone(digits []byte, digitLen int) JPPhoneType {
 		return ""
 	}
 
-	// Mobile: 090, 080, 070 (11 digits)
-	if digitLen == 11 && digits[1] == '9' && digits[2] == '0' {
-		return JPPhoneTypeMobile
-	}
-	if digitLen == 11 && digits[1] == '8' && digits[2] == '0' {
-		return JPPhoneTypeMobile
-	}
-	if digitLen == 11 && digits[1] == '7' && digits[2] == '0' {
-		return JPPhoneTypeMobile
-	}
-
-	// IP phone: 050 (11 digits)
-	if digitLen == 11 && digits[1] == '5' && digits[2] == '0' {
-		return JPPhoneTypeIPPhone
-	}
-
-	// Toll-free: 0120 (10 digits)
-	if digitLen == 10 && len(digits) >= 4 &&
-		digits[1] == '1' && digits[2] == '2' && digits[3] == '0' {
-		return JPPhoneTypeTollFree
-	}
-	// Toll-free: 0800 (11 digits)
-	if digitLen == 11 && len(digits) >= 4 &&
-		digits[1] == '8' && digits[2] == '0' && digits[3] == '0' {
-		return JPPhoneTypeTollFree
+	// Check prefix rules for mobile, IP phone, and toll-free numbers.
+	for _, rule := range jpPhoneRules {
+		if digitLen == rule.digitLen && len(digits) >= 1+len(rule.prefix) {
+			if string(digits[1:1+len(rule.prefix)]) == rule.prefix {
+				return rule.result
+			}
+		}
 	}
 
 	// Landline: 0[1-9]X (10 digits) with valid area code prefix.
@@ -217,24 +227,5 @@ func isValidLandlinePrefix(digits []byte) bool {
 	if len(digits) < 3 {
 		return false
 	}
-	d1, d2 := digits[1], digits[2]
-
-	// 0X0 prefixes (050, 070, 080, 090) are mobile/IP phone with 11 digits.
-	// A 10-digit number with these prefixes is invalid.
-	if d2 == '0' && (d1 == '5' || d1 == '7' || d1 == '8' || d1 == '9') {
-		return false
-	}
-	// 0X1 prefixes not assigned as area codes.
-	if d2 == '1' && (d1 == '5' || d1 == '7' || d1 == '8' || d1 == '9') {
-		return false
-	}
-	// 020, 021 are not landline area codes.
-	if d1 == '2' && d2 <= '1' {
-		return false
-	}
-	// 057 is not a standard area code.
-	if d1 == '5' && d2 == '7' {
-		return false
-	}
-	return true
+	return !invalidLandlinePrefixes[string(digits[1:3])]
 }
