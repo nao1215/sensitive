@@ -1,0 +1,362 @@
+# sensitive
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/sensitive.svg)](https://pkg.go.dev/github.com/nao1215/sensitive)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nao1215/sensitive)](https://goreportcard.com/report/github.com/nao1215/sensitive)
+[![Coverage](https://github.com/nao1215/sensitive/actions/workflows/coverage.yml/badge.svg)](https://github.com/nao1215/sensitive/actions/workflows/coverage.yml)
+[![MultiPlatformUnitTest](https://github.com/nao1215/sensitive/actions/workflows/unit_test.yml/badge.svg)](https://github.com/nao1215/sensitive/actions/workflows/unit_test.yml)
+
+![logo](./doc/images/logo-small.png)
+
+
+**sensitive** is a Go library that detects sensitive data in text. It scans for credit card numbers, email addresses, Japanese phone numbers, Japanese My Number, JWTs, AWS access keys, IBANs, and IP addresses, returning the position, type, and confidence level of each match. It also includes international and fintech-focused detectors such as SWIFT/BIC, US ABA routing numbers, UK sort codes, payment tokens, card CVV/expiry, and ACH trace numbers. Masking is available as an optional helper, but detection is the core focus.
+
+The library has zero external dependencies and relies only on the Go standard library.
+
+## Requirements
+
+- Go Version: 1.24 or later
+- Operating Systems (tested on):
+  - Linux
+  - macOS
+  - Windows
+
+
+## Installation
+
+```bash
+go get github.com/nao1215/sensitive
+```
+
+## Quick Start
+
+Create a Scanner, choose which detectors to enable, call `ScanString`, and optionally mask findings:
+
+```go
+package main
+
+import (
+    "fmt"
+
+    "github.com/nao1215/sensitive"
+    "github.com/nao1215/sensitive/detector"
+    "github.com/nao1215/sensitive/mask"
+)
+
+func main() {
+    scanner := sensitive.NewScanner(sensitive.WithAll())
+    text := "user tanaka@example.com paid with 4532015112830366"
+    findings := scanner.ScanString(text)
+
+    for _, f := range findings {
+        fmt.Printf("type=%s raw=%s confidence=%.2f\n",
+            f.DetectorName, f.RawValue, f.Confidence)
+    }
+
+    masked := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{
+        detector.NamePAN:   mask.Last4,
+        detector.NameEmail: mask.Partial,
+    })
+    fmt.Println(masked)
+}
+```
+
+Output (order may vary):
+
+```
+type=pan raw=4532015112830366 confidence=1.00
+type=email raw=tanaka@example.com confidence=1.00
+user t*****@example.com paid with ************0366
+```
+
+`WithAll()` turns on every built-in detector. If you only care about specific types, pick them individually:
+
+```go
+scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
+```
+
+> **Caution on `WithAll()`:** `WithAll()` enables *all* built-in detectors, including context-based weak detectors (`WithBankAccount`, `WithACHTrace`, `WithMerchantID`, `WithCVV`, `WithCardExpiry`). These detectors rely on nearby keywords rather than checksums and may produce false positives. In strict/financial-audit scenarios where false positive cost is high, avoid `WithAll()` and enable only the specific detectors you need.
+
+> **Note:** `NewScanner()` with no options creates a scanner with zero detectors, so `Scan` will always return an empty result. You must pass at least one `With*()` option to enable detection.
+
+**Common mistakes:**
+
+```go
+// Mistake 1: No detectors — always returns empty results.
+scanner := sensitive.NewScanner()
+findings := scanner.ScanString("4532015112830366") // findings is empty!
+
+// Mistake 2: WithAll() in strict mode produces noise from weak detectors.
+// Use specific options instead.
+scanner = sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
+```
+
+## Supported Detectors
+
+| Option | Detects | Validation |
+|--------|---------|------------|
+| `WithPAN()` | Credit card numbers (Visa, Mastercard, Amex, JCB, Discover, Diners, UnionPay) | BIN prefix + Luhn algorithm |
+| `WithEmail()` | Email addresses | Structure + known TLD check |
+| `WithJPPhone()` | Japanese phone numbers (mobile, landline, IP phone, toll-free) | Prefix classification + digit count |
+| `WithMyNumber()` | Japanese My Number (12-digit individual number) | MOD 11 check digit |
+| `WithJWT()` | JSON Web Tokens | Header decode + `alg` key check |
+| `WithAWSKey()` | AWS Access Key IDs (`AKIA...` / `ASIA...`) | Prefix + 20-char alphanumeric |
+| `WithIBAN()` | International Bank Account Numbers | Country code + MOD 97 check digit |
+| `WithIPAddr()` | IPv4 and IPv6 addresses | `net.ParseIP` + octet range |
+| `WithSWIFTBIC()` | SWIFT/BIC codes | Format + country code validation |
+| `WithABARouting()` | US ABA routing numbers | Prefix range + checksum |
+| `WithUKSortCode()` | UK sort codes (XX-XX-XX) | Pattern + boundary checks |
+| `WithCVV()` | Card verification values (CVV/CVC/CID) | Context keyword + digit length (context-based, weaker) |
+| `WithCardExpiry()` | Card expiration dates | Context keyword + MM/YY validation (context-based, weaker) |
+| `WithPaymentToken()` | Payment processor tokens (Stripe/PayPal/Square) | Prefix + minimum body length |
+| `WithBankAccount()` | Bank account numbers (context-based) | Context keyword + digit range (context-based, weaker) |
+| `WithACHTrace()` | ACH trace numbers | Context keyword + prefix range (context-based, weaker) |
+| `WithMerchantID()` | Merchant/terminal IDs | Context keyword + format (context-based, weaker) |
+| `WithAll()` | All of the above | |
+
+## Benchmarks
+
+**Measurement conditions:**
+
+- **Command:** `go test -bench BenchmarkScanner -benchmem -benchtime 3s -count 5 -run '^$'`
+- **Go version:** 1.24 (linux/amd64)
+- **GOMAXPROCS:** 16
+- **CPU:** AMD RYZEN AI MAX+ 395 w/ Radeon 8060S
+- **Commit:** [b7e0cdc](https://github.com/nao1215/sensitive/commit/b7e0cdc)
+
+To reproduce, run the command above. Use `-count 5` and take the median for stable results.
+Benchmark numbers are environment-sensitive. Expect variation across Go versions, CPUs, and background load, and refresh results periodically if you publish them for compliance or audit purposes.
+
+### Per-detector benchmarks (single detector enabled)
+
+| Benchmark | ns/op | B/op | allocs/op |
+|-----------|-------|------|-----------|
+| PAN | 286.7 | 944 | 16 |
+| Email | 188.2 | 288 | 9 |
+| JPPhone | 171.3 | 464 | 8 |
+| MyNumber | 142.0 | 392 | 6 |
+| JWT | 1001 | 1208 | 25 |
+| AWSKey | 147.1 | 280 | 8 |
+| IBAN | 205.7 | 226 | 6 |
+| IPAddr | 209.8 | 312 | 10 |
+| SWIFTBIC | 176.1 | 288 | 9 |
+| ABARouting | 132.7 | 376 | 6 |
+| UKSortCode | 128.4 | 248 | 8 |
+| CVV | 289.6 | 568 | 18 |
+| CardExpiry | 261.4 | 456 | 16 |
+| PaymentToken | 276.7 | 688 | 20 |
+| BankAccount | 435.1 | 760 | 22 |
+| ACHTrace | 325.9 | 480 | 17 |
+| MerchantID | 343.4 | 568 | 18 |
+
+### Multi-detector and edge-case benchmarks
+
+| Benchmark | Description |
+|-----------|-------------|
+| `BenchmarkScannerNoMatch` | All detectors enabled, input with no sensitive data. Note: detectors with nil hints (IBAN, SWIFT/BIC, ABA, MyNumber) always run regardless of input content. |
+| `BenchmarkScannerAllDetectors` | All detectors enabled, input containing email + PAN + IP |
+| `BenchmarkScannerEmptyInput` | All detectors enabled, nil input |
+| `BenchmarkScannerLargeInput` | All detectors enabled, ~4KB log block with no sensitive data |
+| `BenchmarkScannerHintMatchNoDetection` | All detectors enabled, hints match but no valid sensitive data found |
+| `BenchmarkScannerFullWidthInput` | All detectors enabled, full-width digit input requiring normalization |
+
+## Working with Findings
+
+Each `Finding` contains the detector name, byte offsets, confidence score (0.0--1.0), the raw matched string, and a Detail struct with detector-specific information.
+
+> **Note:** `Start` and `End` are **byte offsets**, not rune (character) offsets. For multi-byte UTF-8 text (e.g., Japanese), use the byte positions directly when slicing `[]byte` data.
+>
+> Context-based detectors (`WithBankAccount`, `WithACHTrace`, `WithMerchantID`, `WithCVV`, `WithCardExpiry`) rely on nearby keywords rather than checksums, so they are more prone to false positives than checksum-validated detectors. Confidence scores vary by detector: `WithBankAccount` returns 0.50--0.65, `WithMerchantID` and `WithACHTrace` return 0.70--0.75, and `WithCVV` and `WithCardExpiry` return 0.85.
+
+### Checking the detector type
+
+```go
+for _, f := range findings {
+    if f.IsPAN() {
+        // handle credit card
+    }
+    if f.IsEmail() {
+        // handle email
+    }
+}
+```
+
+There is also a generic `Is` method that takes a detector name constant:
+
+```go
+if f.Is(detector.NamePAN) { ... }
+```
+
+### Confidence levels
+
+Confidence is a float between 0.0 and 1.0. When you do not need the exact score, use `Level()` to get a categorical assessment:
+
+```go
+switch f.Level() {
+case detector.ConfidenceHigh:   // >= 0.8
+case detector.ConfidenceMedium: // >= 0.4
+case detector.ConfidenceLow:    // < 0.4
+}
+```
+
+### Getting detector-specific details
+
+Every finding carries a `Detail` field. Instead of type-asserting it yourself, use the typed accessor methods. Each returns a pointer and a boolean indicating success:
+
+```go
+scanner := sensitive.NewScanner(sensitive.WithPAN())
+findings := scanner.ScanString("4532015112830366")
+
+if detail, ok := findings[0].PANDetail(); ok {
+    fmt.Println(detail.Brand)  // "Visa"
+    fmt.Println(detail.Last4)  // "0366"
+    fmt.Println(detail.Luhn)   // true
+}
+```
+
+The available accessors and their fields:
+
+| Method | Fields |
+|--------|--------|
+| `PANDetail()` | Brand, BIN, Last4, Luhn, Length |
+| `EmailDetail()` | Local, Domain |
+| `JPPhoneDetail()` | PhoneType (`JPPhoneTypeMobile`, `JPPhoneTypeLandline`, `JPPhoneTypeIPPhone`, `JPPhoneTypeTollFree`) |
+| `JWTDetail()` | Algorithm (e.g. `HS256`, `RS256`) |
+| `AWSKeyDetail()` | KeyType (`AWSKeyTypeLongTerm` or `AWSKeyTypeTemporary`) |
+| `IBANDetail()` | CountryCode (ISO 3166-1 alpha-2) |
+| `IPAddrDetail()` | Version (4 or 6) |
+| `MyNumberDetail()` | CheckDigitValid |
+
+## Masking
+
+The `mask` sub-package provides five masking strategies:
+
+| Strategy | Example |
+|----------|---------|
+| `Redact` | `4532015112830366` -> `****************` |
+| `Last4` | `4532015112830366` -> `************0366` |
+| `First1Last4` | `4532015112830366` -> `4***********0366` |
+| `Partial` | `tanaka@example.com` -> `t*****@example.com` |
+| `Hash` | `4532015112830366` -> `a8f5f167` (SHA-256 prefix) |
+
+Use `mask.Mask` to apply different strategies per detector:
+
+```go
+import (
+    "github.com/nao1215/sensitive"
+    "github.com/nao1215/sensitive/detector"
+    "github.com/nao1215/sensitive/mask"
+)
+
+scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
+text := "user tanaka@example.com paid with 4532015112830366"
+findings := scanner.ScanString(text)
+
+masked := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{
+    detector.NamePAN:   mask.Last4,
+    detector.NameEmail: mask.Partial,
+})
+
+fmt.Println(masked)
+// user t*****@example.com paid with ************0366
+```
+
+If you want the same strategy for everything, use `mask.MaskAll`:
+
+```go
+masked := mask.MaskAll(text, findings, mask.Redact)
+// user ****************** paid with ****************
+```
+
+## Custom Detectors
+
+You can add your own detectors. The simplest way is `detector.NewRegex`, which wraps a compiled regular expression:
+
+```go
+import (
+    "regexp"
+
+    "github.com/nao1215/sensitive"
+    "github.com/nao1215/sensitive/detector"
+)
+
+ticketDetector := detector.NewRegex(
+    detector.DetectorName("ticket_id"),
+    regexp.MustCompile(`TICKET-\d{4}`),
+    [][]byte{[]byte("TICKET-")},   // hint for pre-filtering
+    0.9,                            // fixed confidence
+)
+
+scanner := sensitive.NewScanner(
+    sensitive.WithPAN(),
+    sensitive.WithDetector(ticketDetector),
+)
+```
+
+The hints parameter is important for performance. The scanner uses `bytes.Contains` to check hints before calling `Scan`, so a good hint lets the scanner skip the regex entirely for inputs that cannot match.
+
+For more complex logic, implement the `Detector` interface directly:
+
+```go
+type Detector interface {
+    Name() detector.DetectorName
+    Hints() [][]byte
+    Scan(data []byte) []detector.Finding
+}
+```
+
+## Full-Width Digit Support
+
+Japanese text often uses full-width digits (０-９). Detectors that parse digit sequences directly (PAN, JPPhone, MyNumber, ABA routing) normalize full-width digits to half-width before detection, so a phone number written as `０９０－１２３４－５６７８` is correctly recognized. IBAN and UK sort code do **not** normalize full-width digits because their formats are primarily used in Western contexts where full-width encoding is uncommon. Context-based detectors (CVV, CardExpiry, ACHTrace, BankAccount, MerchantID) also do **not** normalize full-width digits. The utility function is also available for direct use:
+
+```go
+normalized, posMap := detector.NormalizeFullWidthDigits([]byte("０９０－１２３４－５６７８"))
+fmt.Println(string(normalized)) // 090-1234-5678
+```
+
+## How It Works
+
+The scanner runs a multi-stage filtering pipeline to keep scan cost low.
+
+```mermaid
+sequenceDiagram
+    participant Caller
+    participant Scanner
+    participant HintFilter as Hint Filter
+    participant Detector
+    participant Dedup as Dedup & Sort
+
+    Caller->>Scanner: Scan(data)
+    alt input is empty
+        Scanner-->>Caller: nil
+    end
+
+    loop for each registered Detector
+        Scanner->>HintFilter: bytes.Contains(data, hint) (~15 ns, SIMD)
+        alt no hint matched
+            HintFilter-->>Scanner: skip
+        else hint matched
+            HintFilter-->>Scanner: pass
+            Scanner->>Detector: Scan(data)
+            Note right of Detector: domain-specific validation<br/>(BIN, Luhn, MOD 97, etc.)
+            Detector-->>Scanner: []Finding
+        end
+    end
+
+    Scanner->>Dedup: merge all findings
+    Note right of Dedup: dedup overlapping (keep highest confidence)<br/>sort by confidence desc
+    Dedup-->>Scanner: []Finding
+    Scanner-->>Caller: []Finding
+```
+
+## Contributing
+
+Contributions are welcome!
+
+If you would like to send comments such as "find a bug" or "request for additional features" to the developer, please use one of the following contacts.
+
+- [GitHub Issue](https://github.com/nao1215/sensitive/issues)
+
+
+## License
+
+[MIT LICENSE](LICENSE)
