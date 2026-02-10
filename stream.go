@@ -31,6 +31,11 @@ func (s *Scanner) ScanReader(r io.Reader) ([]Finding, error) {
 // fn is only called for lines that contain findings. Lines with no
 // sensitive data are silently skipped.
 //
+// The internal buffer starts at 64 KB and grows up to 1 MB per line.
+// Lines exceeding 1 MB cause ScanLines to return [bufio.ErrTooLong].
+// If you need to handle longer lines, use [Scanner.ScanReader] instead
+// (which loads the entire input into memory).
+//
 // Returns the first error encountered while reading from r, or nil
 // if the entire input was processed successfully.
 //
@@ -41,6 +46,7 @@ func (s *Scanner) ScanReader(r io.Reader) ([]Finding, error) {
 //	})
 func (s *Scanner) ScanLines(r io.Reader, fn func(lineNum int, line []byte, findings []Finding)) error {
 	sc := bufio.NewScanner(r)
+	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	lineNum := 0
 	for sc.Scan() {
 		lineNum++
