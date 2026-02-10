@@ -117,3 +117,33 @@ func TestRegexDetector_NilHints(t *testing.T) {
 		t.Errorf("Hints() = %v, want nil", got)
 	}
 }
+
+func TestNewRegex_confidenceIsClamped(t *testing.T) {
+	t.Parallel()
+
+	t.Run("negative confidence is clamped to 0", func(t *testing.T) {
+		t.Parallel()
+
+		d := detector.NewRegex("test", regexp.MustCompile(`test`), nil, -0.5)
+		findings := d.Scan([]byte("test"))
+		if len(findings) != 1 {
+			t.Fatalf("got %d findings, want 1", len(findings))
+		}
+		if findings[0].Confidence != 0 {
+			t.Errorf("Confidence = %f, want 0", findings[0].Confidence)
+		}
+	})
+
+	t.Run("confidence above 1 is clamped to 1", func(t *testing.T) {
+		t.Parallel()
+
+		d := detector.NewRegex("test", regexp.MustCompile(`test`), nil, 1.5)
+		findings := d.Scan([]byte("test"))
+		if len(findings) != 1 {
+			t.Fatalf("got %d findings, want 1", len(findings))
+		}
+		if findings[0].Confidence != 1.0 {
+			t.Errorf("Confidence = %f, want 1.0", findings[0].Confidence)
+		}
+	})
+}

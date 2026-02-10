@@ -29,6 +29,62 @@ func TestNewScanner_nilOptionIsIgnored(t *testing.T) {
 	}
 }
 
+func TestWithMinConfidence_clampsOutOfRangeValues(t *testing.T) {
+	t.Parallel()
+
+	t.Run("negative value is clamped to 0", func(t *testing.T) {
+		t.Parallel()
+
+		scanner := NewScanner(WithPAN(), WithMinConfidence(-0.5))
+		findings := scanner.ScanString("4532015112830366")
+		// minConfidence=0 means no filtering; PAN should still be found.
+		if len(findings) == 0 {
+			t.Fatal("expected PAN finding with clamped negative threshold")
+		}
+	})
+
+	t.Run("value above 1 is clamped to 1", func(t *testing.T) {
+		t.Parallel()
+
+		scanner := NewScanner(WithPAN(), WithMinConfidence(1.2))
+		findings := scanner.ScanString("4532015112830366")
+		// minConfidence=1.0 filters findings with confidence < 1.0.
+		// PAN confidence is ~1.0, so it should pass.
+		for _, f := range findings {
+			if f.Confidence < 1.0 {
+				t.Errorf("finding %q has confidence %.2f, want >= 1.0", f.DetectorName, f.Confidence)
+			}
+		}
+	})
+}
+
+func TestClampConfidence(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input float64
+		want  float64
+	}{
+		{"negative is clamped to 0", -0.5, 0},
+		{"zero stays 0", 0, 0},
+		{"mid-range unchanged", 0.5, 0.5},
+		{"one stays 1", 1.0, 1.0},
+		{"above 1 is clamped to 1", 1.5, 1.0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := clampConfidence(tt.input)
+			if got != tt.want {
+				t.Errorf("clampConfidence(%f) = %f, want %f", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestOptions_NewDetectors(t *testing.T) {
 	t.Parallel()
 

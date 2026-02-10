@@ -818,15 +818,37 @@ func TestScanner_WithMinConfidence(t *testing.T) {
 		}
 	})
 
-	t.Run("threshold 1.0 filters almost everything", func(t *testing.T) {
+	t.Run("threshold 1.0 filters low-confidence findings", func(t *testing.T) {
 		t.Parallel()
 		scanner := sensitive.NewScanner(
 			sensitive.WithPAN(), sensitive.WithBankAccount(),
-			sensitive.WithMinConfidence(1.01),
+			sensitive.WithMinConfidence(1.0),
 		)
 		findings := scanner.ScanString(input)
-		if len(findings) != 0 {
-			t.Errorf("expected 0 findings with threshold 1.01, got %d", len(findings))
+		for _, f := range findings {
+			if f.Confidence < 1.0 {
+				t.Errorf("finding %q has confidence %.2f, want >= 1.0",
+					f.DetectorName, f.Confidence)
+			}
+		}
+		// BankAccount (confidence 0.5-0.65) should be filtered out.
+		bankFindings := filterByDetector(findings, detector.NameBankAccount)
+		if len(bankFindings) != 0 {
+			t.Errorf("expected 0 BankAccount findings with threshold 1.0, got %d", len(bankFindings))
+		}
+	})
+
+	t.Run("value above 1 is clamped to 1", func(t *testing.T) {
+		t.Parallel()
+		// 1.01 is clamped to 1.0, so PAN (confidence 1.0) should still pass.
+		scanner := sensitive.NewScanner(
+			sensitive.WithPAN(),
+			sensitive.WithMinConfidence(1.01),
+		)
+		findings := scanner.ScanString("4532015112830366")
+		panFindings := filterByDetector(findings, detector.NamePAN)
+		if len(panFindings) == 0 {
+			t.Error("expected PAN finding with clamped threshold 1.01 -> 1.0")
 		}
 	})
 }

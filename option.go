@@ -233,6 +233,9 @@ func WithoutDedup() Option {
 // high-confidence only) or a loose mode (e.g., 0.4 to include medium-confidence
 // matches).
 //
+// The threshold is clamped to the [0, 1] range. Values below 0 are treated as 0
+// and values above 1 are treated as 1.
+//
 // A value of 0 (the default) disables filtering and returns all findings.
 //
 //	// Strict mode: only high-confidence findings.
@@ -242,8 +245,19 @@ func WithoutDedup() Option {
 //	scanner := sensitive.NewScanner(sensitive.WithAll(), sensitive.WithMinConfidence(0.4))
 func WithMinConfidence(threshold float64) Option {
 	return func(s *Scanner) {
-		s.minConfidence = threshold
+		s.minConfidence = clampConfidence(threshold)
 	}
+}
+
+// clampConfidence restricts v to the [0, 1] range.
+func clampConfidence(v float64) float64 {
+	if v < 0 {
+		return 0
+	}
+	if v > 1 {
+		return 1
+	}
+	return v
 }
 
 // WithDetector adds a custom Detector to the Scanner.

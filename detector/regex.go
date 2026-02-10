@@ -28,6 +28,9 @@ type Regex struct {
 // and must not be nil. Passing a nil pattern causes a panic because Scan would
 // otherwise dereference it at runtime.
 //
+// The confidence value is clamped to the [0, 1] range. Values below 0 are
+// treated as 0 and values above 1 are treated as 1.
+//
 // Hints should contain byte sequences that are guaranteed to be present in any
 // match, enabling the Scanner's pre-filter to skip non-matching input efficiently.
 // An empty hints slice causes Scan to be called unconditionally (discouraged).
@@ -39,8 +42,19 @@ func NewRegex(name DetectorName, pattern *regexp.Regexp, hints [][]byte, confide
 		name:       name,
 		pattern:    pattern,
 		hints:      hints,
-		confidence: confidence,
+		confidence: clampConfidence(confidence),
 	}
+}
+
+// clampConfidence restricts v to the [0, 1] range.
+func clampConfidence(v float64) float64 {
+	if v < 0 {
+		return 0
+	}
+	if v > 1 {
+		return 1
+	}
+	return v
 }
 
 // Name returns the detector name specified at construction time.
