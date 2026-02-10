@@ -25,8 +25,9 @@ func (s *Scanner) ScanReader(r io.Reader) ([]Finding, error) {
 // log files and other line-oriented text streams, as it processes data
 // incrementally without loading the entire input into memory.
 //
-// lineNum is 1-based. The line parameter is the raw line bytes (without
-// the trailing newline). findings contains all detections for that line.
+// lineNum is 1-based. The line parameter is a copy of the raw line bytes
+// (without the trailing newline), safe to retain after fn returns.
+// findings contains all detections for that line.
 //
 // fn is only called for lines that contain findings. Lines with no
 // sensitive data are silently skipped.
@@ -50,9 +51,13 @@ func (s *Scanner) ScanLines(r io.Reader, fn func(lineNum int, line []byte, findi
 	lineNum := 0
 	for sc.Scan() {
 		lineNum++
-		line := sc.Bytes()
-		findings := s.Scan(line)
+		raw := sc.Bytes()
+		findings := s.Scan(raw)
 		if len(findings) > 0 {
+			// Copy raw so the callback can safely retain the slice;
+			// bufio.Scanner reuses its internal buffer on the next Scan.
+			line := make([]byte, len(raw))
+			copy(line, raw)
 			fn(lineNum, line, findings)
 		}
 	}
