@@ -838,6 +838,33 @@ func TestScanner_WithMinConfidence(t *testing.T) {
 		}
 	})
 
+	t.Run("threshold equals confidence includes the finding", func(t *testing.T) {
+		t.Parallel()
+		// Regex detector with confidence exactly 0.6.
+		d := detector.NewRegex("exact", regexp.MustCompile(`EXACT`), nil, 0.6)
+		scanner := sensitive.NewScanner(
+			sensitive.WithDetector(d),
+			sensitive.WithMinConfidence(0.6),
+		)
+		findings := scanner.ScanString("EXACT")
+		if len(findings) != 1 {
+			t.Fatalf("finding with confidence == threshold should be included, got %d findings", len(findings))
+		}
+	})
+
+	t.Run("threshold just above confidence excludes the finding", func(t *testing.T) {
+		t.Parallel()
+		d := detector.NewRegex("exact", regexp.MustCompile(`EXACT`), nil, 0.6)
+		scanner := sensitive.NewScanner(
+			sensitive.WithDetector(d),
+			sensitive.WithMinConfidence(0.61),
+		)
+		findings := scanner.ScanString("EXACT")
+		if len(findings) != 0 {
+			t.Fatalf("finding with confidence < threshold should be excluded, got %d findings", len(findings))
+		}
+	})
+
 	t.Run("value above 1 is clamped to 1", func(t *testing.T) {
 		t.Parallel()
 		// 1.01 is clamped to 1.0, so PAN (confidence 1.0) should still pass.
