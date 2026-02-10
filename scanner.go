@@ -3,6 +3,8 @@ package sensitive
 import (
 	"bytes"
 	"sort"
+
+	"github.com/nao1215/sensitive/internal/ascii"
 )
 
 // Scanner scans text for sensitive data using registered Detectors.
@@ -67,7 +69,7 @@ func NewScanner(opts ...Option) *Scanner {
 }
 
 // buildHintCache pre-computes lowered hints for each detector so that
-// asciiLowerCopy(hint) is not called on every Scan invocation.
+// ascii.LowerCopy(hint) is not called on every Scan invocation.
 func buildHintCache(detectors []Detector) [][]hintEntry {
 	cache := make([][]hintEntry, len(detectors))
 	for i, d := range detectors {
@@ -77,8 +79,8 @@ func buildHintCache(detectors []Detector) [][]hintEntry {
 		}
 		entries := make([]hintEntry, len(hints))
 		for j, h := range hints {
-			if hasASCIILetter(h) {
-				entries[j] = hintEntry{lowered: asciiLowerCopy(h), needFold: true}
+			if ascii.HasLetter(h) {
+				entries[j] = hintEntry{lowered: ascii.LowerCopy(h), needFold: true}
 			} else {
 				entries[j] = hintEntry{lowered: h, needFold: false}
 			}
@@ -178,7 +180,7 @@ func matchesAnyHint(entries []hintEntry, data []byte, foldedData *[]byte, folded
 	for _, e := range entries {
 		if e.needFold {
 			if !*foldedReady {
-				*foldedData = asciiLowerCopy(data)
+				*foldedData = ascii.LowerCopy(data)
 				*foldedReady = true
 			}
 			if bytes.Contains(*foldedData, e.lowered) {
@@ -300,28 +302,4 @@ func dedupOverlaps(accepted []Finding, f Finding) bool {
 		return true
 	}
 	return false
-}
-
-func hasASCIILetter(data []byte) bool {
-	for _, b := range data {
-		if (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') {
-			return true
-		}
-	}
-	return false
-}
-
-func asciiLowerCopy(data []byte) []byte {
-	out := make([]byte, len(data))
-	for i, b := range data {
-		out[i] = toLowerASCII(b)
-	}
-	return out
-}
-
-func toLowerASCII(b byte) byte {
-	if b >= 'A' && b <= 'Z' {
-		return b + ('a' - 'A')
-	}
-	return b
 }

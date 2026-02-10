@@ -1,6 +1,10 @@
 package detector
 
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/nao1215/sensitive/internal/ascii"
+)
 
 // keywordMatch represents a position where a keyword was found in the data.
 type keywordMatch struct {
@@ -38,7 +42,7 @@ func findKeywordPositions(data []byte, keywords [][]byte) []keywordMatch {
 
 	needFold := false
 	for _, kw := range keywords {
-		if hasASCIILetter(kw) {
+		if ascii.HasLetter(kw) {
 			needFold = true
 			break
 		}
@@ -46,7 +50,7 @@ func findKeywordPositions(data []byte, keywords [][]byte) []keywordMatch {
 
 	var foldedData []byte
 	if needFold {
-		foldedData = asciiLowerCopy(data)
+		foldedData = ascii.LowerCopy(data)
 	}
 
 	for _, kw := range keywords {
@@ -56,9 +60,9 @@ func findKeywordPositions(data []byte, keywords [][]byte) []keywordMatch {
 
 		haystack := data
 		needle := kw
-		if needFold && hasASCIILetter(kw) {
+		if needFold && ascii.HasLetter(kw) {
 			haystack = foldedData
-			needle = asciiLowerCopy(kw)
+			needle = ascii.LowerCopy(kw)
 		}
 		offset := 0
 		for {
@@ -106,30 +110,6 @@ func isWordBoundary(data []byte, pos, end int, kw []byte) bool {
 // isASCIIAlphaNum reports whether b is an ASCII letter or digit.
 func isASCIIAlphaNum(b byte) bool {
 	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9')
-}
-
-func hasASCIILetter(data []byte) bool {
-	for _, b := range data {
-		if (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') {
-			return true
-		}
-	}
-	return false
-}
-
-func asciiLowerCopy(data []byte) []byte {
-	out := make([]byte, len(data))
-	for i, b := range data {
-		out[i] = toLowerASCII(b)
-	}
-	return out
-}
-
-func toLowerASCII(b byte) byte {
-	if b >= 'A' && b <= 'Z' {
-		return b + ('a' - 'A')
-	}
-	return b
 }
 
 // extractDigitsNear finds all digit sequences within the given byte radius
