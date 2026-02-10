@@ -1,6 +1,7 @@
 package sensitive_test
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"io"
@@ -139,6 +140,29 @@ func TestScanner_ScanLines(t *testing.T) {
 			t.Errorf("expected ErrUnexpectedEOF, got %v", err)
 		}
 	})
+}
+
+func TestScanner_ScanLines_longLineReturnsErrTooLong(t *testing.T) {
+	t.Parallel()
+
+	scanner := sensitive.NewScanner(sensitive.WithEmail())
+
+	// Build a single line that exceeds the 1 MB buffer limit.
+	// The line contains an email so ScanLines would call fn if it could
+	// read the line, but the line is too long for the internal buffer.
+	longLine := make([]byte, 1024*1024+1)
+	for i := range longLine {
+		longLine[i] = 'x'
+	}
+	// No trailing newline — the entire input is a single oversized line.
+	r := bytes.NewReader(longLine)
+
+	err := scanner.ScanLines(r, func(_ int, _ []byte, _ []sensitive.Finding) {
+		t.Error("fn should not be called for an oversized line")
+	})
+	if !errors.Is(err, bufio.ErrTooLong) {
+		t.Errorf("expected bufio.ErrTooLong, got %v", err)
+	}
 }
 
 // errorReader is a test helper that always returns the configured error.
