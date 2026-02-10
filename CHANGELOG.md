@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-02-10
+
+### Fixed
+
+- **ScanLines buffer limit increased to 1 MB** ([6ee98e3](https://github.com/nao1215/sensitive/commit/6ee98e3)): The internal `bufio.Scanner` buffer now starts at 64 KB and grows up to 1 MB (previously limited to the default 64 KB). Lines exceeding 1 MB return `bufio.ErrTooLong`. The doc comment now documents this limitation explicitly.
+- **ScanLines callback receives a safe copy of line bytes** ([216ce24](https://github.com/nao1215/sensitive/commit/216ce24)): The `line` slice passed to the ScanLines callback is now an independent copy, safe to retain after the callback returns. Previously, the slice pointed into the `bufio.Scanner` internal buffer, which was overwritten on the next `Scan()` call.
+- **Confidence values clamped to [0, 1]** ([2802566](https://github.com/nao1215/sensitive/commit/2802566)): `WithMinConfidence` and `detector.NewRegex` now clamp the confidence parameter to the valid range. Values below 0 are treated as 0 and values above 1 are treated as 1.
+
+### Changed
+
+- **Clarified minConfidence ordering in documentation** ([cc8d13d](https://github.com/nao1215/sensitive/commit/cc8d13d)): The `Scanner.Scan` and `WithMinConfidence` doc comments now explicitly state that the confidence threshold is applied after deduplication and sorting, so dedup always sees the full candidate set.
+- **Extracted duplicated ASCII helpers to `internal/ascii`** ([50a6846](https://github.com/nao1215/sensitive/commit/50a6846)): `hasASCIILetter`, `asciiLowerCopy`, and `toLowerASCII` were duplicated between `scanner.go` and `detector/context.go`. They are now shared via the `internal/ascii` package, eliminating the risk of future divergence.
+- **Pre-computed keyword cache for context-based detectors** ([7d56c0f](https://github.com/nao1215/sensitive/commit/7d56c0f)): Introduced `keywordSet` type that pre-computes lowered keyword forms once at initialization. Context-based detectors (CVV, ACH, card expiry, merchant ID, bank account) no longer call `ascii.LowerCopy` per keyword on every `Scan` invocation.
+
+### Tests
+
+- **ScanLines ErrTooLong regression test** ([b71bf3d](https://github.com/nao1215/sensitive/commit/b71bf3d)): Verifies that lines exceeding the 1 MB buffer return `bufio.ErrTooLong`.
+- **ScanLines buffer copy safety test** ([5e24472](https://github.com/nao1215/sensitive/commit/5e24472)): Verifies that retained `line` slices from the callback are not corrupted by subsequent scans.
+- **WithMinConfidence boundary value tests** ([cf0a3f0](https://github.com/nao1215/sensitive/commit/cf0a3f0)): Verifies that a finding with confidence exactly equal to the threshold is included, and one just below is excluded.
+- **RawValue == input[Start:End] invariant test** ([54eaa2c](https://github.com/nao1215/sensitive/commit/54eaa2c)): Verifies across all built-in detectors that every finding's `RawValue` matches the corresponding `input[Start:End]` slice, preventing mask output corruption.
+
 ## [0.0.2] - 2026-02-08
 
 ### Added
@@ -70,5 +91,6 @@ Initial release of the `sensitive` library.
 - **Full-width digit normalization**: Transparent handling of Japanese full-width digits (U+FF10--U+FF19) for PAN, phone, and My Number detection.
 - **Deterministic output**: Findings are sorted by confidence (descending), then by byte offset and detector name for fully reproducible results.
 
+[0.0.3]: https://github.com/nao1215/sensitive/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/nao1215/sensitive/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/nao1215/sensitive/releases/tag/v0.0.1
