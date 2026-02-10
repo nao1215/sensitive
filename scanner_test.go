@@ -603,6 +603,50 @@ func TestScanner_Integration_FindingDetail(t *testing.T) {
 	})
 }
 
+func TestScanner_RawValueMatchesInputSlice(t *testing.T) {
+	t.Parallel()
+
+	// For every finding returned by every detector, the invariant
+	// RawValue == input[Start:End] must hold. If it doesn't, the mask
+	// package will produce corrupted output.
+	scanner := sensitive.NewScanner(sensitive.WithAll())
+
+	inputs := []string{
+		"card 4532015112830366 email tanaka@example.com",
+		"TEL: 090-1234-5678 MyNumber 123456789018",
+		// #nosec G101 -- test token for detection
+		"token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
+		"key: AKIAIOSFODNN7EXAMPLE",
+		"IBAN: DE89370400440532013000",
+		"host: 192.168.1.1 and ::1",
+		"SWIFT: DEUTDEFF routing: 021000021",
+		"sort code: 12-34-56",
+		"CVV 123 exp 12/29",
+		"sk_live_1234567890abcdef",
+		"bank account 12345678",
+		"ACH trace 021000021123456",
+		"merchant ID ABCDE12345FGHI6",
+		"btc: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+		"eth: 0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+	}
+
+	for _, input := range inputs {
+		findings := scanner.ScanString(input)
+		for _, f := range findings {
+			if f.Start < 0 || f.End > len(input) || f.Start >= f.End {
+				t.Errorf("finding %q: invalid range [%d:%d] for input len %d",
+					f.DetectorName, f.Start, f.End, len(input))
+				continue
+			}
+			slice := input[f.Start:f.End]
+			if f.RawValue != slice {
+				t.Errorf("finding %q at [%d:%d]: RawValue = %q, want %q (input[Start:End])",
+					f.DetectorName, f.Start, f.End, f.RawValue, slice)
+			}
+		}
+	}
+}
+
 func TestScanner_UKSortCode_SpaceSeparatedDetectedViaHint(t *testing.T) {
 	t.Parallel()
 
