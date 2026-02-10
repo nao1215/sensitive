@@ -73,7 +73,7 @@ func (d *MerchantID) Scan(data []byte) []Finding {
 	used := make(map[int]struct{})
 
 	// Check merchant keywords.
-	merchantMatches := findKeywordPositions(data, merchantKeywords)
+	merchantMatches := merchantKeywords.findPositions(data)
 	for _, m := range merchantMatches {
 		seqs := extractAlphaNumNear(data, m.end, 30, 15, 15)
 		for _, seq := range seqs {
@@ -97,7 +97,7 @@ func (d *MerchantID) Scan(data []byte) []Finding {
 	}
 
 	// Check terminal keywords.
-	terminalMatches := findKeywordPositions(data, terminalKeywords)
+	terminalMatches := terminalKeywords.findPositions(data)
 	for _, m := range terminalMatches {
 		seqs := extractDigitsNear(data, m.end, 30, 8, 8)
 		for _, seq := range seqs {
@@ -124,7 +124,7 @@ func (d *MerchantID) Scan(data []byte) []Finding {
 }
 
 // merchantKeywords are context keywords for merchant ID detection.
-var merchantKeywords = [][]byte{
+var merchantKeywords = newKeywordSet([][]byte{
 	[]byte("merchant ID"),
 	[]byte("Merchant ID"),
 	[]byte("MERCHANT ID"),
@@ -135,10 +135,10 @@ var merchantKeywords = [][]byte{
 	append([]byte{0xE5, 0x8A, 0xA0, 0xE7, 0x9B, 0x9F, 0xE5, 0xBA, 0x97}, []byte("ID")...),
 	// Japanese: 加盟店
 	{0xE5, 0x8A, 0xA0, 0xE7, 0x9B, 0x9F, 0xE5, 0xBA, 0x97},
-}
+})
 
 // terminalKeywords are context keywords for terminal ID detection.
-var terminalKeywords = [][]byte{
+var terminalKeywords = newKeywordSet([][]byte{
 	[]byte("terminal ID"),
 	[]byte("Terminal ID"),
 	[]byte("TERMINAL ID"),
@@ -149,4 +149,4 @@ var terminalKeywords = [][]byte{
 	append([]byte{0xE7, 0xAB, 0xAF, 0xE6, 0x9C, 0xAB}, []byte("ID")...),
 	// Japanese: 端末
 	{0xE7, 0xAB, 0xAF, 0xE6, 0x9C, 0xAB},
-}
+})

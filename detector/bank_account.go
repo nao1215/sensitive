@@ -91,7 +91,7 @@ func (d *BankAccount) Scan(data []byte) []Finding {
 // scanNormalized performs bank account detection on normalized data.
 // orig is the original (possibly full-width) input used for RawValue.
 func (d *BankAccount) scanNormalized(orig []byte, data []byte, posMap []int) []Finding {
-	matches := findKeywordPositions(data, bankAccountKeywords)
+	matches := bankAccountKeywords.findPositions(data)
 	if len(matches) == 0 {
 		return nil
 	}
@@ -210,7 +210,7 @@ func containsBytes(data, sub []byte) bool {
 }
 
 // bankAccountKeywords are the context keywords for bank account detection.
-var bankAccountKeywords = [][]byte{
+var bankAccountKeywords = newKeywordSet([][]byte{
 	// Japanese keywords.
 	// 口座番号 (account number)
 	{0xE5, 0x8F, 0xA3, 0xE5, 0xBA, 0xA7, 0xE7, 0x95, 0xAA, 0xE5, 0x8F, 0xB7},
@@ -242,7 +242,7 @@ var bankAccountKeywords = [][]byte{
 	[]byte("Account No"),
 	[]byte("Account no"),
 	[]byte("ACCOUNT NO"),
-}
+})
 
 // holderNameKeywords are keywords indicating holder/beneficiary name context.
 // Their presence near a bank account number increases confidence.

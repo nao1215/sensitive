@@ -22,11 +22,51 @@ type digitSequence struct {
 	end int
 }
 
-// findKeywordPositions returns all positions where any of the given keywords
-// appear in data at word boundaries. The search is performed using
-// bytes.Index for efficiency. Keywords containing ASCII letters are matched
-// case-insensitively (ASCII-only), while non-ASCII keywords are matched
-// byte-for-byte.
+// keywordEntry holds the original keyword and its pre-computed lowercase form.
+type keywordEntry struct {
+	// original is the keyword as provided by the caller.
+	original []byte
+	// lowered is ascii.LowerCopy(original) when the keyword contains ASCII
+	// letters; otherwise it is the same slice as original.
+	lowered []byte
+	// needFold is true when the keyword contains ASCII letters.
+	needFold bool
+}
+
+// keywordSet holds pre-computed keyword data so that ascii.LowerCopy is not
+// called on every Scan invocation. Construct one via newKeywordSet and reuse
+// it across calls to findPositions.
+type keywordSet struct {
+	entries  []keywordEntry
+	needFold bool // true if any entry requires case folding
+}
+
+// newKeywordSet pre-computes lowered forms for the given keywords.
+func newKeywordSet(keywords [][]byte) *keywordSet {
+	entries := make([]keywordEntry, 0, len(keywords))
+	anyFold := false
+	for _, kw := range keywords {
+		if len(kw) == 0 {
+			continue
+		}
+		e := keywordEntry{original: kw}
+		if ascii.HasLetter(kw) {
+			e.lowered = ascii.LowerCopy(kw)
+			e.needFold = true
+			anyFold = true
+		} else {
+			e.lowered = kw
+		}
+		entries = append(entries, e)
+	}
+	return &keywordSet{entries: entries, needFold: anyFold}
+}
+
+// findPositions returns all positions where any keyword in the set appears in
+// data at word boundaries.
+//
+// Keywords containing ASCII letters are matched case-insensitively (ASCII-only),
+// while non-ASCII keywords are matched byte-for-byte.
 //
 // A word boundary check prevents partial matches inside longer words.
 // When the keyword edge character is ASCII alphanumeric, the adjacent
@@ -37,32 +77,20 @@ type digitSequence struct {
 //
 // Non-ASCII (multi-byte) boundary characters are always accepted, so
 // Japanese keywords embedded in kanji text match without restriction.
-func findKeywordPositions(data []byte, keywords [][]byte) []keywordMatch {
+func (ks *keywordSet) findPositions(data []byte) []keywordMatch {
 	var matches []keywordMatch
 
-	needFold := false
-	for _, kw := range keywords {
-		if ascii.HasLetter(kw) {
-			needFold = true
-			break
-		}
-	}
-
 	var foldedData []byte
-	if needFold {
+	if ks.needFold {
 		foldedData = ascii.LowerCopy(data)
 	}
 
-	for _, kw := range keywords {
-		if len(kw) == 0 {
-			continue
-		}
-
+	for _, e := range ks.entries {
 		haystack := data
-		needle := kw
-		if needFold && ascii.HasLetter(kw) {
+		needle := e.original
+		if e.needFold {
 			haystack = foldedData
-			needle = ascii.LowerCopy(kw)
+			needle = e.lowered
 		}
 		offset := 0
 		for {
@@ -75,7 +103,7 @@ func findKeywordPositions(data []byte, keywords [][]byte) []keywordMatch {
 
 			// Word boundary check: reject matches embedded inside
 			// a larger alphanumeric token.
-			if !isWordBoundary(data, pos, end, kw) {
+			if !isWordBoundary(data, pos, end, e.original) {
 				offset = pos + 1
 				continue
 			}
@@ -89,6 +117,14 @@ func findKeywordPositions(data []byte, keywords [][]byte) []keywordMatch {
 	}
 
 	return matches
+}
+
+// findKeywordPositions is a convenience wrapper that creates a temporary
+// keywordSet from keywords and searches data. For repeated calls with the
+// same keywords, prefer newKeywordSet + findPositions to avoid per-call
+// allocations.
+func findKeywordPositions(data []byte, keywords [][]byte) []keywordMatch {
+	return newKeywordSet(keywords).findPositions(data)
 }
 
 // isWordBoundary reports whether the keyword match at data[pos:end] sits at

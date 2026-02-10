@@ -54,7 +54,7 @@ func (d *CardExpiry) Hints() [][]byte {
 
 // Scan examines data for card expiry dates near context keywords and returns findings.
 func (d *CardExpiry) Scan(data []byte) []Finding {
-	matches := findKeywordPositions(data, expiryKeywords)
+	matches := expiryKeywords.findPositions(data)
 	if len(matches) == 0 {
 		return nil
 	}
@@ -169,7 +169,7 @@ func (d *CardExpiry) searchRange(data []byte, start, end int, used map[int]struc
 // Longer keywords are listed first so that "expiration" matches before "exp".
 // Common mixed-case variants are included to reduce false negatives from
 // case variations in real-world documents.
-var expiryKeywords = [][]byte{
+var expiryKeywords = newKeywordSet([][]byte{
 	[]byte("expiration date"),
 	[]byte("Expiration Date"),
 	[]byte("Expiration date"),
@@ -200,4 +200,4 @@ var expiryKeywords = [][]byte{
 	[]byte("EXP"),
 	// Japanese: 有効期限
 	{0xE6, 0x9C, 0x89, 0xE5, 0x8A, 0xB9, 0xE6, 0x9C, 0x9F, 0xE9, 0x99, 0x90},
-}
+})

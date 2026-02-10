@@ -54,7 +54,7 @@ func (d *ACHTrace) Hints() [][]byte {
 
 // Scan examines data for ACH trace numbers near context keywords and returns findings.
 func (d *ACHTrace) Scan(data []byte) []Finding {
-	matches := findKeywordPositions(data, achKeywords)
+	matches := achKeywords.findPositions(data)
 	if len(matches) == 0 {
 		return nil
 	}
@@ -109,7 +109,7 @@ func (d *ACHTrace) Scan(data []byte) []Finding {
 //
 // Common mixed-case variants (e.g., "Trace number") are included to
 // reduce false negatives from case variations in real-world documents.
-var achKeywords = [][]byte{
+var achKeywords = newKeywordSet([][]byte{
 	[]byte("ACH"),
 	[]byte("ach"),
 	[]byte("Ach"),
@@ -133,4 +133,4 @@ var achKeywords = [][]byte{
 	[]byte("trace#"),
 	[]byte("Trace#"),
 	[]byte("TRACE#"),
-}
+})

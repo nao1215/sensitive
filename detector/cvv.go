@@ -59,7 +59,7 @@ func (d *CVV) Hints() [][]byte {
 
 // Scan examines data for CVV/CVC numbers near context keywords and returns findings.
 func (d *CVV) Scan(data []byte) []Finding {
-	matches := findKeywordPositions(data, cvvKeywords)
+	matches := cvvKeywords.findPositions(data)
 	if len(matches) == 0 {
 		return nil
 	}
@@ -100,7 +100,7 @@ func (d *CVV) Scan(data []byte) []Finding {
 // cvvKeywords are the context keywords used to identify CVV/CVC/CID mentions.
 // CID (Card Identification Number) is the 4-digit security code used by
 // American Express. It is functionally equivalent to CVV/CVC on other networks.
-var cvvKeywords = [][]byte{
+var cvvKeywords = newKeywordSet([][]byte{
 	[]byte("CVV2"),
 	[]byte("CVC2"),
 	[]byte("CVV"),
@@ -122,4 +122,4 @@ var cvvKeywords = [][]byte{
 	{0xE3, 0x82, 0xBB, 0xE3, 0x82, 0xAD, 0xE3, 0x83, 0xA5, 0xE3,
 		0x83, 0xAA, 0xE3, 0x83, 0x86, 0xE3, 0x82, 0xA3, 0xE3, 0x82,
 		0xB3, 0xE3, 0x83, 0xBC, 0xE3, 0x83, 0x89},
-}
+})
