@@ -142,6 +142,37 @@ func TestScanner_ScanLines(t *testing.T) {
 	})
 }
 
+func TestScanner_ScanLines_lineBytesAreSafeToRetain(t *testing.T) {
+	t.Parallel()
+
+	scanner := sensitive.NewScanner(sensitive.WithEmail())
+	input := "user tanaka@example.com logged in\n" +
+		"admin admin@example.com logged in\n"
+	r := strings.NewReader(input)
+
+	// Collect the line slices returned by the callback.
+	var savedLines [][]byte
+	err := scanner.ScanLines(r, func(_ int, line []byte, _ []sensitive.Finding) {
+		savedLines = append(savedLines, line)
+	})
+	if err != nil {
+		t.Fatalf("ScanLines returned error: %v", err)
+	}
+	if len(savedLines) != 2 {
+		t.Fatalf("expected 2 callbacks, got %d", len(savedLines))
+	}
+
+	// After ScanLines returns, the retained line slices must still contain
+	// the original content. Without the internal copy, bufio.Scanner would
+	// have overwritten the buffer.
+	if !bytes.Contains(savedLines[0], []byte("tanaka@example.com")) {
+		t.Errorf("first retained line was corrupted: %q", savedLines[0])
+	}
+	if !bytes.Contains(savedLines[1], []byte("admin@example.com")) {
+		t.Errorf("second retained line was corrupted: %q", savedLines[1])
+	}
+}
+
 func TestScanner_ScanLines_longLineReturnsErrTooLong(t *testing.T) {
 	t.Parallel()
 
