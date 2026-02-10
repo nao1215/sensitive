@@ -228,10 +228,12 @@ func WithoutDedup() Option {
 }
 
 // WithMinConfidence sets the minimum confidence threshold for reported findings.
-// Findings with confidence below the threshold are filtered out after detection
-// and deduplication. This allows callers to select a strict mode (e.g., 0.8 for
-// high-confidence only) or a loose mode (e.g., 0.4 to include medium-confidence
-// matches).
+// The threshold is applied after deduplication and sorting (see [Scanner.Scan]
+// for the full pipeline). This means deduplication always sees every candidate,
+// ensuring the highest-confidence finding per byte range survives. The threshold
+// then filters only the final sorted output, so callers can select a strict mode
+// (e.g., 0.8 for high-confidence only) or a loose mode (e.g., 0.4 to include
+// medium-confidence matches).
 //
 // The threshold is clamped to the [0, 1] range. Values below 0 are treated as 0
 // and values above 1 are treated as 1.

@@ -126,6 +126,12 @@ func deduplicateDetectors(detectors []Detector) []Detector {
 // Use [WithSortByPosition] to sort by byte offset (ascending) instead.
 // Use [WithoutDedup] to receive all findings including overlapping ones
 // from different detectors.
+//
+// If [WithMinConfidence] is configured, the confidence threshold is applied
+// after deduplication and sorting. This means deduplication always sees the
+// full set of findings, so the highest-confidence finding for each byte range
+// is kept regardless of the threshold. The threshold then removes only the
+// remaining low-confidence findings from the final output.
 func (s *Scanner) Scan(data []byte) []Finding {
 	// Stage 0: Empty data check.
 	if len(data) == 0 {
