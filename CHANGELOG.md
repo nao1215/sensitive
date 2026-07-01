@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Developer credential detectors**: four new detectors for secrets commonly
+  leaked in source, CI logs, and command lines.
+  - `WithGitHubToken()` (`NameGitHubToken`): classic GitHub tokens
+    (`ghp_`/`gho_`/`ghu_`/`ghs_`/`ghr_` + 36 base62 chars) and fine-grained PATs
+    (`github_pat_` + 22+ chars). Detail: `GitHubTokenDetail{TokenType}`.
+  - `WithSlackToken()` (`NameSlackToken`): Slack API tokens
+    (`xoxb-`/`xoxp-`/`xoxa-`/`xoxo-`/`xoxr-`/`xoxs-`). Detail:
+    `SlackTokenDetail{TokenType}`.
+  - `WithGoogleAPIKey()` (`NameGoogleAPIKey`): Google API keys (`AIza` + 35
+    chars). Detail: `GoogleAPIKeyDetail`.
+  - `WithPrivateKeyPEM()` (`NamePrivateKeyPEM`): PEM private key headers
+    (`-----BEGIN [ALGO ]PRIVATE KEY-----` for RSA/EC/DSA/OpenSSH/PKCS#8). Detail:
+    `PrivateKeyPEMDetail{KeyType}`.
+
+  All four are classified as `KindCredential`, use hint-based pre-filtering with
+  dedicated byte scanners (no regular expressions), and are included in
+  `WithAll()`. Findings expose `Is*` predicates and `*Detail()` accessors
+  consistent with the existing detectors.
+
 ## [0.0.3] - 2026-02-10
 
 ### Fixed

@@ -48,6 +48,14 @@ const (
 	NameBTC DetectorName = "btc"
 	// NameETH is the detector name for Ethereum addresses.
 	NameETH DetectorName = "eth"
+	// NameGitHubToken is the detector name for GitHub access tokens.
+	NameGitHubToken DetectorName = "github_token"
+	// NameSlackToken is the detector name for Slack API tokens.
+	NameSlackToken DetectorName = "slack_token"
+	// NameGoogleAPIKey is the detector name for Google API keys.
+	NameGoogleAPIKey DetectorName = "google_api_key"
+	// NamePrivateKeyPEM is the detector name for PEM-encoded private key headers.
+	NamePrivateKeyPEM DetectorName = "private_key_pem"
 )
 
 // SensitiveKind categorizes a finding into a broad semantic group for
@@ -79,25 +87,29 @@ const (
 // kindMapping maps each built-in detector name to its semantic kind.
 // Custom detectors not in this map return "" (empty SensitiveKind) from Kind().
 var kindMapping = map[DetectorName]SensitiveKind{
-	NamePAN:          KindFinancial,
-	NameIBAN:         KindFinancial,
-	NameABARouting:   KindFinancial,
-	NameUKSortCode:   KindFinancial,
-	NameCVV:          KindFinancial,
-	NameCardExpiry:   KindFinancial,
-	NameBankAccount:  KindFinancial,
-	NameACHTrace:     KindFinancial,
-	NameMerchantID:   KindFinancial,
-	NameSWIFTBIC:     KindFinancial,
-	NameBTC:          KindFinancial,
-	NameETH:          KindFinancial,
-	NameEmail:        KindPII,
-	NameJPPhone:      KindPII,
-	NameMyNumber:     KindPII,
-	NameIPAddr:       KindPII,
-	NameJWT:          KindCredential,
-	NameAWSKey:       KindCredential,
-	NamePaymentToken: KindCredential,
+	NamePAN:           KindFinancial,
+	NameIBAN:          KindFinancial,
+	NameABARouting:    KindFinancial,
+	NameUKSortCode:    KindFinancial,
+	NameCVV:           KindFinancial,
+	NameCardExpiry:    KindFinancial,
+	NameBankAccount:   KindFinancial,
+	NameACHTrace:      KindFinancial,
+	NameMerchantID:    KindFinancial,
+	NameSWIFTBIC:      KindFinancial,
+	NameBTC:           KindFinancial,
+	NameETH:           KindFinancial,
+	NameEmail:         KindPII,
+	NameJPPhone:       KindPII,
+	NameMyNumber:      KindPII,
+	NameIPAddr:        KindPII,
+	NameJWT:           KindCredential,
+	NameAWSKey:        KindCredential,
+	NamePaymentToken:  KindCredential,
+	NameGitHubToken:   KindCredential,
+	NameSlackToken:    KindCredential,
+	NameGoogleAPIKey:  KindCredential,
+	NamePrivateKeyPEM: KindCredential,
 }
 
 // ConfidenceLevel represents a human-readable confidence threshold.
@@ -270,6 +282,18 @@ func (f Finding) IsBTC() bool { return f.DetectorName == NameBTC }
 // IsETH reports whether this finding is an Ethereum address.
 func (f Finding) IsETH() bool { return f.DetectorName == NameETH }
 
+// IsGitHubToken reports whether this finding is a GitHub access token.
+func (f Finding) IsGitHubToken() bool { return f.DetectorName == NameGitHubToken }
+
+// IsSlackToken reports whether this finding is a Slack API token.
+func (f Finding) IsSlackToken() bool { return f.DetectorName == NameSlackToken }
+
+// IsGoogleAPIKey reports whether this finding is a Google API key.
+func (f Finding) IsGoogleAPIKey() bool { return f.DetectorName == NameGoogleAPIKey }
+
+// IsPrivateKeyPEM reports whether this finding is a PEM private key header.
+func (f Finding) IsPrivateKeyPEM() bool { return f.DetectorName == NamePrivateKeyPEM }
+
 // PANDetail returns the PAN-specific detail if this finding was produced by
 // the PAN detector. The second return value indicates whether the assertion
 // succeeded. When the finding is not a PAN or Detail is nil, it returns (nil, false).
@@ -416,6 +440,36 @@ func (f Finding) ETHDetail() (*ETHDetail, bool) {
 	return d, ok
 }
 
+// GitHubTokenDetail returns the GitHub-token-specific detail if this finding was
+// produced by the GitHubToken detector. Returns (nil, false) when not applicable.
+func (f Finding) GitHubTokenDetail() (*GitHubTokenDetail, bool) {
+	d, ok := f.Detail.(*GitHubTokenDetail)
+	return d, ok
+}
+
+// SlackTokenDetail returns the Slack-token-specific detail if this finding was
+// produced by the SlackToken detector. Returns (nil, false) when not applicable.
+func (f Finding) SlackTokenDetail() (*SlackTokenDetail, bool) {
+	d, ok := f.Detail.(*SlackTokenDetail)
+	return d, ok
+}
+
+// GoogleAPIKeyDetail returns the Google-API-key-specific detail if this finding
+// was produced by the GoogleAPIKey detector. Returns (nil, false) when not
+// applicable.
+func (f Finding) GoogleAPIKeyDetail() (*GoogleAPIKeyDetail, bool) {
+	d, ok := f.Detail.(*GoogleAPIKeyDetail)
+	return d, ok
+}
+
+// PrivateKeyPEMDetail returns the PEM-private-key-specific detail if this finding
+// was produced by the PrivateKeyPEM detector. Returns (nil, false) when not
+// applicable.
+func (f Finding) PrivateKeyPEMDetail() (*PrivateKeyPEMDetail, bool) {
+	d, ok := f.Detail.(*PrivateKeyPEMDetail)
+	return d, ok
+}
+
 // Level returns the confidence level of this finding as a human-readable
 // threshold value. This is useful when exact confidence scores are not needed
 // and a categorical assessment (high/medium/low) is sufficient.
@@ -472,4 +526,8 @@ var (
 	_ Detector = (*MerchantID)(nil)
 	_ Detector = (*BTC)(nil)
 	_ Detector = (*ETH)(nil)
+	_ Detector = (*GitHubToken)(nil)
+	_ Detector = (*SlackToken)(nil)
+	_ Detector = (*GoogleAPIKey)(nil)
+	_ Detector = (*PrivateKeyPEM)(nil)
 )

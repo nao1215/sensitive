@@ -8,7 +8,7 @@
 ![logo](./doc/images/logo-small.png)
 
 
-**sensitive** is a Go library that detects sensitive data in text. It scans for credit card numbers, email addresses, Japanese phone numbers, Japanese My Number, JWTs, AWS access keys, IBANs, IP addresses, Bitcoin addresses, and Ethereum addresses, returning the position, type, and confidence level of each match. It also includes international and fintech-focused detectors such as SWIFT/BIC, US ABA routing numbers, UK sort codes, payment tokens, card CVV/expiry, and ACH trace numbers. Masking is available as an optional helper, but detection is the core focus.
+**sensitive** is a Go library that detects sensitive data in text. It scans for credit card numbers, email addresses, Japanese phone numbers, Japanese My Number, JWTs, AWS access keys, IBANs, IP addresses, Bitcoin addresses, and Ethereum addresses, returning the position, type, and confidence level of each match. It also includes international and fintech-focused detectors such as SWIFT/BIC, US ABA routing numbers, UK sort codes, payment tokens, card CVV/expiry, and ACH trace numbers, plus developer credential detectors for GitHub tokens, Slack tokens, Google API keys, and PEM private keys. Masking is available as an optional helper, but detection is the core focus.
 
 The library has zero external dependencies and relies only on the Go standard library.
 
@@ -113,6 +113,10 @@ scanner = sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
 | `WithMerchantID()` | Merchant/terminal IDs | Context keyword + format (context-based, weaker) |
 | `WithBTC()` | Bitcoin addresses (P2PKH, P2SH, Bech32, Bech32m/Taproot) | Base58Check (double SHA-256) / Bech32 polynomial checksum |
 | `WithETH()` | Ethereum addresses (0x + 40 hex) | EIP-55 mixed-case checksum (Keccak-256) |
+| `WithGitHubToken()` | GitHub tokens (classic `ghp_`/`gho_`/`ghu_`/`ghs_`/`ghr_`, fine-grained `github_pat_`) | Prefix + body character set + minimum length |
+| `WithSlackToken()` | Slack API tokens (`xoxb-`/`xoxp-`/`xoxa-`/`xoxo-`/`xoxr-`/`xoxs-`) | Prefix + type character + minimum body length |
+| `WithGoogleAPIKey()` | Google API keys (`AIza...`) | Prefix + 35-char body |
+| `WithPrivateKeyPEM()` | PEM private key headers (RSA/EC/DSA/OpenSSH/PKCS#8) | `-----BEGIN [ALGO ]PRIVATE KEY-----` header parse |
 | `WithAll()` | All of the above | |
 
 ## Benchmarks
@@ -290,6 +294,10 @@ The available accessors and their fields:
 | `MyNumberDetail()` | CheckDigitValid |
 | `BTCDetail()` | AddressType (`BTCAddressP2PKH`, `BTCAddressP2SH`, `BTCAddressBech32`, `BTCAddressBech32m`) |
 | `ETHDetail()` | EIP55 (bool, whether EIP-55 checksum validated) |
+| `GitHubTokenDetail()` | TokenType (`GitHubTokenClassic` or `GitHubTokenFineGrained`) |
+| `SlackTokenDetail()` | TokenType (`SlackTokenBot`, `SlackTokenUser`, `SlackTokenApp`, `SlackTokenOAuth`, `SlackTokenRefresh`, `SlackTokenServiceRefresh`) |
+| `GoogleAPIKeyDetail()` | (no fields) |
+| `PrivateKeyPEMDetail()` | KeyType (algorithm named in the header, e.g. `RSA`, `EC`, `OPENSSH`, or empty for PKCS#8) |
 
 ## Masking
 

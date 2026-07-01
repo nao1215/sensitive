@@ -176,6 +176,41 @@ func WithETH() Option {
 	}
 }
 
+// WithGitHubToken enables GitHub access token detection.
+// It recognizes classic tokens (ghp_/gho_/ghu_/ghs_/ghr_ prefixes) and
+// fine-grained personal access tokens (github_pat_ prefix).
+func WithGitHubToken() Option {
+	return func(s *Scanner) {
+		s.detectors = append(s.detectors, detector.NewGitHubToken())
+	}
+}
+
+// WithSlackToken enables Slack API token detection.
+// It recognizes bot (xoxb-), user (xoxp-), app (xoxa-), OAuth (xoxo-),
+// refresh (xoxr-), and service-refresh (xoxs-) tokens.
+func WithSlackToken() Option {
+	return func(s *Scanner) {
+		s.detectors = append(s.detectors, detector.NewSlackToken())
+	}
+}
+
+// WithGoogleAPIKey enables Google API key detection.
+// Google API keys start with the "AIza" prefix followed by 35 characters.
+func WithGoogleAPIKey() Option {
+	return func(s *Scanner) {
+		s.detectors = append(s.detectors, detector.NewGoogleAPIKey())
+	}
+}
+
+// WithPrivateKeyPEM enables PEM-encoded private key detection.
+// It matches the "-----BEGIN [<ALGORITHM> ]PRIVATE KEY-----" header line for
+// RSA, EC, DSA, OpenSSH, PKCS#8, and encrypted private keys.
+func WithPrivateKeyPEM() Option {
+	return func(s *Scanner) {
+		s.detectors = append(s.detectors, detector.NewPrivateKeyPEM())
+	}
+}
+
 // WithAll enables all built-in detectors.
 // This is a convenience option equivalent to enabling each detector individually.
 func WithAll() Option {
@@ -200,6 +235,10 @@ func WithAll() Option {
 			detector.NewMerchantID(),
 			detector.NewBTC(),
 			detector.NewETH(),
+			detector.NewGitHubToken(),
+			detector.NewSlackToken(),
+			detector.NewGoogleAPIKey(),
+			detector.NewPrivateKeyPEM(),
 		)
 	}
 }

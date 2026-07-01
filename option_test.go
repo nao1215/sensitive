@@ -1,6 +1,7 @@
 package sensitive
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/nao1215/sensitive/detector"
@@ -190,5 +191,78 @@ func TestOptions_NewDetectors(t *testing.T) {
 				t.Errorf("DetectorName = %q, want %q", findings[0].DetectorName, tt.expectName)
 			}
 		})
+	}
+}
+
+func TestCredentialOptions_ScanEndToEnd(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		option Option
+		input  string
+		want   detector.DetectorName
+	}{
+		{
+			name:   "github fine-grained PAT",
+			option: WithGitHubToken(),
+			input:  "export GITHUB_TOKEN=github_pat_11ABCDE0000aaaaaAAAAAa_abcdefghij",
+			want:   detector.NameGitHubToken,
+		},
+		{
+			name:   "slack bot token",
+			option: WithSlackToken(),
+			input:  "SLACK_TOKEN=xoxb-1234567890-abcdefghijkl and more",
+			want:   detector.NameSlackToken,
+		},
+		{
+			name:   "google api key",
+			option: WithGoogleAPIKey(),
+			input:  "key: AIza" + strings.Repeat("A", 35),
+			want:   detector.NameGoogleAPIKey,
+		},
+		{
+			name:   "pem private key header",
+			option: WithPrivateKeyPEM(),
+			input:  "-----BEGIN EC PRIVATE" + " KEY-----\nbody",
+			want:   detector.NamePrivateKeyPEM,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			scanner := NewScanner(tt.option)
+			findings := scanner.ScanString(tt.input)
+			var found bool
+			for _, f := range findings {
+				if f.Is(tt.want) {
+					found = true
+				}
+			}
+			if !found {
+				t.Errorf("scanner did not detect %q in %q; findings=%+v", tt.want, tt.input, findings)
+			}
+		})
+	}
+}
+
+func TestWithAll_IncludesCredentialDetectors(t *testing.T) {
+	t.Parallel()
+
+	scanner := NewScanner(WithAll())
+	input := "github_pat_11ABCDE0000aaaaaAAAAAa_abcdefghij xoxb-1234567890-abcdefghijkl"
+	findings := scanner.ScanString(input)
+	var gh, slack bool
+	for _, f := range findings {
+		switch {
+		case f.IsGitHubToken():
+			gh = true
+		case f.IsSlackToken():
+			slack = true
+		}
+	}
+	if !gh || !slack {
+		t.Errorf("WithAll should detect github (%v) and slack (%v) tokens", gh, slack)
 	}
 }
