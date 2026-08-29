@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The supported Go floor is 1.22 instead of 1.24. Nothing in the tree needs a newer Go: 1.22 is where the detectors' range-over-int stops compiling, so that is the real minimum, and two more Go releases can now use this library. The unit-test matrix runs that floor and the newest release, and the GitHub Actions pins move to `actions/checkout@v7` / `actions/setup-go@v7`.
+
 ### Added
 
 - **Developer credential detectors**: four new detectors for secrets commonly

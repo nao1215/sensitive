@@ -14,7 +14,7 @@ The library has zero external dependencies and relies only on the Go standard li
 
 ## Requirements
 
-- Go Version: 1.24 or later
+- Go Version: 1.22 or later
 - Operating Systems (tested on):
   - Linux
   - macOS
