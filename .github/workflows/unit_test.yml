@@ -26,6 +26,16 @@ jobs:
         go:
           - "1.22"
           - "stable"
+        # Go 1.22 binaries do not run on the current macOS runner image: its
+        # linker omits the LC_UUID load command that modern dyld requires, so
+        # every test binary aborts with "missing LC_UUID load command" before a
+        # single test runs. That is a toolchain-and-OS limit, not something this
+        # library can fix or should raise its floor for -- a macOS user on an
+        # older system builds fine. The floor stays verified on Linux and
+        # Windows, and macOS still runs the newest Go.
+        exclude:
+          - os: "macos-latest"
+            go: "1.22"
       fail-fast: false
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
