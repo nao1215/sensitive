@@ -17,17 +17,23 @@ jobs:
           - "ubuntu-latest"
           - "windows-latest"
           - "macos-latest"
+        # The floor go.mod declares and the newest release. The floor is 1.22
+        # because the detectors use range-over-int, which 1.21 rejects; nothing
+        # in the tree needs anything newer, and this matrix is the only place
+        # that claim is checked. "stable" tracks each Go release without an
+        # edit, and is used rather than "1" because setup-go resolves "1" from
+        # its own manifest, which lags a fresh release.
         go:
-          - "1.24"
-          - "1.25"
+          - "1.22"
+          - "stable"
       fail-fast: false
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: ${{ matrix.go }}
 
