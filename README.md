@@ -1,7 +1,6 @@
 # sensitive
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/sensitive.svg)](https://pkg.go.dev/github.com/nao1215/sensitive)
-[![Go Report Card](https://goreportcard.com/badge/github.com/nao1215/sensitive)](https://goreportcard.com/report/github.com/nao1215/sensitive)
 [![Coverage](https://github.com/nao1215/sensitive/actions/workflows/coverage.yml/badge.svg)](https://github.com/nao1215/sensitive/actions/workflows/coverage.yml)
 [![MultiPlatformUnitTest](https://github.com/nao1215/sensitive/actions/workflows/unit_test.yml/badge.svg)](https://github.com/nao1215/sensitive/actions/workflows/unit_test.yml)
 
