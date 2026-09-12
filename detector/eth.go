@@ -181,7 +181,7 @@ func validateEIP55(hexAddr string) bool {
 		if b >= 'A' && b <= 'F' {
 			b += 'a' - 'A'
 		}
-		lower[i] = b //nolint:gosec // i is bounded by range 40, hexAddr is verified to be len 40.
+		lower[i] = b
 	}
 
 	hash := keccak256Sum(lower)
@@ -194,7 +194,7 @@ func validateEIP55(hexAddr string) bool {
 		}
 
 		// Get the corresponding hash nibble.
-		hashByte := hash[i/2] //nolint:gosec // i ranges 0..39, i/2 ranges 0..19, hash is [32]byte.
+		hashByte := hash[i/2]
 		var nibble byte
 		if i%2 == 0 {
 			nibble = hashByte >> 4
@@ -240,7 +240,7 @@ func keccak256Sum(data []byte) [32]byte {
 	offset := 0
 	for offset+rate <= len(data) {
 		for i := range rate / 8 {
-			state[i] ^= binary.LittleEndian.Uint64(data[offset+i*8 : offset+i*8+8]) //nolint:gosec // i < rate/8 = 17, state is [25]uint64.
+			state[i] ^= binary.LittleEndian.Uint64(data[offset+i*8 : offset+i*8+8])
 		}
 		keccakF1600(&state)
 		offset += rate
@@ -261,7 +261,7 @@ func keccak256Sum(data []byte) [32]byte {
 	// Squeeze: extract 32 bytes of output (within a single rate block).
 	var out [32]byte
 	for i := range 4 {
-		binary.LittleEndian.PutUint64(out[i*8:], state[i]) //nolint:gosec // i < 4, state is [25]uint64.
+		binary.LittleEndian.PutUint64(out[i*8:], state[i])
 	}
 	return out
 }
@@ -274,10 +274,10 @@ func keccakF1600(state *[25]uint64) {
 		// θ (theta): column parity mixing.
 		var bc [5]uint64
 		for i := range 5 {
-			bc[i] = state[i] ^ state[i+5] ^ state[i+10] ^ state[i+15] ^ state[i+20] //nolint:gosec // i < 5, i+20 < 25, state is [25]uint64.
+			bc[i] = state[i] ^ state[i+5] ^ state[i+10] ^ state[i+15] ^ state[i+20]
 		}
 		for i := range 5 {
-			t := bc[(i+4)%5] ^ bits.RotateLeft64(bc[(i+1)%5], 1) //nolint:gosec // (i+1)%5 < 5, bc is [5]uint64.
+			t := bc[(i+4)%5] ^ bits.RotateLeft64(bc[(i+1)%5], 1)
 			for j := 0; j < 25; j += 5 {
 				state[i+j] ^= t
 			}
@@ -287,9 +287,9 @@ func keccakF1600(state *[25]uint64) {
 		t := state[1]
 		for i := range 24 {
 			j := keccakPiLane[i]
-			bc[0] = state[j] //nolint:gosec // j is from keccakPiLane (max 24), state is [25]uint64.
+			bc[0] = state[j]
 			state[j] = bits.RotateLeft64(t, keccakRotation[i])
-			t = bc[0] //nolint:gosec // bc is [5]uint64, index 0 is always valid.
+			t = bc[0]
 		}
 
 		// χ (chi): nonlinear row mixing.

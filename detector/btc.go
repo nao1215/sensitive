@@ -428,7 +428,7 @@ func bech32Polymod(values []int) int {
 		b := chk >> 25
 		chk = (chk&0x1ffffff)<<5 ^ v
 		for i := range 5 {
-			if (b>>uint(i))&1 == 1 { //nolint:gosec // i is always 0-4, no overflow risk
+			if (b>>uint(i))&1 == 1 {
 				chk ^= bech32Generator[i]
 			}
 		}
