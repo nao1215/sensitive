@@ -1,6 +1,9 @@
 version: "2"
 run:
-  go: "1.24"
+  # The language version go.mod declares. The linter assumes this when it
+  # decides what the code may use, so a higher number here would let a construct
+  # that does not compile on the supported floor through the gate.
+  go: "1.22"
 linters:
   enable:
     - asciicheck
@@ -63,6 +66,16 @@ linters:
       - linters:
           - goconst
         path: .*_test\.go
+      # G101 reports hardcoded credentials. This library's tests are made of
+      # them: a detector for AWS keys and Stripe tokens is tested by handing it
+      # AWS keys and Stripe tokens, and the published documentation examples show
+      # the same. The strings are the well-known non-secrets from each vendor's
+      # own docs (AKIAIOSFODNN7EXAMPLE, sk_live_4eC39Hq...), and there is nothing
+      # they could leak. In non-test code G101 stays on.
+      - linters:
+          - gosec
+        path: .*_test\.go
+        text: G101
       - linters:
           - errcheck
         source: defer

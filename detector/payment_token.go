@@ -133,27 +133,36 @@ type tokenPattern struct {
 	minBodyLen int // minimum number of characters after the prefix
 }
 
+// Payment processor names. Each is written once rather than on every row of
+// tokenPatterns below: a provider issues many prefixes, so the name repeats as
+// often as the provider has token kinds.
+const (
+	providerStripe = "Stripe"
+	providerPayPal = "PayPal"
+	providerSquare = "Square"
+)
+
 // tokenPatterns lists all recognized payment token patterns.
 // Longer prefixes are listed first so they match before shorter ones
 // (e.g., "sk_live_" before a hypothetical shorter prefix).
 var tokenPatterns = []tokenPattern{
 	// Stripe tokens (longer prefixes first).
-	{prefix: "sk_live_", provider: "Stripe", tokenType: "secret_key", minBodyLen: 16},
-	{prefix: "pk_live_", provider: "Stripe", tokenType: "publishable_key", minBodyLen: 16},
-	{prefix: "sk_test_", provider: "Stripe", tokenType: "secret_key_test", minBodyLen: 16},
-	{prefix: "pk_test_", provider: "Stripe", tokenType: "publishable_key_test", minBodyLen: 16},
-	{prefix: "price_", provider: "Stripe", tokenType: "price", minBodyLen: 8},
-	{prefix: "prod_", provider: "Stripe", tokenType: "product", minBodyLen: 8},
-	{prefix: "tok_", provider: "Stripe", tokenType: "token", minBodyLen: 8},
-	{prefix: "cus_", provider: "Stripe", tokenType: "customer", minBodyLen: 8},
-	{prefix: "sub_", provider: "Stripe", tokenType: "subscription", minBodyLen: 8},
-	{prefix: "pi_", provider: "Stripe", tokenType: "payment_intent", minBodyLen: 8},
-	{prefix: "pm_", provider: "Stripe", tokenType: "payment_method", minBodyLen: 8},
+	{prefix: "sk_live_", provider: providerStripe, tokenType: "secret_key", minBodyLen: 16},
+	{prefix: "pk_live_", provider: providerStripe, tokenType: "publishable_key", minBodyLen: 16},
+	{prefix: "sk_test_", provider: providerStripe, tokenType: "secret_key_test", minBodyLen: 16},
+	{prefix: "pk_test_", provider: providerStripe, tokenType: "publishable_key_test", minBodyLen: 16},
+	{prefix: "price_", provider: providerStripe, tokenType: "price", minBodyLen: 8},
+	{prefix: "prod_", provider: providerStripe, tokenType: "product", minBodyLen: 8},
+	{prefix: "tok_", provider: providerStripe, tokenType: "token", minBodyLen: 8},
+	{prefix: "cus_", provider: providerStripe, tokenType: "customer", minBodyLen: 8},
+	{prefix: "sub_", provider: providerStripe, tokenType: "subscription", minBodyLen: 8},
+	{prefix: "pi_", provider: providerStripe, tokenType: "payment_intent", minBodyLen: 8},
+	{prefix: "pm_", provider: providerStripe, tokenType: "payment_method", minBodyLen: 8},
 
 	// PayPal tokens.
-	{prefix: "PAYID-", provider: "PayPal", tokenType: "payment_id", minBodyLen: 16},
+	{prefix: "PAYID-", provider: providerPayPal, tokenType: "payment_id", minBodyLen: 16},
 
 	// Square tokens.
-	{prefix: "sq0idp-", provider: "Square", tokenType: "application_id", minBodyLen: 16},
-	{prefix: "sq0csp-", provider: "Square", tokenType: "application_secret", minBodyLen: 16},
+	{prefix: "sq0idp-", provider: providerSquare, tokenType: "application_id", minBodyLen: 16},
+	{prefix: "sq0csp-", provider: providerSquare, tokenType: "application_secret", minBodyLen: 16},
 }
