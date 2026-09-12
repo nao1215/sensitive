@@ -49,3 +49,33 @@ jobs:
 
       - name: Run tests with coverage report output
         run: go test -cover -coverpkg=./... -coverprofile=coverage.out ./...
+
+  cross_build:
+    name: Cross build (${{ matrix.goos }})
+
+    # The matrix above runs on the three operating systems GitHub hosts runners
+    # for. This is the cheap other half: whether the module compiles for the
+    # BSDs at all. A library is reached by `go get` from whatever machine its
+    # caller has, so a build that stops working on FreeBSD surfaces in their
+    # terminal rather than here unless something watches it. A leg takes seconds
+    # and produces no binary.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        goos: [freebsd, openbsd, netbsd]
+
+    env:
+      GOOS: ${{ matrix.goos }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "stable"
+
+      - name: Build
+        run: go build ./...

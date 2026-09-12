@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The supported Go floor is 1.22 instead of 1.24. Nothing in the tree needs a newer Go: 1.22 is where the detectors' range-over-int stops compiling, so that is the real minimum, and two more Go releases can now use this library. The unit-test matrix runs that floor and the newest release, and the GitHub Actions pins move to `actions/checkout@v7` / `actions/setup-go@v7`.
+- CI cross-builds the module for FreeBSD, OpenBSD and NetBSD. A library is reached by `go get` from whatever machine its caller has, and nothing was checking that those three still compile.
+
+### Removed
+
+- The Go Report Card badge. The service is retired and its badge now answers `go report: retired`, which is a line of README saying nothing about this library.
 
 ### Added
 
