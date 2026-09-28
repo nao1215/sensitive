@@ -21,8 +21,9 @@ type EmailDetail struct {
 //     '.', '+', '-', '_'; must not start or end with '.')
 //  3. Walk forward from '@' to identify the domain part (allowed: alphanumeric,
 //     '.', '-')
-//  4. Validate that the local part is non-empty, the domain contains at least
-//     one '.', and the TLD is at least 2 alphabetic characters
+//  4. Validate that the local part is non-empty, the domain does not start
+//     with '.' and contains at least one '.', and the TLD is at least 2
+//     alphabetic characters
 //
 // Confidence is calculated as:
 //   - Basic structure match: 0.7
@@ -147,9 +148,15 @@ func findDomainEnd(data []byte, atIdx int) (end int, domain []byte, ok bool) {
 
 // validateTLD finds the last '.' in domain, checks that the TLD is at least 2
 // characters long and composed entirely of alphabetic characters, and verifies
-// that no domain label starts or ends with '-'. It returns (nil, false) if any
+// that the domain does not start with '.' and no domain label starts or ends
+// with '-'. It returns (nil, false) if any
 // of these checks fail.
 func validateTLD(domain []byte) (tld []byte, ok bool) {
+	// Domain must not start with '.': the first label would be empty, as in
+	// "user@.com", which names a TLD but no domain.
+	if domain[0] == '.' {
+		return nil, false
+	}
 	// Domain must contain at least one '.'.
 	dotIdx := -1
 	for k := len(domain) - 1; k >= 0; k-- {

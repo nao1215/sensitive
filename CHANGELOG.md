@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The card expiry detector no longer reports a second, overlapping date inside one it already reported. "exp 01/01/00" gave both `01/01` and `01/00`, because "exp" is matched once per case variant and each match searched the same range again; "有効期限 01/01/00", matched once, gave only `01/01`. Found by the new `FuzzScanner`.
+- The email detector no longer accepts a domain that starts with `.`: "user@.com" and "user@.example.com" were reported with full confidence although the first domain label is empty. Found by the new `FuzzScanner`.
+
 ## [0.1.1] - 2026-09-12
 
 ### Changed
