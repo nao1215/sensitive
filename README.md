@@ -3,6 +3,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/sensitive.svg)](https://pkg.go.dev/github.com/nao1215/sensitive)
 [![Coverage](https://github.com/nao1215/sensitive/actions/workflows/coverage.yml/badge.svg)](https://github.com/nao1215/sensitive/actions/workflows/coverage.yml)
 [![MultiPlatformUnitTest](https://github.com/nao1215/sensitive/actions/workflows/unit_test.yml/badge.svg)](https://github.com/nao1215/sensitive/actions/workflows/unit_test.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nao1215/sensitive/badge)](https://scorecard.dev/viewer/?uri=github.com/nao1215/sensitive)
 
 ![logo](./doc/images/logo-small.png)
 
