@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-09-28
+
 ### Fixed
 
 - The card expiry detector no longer reports a second, overlapping date inside one it already reported. "exp 01/01/00" gave both `01/01` and `01/00`, because "exp" is matched once per case variant and each match searched the same range again; "有効期限 01/01/00", matched once, gave only `01/01`. Found by the new `FuzzScanner`.
