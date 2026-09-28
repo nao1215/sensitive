@@ -276,3 +276,29 @@ func TestEmailDetector_DomainLabelEndsWithDash(t *testing.T) {
 		t.Errorf("got %d findings for domain label ending with dash, want 0", len(findings))
 	}
 }
+
+func TestEmailDetector_DomainStartsWithDot(t *testing.T) {
+	t.Parallel()
+
+	// A domain that starts with '.' has an empty first label, so "user@.com"
+	// is not an address: there is no domain name, only a TLD. Rejecting it
+	// mirrors the rule that the local part must not start with '.'.
+	d := detector.NewEmail()
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{name: "TLD only after the at sign", input: "user@.com"},
+		{name: "leading dot before a full domain", input: "user@.example.com"},
+		{name: "second at sign followed by a dot", input: "0.AA@.AA"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if findings := d.Scan([]byte(tt.input)); len(findings) != 0 {
+				t.Errorf("Scan(%q) = %q, want no findings", tt.input, findings[0].RawValue)
+			}
+		})
+	}
+}

@@ -60,7 +60,13 @@ func (d *CardExpiry) Scan(data []byte) []Finding {
 	}
 
 	var findings []Finding
-	used := make(map[int]struct{}) // track date start positions already reported
+	// used maps the start of each reported date to its end. One place in the
+	// text is often matched by several keywords ("exp", "Exp" and "EXP" are
+	// all compared case-insensitively), so the same range is searched more
+	// than once; searchRange uses this map to skip over dates that are
+	// already reported instead of finding a second, overlapping date inside
+	// them.
+	used := make(map[int]int)
 
 	for _, m := range matches {
 		// Search within a 50-byte radius before the keyword for date patterns.
@@ -128,9 +134,17 @@ func parseExpiryCandidate(data []byte, i int) (expiryCandidate, bool) {
 
 // searchRange scans data[start:end] for card expiry date patterns (MM/YY,
 // MM/YYYY, MM-YY, MM-YYYY) and appends any valid findings to results.
-// The used map tracks already-reported date positions to avoid duplicates.
-func (d *CardExpiry) searchRange(data []byte, start, end int, used map[int]struct{}, results *[]Finding) {
+// The used map (start to end of each reported date) makes the result
+// independent of how many times a range is searched: a position inside an
+// already-reported date is skipped past, exactly as a single search skips
+// past a date it has just reported, and a date that would overlap a reported
+// one is not reported.
+func (d *CardExpiry) searchRange(data []byte, start, end int, used map[int]int, results *[]Finding) {
 	for i := start; i < end-4; i++ {
+		if reportedEnd, ok := reportedDateAt(used, i); ok {
+			i = reportedEnd - 1
+			continue
+		}
 		c, ok := parseExpiryCandidate(data, i)
 		if !ok {
 			continue
@@ -144,10 +158,10 @@ func (d *CardExpiry) searchRange(data []byte, start, end int, used map[int]struc
 			continue
 		}
 
-		if _, ok := used[i]; ok {
+		if overlapsReportedDate(used, i, c.dateEnd) {
 			continue
 		}
-		used[i] = struct{}{}
+		used[i] = c.dateEnd
 
 		*results = append(*results, Finding{
 			DetectorName: d.Name(),
@@ -163,6 +177,31 @@ func (d *CardExpiry) searchRange(data []byte, start, end int, used map[int]struc
 
 		i = c.dateEnd - 1
 	}
+}
+
+// maxExpiryLen is the length of the longest date searchRange reports (MM/YYYY).
+const maxExpiryLen = 7
+
+// reportedDateAt reports whether position i lies inside a date already in
+// used, and if so returns that date's end.
+func reportedDateAt(used map[int]int, i int) (int, bool) {
+	for s := max(0, i-maxExpiryLen+1); s <= i; s++ {
+		if e, ok := used[s]; ok && e > i {
+			return e, true
+		}
+	}
+	return 0, false
+}
+
+// overlapsReportedDate reports whether data[start:end] overlaps a date
+// already in used.
+func overlapsReportedDate(used map[int]int, start, end int) bool {
+	for s := max(0, start-maxExpiryLen+1); s < end; s++ {
+		if e, ok := used[s]; ok && e > start {
+			return true
+		}
+	}
+	return false
 }
 
 // expiryKeywords are the context keywords used to identify card expiry mentions.

@@ -245,3 +245,50 @@ func TestCardExpiryDetector_NoFalsePositiveFromExample(t *testing.T) {
 		t.Errorf("got %d findings, want 0; 'exp' inside 'example' should not trigger detection", len(findings))
 	}
 }
+
+func TestCardExpiryDetector_NoOverlapFromRepeatedKeywordMatches(t *testing.T) {
+	t.Parallel()
+
+	// "exp" is listed as "exp", "Exp" and "EXP", and every entry is matched
+	// case-insensitively, so one "exp" in the text yields several keyword
+	// matches that each search the same range. The findings must not depend
+	// on how many times a keyword is matched: "01/01/00" has to yield the
+	// same single finding as with a keyword that matches once (有効期限),
+	// never a second, overlapping "01/00".
+	d := detector.NewCardExpiry()
+	tests := []struct {
+		name    string
+		input   string
+		wantRaw []string
+	}{
+		{name: "keyword matched once", input: "有効期限 01/01/00", wantRaw: []string{"01/01"}},
+		{name: "lowercase exp matched by three entries", input: "exp 01/01/00", wantRaw: []string{"01/01"}},
+		{name: "mixed case eXp", input: "eXp 01/01/00", wantRaw: []string{"01/01"}},
+		{name: "expiration date matches four keywords", input: "expiration date 12/25/30", wantRaw: []string{"12/25"}},
+		{name: "date before the keyword", input: "01/01/00 exp", wantRaw: []string{"01/01"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			findings := d.Scan([]byte(tt.input))
+			got := make([]string, 0, len(findings))
+			for _, f := range findings {
+				got = append(got, f.RawValue)
+			}
+			if len(got) != len(tt.wantRaw) {
+				t.Fatalf("Scan(%q) = %q, want %q", tt.input, got, tt.wantRaw)
+			}
+			for i := range got {
+				if got[i] != tt.wantRaw[i] {
+					t.Fatalf("Scan(%q) = %q, want %q", tt.input, got, tt.wantRaw)
+				}
+			}
+			for i := 1; i < len(findings); i++ {
+				if findings[i-1].End > findings[i].Start && findings[i].End > findings[i-1].Start {
+					t.Fatalf("Scan(%q) returned overlapping findings %q and %q", tt.input, findings[i-1].RawValue, findings[i].RawValue)
+				}
+			}
+		})
+	}
+}
