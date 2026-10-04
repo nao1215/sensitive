@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The merchant ID detector no longer reports a terminal ID inside a merchant ID it already reported. "Merchant ID A00000000A00000 TID 000" gave both `A00000000A00000` and `00000000`, because only the start offset was checked for duplicates, not the whole range. Found by the scheduled `FuzzScanner` run.
+
 ## [0.1.2] - 2026-09-28
 
 ### Fixed

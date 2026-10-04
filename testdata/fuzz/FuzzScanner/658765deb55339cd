@@ -1,0 +1,2 @@
+go test fuzz v1
+string("merChAnt ID  A00000000A00000 00000 TID 000")

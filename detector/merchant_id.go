@@ -70,20 +70,18 @@ func (d *MerchantID) Hints() [][]byte {
 // Scan examines data for merchant/terminal IDs near context keywords and returns findings.
 func (d *MerchantID) Scan(data []byte) []Finding {
 	var findings []Finding
-	used := make(map[int]struct{})
 
 	// Check merchant keywords.
 	merchantMatches := merchantKeywords.findPositions(data)
 	for _, m := range merchantMatches {
 		seqs := extractAlphaNumNear(data, m.end, 30, 15, 15)
 		for _, seq := range seqs {
-			if _, ok := used[seq.start]; ok {
+			if overlapsFinding(findings, seq.start, seq.end) {
 				continue
 			}
 			if seq.start < m.end && seq.end > m.start {
 				continue
 			}
-			used[seq.start] = struct{}{}
 
 			findings = append(findings, Finding{
 				DetectorName: d.Name(),
@@ -101,13 +99,12 @@ func (d *MerchantID) Scan(data []byte) []Finding {
 	for _, m := range terminalMatches {
 		seqs := extractDigitsNear(data, m.end, 30, 8, 8)
 		for _, seq := range seqs {
-			if _, ok := used[seq.start]; ok {
+			if overlapsFinding(findings, seq.start, seq.end) {
 				continue
 			}
 			if seq.start < m.end && seq.end > m.start {
 				continue
 			}
-			used[seq.start] = struct{}{}
 
 			findings = append(findings, Finding{
 				DetectorName: d.Name(),
@@ -121,6 +118,18 @@ func (d *MerchantID) Scan(data []byte) []Finding {
 	}
 
 	return findings
+}
+
+// overlapsFinding reports whether [start, end) overlaps any existing finding.
+// A digit run inside an already reported merchant ID (e.g., "00000000" in
+// "A00000000A00000") must not be reported again as a terminal ID.
+func overlapsFinding(findings []Finding, start, end int) bool {
+	for _, f := range findings {
+		if start < f.End && end > f.Start {
+			return true
+		}
+	}
+	return false
 }
 
 // merchantKeywords are context keywords for merchant ID detection.
