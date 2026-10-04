@@ -35,6 +35,14 @@ func TestMerchantIDDetector_Scan(t *testing.T) {
 			wantIDType: detector.MerchantIDTypeTerminal,
 		},
 		{
+			name:       "digits inside a merchant ID are not reported again as a terminal ID",
+			input:      "Merchant ID A00000000A00000 TID 000",
+			wantLen:    1,
+			wantRaw:    "A00000000A00000",
+			wantMinCon: 0.7,
+			wantIDType: detector.MerchantIDTypeMerchant,
+		},
+		{
 			name:    "no keyword",
 			input:   "ABCDE12345FGHI6",
 			wantLen: 0,
