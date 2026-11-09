@@ -20,7 +20,7 @@ test: ## Run tests with coverage
 	$(GO_TOOL) cover -html=cover.out -o cover.html
 
 tools: ## Install dependency tools
-	$(GO_INSTALL) github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+	$(GO_INSTALL) github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
 	$(GO_INSTALL) github.com/k1LoW/octocov@latest
 
 lint: ## Lint code
