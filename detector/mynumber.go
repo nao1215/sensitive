@@ -57,13 +57,17 @@ func (d *MyNumber) scanNormalized(orig []byte, data []byte, posMap []int) []Find
 
 	i := 0
 	for i < len(data) {
+		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(orig, posMap[i+3]) {
+			i += 3
+			continue
+		}
 		if !isDigit(data[i]) {
 			i++
 			continue
 		}
 
 		// Check that this digit is not part of a longer alphanumeric token.
-		if i > 0 && isAlpha(data[i-1]) && !encodedSeparatorBefore(data, i) {
+		if i > 0 && isAlpha(data[i-1]) && !encodedSeparatorBefore(orig, posMap[i]) {
 			i++
 			continue
 		}

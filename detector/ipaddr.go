@@ -46,6 +46,10 @@ func (d *IPAddr) Scan(data []byte) []Finding {
 
 	i := 0
 	for i < len(data) {
+		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(data, i+3) {
+			i += 3
+			continue
+		}
 		// Try IPv4 first if we see a digit.
 		if isDigit(data[i]) {
 			if f, adv, ok := d.tryIPv4(data, i); ok {

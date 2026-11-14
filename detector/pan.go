@@ -114,6 +114,11 @@ func (d *PAN) scanNormalized(orig []byte, data []byte, posMap []int) []Finding {
 
 	i := 0
 	for i < len(data) {
+		// Escape bytes cannot become part of a numeric candidate.
+		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(orig, posMap[i+3]) {
+			i += 3
+			continue
+		}
 		// Skip non-digit characters.
 		if !isDigit(data[i]) {
 			i++

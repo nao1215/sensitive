@@ -59,12 +59,17 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	var findings []Finding
 
 	for i := 0; i < len(data); i++ {
+		// Escape bytes cannot become part of a numeric candidate.
+		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(orig, posMap[i+3]) {
+			i += 2
+			continue
+		}
 		if !isDigit(data[i]) {
 			continue
 		}
 
 		// Word boundary: preceding character must not be alphanumeric.
-		if i > 0 && isAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
+		if i > 0 && isAlphaNum(data[i-1]) && !encodedSeparatorBefore(orig, posMap[i]) {
 			continue
 		}
 
