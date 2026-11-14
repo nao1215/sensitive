@@ -1,23 +1,13 @@
 package detector
 
-// GoogleAPIKeyDetail holds Google API key-specific detail information.
-// It is currently empty; the type exists so the finding carries a typed,
-// forward-compatible Detail like the other detectors.
+// GoogleAPIKeyDetail marks a Google API key finding and currently has no fields.
 type GoogleAPIKeyDetail struct{}
 
-// GoogleAPIKey detects Google API keys in text.
+// GoogleAPIKey detects Google API keys by format, without verifying authentication.
 //
-// Google API keys are 39-character strings that start with the fixed "AIza"
-// prefix followed by exactly 35 characters of A-Z, a-z, 0-9, '-' or '_'.
-//
-// Detection logic:
-//  1. Scan for the "AIza" prefix.
-//  2. Validate that the next 35 characters are in the allowed set.
-//  3. Enforce word boundaries so a key embedded in a longer identifier is not
-//     matched.
-//
-// Confidence: 0.9 — the "AIza" prefix with the fixed length is characteristic of
-// Google API keys.
+//  1. Find the AIza prefix.
+//  2. Require exactly 35 following ASCII letters, digits, hyphens, or underscores, for 39 characters total.
+//  3. Enforce word boundaries and score a match as 0.9.
 type GoogleAPIKey struct{}
 
 // NewGoogleAPIKey creates a new Google API key detector.
@@ -30,8 +20,7 @@ func (d *GoogleAPIKey) Name() DetectorName {
 	return NameGoogleAPIKey
 }
 
-// Hints returns byte sequences for pre-filtering. Every Google API key begins
-// with "AIza", so it is an exhaustive hint.
+// Hints returns the pre-filter substrings for [GoogleAPIKey].
 func (d *GoogleAPIKey) Hints() [][]byte {
 	return [][]byte{[]byte("AIza")}
 }
@@ -39,7 +28,7 @@ func (d *GoogleAPIKey) Hints() [][]byte {
 // googleAPIKeyBodyLen is the number of characters after the "AIza" prefix.
 const googleAPIKeyBodyLen = 35
 
-// Scan examines data for Google API keys and returns findings.
+// Scan returns matches in data using the rules documented on [GoogleAPIKey].
 func (d *GoogleAPIKey) Scan(data []byte) []Finding {
 	var findings []Finding
 	const prefixLen = 4 // len("AIza")

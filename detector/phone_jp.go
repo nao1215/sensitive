@@ -1,9 +1,6 @@
 package detector
 
-// JPPhoneType is the type-safe identifier for a Japanese phone number type.
-// Use the JPPhoneType* constants for comparison with [JPPhoneDetail.PhoneType].
-//
-//	if detail.PhoneType == detector.JPPhoneTypeMobile { ... }
+// JPPhoneType classifies a Japanese phone number; see the JPPhoneType* constants.
 type JPPhoneType string
 
 const (
@@ -23,9 +20,7 @@ const (
 
 // JPPhoneDetail holds Japanese phone number-specific detail information.
 type JPPhoneDetail struct {
-	// PhoneType is the classification of the phone number.
-	// Compare with the JPPhoneType* constants (e.g., [JPPhoneTypeMobile],
-	// [JPPhoneTypeLandline]).
+	// PhoneType is the prefix-based phone classification.
 	PhoneType JPPhoneType
 }
 
@@ -63,28 +58,11 @@ var invalidLandlinePrefixes = map[string]bool{
 	"60": true, "71": true, "81": true, "91": true,
 }
 
-// JPPhone detects Japanese phone numbers in text.
+// JPPhone detects Japanese phone numbers by prefix and length.
 //
-// Supported formats:
-//   - Landline: 03-1234-5678, 03(1234)5678, 0312345678
-//   - Mobile: 090-1234-5678, 090 1234 5678, 09012345678
-//   - IP phone: 050-1234-5678
-//   - Toll-free: 0120-123-456, 0800-123-4567
-//   - M2M/IoT: 020-1234-5678
-//   - Service: 060-1234-5678
-//
-// Detection logic:
-//  1. Scan for sequences starting with '0' (allowing '-', '(', ')', ' ' separators)
-//  2. Count digits (must be 10-11)
-//  3. Validate prefix against known area codes and mobile prefixes
-//
-// To avoid false positives with postal codes (7-digit XXX-XXXX format) and
-// other numeric sequences, the detector requires the '0' prefix and validates
-// the total digit count strictly. Underscores are treated as word characters,
-// so identifiers like _09012345678 are not detected.
-//
-// Full-width digits (e.g., ０９０−１２３４−５６７８) are also supported
-// through normalization.
+//  1. Extract numbers beginning with 0, allowing hyphens, parentheses, and spaces (e.g., 03(1234)5678 or 090 1234 5678).
+//  2. Require 10 or 11 digits and a supported [JPPhoneType] prefix; reject adjacent letters, digits, or underscores.
+//  3. Score landlines as 0.8 and mobile, IP phone, toll-free, M2M/IoT, and service numbers as 0.9.
 type JPPhone struct{}
 
 // NewJPPhone creates a new Japanese phone number detector.
@@ -97,18 +75,7 @@ func (d *JPPhone) Name() DetectorName {
 	return NameJPPhone
 }
 
-// Hints returns byte sequences that may indicate the presence of a Japanese
-// phone number. All Japanese phone numbers start with '0'.
-//
-// NOTE: The single-byte hint "0" is broad and will match most inputs
-// containing any digit zero. However, it still provides value by skipping
-// inputs that contain no '0' at all (e.g., pure alphabetic text). For
-// stricter pre-filtering, multi-byte prefixes like "03", "06", "090" could
-// be used, but this would require an exhaustive list of all valid area codes.
-//
-// The full-width equivalent ０ (U+FF10) is included because Scan normalizes
-// full-width digits before detection. Without this hint the Scanner's
-// pre-filter would reject full-width-only phone numbers before Scan runs.
+// Hints returns the pre-filter substrings for [JPPhone].
 func (d *JPPhone) Hints() [][]byte {
 	return [][]byte{
 		[]byte("0"),
@@ -116,8 +83,7 @@ func (d *JPPhone) Hints() [][]byte {
 	}
 }
 
-// Scan examines data for Japanese phone numbers and returns findings.
-// It normalizes full-width digits before scanning.
+// Scan returns matches in data using the rules documented on [JPPhone].
 func (d *JPPhone) Scan(data []byte) []Finding {
 	normalized, posMap := NormalizeFullWidthDigits(data)
 	return d.scanNormalized(data, normalized, posMap)

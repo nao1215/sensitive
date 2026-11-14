@@ -7,29 +7,15 @@ import (
 
 // ETHDetail holds Ethereum address-specific detail information.
 type ETHDetail struct {
-	// EIP55 indicates whether the address passed EIP-55 mixed-case checksum validation.
-	// True means the address uses correct EIP-55 encoding; false means the address
-	// was all-lowercase or all-uppercase (valid but not checksummed).
+	// EIP55 reports successful mixed-case checksum validation; false means uniform-case hex.
 	EIP55 bool
 }
 
-// ETH detects Ethereum addresses in text.
+// ETH detects Ethereum addresses with optional EIP-55 checksum validation.
 //
-// Ethereum addresses are 42 characters long: a '0x' prefix followed by 40
-// hexadecimal characters representing a 20-byte account address.
-//
-// Detection logic:
-//  1. Scan for '0x' or '0X' prefix
-//  2. Verify the next 40 characters are valid hexadecimal digits
-//  3. Check word boundaries (not part of a larger identifier)
-//  4. If the address uses mixed case, validate the EIP-55 checksum
-//     using Keccak-256 (the pre-FIPS-202 hash used by Ethereum)
-//
-// Confidence scoring:
-//   - 0.80: all-lowercase or all-uppercase hex (valid but no checksum to verify)
-//   - 0.95: mixed-case with valid EIP-55 checksum
-//
-// Mixed-case addresses that fail EIP-55 validation are rejected.
+//  1. Find 0x or 0X followed by exactly 40 hexadecimal characters at word boundaries.
+//  2. Accept uniform-case hex with confidence 0.80.
+//  3. For mixed-case hex, require the EIP-55 checksum using Keccak-256 (the pre-FIPS-202 hash); reject failures and score valid matches as 0.95.
 type ETH struct{}
 
 // NewETH creates a new Ethereum address detector.
@@ -42,9 +28,7 @@ func (d *ETH) Name() DetectorName {
 	return NameETH
 }
 
-// Hints returns byte sequences for pre-filtering.
-// Ethereum addresses always start with "0x" or "0X", providing
-// effective hints for the Scanner's pre-filter stage.
+// Hints returns the pre-filter substrings for [ETH].
 func (d *ETH) Hints() [][]byte {
 	return [][]byte{
 		[]byte("0x"),
@@ -52,8 +36,7 @@ func (d *ETH) Hints() [][]byte {
 	}
 }
 
-// Scan examines data for Ethereum addresses and returns findings.
-// Both all-lowercase and EIP-55 checksummed addresses are detected.
+// Scan returns matches in data using the rules documented on [ETH].
 func (d *ETH) Scan(data []byte) []Finding {
 	var findings []Finding
 

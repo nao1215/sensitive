@@ -2,25 +2,15 @@ package detector
 
 // IBANDetail holds IBAN-specific detail information.
 type IBANDetail struct {
-	// CountryCode is the ISO 3166-1 alpha-2 country code (e.g., "DE", "GB", "JP").
+	// CountryCode is the uppercase ISO 3166-1 alpha-2 code (e.g., "DE" or "GB").
 	CountryCode string
 }
 
-// IBAN detects International Bank Account Numbers in text.
+// IBAN detects International Bank Account Numbers with country-specific lengths and MOD 97 validation.
 //
-// IBAN format: 2 letters (country code) + 2 digits (check digits)
-// + up to 30 alphanumeric characters (BBAN).
-// Both uppercase (DE89...) and lowercase (de89...) IBANs are detected;
-// letters are normalized to uppercase internally for validation.
-//
-// Detection logic:
-//  1. Scan for 2 ASCII letters (case-insensitive) followed by 2 digits
-//  2. Validate the country code against known ISO 3166-1 alpha-2 codes
-//  3. Extract exactly the country-specific length, allowing internal spaces;
-//     a following space separates subsequent text, while adjacent letters or digits reject the candidate
-//  4. Validate the MOD 97 check digit (ISO 7064)
-//
-// Confidence: 0.95 when MOD 97 check passes.
+//  1. Find two ASCII letters followed by two check digits; uppercase letters for lookup in the supported SWIFT registry country table.
+//  2. Extract the country's required length (up to 30 BBAN characters after the prefix), allowing internal spaces; following spaces delimit text, while adjacent letters or digits reject the candidate.
+//  3. Require MOD 97 (ISO 7064) validation and score the match as 0.95.
 type IBAN struct{}
 
 // NewIBAN creates a new IBAN detector.
@@ -33,19 +23,12 @@ func (d *IBAN) Name() DetectorName {
 	return NameIBAN
 }
 
-// Hints returns nil, causing the Scanner to always run IBAN detection.
-// Each supported country code is only 2 bytes long (e.g., "DE", "FR"),
-// which frequently matches normal English text and triggers unnecessary
-// scans. Returning nil avoids this overhead. The Scan method itself
-// performs fast rejection (2 alpha + 2 digit check) so the cost of
-// always scanning is negligible.
+// Hints returns nil because no selective exhaustive substring is available.
 func (d *IBAN) Hints() [][]byte {
 	return nil
 }
 
-// Scan examines data for IBANs and returns findings.
-// Both uppercase and lowercase IBANs are detected. Letters are
-// normalized to uppercase for country code lookup and MOD 97 validation.
+// Scan returns matches in data using the rules documented on [IBAN].
 func (d *IBAN) Scan(data []byte) []Finding {
 	var findings []Finding
 

@@ -9,24 +9,11 @@ type PaymentTokenDetail struct {
 	TokenType string
 }
 
-// PaymentToken detects payment processor API tokens and keys in text.
+// PaymentToken detects Stripe, PayPal, and Square identifiers by prefix and body shape.
 //
-// Payment processor tokens are identifiers used by services such as Stripe,
-// PayPal, and Square. These tokens have distinctive prefixes that make them
-// highly identifiable.
-//
-// Supported token patterns:
-//   - Stripe: sk_live_, pk_live_, sk_test_, pk_test_, tok_, pi_, pm_, cus_, sub_, price_, prod_
-//   - PayPal: PAYID-
-//   - Square: sq0idp-, sq0csp-
-//
-// Detection logic:
-//  1. Scan for known token prefixes
-//  2. Validate that the prefix is followed by a sufficient number of
-//     alphanumeric characters (or base62 characters including underscores)
-//  3. Check word boundaries to avoid false matches
-//
-// Confidence: 0.9 when a recognized prefix and valid token body are found.
+//  1. Find Stripe sk_live_, pk_live_, sk_test_, pk_test_, tok_, pi_, pm_, cus_, sub_, price_, or prod_; PayPal PAYID-; or Square sq0idp- or sq0csp- at a leading word boundary.
+//  2. Consume ASCII alphanumerics, underscores, or hyphens; require at least 16 body characters for keys, PayPal, and Square, or eight for the remaining Stripe identifiers.
+//  3. Score a match as 0.9 and record the provider and token type; no service authentication is attempted.
 type PaymentToken struct{}
 
 // NewPaymentToken creates a new payment processor token detector.
@@ -39,8 +26,7 @@ func (d *PaymentToken) Name() DetectorName {
 	return NamePaymentToken
 }
 
-// Hints returns byte sequences for pre-filtering.
-// Each token type has a distinctive prefix, providing excellent pre-filtering.
+// Hints returns the pre-filter substrings for [PaymentToken].
 func (d *PaymentToken) Hints() [][]byte {
 	return [][]byte{
 		[]byte("sk_live_"),
@@ -60,7 +46,7 @@ func (d *PaymentToken) Hints() [][]byte {
 	}
 }
 
-// Scan examines data for payment processor tokens and returns findings.
+// Scan returns matches in data using the rules documented on [PaymentToken].
 func (d *PaymentToken) Scan(data []byte) []Finding {
 	var findings []Finding
 

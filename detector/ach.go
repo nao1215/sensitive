@@ -8,24 +8,11 @@ type ACHTraceDetail struct {
 	ODFIRoutingNumber string
 }
 
-// ACHTrace detects ACH (Automated Clearing House) trace numbers in text.
+// ACHTrace detects 15-digit ACH transaction trace identifiers from context; the first eight digits identify the originating financial institution and the last seven are its sequence number.
 //
-// An ACH trace number is a 15-digit identifier used to track ACH transactions.
-// The first 8 digits are the ODFI (Originating Depository Financial Institution)
-// routing number, and the remaining 7 digits are a sequence number assigned by
-// the originator.
-//
-// Because bare 15-digit numbers are common (phone numbers, IDs, etc.), this
-// detector requires a context keyword to be present nearby.
-//
-// Detection logic:
-//  1. Scan for context keywords: "ACH", "ach", "trace number", "Trace Number"
-//  2. Within a 50-byte radius of each keyword, look for a 15-digit number
-//  3. Validate the first 8 digits by prepending a check digit (making a 9-digit
-//     ABA routing number) would be unreliable, so instead we validate that
-//     the first 2 digits fall within a valid Federal Reserve routing symbol range
-//
-// Confidence: 0.75 when a context keyword and valid 15-digit sequence are found.
+//  1. Find ACH or trace number (ASCII case-insensitive).
+//  2. Search within 50 bytes of the keyword end for a separate 15-digit sequence.
+//  3. Require the first two digits to fall in an ABA routing prefix range, without applying a checksum; score the match as 0.75.
 type ACHTrace struct{}
 
 // NewACHTrace creates a new ACH trace number detector.
@@ -38,13 +25,7 @@ func (d *ACHTrace) Name() DetectorName {
 	return NameACHTrace
 }
 
-// Hints returns byte sequences for pre-filtering.
-// ACH trace detection requires context keywords to avoid false positives.
-// "trace" is included as a hint (not a keyword) because compound keywords
-// like "trace number" contain it, and the hint filter uses bytes.Contains.
-//
-// ASCII hints are matched case-insensitively by Scanner's hint filter, so a
-// single lowercase entry covers all case variants.
+// Hints returns the pre-filter substrings for [ACHTrace].
 func (d *ACHTrace) Hints() [][]byte {
 	return [][]byte{
 		[]byte("ach"),   // covers ACH, Ach, ach
@@ -52,7 +33,7 @@ func (d *ACHTrace) Hints() [][]byte {
 	}
 }
 
-// Scan examines data for ACH trace numbers near context keywords and returns findings.
+// Scan returns matches in data using the rules documented on [ACHTrace].
 func (d *ACHTrace) Scan(data []byte) []Finding {
 	matches := achKeywords.findPositions(data)
 	if len(matches) == 0 {

@@ -7,20 +7,11 @@ type MyNumberDetail struct {
 	CheckDigitValid bool
 }
 
-// MyNumber detects Japanese My Number (individual number) in text.
+// MyNumber detects 12-digit Japanese individual numbers with a valid MOD 11 check digit.
 //
-// My Number is a 12-digit number assigned to every resident of Japan.
-// The last digit is a check digit calculated from the first 11 digits.
-//
-// Check digit algorithm:
-//  1. For each of the first 11 digits (P[0] to P[10], from left to right):
-//     Calculate weight Q[n] where n is the position from the right (0-indexed).
-//     Q[n] = n + 2 if n < 6, or Q[n] = n - 4 if n >= 6.
-//  2. Sum = P[10-n] * Q[n] for n = 0..10
-//  3. Remainder = Sum mod 11
-//  4. Check digit = 0 if remainder <= 1, else 11 - remainder
-//
-// Confidence: 0.95 when the check digit is valid.
+//  1. Extract exactly 12 digits; the final digit is the check digit.
+//  2. For the first 11 digits, count n from the right starting at 0 and use weight n+2 for n < 6, otherwise n-4; sum digit times weight.
+//  3. Let r be the sum modulo 11; require check digit 0 when r <= 1, otherwise 11-r. Score a valid match as 0.95.
 type MyNumber struct{}
 
 // NewMyNumber creates a new My Number detector.
@@ -33,18 +24,12 @@ func (d *MyNumber) Name() DetectorName {
 	return NameMyNumber
 }
 
-// Hints returns nil, causing the Scanner to always run My Number detection.
-// My Number consists of digits 0-9 only and can start with any digit,
-// so listing all ten single-digit hints would match virtually every input.
-// Returning nil makes this intent explicit. The Scan method itself performs
-// fast rejection (12-digit length + check digit) so the cost of always
-// scanning is negligible.
+// Hints returns nil because no selective exhaustive substring is available.
 func (d *MyNumber) Hints() [][]byte {
 	return nil
 }
 
-// Scan examines data for My Number values and returns findings.
-// It normalizes full-width digits before scanning.
+// Scan returns matches in data using the rules documented on [MyNumber].
 func (d *MyNumber) Scan(data []byte) []Finding {
 	normalized, posMap := NormalizeFullWidthDigits(data)
 	return d.scanNormalized(data, normalized, posMap)

@@ -2,7 +2,6 @@ package detector_test
 
 import (
 	"fmt"
-	"regexp"
 
 	"github.com/nao1215/sensitive/detector"
 )
@@ -127,35 +126,16 @@ func ExampleNewIPAddr() {
 	// ip=192.168.1.1 version=4
 }
 
-func ExampleNewRegex() {
-	// Create a custom detector for internal ticket IDs.
-	d := detector.NewRegex(
-		detector.DetectorName("ticket_id"),
-		regexp.MustCompile(`TICKET-\d{4}`),
-		[][]byte{[]byte("TICKET-")},
-		0.9,
-	)
-
-	findings := d.Scan([]byte("see TICKET-4321 for details"))
-
-	for _, f := range findings {
-		fmt.Printf("type=%s raw=%s confidence=%.1f\n", f.DetectorName, f.RawValue, f.Confidence)
-	}
-	// Output:
-	// type=ticket_id raw=TICKET-4321 confidence=0.9
-}
-
 func ExampleFinding_PANDetail() {
-	d := detector.NewPAN()
-	findings := d.Scan([]byte("4532015112830366"))
-
-	for _, f := range findings {
-		if detail, ok := f.PANDetail(); ok {
-			fmt.Printf("brand=%s last4=%s luhn=%t\n", detail.Brand, detail.Last4, detail.Luhn)
-		}
+	finding := detector.NewPAN().Scan([]byte("4532015112830366"))[0]
+	if detail, ok := finding.PANDetail(); ok {
+		fmt.Printf("brand=%s last4=%s\n", detail.Brand, detail.Last4)
 	}
+	_, ok := finding.EmailDetail()
+	fmt.Println("email detail:", ok)
 	// Output:
-	// brand=Visa last4=0366 luhn=true
+	// brand=Visa last4=0366
+	// email detail: false
 }
 
 func ExampleFinding_IsPAN() {
@@ -208,4 +188,16 @@ func ExampleNormalizeFullWidthDigits() {
 	fmt.Println(string(normalized))
 	// Output:
 	// 090-1234-5678
+}
+
+func ExampleFinding_Kind() {
+	for _, name := range []detector.DetectorName{detector.NamePAN, detector.NameEmail, detector.NameAWSKey, "custom"} {
+		finding := detector.Finding{DetectorName: name}
+		fmt.Printf("%s: %q\n", name, finding.Kind())
+	}
+	// Output:
+	// pan: "financial"
+	// email: "pii"
+	// awskey: "credential"
+	// custom: ""
 }

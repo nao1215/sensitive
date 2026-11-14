@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Shorten the README around runnable examples, move detailed contracts and benchmarks to linked documentation, and condense public API comments while retaining detector algorithms; keep Contributors unchanged ([PR #51](https://github.com/nao1215/sensitive/pull/51), [21ac25a](https://github.com/nao1215/sensitive/commit/21ac25a6073b43ddd2c5f8501eda38924dd76bb2)).
+- Consolidate runnable examples and check README snippets, expected output, and godoc example placement in the test suite without changing library behavior or dependencies ([PR #51](https://github.com/nao1215/sensitive/pull/51), [21ac25a](https://github.com/nao1215/sensitive/commit/21ac25a6073b43ddd2c5f8501eda38924dd76bb2)).
+
 ## [0.2.1] - 2026-11-14
 
 ### Fixed

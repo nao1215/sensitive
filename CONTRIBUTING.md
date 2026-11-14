@@ -10,27 +10,7 @@ Thank you for considering contributing to the sensitive project! This document e
 
 #### Installing Go
 
-sensitive development requires Go 1.24 or later.
-
-**macOS (using Homebrew)**
-```bash
-brew install go
-```
-
-**Linux (for Ubuntu)**
-```bash
-# Using snap
-sudo snap install go --classic
-
-# Or download from official site
-wget https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
-sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
-echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.profile
-source ~/.profile
-```
-
-**Windows**
-Download and run the installer from the official Go website.
+See [Installation and requirements](README.md#installation-and-requirements) for the library's Go floor and [Testing](README.md#testing) for the separate test module's requirement. Install a current Go toolchain using the [official installation guide](https://go.dev/doc/install).
 
 Verify installation:
 ```bash
@@ -61,6 +41,9 @@ make test
 
 # Run linter
 make lint
+
+# Run the separate property tests
+(cd tests && go test ./...)
 ```
 
 ## Development Workflow

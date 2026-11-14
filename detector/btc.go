@@ -4,10 +4,7 @@ import (
 	"crypto/sha256"
 )
 
-// BTCAddressType identifies the Bitcoin address encoding format.
-// Use the BTCAddress* constants for comparison with [BTCDetail.AddressType].
-//
-//	if detail.AddressType == detector.BTCAddressP2PKH { ... }
+// BTCAddressType identifies the encoding in [BTCDetail.AddressType].
 type BTCAddressType string
 
 const (
@@ -23,29 +20,16 @@ const (
 
 // BTCDetail holds Bitcoin address-specific detail information.
 type BTCDetail struct {
-	// AddressType is the encoding format of the detected address.
-	// Compare with the BTCAddress* constants (e.g., [BTCAddressP2PKH],
-	// [BTCAddressBech32]).
+	// AddressType is the address encoding.
 	AddressType BTCAddressType
 }
 
-// BTC detects Bitcoin addresses in text.
+// BTC detects Bitcoin mainnet addresses with valid checksums.
 //
-// Bitcoin uses four main address formats:
-//   - P2PKH (Pay-to-Public-Key-Hash): starts with '1', 25-34 Base58Check characters
-//   - P2SH (Pay-to-Script-Hash): starts with '3', 25-34 Base58Check characters
-//   - Bech32 SegWit v0: starts with 'bc1q', exactly 42 characters (P2WPKH) or 62 characters (P2WSH)
-//   - Bech32m Taproot v1: starts with 'bc1p', exactly 62 characters (P2TR)
-//
-// Detection logic:
-//  1. Scan for potential address start characters ('1', '3', 'b'/'B')
-//  2. For legacy addresses: extract Base58 character sequence, validate length (25-34),
-//     decode Base58, verify double-SHA-256 checksum (last 4 bytes)
-//  3. For bech32/bech32m: match 'bc1' prefix, extract bech32 characters,
-//     validate length (42 or 62), verify polynomial checksum
-//  4. Check word boundaries to avoid matching substrings of larger identifiers
-//
-// Confidence: 0.95 when checksum validation passes.
+//  1. Extract candidates at word boundaries beginning with 1, 3, or bc1 (case-insensitive for the prefix).
+//  2. For P2PKH (1) and P2SH (3), require 25–34 Base58Check characters and verify the double-SHA-256 checksum.
+//  3. For bc1q, require SegWit v0 and Bech32 with 42 or 62 characters; for bc1p, require Taproot v1 and Bech32m with 62 characters. Validate the witness program and polynomial checksum.
+//  4. Score a valid match as 0.95.
 type BTC struct{}
 
 // NewBTC creates a new Bitcoin address detector.
@@ -58,19 +42,12 @@ func (d *BTC) Name() DetectorName {
 	return NameBTC
 }
 
-// Hints returns nil, causing the Scanner to always run BTC detection.
-// Legacy addresses start with '1' or '3', which are single-byte sequences
-// that appear in nearly all text, making them ineffective as pre-filter hints.
-// The Scan method itself performs fast character-class rejection, so the cost
-// of always scanning is negligible.
+// Hints returns nil because no selective exhaustive substring is available.
 func (d *BTC) Hints() [][]byte {
 	return nil
 }
 
-// Scan examines data for Bitcoin addresses and returns findings.
-// Both legacy (Base58Check) and bech32/bech32m (SegWit/Taproot) formats
-// are detected. Addresses are validated using their respective checksum
-// algorithms before being reported.
+// Scan returns matches in data using the rules documented on [BTC].
 func (d *BTC) Scan(data []byte) []Finding {
 	var findings []Finding
 

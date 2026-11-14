@@ -15,31 +15,11 @@ type SWIFTBICDetail struct {
 	BranchCode string
 }
 
-// SWIFTBIC detects SWIFT/BIC codes in text.
+// SWIFTBIC detects 8- or 11-character bank identifiers for international wire transfers, without checking assignment to an institution.
 //
-// SWIFT/BIC (Society for Worldwide Interbank Financial Telecommunication /
-// Bank Identifier Code) is an 8- or 11-character identifier used for
-// international wire transfers. The format is:
-//
-//	BBBBCCLL    (8 characters, head office)
-//	BBBBCCLLBBB (11 characters, specific branch)
-//
-// Where:
-//   - BBBB = bank/institution code (4 letters)
-//   - CC   = ISO 3166-1 alpha-2 country code (2 letters)
-//   - LL   = location code (2 alphanumeric characters)
-//   - BBB  = branch code (3 alphanumeric characters, optional)
-//
-// Detection logic:
-//  1. Scan for sequences of 8 or 11 alphanumeric characters
-//  2. Validate the first 4 characters are alphabetic (bank code)
-//  3. Validate characters 5-6 are a recognized ISO 3166-1 alpha-2 country code
-//  4. Validate characters 7-8 are alphanumeric (location code)
-//  5. If 11 characters, validate characters 9-11 are alphanumeric (branch code)
-//  6. Both uppercase and lowercase inputs are accepted; letters are normalized
-//     to uppercase for validation
-//
-// Confidence: 0.85 when format and country code are valid.
+//  1. Extract an alphanumeric candidate and uppercase letters for validation.
+//  2. Require four bank letters, a recognized two-letter ISO 3166-1 country code, two alphanumeric location characters, and optionally three alphanumeric branch characters.
+//  3. Score a match as 0.85; an absent branch denotes the head office.
 type SWIFTBIC struct{}
 
 // NewSWIFTBIC creates a new SWIFT/BIC code detector.
@@ -52,19 +32,12 @@ func (d *SWIFTBIC) Name() DetectorName {
 	return NameSWIFTBIC
 }
 
-// Hints returns nil, causing the Scanner to always run SWIFT/BIC detection.
-// SWIFT/BIC codes have no common prefix or substring that can serve as an
-// exhaustive hint. The 2-letter country code is too short and matches
-// normal English text frequently. The Scan method itself performs fast
-// rejection (4 alpha + valid country code) so the cost of always scanning
-// is negligible.
+// Hints returns nil because no selective exhaustive substring is available.
 func (d *SWIFTBIC) Hints() [][]byte {
 	return nil
 }
 
-// Scan examines data for SWIFT/BIC codes and returns findings.
-// Both uppercase and lowercase codes are detected. Letters are
-// normalized to uppercase for country code validation.
+// Scan returns matches in data using the rules documented on [SWIFTBIC].
 func (d *SWIFTBIC) Scan(data []byte) []Finding {
 	var findings []Finding
 

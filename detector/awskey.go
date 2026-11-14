@@ -1,9 +1,6 @@
 package detector
 
-// AWSKeyType is the type-safe identifier for an AWS key credential type.
-// Use the AWSKeyType* constants for comparison with [AWSKeyDetail.KeyType].
-//
-//	if detail.KeyType == detector.AWSKeyTypeLongTerm { ... }
+// AWSKeyType identifies the credential type in [AWSKeyDetail.KeyType].
 type AWSKeyType string
 
 const (
@@ -15,24 +12,15 @@ const (
 
 // AWSKeyDetail holds AWS Access Key-specific detail information.
 type AWSKeyDetail struct {
-	// KeyType is the type of the AWS key.
-	// Compare with the AWSKeyType* constants (e.g., [AWSKeyTypeLongTerm],
-	// [AWSKeyTypeTemporary]).
+	// KeyType is the credential type inferred from the prefix.
 	KeyType AWSKeyType
 }
 
-// AWSKey detects AWS Access Key IDs in text.
+// AWSKey detects AWS Access Key IDs by format, without checking whether they authenticate.
 //
-// AWS Access Key IDs are 20-character strings that start with "AKIA" (long-term
-// credentials) or "ASIA" (temporary STS credentials). The remaining 16 characters
-// are uppercase letters and digits (A-Z, 0-9).
-//
-// Detection logic:
-//  1. Scan for "AKIA" or "ASIA" prefix
-//  2. Validate that the next 16 characters are uppercase alphanumeric
-//  3. Confirm total length is exactly 20 characters
-//
-// Confidence: 0.95 for a valid match.
+//  1. Find AKIA (long-term IAM) or ASIA (temporary STS).
+//  2. Require exactly 16 following uppercase ASCII letters or digits and token boundaries, for 20 characters total.
+//  3. Score a match as 0.95 and record [AWSKeyDetail.KeyType].
 type AWSKey struct{}
 
 // NewAWSKey creates a new AWS Access Key detector.
@@ -45,9 +33,7 @@ func (d *AWSKey) Name() DetectorName {
 	return NameAWSKey
 }
 
-// Hints returns byte sequences for pre-filtering.
-// AWS Access Key IDs always start with "AKIA" or "ASIA", providing
-// highly specific hints for efficient pre-filtering.
+// Hints returns the pre-filter substrings for [AWSKey].
 func (d *AWSKey) Hints() [][]byte {
 	return [][]byte{
 		[]byte("AKIA"),
@@ -55,7 +41,7 @@ func (d *AWSKey) Hints() [][]byte {
 	}
 }
 
-// Scan examines data for AWS Access Key IDs and returns findings.
+// Scan returns matches in data using the rules documented on [AWSKey].
 func (d *AWSKey) Scan(data []byte) []Finding {
 	var findings []Finding
 

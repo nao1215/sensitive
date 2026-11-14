@@ -8,27 +8,11 @@ type EmailDetail struct {
 	Domain string
 }
 
-// Email detects email addresses in text using heuristic validation.
+// Email detects addresses heuristically, without quoted local parts, IP-literal domains, or internationalized addresses (EAI/RFC 6530).
 //
-// This is NOT a strict RFC 5321/5322 parser. It uses practical rules that
-// cover the vast majority of real-world email addresses while keeping false
-// positives low. Notably, it does not support quoted local parts, IP-literal
-// domains, or internationalized email addresses (EAI/RFC 6530).
-//
-// Detection uses '@' as a pivot point rather than a regular expression:
-//  1. Scan for '@' characters in the input
-//  2. Walk backward from '@' to identify the local part (allowed: alphanumeric,
-//     '.', '+', '-', '_'; must not start or end with '.')
-//  3. Walk forward from '@' to identify the domain part (allowed: alphanumeric,
-//     '.', '-')
-//  4. Validate that the local part is non-empty, the domain does not start
-//     with '.' and contains at least one '.', and the TLD is at least 2
-//     alphabetic characters
-//
-// Confidence is calculated as:
-//   - Basic structure match: 0.7
-//   - + Known TLD (case-insensitive check): +0.2 (= 0.9)
-//   - + No consecutive dots in domain: +0.1 (= 1.0)
+//  1. Find @, then scan backward over alphanumerics and .+-_ for the local part and forward over alphanumerics and .- for the domain.
+//  2. Require a nonempty local part without leading/trailing dots, a domain containing a dot but not starting with one, and an alphabetic TLD of at least two characters.
+//  3. Score the structure as 0.7, add 0.2 for a known TLD (case-insensitive), and add 0.1 for a domain without consecutive dots.
 type Email struct{}
 
 // NewEmail creates a new Email detector.
@@ -41,16 +25,14 @@ func (d *Email) Name() DetectorName {
 	return NameEmail
 }
 
-// Hints returns byte sequences that may indicate the presence of an email address.
-// Every email address contains an '@' character.
+// Hints returns the pre-filter substrings for [Email].
 func (d *Email) Hints() [][]byte {
 	return [][]byte{
 		[]byte("@"),
 	}
 }
 
-// Scan examines data for email addresses and returns findings.
-// It scans for '@' characters and validates the surrounding local and domain parts.
+// Scan returns matches in data using the rules documented on [Email].
 func (d *Email) Scan(data []byte) []Finding {
 	var findings []Finding
 

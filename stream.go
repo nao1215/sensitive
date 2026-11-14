@@ -5,13 +5,7 @@ import (
 	"io"
 )
 
-// ScanReader reads all data from r and scans it for sensitive data.
-// This is a convenience method for cases where the full content fits in memory.
-// For large inputs or streaming use cases, prefer [Scanner.ScanLines].
-//
-//	f, _ := os.Open("access.log")
-//	defer f.Close()
-//	findings, err := scanner.ScanReader(f)
+// ScanReader reads all of r into memory and calls [Scanner.Scan]. A read error returns nil findings and the error; use [Scanner.ScanLines] for incremental processing.
 func (s *Scanner) ScanReader(r io.Reader) ([]Finding, error) {
 	data, err := io.ReadAll(r)
 	if err != nil {
@@ -20,31 +14,9 @@ func (s *Scanner) ScanReader(r io.Reader) ([]Finding, error) {
 	return s.Scan(data), nil
 }
 
-// ScanLines reads from r line by line and calls fn for each line that
-// contains at least one finding. This is the recommended API for scanning
-// log files and other line-oriented text streams, as it processes data
-// incrementally without loading the entire input into memory.
+// ScanLines calls fn synchronously for each line containing findings, with 1-based line numbers and line-relative byte offsets. The line excludes its LF or CRLF terminator and is a copy that fn may retain.
 //
-// lineNum is 1-based. The line parameter is a copy of the raw line bytes
-// (without the trailing newline), safe to retain after fn returns.
-// findings contains all detections for that line.
-//
-// fn is only called for lines that contain findings. Lines with no
-// sensitive data are silently skipped.
-//
-// The internal buffer starts at 64 KB and grows up to 1 MB per line.
-// Lines exceeding 1 MB cause ScanLines to return [bufio.ErrTooLong].
-// If you need to handle longer lines, use [Scanner.ScanReader] instead
-// (which loads the entire input into memory).
-//
-// Returns the first error encountered while reading from r, or nil
-// if the entire input was processed successfully.
-//
-//	f, _ := os.Open("access.log")
-//	defer f.Close()
-//	err := scanner.ScanLines(f, func(lineNum int, line []byte, findings []Finding) {
-//	    fmt.Printf("line %d: found %d sensitive values\n", lineNum, len(findings))
-//	})
+// The buffer starts at 64 KiB and grows to 1 MiB, including space needed for the line terminator. A line that exceeds the buffer limit returns [bufio.ErrTooLong]; use [Scanner.ScanReader] for longer lines. Read errors are returned after any callbacks already made.
 func (s *Scanner) ScanLines(r io.Reader, fn func(lineNum int, line []byte, findings []Finding)) error {
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)

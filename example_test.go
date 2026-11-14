@@ -7,164 +7,131 @@ import (
 
 	"github.com/nao1215/sensitive"
 	"github.com/nao1215/sensitive/detector"
-	"github.com/nao1215/sensitive/mask"
 )
 
-func ExampleNewScanner() {
+func Example() {
 	scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
-	findings := scanner.ScanString("user tanaka@example.com paid with 4532015112830366")
-
-	for _, f := range findings {
-		fmt.Printf("type=%s raw=%s confidence=%.2f\n", f.DetectorName, f.RawValue, f.Confidence)
-	}
-	// Unordered output:
-	// type=pan raw=4532015112830366 confidence=1.00
-	// type=email raw=tanaka@example.com confidence=1.00
-}
-
-func ExampleNewScanner_withAll() {
-	scanner := sensitive.NewScanner(sensitive.WithAll())
-	findings := scanner.ScanString("key: AKIAIOSFODNN7EXAMPLE")
-
-	for _, f := range findings {
-		fmt.Printf("type=%s raw=%s confidence=%.2f\n", f.DetectorName, f.RawValue, f.Confidence)
+	text := "user tanaka@example.com paid with 4532015112830366"
+	for _, f := range scanner.ScanString(text) {
+		fmt.Printf("%s: %s (%.2f)\n", f.DetectorName, f.RawValue, f.Confidence)
 	}
 	// Output:
-	// type=awskey raw=AKIAIOSFODNN7EXAMPLE confidence=0.95
+	// pan: 4532015112830366 (1.00)
+	// email: tanaka@example.com (1.00)
+}
+
+func ExampleNewScanner() {
+	text := "tanaka@example.com 4532015112830366 from 192.0.2.1"
+	for _, config := range []struct {
+		name string
+		opts []sensitive.Option
+	}{
+		{"no options", nil},
+		{"selected", []sensitive.Option{sensitive.WithPAN(), sensitive.WithEmail()}},
+		{"all built-ins", []sensitive.Option{sensitive.WithAll()}},
+	} {
+		scanner := sensitive.NewScanner(config.opts...)
+		fmt.Printf("%s: %d findings\n", config.name, len(scanner.ScanString(text)))
+	}
+	// Output:
+	// no options: 0 findings
+	// selected: 2 findings
+	// all built-ins: 3 findings
+}
+
+func ExampleNewScanner_options() {
+	// Keep overlapping candidates and process them in input order.
+	custom := detector.NewRegex("reference", regexp.MustCompile(`REF-\d{4}`), nil, 0.5)
+	scanner := sensitive.NewScanner(
+		sensitive.WithEmail(),
+		sensitive.WithDetector(custom),
+		sensitive.WithoutDedup(),
+		sensitive.WithSortByPosition(),
+	)
+	for _, f := range scanner.ScanString("REF-1234@example.com then admin@example.com") {
+		fmt.Printf("%s [%d:%d] %.1f\n", f.DetectorName, f.Start, f.End, f.Confidence)
+	}
+	// Output:
+	// email [0:20] 1.0
+	// reference [0:8] 0.5
+	// email [26:43] 1.0
 }
 
 func ExampleScanner_Scan() {
 	scanner := sensitive.NewScanner(sensitive.WithPAN())
-	data := []byte("payment for card 4532-0151-1283-0366 amount $99.99")
-	findings := scanner.Scan(data)
-
-	for _, f := range findings {
-		fmt.Printf("found %s at position [%d:%d]\n", f.DetectorName, f.Start, f.End)
+	data := []byte("カード: 4532-0151-1283-0366")
+	for _, f := range scanner.Scan(data) {
+		fmt.Printf("%s [%d:%d]: %s\n", f.DetectorName, f.Start, f.End, data[f.Start:f.End])
 	}
 	// Output:
-	// found pan at position [17:36]
+	// pan [11:30]: 4532-0151-1283-0366
 }
 
 func ExampleScanner_ScanString() {
 	scanner := sensitive.NewScanner(sensitive.WithEmail())
 	findings := scanner.ScanString("contact admin@example.com for support")
-
 	fmt.Printf("found %d email(s)\n", len(findings))
-	if len(findings) > 0 {
-		fmt.Printf("email: %s\n", findings[0].RawValue)
+	for _, f := range findings {
+		fmt.Println(f.RawValue)
 	}
 	// Output:
 	// found 1 email(s)
-	// email: admin@example.com
-}
-
-func ExampleWithDetector() {
-	// Register a custom detector for internal project IDs.
-	projectID := detector.NewRegex(
-		detector.DetectorName("project_id"),
-		regexp.MustCompile(`PROJ-\d{6}`),
-		[][]byte{[]byte("PROJ-")},
-		0.8,
-	)
-
-	scanner := sensitive.NewScanner(sensitive.WithDetector(projectID))
-	findings := scanner.ScanString("assigned to PROJ-123456")
-
-	for _, f := range findings {
-		fmt.Printf("type=%s raw=%s\n", f.DetectorName, f.RawValue)
-	}
-	// Output:
-	// type=project_id raw=PROJ-123456
-}
-
-func ExampleWithAll() {
-	scanner := sensitive.NewScanner(sensitive.WithAll())
-	text := "user tanaka@example.com paid with 4532015112830366 from 192.168.1.1"
-	findings := scanner.ScanString(text)
-
-	fmt.Printf("found %d sensitive item(s)\n", len(findings))
-	// Output:
-	// found 3 sensitive item(s)
+	// admin@example.com
 }
 
 func ExampleScanner_ScanReader() {
-	scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
-	r := strings.NewReader("user tanaka@example.com paid with 4532015112830366")
-
-	findings, err := scanner.ScanReader(r)
+	scanner := sensitive.NewScanner(sensitive.WithEmail())
+	reader := strings.NewReader("safe line\nadmin@example.com\n")
+	findings, err := scanner.ScanReader(reader)
 	if err != nil {
 		fmt.Println("error:", err)
 		return
 	}
-
 	for _, f := range findings {
-		fmt.Printf("type=%s raw=%s\n", f.DetectorName, f.RawValue)
+		fmt.Printf("%s [%d:%d]\n", f.RawValue, f.Start, f.End)
 	}
-	// Unordered output:
-	// type=pan raw=4532015112830366
-	// type=email raw=tanaka@example.com
+	// Output:
+	// admin@example.com [10:27]
 }
 
 func ExampleScanner_ScanLines() {
 	scanner := sensitive.NewScanner(sensitive.WithEmail())
-	input := "normal log line\nuser tanaka@example.com logged in\nanother safe line\n"
-
-	err := scanner.ScanLines(strings.NewReader(input), func(lineNum int, _ []byte, findings []sensitive.Finding) {
+	input := "safe line\nadmin@example.com\n"
+	err := scanner.ScanLines(strings.NewReader(input), func(n int, line []byte, findings []sensitive.Finding) {
 		for _, f := range findings {
-			fmt.Printf("line %d: %s=%s\n", lineNum, f.DetectorName, f.RawValue)
+			fmt.Printf("line %d [%d:%d]: %s\n", n, f.Start, f.End, line[f.Start:f.End])
 		}
 	})
 	if err != nil {
 		fmt.Println("error:", err)
 	}
 	// Output:
-	// line 2: email=tanaka@example.com
+	// line 2 [0:17]: admin@example.com
 }
 
 func ExampleWithMinConfidence() {
-	// WithMinConfidence filters out findings below the threshold.
-	// BankAccount detections have lower confidence (0.50-0.65),
-	// while Email detections have high confidence (1.00).
-	scanner := sensitive.NewScanner(
-		sensitive.WithEmail(),
-		sensitive.WithBankAccount(),
-		sensitive.WithMinConfidence(0.8),
+	text := "user tanaka@example.com bank account 12345678"
+	for _, threshold := range []float64{0.4, 0.8} {
+		scanner := sensitive.NewScanner(
+			sensitive.WithEmail(), sensitive.WithBankAccount(),
+			sensitive.WithMinConfidence(threshold),
+		)
+		fmt.Printf("threshold %.1f: %d findings\n", threshold, len(scanner.ScanString(text)))
+	}
+	// Output:
+	// threshold 0.4: 2 findings
+	// threshold 0.8: 1 findings
+}
+
+func ExampleWithDetector() {
+	ticket := detector.NewRegex(
+		"ticket_id", regexp.MustCompile(`TICKET-\d{4}`),
+		[][]byte{[]byte("TICKET-")}, 0.9,
 	)
-	findings := scanner.ScanString("user tanaka@example.com bank account 12345678")
-
-	for _, f := range findings {
-		fmt.Printf("type=%s confidence=%.2f\n", f.DetectorName, f.Confidence)
+	scanner := sensitive.NewScanner(sensitive.WithDetector(ticket))
+	for _, f := range scanner.ScanString("see TICKET-4321 for details") {
+		fmt.Printf("%s: %s (%.1f)\n", f.DetectorName, f.RawValue, f.Confidence)
 	}
 	// Output:
-	// type=email confidence=1.00
-}
-
-func ExampleFinding_Kind() {
-	scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail(), sensitive.WithAWSKey())
-	findings := scanner.ScanString("user tanaka@example.com paid with 4532015112830366 key AKIAIOSFODNN7EXAMPLE")
-
-	for _, f := range findings {
-		fmt.Printf("%s: %s\n", f.DetectorName, f.Kind())
-	}
-	// Unordered output:
-	// pan: financial
-	// email: pii
-	// awskey: credential
-}
-
-// This example demonstrates how to use the mask package with the scanner
-// to detect and mask sensitive data in a single pipeline.
-func Example_maskingPipeline() {
-	scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
-	text := "user tanaka@example.com paid with 4532015112830366"
-	findings := scanner.ScanString(text)
-
-	masked := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{
-		detector.NamePAN:   mask.Last4,
-		detector.NameEmail: mask.Partial,
-	})
-
-	fmt.Println(masked)
-	// Output:
-	// user t*****@example.com paid with ************0366
+	// ticket_id: TICKET-4321 (0.9)
 }

@@ -1,45 +1,12 @@
-// Package detector provides individual sensitive data detector implementations
-// for the sensitive library. Each detector targets a specific type of sensitive
-// data (e.g., credit card numbers, email addresses, phone numbers) and implements
-// the sensitive.Detector interface.
+// Package detector provides built-in sensitive-data detectors and the [Detector] extension interface. Each detector type documents its validation steps and confidence score; the root sensitive package composes detectors into a scanner.
 //
-// Detectors use a multi-stage approach to minimize false positives:
+// # Full-Width Digits and Boundaries
 //
-//  1. Hint-based pre-filtering via the Hints() method, enabling the Scanner
-//     to quickly skip non-matching input using bytes.Contains.
-//  2. Dedicated parsers that scan byte sequences directly, avoiding expensive
-//     regular expression evaluation when possible.
-//  3. Domain rule validation (BIN prefix checks, Luhn algorithm, check digit
-//     verification, etc.) to confirm that candidates are genuine.
+// [PAN], [JPPhone], [MyNumber], [ABARouting], and [BankAccount] use [NormalizeFullWidthDigits] before extraction. For example, ０９０－１２３４－５６７８ and 口座番号 １２３４５６７８ are recognized. IBAN and UK sort codes use ASCII formats; CVV, card expiry, ACH trace, and merchant IDs also do not normalize full-width digits. Findings retain the original bytes and offsets.
 //
-// # Available Detectors
+// Leading percent-encoded log/query separators (whitespace, quotes, brackets, colon, comma, semicolon, equals, ampersand, and question mark) delimit values like literal separators. Encoded word characters and malformed escapes do not relax boundary checks.
 //
-//   - [PAN]: Credit card number detection with BIN prefix and Luhn validation
-//   - [Email]: Email address detection using '@' pivot scanning
-//   - [JPPhone]: Japanese phone number detection (landline, mobile, IP, toll-free)
-//   - [MyNumber]: Japanese My Number (individual number) with check digit validation
-//   - [JWT]: JSON Web Token detection with header structure validation
-//   - [AWSKey]: AWS Access Key ID detection (AKIA/ASIA prefix)
-//   - [IBAN]: International Bank Account Number with MOD 97 validation
-//   - [IPAddr]: IPv4 and IPv6 address detection
-//   - [SWIFTBIC]: SWIFT/BIC code detection with country code validation
-//   - [ABARouting]: US ABA routing transit number with checksum validation
-//   - [UKSortCode]: UK bank sort code detection (XX-XX-XX format)
-//   - [CVV]: Card verification value (CVV/CVC) detection with context keywords
-//   - [CardExpiry]: Payment card expiration date detection with context keywords
-//   - [PaymentToken]: Payment processor token detection (Stripe, PayPal, Square)
-//   - [BankAccount]: Bank account number detection using context keywords (weak detection)
-//   - [ACHTrace]: ACH trace number detection with context keywords
-//   - [MerchantID]: Merchant ID and terminal ID detection with context keywords
-//   - [Regex]: User-defined regular expression detector for custom patterns
+// # Finding Details
 //
-// # Full-Width Digit Normalization
-//
-// The [NormalizeFullWidthDigits] utility converts full-width digits (U+FF10-U+FF19)
-// and full-width hyphens to their half-width equivalents, enabling detection of
-// sensitive data written in Japanese full-width characters.
-// Leading percent-encoded log/query separators (whitespace, quotes, brackets,
-// colon, comma, semicolon, equals, ampersand, and question mark) delimit values
-// just like literal separators. Encoded word characters and malformed escapes
-// do not relax boundary checks. RawValue and offsets refer to the original input.
+// [Finding.Detail] holds different detail types in one result slice. Its typed accessor methods avoid direct type assertions; [Finding.Is] and the Is* methods check detector names, while [Finding.Kind] supplies a broad category. Runnable examples show classification, confidence levels, and detail access.
 package detector

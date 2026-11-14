@@ -1,31 +1,27 @@
-// Package sensitive provides a high-performance, rule-based sensitive data
-// detection library for Go. It scans text for credit card numbers (PAN),
-// email addresses, phone numbers, Japanese My Number, and other confidential
-// information, returning the position, type, and confidence level of each finding.
+// Package sensitive detects sensitive data in text; the optional mask subpackage applies masking to its findings.
 //
-// Detection is the core focus. Masking is optional and provided as a thin helper
-// in the mask sub-package. Users can implement their own masking logic using
-// the detection results.
+// # Choosing an API
 //
-// # Architecture
+// Use [NewScanner] to select detectors, [Scanner.Scan] for bytes, and [Scanner.ScanString] for strings. For readers, [Scanner.ScanReader] handles content that fits in memory and [Scanner.ScanLines] handles line-oriented logs. Each method has a runnable example; its documentation defines offsets, limits, and error behavior.
 //
-// The library uses a multi-stage filtering pipeline to minimize scan cost:
+// # Confidence
 //
-//  1. Hint-based pre-filter: Each Detector provides hint byte sequences.
-//     bytes.Contains (SIMD-optimized in Go runtime) quickly eliminates
-//     lines that cannot possibly contain a match (~15ns per line).
-//  2. Detector.Scan: Only called on data that passes the hint filter.
-//     Uses dedicated parsers and domain rule validation (BIN check, Luhn,
-//     check digits, etc.) rather than regular expressions.
-//  3. Result merging: Overlapping findings are deduplicated and sorted
-//     by confidence.
+// Confidence is a detector-specific heuristic, not a probability or proof that an identifier is assigned or a credential authenticates. A [WithMinConfidence] threshold of 0.8 selects the high category; 0.4 includes medium confidence. [detector.Finding.Level] supplies the category, and each detector type documents its scoring rules.
 //
-// # Usage
+// Context-based detectors use nearby keywords rather than checksums. In particular, CVV and card expiry can still pass a high-confidence filter; choose detector options to control what is considered sensitive. [WithAll] is useful for exploration, while explicit options suit stricter auditing.
 //
-//	scanner := sensitive.NewScanner(sensitive.WithAll())
-//	findings := scanner.ScanString("card is 4532-0151-1283-0366")
-//	for _, f := range findings {
-//	    fmt.Printf("Found %s at [%d:%d] confidence=%.2f\n",
-//	        f.DetectorName, f.Start, f.End, f.Confidence)
-//	}
+// # How It Works
+//
+//  1. Return immediately for empty input.
+//  2. Check cached hints with bytes.Contains, folding ASCII letters for case-insensitive matching; detectors without hints always run.
+//  3. Run matching detectors' parsers and domain validation, such as BIN, Luhn, and MOD 97 checks.
+//  4. Merge findings using the overlap, ordering, and filtering rules in [Scanner.Scan].
+//
+// Hint filtering avoids parser work when a required substring is absent; its benefit depends on the input and enabled detectors. See the [benchmarks] for recorded measurements and reproduction commands.
+//
+// # Custom Detectors
+//
+// Wrap a compiled pattern with [detector.NewRegex] and pass it to [WithDetector], as its example shows. A specific hint such as TICKET- lets the scanner skip the regex when that substring is absent. For parsing or validation beyond a regex, implement [Detector]; its methods define names, exhaustive hints, and finding offsets. Use dedicated parsers when scan cost matters.
+//
+// [benchmarks]: https://github.com/nao1215/sensitive/blob/main/doc/benchmarks.md
 package sensitive

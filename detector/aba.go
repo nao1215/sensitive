@@ -7,25 +7,11 @@ type ABARoutingDetail struct {
 	FederalReserveDistrict string
 }
 
-// ABARouting detects US ABA routing transit numbers in text.
+// ABARouting detects US routing transit numbers used for ACH, wire transfers, and checks.
 //
-// ABA routing numbers are 9-digit identifiers assigned by the American Bankers
-// Association to financial institutions. They are used in ACH transfers, wire
-// transfers, and check processing.
-//
-// Detection logic:
-//  1. Scan for sequences of exactly 9 consecutive ASCII digits
-//  2. Validate the first two digits are a recognized Federal Reserve routing
-//     symbol (01-12 for normal, 21-32 for thrift, 61-72 for electronic, 80 for traveler's cheques)
-//  3. Validate the checksum: 3*(d1+d4+d7) + 7*(d2+d5+d8) + (d3+d6+d9) ≡ 0 (mod 10)
-//
-// Confidence:
-//   - 0.85: routing symbol prefix and checksum are both valid
-//
-// Numbers that fail the checksum are unconditionally rejected regardless
-// of prefix range or context keywords. In financial systems checksum
-// validation is mandatory and relaxing it introduces unacceptable false
-// positive risk.
+//  1. Extract exactly nine digits and require a routing prefix in 01–12, 21–32, 61–72, or 80 (normal, thrift, electronic, or traveler's checks).
+//  2. Require 3*(d1+d4+d7) + 7*(d2+d5+d8) + (d3+d6+d9) to be divisible by 10; reject every checksum failure.
+//  3. Score a valid match as 0.85.
 type ABARouting struct{}
 
 // NewABARouting creates a new US ABA routing number detector.
@@ -38,17 +24,12 @@ func (d *ABARouting) Name() DetectorName {
 	return NameABARouting
 }
 
-// Hints returns nil, causing the Scanner to always run ABA detection.
-// ABA routing numbers are 9-digit sequences that can start with any of
-// the digits 0-8. Short single-digit hints would match nearly all input
-// and provide no filtering benefit. The Scan method itself performs fast
-// rejection (digit count + prefix range + checksum) so the cost of always
-// scanning is negligible.
+// Hints returns nil because no selective exhaustive substring is available.
 func (d *ABARouting) Hints() [][]byte {
 	return nil
 }
 
-// Scan examines data for ABA routing numbers and returns findings.
+// Scan returns matches in data using the rules documented on [ABARouting].
 func (d *ABARouting) Scan(data []byte) []Finding {
 	normalized, posMap := NormalizeFullWidthDigits(data)
 	return d.scanNormalized(data, normalized, posMap)

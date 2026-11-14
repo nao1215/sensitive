@@ -16,25 +16,11 @@ type MerchantIDDetail struct {
 	IDType MerchantIDType
 }
 
-// MerchantID detects merchant IDs (MIDs) and terminal IDs (TIDs) in text.
+// MerchantID detects merchant and terminal identifiers from nearby context.
 //
-// A Merchant ID (MID) is a unique identifier assigned to a merchant by a
-// payment processor, typically 15 alphanumeric characters. A Terminal ID (TID)
-// identifies a specific payment terminal, typically 8 alphanumeric characters.
-//
-// Because these patterns are generic (15 or 8 alphanumeric characters), this
-// detector requires a context keyword to be present nearby.
-//
-// Detection logic:
-//  1. Scan for context keywords:
-//     English: "merchant ID", "MID", "terminal ID", "TID"
-//     Japanese: "加盟店", "端末"
-//  2. Within a 30-byte radius of each keyword, look for:
-//     - Merchant ID: 15 alphanumeric characters
-//     - Terminal ID: 8 alphanumeric characters (digits only for TID)
-//  3. Determine the ID type based on the matched keyword
-//
-// Confidence: 0.7 when a context keyword and valid identifier are found.
+//  1. Find merchant ID, MID, terminal ID, TID, 加盟店, or 端末 context (ASCII case-insensitive).
+//  2. Search within 30 bytes of the keyword end for 15 alphanumeric characters for a merchant ID or eight digits for a terminal ID.
+//  3. Exclude keyword overlaps and already reported ranges; score a match as 0.7 and record its identifier type.
 type MerchantID struct{}
 
 // NewMerchantID creates a new merchant/terminal ID detector.
@@ -47,13 +33,7 @@ func (d *MerchantID) Name() DetectorName {
 	return NameMerchantID
 }
 
-// Hints returns byte sequences for pre-filtering.
-// These keywords must appear in the input for merchant/terminal ID detection.
-//
-// ASCII hints are matched case-insensitively by Scanner's hint filter, so a
-// single lowercase entry (e.g., "merchant") covers all case variants
-// ("Merchant", "MERCHANT", etc.). Non-ASCII hints (Japanese) are matched
-// byte-for-byte.
+// Hints returns the pre-filter substrings for [MerchantID].
 func (d *MerchantID) Hints() [][]byte {
 	return [][]byte{
 		[]byte("merchant"), // covers Merchant, MERCHANT, etc.
@@ -67,7 +47,7 @@ func (d *MerchantID) Hints() [][]byte {
 	}
 }
 
-// Scan examines data for merchant/terminal IDs near context keywords and returns findings.
+// Scan returns matches in data using the rules documented on [MerchantID].
 func (d *MerchantID) Scan(data []byte) []Finding {
 	var findings []Finding
 

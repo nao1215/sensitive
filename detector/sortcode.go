@@ -8,31 +8,11 @@ type UKSortCodeDetail struct {
 	FormattedValue string
 }
 
-// UKSortCode detects UK bank sort codes in text.
+// UKSortCode detects formatted UK bank/branch identifiers without a checksum or assignment check.
 //
-// A UK sort code is a 6-digit number that identifies the bank and branch for
-// domestic payments. Sort codes are typically formatted as XX-XX-XX (with
-// hyphens) or XX XX XX (with spaces).
-//
-// Detection logic:
-//  1. Scan for the pattern DD-DD-DD or DD DD DD where D is a digit
-//  2. Validate that the sequence has exactly 6 digits with consistent separators
-//  3. Check word boundaries to avoid matching substrings
-//  4. When the pattern looks date-like (middle pair is month 01-12, and at
-//     least one outer pair is day 01-31), check for sort code context keywords
-//     nearby. If context is found, accept with reduced confidence (0.55).
-//     If no context is found, reject the pattern to reduce false positives.
-//
-// Only formatted sort codes (with hyphens or spaces) are detected. Bare
-// 6-digit sequences are indistinguishable from other numeric data and
-// would produce too many false positives.
-//
-// There is no standard checksum for UK sort codes, so confidence is based
-// on the formatted pattern match alone.
-//
-// Confidence:
-//   - 0.7 for a non-date-like formatted sort code
-//   - 0.55 for a date-like pattern with sort code context keywords nearby
+//  1. Extract DD-DD-DD or DD DD DD with consistent separators; reject all-zero codes, bare six-digit numbers, and candidates inside longer numeric groups.
+//  2. Treat a middle pair in 01–12 with either outer pair in 01–31 as date-like; require nearby sort-code context for these candidates and score them as 0.55.
+//  3. Score other formatted matches as 0.7.
 type UKSortCode struct{}
 
 // NewUKSortCode creates a new UK sort code detector.
@@ -45,12 +25,7 @@ func (d *UKSortCode) Name() DetectorName {
 	return NameUKSortCode
 }
 
-// Hints returns byte sequences for pre-filtering.
-// Formatted sort codes use either hyphens (XX-XX-XX) or spaces (XX XX XX)
-// as separators. Both are included to ensure all valid sort codes pass the
-// hint filter. The space hint is very common in text, which reduces filtering
-// efficiency, but correctness requires it — omitting it would silently miss
-// space-separated sort codes.
+// Hints returns the pre-filter substrings for [UKSortCode].
 func (d *UKSortCode) Hints() [][]byte {
 	return [][]byte{
 		[]byte("-"),
@@ -130,7 +105,7 @@ func isAllZeroSortCode(data []byte, i int) bool {
 		data[i+6] == '0' && data[i+7] == '0'
 }
 
-// Scan examines data for UK sort codes and returns findings.
+// Scan returns matches in data using the rules documented on [UKSortCode].
 func (d *UKSortCode) Scan(data []byte) []Finding {
 	var findings []Finding
 
