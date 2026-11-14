@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- IBAN detection now covers all 89 country formats in SWIFT registry release 103, including 17 previously missing countries ([PR #45](https://github.com/nao1215/sensitive/pull/45), [5552698](https://github.com/nao1215/sensitive/commit/5552698)).
+
 ### Fixed
+
+- IBANs followed by spaces and another word retain their complete original value instead of being rejected; extraction stops at the country-specific length before checking MOD 97 ([PR #45](https://github.com/nao1215/sensitive/pull/45), [a66ecbc](https://github.com/nao1215/sensitive/commit/a66ecbc)).
+- Percent-encoded log/query separators now delimit values consistently, including numeric values whose scanners previously consumed escape digits; malformed escapes are checked against original bytes before full-width normalization ([PR #45](https://github.com/nao1215/sensitive/pull/45), [cd14a79](https://github.com/nao1215/sensitive/commit/cd14a79)).
 
 - The merchant ID detector no longer reports a terminal ID inside a merchant ID it already reported. "Merchant ID A00000000A00000 TID 000" gave both `A00000000A00000` and `00000000`, because only the start offset was checked for duplicates, not the whole range. Found by the scheduled `FuzzScanner` run.
 
