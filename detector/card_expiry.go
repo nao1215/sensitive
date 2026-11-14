@@ -151,7 +151,7 @@ func (d *CardExpiry) searchRange(data []byte, start, end int, used map[int]int, 
 		}
 
 		// Word boundary: no digit before or after.
-		if i > 0 && isDigit(data[i-1]) {
+		if i > 0 && isDigit(data[i-1]) && !encodedSeparatorBefore(data, i) {
 			continue
 		}
 		if c.dateEnd < len(data) && isDigit(data[c.dateEnd]) {

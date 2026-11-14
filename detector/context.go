@@ -169,6 +169,10 @@ func extractDigitsNear(data []byte, pos, radius, minDigits, maxDigits int) []dig
 
 	i := searchStart
 	for i < searchEnd {
+		if data[i] == '%' && i+3 <= searchEnd && encodedSeparatorBefore(data, i+3) {
+			i += 3
+			continue
+		}
 		if !isDigit(data[i]) {
 			i++
 			continue
@@ -187,7 +191,7 @@ func extractDigitsNear(data []byte, pos, radius, minDigits, maxDigits int) []dig
 		// a standalone sequence. Including it would cause false positives
 		// (e.g., the tail of a 20-digit number appearing as an 8-digit
 		// bank account number).
-		if seqStart == searchStart && searchStart > 0 && isDigit(data[searchStart-1]) {
+		if seqStart == searchStart && searchStart > 0 && isDigit(data[searchStart-1]) && !encodedSeparatorBefore(data, searchStart) {
 			continue
 		}
 		if seqEnd == searchEnd && searchEnd < len(data) && isDigit(data[searchEnd]) {
@@ -228,6 +232,10 @@ func extractAlphaNumNear(data []byte, pos, radius, minLen, maxLen int) []digitSe
 
 	i := searchStart
 	for i < searchEnd {
+		if data[i] == '%' && i+3 <= searchEnd && encodedSeparatorBefore(data, i+3) {
+			i += 3
+			continue
+		}
 		if !isAlphaNum(data[i]) {
 			i++
 			continue
@@ -240,7 +248,7 @@ func extractAlphaNumNear(data []byte, pos, radius, minLen, maxLen int) []digitSe
 		seqEnd := i
 
 		// Skip sequences truncated at the search boundary.
-		if seqStart == searchStart && searchStart > 0 && isAlphaNum(data[searchStart-1]) {
+		if seqStart == searchStart && searchStart > 0 && isAlphaNum(data[searchStart-1]) && !encodedSeparatorBefore(data, searchStart) {
 			continue
 		}
 		if seqEnd == searchEnd && searchEnd < len(data) && isAlphaNum(data[searchEnd]) {
