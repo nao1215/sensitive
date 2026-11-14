@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Space-delimited UK sort codes followed by whitespace or prose are detected without accepting a following numeric group; classic GitHub tokens require exactly 36 body characters as documented ([PR #47](https://github.com/nao1215/sensitive/pull/47), [2033b50](https://github.com/nao1215/sensitive/commit/2033b50)).
+
+### Changed
+
+- Property-based testing now uses rapid in an isolated test-only module, with specification generators, shrinking, path and masking properties, a labeled recall corpus, targeted mutation checks, and merged cross-module coverage; the root library remains dependency-free ([PR #47](https://github.com/nao1215/sensitive/pull/47), [2033b50](https://github.com/nao1215/sensitive/commit/2033b50)).
+
 ## [0.2.0] - 2026-11-14
 
 ### Added
