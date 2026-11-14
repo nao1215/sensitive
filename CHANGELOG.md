@@ -6,13 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-14
+
 ### Fixed
 
-- Space-delimited UK sort codes followed by whitespace or prose are detected without accepting a following numeric group; classic GitHub tokens require exactly 36 body characters as documented ([PR #47](https://github.com/nao1215/sensitive/pull/47), [2033b50](https://github.com/nao1215/sensitive/commit/2033b50)).
+- Space-delimited UK sort codes followed by whitespace or prose are detected without accepting a following numeric group; classic GitHub tokens require exactly 36 body characters as documented ([PR #47](https://github.com/nao1215/sensitive/pull/47), [40d3c95](https://github.com/nao1215/sensitive/commit/40d3c95)).
 
 ### Changed
 
-- Property-based testing now uses rapid in an isolated test-only module, with specification generators, shrinking, path and masking properties, a labeled recall corpus, targeted mutation checks, and merged cross-module coverage; the root library remains dependency-free ([PR #47](https://github.com/nao1215/sensitive/pull/47), [2033b50](https://github.com/nao1215/sensitive/commit/2033b50)).
+- Property-based testing now uses rapid in an isolated test-only module, with specification generators, shrinking, path and masking properties, a labeled recall corpus, targeted mutation checks, and merged cross-module coverage; the root library remains dependency-free ([PR #47](https://github.com/nao1215/sensitive/pull/47), [40d3c95](https://github.com/nao1215/sensitive/commit/40d3c95)).
 
 ## [0.2.0] - 2026-11-14
 
@@ -141,7 +143,8 @@ Initial release of the `sensitive` library.
 - Full-width digit normalization: Transparent handling of Japanese full-width digits (U+FF10--U+FF19) for PAN, phone, and My Number detection.
 - Deterministic output: Findings are sorted by confidence (descending), then by byte offset and detector name for fully reproducible results.
 
-[Unreleased]: https://github.com/nao1215/sensitive/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/nao1215/sensitive/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/nao1215/sensitive/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/nao1215/sensitive/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/nao1215/sensitive/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/nao1215/sensitive/compare/v0.1.0...v0.1.1
