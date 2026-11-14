@@ -1,6 +1,7 @@
 package detector_test
 
 import (
+	"math/rand/v2"
 	"strings"
 	"testing"
 
@@ -112,5 +113,28 @@ func TestGitHubTokenDetector_Detail(t *testing.T) {
 				t.Errorf("Kind = %q, want credential", findings[0].Kind())
 			}
 		})
+	}
+}
+
+func TestGeneratedGitHubToken(t *testing.T) {
+	t.Parallel()
+	rng := rand.New(rand.NewPCG(1215, 2026))
+	body := func(n int) string {
+		const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+		result := make([]byte, n)
+		for i := range result {
+			result[i] = alphabet[rng.IntN(len(alphabet))]
+		}
+		return string(result)
+	}
+	for range 100 {
+		raw := "ghp_" + body(36)
+		got := detector.NewGitHubToken().Scan([]byte(raw))
+		if len(got) != 1 || got[0].RawValue != raw || got[0].Confidence < 0.95 {
+			t.Fatalf("valid generated value rejected: %v", got)
+		}
+		if len(detector.NewGitHubToken().Scan([]byte("word"+raw))) != 0 {
+			t.Fatal("embedded identifier accepted")
+		}
 	}
 }

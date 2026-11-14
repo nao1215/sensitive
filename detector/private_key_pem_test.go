@@ -1,6 +1,7 @@
 package detector_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/nao1215/sensitive/detector"
@@ -89,5 +90,20 @@ func TestPrivateKeyPEMDetector_Scan(t *testing.T) {
 				t.Errorf("KeyType = %q, want %q", detail.KeyType, tt.wantAlgo)
 			}
 		})
+	}
+}
+
+func TestPEMGeneratedHeaders(t *testing.T) {
+	t.Parallel()
+	for _, kind := range []string{"PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY", "DSA PRIVATE KEY", "OPENSSH PRIVATE KEY", "ENCRYPTED PRIVATE KEY"} {
+		raw := "-----BEGIN " + kind + "-----"
+		got := detector.NewPrivateKeyPEM().Scan([]byte(raw))
+		if len(got) != 1 || got[0].RawValue != raw {
+			t.Fatalf("private header rejected: %s", kind)
+		}
+		bad := strings.Replace(raw, "PRIVATE", "PUBLIC", 1)
+		if len(detector.NewPrivateKeyPEM().Scan([]byte(bad))) != 0 {
+			t.Fatal("public header accepted")
+		}
 	}
 }

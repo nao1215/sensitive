@@ -1,0 +1,5 @@
+2026-11-14T10:30:00Z INFO checkout card=4532015112830366
+2026-11-14T10:30:01Z INFO user=tanaka@example.com
+2026-11-14T10:30:02Z WARN query=v%3DAKIAIOSFODNN7EXAMPLE
+2026-11-14T10:30:03Z INFO transfer to GB82 WEST 1234 5698 7654 32 today
+2026-11-14T10:30:04Z INFO commit=abcdefabcdefabcdefabcdefabcdefabcdefabcd

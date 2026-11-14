@@ -1,6 +1,8 @@
 package detector_test
 
 import (
+	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/nao1215/sensitive/detector"
@@ -272,5 +274,23 @@ func TestETHDetector_EIP55Validation(t *testing.T) {
 	}
 	if findings[0].Confidence < 0.9 {
 		t.Errorf("Confidence = %.2f, want >= 0.9", findings[0].Confidence)
+	}
+}
+
+func TestETHSpecificationVectors(t *testing.T) {
+	t.Parallel()
+	data, err := os.ReadFile("testdata/eip55.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var vectors []string
+	if err := json.Unmarshal(data, &vectors); err != nil {
+		t.Fatal(err)
+	}
+	for _, raw := range vectors {
+		got := detector.NewETH().Scan([]byte(raw))
+		if len(got) != 1 || got[0].RawValue != raw {
+			t.Errorf("EIP-55 vector rejected: %s", raw)
+		}
 	}
 }

@@ -1,6 +1,9 @@
 package sensitive_test
 
 import (
+	"flag"
+	"fmt"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -932,4 +935,103 @@ func filterByDetector(findings []sensitive.Finding, name sensitive.DetectorName)
 		}
 	}
 	return filtered
+}
+
+// Contexts use explicit separators; adjoining ASCII word characters are not
+// invariant because they may extend a value. Context-dependent detectors retain
+// their original keyword-bearing seed instead of stripping it to RawValue.
+func TestScannerContextInvariance(t *testing.T) {
+	t.Parallel()
+	contexts := [][2]string{{"", ""}, {"x ", " y"}, {"x\t", "\ty"}, {"x\n", "\ny"}, {`{"v":"`, `"}`}, {"key=", "&next=1"}, {"https://example.invalid/?v=", "&next=yes"}, {"v%3D", "%26next=yes"}, {"\"", "\""}, {"(", ")"}, {"[", "]"}, {":", ","}, {"番号", "です"}, {"「", "」、"}}
+	for _, d := range builtinDetectors() {
+		one := sensitive.NewScanner(sensitive.WithDetector(d))
+		all := sensitive.NewScanner(sensitive.WithAll(), sensitive.WithoutDedup())
+		for _, seed := range fuzzSeeds() {
+			original := one.ScanString(seed)
+			if len(original) == 0 {
+				continue
+			}
+			for _, context := range contexts {
+				// Wrap the entire seed so required keywords and intravalue separators stay intact.
+				text := context[0] + seed + context[1]
+				got := one.ScanString(text)
+				for _, want := range original {
+					found := false
+					for _, f := range got {
+						if f.RawValue == want.RawValue && f.Start == want.Start+len(context[0]) {
+							found = true
+						}
+					}
+					if !found {
+						t.Errorf("%s context %q/%q lost %q", d.Name(), context[0], context[1], want.RawValue)
+					}
+				}
+				// Disable dedup: with default dedup a higher-confidence overlapping
+				// detector may legitimately replace a single-detector finding.
+				superset := keysOf(all.ScanString(text))
+				for key := range keysOf(got) {
+					if superset[key] == 0 {
+						t.Errorf("WithAll lost %v", key)
+					}
+				}
+			}
+		}
+	}
+}
+
+func TestNegativeCorpus(t *testing.T) {
+	t.Parallel()
+	data, err := os.ReadFile("testdata/nonsecrets.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := sensitive.NewScanner(sensitive.WithAll()).Scan(data); len(got) != 0 {
+		t.Fatalf("non-secret corpus: %v", got)
+	}
+}
+
+func TestMain(m *testing.M) {
+	flag.Bool("update", false, "update reviewed golden findings")
+	os.Exit(m.Run())
+}
+
+func TestMixedLogGolden(t *testing.T) {
+	t.Parallel()
+	data, err := os.ReadFile("testdata/mixed.log")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var lines strings.Builder
+	for _, f := range sensitive.NewScanner(sensitive.WithAll(), sensitive.WithSortByPosition()).Scan(data) {
+		fmt.Fprintf(&lines, "%s %d:%d %.2f %q\n", f.DetectorName, f.Start, f.End, f.Confidence, f.RawValue)
+	}
+	path := "testdata/mixed.golden"
+	if flag.Lookup("update").Value.String() == "true" {
+		if err := os.WriteFile(path, []byte(lines.String()), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	want, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(want) != lines.String() {
+		t.Fatalf("golden mismatch; inspect before running go test . -run TestMixedLogGolden -update\ngot:\n%s", lines.String())
+	}
+}
+
+func TestAdversarialAllocationBudget(t *testing.T) {
+	// AllocsPerRun changes GOMAXPROCS and must run serially.
+	scanner := sensitive.NewScanner(sensitive.WithAll())
+	for _, pattern := range []string{"9", "a", "@", " - ", "DE00 "} {
+		for _, size := range []int{4096, 16384, 65536} {
+			data := []byte(strings.Repeat(pattern, size/len(pattern)))
+			// A linear budget tolerates candidate allocations but rejects allocating
+			// one candidate per suffix of long runs (quadratic rescanning).
+			allocations := testing.AllocsPerRun(3, func() { scanner.Scan(data) })
+			if allocations > float64(128+len(data)) {
+				t.Fatalf("%q/%d: %.0f allocations exceed linear budget", pattern, size, allocations)
+			}
+		}
+	}
 }

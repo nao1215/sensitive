@@ -2,6 +2,7 @@ package sensitive_test
 
 import (
 	"bytes"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -14,6 +15,7 @@ import (
 // UTF-8, repeated pivots, CRLF).
 func fuzzSeeds() []string {
 	return []string{
+		"v%20021000021", "v%20123456789018", "v%0909012345678", "v%3A2001:db8::1", "v%３D021000021",
 		"",
 		"user tanaka@example.com paid with 4532015112830366",
 		"payment for card 4532-0151-1283-0366 amount $99.99",
@@ -166,6 +168,7 @@ func FuzzScanner(f *testing.F) {
 	}
 
 	f.Fuzz(func(t *testing.T, text string) {
+		checkEmbeddedSecret(t, text)
 		data := []byte(text)
 
 		raw := noDedup.Scan(data)
@@ -237,6 +240,7 @@ func FuzzScanLines(f *testing.F) {
 	scanner := sensitive.NewScanner(sensitive.WithAll())
 
 	f.Fuzz(func(t *testing.T, text string) {
+		checkEmbeddedSecret(t, text)
 		type lineResult struct {
 			line     string
 			findings map[findingKey]int
@@ -299,4 +303,22 @@ func sameKeys(a, b map[findingKey]int) bool {
 		}
 	}
 	return true
+}
+
+// checkEmbeddedSecret lets fuzzing vary arbitrary surrounding log bytes while
+// bracket/newline separators preserve the generated email's lexical boundaries.
+func checkEmbeddedSecret(t *testing.T, context string) {
+	t.Helper()
+	raw := "user" + strconv.Itoa(len(context)) + "@example.com"
+	text := context + "\n[" + raw + "]\n" + context
+	s := sensitive.NewScanner(sensitive.WithEmail())
+	found := false
+	for _, f := range s.ScanString(text) {
+		if f.RawValue == raw && f.Start == len(context)+2 {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("embedded valid email lost")
+	}
 }

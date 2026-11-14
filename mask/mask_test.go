@@ -606,3 +606,23 @@ func TestMask_Integration_WithRegexDetector(t *testing.T) {
 		t.Error("masked output still contains SECRET-123456")
 	}
 }
+
+func TestRedactIdempotenceAndNoRawValues(t *testing.T) {
+	t.Parallel()
+	s := sensitive.NewScanner(sensitive.WithAll())
+	for _, input := range []string{"mail tanaka@example.com", "card 4532015112830366", "GB82 WEST 1234 5698 7654 32 today", "v%3DAKIAIOSFODNN7EXAMPLE"} {
+		findings := s.ScanString(input)
+		if len(findings) == 0 {
+			t.Fatal("fixture has no finding")
+		}
+		once := mask.MaskAll(input, findings, mask.Redact)
+		if twice := mask.MaskAll(once, findings, mask.Redact); twice != once {
+			t.Errorf("redacting identical findings is not idempotent")
+		}
+		for _, f := range findings {
+			if strings.Contains(once, f.RawValue) {
+				t.Errorf("redaction retained a raw value")
+			}
+		}
+	}
+}

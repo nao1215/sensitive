@@ -1,6 +1,7 @@
 package detector_test
 
 import (
+	"math/rand/v2"
 	"testing"
 
 	"github.com/nao1215/sensitive/detector"
@@ -203,5 +204,33 @@ func TestMyNumberDetector_TrailingHyphen(t *testing.T) {
 	}
 	if findings[0].RawValue != "1234-5678-9018" {
 		t.Errorf("RawValue = %q, want %q", findings[0].RawValue, "1234-5678-9018")
+	}
+}
+
+func TestMyNumberGeneratedChecksums(t *testing.T) {
+	t.Parallel()
+	rng := rand.New(rand.NewPCG(11, 97))
+	for range 500 {
+		raw := make([]byte, 12)
+		sum := 0
+		weights := []int{6, 5, 4, 3, 2, 7, 6, 5, 4, 3, 2}
+		for i, w := range weights {
+			n := rng.IntN(10)
+			raw[i] = "0123456789"[n]
+			sum += w * n
+		}
+		check := (11 - sum%11) % 11
+		if check == 10 {
+			check = 0
+		}
+		raw[11] = byte('0' + check)
+		got := detector.NewMyNumber().Scan(raw)
+		if len(got) != 1 || got[0].Confidence != 0.95 {
+			t.Fatalf("valid MOD 11 value rejected: %s", raw)
+		}
+		raw[11] = '0' + (raw[11]-'0'+1)%10
+		if len(detector.NewMyNumber().Scan(raw)) != 0 {
+			t.Fatal("invalid MOD 11 accepted")
+		}
 	}
 }

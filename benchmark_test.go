@@ -1,6 +1,8 @@
 package sensitive_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/nao1215/sensitive"
@@ -257,5 +259,22 @@ func BenchmarkScannerHighDensity(b *testing.B) {
 	b.ResetTimer()
 	for range b.N {
 		scanner.Scan(line)
+	}
+}
+
+func BenchmarkScannerAdversarial(b *testing.B) {
+	for _, pattern := range []string{"9", "a", "@", " - ", "DE00 "} {
+		for _, size := range []int{1024, 16384, 262144} {
+			b.Run(fmt.Sprintf("%q/%d", pattern, size), func(b *testing.B) {
+				scanner := sensitive.NewScanner(sensitive.WithAll())
+				data := []byte(strings.Repeat(pattern, size/len(pattern)))
+				b.SetBytes(int64(len(data)))
+				b.ReportAllocs()
+				b.ResetTimer()
+				for range b.N {
+					scanner.Scan(data)
+				}
+			})
+		}
 	}
 }
