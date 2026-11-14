@@ -38,8 +38,8 @@ func TestEncodedBoundary(t *testing.T) {
 		for _, prefix := range []string{"v%3D", "v%3d", "v%20", "v%09", "v%22", "v%3A", "", " "} {
 			t.Run(string(sample.d.Name())+prefix, func(t *testing.T) {
 				t.Parallel()
-				got := sample.d.Scan([]byte(prefix + sample.raw))
-				if len(got) != 1 || got[0].RawValue != sample.raw || got[0].Start != len(prefix) || got[0].End != len(prefix)+len(sample.raw) {
+				got := sample.d.Scan([]byte(prefix + sample.raw + "\n" + sample.raw))
+				if len(got) != 2 || got[0].RawValue != sample.raw || got[0].Start != len(prefix) || got[0].End != len(prefix)+len(sample.raw) || got[1].RawValue != sample.raw || got[1].Start != len(prefix)+len(sample.raw)+1 || got[1].End != len(prefix)+2*len(sample.raw)+1 {
 					t.Errorf("encoded separator lost raw value: %v", got)
 				}
 			})
