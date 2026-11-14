@@ -7,25 +7,7 @@ import (
 	"github.com/nao1215/sensitive/internal/ascii"
 )
 
-// Scanner scans text for sensitive data using registered Detectors.
-// It implements a multi-stage filtering pipeline:
-//
-//  1. Empty data check: Immediately returns if the input is empty.
-//  2. Hint-based pre-filter: Uses bytes.Contains with each Detector's
-//     hints to quickly skip detectors that cannot match the input.
-//     ASCII letters in hints are matched case-insensitively.
-//     Hints must be exhaustive for the detector's domain (i.e., every
-//     possible match must contain at least one hint byte sequence), or
-//     empty/nil to always run the detector. Non-exhaustive hints will
-//     cause silent detection misses.
-//  3. Detector.Scan: Runs only the detectors whose hints matched.
-//  4. Result merging: By default, deduplicates overlapping findings
-//     (keeping the highest confidence) and sorts by confidence
-//     (descending). Use [WithSortByPosition] to sort by byte offset
-//     instead, or [WithoutDedup] to keep all findings including
-//     overlapping ones.
-//
-// Create a Scanner using [NewScanner] with the desired options.
+// Scanner detects sensitive data with configured [Detector] implementations. Create one with [NewScanner]; concurrent scans require each registered detector to support concurrent use.
 type Scanner struct {
 	detectors      []Detector
 	hintCache      [][]hintEntry // pre-computed per detector
@@ -44,17 +26,7 @@ type hintEntry struct {
 	needFold bool
 }
 
-// NewScanner creates a new Scanner with the given options.
-// Each option enables a specific detector or adds a custom one.
-// If the same detector is registered more than once (e.g., by combining
-// [WithAll] with an individual option like [WithPAN]), the duplicate is
-// silently removed so that each detector runs at most once.
-//
-//	// Enable all built-in detectors
-//	scanner := sensitive.NewScanner(sensitive.WithAll())
-//
-//	// Enable only PAN and email detection
-//	scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
+// NewScanner applies opts in order; no options enables no detectors. Nil options are ignored, and the last registration for each detector name wins.
 func NewScanner(opts ...Option) *Scanner {
 	s := &Scanner{}
 	for _, opt := range opts {
@@ -117,23 +89,9 @@ func deduplicateDetectors(detectors []Detector) []Detector {
 	return result
 }
 
-// Scan examines the given byte slice for sensitive data and returns all findings.
-// The multi-stage filtering pipeline ensures that detectors are only invoked
-// when their hint sequences are found in the data, minimizing scan cost.
+// Scan returns findings in data, or nil for empty input. It keeps the highest-confidence non-overlapping findings, then orders them by confidence descending, start offset ascending, and detector name.
 //
-// By default the returned findings are deduplicated (overlapping findings
-// are merged, keeping the highest confidence) and sorted by confidence in
-// descending order. Findings with the same confidence are ordered by byte
-// offset (ascending), then by detector name for full determinism.
-// Use [WithSortByPosition] to sort by byte offset (ascending) instead.
-// Use [WithoutDedup] to receive all findings including overlapping ones
-// from different detectors.
-//
-// If [WithMinConfidence] is configured, the confidence threshold is applied
-// after deduplication and sorting. This means deduplication always sees the
-// full set of findings, so the highest-confidence finding for each byte range
-// is kept regardless of the threshold. The threshold then removes only the
-// remaining low-confidence findings from the final output.
+// Overlap ties prefer an earlier start, then a later end, then detector name. [WithoutDedup] retains overlaps; [WithSortByPosition] changes ordering; [WithMinConfidence] filters the final results.
 func (s *Scanner) Scan(data []byte) []Finding {
 	// Stage 0: Empty data check.
 	if len(data) == 0 {
@@ -221,8 +179,7 @@ func sortFindings(findings []Finding, byPosition bool) {
 	}
 }
 
-// ScanString is a convenience method that scans a string for sensitive data.
-// It converts the string to a byte slice and calls [Scanner.Scan].
+// ScanString calls [Scanner.Scan] on the bytes of text.
 func (s *Scanner) ScanString(text string) []Finding {
 	return s.Scan([]byte(text))
 }

@@ -26,20 +26,11 @@ type SlackTokenDetail struct {
 	TokenType SlackTokenType
 }
 
-// SlackToken detects Slack API tokens in text.
+// SlackToken detects Slack API tokens by format, without verifying authentication.
 //
-// Slack tokens start with "xox" followed by a single character identifying the
-// token type — 'b' (bot), 'p' (user), 'a' (app), 'o' (OAuth), 'r' (refresh), or
-// 's' (service refresh) — then a '-' and one or more '-'-separated segments of
-// letters and digits (at least 10 body characters total).
-//
-// Detection logic:
-//  1. Scan for the "xox" prefix followed by a known type character and '-'.
-//  2. Consume the token body (A-Z, a-z, 0-9, '-'), requiring a minimum length.
-//  3. Enforce a leading word boundary so a token embedded in a longer identifier
-//     is not matched.
-//
-// Confidence: 0.9 — the "xox<type>-" prefix is characteristic of Slack.
+//  1. Find xox followed by b, p, a, o, r, or s and a hyphen; [SlackTokenType] names these families.
+//  2. Consume ASCII letters, digits, and hyphens, requiring at least ten body characters.
+//  3. Enforce a leading word boundary and score a match as 0.9.
 type SlackToken struct{}
 
 // NewSlackToken creates a new Slack token detector.
@@ -52,8 +43,7 @@ func (d *SlackToken) Name() DetectorName {
 	return NameSlackToken
 }
 
-// Hints returns byte sequences for pre-filtering. Every Slack token begins with
-// "xox", so it is an exhaustive hint.
+// Hints returns the pre-filter substrings for [SlackToken].
 func (d *SlackToken) Hints() [][]byte {
 	return [][]byte{[]byte("xox")}
 }
@@ -61,7 +51,7 @@ func (d *SlackToken) Hints() [][]byte {
 // slackMinBody is the minimum number of body characters after "xox<type>-".
 const slackMinBody = 10
 
-// Scan examines data for Slack tokens and returns findings.
+// Scan returns matches in data using the rules documented on [SlackToken].
 func (d *SlackToken) Scan(data []byte) []Finding {
 	var findings []Finding
 	for i := 0; i+5 <= len(data); {

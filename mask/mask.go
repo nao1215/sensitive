@@ -9,16 +9,9 @@ import (
 	"github.com/nao1215/sensitive"
 )
 
-// Mask applies masking to the given text using the provided findings and
-// per-detector strategy map. Each finding is masked according to the strategy
-// assigned to its detector name. If no strategy is specified for a detector,
-// the finding is left unmasked.
+// Mask replaces findings in text using strategyMap; unmapped detector names remain unchanged. Findings must refer to text, with RawValue equal to text[Start:End]; the input slice is not modified.
 //
-// Findings are processed from right to left to preserve byte offsets.
-// Findings with invalid positions (Start < 0, End > len(text), Start >= End)
-// are silently skipped. When multiple findings overlap, only the rightmost
-// (first-processed) finding is applied; overlapping findings to the left
-// are skipped to prevent corrupted output.
+// Invalid ranges (Start < 0, End > len(text), or Start >= End) are skipped. Replacements run right to left; a finding overlapping an already applied replacement is skipped, and equal-start overlaps have no guaranteed winner.
 func Mask(text string, findings []sensitive.Finding, strategyMap map[sensitive.DetectorName]Strategy) string {
 	if len(findings) == 0 {
 		return text
@@ -57,9 +50,9 @@ func Mask(text string, findings []sensitive.Finding, strategyMap map[sensitive.D
 	return result
 }
 
-// MaskAll applies the same masking strategy to all findings.
+// MaskAll applies strategy to every finding using the range and overlap rules of [Mask].
 //
-//revive:disable-next-line:exported
+// revive:disable-next-line:exported
 func MaskAll(text string, findings []sensitive.Finding, strategy Strategy) string {
 	if len(findings) == 0 {
 		return text

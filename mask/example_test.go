@@ -24,35 +24,20 @@ func ExampleMask() {
 	// user t*****@example.com paid with ************0366
 }
 
-func ExampleMask_redact() {
-	// #nosec G101 -- test key for masking behavior
-	text := "key: AKIAIOSFODNN7EXAMPLE"
-	findings := []sensitive.Finding{
-		{DetectorName: detector.NameAWSKey, Start: 5, End: 25, RawValue: "AKIAIOSFODNN7EXAMPLE"},
+func ExampleMask_strategies() {
+	text := "4532015112830366"
+	findings := sensitive.NewScanner(sensitive.WithPAN()).ScanString(text)
+	for _, strategy := range []mask.Strategy{mask.Redact, mask.Last4, mask.First1Last4, mask.Partial, mask.Hash} {
+		fmt.Println(mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{
+			detector.NamePAN: strategy,
+		}))
 	}
-
-	masked := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{
-		detector.NameAWSKey: mask.Redact,
-	})
-
-	fmt.Println(masked)
 	// Output:
-	// key: ********************
-}
-
-func ExampleMask_first1Last4() {
-	text := "card: 4532015112830366"
-	findings := []sensitive.Finding{
-		{DetectorName: detector.NamePAN, Start: 6, End: 22, RawValue: "4532015112830366"},
-	}
-
-	masked := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{
-		detector.NamePAN: mask.First1Last4,
-	})
-
-	fmt.Println(masked)
-	// Output:
-	// card: 4***********0366
+	// ****************
+	// ************0366
+	// 4***********0366
+	// ************0366
+	// 9b089351
 }
 
 func ExampleMaskAll() {

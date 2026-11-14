@@ -9,21 +9,11 @@ type PrivateKeyPEMDetail struct {
 	KeyType string
 }
 
-// PrivateKeyPEM detects the header line of a PEM-encoded private key.
+// PrivateKeyPEM detects PEM private key headers; the body is neither required nor parsed.
 //
-// PEM private keys begin with a header line of the form
-// "-----BEGIN [<ALGORITHM> ]PRIVATE KEY-----", where the optional algorithm is
-// "RSA", "EC", "DSA", "OPENSSH", "ENCRYPTED", etc. A bare PKCS#8 key uses
-// "-----BEGIN PRIVATE KEY-----" with no algorithm.
-//
-// Detection logic:
-//  1. Scan for the "-----BEGIN " opener.
-//  2. Read up to the closing "-----" of the header line and require the header
-//     content to end with "PRIVATE KEY".
-//  3. Report the header line as the finding and record the algorithm as detail.
-//
-// The header alone is unambiguous, so the private key body is not required to
-// flag a leak. Confidence: 0.99.
+//  1. Find -----BEGIN and its following space.
+//  2. Read through the closing ----- on the same line and require the header content to end with PRIVATE KEY.
+//  3. Return the header with confidence 0.99 and record any preceding algorithm text (e.g., RSA, EC, DSA, OPENSSH, ENCRYPTED, or empty for bare PKCS#8).
 type PrivateKeyPEM struct{}
 
 // NewPrivateKeyPEM creates a new PEM private key detector.
@@ -36,13 +26,12 @@ func (d *PrivateKeyPEM) Name() DetectorName {
 	return NamePrivateKeyPEM
 }
 
-// Hints returns byte sequences for pre-filtering. Every PEM private key header
-// contains "PRIVATE KEY", so it is an exhaustive hint.
+// Hints returns the pre-filter substrings for [PrivateKeyPEM].
 func (d *PrivateKeyPEM) Hints() [][]byte {
 	return [][]byte{[]byte("PRIVATE KEY")}
 }
 
-// Scan examines data for PEM private key headers and returns findings.
+// Scan returns matches in data using the rules documented on [PrivateKeyPEM].
 func (d *PrivateKeyPEM) Scan(data []byte) []Finding {
 	const opener = "-----BEGIN "
 	const closer = "-----"

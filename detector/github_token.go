@@ -20,26 +20,11 @@ type GitHubTokenDetail struct {
 	TokenType GitHubTokenType
 }
 
-// GitHubToken detects GitHub access tokens in text.
+// GitHubToken detects GitHub access tokens by format, without verifying authentication.
 //
-// GitHub tokens come in two shapes:
-//
-//   - Classic tokens use a four-character prefix identifying the token kind —
-//     "ghp_" (personal access token), "gho_" (OAuth access token), "ghu_"
-//     (user-to-server), "ghs_" (server-to-server), or "ghr_" (refresh token) —
-//     followed by 36 base62 characters (A-Z, a-z, 0-9).
-//   - Fine-grained personal access tokens use the "github_pat_" prefix followed
-//     by at least 22 characters of A-Z, a-z, 0-9, or '_'.
-//
-// Detection logic:
-//  1. Scan for one of the six known prefixes (fine-grained is tried first so its
-//     longer prefix is not misread as a classic one).
-//  2. Validate that the token body matches the expected character set and minimum
-//     length for that prefix.
-//  3. Enforce word boundaries so a token embedded in a longer identifier is not
-//     matched.
-//
-// Confidence: 0.95 — the prefixes are highly specific to GitHub.
+//  1. Find github_pat_ first, or a classic prefix: ghp_, gho_, ghu_, ghs_, or ghr_.
+//  2. Require exactly 36 ASCII alphanumeric body characters for classic tokens, or at least 22 ASCII alphanumerics/underscores for fine-grained tokens.
+//  3. Enforce word boundaries and score a match as 0.95; [GitHubTokenType] identifies the family.
 type GitHubToken struct{}
 
 // NewGitHubToken creates a new GitHub token detector.
@@ -52,8 +37,7 @@ func (d *GitHubToken) Name() DetectorName {
 	return NameGitHubToken
 }
 
-// Hints returns byte sequences for pre-filtering. Every GitHub token contains one
-// of these prefixes, so they are exhaustive for the detector's domain.
+// Hints returns the pre-filter substrings for [GitHubToken].
 func (d *GitHubToken) Hints() [][]byte {
 	return [][]byte{
 		[]byte("ghp_"),
@@ -76,7 +60,7 @@ const githubClassicBodyLen = 36
 // githubFineGrainedMinBody is the minimum body length after "github_pat_".
 const githubFineGrainedMinBody = 22
 
-// Scan examines data for GitHub tokens and returns findings.
+// Scan returns matches in data using the rules documented on [GitHubToken].
 func (d *GitHubToken) Scan(data []byte) []Finding {
 	var findings []Finding
 	for i := 0; i < len(data); {

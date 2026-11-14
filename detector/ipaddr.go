@@ -8,17 +8,11 @@ type IPAddrDetail struct {
 	Version int
 }
 
-// IPAddr detects IP addresses (IPv4 and IPv6) in text.
+// IPAddr detects IPv4 and IPv6 addresses.
 //
-// IPv4 detection:
-//  1. Scan for digit sequences separated by '.'
-//  2. Validate 4 octets, each 0-255
-//
-// IPv6 detection:
-//  1. Scan for hex digit sequences separated by ':'
-//  2. Validate structure (including '::' shorthand)
-//
-// Confidence: 0.8 for valid IP addresses.
+//  1. Extract dot-separated decimal candidates or colon-separated hexadecimal candidates, including IPv6 :: shorthand.
+//  2. Validate with net.ParseIP, requiring four octets in 0–255 for IPv4.
+//  3. Score valid addresses as 0.8 and record their version.
 type IPAddr struct{}
 
 // NewIPAddr creates a new IP address detector.
@@ -31,8 +25,7 @@ func (d *IPAddr) Name() DetectorName {
 	return NameIPAddr
 }
 
-// Hints returns byte sequences for pre-filtering.
-// IPv4 addresses contain '.', and IPv6 addresses contain ':'.
+// Hints returns the pre-filter substrings for [IPAddr].
 func (d *IPAddr) Hints() [][]byte {
 	return [][]byte{
 		[]byte("."),
@@ -40,7 +33,7 @@ func (d *IPAddr) Hints() [][]byte {
 	}
 }
 
-// Scan examines data for IP addresses and returns findings.
+// Scan returns matches in data using the rules documented on [IPAddr].
 func (d *IPAddr) Scan(data []byte) []Finding {
 	var findings []Finding
 

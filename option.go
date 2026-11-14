@@ -2,217 +2,171 @@ package sensitive
 
 import "github.com/nao1215/sensitive/detector"
 
-// Option is a function that configures a Scanner.
-// Options are passed to [NewScanner] to enable specific detectors.
+// Option configures a [Scanner] through [NewScanner].
 type Option func(*Scanner)
 
-// WithPAN enables credit card number (PAN) detection.
-// PAN detection uses BIN prefix matching and the Luhn algorithm
-// to validate detected numbers, providing high-confidence results.
+// WithPAN enables [detector.PAN] detection.
 func WithPAN() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewPAN())
 	}
 }
 
-// WithEmail enables email address detection.
-// Email detection uses '@' as a pivot point and scans forward/backward
-// to identify the local part and domain, then validates the structure.
+// WithEmail enables [detector.Email] detection.
 func WithEmail() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewEmail())
 	}
 }
 
-// WithJPPhone enables Japanese phone number detection.
-// It recognizes landline (03-xxxx-xxxx), mobile (090-xxxx-xxxx),
-// IP phone (050-xxxx-xxxx), and toll-free (0120-xxx-xxx) formats.
+// WithJPPhone enables [detector.JPPhone] detection.
 func WithJPPhone() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewJPPhone())
 	}
 }
 
-// WithMyNumber enables Japanese My Number (individual number) detection.
-// My Number is a 12-digit number with a check digit. The detector
-// validates the check digit algorithm to reduce false positives.
+// WithMyNumber enables [detector.MyNumber] detection.
 func WithMyNumber() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewMyNumber())
 	}
 }
 
-// WithJWT enables JSON Web Token detection.
-// JWT detection looks for the characteristic "eyJ" prefix (base64 of "{")
-// and validates the three-part structure (header.payload.signature).
+// WithJWT enables [detector.JWT] detection.
 func WithJWT() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewJWT())
 	}
 }
 
-// WithAWSKey enables AWS Access Key ID detection.
-// AWS keys always start with "AKIA" (long-term) or "ASIA" (temporary STS).
+// WithAWSKey enables [detector.AWSKey] detection.
 func WithAWSKey() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewAWSKey())
 	}
 }
 
-// WithIBAN enables International Bank Account Number detection.
-// IBAN detection validates the country code, length, and MOD 97 check digit.
+// WithIBAN enables [detector.IBAN] detection.
 func WithIBAN() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewIBAN())
 	}
 }
 
-// WithIPAddr enables IP address (IPv4 and IPv6) detection.
+// WithIPAddr enables [detector.IPAddr] detection.
 func WithIPAddr() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewIPAddr())
 	}
 }
 
-// WithSWIFTBIC enables SWIFT/BIC code detection.
-// SWIFT/BIC codes are 8 or 11 character identifiers used for international
-// wire transfers. Detection validates the format and ISO 3166-1 country code.
+// WithSWIFTBIC enables [detector.SWIFTBIC] detection.
 func WithSWIFTBIC() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewSWIFTBIC())
 	}
 }
 
-// WithABARouting enables US ABA routing transit number detection.
-// ABA routing numbers are 9-digit identifiers with a checksum used for
-// ACH transfers, wire transfers, and check processing.
+// WithABARouting enables [detector.ABARouting] detection.
 func WithABARouting() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewABARouting())
 	}
 }
 
-// WithUKSortCode enables UK bank sort code detection.
-// Sort codes are 6-digit numbers in XX-XX-XX format that identify bank branches.
+// WithUKSortCode enables [detector.UKSortCode] detection.
 func WithUKSortCode() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewUKSortCode())
 	}
 }
 
-// WithCVV enables CVV/CVC/CID detection.
-// Card verification values are 3-4 digit security codes on payment cards.
-// Detection requires context keywords (e.g., "CVV", "security code") nearby.
+// WithCVV enables [detector.CVV] detection.
 func WithCVV() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewCVV())
 	}
 }
 
-// WithCardExpiry enables payment card expiration date detection.
-// Expiry dates are formatted as MM/YY or MM/YYYY. Detection requires context
-// keywords (e.g., "exp", "expiry", "有効期限") nearby.
+// WithCardExpiry enables [detector.CardExpiry] detection.
 func WithCardExpiry() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewCardExpiry())
 	}
 }
 
-// WithPaymentToken enables payment processor token detection.
-// Detects API tokens from Stripe (sk_live_, pk_live_, tok_, etc.),
-// PayPal (PAYID-), and Square (sq0idp-, sq0csp-).
+// WithPaymentToken enables [detector.PaymentToken] detection.
 func WithPaymentToken() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewPaymentToken())
 	}
 }
 
-// WithBankAccount enables bank account number detection (context-based).
-// This is a weak detector that looks for digit sequences near banking keywords
-// (e.g., "口座番号", "bank account"). Confidence is intentionally lower (0.5-0.65)
-// because bank account numbers have no universal format or checksum.
+// WithBankAccount enables [detector.BankAccount] detection.
 func WithBankAccount() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewBankAccount())
 	}
 }
 
-// WithACHTrace enables ACH trace number detection.
-// ACH trace numbers are 15-digit identifiers used to track ACH transactions.
-// Detection requires context keywords (e.g., "ACH", "trace") nearby.
+// WithACHTrace enables [detector.ACHTrace] detection.
 func WithACHTrace() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewACHTrace())
 	}
 }
 
-// WithMerchantID enables merchant ID and terminal ID detection.
-// MIDs are typically 15 alphanumeric characters and TIDs are 8 digits.
-// Detection requires context keywords (e.g., "merchant ID", "TID") nearby.
+// WithMerchantID enables [detector.MerchantID] detection.
 func WithMerchantID() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewMerchantID())
 	}
 }
 
-// WithBTC enables Bitcoin address detection.
-// BTC detection supports P2PKH (prefix '1'), P2SH (prefix '3'),
-// Bech32 SegWit v0 (prefix 'bc1q'), and Bech32m Taproot v1 (prefix 'bc1p').
-// Addresses are validated using Base58Check (double SHA-256) or Bech32/Bech32m
-// polynomial checksums.
+// WithBTC enables [detector.BTC] detection.
 func WithBTC() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewBTC())
 	}
 }
 
-// WithETH enables Ethereum address detection.
-// ETH detection recognizes 42-character addresses (0x + 40 hex chars).
-// Mixed-case addresses are validated against the EIP-55 checksum
-// using Keccak-256.
+// WithETH enables [detector.ETH] detection.
 func WithETH() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewETH())
 	}
 }
 
-// WithGitHubToken enables GitHub access token detection.
-// It recognizes classic tokens (ghp_/gho_/ghu_/ghs_/ghr_ prefixes) and
-// fine-grained personal access tokens (github_pat_ prefix).
+// WithGitHubToken enables [detector.GitHubToken] detection.
 func WithGitHubToken() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewGitHubToken())
 	}
 }
 
-// WithSlackToken enables Slack API token detection.
-// It recognizes bot (xoxb-), user (xoxp-), app (xoxa-), OAuth (xoxo-),
-// refresh (xoxr-), and service-refresh (xoxs-) tokens.
+// WithSlackToken enables [detector.SlackToken] detection.
 func WithSlackToken() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewSlackToken())
 	}
 }
 
-// WithGoogleAPIKey enables Google API key detection.
-// Google API keys start with the "AIza" prefix followed by 35 characters.
+// WithGoogleAPIKey enables [detector.GoogleAPIKey] detection.
 func WithGoogleAPIKey() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewGoogleAPIKey())
 	}
 }
 
-// WithPrivateKeyPEM enables PEM-encoded private key detection.
-// It matches the "-----BEGIN [<ALGORITHM> ]PRIVATE KEY-----" header line for
-// RSA, EC, DSA, OpenSSH, PKCS#8, and encrypted private keys.
+// WithPrivateKeyPEM enables [detector.PrivateKeyPEM] detection.
 func WithPrivateKeyPEM() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors, detector.NewPrivateKeyPEM())
 	}
 }
 
-// WithAll enables all built-in detectors.
-// This is a convenience option equivalent to enabling each detector individually.
+// WithAll enables every built-in detector, including context-based detectors that can produce false positives. Select individual With options when those matches are unwanted.
 func WithAll() Option {
 	return func(s *Scanner) {
 		s.detectors = append(s.detectors,
@@ -243,47 +197,21 @@ func WithAll() Option {
 	}
 }
 
-// WithSortByPosition configures the Scanner to return findings sorted by
-// their byte offset (Start position, ascending) instead of the default
-// confidence-descending order. This is useful when the caller needs to
-// process findings in the order they appear in the original text.
+// WithSortByPosition orders findings by start offset ascending, then confidence descending and detector name.
 func WithSortByPosition() Option {
 	return func(s *Scanner) {
 		s.sortByPosition = true
 	}
 }
 
-// WithoutDedup disables the default deduplication of overlapping findings.
-// By default, when two findings overlap in byte position, only the one with
-// the highest confidence is kept. With this option, all findings are returned,
-// which is useful when the caller needs to see every detection from every
-// detector, even if they overlap.
-//
-//	scanner := sensitive.NewScanner(sensitive.WithAll(), sensitive.WithoutDedup())
+// WithoutDedup retains overlapping findings from all enabled detectors.
 func WithoutDedup() Option {
 	return func(s *Scanner) {
 		s.skipDedup = true
 	}
 }
 
-// WithMinConfidence sets the minimum confidence threshold for reported findings.
-// The threshold is applied after deduplication and sorting (see [Scanner.Scan]
-// for the full pipeline). This means deduplication always sees every candidate,
-// ensuring the highest-confidence finding per byte range survives. The threshold
-// then filters only the final sorted output, so callers can select a strict mode
-// (e.g., 0.8 for high-confidence only) or a loose mode (e.g., 0.4 to include
-// medium-confidence matches).
-//
-// The threshold is clamped to the [0, 1] range. Values below 0 are treated as 0
-// and values above 1 are treated as 1.
-//
-// A value of 0 (the default) disables filtering and returns all findings.
-//
-//	// Strict mode: only high-confidence findings.
-//	scanner := sensitive.NewScanner(sensitive.WithAll(), sensitive.WithMinConfidence(0.8))
-//
-//	// Loose mode: include medium-confidence and above.
-//	scanner := sensitive.NewScanner(sensitive.WithAll(), sensitive.WithMinConfidence(0.4))
+// WithMinConfidence keeps findings with confidence >= threshold after deduplication and sorting. Values below 0 become 0, values above 1 become 1, and 0 (the default) disables filtering.
 func WithMinConfidence(threshold float64) Option {
 	return func(s *Scanner) {
 		s.minConfidence = clampConfidence(threshold)
@@ -301,17 +229,7 @@ func clampConfidence(v float64) float64 {
 	return v
 }
 
-// WithDetector adds a custom Detector to the Scanner.
-// This allows users to extend the Scanner with their own detection logic.
-// If d is nil, the option is a no-op (the nil detector is silently ignored).
-//
-//	customDetector := detector.NewRegex(
-//	    "internal_id",
-//	    regexp.MustCompile(`PROJ-\d{6}`),
-//	    [][]byte{[]byte("PROJ-")},
-//	    0.8,
-//	)
-//	scanner := sensitive.NewScanner(sensitive.WithDetector(customDetector))
+// WithDetector registers d; a nil interface is ignored. See [Detector] for the hint and finding contracts.
 func WithDetector(d Detector) Option {
 	return func(s *Scanner) {
 		if d == nil {

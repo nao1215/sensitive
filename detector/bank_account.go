@@ -20,29 +20,11 @@ type BankAccountDetail struct {
 	Language BankAccountLanguage
 }
 
-// BankAccount detects bank account numbers mentioned near context keywords in text.
+// BankAccount detects possible account numbers using context; no universal account format or checksum is assumed.
 //
-// This is a context-based weak detector (弱検出). Bank account numbers have no
-// universal format or checksum, so detection relies on the presence of banking
-// keywords nearby. The confidence is intentionally low (0.5-0.65) to reflect
-// the uncertainty.
-//
-// Detection logic:
-//  1. Scan for context keywords:
-//     Japanese: "口座番号", "口座名義", "振込先", "銀行口座", "預金口座"
-//     English: "bank account", "account number", "acct no", "account no"
-//  2. Within a 50-byte radius of each keyword, look for digit sequences
-//     of 4-17 digits (covering US, UK, EU, and Japanese account number lengths)
-//  3. If a "名義" (holder name) keyword also appears within 50 bytes of the
-//     digit sequence, increase confidence to 0.65
-//
-// Full-width digits (e.g., 口座番号 １２３４５６７８) are normalized to
-// half-width before digit extraction, so Japanese text using full-width
-// numbers is correctly detected.
-//
-// Confidence:
-//   - 0.50: keyword + digit sequence found
-//   - 0.65: keyword + digit sequence + holder name context
+//  1. Find 口座番号, 口座名義, 振込先, 銀行口座, 預金口座, bank account, account number, acct no, or account no (ASCII case-insensitive).
+//  2. Search within 50 bytes of the keyword end for 4–17 digits that do not overlap the keyword.
+//  3. Score a match as 0.50, or 0.65 if holder-name context such as 名義 also occurs within 50 bytes of the digits.
 type BankAccount struct{}
 
 // NewBankAccount creates a new bank account context detector.
@@ -55,12 +37,7 @@ func (d *BankAccount) Name() DetectorName {
 	return NameBankAccount
 }
 
-// Hints returns byte sequences for pre-filtering.
-// These keywords must appear in the input for bank account detection to trigger.
-//
-// ASCII hints are matched case-insensitively by Scanner's hint filter, so a
-// single lowercase entry covers all case variants. Non-ASCII hints (Japanese)
-// are matched byte-for-byte.
+// Hints returns the pre-filter substrings for [BankAccount].
 func (d *BankAccount) Hints() [][]byte {
 	return [][]byte{
 		// Japanese keywords (UTF-8 encoded).
@@ -81,8 +58,7 @@ func (d *BankAccount) Hints() [][]byte {
 	}
 }
 
-// Scan examines data for bank account numbers near context keywords and returns findings.
-// Full-width digits are normalized to half-width before digit extraction.
+// Scan returns matches in data using the rules documented on [BankAccount].
 func (d *BankAccount) Scan(data []byte) []Finding {
 	normalized, posMap := NormalizeFullWidthDigits(data)
 	return d.scanNormalized(data, normalized, posMap)

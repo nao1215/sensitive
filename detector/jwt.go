@@ -35,24 +35,11 @@ type JWTDetail struct {
 	Algorithm string
 }
 
-// JWT detects JSON Web Tokens in text.
+// JWT detects token-shaped strings without verifying signatures or payload JSON; unsigned tokens with an empty signature are also reported.
 //
-// JWT detection relies on the characteristic "eyJ" prefix, which is the
-// base64url encoding of '{"' — the start of every JSON object. The detector
-// then validates the three-part structure (header.payload.signature) and
-// optionally decodes the header to check for valid JSON with an "alg" key.
-//
-// Unsigned JWTs (alg:"none") are also detected. These tokens have an empty
-// signature part (e.g., "header.payload.") and are reported with lower base
-// confidence (0.5 instead of 0.7) because they may also indicate a malformed
-// string. Detecting unsigned JWTs is important because alg:none is a known
-// attack vector (CVE-2015-9235 and related).
-//
-// Confidence is calculated as:
-//   - Signed JWT ("eyJ" prefix + 2 dots + non-empty signature): base 0.7
-//   - Unsigned JWT ("eyJ" prefix + 2 dots + empty signature): base 0.5
-//   - + Header decodes to valid JSON: +0.2
-//   - + Header contains "alg" key: +0.1
+//  1. Find the eyJ prefix and three base64url segments separated by two dots; require nonempty header and payload.
+//  2. Score a nonempty signature as 0.7, or an empty signature as 0.5.
+//  3. Add 0.2 when the header decodes as a JSON object and 0.1 when it contains an alg key; record alg when it is a string.
 type JWT struct{}
 
 // NewJWT creates a new JWT detector.
@@ -65,16 +52,14 @@ func (d *JWT) Name() DetectorName {
 	return NameJWT
 }
 
-// Hints returns byte sequences for pre-filtering.
-// All JWTs start with "eyJ" (base64url encoding of '{"'), making this
-// a highly specific hint that efficiently eliminates non-matching input.
+// Hints returns the pre-filter substrings for [JWT].
 func (d *JWT) Hints() [][]byte {
 	return [][]byte{
 		[]byte("eyJ"),
 	}
 }
 
-// Scan examines data for JWT tokens and returns findings.
+// Scan returns matches in data using the rules documented on [JWT].
 func (d *JWT) Scan(data []byte) []Finding {
 	var findings []Finding
 

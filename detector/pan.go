@@ -1,9 +1,6 @@
 package detector
 
-// CardBrand is the type-safe identifier for a payment card brand.
-// Use the Brand* constants for comparison with [PANDetail.Brand].
-//
-//	if detail.Brand == detector.BrandVisa { ... }
+// CardBrand identifies a payment card brand; see the Brand* constants.
 type CardBrand string
 
 // Card brand constants. Use these with [PANDetail.Brand] to identify
@@ -28,7 +25,6 @@ const (
 // PANDetail holds credit card-specific detail information for a PAN finding.
 type PANDetail struct {
 	// Brand is the card brand identified by the BIN prefix.
-	// Compare with the Brand* constants (e.g., [BrandVisa], [BrandMastercard]).
 	Brand CardBrand
 	// BIN is the first 6 digits of the card number (Bank Identification Number).
 	BIN string
@@ -40,26 +36,11 @@ type PANDetail struct {
 	Length int
 }
 
-// PAN detects credit card numbers (Primary Account Numbers) in text.
+// PAN detects payment card numbers, including checksum failures at reduced confidence.
 //
-// Detection uses a dedicated parser rather than regular expressions:
-//  1. Scan for digit sequences (allowing '-' and ' ' as separators)
-//  2. Check that the digit count is 13-19 (valid PAN range)
-//  3. Validate against known BIN/IIN prefix table (Visa, Mastercard, Amex, etc.)
-//  4. Run the Luhn check digit algorithm
-//  5. Verify that the digit count matches the expected length for the card brand
-//
-// Confidence is calculated cumulatively:
-//   - 13-19 digits: 0.3
-//   - + Known BIN prefix match: +0.3 (= 0.6)
-//   - + Luhn check passes AND expected length for brand: +0.4 (= 1.0)
-//   - Luhn passes but length does NOT match brand: confidence drops to 0.4
-//     (below detection threshold, effectively rejected)
-//
-// The expected-length check is mandatory when Luhn passes. In financial
-// contexts, a digit sequence that passes Luhn but has the wrong length
-// for its brand prefix (e.g., 19-digit Visa) is almost certainly not a
-// genuine card number.
+//  1. Extract 13–19 digits, allowing spaces and hyphens, and require a known [CardBrand] BIN prefix.
+//  2. Score the length as 0.3 and the known prefix as another 0.3; unknown brands are rejected.
+//  3. Add 0.4 for a valid Luhn checksum and the brand's expected length. A Luhn-valid candidate with the wrong brand length scores 0.4 and is rejected; a failed checksum remains at 0.6.
 type PAN struct{}
 
 // NewPAN creates a new PAN detector.
@@ -72,14 +53,7 @@ func (d *PAN) Name() DetectorName {
 	return NamePAN
 }
 
-// Hints returns byte sequences that may indicate the presence of a PAN.
-// Since PANs are composed of digits, the hints target the first digit of
-// each known card brand prefix. This provides limited filtering precision,
-// so the Scan method applies BIN + Luhn validation to eliminate false positives.
-//
-// Full-width digit equivalents (U+FF10–U+FF19) are included because Scan
-// normalizes full-width digits before detection. Without these hints the
-// Scanner's pre-filter would reject full-width-only PANs before Scan runs.
+// Hints returns the pre-filter substrings for [PAN].
 func (d *PAN) Hints() [][]byte {
 	return [][]byte{
 		[]byte("4"),        // Visa (half-width)
@@ -95,11 +69,7 @@ func (d *PAN) Hints() [][]byte {
 	}
 }
 
-// Scan examines data for credit card numbers and returns findings.
-//
-// The algorithm scans for contiguous digit sequences (with optional '-' or ' '
-// separators), then applies BIN prefix matching and Luhn validation.
-// Full-width digits are normalized before scanning.
+// Scan returns matches in data using the rules documented on [PAN].
 func (d *PAN) Scan(data []byte) []Finding {
 	normalized, posMap := NormalizeFullWidthDigits(data)
 	return d.scanNormalized(data, normalized, posMap)

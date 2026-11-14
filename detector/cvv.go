@@ -2,27 +2,15 @@ package detector
 
 // CVVDetail holds CVV/CVC-specific detail information.
 type CVVDetail struct {
-	// DigitCount is the number of digits in the detected CVV/CVC (3 or 4).
-	// 3 digits: Visa, Mastercard, JCB, Discover.
-	// 4 digits: American Express (CID).
+	// DigitCount is 3 for CVV/CVC or 4 for American Express CID.
 	DigitCount int
 }
 
-// CVV detects card verification values (CVV/CVC/CID) in text.
+// CVV detects card verification values from nearby keywords, without checksum validation.
 //
-// A CVV (Card Verification Value), CVC (Card Verification Code), or CID
-// (Card Identification Number) is a 3- or 4-digit security code printed
-// on payment cards. Because bare 3-4 digit numbers appear everywhere,
-// this detector requires a context keyword to be present nearby.
-//
-// Detection logic:
-//  1. Scan for context keywords: "CVV", "CVC", "CID", "CVV2", "CVC2",
-//     "security code", "セキュリティコード" (and case variants)
-//  2. Within a 30-byte radius of each keyword, look for a 3- or 4-digit
-//     number that is not part of a longer digit sequence
-//  3. Return the digit sequence as the finding (not the keyword)
-//
-// Confidence: 0.85 when a context keyword and valid digit sequence are found.
+//  1. Find CVV, CVC, CID, CVV2, CVC2, security code, or セキュリティコード (ASCII case-insensitive).
+//  2. Search within 30 bytes of the keyword end for a separate three- or four-digit sequence that does not overlap the keyword.
+//  3. Return only the digits with confidence 0.85.
 type CVV struct{}
 
 // NewCVV creates a new CVV/CVC detector.
@@ -35,15 +23,7 @@ func (d *CVV) Name() DetectorName {
 	return NameCVV
 }
 
-// Hints returns byte sequences for pre-filtering.
-// These keywords must appear in the input for CVV detection to trigger.
-// The hints are exhaustive: without one of these keywords, a bare 3-4 digit
-// number is not considered a CVV.
-//
-// ASCII hints are matched case-insensitively by Scanner's hint filter, so a
-// single lowercase entry (e.g., "cvv") covers all case variants ("CVV",
-// "Cvv", "SECURITY CODE", etc.). Non-ASCII hints (Japanese) are matched
-// byte-for-byte.
+// Hints returns the pre-filter substrings for [CVV].
 func (d *CVV) Hints() [][]byte {
 	return [][]byte{
 		[]byte("cvv"),           // covers CVV, Cvv, CVV2, cvv2, etc.
@@ -57,7 +37,7 @@ func (d *CVV) Hints() [][]byte {
 	}
 }
 
-// Scan examines data for CVV/CVC numbers near context keywords and returns findings.
+// Scan returns matches in data using the rules documented on [CVV].
 func (d *CVV) Scan(data []byte) []Finding {
 	matches := cvvKeywords.findPositions(data)
 	if len(matches) == 0 {

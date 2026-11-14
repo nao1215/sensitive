@@ -8,23 +8,11 @@ type CardExpiryDetail struct {
 	Year string
 }
 
-// CardExpiry detects payment card expiration dates in text.
+// CardExpiry detects payment card expiration dates from context, without checking whether the date is in the future.
 //
-// Card expiry dates are typically formatted as MM/YY, MM/YYYY, MM-YY, or
-// MM-YYYY. Because these patterns are common in non-card contexts (dates,
-// version numbers, etc.), this detector requires a context keyword to be
-// present nearby.
-//
-// Detection logic:
-//  1. Scan for context keywords: "exp", "expir", "expiry", "expires",
-//     "expiration", "valid thru", "valid through", "有効期限"
-//     (and common case variants)
-//  2. Within a 50-byte radius before and after each keyword, look for a
-//     date pattern matching MM/YY, MM/YYYY, MM-YY, or MM-YYYY
-//  3. Validate that the month is between 01 and 12
-//  4. Return the date pattern as the finding (not the keyword)
-//
-// Confidence: 0.85 when a context keyword and valid date pattern are found.
+//  1. Find exp, expir, expiry, expires, expiration, valid thru, valid through, or 有効期限 (ASCII case-insensitive).
+//  2. Search up to 50 bytes before and after the keyword for MM/YY, MM/YYYY, MM-YY, or MM-YYYY with month 01–12.
+//  3. Reject adjacent digits and previously reported overlaps; return only the date with confidence 0.85.
 type CardExpiry struct{}
 
 // NewCardExpiry creates a new card expiry date detector.
@@ -37,12 +25,7 @@ func (d *CardExpiry) Name() DetectorName {
 	return NameCardExpiry
 }
 
-// Hints returns byte sequences for pre-filtering.
-// These keywords must appear in the input for card expiry detection to trigger.
-//
-// ASCII hints are matched case-insensitively by Scanner's hint filter, so a
-// single lowercase entry covers all case variants. Non-ASCII hints (Japanese)
-// are matched byte-for-byte.
+// Hints returns the pre-filter substrings for [CardExpiry].
 func (d *CardExpiry) Hints() [][]byte {
 	return [][]byte{
 		[]byte("exp"),   // covers Exp, EXP, expiry, expiration, etc.
@@ -52,7 +35,7 @@ func (d *CardExpiry) Hints() [][]byte {
 	}
 }
 
-// Scan examines data for card expiry dates near context keywords and returns findings.
+// Scan returns matches in data using the rules documented on [CardExpiry].
 func (d *CardExpiry) Scan(data []byte) []Finding {
 	matches := expiryKeywords.findPositions(data)
 	if len(matches) == 0 {

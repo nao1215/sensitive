@@ -2,18 +2,9 @@ package detector
 
 import "unicode/utf8"
 
-// NormalizeFullWidthDigits converts full-width digits (U+FF10 '０' through
-// U+FF19 '９') and full-width hyphens (U+FF0D '－', U+30FC 'ー', U+2010 '‐')
-// to their half-width ASCII equivalents.
+// NormalizeFullWidthDigits converts U+FF10–U+FF19 digits and hyphen variants U+FF0D, U+30FC, and U+2010 to ASCII. The returned map translates normalized byte indexes to original indexes, including an end sentinel equal to len(data).
 //
-// It returns the normalized byte slice and a position map that maps each byte
-// index in the normalized output back to the corresponding byte index in the
-// original input. This allows Finding positions to be translated back to the
-// original text coordinates.
-//
-// If the input contains no full-width characters, the returned normalized slice
-// shares the same content as the input (no allocation), and the position map is
-// an identity mapping.
+// ASCII-only input is returned unchanged with an allocated identity map; input containing non-ASCII bytes uses a new buffer. Other bytes are preserved.
 func NormalizeFullWidthDigits(data []byte) ([]byte, []int) {
 	// Quick check: if no multi-byte characters, return as-is.
 	hasMultiByte := false

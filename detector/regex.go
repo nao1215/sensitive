@@ -2,18 +2,10 @@ package detector
 
 import "regexp"
 
-// Regex is a user-defined regular expression detector for custom patterns.
-// It serves as a fallback mechanism for patterns that do not warrant a
-// dedicated detector implementation.
+// Regex detects custom patterns with a compiled regular expression.
 //
-// Example usage:
-//
-//	d := detector.NewRegex(
-//	    "internal_id",
-//	    regexp.MustCompile(`PROJ-\d{6}`),
-//	    [][]byte{[]byte("PROJ-")},
-//	    0.8,
-//	)
+//  1. Find every non-overlapping match, including empty matches allowed by the pattern.
+//  2. Return each original byte range with the configured name and fixed confidence.
 type Regex struct {
 	name       DetectorName
 	pattern    *regexp.Regexp
@@ -21,19 +13,7 @@ type Regex struct {
 	confidence float64
 }
 
-// NewRegex creates a new Regex detector with the given name, compiled pattern,
-// hint byte sequences, and fixed confidence value.
-//
-// The pattern must be pre-compiled using regexp.MustCompile or regexp.Compile
-// and must not be nil. Passing a nil pattern causes a panic because Scan would
-// otherwise dereference it at runtime.
-//
-// The confidence value is clamped to the [0, 1] range. Values below 0 are
-// treated as 0 and values above 1 are treated as 1.
-//
-// Hints should contain byte sequences that are guaranteed to be present in any
-// match, enabling the Scanner's pre-filter to skip non-matching input efficiently.
-// An empty hints slice causes Scan to be called unconditionally (discouraged).
+// NewRegex creates a detector with pattern and a fixed confidence clamped to [0, 1]. It panics if pattern is nil; hints follow [Detector.Hints] and must not change after registration.
 func NewRegex(name DetectorName, pattern *regexp.Regexp, hints [][]byte, confidence float64) *Regex {
 	if pattern == nil {
 		panic("detector.NewRegex: pattern must not be nil")
