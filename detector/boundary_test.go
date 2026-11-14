@@ -79,7 +79,6 @@ func TestEncodedSeparatorBytes(t *testing.T) {
 			t.Errorf("invalid escape %q relaxed a word boundary", s)
 		}
 	}
-
 }
 
 func TestEncodedBoundaryKeepsOriginalBytes(t *testing.T) {
