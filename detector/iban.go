@@ -59,13 +59,13 @@ func (d *IBAN) Scan(data []byte) []Finding {
 		}
 
 		// Check that it's not part of a longer word.
-		if i > 0 && !encodedSeparatorBefore(data, i) && isAlphaNum(data[i-1]) {
+		if i > 0 && isAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
 			continue
 		}
 
 		// Normalize country code to uppercase for lookup.
 		countryCode := string([]byte{toUpperByte(data[i]), toUpperByte(data[i+1])})
-		expectedLen, ok := ibanLengths[countryCode]
+		expectedLen, ok := ibanCountryLength(countryCode)
 		if !ok {
 			continue
 		}
@@ -165,19 +165,48 @@ func toUpperByte(b byte) byte {
 	return b
 }
 
-// ibanLengths maps country codes to their expected IBAN lengths.
-// Source: https://www.swift.com/standards/data-standards/iban
-var ibanLengths = map[string]int{
-	"AL": 28, "AD": 24, "AT": 20, "AZ": 28, "BH": 22, "BY": 28,
-	"BE": 16, "BA": 20, "BR": 29, "BG": 22, "CR": 22, "HR": 21,
-	"CY": 28, "CZ": 24, "DK": 18, "DO": 28, "TL": 23, "EE": 20,
-	"FO": 18, "FI": 18, "FR": 27, "GE": 22, "DE": 22, "GI": 23,
-	"GR": 27, "GL": 18, "GT": 28, "HU": 28, "IS": 26, "IQ": 23,
-	"IE": 22, "IL": 23, "IT": 27, "JO": 30, "KZ": 20, "XK": 20,
-	"KW": 30, "LV": 21, "LB": 28, "LI": 21, "LT": 20, "LU": 20,
-	"MK": 19, "MT": 31, "MR": 27, "MU": 30, "MC": 27, "MD": 24,
-	"ME": 22, "NL": 18, "NO": 15, "PK": 24, "PS": 29, "PL": 28,
-	"PT": 25, "QA": 29, "RO": 24, "SM": 27, "SA": 24, "RS": 22,
-	"SK": 24, "SI": 19, "ES": 24, "SE": 24, "CH": 21, "TN": 24,
-	"TR": 26, "UA": 29, "AE": 23, "GB": 22, "VA": 22, "VG": 24,
+// ibanCountryLength returns the country length from SWIFT IBAN Registry release
+// 103 (September 2026): https://www.swift.com/swift-resource/9606/download .
+// A switch keeps the registry immutable without package-level state.
+func ibanCountryLength(country string) (int, bool) {
+	switch country {
+	case "NO":
+		return 15, true
+	case "BE":
+		return 16, true
+	case "DK", "FI", "FK", "FO", "GL", "NL", "SD":
+		return 18, true
+	case "MK", "SI":
+		return 19, true
+	case "AT", "BA", "EE", "KZ", "LT", "LU", "MN", "XK":
+		return 20, true
+	case "CH", "HR", "LI", "LV":
+		return 21, true
+	case "BG", "BH", "CR", "DE", "GB", "GE", "IE", "ME", "RS", "VA":
+		return 22, true
+	case "AE", "GI", "IL", "IQ", "OM", "SO", "TL":
+		return 23, true
+	case "AD", "CZ", "ES", "MD", "PK", "RO", "SA", "SE", "SK", "TN", "VG":
+		return 24, true
+	case "LY", "PT", "ST":
+		return 25, true
+	case "IS", "TR":
+		return 26, true
+	case "BI", "DJ", "FR", "GR", "IT", "MC", "MR", "SM":
+		return 27, true
+	case "AL", "AZ", "BY", "CY", "DO", "GT", "HN", "HU", "LB", "NI", "PL", "SV":
+		return 28, true
+	case "BR", "EG", "PS", "QA", "UA":
+		return 29, true
+	case "JO", "KW", "MU", "YE":
+		return 30, true
+	case "MT", "SC":
+		return 31, true
+	case "LC":
+		return 32, true
+	case "RU":
+		return 33, true
+	default:
+		return 0, false
+	}
 }
