@@ -108,6 +108,7 @@ jobs:
           go mod tidy -diff
           test "$(go list -m all)" = github.com/nao1215/sensitive
       - name: Check test module and run properties
+        shell: bash
         working-directory: tests
         run: |
           go mod tidy -diff
