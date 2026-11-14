@@ -1,7 +1,6 @@
 package detector_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/nao1215/sensitive/detector"
@@ -260,18 +259,17 @@ func TestUKSortCodeDetector_Hints(t *testing.T) {
 	}
 }
 
-func TestUKSortCodeGeneratedGroups(t *testing.T) {
+func TestUKSortCodeTrailingSpace(t *testing.T) {
 	t.Parallel()
-	for i := range 100 {
-		raw := fmt.Sprintf("12-%02d-%02d", i, 99-i)
-		got := detector.NewUKSortCode().Scan([]byte("sort code: " + raw))
-		if len(got) != 1 || got[0].RawValue != raw {
-			t.Fatalf("valid sort code rejected: %s", raw)
-		}
-		for _, bad := range []string{"x" + raw, raw + "0", raw[:len(raw)-1]} {
-			if len(detector.NewUKSortCode().Scan([]byte(bad))) != 0 {
-				t.Fatalf("invalid sort code accepted: %s", bad)
+	for _, raw := range []string{"01 00 00", "12 34 56"} {
+		for _, suffix := range []string{" ", " today", "  "} {
+			got := detector.NewUKSortCode().Scan([]byte("sort code: " + raw + suffix))
+			if len(got) != 1 || got[0].RawValue != raw {
+				t.Errorf("lost %q with suffix %q: %+v", raw, suffix, got)
 			}
+		}
+		if got := detector.NewUKSortCode().Scan([]byte(raw + " 78")); len(got) != 0 {
+			t.Errorf("long numeric sequence accepted: %+v", got)
 		}
 	}
 }

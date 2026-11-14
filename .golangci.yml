@@ -51,6 +51,10 @@ linters:
     - wastedassign
     - whitespace
   settings:
+    gomoddirectives:
+      replace-local: true
+      replace-allow-list:
+        - github.com/nao1215/sensitive
     errcheck:
       disable-default-exclusions: false
       check-type-assertions: true

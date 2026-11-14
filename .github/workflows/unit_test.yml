@@ -82,3 +82,33 @@ jobs:
 
       - name: Build
         run: go build ./...
+
+  property_tests:
+    name: Property tests (${{ matrix.os }}, Go ${{ matrix.go }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        # rapid v1.3.0 requires Go 1.23; the library matrix remains on 1.22.
+        go: ["1.23", "stable"]
+        exclude:
+          - os: macos-latest
+            go: "1.23"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ matrix.go }}
+          cache-dependency-path: tests/go.sum
+      - name: Check root module isolation
+        shell: bash
+        run: |
+          go mod tidy -diff
+          test "$(go list -m all)" = github.com/nao1215/sensitive
+      - name: Check test module and run properties
+        working-directory: tests
+        run: |
+          go mod tidy -diff
+          go test ./... -rapid.checks=100

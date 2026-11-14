@@ -31,3 +31,8 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+*.cover
+__pycache__/
+# Shrunk failures are promoted to named regression tests before committing.
+/tests/testdata/rapid/

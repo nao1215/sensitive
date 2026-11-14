@@ -1,9 +1,6 @@
 package detector_test
 
 import (
-	"bytes"
-	"encoding/base64"
-	"fmt"
 	"testing"
 
 	"github.com/nao1215/sensitive/detector"
@@ -189,23 +186,5 @@ func TestJWTDetector_EmptyHeaderRejected(t *testing.T) {
 	// a useful header. This tests that very short headers still produce a finding.
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
-	}
-}
-
-func TestJWTGeneratedJSONSegments(t *testing.T) {
-	t.Parallel()
-	for i := range 100 {
-		header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
-		payload := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf(`{"sub":"synthetic-%d","iat":1234567890}`, i)))
-		signature := base64.RawURLEncoding.EncodeToString(bytes.Repeat([]byte{byte(i)}, 32))
-		raw := header + "." + payload + "." + signature
-		got := detector.NewJWT().Scan([]byte(raw))
-		if len(got) != 1 || got[0].RawValue != raw {
-			t.Fatal("generated JWT rejected")
-		}
-		bad := header + ".!invalid." + signature
-		if len(detector.NewJWT().Scan([]byte(bad))) != 0 {
-			t.Fatal("invalid base64url payload accepted")
-		}
 	}
 }

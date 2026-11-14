@@ -458,6 +458,6 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 
 ## Testing
 
-The suite combines unit tests, metamorphic checks, property-based tests with specification-driven generators, differential specification vectors, fuzzing with an embedded-secret oracle, a negative corpus, and reviewed golden logs. Mutation testing with gremlins is a periodic measurement, not a module dependency.
+The library has zero dependencies; test-only tools live in the separate [`tests/`](tests/) module. Testing combines property-based tests with rapid, specification vectors and generated examples, metamorphic checks, Go fuzzing with an embedded-secret oracle, negative and labeled recall corpora, and reviewed golden logs. Mutation testing with gremlins is a periodic measurement.
 
-Run `go test ./...` for all deterministic tests and fuzz seeds, `go test . -fuzz=FuzzScanner -fuzztime=2m` for exploration, and `go run github.com/go-gremlins/gremlins/cmd/gremlins@latest unleash ./detector` for mutation measurement. Review golden changes before accepting `go test . -run TestMixedLogGolden -update`; run `make benchmark` for performance.
+Run `go test ./...` in the root and `cd tests && go test ./...` for rapid properties (Go 1.23+). Run `go test . -fuzz=FuzzScanner -fuzztime=2m` for exploration and `make benchmark` for performance. Review golden changes before accepting `go test . -run TestMixedLogGolden -update`. See [test methodology](tests/README.md) for generator scope, shrinking, and mutation measurements.

@@ -25,7 +25,7 @@ permissions:
 
 jobs:
   govulncheck:
-    name: govulncheck (Go ${{ matrix.go }})
+    name: govulncheck (${{ matrix.module }}, Go ${{ matrix.go }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -45,8 +45,16 @@ jobs:
         include:
           - go: "1.22"
             stdlib: warn
+            module: .
           - go: "stable"
             stdlib: fail
+            module: .
+          - go: "1.23"
+            stdlib: warn
+            module: tests
+          - go: "stable"
+            stdlib: fail
+            module: tests
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -80,12 +88,13 @@ jobs:
       # reading as "nothing found": the default run shell does not set pipefail,
       # so a jq error would otherwise be hidden behind sort.
       - name: Scan the module
+        working-directory: ${{ matrix.module }}
         env:
           ACCEPTED: ""
           STDLIB: ${{ matrix.stdlib }}
         run: |
           set -o pipefail
-          govulncheck -format json ./... > "$RUNNER_TEMP/govulncheck.json"
+          govulncheck -test -format json ./... > "$RUNNER_TEMP/govulncheck.json"
           jq -e -s 'length > 0' "$RUNNER_TEMP/govulncheck.json" > /dev/null
           called='select(.finding != null and (.finding.trace[0].function // "") != "")'
           if [ "$STDLIB" = "warn" ]; then
@@ -100,6 +109,6 @@ jobs:
           tr ' ' '\n' <<< "$ACCEPTED" | sed '/^$/d' > "$RUNNER_TEMP/accepted.txt"
           if grep -vxF -f "$RUNNER_TEMP/accepted.txt" "$RUNNER_TEMP/called.txt"; then
             echo "::error::govulncheck found an advisory that is not in ACCEPTED"
-            govulncheck ./...
+            govulncheck -test ./...
             exit 1
           fi

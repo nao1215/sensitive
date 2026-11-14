@@ -1,0 +1,15 @@
+# Test-only tools
+
+The root library remains dependency-free on Go 1.22. This separate module uses rapid v1.3.0 (Go 1.23+) for generation and automatic shrinking; `golang.org/x/crypto/sha3` supplies an independent Keccak oracle for EIP-55. Its version is the last release supporting Go 1.23; only its SHA-3 package is used. Neither dependency enters the root module.
+
+Run `go test ./... -rapid.checks=100` here, or increase `-rapid.checks` for exploration. On failure rapid prints a replay seed and stores a minimized case under `testdata/rapid/`; promote useful failures to named regression tests in the root. The local sanity check deliberately asserted that every integer in [0,100000] was below 7 and shrank to 7; that failing test is not committed.
+
+Generators construct check digits and encodings independently: supported PAN brand lengths with Luhn, all 89 SWIFT registry IBAN country structures with big.Int MOD97, My Number MOD11, ABA weighted MOD10, formatted sort codes, BICs, EIP-55, Bitcoin Base58Check and BIP173/350 witness addresses, AWS/GitHub/Slack/Google token shapes, JWT segments, and PEM header kinds. Every generated component is a rapid draw; finite specification domains remain bounded, while contexts, token bodies, payloads, and reader placements vary. These are syntax and checksum tests, not evidence that generated identifiers are assigned or credentials authenticate.
+
+Each family checks detection, exact raw bytes and offsets, separator-context invariance, Scan/ScanString/ScanReader/ScanLines equivalence, and Redact/Last4 behavior. Reader chunk sizes vary and placements cover 512-byte, 4-KiB, and 64-KiB boundaries. ScanLines equivalence uses one line because its offsets are line-relative. PAN checksum failures remain lower-confidence findings by contract; uniform-case Ethereum addresses are valid without EIP-55. Zero sort codes, unsupported ABA prefixes, unsupported Bitcoin networks and witness forms are outside the positive domain. PEM detection concerns headers, not key parsing; JWT detection does not verify signatures or payload JSON.
+
+The root retains specification vectors, finite generated examples, golden logs, fuzz oracles, and regression tests. `testdata/recall.json` in the root contains two positive and two look-alike negative synthetic examples for each of 23 detectors; its test fails on any lost positive or new false positive. This small balanced corpus is a regression measurement, not an estimate of production prevalence or universal precision.
+
+For comparable mutation measurements, run `gremlins unleash ./detector --workers 4 --test-cpu 1 --output mutation.json` on an isolated snapshot. This measures the root detector tests, not rapid in the nested module; report that scope with the numbers. The byte alphabet, context window, date-ambiguity, and checksum regression tests target surviving mutants. Coverage CI separately instruments root packages from both modules and merges source blocks before octocov, so each statement contributes once.
+
+Contributions and additional synthetic edge cases are welcome; please [sponsor maintenance](https://github.com/sponsors/nao1215).

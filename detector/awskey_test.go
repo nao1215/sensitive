@@ -1,7 +1,6 @@
 package detector_test
 
 import (
-	"math/rand/v2"
 	"testing"
 
 	"github.com/nao1215/sensitive/detector"
@@ -172,28 +171,5 @@ func TestAWSKeyDetector_NonAKIAPrefix(t *testing.T) {
 	findings := d.Scan([]byte("ANPAIOSFODNN7EXAMPLE"))
 	if len(findings) != 0 {
 		t.Errorf("got %d findings for ANPA prefix, want 0", len(findings))
-	}
-}
-
-func TestGeneratedAWSKey(t *testing.T) {
-	t.Parallel()
-	rng := rand.New(rand.NewPCG(1215, 2026))
-	body := func(n int) string {
-		const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-		result := make([]byte, n)
-		for i := range result {
-			result[i] = alphabet[rng.IntN(len(alphabet))]
-		}
-		return string(result)
-	}
-	for range 100 {
-		raw := "AKIA" + body(16)
-		got := detector.NewAWSKey().Scan([]byte(raw))
-		if len(got) != 1 || got[0].RawValue != raw || got[0].Confidence < 0.95 {
-			t.Fatalf("valid generated value rejected: %v", got)
-		}
-		if len(detector.NewAWSKey().Scan([]byte("word"+raw))) != 0 {
-			t.Fatal("embedded identifier accepted")
-		}
 	}
 }

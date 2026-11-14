@@ -1,8 +1,6 @@
 package detector_test
 
 import (
-	"fmt"
-	"math/rand/v2"
 	"testing"
 
 	"github.com/nao1215/sensitive/detector"
@@ -203,28 +201,5 @@ func TestABARoutingDetector_Hints(t *testing.T) {
 	d := detector.NewABARouting()
 	if d.Hints() != nil {
 		t.Errorf("Hints() = %v, want nil", d.Hints())
-	}
-}
-
-func TestABAGeneratedChecksums(t *testing.T) {
-	t.Parallel()
-	rng := rand.New(rand.NewPCG(3, 7))
-	for _, prefix := range []int{1, 12, 21, 32, 61, 72, 80} {
-		for range 50 {
-			raw := []byte(fmt.Sprintf("%02d%06d", prefix, rng.IntN(1000000)))
-			sum := 0
-			for i, b := range raw {
-				sum += int(b-'0') * []int{3, 7, 1}[i%3]
-			}
-			raw = append(raw, byte('0'+(10-sum%10)%10))
-			got := detector.NewABARouting().Scan(raw)
-			if len(got) != 1 || got[0].Confidence != 0.85 {
-				t.Fatalf("valid ABA rejected: %s", raw)
-			}
-			raw[8] = '0' + (raw[8]-'0'+1)%10
-			if len(detector.NewABARouting().Scan(raw)) != 0 {
-				t.Fatal("invalid ABA accepted")
-			}
-		}
 	}
 }
