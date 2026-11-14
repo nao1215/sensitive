@@ -94,7 +94,7 @@ func isSortCodePattern(data []byte, i int) (sep byte, ok bool) {
 // sequence, is followed by a digit, or is followed by the same separator.
 func isValidSortCodeBoundary(data []byte, i, end int, sep byte) bool {
 	// Word boundary: preceding character must not be a digit or letter.
-	if i > 0 && !encodedSeparatorBefore(data, i) && isAlphaNum(data[i-1]) {
+	if i > 0 && isAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
 		return false
 	}
 

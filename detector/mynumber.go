@@ -63,7 +63,7 @@ func (d *MyNumber) scanNormalized(orig []byte, data []byte, posMap []int) []Find
 		}
 
 		// Check that this digit is not part of a longer alphanumeric token.
-		if i > 0 && !encodedSeparatorBefore(data, i) && isAlpha(data[i-1]) {
+		if i > 0 && isAlpha(data[i-1]) && !encodedSeparatorBefore(data, i) {
 			i++
 			continue
 		}

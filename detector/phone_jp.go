@@ -138,7 +138,7 @@ func (d *JPPhone) scanNormalized(orig []byte, data []byte, posMap []int) []Findi
 		// Check that '0' is not part of a longer word-like token.
 		// Underscores are treated as word characters to prevent matching
 		// identifiers like _09012345678.
-		if i > 0 && !encodedSeparatorBefore(data, i) && isPhoneWordChar(data[i-1]) {
+		if i > 0 && isPhoneWordChar(data[i-1]) && !encodedSeparatorBefore(data, i) {
 			i++
 			continue
 		}
