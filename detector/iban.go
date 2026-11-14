@@ -16,7 +16,8 @@ type IBANDetail struct {
 // Detection logic:
 //  1. Scan for 2 ASCII letters (case-insensitive) followed by 2 digits
 //  2. Validate the country code against known ISO 3166-1 alpha-2 codes
-//  3. Verify the total length matches the expected length for that country
+//  3. Extract exactly the country-specific length, allowing internal spaces;
+//     a following space separates subsequent text, while adjacent letters or digits reject the candidate
 //  4. Validate the MOD 97 check digit (ISO 7064)
 //
 // Confidence: 0.95 when MOD 97 check passes.
@@ -58,7 +59,7 @@ func (d *IBAN) Scan(data []byte) []Finding {
 		}
 
 		// Check that it's not part of a longer word.
-		if i > 0 && isAlphaNum(data[i-1]) {
+		if i > 0 && !encodedSeparatorBefore(data, i) && isAlphaNum(data[i-1]) {
 			continue
 		}
 
@@ -70,7 +71,7 @@ func (d *IBAN) Scan(data []byte) []Finding {
 		}
 
 		start := i
-		ibanChars, end := extractIBANChars(data, i)
+		ibanChars, end := extractIBANChars(data, i, expectedLen)
 
 		if len(ibanChars) != expectedLen {
 			continue
@@ -138,10 +139,11 @@ func validateIBANMod97(iban []byte) bool {
 // extractIBANChars extracts alphanumeric characters from data[start:],
 // treating spaces as optional separators and normalizing to uppercase.
 // Returns the extracted characters and the trimmed end position (excluding
-// trailing spaces).
-func extractIBANChars(data []byte, start int) (ibanChars []byte, end int) {
+// trailing spaces). Extraction stops at the country-specific length so a
+// following word cannot become part of the checksum candidate.
+func extractIBANChars(data []byte, start, expectedLen int) (ibanChars []byte, end int) {
 	j := start
-	for j < len(data) && (isAlphaNum(data[j]) || data[j] == ' ') {
+	for j < len(data) && len(ibanChars) < expectedLen && (isAlphaNum(data[j]) || data[j] == ' ') {
 		if isAlphaNum(data[j]) {
 			ibanChars = append(ibanChars, toUpperByte(data[j]))
 		}

@@ -63,7 +63,7 @@ func (d *ETH) Scan(data []byte) []Finding {
 		}
 
 		// Word boundary: preceding character must not be alphanumeric or underscore.
-		if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '_') {
+		if i > 0 && !encodedSeparatorBefore(data, i) && (isAlphaNum(data[i-1]) || data[i-1] == '_') {
 			continue
 		}
 

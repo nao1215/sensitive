@@ -133,7 +133,7 @@ func findKeywordPositions(data []byte, keywords [][]byte) []keywordMatch {
 // indicating the keyword is part of a longer word.
 func isWordBoundary(data []byte, pos, end int, kw []byte) bool {
 	// Check leading boundary.
-	if pos > 0 && isASCIIAlphaNum(kw[0]) && isASCIIAlphaNum(data[pos-1]) {
+	if pos > 0 && !encodedSeparatorBefore(data, pos) && isASCIIAlphaNum(kw[0]) && isASCIIAlphaNum(data[pos-1]) {
 		return false
 	}
 	// Check trailing boundary.

@@ -263,3 +263,15 @@ func TestIBANDetector_MultipleIBANs(t *testing.T) {
 		t.Fatalf("got %d findings, want 2", len(findings))
 	}
 }
+
+func TestIBANFollowingWord(t *testing.T) {
+	t.Parallel()
+	for _, raw := range []string{"GB82WEST12345698765432", "GB82 WEST 1234 5698 7654 32"} {
+		for _, suffix := range []string{" y", " today", " 123"} {
+			got := detector.NewIBAN().Scan([]byte("to " + raw + suffix))
+			if len(got) != 1 || got[0].RawValue != raw {
+				t.Errorf("%q: got %v", raw+suffix, got)
+			}
+		}
+	}
+}

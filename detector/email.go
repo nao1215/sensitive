@@ -105,7 +105,7 @@ func (d *Email) Scan(data []byte) []Finding {
 // with '.', or contains consecutive dots.
 func findLocalPartStart(data []byte, atIdx int) (start int, ok bool) {
 	localStart := atIdx
-	for localStart > 0 && isLocalPartChar(data[localStart-1]) {
+	for localStart > 0 && !encodedSeparatorBefore(data, localStart) && isLocalPartChar(data[localStart-1]) {
 		localStart--
 	}
 	// Local part must not be empty and must not start/end with '.'.

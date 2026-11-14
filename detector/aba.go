@@ -64,7 +64,7 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		}
 
 		// Word boundary: preceding character must not be alphanumeric.
-		if i > 0 && isAlphaNum(data[i-1]) {
+		if i > 0 && !encodedSeparatorBefore(data, i) && isAlphaNum(data[i-1]) {
 			continue
 		}
 
