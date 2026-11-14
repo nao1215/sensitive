@@ -38,4 +38,8 @@
 // The [NormalizeFullWidthDigits] utility converts full-width digits (U+FF10-U+FF19)
 // and full-width hyphens to their half-width equivalents, enabling detection of
 // sensitive data written in Japanese full-width characters.
+// Leading percent-encoded log/query separators (whitespace, quotes, brackets,
+// colon, comma, semicolon, equals, ampersand, and question mark) delimit values
+// just like literal separators. Encoded word characters and malformed escapes
+// do not relax boundary checks. RawValue and offsets refer to the original input.
 package detector

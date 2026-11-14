@@ -1,6 +1,7 @@
 package detector_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/nao1215/sensitive/detector"
@@ -256,5 +257,21 @@ func TestUKSortCodeDetector_Hints(t *testing.T) {
 	hints := d.Hints()
 	if len(hints) == 0 {
 		t.Error("Hints() returned empty slice, want at least one hint")
+	}
+}
+
+func TestUKSortCodeGeneratedGroups(t *testing.T) {
+	t.Parallel()
+	for i := range 100 {
+		raw := fmt.Sprintf("12-%02d-%02d", i, 99-i)
+		got := detector.NewUKSortCode().Scan([]byte("sort code: " + raw))
+		if len(got) != 1 || got[0].RawValue != raw {
+			t.Fatalf("valid sort code rejected: %s", raw)
+		}
+		for _, bad := range []string{"x" + raw, raw + "0", raw[:len(raw)-1]} {
+			if len(detector.NewUKSortCode().Scan([]byte(bad))) != 0 {
+				t.Fatalf("invalid sort code accepted: %s", bad)
+			}
+		}
 	}
 }

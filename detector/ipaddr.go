@@ -46,6 +46,10 @@ func (d *IPAddr) Scan(data []byte) []Finding {
 
 	i := 0
 	for i < len(data) {
+		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(data, i+3) {
+			i += 3
+			continue
+		}
 		// Try IPv4 first if we see a digit.
 		if isDigit(data[i]) {
 			if f, adv, ok := d.tryIPv4(data, i); ok {
@@ -77,7 +81,7 @@ func (d *IPAddr) Scan(data []byte) []Finding {
 // Returns the finding, the advance position, and whether a valid IPv4 was found.
 func (d *IPAddr) tryIPv4(data []byte, i int) (Finding, int, bool) {
 	// Word boundary: reject if preceded by alphanumeric, '.', or '_'.
-	if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '.' || data[i-1] == '_') {
+	if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '.' || data[i-1] == '_') && !encodedSeparatorBefore(data, i) {
 		return Finding{}, i + 1, false
 	}
 
@@ -119,7 +123,7 @@ func isIPv4TrailingChar(b byte) bool {
 // Returns the finding, the advance position, and whether a valid IPv6 was found.
 func (d *IPAddr) tryIPv6(data []byte, i int) (Finding, int, bool) {
 	// Word boundary: reject if preceded by alphanumeric or '_'.
-	if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '_') {
+	if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '_') && !encodedSeparatorBefore(data, i) {
 		return Finding{}, i + 1, false
 	}
 

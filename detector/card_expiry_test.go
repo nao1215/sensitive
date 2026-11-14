@@ -292,3 +292,13 @@ func TestCardExpiryDetector_NoOverlapFromRepeatedKeywordMatches(t *testing.T) {
 		})
 	}
 }
+
+func TestCardExpiryEncodedSeparators(t *testing.T) {
+	t.Parallel()
+	for _, escape := range []string{"%20", "%09", "%3D"} {
+		got := detector.NewCardExpiry().Scan([]byte("expiry " + escape + "12/28"))
+		if len(got) != 1 || got[0].RawValue != "12/28" {
+			t.Fatalf("%s: lost expiry: %v", escape, got)
+		}
+	}
+}

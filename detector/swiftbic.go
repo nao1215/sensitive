@@ -129,7 +129,7 @@ func validateSWIFTStructure(data []byte, i int) (countryCode string, ok bool) {
 	if !isAlphaNum(data[i+6]) || !isAlphaNum(data[i+7]) {
 		return "", false
 	}
-	if i > 0 && isAlphaNum(data[i-1]) {
+	if i > 0 && isAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
 		return "", false
 	}
 	cc := string([]byte{toUpperByte(data[i+4]), toUpperByte(data[i+5])})

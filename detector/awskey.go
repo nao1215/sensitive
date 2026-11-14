@@ -66,7 +66,7 @@ func (d *AWSKey) Scan(data []byte) []Finding {
 		}
 
 		// Word boundary: preceding character must not be alphanumeric.
-		if i > 0 && isAlphaNum(data[i-1]) {
+		if i > 0 && isAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
 			continue
 		}
 

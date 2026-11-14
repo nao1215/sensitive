@@ -208,3 +208,19 @@ func TestExtractAlphaNumNear_CompleteBoundarySequence(t *testing.T) {
 		t.Errorf("sequence = %q, want %q", got, "ABCDE12345FGHI6")
 	}
 }
+
+func TestExtractSequencesAfterEncodedSeparators(t *testing.T) {
+	t.Parallel()
+	for _, escape := range []string{"%20", "%09", "%3D"} {
+		digits := []byte(escape + "123")
+		got := extractDigitsNear(digits, 0, 30, 3, 3)
+		if len(got) != 1 || got[0].start != 3 || got[0].end != 6 {
+			t.Errorf("digit escape %s: %v", escape, got)
+		}
+		token := []byte(escape + "ABCDE12345FGHI6")
+		ids := extractAlphaNumNear(token, 0, 30, 15, 15)
+		if len(ids) != 1 || ids[0].start != 3 || ids[0].end != 18 {
+			t.Errorf("token escape %s: %v", escape, ids)
+		}
+	}
+}

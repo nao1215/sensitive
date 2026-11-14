@@ -1,14 +1,14 @@
 # sensitive
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/sensitive.svg)](https://pkg.go.dev/github.com/nao1215/sensitive)
-[![Coverage](https://github.com/nao1215/sensitive/actions/workflows/coverage.yml/badge.svg)](https://github.com/nao1215/sensitive/actions/workflows/coverage.yml)
+![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/sensitive/coverage.svg)
 [![MultiPlatformUnitTest](https://github.com/nao1215/sensitive/actions/workflows/unit_test.yml/badge.svg)](https://github.com/nao1215/sensitive/actions/workflows/unit_test.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nao1215/sensitive/badge)](https://scorecard.dev/viewer/?uri=github.com/nao1215/sensitive)
 
 ![logo](./doc/images/logo-small.png)
 
 
-**sensitive** is a Go library that detects sensitive data in text. It scans for credit card numbers, email addresses, Japanese phone numbers, Japanese My Number, JWTs, AWS access keys, IBANs, IP addresses, Bitcoin addresses, and Ethereum addresses, returning the position, type, and confidence level of each match. It also includes international and fintech-focused detectors such as SWIFT/BIC, US ABA routing numbers, UK sort codes, payment tokens, card CVV/expiry, and ACH trace numbers, plus developer credential detectors for GitHub tokens, Slack tokens, Google API keys, and PEM private keys. Masking is available as an optional helper, but detection is the core focus.
+sensitive is a Go library that detects sensitive data in text. It scans for credit card numbers, email addresses, Japanese phone numbers, Japanese My Number, JWTs, AWS access keys, IBANs, IP addresses, Bitcoin addresses, and Ethereum addresses, returning the position, type, and confidence level of each match. It also includes international and fintech-focused detectors such as SWIFT/BIC, US ABA routing numbers, UK sort codes, payment tokens, card CVV/expiry, and ACH trace numbers, plus developer credential detectors for GitHub tokens, Slack tokens, Google API keys, and PEM private keys. Masking is available as an optional helper, but detection is the core focus.
 
 The library has zero external dependencies and relies only on the Go standard library.
 
@@ -74,11 +74,11 @@ user t*****@example.com paid with ************0366
 scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
 ```
 
-> **Caution on `WithAll()`:** `WithAll()` enables *all* built-in detectors, including context-based weak detectors (`WithBankAccount`, `WithACHTrace`, `WithMerchantID`, `WithCVV`, `WithCardExpiry`). These detectors rely on nearby keywords rather than checksums and may produce false positives. In strict/financial-audit scenarios where false positive cost is high, avoid `WithAll()` and enable only the specific detectors you need.
+> Caution on `WithAll()`: `WithAll()` enables *all* built-in detectors, including context-based weak detectors (`WithBankAccount`, `WithACHTrace`, `WithMerchantID`, `WithCVV`, `WithCardExpiry`). These detectors rely on nearby keywords rather than checksums and may produce false positives. In strict/financial-audit scenarios where false positive cost is high, avoid `WithAll()` and enable only the specific detectors you need.
 
-> **Note:** `NewScanner()` with no options creates a scanner with zero detectors, so `Scan` will always return an empty result. You must pass at least one `With*()` option to enable detection.
+> Note: `NewScanner()` with no options creates a scanner with zero detectors, so `Scan` will always return an empty result. You must pass at least one `With*()` option to enable detection.
 
-**Common mistakes:**
+Common mistakes:
 
 ```go
 // Mistake 1: No detectors — always returns empty results.
@@ -121,13 +121,13 @@ scanner = sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
 
 ## Benchmarks
 
-**Measurement conditions:**
+Measurement conditions:
 
-- **Command:** `go test -bench BenchmarkScanner -benchmem -benchtime 3s -count 5 -run '^$'`
-- **Go version:** 1.24 (linux/amd64)
-- **GOMAXPROCS:** 16
-- **CPU:** AMD RYZEN AI MAX+ 395 w/ Radeon 8060S
-- **Commit:** [b7e0cdc](https://github.com/nao1215/sensitive/commit/b7e0cdc)
+- Command: `go test -bench BenchmarkScanner -benchmem -benchtime 3s -count 5 -run '^$'`
+- Go version: 1.24 (linux/amd64)
+- GOMAXPROCS: 16
+- CPU: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S
+- Commit: [b7e0cdc](https://github.com/nao1215/sensitive/commit/b7e0cdc)
 
 To reproduce, run the command above. Use `-count 5` and take the median for stable results.
 Benchmark numbers are environment-sensitive. Expect variation across Go versions, CPUs, and background load, and refresh results periodically if you publish them for compliance or audit purposes.
@@ -230,7 +230,7 @@ for _, f := range findings {
 
 Each `Finding` contains the detector name, byte offsets, confidence score (0.0--1.0), the raw matched string, and a Detail struct with detector-specific information.
 
-> **Note:** `Start` and `End` are **byte offsets**, not rune (character) offsets. For multi-byte UTF-8 text (e.g., Japanese), use the byte positions directly when slicing `[]byte` data.
+> Note: `Start` and `End` are byte offsets, not rune (character) offsets. For multi-byte UTF-8 text (e.g., Japanese), use the byte positions directly when slicing `[]byte` data.
 >
 > Context-based detectors (`WithBankAccount`, `WithACHTrace`, `WithMerchantID`, `WithCVV`, `WithCardExpiry`) rely on nearby keywords rather than checksums, so they are more prone to false positives than checksum-validated detectors. Confidence scores vary by detector: `WithBankAccount` returns 0.50--0.65, `WithMerchantID` and `WithACHTrace` return 0.70--0.75, and `WithCVV` and `WithCardExpiry` return 0.85.
 
@@ -379,7 +379,7 @@ type Detector interface {
 
 ## Full-Width Digit Support
 
-Japanese text often uses full-width digits (０-９). Detectors that parse digit sequences directly (PAN, JPPhone, MyNumber, ABA routing, BankAccount) normalize full-width digits to half-width before detection, so a phone number written as `０９０－１２３４－５６７８` or a bank account number written as `口座番号 １２３４５６７８` is correctly recognized. IBAN and UK sort code do **not** normalize full-width digits because their formats are primarily used in Western contexts where full-width encoding is uncommon. Context-based detectors (CVV, CardExpiry, ACHTrace, MerchantID) also do **not** normalize full-width digits. The utility function is also available for direct use:
+Japanese text often uses full-width digits (０-９). Detectors that parse digit sequences directly (PAN, JPPhone, MyNumber, ABA routing, BankAccount) normalize full-width digits to half-width before detection, so a phone number written as `０９０－１２３４－５６７８` or a bank account number written as `口座番号 １２３４５６７８` is correctly recognized. IBAN and UK sort code do not normalize full-width digits because their formats are primarily used in Western contexts where full-width encoding is uncommon. Context-based detectors (CVV, CardExpiry, ACHTrace, MerchantID) also do not normalize full-width digits. The utility function is also available for direct use:
 
 ```go
 normalized, posMap := detector.NormalizeFullWidthDigits([]byte("０９０－１２３４－５６７８"))
@@ -455,3 +455,9 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 ## License
 
 [MIT LICENSE](LICENSE)
+
+## Testing
+
+The suite combines unit tests, metamorphic checks, property-based tests with specification-driven generators, differential specification vectors, fuzzing with an embedded-secret oracle, a negative corpus, and reviewed golden logs. Mutation testing with gremlins is a periodic measurement, not a module dependency.
+
+Run `go test ./...` for all deterministic tests and fuzz seeds, `go test . -fuzz=FuzzScanner -fuzztime=2m` for exploration, and `go run github.com/go-gremlins/gremlins/cmd/gremlins@latest unleash ./detector` for mutation measurement. Review golden changes before accepting `go test . -run TestMixedLogGolden -update`; run `make benchmark` for performance.

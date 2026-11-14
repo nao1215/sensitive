@@ -1,6 +1,14 @@
 package detector_test
 
 import (
+	"encoding/json"
+	"fmt"
+	"math/big"
+	"math/rand/v2"
+	"os"
+	"regexp"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/nao1215/sensitive/detector"
@@ -261,5 +269,89 @@ func TestIBANDetector_MultipleIBANs(t *testing.T) {
 	findings := d.Scan([]byte("DE89370400440532013000\nGB29NWBK60161331926819"))
 	if len(findings) != 2 {
 		t.Fatalf("got %d findings, want 2", len(findings))
+	}
+}
+
+func TestIBANFollowingWord(t *testing.T) {
+	t.Parallel()
+	for _, raw := range []string{"GB82WEST12345698765432", "GB82 WEST 1234 5698 7654 32"} {
+		for _, suffix := range []string{" y", " today", " 123"} {
+			got := detector.NewIBAN().Scan([]byte("to " + raw + suffix))
+			if len(got) != 1 || got[0].RawValue != raw {
+				t.Errorf("%q: got %v", raw+suffix, got)
+			}
+		}
+	}
+}
+
+// Registry fields are independent fixtures from SWIFT release 103. Generated
+// BBANs follow each country's character classes; national account checksums are
+// outside the detector's documented country-length/MOD97 contract.
+func TestIBANRegistryAndGeneratedValues(t *testing.T) {
+	t.Parallel()
+	data, err := os.ReadFile("testdata/iban-registry.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var countries []struct {
+		Country, Structure, Example string
+		Length                      int
+	}
+	if err := json.Unmarshal(data, &countries); err != nil {
+		t.Fatal(err)
+	}
+	if len(countries) != 89 {
+		t.Fatal("incomplete registry fixture")
+	}
+	rng := rand.New(rand.NewPCG(97, 103))
+	groups := regexp.MustCompile(`(\d+)!([nac])`)
+	for _, country := range countries {
+		t.Run(country.Country, func(t *testing.T) {
+			for trial := range 20 {
+				var bban strings.Builder
+				for _, group := range groups.FindAllStringSubmatch(country.Structure, -1) {
+					n, err := strconv.Atoi(group[1])
+					if err != nil {
+						t.Fatal(err)
+					}
+					alphabet := map[string]string{"n": "0123456789", "a": "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "c": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"}[group[2]]
+					for range n {
+						bban.WriteByte(alphabet[rng.IntN(len(alphabet))])
+					}
+				}
+				rearranged := bban.String() + country.Country + "00"
+				var number strings.Builder
+				for _, c := range rearranged {
+					if c >= 'A' && c <= 'Z' {
+						number.WriteString(strconv.Itoa(int(c-'A') + 10))
+					} else {
+						number.WriteRune(c)
+					}
+				}
+				n, ok := new(big.Int).SetString(number.String(), 10)
+				if !ok {
+					t.Fatal("invalid generator")
+				}
+				check := 98 - new(big.Int).Mod(n, big.NewInt(97)).Int64()
+				raw := fmt.Sprintf("%s%02d%s", country.Country, check, bban.String())
+				if trial == 0 {
+					raw = country.Example
+				}
+				if len(raw) != country.Length {
+					t.Fatalf("registry length %d differs from %q", country.Length, raw)
+				}
+				got := detector.NewIBAN().Scan([]byte(raw))
+				if len(got) != 1 || got[0].RawValue != raw || got[0].Confidence != 0.95 {
+					t.Fatalf("valid registry IBAN rejected: %s", raw)
+				}
+				bad := []byte(raw)
+				bad[3] = '0' + (bad[3]-'0'+1)%10
+				for _, invalid := range []string{string(bad), raw[:len(raw)-1], raw + "0"} {
+					if len(detector.NewIBAN().Scan([]byte(invalid))) != 0 {
+						t.Fatalf("near-miss accepted: %s", invalid)
+					}
+				}
+			}
+		})
 	}
 }

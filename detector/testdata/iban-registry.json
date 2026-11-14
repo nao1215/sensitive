@@ -1,0 +1,536 @@
+[
+  {
+    "country": "AD",
+    "structure": "4!n4!n12!c",
+    "example": "AD1200012030200359100100",
+    "length": 24
+  },
+  {
+    "country": "AE",
+    "structure": "3!n16!n",
+    "example": "AE070331234567890123456",
+    "length": 23
+  },
+  {
+    "country": "AL",
+    "structure": "8!n16!c",
+    "example": "AL47212110090000000235698741",
+    "length": 28
+  },
+  {
+    "country": "AT",
+    "structure": "5!n11!n",
+    "example": "AT611904300234573201",
+    "length": 20
+  },
+  {
+    "country": "AZ",
+    "structure": "4!a20!c",
+    "example": "AZ21NABZ00000000137010001944",
+    "length": 28
+  },
+  {
+    "country": "BA",
+    "structure": "3!n3!n8!n2!n",
+    "example": "BA391290079401028494",
+    "length": 20
+  },
+  {
+    "country": "BE",
+    "structure": "3!n7!n2!n",
+    "example": "BE68539007547034",
+    "length": 16
+  },
+  {
+    "country": "BG",
+    "structure": "4!a4!n2!n8!c",
+    "example": "BG80BNBG96611020345678",
+    "length": 22
+  },
+  {
+    "country": "BH",
+    "structure": "4!a14!c",
+    "example": "BH67BMAG00001299123456",
+    "length": 22
+  },
+  {
+    "country": "BI",
+    "structure": "5!n5!n11!n2!n",
+    "example": "BI4210000100010000332045181",
+    "length": 27
+  },
+  {
+    "country": "BR",
+    "structure": "8!c5!n10!n1!c1!c",
+    "example": "BR6699999A03000010009795493C1",
+    "length": 29
+  },
+  {
+    "country": "BY",
+    "structure": "4!c4!n16!c",
+    "example": "BY13NBRB3600900000002Z00AB00",
+    "length": 28
+  },
+  {
+    "country": "CH",
+    "structure": "5!n12!c",
+    "example": "CH9300762011623852957",
+    "length": 21
+  },
+  {
+    "country": "CR",
+    "structure": "4!n14!n",
+    "example": "CR05015202001026284066",
+    "length": 22
+  },
+  {
+    "country": "CY",
+    "structure": "3!n5!n16!c",
+    "example": "CY17002001280000001200527600",
+    "length": 28
+  },
+  {
+    "country": "CZ",
+    "structure": "4!n6!n10!n",
+    "example": "CZ6508000000192000145399",
+    "length": 24
+  },
+  {
+    "country": "DE",
+    "structure": "8!n10!n",
+    "example": "DE89370400440532013000",
+    "length": 22
+  },
+  {
+    "country": "DJ",
+    "structure": "5!n5!n11!n2!n",
+    "example": "DJ2100010000000154000100186",
+    "length": 27
+  },
+  {
+    "country": "DK",
+    "structure": "4!n9!n1!n",
+    "example": "DK5000400440116243",
+    "length": 18
+  },
+  {
+    "country": "DO",
+    "structure": "4!c20!n",
+    "example": "DO28BAGR00000001212453611324",
+    "length": 28
+  },
+  {
+    "country": "EE",
+    "structure": "2!n14!n",
+    "example": "EE382200221020145685",
+    "length": 20
+  },
+  {
+    "country": "EG",
+    "structure": "4!n4!n17!n",
+    "example": "EG380019000500000000263180002",
+    "length": 29
+  },
+  {
+    "country": "ES",
+    "structure": "4!n4!n1!n1!n10!n",
+    "example": "ES9121000418450200051332",
+    "length": 24
+  },
+  {
+    "country": "FI",
+    "structure": "3!n11!n",
+    "example": "FI2112345600000785",
+    "length": 18
+  },
+  {
+    "country": "FK",
+    "structure": "2!a12!n",
+    "example": "FK88SC123456789012",
+    "length": 18
+  },
+  {
+    "country": "FO",
+    "structure": "4!n9!n1!n",
+    "example": "FO6264600001631634",
+    "length": 18
+  },
+  {
+    "country": "FR",
+    "structure": "5!n5!n11!c2!n",
+    "example": "FR1420041010050500013M02606",
+    "length": 27
+  },
+  {
+    "country": "GB",
+    "structure": "4!a6!n8!n",
+    "example": "GB29NWBK60161331926819",
+    "length": 22
+  },
+  {
+    "country": "GE",
+    "structure": "2!a16!n",
+    "example": "GE29NB0000000101904917",
+    "length": 22
+  },
+  {
+    "country": "GI",
+    "structure": "4!a15!c",
+    "example": "GI75NWBK000000007099453",
+    "length": 23
+  },
+  {
+    "country": "GL",
+    "structure": "4!n9!n1!n",
+    "example": "GL8964710001000206",
+    "length": 18
+  },
+  {
+    "country": "GR",
+    "structure": "3!n4!n16!c",
+    "example": "GR1601101250000000012300695",
+    "length": 27
+  },
+  {
+    "country": "GT",
+    "structure": "4!c20!c",
+    "example": "GT82TRAJ01020000001210029690",
+    "length": 28
+  },
+  {
+    "country": "HN",
+    "structure": "4!a20!n",
+    "example": "HN88CABF00000000000250005469",
+    "length": 28
+  },
+  {
+    "country": "HR",
+    "structure": "7!n10!n",
+    "example": "HR1210010051863000160",
+    "length": 21
+  },
+  {
+    "country": "HU",
+    "structure": "3!n4!n1!n15!n1!n",
+    "example": "HU42117730161111101800000000",
+    "length": 28
+  },
+  {
+    "country": "IE",
+    "structure": "4!a6!n8!n",
+    "example": "IE29AIBK93115212345678",
+    "length": 22
+  },
+  {
+    "country": "IL",
+    "structure": "3!n3!n13!n",
+    "example": "IL620108000000099999999",
+    "length": 23
+  },
+  {
+    "country": "IQ",
+    "structure": "4!a3!n12!n",
+    "example": "IQ98NBIQ850123456789012",
+    "length": 23
+  },
+  {
+    "country": "IS",
+    "structure": "4!n2!n6!n10!n",
+    "example": "IS140159260076545510730339",
+    "length": 26
+  },
+  {
+    "country": "IT",
+    "structure": "1!a5!n5!n12!c",
+    "example": "IT60X0542811101000000123456",
+    "length": 27
+  },
+  {
+    "country": "JO",
+    "structure": "4!a4!n18!c",
+    "example": "JO94CBJO0010000000000131000302",
+    "length": 30
+  },
+  {
+    "country": "KW",
+    "structure": "4!a22!c",
+    "example": "KW81CBKU0000000000001234560101",
+    "length": 30
+  },
+  {
+    "country": "KZ",
+    "structure": "3!n13!c",
+    "example": "KZ86125KZT5004100100",
+    "length": 20
+  },
+  {
+    "country": "LB",
+    "structure": "4!n20!c",
+    "example": "LB62099900000001001901229114",
+    "length": 28
+  },
+  {
+    "country": "LC",
+    "structure": "4!a24!c",
+    "example": "LC55HEMM000100010012001200023015",
+    "length": 32
+  },
+  {
+    "country": "LI",
+    "structure": "5!n12!c",
+    "example": "LI21088100002324013AA",
+    "length": 21
+  },
+  {
+    "country": "LT",
+    "structure": "5!n11!n",
+    "example": "LT121000011101001000",
+    "length": 20
+  },
+  {
+    "country": "LU",
+    "structure": "3!n13!c",
+    "example": "LU280019400644750000",
+    "length": 20
+  },
+  {
+    "country": "LV",
+    "structure": "4!a13!c",
+    "example": "LV80BANK0000435195001",
+    "length": 21
+  },
+  {
+    "country": "LY",
+    "structure": "3!n3!n15!n",
+    "example": "LY83002048000020100120361",
+    "length": 25
+  },
+  {
+    "country": "MC",
+    "structure": "5!n5!n11!c2!n",
+    "example": "MC5811222000010123456789030",
+    "length": 27
+  },
+  {
+    "country": "MD",
+    "structure": "2!c18!c",
+    "example": "MD24AG000225100013104168",
+    "length": 24
+  },
+  {
+    "country": "ME",
+    "structure": "3!n13!n2!n",
+    "example": "ME25505000012345678951",
+    "length": 22
+  },
+  {
+    "country": "MK",
+    "structure": "3!n10!c2!n",
+    "example": "MK07250120000058984",
+    "length": 19
+  },
+  {
+    "country": "MN",
+    "structure": "4!n12!n",
+    "example": "MN121234123456789123",
+    "length": 20
+  },
+  {
+    "country": "MR",
+    "structure": "5!n5!n11!n2!n",
+    "example": "MR1300020001010000123456753",
+    "length": 27
+  },
+  {
+    "country": "MT",
+    "structure": "4!a5!n18!c",
+    "example": "MT84MALT011000012345MTLCAST001S",
+    "length": 31
+  },
+  {
+    "country": "MU",
+    "structure": "4!a2!n2!n12!n3!n3!a",
+    "example": "MU17BOMM0101101030300200000MUR",
+    "length": 30
+  },
+  {
+    "country": "NI",
+    "structure": "4!a20!n",
+    "example": "NI45BAPR00000013000003558124",
+    "length": 28
+  },
+  {
+    "country": "NL",
+    "structure": "4!a10!n",
+    "example": "NL91ABNA0417164300",
+    "length": 18
+  },
+  {
+    "country": "NO",
+    "structure": "4!n6!n1!n",
+    "example": "NO9386011117947",
+    "length": 15
+  },
+  {
+    "country": "OM",
+    "structure": "3!n16!c",
+    "example": "OM810180000001299123456",
+    "length": 23
+  },
+  {
+    "country": "PK",
+    "structure": "4!a16!c",
+    "example": "PK36SCBL0000001123456702",
+    "length": 24
+  },
+  {
+    "country": "PL",
+    "structure": "8!n16!n",
+    "example": "PL61109010140000071219812874",
+    "length": 28
+  },
+  {
+    "country": "PS",
+    "structure": "4!a21!c",
+    "example": "PS92PALS000000000400123456702",
+    "length": 29
+  },
+  {
+    "country": "PT",
+    "structure": "4!n4!n11!n2!n",
+    "example": "PT50000201231234567890154",
+    "length": 25
+  },
+  {
+    "country": "QA",
+    "structure": "4!a21!c",
+    "example": "QA58DOHB00001234567890ABCDEFG",
+    "length": 29
+  },
+  {
+    "country": "RO",
+    "example": "RO49AAAA1B31007593840000",
+    "length": 24,
+    "structure": "4!a16!c"
+  },
+  {
+    "country": "RS",
+    "structure": "3!n13!n2!n",
+    "example": "RS35260005601001611379",
+    "length": 22
+  },
+  {
+    "country": "RU",
+    "structure": "9!n5!n15!c",
+    "example": "RU0304452522540817810538091310419",
+    "length": 33
+  },
+  {
+    "country": "SA",
+    "structure": "2!n18!c",
+    "example": "SA0380000000608010167519",
+    "length": 24
+  },
+  {
+    "country": "SC",
+    "structure": "4!a2!n2!n16!n3!a",
+    "example": "SC18SSCB11010000000000001497USD",
+    "length": 31
+  },
+  {
+    "country": "SD",
+    "structure": "2!n12!n",
+    "example": "SD2129010501234001",
+    "length": 18
+  },
+  {
+    "country": "SE",
+    "structure": "3!n16!n1!n",
+    "example": "SE4550000000058398257466",
+    "length": 24
+  },
+  {
+    "country": "SI",
+    "structure": "5!n8!n2!n",
+    "example": "SI56263300012039086",
+    "length": 19
+  },
+  {
+    "country": "SK",
+    "structure": "4!n6!n10!n",
+    "example": "SK3112000000198742637541",
+    "length": 24
+  },
+  {
+    "country": "SM",
+    "structure": "1!a5!n5!n12!c",
+    "example": "SM86U0322509800000000270100",
+    "length": 27
+  },
+  {
+    "country": "SO",
+    "structure": "4!n3!n12!n",
+    "example": "SO211000001001000100141",
+    "length": 23
+  },
+  {
+    "country": "ST",
+    "structure": "4!n4!n11!n2!n",
+    "example": "ST23000100010051845310146",
+    "length": 25
+  },
+  {
+    "country": "SV",
+    "structure": "4!a20!n",
+    "example": "SV62CENR00000000000000700025",
+    "length": 28
+  },
+  {
+    "country": "TL",
+    "structure": "3!n14!n2!n",
+    "example": "TL380080012345678910157",
+    "length": 23
+  },
+  {
+    "country": "TN",
+    "structure": "2!n3!n13!n2!n",
+    "example": "TN5910006035183598478831",
+    "length": 24
+  },
+  {
+    "country": "TR",
+    "structure": "5!n1!n16!c",
+    "example": "TR330006100519786457841326",
+    "length": 26
+  },
+  {
+    "country": "UA",
+    "structure": "6!n19!c",
+    "example": "UA213223130000026007233566001",
+    "length": 29
+  },
+  {
+    "country": "VA",
+    "structure": "3!n15!n",
+    "example": "VA59001123000012345678",
+    "length": 22
+  },
+  {
+    "country": "VG",
+    "structure": "4!a16!n",
+    "example": "VG96VPVG0000012345678901",
+    "length": 24
+  },
+  {
+    "country": "XK",
+    "structure": "4!n10!n2!n",
+    "example": "XK051212012345678906",
+    "length": 20
+  },
+  {
+    "country": "YE",
+    "structure": "4!a4!n18!c",
+    "example": "YE15CBYE0001018861234567891234",
+    "length": 30
+  }
+]

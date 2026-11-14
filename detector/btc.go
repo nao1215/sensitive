@@ -112,7 +112,7 @@ func matchBech32Prefix(data []byte, i int) bool {
 // Returns the Finding, end position, and success flag.
 func (d *BTC) scanBech32(data []byte, i int) (Finding, int, bool) {
 	// Word boundary: preceding character must not be alphanumeric or underscore.
-	if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '_') {
+	if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '_') && !encodedSeparatorBefore(data, i) {
 		return Finding{}, 0, false
 	}
 
@@ -194,7 +194,7 @@ func (d *BTC) scanLegacy(data []byte, i int) (Finding, int, bool) {
 	// Word boundary: preceding character must not be alphanumeric or underscore.
 	// This matches the right-boundary check and prevents false positives from
 	// non-Base58 characters like 0, I, O, l that precede the address.
-	if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '_') {
+	if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '_') && !encodedSeparatorBefore(data, i) {
 		return Finding{}, 0, false
 	}
 

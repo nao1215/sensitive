@@ -48,6 +48,7 @@ func FuzzMaskAllRedact(f *testing.F) {
 	scanner := sensitive.NewScanner(sensitive.WithAll(), sensitive.WithSortByPosition())
 
 	f.Fuzz(func(t *testing.T, text string) {
+		checkEmbeddedRedaction(t, text)
 		findings := scanner.ScanString(text)
 		got := mask.MaskAll(text, findings, mask.Redact)
 
@@ -105,6 +106,7 @@ func FuzzMask(f *testing.F) {
 	f.Add("abc", 0, 3, 99)
 
 	f.Fuzz(func(t *testing.T, text string, start, end, strategy int) {
+		checkEmbeddedRedaction(t, text)
 		const name = sensitive.DetectorName("fuzz")
 		st := mask.Strategy(strategy)
 		inRange := start >= 0 && end <= len(text) && start < end
@@ -144,4 +146,25 @@ func FuzzMask(f *testing.F) {
 			t.Fatalf("Redact left non-'*' characters: %q", replaced)
 		}
 	})
+}
+
+func checkEmbeddedRedaction(t *testing.T, context string) {
+	t.Helper()
+	raw := "oracle@example.com"
+	text := context + "\n[" + raw + "]\n" + context
+	s := sensitive.NewScanner(sensitive.WithEmail())
+	findings := s.ScanString(text)
+	found := false
+	for _, f := range findings {
+		if f.RawValue == raw && f.Start == len(context)+2 {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("embedded secret lost")
+	}
+	got := mask.MaskAll(text, findings, mask.Redact)
+	if strings.Contains(got, raw) {
+		t.Fatal("redaction leaked embedded email")
+	}
 }

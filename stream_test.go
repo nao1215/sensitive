@@ -204,3 +204,26 @@ type errorReader struct {
 func (r *errorReader) Read([]byte) (int, error) {
 	return 0, r.err
 }
+
+func TestScannerPathsAtBufferBoundaries(t *testing.T) {
+	t.Parallel()
+	s := sensitive.NewScanner(sensitive.WithAll(), sensitive.WithSortByPosition())
+	// ScanLines reports line-relative offsets and cannot match across newlines;
+	// this equivalence deliberately uses one line below the documented 1 MiB cap.
+	for _, offset := range []int{0, 1, 509, 510, 511, 512, 4093, 4095, 4096, 65515, 65535, 65536, 131071} {
+		input := strings.Repeat(".", offset) + " [tanaka@example.com] [GB82WEST12345698765432] end"
+		want := keysOf(s.Scan([]byte(input)))
+		if !sameKeys(want, keysOf(s.ScanString(input))) {
+			t.Fatal("ScanString differs")
+		}
+		got, err := s.ScanReader(strings.NewReader(input))
+		if err != nil || !sameKeys(want, keysOf(got)) {
+			t.Fatalf("reader offset %d: %v", offset, err)
+		}
+		var lines []sensitive.Finding
+		err = s.ScanLines(strings.NewReader(input), func(_ int, _ []byte, findings []sensitive.Finding) { lines = append(lines, findings...) })
+		if err != nil || !sameKeys(want, keysOf(lines)) {
+			t.Fatalf("lines offset %d: %v", offset, err)
+		}
+	}
+}

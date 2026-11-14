@@ -108,6 +108,10 @@ func findLocalPartStart(data []byte, atIdx int) (start int, ok bool) {
 	for localStart > 0 && isLocalPartChar(data[localStart-1]) {
 		localStart--
 	}
+	// Exclude the hexadecimal digits of a preceding encoded separator.
+	if localStart+2 <= atIdx && encodedSeparatorBefore(data, localStart+2) {
+		localStart += 2
+	}
 	// Local part must not be empty and must not start/end with '.'.
 	if localStart == atIdx {
 		return 0, false
