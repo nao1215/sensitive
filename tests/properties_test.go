@@ -116,12 +116,25 @@ func TestPAN(t *testing.T) {
 		lengths []int
 	}{
 		{"4", []int{13, 16}}, {"51", []int{16}}, {"55", []int{16}}, {"2221", []int{16}}, {"2720", []int{16}},
-		{"34", []int{15}}, {"37", []int{15}}, {"6011", []int{16}}, {"65", []int{16}}, {"3528", []int{16}}, {"3589", []int{16}}, {"36", []int{14, 15, 16}}, {"62", []int{16, 17, 18, 19}},
+		{"34", []int{15}}, {"37", []int{15}}, {"6011", []int{16}}, {"65", []int{16}}, {"3528", []int{16}}, {"3589", []int{16}}, {"36", []int{14, 15, 16}}, {"38", []int{14, 15, 16}}, {"300", []int{14, 15, 16}}, {"644", []int{16}}, {"62", []int{16, 17, 18, 19}},
 	} {
 		t.Run(spec.prefix, func(t *testing.T) {
 			rapid.Check(t, func(t *rapid.T) {
 				n := rapid.SampledFrom(spec.lengths).Draw(t, "PAN length")
-				raw := spec.prefix + digits(t, n-len(spec.prefix)-1)
+				prefix := spec.prefix
+				switch prefix {
+				case "51":
+					prefix = strconv.Itoa(rapid.IntRange(51, 55).Draw(t, "Mastercard prefix"))
+				case "2221":
+					prefix = strconv.Itoa(rapid.IntRange(2221, 2720).Draw(t, "Mastercard 2-series prefix"))
+				case "3528":
+					prefix = strconv.Itoa(rapid.IntRange(3528, 3589).Draw(t, "JCB prefix"))
+				case "300":
+					prefix = strconv.Itoa(rapid.IntRange(300, 305).Draw(t, "Diners prefix"))
+				case "644":
+					prefix = strconv.Itoa(rapid.IntRange(644, 649).Draw(t, "Discover prefix"))
+				}
+				raw := prefix + digits(t, n-len(prefix)-1)
 				sum := 0
 				for i := len(raw) - 1; i >= 0; i-- {
 					v := int(raw[i] - '0')
