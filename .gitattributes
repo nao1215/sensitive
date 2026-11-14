@@ -1,0 +1,3 @@
+# Golden offsets refer to LF fixture bytes on every platform.
+testdata/mixed.log text eol=lf
+testdata/mixed.golden text eol=lf
