@@ -26,17 +26,18 @@ func TestEncodedBoundary(t *testing.T) {
 		{NewUKSortCode(), "12-34-56"},
 		{NewIPAddr(), "192.168.0.1"},
 		{NewBTC(), "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
+		{NewBTC(), "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"},
 		{NewETH(), "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"},
 		{NewAWSKey(), "AKIAIOSFODNN7EXAMPLE"},
 		{NewIBAN(), "GB82WEST12345698765432"},
 		{NewJWT(), "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"},
 	}
 	for _, sample := range samples {
-		for _, prefix := range []string{"v%3D", "v%3d", "v%20", "v%09", "v%22", "v%3A"} {
+		for _, prefix := range []string{"v%3D", "v%3d", "v%20", "v%09", "v%22", "v%3A", "", " "} {
 			t.Run(string(sample.d.Name())+prefix, func(t *testing.T) {
 				t.Parallel()
 				got := sample.d.Scan([]byte(prefix + sample.raw))
-				if len(got) != 1 || got[0].RawValue != sample.raw {
+				if len(got) != 1 || got[0].RawValue != sample.raw || got[0].Start != len(prefix) || got[0].End != len(prefix)+len(sample.raw) {
 					t.Errorf("encoded separator lost raw value: %v", got)
 				}
 			})
@@ -83,6 +84,21 @@ func TestEncodedBoundaryKeepsOriginalBytes(t *testing.T) {
 	for _, prefix := range []string{"v%３D", "v%３d"} {
 		if got := NewABARouting().Scan([]byte(prefix + "021000021")); len(got) != 0 {
 			t.Fatalf("malformed original escape accepted: %q", prefix)
+		}
+	}
+}
+
+func TestBitcoinIdentifierBoundaries(t *testing.T) {
+	t.Parallel()
+	raw := "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+	for _, value := range []string{"_" + raw, raw + "_", "a" + raw, raw + "a"} {
+		if len(NewBTC().Scan([]byte(value))) != 0 {
+			t.Fatalf("embedded address accepted: %s", value)
+		}
+	}
+	for _, value := range []string{raw, strings.ToUpper(raw)} {
+		if got := NewBTC().Scan([]byte(value)); len(got) != 1 || got[0].RawValue != value {
+			t.Fatal("consistent-case address rejected")
 		}
 	}
 }
