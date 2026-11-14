@@ -3,6 +3,7 @@ package detector_test
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/nao1215/sensitive/detector"
@@ -289,8 +290,30 @@ func TestETHSpecificationVectors(t *testing.T) {
 	}
 	for _, raw := range vectors {
 		got := detector.NewETH().Scan([]byte(raw))
-		if len(got) != 1 || got[0].RawValue != raw {
-			t.Errorf("EIP-55 vector rejected: %s", raw)
+		want := 0.95
+		if raw[2:] == strings.ToLower(raw[2:]) || raw[2:] == strings.ToUpper(raw[2:]) {
+			want = 0.80
+		}
+		if len(got) != 1 || got[0].RawValue != raw || got[0].Confidence != want {
+			t.Errorf("EIP-55 vector rejected or mis-scored: %s", raw)
+		}
+		if len(detector.NewETH().Scan([]byte(raw+"0"))) != 0 {
+			t.Fatal("overlong ETH address accepted")
+		}
+		if want == 0.95 {
+			for i := 2; i < len(raw); i++ {
+				bad := []byte(raw)
+				if bad[i] >= 'a' && bad[i] <= 'f' {
+					bad[i] -= 32
+				} else if bad[i] >= 'A' && bad[i] <= 'F' {
+					bad[i] += 32
+				} else {
+					continue
+				}
+				if len(detector.NewETH().Scan(bad)) != 0 {
+					t.Fatalf("one-letter EIP-55 mutation accepted: %s", bad)
+				}
+			}
 		}
 	}
 }
