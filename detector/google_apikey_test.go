@@ -1,7 +1,6 @@
 package detector_test
 
 import (
-	"math/rand/v2"
 	"strings"
 	"testing"
 
@@ -71,28 +70,5 @@ func TestGoogleAPIKeyDetector_Scan(t *testing.T) {
 				}
 			}
 		})
-	}
-}
-
-func TestGeneratedGoogleAPIKey(t *testing.T) {
-	t.Parallel()
-	rng := rand.New(rand.NewPCG(1215, 2026))
-	body := func(n int) string {
-		const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-		result := make([]byte, n)
-		for i := range result {
-			result[i] = alphabet[rng.IntN(len(alphabet))]
-		}
-		return string(result)
-	}
-	for range 100 {
-		raw := "AIza" + body(35)
-		got := detector.NewGoogleAPIKey().Scan([]byte(raw))
-		if len(got) != 1 || got[0].RawValue != raw || got[0].Confidence < 0.9 {
-			t.Fatalf("valid generated value rejected: %v", got)
-		}
-		if len(detector.NewGoogleAPIKey().Scan([]byte("word"+raw))) != 0 {
-			t.Fatal("embedded identifier accepted")
-		}
 	}
 }

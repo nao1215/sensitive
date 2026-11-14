@@ -93,7 +93,7 @@ func TestPrivateKeyPEMDetector_Scan(t *testing.T) {
 	}
 }
 
-func TestPEMGeneratedHeaders(t *testing.T) {
+func TestPEMHeaderVectors(t *testing.T) {
 	t.Parallel()
 	for _, kind := range []string{"PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY", "DSA PRIVATE KEY", "OPENSSH PRIVATE KEY", "ENCRYPTED PRIVATE KEY"} {
 		raw := "-----BEGIN " + kind + "-----"

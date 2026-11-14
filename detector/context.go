@@ -216,8 +216,6 @@ func extractDigitsNear(data []byte, pos, radius, minDigits, maxDigits int) []dig
 // the captured portion is a fragment of a longer token — not a standalone
 // identifier. Including it would cause false positives (e.g., the tail of
 // a 30-character string appearing as a 15-character merchant ID).
-//
-//nolint:unparam // minLen is kept as a parameter for API consistency with extractDigitsNear.
 func extractAlphaNumNear(data []byte, pos, radius, minLen, maxLen int) []digitSequence {
 	searchStart := pos - radius
 	if searchStart < 0 {

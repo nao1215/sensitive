@@ -1,11 +1,9 @@
 package detector_test
 
 import (
-	"math/rand/v2"
 	"os"
 	"strings"
 	"testing"
-	"testing/quick"
 
 	"github.com/nao1215/sensitive/detector"
 )
@@ -408,53 +406,6 @@ func TestPANDetector_TrailingSeparator(t *testing.T) {
 	}
 	if findings[0].RawValue != "4532015112830366" {
 		t.Errorf("RawValue = %q, want %q", findings[0].RawValue, "4532015112830366")
-	}
-}
-
-// The generator constructs the check digit by the ISO/IEC 7812 alternating
-// double-and-sum rule, independently of the detector's validation routine.
-func TestPANGeneratedBrands(t *testing.T) {
-	t.Parallel()
-	rng := rand.New(rand.NewPCG(1215, 20261114))
-	for _, spec := range []struct {
-		prefix  string
-		lengths []int
-	}{
-		{"4", []int{13, 16}}, {"51", []int{16}}, {"55", []int{16}}, {"2221", []int{16}}, {"2720", []int{16}},
-		{"34", []int{15}}, {"37", []int{15}}, {"6011", []int{16}}, {"65", []int{16}}, {"3528", []int{16}}, {"3589", []int{16}}, {"36", []int{14, 15, 16}}, {"62", []int{16, 17, 18, 19}},
-	} {
-		for _, length := range spec.lengths {
-			property := func() bool {
-				digits := []byte(spec.prefix)
-				for len(digits) < length-1 {
-					digits = append(digits, "0123456789"[rng.IntN(10)])
-				}
-				sum := 0
-				for i := len(digits) - 1; i >= 0; i-- {
-					n := int(digits[i] - '0')
-					if (len(digits)-1-i)%2 == 0 {
-						n *= 2
-						if n > 9 {
-							n -= 9
-						}
-					}
-					sum += n
-				}
-				digits = append(digits, byte('0'+(10-sum%10)%10))
-				got := detector.NewPAN().Scan(digits)
-				if len(got) != 1 || got[0].RawValue != string(digits) || got[0].Confidence < 0.99 {
-					t.Logf("prefix %s length %d", spec.prefix, length)
-					return false
-				}
-				// Bad Luhn values intentionally remain low-confidence candidates.
-				digits[len(digits)-1] = '0' + (digits[len(digits)-1]-'0'+1)%10
-				bad := detector.NewPAN().Scan(digits)
-				return len(bad) == 1 && bad[0].Confidence < 0.99
-			}
-			if err := quick.Check(property, &quick.Config{MaxCount: 50}); err != nil {
-				t.Fatal(err)
-			}
-		}
 	}
 }
 

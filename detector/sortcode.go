@@ -91,7 +91,7 @@ func isSortCodePattern(data []byte, i int) (sep byte, ok bool) {
 // isValidSortCodeBoundary checks word boundaries around a candidate sort code
 // at data[i:end] using the given separator. It returns false if the candidate
 // is preceded by an alphanumeric character, is part of a longer separated
-// sequence, is followed by a digit, or is followed by the same separator.
+// sequence, is followed by a digit, or continues with another separator group.
 func isValidSortCodeBoundary(data []byte, i, end int, sep byte) bool {
 	// Word boundary: preceding character must not be a digit or letter.
 	if i > 0 && isAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
@@ -111,7 +111,10 @@ func isValidSortCodeBoundary(data []byte, i, end int, sep byte) bool {
 
 	// Avoid matching patterns that continue with another separator group
 	// (e.g., "DD-DD-DD-DD" is part of a longer sequence, not a sort code).
-	if end < len(data) && data[end] == sep {
+	// A space can also delimit prose or end the input; reject it only when
+	// another numeric group follows.
+	if end < len(data) && data[end] == sep &&
+		(sep != ' ' || end+1 < len(data) && isDigit(data[end+1])) {
 		return false
 	}
 

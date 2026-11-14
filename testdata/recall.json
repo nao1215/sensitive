@@ -1,0 +1,470 @@
+[
+  {
+    "detector": "pan",
+    "text": "4532015112830366",
+    "positive": true
+  },
+  {
+    "detector": "pan",
+    "text": "374245455400126",
+    "positive": true
+  },
+  {
+    "detector": "pan",
+    "text": "version 1.2.3",
+    "positive": false
+  },
+  {
+    "detector": "pan",
+    "text": "123456789012",
+    "positive": false
+  },
+  {
+    "detector": "email",
+    "text": "alice@example.com",
+    "positive": true
+  },
+  {
+    "detector": "email",
+    "text": "build+test@example.org",
+    "positive": true
+  },
+  {
+    "detector": "email",
+    "text": "alice@example",
+    "positive": false
+  },
+  {
+    "detector": "email",
+    "text": "user@@example.com",
+    "positive": false
+  },
+  {
+    "detector": "phone_jp",
+    "text": "090-1234-5678",
+    "positive": true
+  },
+  {
+    "detector": "phone_jp",
+    "text": "03-1234-5678",
+    "positive": true
+  },
+  {
+    "detector": "phone_jp",
+    "text": "090-1234-567",
+    "positive": false
+  },
+  {
+    "detector": "phone_jp",
+    "text": "190-1234-5678",
+    "positive": false
+  },
+  {
+    "detector": "mynumber",
+    "text": "123456789018",
+    "positive": true
+  },
+  {
+    "detector": "mynumber",
+    "text": "１２３４５６７８９０１８",
+    "positive": true
+  },
+  {
+    "detector": "mynumber",
+    "text": "123456789019",
+    "positive": false
+  },
+  {
+    "detector": "mynumber",
+    "text": "12345678901",
+    "positive": false
+  },
+  {
+    "detector": "jwt",
+    "text": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhIn0.AAAA",
+    "positive": true
+  },
+  {
+    "detector": "jwt",
+    "text": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJhIn0.",
+    "positive": true
+  },
+  {
+    "detector": "jwt",
+    "text": "eyJhbGciOiJIUzI1NiJ9.!invalid.AAAA",
+    "positive": false
+  },
+  {
+    "detector": "jwt",
+    "text": "eyJhbGciOiJIUzI1NiJ9",
+    "positive": false
+  },
+  {
+    "detector": "awskey",
+    "text": "AKIAIOSFODNN7EXAMPLE",
+    "positive": true
+  },
+  {
+    "detector": "awskey",
+    "text": "ASIAIOSFODNN7EXAMPLE",
+    "positive": true
+  },
+  {
+    "detector": "awskey",
+    "text": "AKIAIOSFODNN7EXAMPL",
+    "positive": false
+  },
+  {
+    "detector": "awskey",
+    "text": "xAKIAIOSFODNN7EXAMPLE",
+    "positive": false
+  },
+  {
+    "detector": "iban",
+    "text": "DE89370400440532013000",
+    "positive": true
+  },
+  {
+    "detector": "iban",
+    "text": "GB82WEST12345698765432",
+    "positive": true
+  },
+  {
+    "detector": "iban",
+    "text": "DE89370400440532013001",
+    "positive": false
+  },
+  {
+    "detector": "iban",
+    "text": "GB82WEST1234569876543",
+    "positive": false
+  },
+  {
+    "detector": "ipaddr",
+    "text": "192.0.2.1",
+    "positive": true
+  },
+  {
+    "detector": "ipaddr",
+    "text": "2001:db8::1",
+    "positive": true
+  },
+  {
+    "detector": "ipaddr",
+    "text": "999.0.0.1",
+    "positive": false
+  },
+  {
+    "detector": "ipaddr",
+    "text": "1.2.3.999",
+    "positive": false
+  },
+  {
+    "detector": "swiftbic",
+    "text": "TESTGB1A",
+    "positive": true
+  },
+  {
+    "detector": "swiftbic",
+    "text": "SWIFT: TESTGBAB",
+    "positive": true
+  },
+  {
+    "detector": "swiftbic",
+    "text": "TEST001A",
+    "positive": false
+  },
+  {
+    "detector": "swiftbic",
+    "text": "TESTGB1",
+    "positive": false
+  },
+  {
+    "detector": "aba_routing",
+    "text": "021000021",
+    "positive": true
+  },
+  {
+    "detector": "aba_routing",
+    "text": "011000015",
+    "positive": true
+  },
+  {
+    "detector": "aba_routing",
+    "text": "021000022",
+    "positive": false
+  },
+  {
+    "detector": "aba_routing",
+    "text": "001000003",
+    "positive": false
+  },
+  {
+    "detector": "uk_sortcode",
+    "text": "12-34-56",
+    "positive": true
+  },
+  {
+    "detector": "uk_sortcode",
+    "text": "sort code: 01 00 00 ",
+    "positive": true
+  },
+  {
+    "detector": "uk_sortcode",
+    "text": "00-00-00",
+    "positive": false
+  },
+  {
+    "detector": "uk_sortcode",
+    "text": "12-34-56-78",
+    "positive": false
+  },
+  {
+    "detector": "cvv",
+    "text": "CVV: 123",
+    "positive": true
+  },
+  {
+    "detector": "cvv",
+    "text": "security code: 4567",
+    "positive": true
+  },
+  {
+    "detector": "cvv",
+    "text": "CVV: 12",
+    "positive": false
+  },
+  {
+    "detector": "cvv",
+    "text": "CVV: 12345",
+    "positive": false
+  },
+  {
+    "detector": "card_expiry",
+    "text": "expiry 12/28",
+    "positive": true
+  },
+  {
+    "detector": "card_expiry",
+    "text": "exp 01/2030",
+    "positive": true
+  },
+  {
+    "detector": "card_expiry",
+    "text": "expiry 13/28",
+    "positive": false
+  },
+  {
+    "detector": "card_expiry",
+    "text": "expiry 00/28",
+    "positive": false
+  },
+  {
+    "detector": "payment_token",
+    "positive": true,
+    "parts": [
+      "sk_",
+      "live_",
+      "aaaaaaaaaaaaaaaaaaaaaaaa"
+    ]
+  },
+  {
+    "detector": "payment_token",
+    "positive": true,
+    "parts": [
+      "sk_",
+      "test_",
+      "bbbbbbbbbbbbbbbbbbbbbbbb"
+    ]
+  },
+  {
+    "detector": "payment_token",
+    "text": "sk_live_short",
+    "positive": false
+  },
+  {
+    "detector": "payment_token",
+    "text": "sk_test_",
+    "positive": false
+  },
+  {
+    "detector": "bank_account",
+    "text": "bank account 12345678",
+    "positive": true
+  },
+  {
+    "detector": "bank_account",
+    "text": "口座番号 1234567",
+    "positive": true
+  },
+  {
+    "detector": "bank_account",
+    "text": "bank account 12",
+    "positive": false
+  },
+  {
+    "detector": "bank_account",
+    "text": "bank account 123456789012345678901234",
+    "positive": false
+  },
+  {
+    "detector": "ach_trace",
+    "text": "ACH trace 021000021123456",
+    "positive": true
+  },
+  {
+    "detector": "ach_trace",
+    "text": "ACH trace 011000015123456",
+    "positive": true
+  },
+  {
+    "detector": "ach_trace",
+    "text": "ACH trace 02100002112345",
+    "positive": false
+  },
+  {
+    "detector": "ach_trace",
+    "text": "ACH trace 0210000211234567",
+    "positive": false
+  },
+  {
+    "detector": "merchant_id",
+    "text": "merchant ID ABCDE12345FGHI6",
+    "positive": true
+  },
+  {
+    "detector": "merchant_id",
+    "text": "TID 12345678",
+    "positive": true
+  },
+  {
+    "detector": "merchant_id",
+    "text": "merchant ID AB",
+    "positive": false
+  },
+  {
+    "detector": "merchant_id",
+    "text": "TID 12",
+    "positive": false
+  },
+  {
+    "detector": "btc",
+    "text": "1111111111111111111114oLvT2",
+    "positive": true
+  },
+  {
+    "detector": "btc",
+    "text": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+    "positive": true
+  },
+  {
+    "detector": "btc",
+    "text": "1111111111111111111114oLvT3",
+    "positive": false
+  },
+  {
+    "detector": "btc",
+    "text": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3tq",
+    "positive": false
+  },
+  {
+    "detector": "eth",
+    "text": "0x0000000000000000000000000000000000000000",
+    "positive": true
+  },
+  {
+    "detector": "eth",
+    "text": "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+    "positive": true
+  },
+  {
+    "detector": "eth",
+    "text": "0xgggggggggggggggggggggggggggggggggggggggg",
+    "positive": false
+  },
+  {
+    "detector": "eth",
+    "text": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "positive": false
+  },
+  {
+    "detector": "github_token",
+    "text": "ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "positive": true
+  },
+  {
+    "detector": "github_token",
+    "text": "github_pat_bbbbbbbbbbbbbbbbbbbbbb",
+    "positive": true
+  },
+  {
+    "detector": "github_token",
+    "text": "ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "positive": false
+  },
+  {
+    "detector": "github_token",
+    "text": "ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "positive": false
+  },
+  {
+    "detector": "slack_token",
+    "text": "xoxb-aaaaaaaaaa",
+    "positive": true
+  },
+  {
+    "detector": "slack_token",
+    "text": "xoxp-bbbbbbbbbbbbbbbbbbbb",
+    "positive": true
+  },
+  {
+    "detector": "slack_token",
+    "text": "xoxb-aaaaaaaaa",
+    "positive": false
+  },
+  {
+    "detector": "slack_token",
+    "text": "xoxz-aaaaaaaaaaaaaaaaaaaa",
+    "positive": false
+  },
+  {
+    "detector": "google_api_key",
+    "text": "AIzaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "positive": true
+  },
+  {
+    "detector": "google_api_key",
+    "text": "AIzabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "positive": true
+  },
+  {
+    "detector": "google_api_key",
+    "text": "AIzaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "positive": false
+  },
+  {
+    "detector": "google_api_key",
+    "text": "AIzaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "positive": false
+  },
+  {
+    "detector": "private_key_pem",
+    "text": "-----BEGIN RSA PRIVATE KEY-----",
+    "positive": true
+  },
+  {
+    "detector": "private_key_pem",
+    "text": "-----BEGIN OPENSSH PRIVATE KEY-----",
+    "positive": true
+  },
+  {
+    "detector": "private_key_pem",
+    "text": "-----BEGIN PUBLIC KEY-----",
+    "positive": false
+  },
+  {
+    "detector": "private_key_pem",
+    "text": "-----BEGIN CERTIFICATE-----",
+    "positive": false
+  }
+]

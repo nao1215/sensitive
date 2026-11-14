@@ -1,7 +1,6 @@
 package detector_test
 
 import (
-	"math/rand/v2"
 	"testing"
 
 	"github.com/nao1215/sensitive/detector"
@@ -190,28 +189,5 @@ func TestSWIFTBICDetector_Hints(t *testing.T) {
 	d := detector.NewSWIFTBIC()
 	if d.Hints() != nil {
 		t.Errorf("Hints() = %v, want nil", d.Hints())
-	}
-}
-
-func TestGeneratedSWIFTBIC(t *testing.T) {
-	t.Parallel()
-	rng := rand.New(rand.NewPCG(1215, 2026))
-	body := func(n int) string {
-		const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-		result := make([]byte, n)
-		for i := range result {
-			result[i] = alphabet[rng.IntN(len(alphabet))]
-		}
-		return string(result)
-	}
-	for range 100 {
-		raw := "TESTGB1" + body(1)
-		got := detector.NewSWIFTBIC().Scan([]byte(raw))
-		if len(got) != 1 || got[0].RawValue != raw || got[0].Confidence < 0.85 {
-			t.Fatalf("valid generated value rejected: %v", got)
-		}
-		if len(detector.NewSWIFTBIC().Scan([]byte("word"+raw))) != 0 {
-			t.Fatal("embedded identifier accepted")
-		}
 	}
 }

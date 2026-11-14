@@ -37,6 +37,15 @@ jobs:
           check-latest: true
 
       - name: Run tests with coverage report output
-        run: go test -cover -coverpkg=./... -coverprofile=coverage.out ./...
+        run: go test -cover -coverpkg=./... -coverprofile=root.cover ./...
+
+      - name: Cover root packages through property tests
+        working-directory: tests
+        run: go test -coverpkg=github.com/nao1215/sensitive/... -coverprofile=../properties.cover ./...
+
+      - name: Merge coverage blocks
+        run: |
+          python3 -m unittest discover -s scripts -p 'test_*.py'
+          python3 scripts/merge_coverage.py root.cover properties.cover > coverage.out
 
       - uses: k1LoW/octocov-action@a167dc0dee441b7ffc45e1b862ab55ec0d87f278 # v1.5.2

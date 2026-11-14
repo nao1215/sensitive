@@ -1,12 +1,10 @@
 package detector_test
 
 import (
-	"crypto/sha256"
 	"encoding/json"
-	"math/big"
-	"math/rand/v2"
+
 	"os"
-	"slices"
+
 	"testing"
 
 	"github.com/nao1215/sensitive/detector"
@@ -327,107 +325,5 @@ func TestBTCSpecificationVectors(t *testing.T) {
 		if (len(got) == 1) != v.Valid {
 			t.Errorf("%s %s: valid=%v got %v", v.Source, v.Raw, v.Valid, got)
 		}
-	}
-}
-
-// encodeWitness independently implements BIP-173/BIP-350's encoder; the
-// production detector only decodes and validates addresses.
-func encodeWitness(version byte, program []byte) string {
-	const alphabet = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
-	values := []byte{version}
-	accumulator, bits := uint32(0), uint(0)
-	for _, b := range program {
-		accumulator = accumulator<<8 | uint32(b)
-		bits += 8
-		for bits >= 5 {
-			bits -= 5
-			values = append(values, byte(accumulator>>bits&31))
-		}
-	}
-	if bits > 0 {
-		values = append(values, byte(accumulator<<(5-bits)&31))
-	}
-	expanded := append([]byte{3, 3, 0, 2, 3}, values...)
-	expanded = append(expanded, 0, 0, 0, 0, 0, 0)
-	checksum := uint32(1)
-	generators := []uint32{0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3}
-	for _, v := range expanded {
-		top := checksum >> 25
-		checksum = (checksum&0x1ffffff)<<5 ^ uint32(v)
-		for i, g := range generators {
-			if top>>i&1 != 0 {
-				checksum ^= g
-			}
-		}
-	}
-	if version == 0 {
-		checksum ^= 1
-	} else {
-		checksum ^= 0x2bc830a3
-	}
-	result := []byte("bc1")
-	for _, v := range values {
-		result = append(result, alphabet[v])
-	}
-	for i := 5; i >= 0; i-- {
-		result = append(result, alphabet[checksum>>uint(5*i)&31])
-	}
-	return string(result)
-}
-
-func TestBTCGeneratedAddresses(t *testing.T) {
-	t.Parallel()
-	rng := rand.New(rand.NewPCG(173, 350))
-	for range 100 {
-		payload := make([]byte, 20)
-		for i := range payload {
-			payload[i] = byte(rng.Uint32() & 255)
-		}
-		for _, version := range []byte{0, 5} {
-			binary := append([]byte{version}, payload...)
-			first := sha256.Sum256(binary)
-			second := sha256.Sum256(first[:])
-			binary = append(binary, second[:4]...)
-			n := new(big.Int).SetBytes(binary)
-			base := big.NewInt(58)
-			rem := new(big.Int)
-			var reversed []byte
-			for n.Sign() > 0 {
-				n.QuoRem(n, base, rem)
-				reversed = append(reversed, "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"[rem.Int64()])
-			}
-			for _, b := range binary {
-				if b != 0 {
-					break
-				}
-				reversed = append(reversed, '1')
-			}
-			slices.Reverse(reversed)
-			assertBTCGenerated(t, string(reversed))
-		}
-		assertBTCGenerated(t, encodeWitness(0, payload))
-		program := make([]byte, 32)
-		copy(program, payload)
-		copy(program[20:], payload[:12])
-		assertBTCGenerated(t, encodeWitness(0, program))
-		assertBTCGenerated(t, encodeWitness(1, program))
-	}
-}
-
-func assertBTCGenerated(t *testing.T, raw string) {
-	t.Helper()
-	got := detector.NewBTC().Scan([]byte(raw))
-	if len(got) != 1 || got[0].RawValue != raw || got[0].Confidence != 0.95 {
-		t.Fatalf("generated Bitcoin address rejected: %s", raw)
-	}
-	// Change one checksum character; every substitution must invalidate it.
-	bad := []byte(raw)
-	if bad[len(bad)-1] == 'q' {
-		bad[len(bad)-1] = 'p'
-	} else {
-		bad[len(bad)-1] = 'q'
-	}
-	if len(detector.NewBTC().Scan(bad)) != 0 {
-		t.Fatalf("checksum mutation accepted: %s", bad)
 	}
 }

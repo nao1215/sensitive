@@ -115,7 +115,7 @@ func (d *GitHubToken) matchClassic(data []byte, i int) (Finding, int, bool) {
 			continue
 		}
 		end, n := scanCharset(data, i+len(prefix), isBase62)
-		if n < githubClassicBodyLen || !credBoundary(data, i, end) {
+		if n != githubClassicBodyLen || !credBoundary(data, i, end) {
 			return Finding{}, 0, false
 		}
 		return d.finding(data, i, end, GitHubTokenClassic), end, true
