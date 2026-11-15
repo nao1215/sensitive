@@ -48,9 +48,8 @@ func (d *CardExpiry) Scan(data []byte) []Finding {
 	// used maps the start of each reported date to its end. One place in the
 	// text is often matched by several keywords ("exp", "Exp" and "EXP" are
 	// all compared case-insensitively), so the same range is searched more
-	// than once; searchRange uses this map to skip over dates that are
-	// already reported instead of finding a second, overlapping date inside
-	// them.
+	// than once. Only parsed date candidates need an overlap lookup; ordinary
+	// bytes cannot overlap a reported date in a way that creates a finding.
 	used := make(map[int]int)
 
 	for _, m := range matches {
@@ -70,9 +69,7 @@ func (d *CardExpiry) Scan(data []byte) []Finding {
 
 // expiryCandidate holds a parsed expiry date pattern.
 type expiryCandidate struct {
-	monthStr string
-	yearStr  string
-	dateEnd  int
+	dateEnd int
 }
 
 // parseExpiryCandidate checks whether data[i:] starts with a valid MM/YY or
@@ -105,30 +102,16 @@ func parseExpiryCandidate(data []byte, i int) (expiryCandidate, bool) {
 		return expiryCandidate{}, false
 	}
 
-	monthStr := string(data[i : i+2])
-	var yearStr string
-	if dateEnd == i+7 {
-		yearStr = string(data[i+3 : i+7])
-	} else {
-		yearStr = string(data[i+3 : i+5])
-	}
-
-	return expiryCandidate{dateEnd: dateEnd, monthStr: monthStr, yearStr: yearStr}, true
+	return expiryCandidate{dateEnd: dateEnd}, true
 }
 
 // searchRange scans data[start:end] for card expiry date patterns (MM/YY,
 // MM/YYYY, MM-YY, MM-YYYY) and appends any valid findings to results.
-// The used map (start to end of each reported date) makes the result
-// independent of how many times a range is searched: a position inside an
-// already-reported date is skipped past, exactly as a single search skips
-// past a date it has just reported, and a date that would overlap a reported
-// one is not reported.
+// The used map makes repeated keyword windows idempotent. Parse first and
+// consult it only for valid candidates, avoiding per-byte overlap map probes.
+// Month/year strings are copied only after a candidate survives deduplication.
 func (d *CardExpiry) searchRange(data []byte, start, end int, used map[int]int, results *[]Finding) {
 	for i := start; i < end-4; i++ {
-		if reportedEnd, ok := reportedDateAt(used, i); ok {
-			i = reportedEnd - 1
-			continue
-		}
 		c, ok := parseExpiryCandidate(data, i)
 		if !ok {
 			continue
@@ -155,8 +138,8 @@ func (d *CardExpiry) searchRange(data []byte, start, end int, used map[int]int, 
 			Confidence: 0.85,
 			RawValue:   string(data[i:c.dateEnd]),
 			Detail: &CardExpiryDetail{
-				Month: c.monthStr,
-				Year:  c.yearStr,
+				Month: string(data[i : i+2]),
+				Year:  string(data[i+3 : c.dateEnd]),
 			},
 		})
 
@@ -166,17 +149,6 @@ func (d *CardExpiry) searchRange(data []byte, start, end int, used map[int]int, 
 
 // maxExpiryLen is the length of the longest date searchRange reports (MM/YYYY).
 const maxExpiryLen = 7
-
-// reportedDateAt reports whether position i lies inside a date already in
-// used, and if so returns that date's end.
-func reportedDateAt(used map[int]int, i int) (int, bool) {
-	for s := max(0, i-maxExpiryLen+1); s <= i; s++ {
-		if e, ok := used[s]; ok && e > i {
-			return e, true
-		}
-	}
-	return 0, false
-}
 
 // overlapsReportedDate reports whether data[start:end] overlaps a date
 // already in used.
