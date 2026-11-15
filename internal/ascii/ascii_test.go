@@ -3,7 +3,7 @@ package ascii_test
 import (
 	"testing"
 
-	"github.com/nao1215/sensitive/internal/ascii"
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 func TestHasLetter(t *testing.T) {

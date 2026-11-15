@@ -1,4 +1,4 @@
-package sensitive_test
+package embargo_test
 
 import (
 	"bytes"
@@ -133,7 +133,7 @@ func TestExamplesAppearInGodoc(t *testing.T) {
 					}
 				}
 			}
-			pkg, err := doc.NewFromFiles(fset, files, "github.com/nao1215/sensitive/"+dir)
+			pkg, err := doc.NewFromFiles(fset, files, "github.com/nao1215/embargo/"+dir)
 			if err != nil {
 				t.Fatal(err)
 			}

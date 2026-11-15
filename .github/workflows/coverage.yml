@@ -41,7 +41,7 @@ jobs:
 
       - name: Cover root packages through property tests
         working-directory: tests
-        run: go test -coverpkg=github.com/nao1215/sensitive/... -coverprofile=../properties.cover ./...
+        run: go test -coverpkg=github.com/nao1215/embargo/... -coverprofile=../properties.cover ./...
 
       - name: Merge coverage blocks
         run: |

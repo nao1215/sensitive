@@ -1,4 +1,4 @@
-package sensitive_test
+package embargo_test
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nao1215/sensitive"
+	"github.com/nao1215/embargo"
 )
 
 // TestLabeledRecall measures individual detectors, avoiding overlap suppression
@@ -30,7 +30,7 @@ func TestLabeledRecall(t *testing.T) {
 		name := string(d.Name())
 		known[name] = true
 		t.Run(name, func(t *testing.T) {
-			s := sensitive.NewScanner(sensitive.WithDetector(d))
+			s := embargo.NewScanner(embargo.WithDetector(d))
 			pos, neg, tp, fp := 0, 0, 0, 0
 			for _, r := range rows {
 				if r.Detector != name {

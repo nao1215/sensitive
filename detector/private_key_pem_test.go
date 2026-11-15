@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nao1215/sensitive/detector"
+	"github.com/nao1215/embargo/detector"
 )
 
 // pemHeader builds a PEM "BEGIN" header for the given algorithm (empty for a bare

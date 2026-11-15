@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nao1215/sensitive"
-	"github.com/nao1215/sensitive/detector"
-	"github.com/nao1215/sensitive/mask"
+	"github.com/nao1215/embargo"
+	"github.com/nao1215/embargo/detector"
+	"github.com/nao1215/embargo/mask"
 )
 
 func TestMask(t *testing.T) {
@@ -16,35 +16,35 @@ func TestMask(t *testing.T) {
 	tests := []struct {
 		name        string
 		text        string
-		findings    []sensitive.Finding
-		strategyMap map[sensitive.DetectorName]mask.Strategy
+		findings    []embargo.Finding
+		strategyMap map[embargo.DetectorName]mask.Strategy
 		want        string
 	}{
 		{
 			name: "mask PAN with Last4",
 			text: "card is 4532015112830366",
-			findings: []sensitive.Finding{
+			findings: []embargo.Finding{
 				{DetectorName: detector.NamePAN, Start: 8, End: 24, RawValue: "4532015112830366"},
 			},
-			strategyMap: map[sensitive.DetectorName]mask.Strategy{detector.NamePAN: mask.Last4},
+			strategyMap: map[embargo.DetectorName]mask.Strategy{detector.NamePAN: mask.Last4},
 			want:        "card is ************0366",
 		},
 		{
 			name: "mask email with Partial",
 			text: "user tanaka@example.com here",
-			findings: []sensitive.Finding{
+			findings: []embargo.Finding{
 				{DetectorName: detector.NameEmail, Start: 5, End: 23, RawValue: "tanaka@example.com"},
 			},
-			strategyMap: map[sensitive.DetectorName]mask.Strategy{detector.NameEmail: mask.Partial},
+			strategyMap: map[embargo.DetectorName]mask.Strategy{detector.NameEmail: mask.Partial},
 			want:        "user t*****@example.com here",
 		},
 		{
 			name: "mask with Redact",
 			text: "secret: AKIAIOSFODNN7EXAMPLE",
-			findings: []sensitive.Finding{
+			findings: []embargo.Finding{
 				{DetectorName: detector.NameAWSKey, Start: 8, End: 28, RawValue: "AKIAIOSFODNN7EXAMPLE"},
 			},
-			strategyMap: map[sensitive.DetectorName]mask.Strategy{detector.NameAWSKey: mask.Redact},
+			strategyMap: map[embargo.DetectorName]mask.Strategy{detector.NameAWSKey: mask.Redact},
 			want:        "secret: ********************",
 		},
 		{
@@ -57,10 +57,10 @@ func TestMask(t *testing.T) {
 		{
 			name: "unmapped detector left unmasked",
 			text: "card is 4532015112830366",
-			findings: []sensitive.Finding{
+			findings: []embargo.Finding{
 				{DetectorName: detector.NamePAN, Start: 8, End: 24, RawValue: "4532015112830366"},
 			},
-			strategyMap: map[sensitive.DetectorName]mask.Strategy{detector.NameEmail: mask.Redact},
+			strategyMap: map[embargo.DetectorName]mask.Strategy{detector.NameEmail: mask.Redact},
 			want:        "card is 4532015112830366",
 		},
 	}
@@ -81,7 +81,7 @@ func TestMaskAll(t *testing.T) {
 	t.Parallel()
 
 	text := "card 4532015112830366 email tanaka@example.com"
-	findings := []sensitive.Finding{
+	findings := []embargo.Finding{
 		{DetectorName: detector.NamePAN, Start: 5, End: 21, RawValue: "4532015112830366"},
 		{DetectorName: detector.NameEmail, Start: 28, End: 46, RawValue: "tanaka@example.com"},
 	}
@@ -98,11 +98,11 @@ func TestMask_Hash(t *testing.T) {
 
 	// #nosec G101 -- test key for masking behavior
 	text := "key: AKIAIOSFODNN7EXAMPLE"
-	findings := []sensitive.Finding{
+	findings := []embargo.Finding{
 		{DetectorName: detector.NameAWSKey, Start: 5, End: 25, RawValue: "AKIAIOSFODNN7EXAMPLE"},
 	}
 
-	got := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{detector.NameAWSKey: mask.Hash})
+	got := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{detector.NameAWSKey: mask.Hash})
 	// Hash produces 8 hex chars.
 	if len(got) != len("key: ")+8 {
 		t.Errorf("Hash mask length = %d, want %d (got %q)", len(got), len("key: ")+8, got)
@@ -113,11 +113,11 @@ func TestMask_First1Last4(t *testing.T) {
 	t.Parallel()
 
 	text := "card: 4532015112830366"
-	findings := []sensitive.Finding{
+	findings := []embargo.Finding{
 		{DetectorName: detector.NamePAN, Start: 6, End: 22, RawValue: "4532015112830366"},
 	}
 
-	got := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{detector.NamePAN: mask.First1Last4})
+	got := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{detector.NamePAN: mask.First1Last4})
 	want := "card: 4***********0366"
 	if got != want {
 		t.Errorf("First1Last4 Mask() = %q, want %q", got, want)
@@ -129,10 +129,10 @@ func TestMask_Last4Short(t *testing.T) {
 
 	// Value with 4 or fewer chars should be returned as-is.
 	text := "val: abcd"
-	findings := []sensitive.Finding{
+	findings := []embargo.Finding{
 		{DetectorName: detector.NamePAN, Start: 5, End: 9, RawValue: "abcd"},
 	}
-	got := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{detector.NamePAN: mask.Last4})
+	got := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{detector.NamePAN: mask.Last4})
 	if got != "val: abcd" {
 		t.Errorf("Last4 short Mask() = %q, want %q", got, "val: abcd")
 	}
@@ -143,10 +143,10 @@ func TestMask_First1Last4Short(t *testing.T) {
 
 	// Value with 5 or fewer chars should be returned as-is.
 	text := "val: abcde"
-	findings := []sensitive.Finding{
+	findings := []embargo.Finding{
 		{DetectorName: detector.NamePAN, Start: 5, End: 10, RawValue: "abcde"},
 	}
-	got := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{detector.NamePAN: mask.First1Last4})
+	got := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{detector.NamePAN: mask.First1Last4})
 	if got != "val: abcde" {
 		t.Errorf("First1Last4 short Mask() = %q, want %q", got, "val: abcde")
 	}
@@ -157,10 +157,10 @@ func TestMask_PartialEmail(t *testing.T) {
 
 	// Single-char local part should be returned as-is.
 	text := "email: a@example.com"
-	findings := []sensitive.Finding{
+	findings := []embargo.Finding{
 		{DetectorName: detector.NameEmail, Start: 7, End: 20, RawValue: "a@example.com"},
 	}
-	got := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{detector.NameEmail: mask.Partial})
+	got := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{detector.NameEmail: mask.Partial})
 	if got != "email: a@example.com" {
 		t.Errorf("Partial single-char Mask() = %q, want %q", got, "email: a@example.com")
 	}
@@ -171,10 +171,10 @@ func TestMask_PartialNonEmail(t *testing.T) {
 
 	// Non-email value falls back to Last4 behavior.
 	text := "phone: 09012345678"
-	findings := []sensitive.Finding{
+	findings := []embargo.Finding{
 		{DetectorName: detector.NameJPPhone, Start: 7, End: 18, RawValue: "09012345678"},
 	}
-	got := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{detector.NameJPPhone: mask.Partial})
+	got := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{detector.NameJPPhone: mask.Partial})
 	want := "phone: *******5678"
 	if got != want {
 		t.Errorf("Partial non-email Mask() = %q, want %q", got, want)
@@ -186,10 +186,10 @@ func TestMask_PartialNonEmailShort(t *testing.T) {
 
 	// Short non-email value (<=4 chars) should be returned as-is.
 	text := "val: abc"
-	findings := []sensitive.Finding{
+	findings := []embargo.Finding{
 		{DetectorName: detector.NamePAN, Start: 5, End: 8, RawValue: "abc"},
 	}
-	got := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{detector.NamePAN: mask.Partial})
+	got := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{detector.NamePAN: mask.Partial})
 	if got != "val: abc" {
 		t.Errorf("Partial short non-email Mask() = %q, want %q", got, "val: abc")
 	}
@@ -203,7 +203,7 @@ func TestMask_FullWidthRuneSafety(t *testing.T) {
 	fullWidth := "０１２３４５６７"
 	start := len("val: ")
 	text := "val: " + fullWidth
-	findings := []sensitive.Finding{
+	findings := []embargo.Finding{
 		{DetectorName: detector.NamePAN, Start: start, End: start + len(fullWidth), RawValue: fullWidth},
 	}
 
@@ -233,7 +233,7 @@ func TestMask_FullWidthRuneSafety(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{detector.NamePAN: tt.strategy})
+			got := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{detector.NamePAN: tt.strategy})
 			if got != tt.want {
 				t.Errorf("Mask(%s) = %q, want %q", tt.name, got, tt.want)
 			}
@@ -245,11 +245,11 @@ func TestMask_UnknownStrategy(t *testing.T) {
 	t.Parallel()
 
 	text := "val: secret"
-	findings := []sensitive.Finding{
+	findings := []embargo.Finding{
 		{DetectorName: detector.NamePAN, Start: 5, End: 11, RawValue: "secret"},
 	}
 	// Strategy value 99 is not defined, should return raw value.
-	got := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{detector.NamePAN: mask.Strategy(99)})
+	got := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{detector.NamePAN: mask.Strategy(99)})
 	if got != "val: secret" {
 		t.Errorf("Unknown strategy Mask() = %q, want %q", got, "val: secret")
 	}
@@ -259,7 +259,7 @@ func TestMask_OutOfBoundsSkipped(t *testing.T) {
 	t.Parallel()
 
 	text := "hello world"
-	findings := []sensitive.Finding{
+	findings := []embargo.Finding{
 		// Start negative — should be skipped.
 		{DetectorName: detector.NamePAN, Start: -1, End: 5, RawValue: "hello"},
 		// End exceeds text length — should be skipped.
@@ -267,7 +267,7 @@ func TestMask_OutOfBoundsSkipped(t *testing.T) {
 		// Start >= End — should be skipped.
 		{DetectorName: detector.NamePAN, Start: 5, End: 5, RawValue: ""},
 	}
-	got := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{detector.NamePAN: mask.Redact})
+	got := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{detector.NamePAN: mask.Redact})
 	if got != text {
 		t.Errorf("Mask() with invalid findings = %q, want %q (unchanged)", got, text)
 	}
@@ -279,11 +279,11 @@ func TestMask_OverlappingFindingsSkipped(t *testing.T) {
 	text := "ABCDEFGHIJ"
 	// Two overlapping findings: [0,6) and [4,10).
 	// Processing right-to-left, [4,10) is applied first; [0,6) overlaps and is skipped.
-	findings := []sensitive.Finding{
+	findings := []embargo.Finding{
 		{DetectorName: detector.NamePAN, Start: 0, End: 6, RawValue: "ABCDEF"},
 		{DetectorName: detector.NamePAN, Start: 4, End: 10, RawValue: "EFGHIJ"},
 	}
-	got := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{detector.NamePAN: mask.Redact})
+	got := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{detector.NamePAN: mask.Redact})
 	want := "ABCD******"
 	if got != want {
 		t.Errorf("Mask() with overlapping findings = %q, want %q", got, want)
@@ -303,11 +303,11 @@ func TestMask_MultipleFindings(t *testing.T) {
 	t.Parallel()
 
 	text := "card 4532015112830366 phone 090-1234-5678"
-	findings := []sensitive.Finding{
+	findings := []embargo.Finding{
 		{DetectorName: detector.NamePAN, Start: 5, End: 21, RawValue: "4532015112830366"},
 		{DetectorName: detector.NameJPPhone, Start: 28, End: 41, RawValue: "090-1234-5678"},
 	}
-	strategyMap := map[sensitive.DetectorName]mask.Strategy{
+	strategyMap := map[embargo.DetectorName]mask.Strategy{
 		detector.NamePAN:     mask.Redact,
 		detector.NameJPPhone: mask.Last4,
 	}
@@ -323,11 +323,11 @@ func TestMask_MultipleFindings(t *testing.T) {
 func TestMask_Integration_ScanAndMask(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
+	scanner := embargo.NewScanner(embargo.WithPAN(), embargo.WithEmail())
 	input := "card 4532015112830366 email tanaka@example.com"
 	findings := scanner.ScanString(input)
 
-	strategyMap := map[sensitive.DetectorName]mask.Strategy{
+	strategyMap := map[embargo.DetectorName]mask.Strategy{
 		detector.NamePAN:   mask.Last4,
 		detector.NameEmail: mask.Partial,
 	}
@@ -344,13 +344,13 @@ func TestMask_Integration_ScanAndMask(t *testing.T) {
 func TestMask_Integration_ScanAllAndRedact(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(
-		sensitive.WithJPPhone(),
-		sensitive.WithMyNumber(),
-		sensitive.WithJWT(),
-		sensitive.WithAWSKey(),
-		sensitive.WithIBAN(),
-		sensitive.WithIPAddr(),
+	scanner := embargo.NewScanner(
+		embargo.WithJPPhone(),
+		embargo.WithMyNumber(),
+		embargo.WithJWT(),
+		embargo.WithAWSKey(),
+		embargo.WithIBAN(),
+		embargo.WithIPAddr(),
 	)
 	input := "phone 090-1234-5678 ip 192.168.1.1 key AKIAIOSFODNN7EXAMPLE iban DE89370400440532013000"
 	findings := scanner.ScanString(input)
@@ -373,7 +373,7 @@ func TestMask_Integration_ScanAllAndRedact(t *testing.T) {
 func TestMask_Integration_AllDetectorVariants(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 
 	tests := []struct {
 		name     string
@@ -437,7 +437,7 @@ func TestMask_Integration_AllDetectorVariants(t *testing.T) {
 func TestMask_Integration_FalsePositivesNoMask(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	inputs := []string{
 		"v1.2.3",
 		"hello world",
@@ -459,7 +459,7 @@ func TestMask_Integration_FalsePositivesNoMask(t *testing.T) {
 
 // assertFindingDetail scans input and verifies that at least one finding
 // passes the given check function.
-func assertFindingDetail(t *testing.T, scanner *sensitive.Scanner, input string, check func(sensitive.Finding) bool) {
+func assertFindingDetail(t *testing.T, scanner *embargo.Scanner, input string, check func(embargo.Finding) bool) {
 	t.Helper()
 	findings := scanner.ScanString(input)
 	for _, f := range findings {
@@ -473,36 +473,36 @@ func assertFindingDetail(t *testing.T, scanner *sensitive.Scanner, input string,
 func TestMask_Integration_FindingDetails(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 
-	assertFindingDetail(t, scanner, "4532015112830366", func(f sensitive.Finding) bool {
+	assertFindingDetail(t, scanner, "4532015112830366", func(f embargo.Finding) bool {
 		detail, ok := f.PANDetail()
 		return ok && detail.Brand != ""
 	})
-	assertFindingDetail(t, scanner, "090-1234-5678", func(f sensitive.Finding) bool {
+	assertFindingDetail(t, scanner, "090-1234-5678", func(f embargo.Finding) bool {
 		detail, ok := f.JPPhoneDetail()
 		return ok && detail.PhoneType != ""
 	})
-	assertFindingDetail(t, scanner, "DE89370400440532013000", func(f sensitive.Finding) bool {
+	assertFindingDetail(t, scanner, "DE89370400440532013000", func(f embargo.Finding) bool {
 		detail, ok := f.IBANDetail()
 		return ok && detail.CountryCode != ""
 	})
-	assertFindingDetail(t, scanner, "192.168.1.1", func(f sensitive.Finding) bool {
+	assertFindingDetail(t, scanner, "192.168.1.1", func(f embargo.Finding) bool {
 		detail, ok := f.IPAddrDetail()
 		return ok && detail.Version != 0
 	})
-	assertFindingDetail(t, scanner, "123456789018", func(f sensitive.Finding) bool {
+	assertFindingDetail(t, scanner, "123456789018", func(f embargo.Finding) bool {
 		if f.DetectorName != detector.NameMyNumber {
 			return false
 		}
 		detail, ok := f.MyNumberDetail()
 		return ok && detail.CheckDigitValid
 	})
-	assertFindingDetail(t, scanner, "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", func(f sensitive.Finding) bool {
+	assertFindingDetail(t, scanner, "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", func(f embargo.Finding) bool {
 		detail, ok := f.BTCDetail()
 		return ok && detail.AddressType != ""
 	})
-	assertFindingDetail(t, scanner, "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", func(f sensitive.Finding) bool {
+	assertFindingDetail(t, scanner, "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", func(f embargo.Finding) bool {
 		detail, ok := f.ETHDetail()
 		return ok && detail.EIP55
 	})
@@ -511,7 +511,7 @@ func TestMask_Integration_FindingDetails(t *testing.T) {
 func TestMask_Integration_FindingHelpers_IsAndLevel(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 
 	panFindings := scanner.ScanString("4532015112830366")
 	if len(panFindings) > 0 {
@@ -538,7 +538,7 @@ func TestMask_Integration_FindingHelpers_IsAndLevel(t *testing.T) {
 func TestMask_Integration_FindingHelpers_ConfidenceLevels(t *testing.T) {
 	t.Parallel()
 
-	medF := sensitive.Finding{Confidence: 0.5}
+	medF := embargo.Finding{Confidence: 0.5}
 	if medF.Level() != detector.ConfidenceMedium {
 		t.Errorf("Level() for 0.5 = %v, want medium", medF.Level())
 	}
@@ -546,7 +546,7 @@ func TestMask_Integration_FindingHelpers_ConfidenceLevels(t *testing.T) {
 		t.Errorf("String() = %q, want medium", medF.Level().String())
 	}
 
-	lowF := sensitive.Finding{Confidence: 0.1}
+	lowF := embargo.Finding{Confidence: 0.1}
 	if lowF.Level() != detector.ConfidenceLow {
 		t.Errorf("Level() for 0.1 = %v, want low", lowF.Level())
 	}
@@ -563,23 +563,23 @@ func TestMask_Integration_FindingHelpers_ConfidenceLevels(t *testing.T) {
 func TestMask_Integration_FindingHelpers_DetailAccessors(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 
-	assertFindingDetail(t, scanner, "tanaka@example.com", func(f sensitive.Finding) bool {
+	assertFindingDetail(t, scanner, "tanaka@example.com", func(f embargo.Finding) bool {
 		if !f.IsEmail() {
 			return false
 		}
 		_, ok := f.EmailDetail()
 		return ok
 	})
-	assertFindingDetail(t, scanner, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U", func(f sensitive.Finding) bool {
+	assertFindingDetail(t, scanner, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U", func(f embargo.Finding) bool {
 		if !f.IsJWT() {
 			return false
 		}
 		_, ok := f.JWTDetail()
 		return ok
 	})
-	assertFindingDetail(t, scanner, "AKIAIOSFODNN7EXAMPLE", func(f sensitive.Finding) bool {
+	assertFindingDetail(t, scanner, "AKIAIOSFODNN7EXAMPLE", func(f embargo.Finding) bool {
 		if !f.IsAWSKey() {
 			return false
 		}
@@ -593,7 +593,7 @@ func TestMask_Integration_WithRegexDetector(t *testing.T) {
 
 	re := regexp.MustCompile(`SECRET-\d{6}`)
 	d := detector.NewRegex("secret_id", re, [][]byte{[]byte("SECRET-")}, 0.8)
-	scanner := sensitive.NewScanner(sensitive.WithDetector(d))
+	scanner := embargo.NewScanner(embargo.WithDetector(d))
 
 	input := "the code is SECRET-123456 here"
 	findings := scanner.ScanString(input)
@@ -609,7 +609,7 @@ func TestMask_Integration_WithRegexDetector(t *testing.T) {
 
 func TestRedactIdempotenceAndNoRawValues(t *testing.T) {
 	t.Parallel()
-	s := sensitive.NewScanner(sensitive.WithAll())
+	s := embargo.NewScanner(embargo.WithAll())
 	for _, input := range []string{"mail tanaka@example.com", "card 4532015112830366", "GB82 WEST 1234 5698 7654 32 today", "v%3DAKIAIOSFODNN7EXAMPLE"} {
 		findings := s.ScanString(input)
 		if len(findings) == 0 {

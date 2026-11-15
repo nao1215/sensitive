@@ -1,4 +1,4 @@
-package sensitive_test
+package embargo_test
 
 import (
 	"bytes"
@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nao1215/sensitive"
-	"github.com/nao1215/sensitive/detector"
+	"github.com/nao1215/embargo"
+	"github.com/nao1215/embargo/detector"
 )
 
 // fuzzSeeds returns inputs that reach every built-in detector, plus a few
@@ -54,8 +54,8 @@ func fuzzSeeds() []string {
 // builtinDetectors returns a fresh instance of every built-in detector.
 // Keep this in sync with WithAll: TestFuzzBuiltinDetectorsMatchesWithAll
 // fails if a detector is added to one list but not the other.
-func builtinDetectors() []sensitive.Detector {
-	return []sensitive.Detector{
+func builtinDetectors() []embargo.Detector {
+	return []embargo.Detector{
 		detector.NewPAN(),
 		detector.NewEmail(),
 		detector.NewJPPhone(),
@@ -88,12 +88,12 @@ func TestFuzzBuiltinDetectorsMatchesWithAll(t *testing.T) {
 	// WithoutDedup and a single input that hits nothing still lets us compare
 	// the registered set: scan an input seeded for every detector and make
 	// sure every detector name WithAll reports is one builtinDetectors knows.
-	known := make(map[sensitive.DetectorName]bool)
+	known := make(map[embargo.DetectorName]bool)
 	for _, d := range builtinDetectors() {
 		known[d.Name()] = true
 	}
-	all := sensitive.NewScanner(sensitive.WithAll(), sensitive.WithoutDedup())
-	seen := make(map[sensitive.DetectorName]bool)
+	all := embargo.NewScanner(embargo.WithAll(), embargo.WithoutDedup())
+	seen := make(map[embargo.DetectorName]bool)
 	for _, seed := range fuzzSeeds() {
 		for _, f := range all.ScanString(seed) {
 			seen[f.DetectorName] = true
@@ -111,7 +111,7 @@ func TestFuzzBuiltinDetectorsMatchesWithAll(t *testing.T) {
 
 // checkFindings verifies the invariants every finding must satisfy against
 // the data it was produced from.
-func checkFindings(t *testing.T, data []byte, findings []sensitive.Finding) {
+func checkFindings(t *testing.T, data []byte, findings []embargo.Finding) {
 	t.Helper()
 	for _, f := range findings {
 		if f.Start < 0 || f.End > len(data) || f.Start >= f.End {
@@ -131,12 +131,12 @@ func checkFindings(t *testing.T, data []byte, findings []sensitive.Finding) {
 
 // findingKey identifies a finding independently of its Detail pointer.
 type findingKey struct {
-	name       sensitive.DetectorName
+	name       embargo.DetectorName
 	start, end int
 	confidence float64
 }
 
-func keysOf(findings []sensitive.Finding) map[findingKey]int {
+func keysOf(findings []embargo.Finding) map[findingKey]int {
 	m := make(map[findingKey]int, len(findings))
 	for _, f := range findings {
 		m[findingKey{f.DetectorName, f.Start, f.End, f.Confidence}]++
@@ -158,13 +158,13 @@ func FuzzScanner(f *testing.F) {
 	for _, s := range fuzzSeeds() {
 		f.Add(s)
 	}
-	defaultScanner := sensitive.NewScanner(sensitive.WithAll())
-	byPosition := sensitive.NewScanner(sensitive.WithAll(), sensitive.WithSortByPosition())
-	noDedup := sensitive.NewScanner(sensitive.WithAll(), sensitive.WithoutDedup())
+	defaultScanner := embargo.NewScanner(embargo.WithAll())
+	byPosition := embargo.NewScanner(embargo.WithAll(), embargo.WithSortByPosition())
+	noDedup := embargo.NewScanner(embargo.WithAll(), embargo.WithoutDedup())
 	detectors := builtinDetectors()
-	single := make([]*sensitive.Scanner, len(detectors))
+	single := make([]*embargo.Scanner, len(detectors))
 	for i, d := range detectors {
-		single[i] = sensitive.NewScanner(sensitive.WithDetector(d), sensitive.WithoutDedup())
+		single[i] = embargo.NewScanner(embargo.WithDetector(d), embargo.WithoutDedup())
 	}
 
 	f.Fuzz(func(t *testing.T, text string) {
@@ -237,7 +237,7 @@ func FuzzScanLines(f *testing.F) {
 		f.Add(s)
 	}
 	f.Add("a@example.com\n\n4532015112830366\r\nlast line without newline 192.168.0.1")
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 
 	f.Fuzz(func(t *testing.T, text string) {
 		checkEmbeddedSecret(t, text)
@@ -246,7 +246,7 @@ func FuzzScanLines(f *testing.F) {
 			findings map[findingKey]int
 		}
 		got := make(map[int]lineResult)
-		err := scanner.ScanLines(strings.NewReader(text), func(lineNum int, line []byte, findings []sensitive.Finding) {
+		err := scanner.ScanLines(strings.NewReader(text), func(lineNum int, line []byte, findings []embargo.Finding) {
 			if _, dup := got[lineNum]; dup {
 				t.Fatalf("line %d reported twice", lineNum)
 			}
@@ -311,7 +311,7 @@ func checkEmbeddedSecret(t *testing.T, context string) {
 	t.Helper()
 	raw := "user" + strconv.Itoa(len(context)) + "@example.com"
 	text := context + "\n[" + raw + "]\n" + context
-	s := sensitive.NewScanner(sensitive.WithEmail())
+	s := embargo.NewScanner(embargo.WithEmail())
 	found := false
 	for _, f := range s.ScanString(text) {
 		if f.RawValue == raw && f.Start == len(context)+2 {

@@ -54,7 +54,7 @@ linters:
     gomoddirectives:
       replace-local: true
       replace-allow-list:
-        - github.com/nao1215/sensitive
+        - github.com/nao1215/embargo
     errcheck:
       disable-default-exclusions: false
       check-type-assertions: true

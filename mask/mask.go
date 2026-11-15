@@ -6,20 +6,20 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/nao1215/sensitive"
+	"github.com/nao1215/embargo"
 )
 
 // Mask replaces findings in text using strategyMap; unmapped detector names remain unchanged. Findings must refer to text, with RawValue equal to text[Start:End]; the input slice is not modified.
 //
 // Invalid ranges (Start < 0, End > len(text), or Start >= End) are skipped. Replacements run right to left; a finding overlapping an already applied replacement is skipped, and equal-start overlaps have no guaranteed winner.
-func Mask(text string, findings []sensitive.Finding, strategyMap map[sensitive.DetectorName]Strategy) string {
+func Mask(text string, findings []embargo.Finding, strategyMap map[embargo.DetectorName]Strategy) string {
 	if len(findings) == 0 {
 		return text
 	}
 
 	// Sort findings by Start position descending so we can replace
 	// from right to left without invalidating positions.
-	sorted := make([]sensitive.Finding, len(findings))
+	sorted := make([]embargo.Finding, len(findings))
 	copy(sorted, findings)
 	sort.Slice(sorted, func(i, j int) bool {
 		return sorted[i].Start > sorted[j].Start
@@ -53,12 +53,12 @@ func Mask(text string, findings []sensitive.Finding, strategyMap map[sensitive.D
 // MaskAll applies strategy to every finding using the range and overlap rules of [Mask].
 //
 // revive:disable-next-line:exported
-func MaskAll(text string, findings []sensitive.Finding, strategy Strategy) string {
+func MaskAll(text string, findings []embargo.Finding, strategy Strategy) string {
 	if len(findings) == 0 {
 		return text
 	}
 
-	strategyMap := make(map[sensitive.DetectorName]Strategy)
+	strategyMap := make(map[embargo.DetectorName]Strategy)
 	for _, f := range findings {
 		strategyMap[f.DetectorName] = strategy
 	}

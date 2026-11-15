@@ -3,7 +3,7 @@ package detector
 import (
 	"bytes"
 
-	"github.com/nao1215/sensitive/internal/ascii"
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 // keywordMatch represents a position where a keyword was found in the data.

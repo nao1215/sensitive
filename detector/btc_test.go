@@ -7,7 +7,7 @@ import (
 
 	"testing"
 
-	"github.com/nao1215/sensitive/detector"
+	"github.com/nao1215/embargo/detector"
 )
 
 func TestBTCDetector_Scan(t *testing.T) {

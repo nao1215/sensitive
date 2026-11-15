@@ -3,7 +3,7 @@ package detector_test
 import (
 	"testing"
 
-	"github.com/nao1215/sensitive/detector"
+	"github.com/nao1215/embargo/detector"
 )
 
 // Per-detector benchmarks measure each detector's Scan() cost in isolation,

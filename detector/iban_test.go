@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/nao1215/sensitive/detector"
+	"github.com/nao1215/embargo/detector"
 )
 
 func TestIBANDetector_Scan(t *testing.T) {
