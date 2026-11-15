@@ -29,16 +29,49 @@ func (Detector).Scan(data []byte) []Finding
 func Mask(text string, findings []Finding) string
 func MaskFunc(text string, findings []Finding, replace func(kind Kind, value string) string) string
 func NewScanner(opts ...ScannerOption) *Scanner
+func NewSecret[T any](v T) Secret[T]
 func WithAll() ScannerOption
 func WithDetector(d Detector) ScannerOption
 func WithKinds(kinds ...Kind) ScannerOption
 func WithMinConfidence(threshold float64) ScannerOption
+methodset *Input[T interface{~string | ~[]byte}] func (*Input[T]).UnmarshalJSON(data []byte) error
+methodset *Input[T interface{~string | ~[]byte}] func (*Input[T]).UnmarshalText(data []byte) error
+methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).Format(state fmt.State, verb rune)
+methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).GoString() string
+methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).LogValue() slog.Value
+methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).MarshalJSON() ([]byte, error)
+methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).MarshalText() ([]byte, error)
+methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).Secret() Secret[T]
+methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).String() string
 methodset *Scanner func (*Scanner).Scan(data []byte) []Finding
 methodset *Scanner func (*Scanner).ScanLines(r io.Reader, fn func(lineNum int, line []byte, findings []Finding)) error
 methodset *Scanner func (*Scanner).ScanString(text string) []Finding
+methodset *Secret[T any] func (Secret[T]).Format(state fmt.State, _ rune)
+methodset *Secret[T any] func (Secret[T]).GoString() string
+methodset *Secret[T any] func (Secret[T]).LogValue() slog.Value
+methodset *Secret[T any] func (Secret[T]).MarshalJSON() ([]byte, error)
+methodset *Secret[T any] func (Secret[T]).MarshalText() ([]byte, error)
+methodset *Secret[T any] func (Secret[T]).Reveal() T
+methodset *Secret[T any] func (Secret[T]).String() string
 methodset Detector func (Detector).Scan(data []byte) []Finding
+methodset Input[T interface{~string | ~[]byte}] func (Input[T]).Format(state fmt.State, verb rune)
+methodset Input[T interface{~string | ~[]byte}] func (Input[T]).GoString() string
+methodset Input[T interface{~string | ~[]byte}] func (Input[T]).LogValue() slog.Value
+methodset Input[T interface{~string | ~[]byte}] func (Input[T]).MarshalJSON() ([]byte, error)
+methodset Input[T interface{~string | ~[]byte}] func (Input[T]).MarshalText() ([]byte, error)
+methodset Input[T interface{~string | ~[]byte}] func (Input[T]).Secret() Secret[T]
+methodset Input[T interface{~string | ~[]byte}] func (Input[T]).String() string
+methodset Secret[T any] func (Secret[T]).Format(state fmt.State, _ rune)
+methodset Secret[T any] func (Secret[T]).GoString() string
+methodset Secret[T any] func (Secret[T]).LogValue() slog.Value
+methodset Secret[T any] func (Secret[T]).MarshalJSON() ([]byte, error)
+methodset Secret[T any] func (Secret[T]).MarshalText() ([]byte, error)
+methodset Secret[T any] func (Secret[T]).Reveal() T
+methodset Secret[T any] func (Secret[T]).String() string
 type Detector interface
 type Finding struct
+type Input[T interface{~string | ~[]byte}] struct
 type Kind string
 type Scanner struct
 type ScannerOption interface (sealed)
+type Secret[T any] struct

@@ -72,6 +72,20 @@ Mask replaces the union of overlapping spans with [REDACTED]. MaskFunc accepts y
 
 Implement Detector.Scan for application-specific tokens and add it with WithDetector. Custom detectors must return valid spans and scores, leave input unchanged, and support concurrent calls when shared.
 
+## Values that must not be displayed
+
+Secret hides its value from fmt, slog, JSON, text and XML output. Reveal deliberately returns the wrapped value. Input initializes a string or byte slice and rejects the redaction marker on round trips. These types do not erase memory or protect values after Reveal.
+
+<!-- example: secret_example_test.go:ExampleNewSecret -->
+```go
+key := embargo.NewSecret("fake-key")
+if _, err := fmt.Println(key); err != nil {
+    panic(err)
+}
+
+// Output: [REDACTED]
+```
+
 ## Testing
 
 The library has zero dependencies; test-only tools live in the separate [tests/](tests/) module (Go 1.26.11+). Run `go test ./...` in both directories; this executes the Go examples and checks README snippets against them. See [testing](doc/testing.md) for lint, vet, fuzzing, golden updates, coverage, and mutation checks.
