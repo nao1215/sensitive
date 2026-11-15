@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 Implementation: [PR #81](https://github.com/nao1215/embargo/pull/81), [9b1baf4](https://github.com/nao1215/embargo/commit/9b1baf479421d5d01736c8aeec7cf331e03579a1).
 
-- Reject entropy candidates in paths and dotted names, numeric log fragments, operational counters and Java object references under unquoted token keys. Make the Sentry fixture use a fixed long source path. Publish licensed, checksum-pinned public-log samples, manual classification rules and FP/GB estimates without redistributing the datasets.
+- Reject entropy candidates in paths and dotted names, numeric log fragments, operational counters and Java object references under unquoted token keys. Make the Sentry fixture use a fixed long source path. Publish measurements from licensed, checksum-pinned public logs, manual classification rules and FP/GB estimates without redistributing the datasets.
 - Make unlabelled entropy detection opt-in through WithAll or WithKinds. Keep its confidence at 0.3 and the scanner threshold at zero; describe the recall trade-off in the migration notes. Retain all twelve consumer-facing identifiers from rounds 11 and 12 after reviewing their callers.
 - Include the instantiated Secret type in `%#v`, and have CheckValue inspect unexported fmt fields. Explain marker-only persistence, Reveal call-site audits and Go memory-lifetime limits; keep Input's existing marker output.
 - Publish interleaved ten-sample WithKinds measurements and the rejected candidate-lexer experiment. Narrow comparison staleness to measured source and dependency versions while retaining the full source/dependency fingerprint for audit.

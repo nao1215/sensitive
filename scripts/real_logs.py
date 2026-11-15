@@ -87,16 +87,30 @@ def summarize(raw, labels):
 
 
 def measure(cache, manifest, labels):
+    cache = cache.resolve()
     cache_datasets(cache, manifest)
+    fingerprint = source_hash()
     rows = []
     for split in ('development', 'held'):
         output = cache/('measured-'+split+'.json')
         command = ['go','-C','tests','run','./cmd/logscan','--cache',str(cache), '--split',split,'--output',str(output)]
         subprocess.run(command, cwd=ROOT, env=dict(os.environ,GOMAXPROCS='4'), check=True)
-        rows.extend(json.loads(output.read_text()))
-    summary = {'source_sha256':source_hash(), 'manifest_sha256':digest((DOC/'real-logs-manifest.json').read_bytes()),
+        rows.extend(json.loads(output.read_text(encoding='utf-8')))
+    if fingerprint != source_hash():
+        raise ValueError('source changed during measurement; discard both scans and retry')
+    summary = {'source_sha256':fingerprint, 'manifest_sha256':digest((DOC/'real-logs-manifest.json').read_bytes()),
                'labels_sha256':digest((DOC/'real-logs-labels.json').read_bytes()), 'baseline_sha256':digest((DOC/'real-logs-baseline.json').read_bytes()), 'datasets':summarize(rows,labels)}
     (DOC/'real-logs-summary.json').write_text(json.dumps(summary,indent=2)+'\n',encoding='utf-8')
+
+
+def validate_strata(rows, labels):
+    for row in rows:
+        for s in row['strata'].values():
+            classes = [labels[key]['classification'] for key in s['sample_ids']]
+            if any(value not in ('false-positive', 'sensitive-reference') for value in classes):
+                raise ValueError('invalid classification')
+            if s['sample_count'] != len(classes) or s['sample_fp'] != classes.count('false-positive'):
+                raise ValueError('aggregate labels disagree')
 
 
 def estimate(rows, names, config, kind=None):
@@ -178,10 +192,7 @@ def main():
     before=load('real-logs-baseline.json')['datasets']
     after=summary['datasets']
     for rows in (before,after):
-        for row in rows:
-            for s in row['strata'].values():
-                if s['sample_count']!=len(s['sample_ids']) or s['sample_fp']!=sum(labels[key]['classification']=='false-positive' for key in s['sample_ids']):
-                    raise ValueError('aggregate labels disagree')
+        validate_strata(rows, labels)
     table,svg=render(manifest,before,after)
     page=DOC/'real-logs.md'
     text=page.read_text(encoding='utf-8')

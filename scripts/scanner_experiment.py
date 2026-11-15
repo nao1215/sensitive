@@ -107,14 +107,14 @@ def render(check):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--measure',action='store_true')
-    parser.add_argument('--base',type=pathlib.Path)
+    parser.add_argument('--base')
     parser.add_argument('--cpu',type=int,default=0)
     parser.add_argument('--check',action='store_true')
     args = parser.parse_args()
     if args.measure:
-        if args.base is None:
+        if not args.base or not args.base.strip():
             parser.error('--measure needs --base pointing at a baseline clone')
-        measure(args.base,args.cpu)
+        measure(pathlib.Path(args.base),args.cpu)
     render(args.check)
 
 

@@ -108,4 +108,5 @@ real-log-accuracy: ## Scan checksum-pinned public logs cached outside the reposi
 CPU ?= 0
 .PHONY: scanner-experiment
 scanner-experiment: ## Repeat the rejected lexer and kind-selection benchmarks (BASE clone, CPU)
+	@test -n "$(strip $(BASE))" || { echo 'BASE must name a baseline clone' >&2; exit 1; }
 	python3 scripts/scanner_experiment.py --measure --base "$(BASE)" --cpu "$(CPU)"

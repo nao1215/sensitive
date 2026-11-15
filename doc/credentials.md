@@ -1,6 +1,6 @@
 # Detect forgotten credentials
 
-Use `KindCredential` for assignments and connection strings, `KindServiceToken` for documented provider prefixes, and `KindHighEntropy` for uncertain unlabeled tokens. NewScanner includes all three. Findings contain only byte spans, kind and heuristic confidence; scanning never authenticates with a provider. Use public fictitious inputs in tests.
+Use `KindCredential` for assignments and connection strings, `KindServiceToken` for documented provider prefixes, and `KindHighEntropy` for uncertain unlabeled tokens. `NewScanner` includes credential and service-token detection by default. Add `WithAll()` or select `KindHighEntropy` with `WithKinds` to scan unlabeled random-looking tokens. Findings contain only byte spans, kind and heuristic confidence; scanning never authenticates with a provider. Use public fictitious inputs in tests.
 
 Credential assignments recognize the sensitive-key rule with ASCII case and `_`, `-`, `.`, or space variants: password, passwd, secret, token, api_key, authorization, cookie and set-cookie. The detector accepts `=`, `:`, quoted JSON fields and header forms. Quotes honor backslash escapes. Unquoted values end at field delimiters; cookie headers extend to the end of the line. Authorization retains Bearer or Basic and hides the credential. Arbitrary programming-language expressions, concatenated runtime values and recursive encodings are outside this parser.
 

@@ -9,6 +9,35 @@ import scanner_experiment
 
 
 class RealLogEvidenceTests(unittest.TestCase):
+    def test_measure_passes_absolute_cache_to_go(self):
+        with patch.object(real_logs, 'cache_datasets'), patch.object(real_logs.subprocess, 'run', side_effect=RuntimeError('stop')) as run:
+            with self.assertRaisesRegex(RuntimeError, 'stop'):
+                real_logs.measure(pathlib.Path('../log-cache'), {}, {})
+            argv = run.call_args.args[0]
+            self.assertTrue(pathlib.Path(argv[argv.index('--cache')+1]).is_absolute())
+            self.assertTrue(pathlib.Path(argv[argv.index('--output')+1]).is_absolute())
+
+    def test_measure_rejects_source_changes_without_publishing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = pathlib.Path(tmp)
+            for split in ('development', 'held'):
+                (cache/('measured-'+split+'.json')).write_text('[]', encoding='utf-8')
+            with patch.object(real_logs, 'cache_datasets'), patch.object(real_logs.subprocess, 'run'), patch.object(real_logs, 'source_hash', side_effect=['before', 'after']), patch.object(pathlib.Path, 'write_text') as write:
+                with self.assertRaisesRegex(ValueError, 'source changed during measurement'):
+                    real_logs.measure(cache, {}, {})
+                write.assert_not_called()
+
+    def test_offline_check_rejects_unclassified_sample(self):
+        row = {'strata': {'email': {'sample_ids': ['pending'], 'sample_count': 1, 'sample_fp': 0}}}
+        with self.assertRaisesRegex(ValueError, 'invalid classification'):
+            real_logs.validate_strata([row], {'pending': {'classification': 'unclassified'}})
+
+    def test_unset_benchmark_baseline_does_not_measure(self):
+        with patch('sys.argv', ['scanner_experiment.py', '--measure', '--base', '']), patch.object(scanner_experiment, 'measure') as measure:
+            with self.assertRaises(SystemExit):
+                scanner_experiment.main()
+            measure.assert_not_called()
+
     def test_changed_cached_bytes_fail_without_download(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = pathlib.Path(tmp)/'log'

@@ -3,6 +3,7 @@ package detect
 import (
 	"bytes"
 	"strings"
+	"unicode"
 )
 
 // numericLogFragment rejects decimal tails, signed identifier suffixes, and
@@ -29,7 +30,7 @@ func operationalNumberContext(data []byte, start int) bool {
 	if start > 0 && data[start-1] == '-' {
 		start--
 	}
-	before := bytes.TrimSpace(data[:start])
+	before := bytes.TrimRightFunc(data[:start], unicode.IsSpace)
 	if len(before) == 0 || before[len(before)-1] != '=' {
 		return false
 	}
