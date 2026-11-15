@@ -82,6 +82,8 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
           cache-dependency-path: tests/go.sum
+      - name: Check deterministic synthetic corpus
+        run: python3 scripts/generate_accuracy.py --check
       - name: Check root module isolation
         shell: bash
         run: |

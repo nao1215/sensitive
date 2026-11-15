@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -22,6 +23,7 @@ type accuracySpan struct {
 	End   int `json:"end"`
 }
 type labeledAccuracySample struct {
+	ID       string         `json:"id"`
 	Kind     embargo.Kind   `json:"kind"`
 	Text     string         `json:"text"`
 	Parts    []string       `json:"parts"`
@@ -68,6 +70,7 @@ func TestAccuracyTable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	//nolint:prealloc // JSON decoding determines the initial slice length.
 	var samples []labeledAccuracySample
 	if decodeErr := json.Unmarshal(corpus, &samples); decodeErr != nil {
 		t.Fatal(decodeErr)
@@ -76,6 +79,7 @@ func TestAccuracyTable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	//nolint:prealloc // JSON decoding determines the initial slice length.
 	var controls []struct {
 		Source string `json:"source"`
 		Text   string `json:"text"`
@@ -83,6 +87,12 @@ func TestAccuracyTable(t *testing.T) {
 	if err := json.Unmarshal(data, &controls); err != nil {
 		t.Fatal(err)
 	}
+	samples = append(samples, readGeneratedAccuracy[labeledAccuracySample](t, "testdata/accuracy_generated.jsonl")...)
+	controls = append(controls, readGeneratedAccuracy[struct {
+		Source string `json:"source"`
+		Text   string `json:"text"`
+	}](t, "testdata/accuracy_generated_controls.jsonl")...)
+
 	counts := map[string]accuracyCount{}
 	inputs := map[string][2]int{}
 
@@ -184,4 +194,26 @@ func TestAccuracyRequiresExactUnusedSpans(t *testing.T) {
 	if accuracyRatio(0, 0) != "n/a" {
 		t.Fatal("undefined precision must not imply zero accuracy")
 	}
+}
+
+func readGeneratedAccuracy[T any](t *testing.T, path string) []T {
+	t.Helper()
+	// #nosec G304 -- callers supply only repository fixture paths.
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var rows []T
+	scanner := bufio.NewScanner(strings.NewReader(string(data)))
+	for scanner.Scan() {
+		var row T
+		if err := json.Unmarshal(scanner.Bytes(), &row); err != nil {
+			t.Fatal(err)
+		}
+		rows = append(rows, row)
+	}
+	if err := scanner.Err(); err != nil {
+		t.Fatal(err)
+	}
+	return rows
 }
