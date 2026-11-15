@@ -60,3 +60,23 @@ func TestCleanScanAllocationBudget(t *testing.T) {
 		t.Fatalf("clean input allocated %.0f times", got)
 	}
 }
+
+func TestDispatchExhaustiveNumericAndTerminalHints(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		kind  Kind
+		input string
+		end   int
+	}{
+		{KindMyNumber, "111111111118", 12},
+		{KindABARouting, "111111118", 9},
+		{KindCVV, "123 CVV", 3},
+		{KindBankAccount, "12345678 bank account", 8},
+		{KindACHTrace, "021000021123456 ACH trace", 15},
+	} {
+		got := NewScanner(WithKinds(tc.kind)).ScanString(tc.input)
+		if len(got) != 1 || got[0].Start != 0 || got[0].End != tc.end {
+			t.Fatal(tc.kind, got)
+		}
+	}
+}
