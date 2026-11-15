@@ -218,9 +218,7 @@ func checkEmbeddedSecret(t *testing.T, context string) {
 
 // percentOracle uses the standard library on individual escapes, independently
 // of the production decoder, while preserving malformed sequences and '+'.
-func percentOracle(text string) ([]byte, []int) {
-	var data []byte
-	var positions []int
+func percentOracle(text string) (data []byte, positions []int) {
 	for i := 0; i < len(text); {
 		positions = append(positions, i)
 		if text[i] == '%' && len(text)-i >= 3 {
