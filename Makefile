@@ -70,3 +70,11 @@ DOC_MUTATION_TIMEOUT ?= 100
 .PHONY: testing-doc
 testing-doc: ## Publish completed measurement logs (DOC_COVERAGE, DOC_MUTATION, DOC_FUZZ, DOC_COMMIT)
 	python3 scripts/testing_docs.py --coverage "$(DOC_COVERAGE)" --mutation "$(DOC_MUTATION)" --fuzz "$(DOC_FUZZ)" --commit "$(DOC_COMMIT)" --mutation-timeout-coefficient "$(DOC_MUTATION_TIMEOUT)"
+
+.PHONY: doc-figures
+doc-figures: ## Regenerate figures from measured data
+	python3 scripts/doc_figures.py
+
+.PHONY: masking-doc
+masking-doc: ## Regenerate masking views from runnable Examples
+	UPDATE_DOCS=1 go test . -run '^TestReadmeMaskingFigure$$' -count=1

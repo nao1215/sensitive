@@ -75,7 +75,12 @@ func TestBenchmarkTable(t *testing.T) {
 		printLine("| %s | %.2f | %.2f |\n", name, snapshot.Benchmarks[prefix+"/clean"]["MB/s"], snapshot.Benchmarks[prefix+"/dirty"]["MB/s"])
 	}
 	printLine("\n</details>\n")
-	syncReadmeTable(t, "benchmarks", table.String())
+	syncDocTable(t, "../doc/benchmarks.md", "benchmarks", table.String())
+	all := snapshot.Benchmarks["BenchmarkPublishedScanner/all/dirty"]["MB/s"]
+	plain := snapshot.Benchmarks["BenchmarkPublishedSlog/plain-clean"]["ns/op"]
+	masked := snapshot.Benchmarks["BenchmarkPublishedSlog/masked-clean"]["ns/op"]
+	summary := fmt.Sprintf("![Scanner throughput and slog time](doc/images/benchmarks.svg)\n\nAll detectors scan sensitive text at %.2f MB/s; masking a clean slog event takes %.2f µs, %.1f× the plain handler.\n", all, masked/1000, masked/plain)
+	syncReadmeTable(t, "benchmarks", summary)
 }
 
 func checkBenchmarkSamples(t *testing.T, medians map[string]map[string]float64) {

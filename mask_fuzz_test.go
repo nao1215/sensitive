@@ -16,6 +16,7 @@ func FuzzMask(f *testing.F) {
 		got := embargo.MaskFunc(text, spans, func(_ embargo.Kind, v string) string { calls++; return strings.Repeat("*", len(v)) })
 		invalid := a < 0 || b <= a || b > len(text) || c < 0 || d <= c || d > len(text)
 		if invalid {
+			//nolint:goconst // Assert the literal public redaction contract.
 			if got != "[REDACTED]" || calls != 0 {
 				t.Fatal("invalid spans passed")
 			}

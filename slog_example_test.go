@@ -22,3 +22,19 @@ func ExampleNewSlogHandler() {
 
 	// Output: level=INFO msg=checkout email=[REDACTED] card=[REDACTED]
 }
+
+func ExampleNewSlogHandler_short() {
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
+	logger := slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.TimeKey {
+				return slog.Attr{}
+			}
+			return a
+		},
+	}), scanner))
+
+	logger.Info("checkout", "email", "alice@example.com")
+
+	// Output: {"level":"INFO","msg":"checkout","email":"[REDACTED]"}
+}

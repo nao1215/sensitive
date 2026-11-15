@@ -86,6 +86,7 @@ func TestMaskUnion(t *testing.T) {
 	if !reflect.DeepEqual(input, before) {
 		t.Fatal("mutated findings")
 	}
+	//nolint:goconst // Assert the literal public redaction contract.
 	if got := embargo.Mask("safe", []embargo.Finding{{Start: -1, End: 1}}); got != "[REDACTED]" {
 		t.Fatal(got)
 	}

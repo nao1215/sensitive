@@ -139,7 +139,13 @@ func TestAccuracyTable(t *testing.T) {
 
 func syncReadmeTable(t *testing.T, name, table string) {
 	t.Helper()
-	data, err := os.ReadFile("../README.md")
+	syncDocTable(t, "../README.md", name, table)
+}
+
+func syncDocTable(t *testing.T, path, name, table string) {
+	t.Helper()
+	// #nosec G304 -- callers supply only fixed repository documentation paths.
+	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,7 +160,7 @@ func syncReadmeTable(t *testing.T, name, table string) {
 	}
 	if os.Getenv("UPDATE_DOCS") == "1" {
 		// #nosec G703 -- table data cannot change the fixed destination path.
-		if err := os.WriteFile("../README.md", []byte(before+start+table+end+after), 0o600); err != nil {
+		if err := os.WriteFile(path, []byte(before+start+table+end+after), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	} else if got != table {

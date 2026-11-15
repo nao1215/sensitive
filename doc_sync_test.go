@@ -23,7 +23,7 @@ func TestReadmeExamples(t *testing.T) {
 	}
 	readme = bytes.ReplaceAll(readme, []byte("\r\n"), []byte("\n"))
 	blocks := regexp.MustCompile("(?s)<!-- example: ([^:\n]+):(Example\\w*) -->\n```go\n(.*?)\n```").FindAllSubmatch(readme, -1)
-	if len(blocks) == 0 || len(blocks) != bytes.Count(readme, []byte("```go\n")) {
+	if len(blocks) == 0 || len(blocks)+bytes.Count(readme, []byte("<!-- test: ")) != bytes.Count(readme, []byte("```go\n")) {
 		t.Fatal("every README Go block must have an example: file:function marker")
 	}
 	for _, block := range blocks {
