@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- Secret and Input are now root runtime types. NewSecret wraps a shallow copy with unexported-pointer storage and [REDACTED] display through fmt, slog, JSON, text and XML; Reveal explicitly returns the value. Input copies decoded strings/bytes into a snapshot and rejects marker round trips, including JSON escaping and base64.
+- Secret and Input are now root runtime types. NewSecret wraps a shallow copy with unexported-pointer storage and [REDACTED] display through fmt, slog, JSON, text and XML; Reveal explicitly returns the value. Input copies decoded strings/bytes into a snapshot and rejects marker round trips, including JSON escaping and base64 ([PR #58](https://github.com/nao1215/embargo/pull/58), [c49392c](https://github.com/nao1215/embargo/commit/c49392c)).
 
 
 Implementation: [PR #56](https://github.com/nao1215/embargo/pull/56), [89eb73c](https://github.com/nao1215/embargo/commit/89eb73c).
