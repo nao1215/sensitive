@@ -1,0 +1,29 @@
+name: Changed files
+
+on:
+  workflow_call:
+    outputs:
+      code:
+        description: Whether the full Go checks are needed
+        value: ${{ jobs.changes.outputs.code }}
+      workflows:
+        description: Whether workflow validation is needed
+        value: ${{ jobs.changes.outputs.workflows }}
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+      workflows: ${{ steps.filter.outputs.workflows }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: filter
+        run: python3 scripts/ci_changes.py
