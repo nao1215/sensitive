@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
+	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -28,6 +31,7 @@ func TestBenchmarkTable(t *testing.T) {
 	if err := json.Unmarshal(data, &snapshot); err != nil {
 		t.Fatal(err)
 	}
+	checkBenchmarkSamples(t, snapshot.Benchmarks)
 	var table strings.Builder
 	printLine := func(format string, args ...any) {
 		if _, err := fmt.Fprintf(&table, format, args...); err != nil {
@@ -72,4 +76,52 @@ func TestBenchmarkTable(t *testing.T) {
 	}
 	printLine("\n</details>\n")
 	syncReadmeTable(t, "benchmarks", table.String())
+}
+
+func checkBenchmarkSamples(t *testing.T, medians map[string]map[string]float64) {
+	t.Helper()
+	raw, err := os.ReadFile("../doc/benchmarks.raw.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	samples := map[string]map[string][]float64{}
+	cpuSuffix := regexp.MustCompile(`-\d+$`)
+	for line := range strings.SplitSeq(string(raw), "\n") {
+		if !strings.HasPrefix(line, "BenchmarkPublished") {
+			continue
+		}
+		fields := strings.Fields(line)
+		if len(fields) < 4 || len(fields)%2 != 0 { // Name, iterations, then value/unit pairs.
+			t.Fatal("invalid benchmark sample")
+		}
+		name := cpuSuffix.ReplaceAllString(fields[0], "")
+		if samples[name] == nil {
+			samples[name] = map[string][]float64{}
+		}
+		for index := 2; index < len(fields); index += 2 {
+			value, err := strconv.ParseFloat(fields[index], 64)
+			if err != nil {
+				t.Fatal(err)
+			}
+			unit := fields[index+1]
+			samples[name][unit] = append(samples[name][unit], value)
+		}
+	}
+	if len(samples) != len(medians) {
+		t.Fatal("benchmark case count differs from raw output")
+	}
+	for name, metrics := range samples {
+		if len(metrics) != len(medians[name]) {
+			t.Fatal("benchmark metric count differs from raw output")
+		}
+		for unit, values := range metrics {
+			if len(values) != 5 { // Publication requires five independent timing samples.
+				t.Fatal("benchmark sample count differs from publication protocol")
+			}
+			slices.Sort(values)
+			if value, ok := medians[name][unit]; !ok || value != values[len(values)/2] {
+				t.Fatal("benchmark median differs from raw output")
+			}
+		}
+	}
 }
