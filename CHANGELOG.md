@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+Implementation: [PR #56](https://github.com/nao1215/embargo/pull/56), [89eb73c](https://github.com/nao1215/embargo/commit/89eb73c).
+
 ### Breaking changes
 
 - Runtime operations now live in embargo. Use NewScanner(WithKinds(KindEmail, KindPAN)) instead of individual WithEmail/WithPAN options or detector.NewX constructors; detector implementations are internal. NewScanner() and a zero Scanner enable all built-ins, including IP addresses and context-based detectors; WithKinds() explicitly selects none and WithAll() resets all.
