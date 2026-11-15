@@ -121,6 +121,9 @@ func TestComparisonCorrectness(t *testing.T) {
 			if !json.Valid(bytes.TrimSpace(out.Bytes())) || !strings.Contains(out.String(), want) {
 				t.Errorf("%s/%s: %s; want %s", tc.name, mode, out.String(), want)
 			}
+			if mode == comparisonEmbargoName && strings.Contains(out.String(), comparisonOpaque) {
+				t.Errorf("%s/%s: raw sensitive fixture remains in output", tc.name, mode)
+			}
 		}
 		writeComparisonTable(t, &table, "| %s | `%s` | `%s` |\n", tc.name, tc.wantMasq, tc.wantEmbargo)
 	}

@@ -55,8 +55,9 @@ func TestStructuredSlogKeepsJSONShape(t *testing.T) {
 					t.Fatalf("leak: %s", got)
 				}
 			}
+			want := `{"id":"u123","email":"[REDACTED]","password":"[REDACTED]","count":9007199254740993,"enabled":true,"secret_value":"[REDACTED]"}`
 			if text {
-				if !strings.Contains(got, `9007199254740993`) {
+				if !strings.Contains(got, "user="+strconv.Quote(want)) {
 					t.Fatal(got)
 				}
 				return
@@ -65,7 +66,6 @@ func TestStructuredSlogKeepsJSONShape(t *testing.T) {
 			if err := json.Unmarshal(out.Bytes(), &record); err != nil {
 				t.Fatal(err)
 			}
-			want := `{"id":"u123","email":"[REDACTED]","password":"[REDACTED]","count":9007199254740993,"enabled":true,"secret_value":"[REDACTED]"}`
 			if string(record["user"]) != want {
 				t.Fatalf("got %s want %s", record["user"], want)
 			}

@@ -198,7 +198,8 @@ func (h *slogHandler) sanitizeAttr(attr slog.Attr, depth int) (slog.Attr, error)
 	return slog.Attr{}, slogSanitizationError()
 }
 
-// JSONHandler uses MarshalJSON; TextHandler uses String to display compact JSON.
+// JSONHandler uses MarshalJSON. TextHandler quotes the compact JSON bytes;
+// String supplies the same JSON text to other fmt-based downstream handlers.
 type maskedJSON []byte
 
 func (v maskedJSON) MarshalJSON() ([]byte, error) { return v, nil }
