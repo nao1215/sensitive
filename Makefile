@@ -65,6 +65,8 @@ accuracy accuracy-doc: ## Regenerate precision and recall from the labeled corpu
 benchmark-doc: ## Run and publish reproducible benchmark samples
 	python3 scripts/benchmark_docs.py
 
+DOC_MUTATION_TIMEOUT ?= 100
+
 .PHONY: testing-doc
 testing-doc: ## Publish completed measurement logs (DOC_COVERAGE, DOC_MUTATION, DOC_FUZZ, DOC_COMMIT)
-	python3 scripts/testing_docs.py --coverage "$(DOC_COVERAGE)" --mutation "$(DOC_MUTATION)" --fuzz "$(DOC_FUZZ)" --commit "$(DOC_COMMIT)"
+	python3 scripts/testing_docs.py --coverage "$(DOC_COVERAGE)" --mutation "$(DOC_MUTATION)" --fuzz "$(DOC_FUZZ)" --commit "$(DOC_COMMIT)" --mutation-timeout-coefficient "$(DOC_MUTATION_TIMEOUT)"

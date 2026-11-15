@@ -14,6 +14,7 @@ parser.add_argument("--coverage", type=pathlib.Path, required=True)
 parser.add_argument("--mutation", type=pathlib.Path, required=True)
 parser.add_argument("--fuzz", type=pathlib.Path, required=True)
 parser.add_argument("--commit", required=True)
+parser.add_argument("--mutation-timeout-coefficient", type=int, default=100)
 args = parser.parse_args()
 root = pathlib.Path(__file__).resolve().parents[1]
 coverage = [line.split() for line in args.coverage.read_text().splitlines()[1:]]
@@ -37,6 +38,8 @@ snapshot = {
     "total_statements": sum(int(fields[1]) for fields in coverage),
     "mutation": dict(zip(["killed", "lived", "uncovered", "timed_out", "not_viable", "skipped"], map(int, summary.groups()[:6]))),
     "efficacy": float(summary[7]),
+    "mutation_timeout_coefficient": args.mutation_timeout_coefficient,
+    "mutation_workers": 4,
     "mutator_coverage": float(summary[8]),
     "fuzz": fuzz_runs,
     "source_sha256": {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in [("coverage", args.coverage), ("mutation", args.mutation), ("fuzz", args.fuzz)]},

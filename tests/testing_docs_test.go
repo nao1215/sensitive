@@ -21,11 +21,13 @@ func TestTestingMetrics(t *testing.T) {
 			Executions       int    `json:"executions"`
 			SecondsRequested int    `json:"seconds_requested"`
 		} `json:"fuzz"`
-		CoveredStatements int     `json:"covered_statements"`
-		TotalStatements   int     `json:"total_statements"`
-		Efficacy          float64 `json:"efficacy"`
-		MutatorCoverage   float64 `json:"mutator_coverage"`
-		Mutation          struct {
+		CoveredStatements          int     `json:"covered_statements"`
+		TotalStatements            int     `json:"total_statements"`
+		Efficacy                   float64 `json:"efficacy"`
+		MutatorCoverage            float64 `json:"mutator_coverage"`
+		MutationTimeoutCoefficient int     `json:"mutation_timeout_coefficient"`
+		MutationWorkers            int     `json:"mutation_workers"`
+		Mutation                   struct {
 			Killed    int `json:"killed"`
 			Lived     int `json:"lived"`
 			Uncovered int `json:"uncovered"`
@@ -45,6 +47,6 @@ func TestTestingMetrics(t *testing.T) {
 			t.Fatal("invalid fuzz measurement")
 		}
 	}
-	text := fmt.Sprintf("Measured %s at [%s](https://github.com/nao1215/embargo/commit/%s): %.1f%% statement coverage (%d/%d, root and integration suites combined); gremlins v0.6.0 efficacy %.2f%% (%d killed, %d lived, %d uncovered, %d timed out; mutator coverage %.2f%%); %d fuzz targets at 10 seconds each, %d executions. Timeouts are reported separately and do not count as killed. These are dated measurements, not guarantees for arbitrary inputs.\n", snapshot.Date, snapshot.Commit[:7], snapshot.Commit, 100*float64(snapshot.CoveredStatements)/float64(snapshot.TotalStatements), snapshot.CoveredStatements, snapshot.TotalStatements, snapshot.Efficacy, snapshot.Mutation.Killed, snapshot.Mutation.Lived, snapshot.Mutation.Uncovered, snapshot.Mutation.TimedOut, snapshot.MutatorCoverage, len(snapshot.Fuzz), executions)
+	text := fmt.Sprintf("Measured %s at [%s](https://github.com/nao1215/embargo/commit/%s): %.1f%% statement coverage (%d/%d, root and integration suites combined); gremlins v0.6.0 with root-module tests, %d workers and %dx baseline timeout: efficacy %.2f%% (%d killed, %d lived, %d uncovered, %d timed out; mutator coverage %.2f%%); %d fuzz targets at 10 seconds each, %d executions. Timeouts are reported separately and do not count as killed. These are dated measurements, not guarantees for arbitrary inputs.\n", snapshot.Date, snapshot.Commit[:7], snapshot.Commit, 100*float64(snapshot.CoveredStatements)/float64(snapshot.TotalStatements), snapshot.CoveredStatements, snapshot.TotalStatements, snapshot.MutationWorkers, snapshot.MutationTimeoutCoefficient, snapshot.Efficacy, snapshot.Mutation.Killed, snapshot.Mutation.Lived, snapshot.Mutation.Uncovered, snapshot.Mutation.TimedOut, snapshot.MutatorCoverage, len(snapshot.Fuzz), executions)
 	syncReadmeTable(t, "testing-metrics", text)
 }

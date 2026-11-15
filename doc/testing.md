@@ -23,4 +23,6 @@ The testing summary is a dated measurement. After completing `make mutation > mu
 make testing-doc DOC_COVERAGE=coverage.out DOC_MUTATION=mutation.log DOC_FUZZ=fuzz.log DOC_COMMIT="$(git rev-parse HEAD)"
 ```
 
+The timeout coefficient defaults to 100; set DOC_MUTATION_TIMEOUT to the actual value if you used a different gremlins timeout. This value and the four-worker count are recorded alongside the result.
+
 The generator rejects incomplete mutation/fuzz runs and records source-log hashes. Commit the generated JSON and README together. Run the benchmark publication separately, after other intentional CPU workloads have finished.
