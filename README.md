@@ -236,7 +236,7 @@ Round 13 scanner medians (ten interleaved samples):
 
 [Machine, method, profiles and full results](doc/benchmarks.md).
 
-Same slog events through masq v0.2.3: 22–78% less time and fewer allocations on all five events. [Comparison](doc/comparison.md) · [benchstat](doc/comparison.benchstat.txt)
+Same slog events through masq v0.2.3: 31–78% less time and fewer allocations on all five events. [Comparison](doc/comparison.md) · [benchstat](doc/comparison.benchstat.txt)
 
 ## Contributing
 
