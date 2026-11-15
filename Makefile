@@ -49,3 +49,6 @@ fuzz: ## Smoke test every root fuzz target
 	go test -run '^$$' -fuzz '^FuzzScanLines$$' -fuzztime=10s .
 	go test -run '^$$' -fuzz '^FuzzMask$$' -fuzztime=10s .
 	go test -run '^$$' -fuzz '^FuzzInput$$' -fuzztime=10s .
+
+	go test -run '^$$' -fuzz '^FuzzCanary$$' -fuzztime=10s ./embargotest
+	go test -run '^$$' -fuzz '^FuzzJSONStream$$' -fuzztime=10s ./embargotest

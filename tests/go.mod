@@ -6,6 +6,7 @@ replace github.com/nao1215/embargo => ../
 
 require (
 	github.com/nao1215/embargo v0.2.1
+	go.uber.org/goleak v1.3.0
 	golang.org/x/crypto v0.59.0
 	golang.org/x/tools v0.52.0
 	pgregory.net/rapid v1.3.0

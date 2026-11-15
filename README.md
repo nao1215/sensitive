@@ -86,6 +86,45 @@ if _, err := fmt.Println(key); err != nil {
 // Output: [REDACTED]
 ```
 
+## Check test output
+
+Use embargotest to capture a writer, an HTTP response, or a test child process. Check requires output and a content expectation, then checks every capture for a known fake secret and detector findings. Narrow the scanner or allow exact fixture values when needed; canary checks remain active.
+
+<!-- example: embargotest/example_integration_test.go:ExampleNew -->
+```go
+package main
+
+import (
+ "fmt"
+ "log/slog"
+ "testing"
+
+ "github.com/nao1215/embargo"
+ "github.com/nao1215/embargo/embargotest"
+)
+
+func main() {
+	passed := false
+	testing.Benchmark(func(b *testing.B) {
+		b.Helper()
+		recorder := embargotest.New(b)
+		logger := slog.New(slog.NewJSONHandler(recorder.Writer("logs"), nil))
+		logger.Info("accepted", "key", embargo.NewSecret(recorder.Canary()))
+		//nolint:goconst // Self-contained examples show the actual display contract.
+		recorder.ExpectJSON("logs", nil, map[string]string{"key": "[REDACTED]"}, 1)
+		passed = recorder.Check()
+	})
+
+	if _, err := fmt.Println(passed); err != nil {
+		panic(err)
+	}
+
+	// Output: true
+}
+```
+
+In application tests pass `t` to `embargotest.New`; this standalone example uses a test benchmark to obtain a testing handle.
+
 ## Testing
 
 The library has zero dependencies; test-only tools live in the separate [tests/](tests/) module (Go 1.26.11+). Run `go test ./...` in both directories; this executes the Go examples and checks README snippets against them. See [testing](doc/testing.md) for lint, vet, fuzzing, golden updates, coverage, and mutation checks.

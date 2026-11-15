@@ -1,0 +1,15 @@
+func New(tb testing.TB, opts ...Option) *Recorder
+func WithAllowedKinds(kinds ...embargo.Kind) Option
+func WithAllowedValues(values ...string) Option
+func WithCanary(canary []byte) Option
+func WithLimits(maxBytes int64, timeout time.Duration) Option
+func WithScanner(scanner *embargo.Scanner) Option
+methodset *Recorder func (*Recorder).Canary() []byte
+methodset *Recorder func (*Recorder).Check() bool
+methodset *Recorder func (*Recorder).Expect(name string, validate func([]byte) bool)
+methodset *Recorder func (*Recorder).ExpectJSON(name string, path []string, fields map[string]string, count int)
+methodset *Recorder func (*Recorder).HTTP(name string) http.ResponseWriter
+methodset *Recorder func (*Recorder).Run(ctx context.Context, helper string, wantExit int) error
+methodset *Recorder func (*Recorder).Writer(name string) io.Writer
+type Option interface (sealed)
+type Recorder struct
