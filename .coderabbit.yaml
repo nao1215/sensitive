@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+reviews:
+  # Review the generators, assertions and summaries instead of their bulk output.
+  # CI checks the generated corpus and figures against the source data.
+  path_filters:
+    - "!tests/testdata/accuracy_generated.jsonl"
+    - "!tests/testdata/accuracy_generated_controls.jsonl"
+    - "!doc/benchmarks.raw.txt"
+    - "!doc/performance/*.txt"
