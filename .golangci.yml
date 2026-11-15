@@ -94,7 +94,9 @@ linters:
           - '!$test'
           - '!**/embargotest/**'
           - '!**/tests/**'
-          - '!**/adapters/**'
+          - '!**/adapters/zap/**'
+          - '!**/adapters/zerolog/**'
+          - '!**/adapters/logrus/**'
           - '!**/internal/output/**'
           allow:
           - $gostd
@@ -139,7 +141,9 @@ linters:
           files:
           - $test
           - '!**/tests/**'
-          - '!**/adapters/**'
+          - '!**/adapters/zap/**'
+          - '!**/adapters/zerolog/**'
+          - '!**/adapters/logrus/**'
           allow:
           - $gostd
           - github.com/nao1215/embargo$
@@ -148,7 +152,9 @@ linters:
         logger-adapters:
           list-mode: strict
           files:
-          - '**/adapters/**/*.go'
+          - '**/adapters/zap/*.go'
+          - '**/adapters/zerolog/*.go'
+          - '**/adapters/logrus/*.go'
           allow:
           - $gostd
           - github.com/nao1215/embargo$
