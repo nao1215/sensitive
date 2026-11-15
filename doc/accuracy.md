@@ -12,6 +12,8 @@ A hit requires an unused expected range with the same detector kind and exact or
 
 Each detector runs alone at the default confidence threshold. URL-encoded positives remain labeled sensitive even where the scanner cannot decode them. This deliberately exposes misses instead of redefining the expected answer.
 
+The samples cover only the listed format variants. They do not establish account existence, credential validity or behavior on other encodings.
+
 [Scoring tests](../tests/accuracy_test.go) cover partial, wrong-kind and duplicate matches. [Regression tests](../tests/accuracy_regression_test.go) reject new mismatches and obsolete exceptions. The reviewed [limit list](../tests/testdata/accuracy_limits.jsonl) records each mismatch and its reason; the first expanded run failed before those limits were documented.
 
 ## Results
@@ -50,7 +52,7 @@ Each detector runs alone at the default confidence threshold. URL-encoded positi
 
 Verified by the [aba_routing format tests](../internal/detect/aba_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Independently generated routing checksums, line endings and checksum failures.
 
-No misses or false alarms appeared in these samples. The covered format variants are limited; the chart does not establish account existence, credential validity or behavior on other encodings.
+No misses or false alarms appeared in these samples.
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -60,7 +62,7 @@ No misses or false alarms appeared in these samples. The covered format variants
 
 Verified by the [ach_trace format tests](../internal/detect/ach_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Contextual fifteen-digit traces, line endings and short traces as negatives.
 
-No misses or false alarms appeared in these samples. The covered format variants are limited; the chart does not establish account existence, credential validity or behavior on other encodings.
+No misses or false alarms appeared in these samples.
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -70,7 +72,7 @@ No misses or false alarms appeared in these samples. The covered format variants
 
 Verified by the [awskey format tests](../internal/detect/awskey_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). AKIA and ASIA prefixes in log, JSON and Japanese text; short tokens as negatives.
 
-No misses or false alarms appeared in these samples. The covered format variants are limited; the chart does not establish account existence, credential validity or behavior on other encodings.
+No misses or false alarms appeared in these samples.
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -82,7 +84,7 @@ Verified by the [bank_account format tests](../internal/detect/bank_account_test
 
 | Observed limit | Input example | Why it remains |
 |---|---|---|
-| `bank_account/positive/0/url` | `https://example.invalid/?value=bank%20ac…ult=accepted` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
+| `bank_account/positive/0/url` | `value=bank%20account%2018393904` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -92,7 +94,7 @@ Verified by the [bank_account format tests](../internal/detect/bank_account_test
 
 Verified by the [btc format tests](../internal/detect/btc_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Independently generated Base58Check P2PKH addresses and invalid checksum look-alikes.
 
-No misses or false alarms appeared in these samples. The covered format variants are limited; the chart does not establish account existence, credential validity or behavior on other encodings.
+No misses or false alarms appeared in these samples.
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -104,7 +106,7 @@ Verified by the [card_expiry format tests](../internal/detect/card_expiry_test.g
 
 | Observed limit | Input example | Why it remains |
 |---|---|---|
-| `card_expiry/positive/0/url` | `https://example.invalid/?value=expiry%2001%2F28&result=accepted` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
+| `card_expiry/positive/0/url` | `value=expiry%2001%2F28` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -114,7 +116,7 @@ Verified by the [card_expiry format tests](../internal/detect/card_expiry_test.g
 
 Verified by the [cvv format tests](../internal/detect/cvv_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Three-digit values near CVV context in log, JSON and Japanese text; two-digit values as negatives.
 
-No misses or false alarms appeared in these samples. The covered format variants are limited; the chart does not establish account existence, credential validity or behavior on other encodings.
+No misses or false alarms appeared in these samples.
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -126,7 +128,7 @@ Verified by the [email format tests](../internal/detect/email_test.go) and the [
 
 | Observed limit | Input example | Why it remains |
 |---|---|---|
-| `email/positive/0/url` | `https://example.invalid/?value=user.0%2B…ult=accepted` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
+| `email/positive/0/url` | `value=user.0%2Bfixture@example.com` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -136,7 +138,7 @@ Verified by the [email format tests](../internal/detect/email_test.go) and the [
 
 Verified by the [eth format tests](../internal/detect/eth_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Lowercase hexadecimal addresses and malformed non-hexadecimal look-alikes.
 
-No misses or false alarms appeared in these samples. The covered format variants are limited; the chart does not establish account existence, credential validity or behavior on other encodings.
+No misses or false alarms appeared in these samples.
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -146,7 +148,7 @@ No misses or false alarms appeared in these samples. The covered format variants
 
 Verified by the [github_token format tests](../internal/detect/github_token_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Four classic token prefixes in log, JSON and Japanese text; short tokens as negatives.
 
-No misses or false alarms appeared in these samples. The covered format variants are limited; the chart does not establish account existence, credential validity or behavior on other encodings.
+No misses or false alarms appeared in these samples.
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -156,7 +158,7 @@ No misses or false alarms appeared in these samples. The covered format variants
 
 Verified by the [google_api_key format tests](../internal/detect/google_apikey_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). AIza-prefixed keys in log, JSON and Japanese text; short bodies as negatives.
 
-No misses or false alarms appeared in these samples. The covered format variants are limited; the chart does not establish account existence, credential validity or behavior on other encodings.
+No misses or false alarms appeared in these samples.
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -166,7 +168,7 @@ No misses or false alarms appeared in these samples. The covered format variants
 
 Verified by the [iban format tests](../internal/detect/iban_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Independently generated German MOD 97 check digits and surrounding JSON or log text.
 
-No misses or false alarms appeared in these samples. The covered format variants are limited; the chart does not establish account existence, credential validity or behavior on other encodings.
+No misses or false alarms appeared in these samples.
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -176,7 +178,7 @@ No misses or false alarms appeared in these samples. The covered format variants
 
 Verified by the [ipaddr format tests](../internal/detect/ipaddr_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Documentation-range IPv4 and IPv6 addresses, Japanese boundaries and invalid octets.
 
-No misses or false alarms appeared in these samples. The covered format variants are limited; the chart does not establish account existence, credential validity or behavior on other encodings.
+No misses or false alarms appeared in these samples.
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -186,7 +188,7 @@ No misses or false alarms appeared in these samples. The covered format variants
 
 Verified by the [jwt format tests](../internal/detect/jwt_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Base64url header, payload and signature fields; malformed payload look-alikes.
 
-No misses or false alarms appeared in these samples. The covered format variants are limited; the chart does not establish account existence, credential validity or behavior on other encodings.
+No misses or false alarms appeared in these samples.
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -198,7 +200,7 @@ Verified by the [merchant_id format tests](../internal/detect/merchant_id_test.g
 
 | Observed limit | Input example | Why it remains |
 |---|---|---|
-| `merchant_id/positive/0/url` | `https://example.invalid/?value=merchant%…ult=accepted` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
+| `merchant_id/positive/0/url` | `value=merchant%20ID%20ZNFBVPHU2BHHFXP` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -211,7 +213,7 @@ Verified by the [mynumber format tests](../internal/detect/mynumber_test.go) and
 | Observed limit | Input example | Why it remains |
 |---|---|---|
 | `mynumber/control/invoice/0` | `Invoice: 100042543904` | Numeric shapes do not establish intent: synthetic order/invoice identifiers can satisfy financial or identity formats; no business-context classifier is implemented. |
-| `mynumber/positive/11/url` | `https://example.invalid/?value=%EF%BC%94…ult=accepted` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
+| `mynumber/positive/11/url` | `value=%EF%BC%94%EF%BC%91%EF%BC%92%EF%BC%…%98%EF%BC%91` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -225,7 +227,7 @@ Verified by the [pan format tests](../internal/detect/pan_test.go) and the [corp
 |---|---|---|
 | `pan/control/order/0` | `Order ID: 4763270889822167` | Numeric shapes do not establish intent: synthetic order/invoice identifiers can satisfy financial or identity formats; no business-context classifier is implemented. |
 | `pan/negative/0/japanese` | `処理結果【card-like 4033438821713084】を記録しました` | PAN deliberately returns BIN/length candidates with a failing Luhn checksum at lower confidence; default confidence accepts them. |
-| `pan/positive/11/url` | `https://example.invalid/?value=%EF%BC%93…ult=accepted` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
+| `pan/positive/11/url` | `value=%EF%BC%93%EF%BC%95%EF%BC%92%EF%BC%…%98%EF%BC%95` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -235,7 +237,7 @@ Verified by the [pan format tests](../internal/detect/pan_test.go) and the [corp
 
 Verified by the [payment_token format tests](../internal/detect/payment_token_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Five payment-token prefixes in log, JSON and Japanese text; short bodies as negatives.
 
-No misses or false alarms appeared in these samples. The covered format variants are limited; the chart does not establish account existence, credential validity or behavior on other encodings.
+No misses or false alarms appeared in these samples.
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -248,7 +250,7 @@ Verified by the [phone_jp format tests](../internal/detect/phone_jp_test.go) and
 | Observed limit | Input example | Why it remains |
 |---|---|---|
 | `phone_jp/control/phone-shaped serial/0` | `Serial: 090-1000-2000` | A serial number with a valid Japanese mobile-number shape is indistinguishable from a phone number without application context. This format detector does not infer the business meaning of a serial field. |
-| `phone_jp/positive/11/url` | `https://example.invalid/?value=%EF%BC%90…ult=accepted` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
+| `phone_jp/positive/11/url` | `value=%EF%BC%90%EF%BC%99%EF%BC%90%EF%BC%…%92%EF%BC%90` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -260,7 +262,7 @@ Verified by the [private_key_pem format tests](../internal/detect/private_key_pe
 
 | Observed limit | Input example | Why it remains |
 |---|---|---|
-| `private_key_pem/positive/0/url` | `https://example.invalid/?value=-----BEGI…ult=accepted` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
+| `private_key_pem/positive/0/url` | `value=-----BEGIN%20RSA%20PRIVATE%20KEY-----` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -270,7 +272,7 @@ Verified by the [private_key_pem format tests](../internal/detect/private_key_pe
 
 Verified by the [slack_token format tests](../internal/detect/slack_token_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Multi-part xoxb shapes in log, JSON and Japanese text; an unsupported type letter as a negative.
 
-No misses or false alarms appeared in these samples. The covered format variants are limited; the chart does not establish account existence, credential validity or behavior on other encodings.
+No misses or false alarms appeared in these samples.
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 
@@ -294,7 +296,7 @@ Verified by the [uk_sortcode format tests](../internal/detect/sortcode_test.go) 
 
 | Observed limit | Input example | Why it remains |
 |---|---|---|
-| `uk_sortcode/positive/11/url` | `https://example.invalid/?value=sort%20co…ult=accepted` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
+| `uk_sortcode/positive/11/url` | `value=sort%20code%3A%2012-05-46` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
 

@@ -10,126 +10,124 @@
 <text x="548" y="86" font-size="15" fill="#172033" text-anchor="start">Sensitive text</text>
 <text x="815" y="86" font-size="14" fill="#172033" text-anchor="middle">Clean / sensitive</text>
 <path d="M205.0,99 L205.0,699" stroke="#e1e5ec"/>
-<text x="205.0" y="719" font-size="12" fill="#172033" text-anchor="middle">0.1</text>
-<path d="M283.3333333333333,99 L283.3333333333333,699" stroke="#e1e5ec"/>
-<text x="283.33" y="719" font-size="12" fill="#172033" text-anchor="middle">1</text>
-<path d="M361.66666666666663,99 L361.66666666666663,699" stroke="#e1e5ec"/>
-<text x="361.67" y="719" font-size="12" fill="#172033" text-anchor="middle">10</text>
-<path d="M440.0,99 L440.0,699" stroke="#e1e5ec"/>
-<text x="440.0" y="719" font-size="12" fill="#172033" text-anchor="middle">100</text>
-<path d="M518.3333333333333,99 L518.3333333333333,699" stroke="#e1e5ec"/>
-<text x="518.33" y="719" font-size="12" fill="#172033" text-anchor="middle">1000</text>
-<path d="M596.6666666666667,99 L596.6666666666667,699" stroke="#e1e5ec"/>
-<text x="596.67" y="719" font-size="12" fill="#172033" text-anchor="middle">10000</text>
+<text x="205.0" y="719" font-size="12" fill="#172033" text-anchor="middle">1</text>
+<path d="M299.0,99 L299.0,699" stroke="#e1e5ec"/>
+<text x="299.0" y="719" font-size="12" fill="#172033" text-anchor="middle">10</text>
+<path d="M393.0,99 L393.0,699" stroke="#e1e5ec"/>
+<text x="393.0" y="719" font-size="12" fill="#172033" text-anchor="middle">100</text>
+<path d="M487.0,99 L487.0,699" stroke="#e1e5ec"/>
+<text x="487.0" y="719" font-size="12" fill="#172033" text-anchor="middle">1000</text>
+<path d="M581.0,99 L581.0,699" stroke="#e1e5ec"/>
+<text x="581.0" y="719" font-size="12" fill="#172033" text-anchor="middle">10000</text>
 <path d="M675.0,99 L675.0,699" stroke="#e1e5ec"/>
 <text x="675.0" y="719" font-size="12" fill="#172033" text-anchor="middle">100000</text>
 <text x="24" y="117" font-size="15" fill="#172033" text-anchor="start">aba_routing</text>
-<circle cx="494.48" cy="110" r="4" fill="#1877b8"/>
-<circle cx="404.70" cy="115" r="4" fill="#b34b19"/>
-<text x="920" y="117" font-size="14" fill="#172033" text-anchor="end">496.03 / 35.43</text>
+<circle cx="435.68" cy="110" r="4" fill="#1877b8"/>
+<circle cx="361.54" cy="115" r="4" fill="#b34b19"/>
+<text x="920" y="117" font-size="14" fill="#172033" text-anchor="end">284.44 / 46.27</text>
 <text x="24" y="142" font-size="15" fill="#172033" text-anchor="start">ach_trace</text>
-<circle cx="515.80" cy="135" r="4" fill="#1877b8"/>
-<circle cx="358.53" cy="140" r="4" fill="#b34b19"/>
-<text x="920" y="142" font-size="14" fill="#172033" text-anchor="end">928.27 / 9.12</text>
+<circle cx="468.60" cy="135" r="4" fill="#1877b8"/>
+<circle cx="270.95" cy="140" r="4" fill="#b34b19"/>
+<text x="920" y="142" font-size="14" fill="#172033" text-anchor="end">637.14 / 5.03</text>
 <text x="24" y="167" font-size="15" fill="#172033" text-anchor="start">all</text>
-<circle cx="397.70" cy="160" r="4" fill="#1877b8"/>
-<circle cx="333.66" cy="165" r="4" fill="#b34b19"/>
-<text x="920" y="167" font-size="14" fill="#172033" text-anchor="end">28.84 / 4.39</text>
+<circle cx="369.64" cy="160" r="4" fill="#1877b8"/>
+<circle cx="298.55" cy="165" r="4" fill="#b34b19"/>
+<text x="920" y="167" font-size="14" fill="#172033" text-anchor="end">56.43 / 9.89</text>
 <text x="24" y="192" font-size="15" fill="#172033" text-anchor="start">awskey</text>
-<circle cx="521.16" cy="185" r="4" fill="#1877b8"/>
-<circle cx="458.09" cy="190" r="4" fill="#b34b19"/>
-<text x="920" y="192" font-size="14" fill="#172033" text-anchor="end">1,086.78 / 170.21</text>
+<circle cx="476.42" cy="185" r="4" fill="#1877b8"/>
+<circle cx="417.09" cy="190" r="4" fill="#b34b19"/>
+<text x="920" y="192" font-size="14" fill="#172033" text-anchor="end">771.68 / 180.42</text>
 <text x="24" y="217" font-size="15" fill="#172033" text-anchor="start">bank_account</text>
-<circle cx="522.12" cy="210" r="4" fill="#1877b8"/>
-<circle cx="364.66" cy="215" r="4" fill="#b34b19"/>
-<text x="920" y="217" font-size="14" fill="#172033" text-anchor="end">1,117.73 / 10.92</text>
+<circle cx="461.82" cy="210" r="4" fill="#1877b8"/>
+<circle cx="294.15" cy="215" r="4" fill="#b34b19"/>
+<text x="920" y="217" font-size="14" fill="#172033" text-anchor="end">539.67 / 8.88</text>
 <text x="24" y="242" font-size="15" fill="#172033" text-anchor="start">btc</text>
-<circle cx="529.30" cy="235" r="4" fill="#1877b8"/>
-<circle cx="436.65" cy="240" r="4" fill="#b34b19"/>
-<text x="920" y="242" font-size="14" fill="#172033" text-anchor="end">1,380.38 / 90.61</text>
+<circle cx="501.03" cy="235" r="4" fill="#1877b8"/>
+<circle cx="385.51" cy="240" r="4" fill="#b34b19"/>
+<text x="920" y="242" font-size="14" fill="#172033" text-anchor="end">1,410.22 / 83.24</text>
 <text x="24" y="267" font-size="15" fill="#172033" text-anchor="start">card_expiry</text>
-<circle cx="527.58" cy="260" r="4" fill="#1877b8"/>
-<circle cx="273.09" cy="265" r="4" fill="#b34b19"/>
-<text x="920" y="267" font-size="14" fill="#172033" text-anchor="end">1,312.22 / 0.74</text>
+<circle cx="514.03" cy="260" r="4" fill="#1877b8"/>
+<circle cx="278.49" cy="265" r="4" fill="#b34b19"/>
+<text x="920" y="267" font-size="14" fill="#172033" text-anchor="end">1,939.09 / 6.05</text>
 <text x="24" y="292" font-size="15" fill="#172033" text-anchor="start">cvv</text>
-<circle cx="496.12" cy="285" r="4" fill="#1877b8"/>
-<circle cx="339.35" cy="290" r="4" fill="#b34b19"/>
-<text x="920" y="292" font-size="14" fill="#172033" text-anchor="end">520.48 / 5.19</text>
+<circle cx="471.62" cy="285" r="4" fill="#1877b8"/>
+<circle cx="280.14" cy="290" r="4" fill="#b34b19"/>
+<text x="920" y="292" font-size="14" fill="#172033" text-anchor="end">686.09 / 6.30</text>
 <text x="24" y="317" font-size="15" fill="#172033" text-anchor="start">email</text>
-<circle cx="663.33" cy="310" r="4" fill="#1877b8"/>
-<circle cx="425.21" cy="315" r="4" fill="#b34b19"/>
-<text x="920" y="317" font-size="14" fill="#172033" text-anchor="end">70,963.90 / 64.75</text>
+<circle cx="642.75" cy="310" r="4" fill="#1877b8"/>
+<circle cx="372.35" cy="315" r="4" fill="#b34b19"/>
+<text x="920" y="317" font-size="14" fill="#172033" text-anchor="end">45,384.28 / 60.30</text>
 <text x="24" y="342" font-size="15" fill="#172033" text-anchor="start">eth</text>
-<circle cx="518.93" cy="335" r="4" fill="#1877b8"/>
-<circle cx="458.17" cy="340" r="4" fill="#b34b19"/>
-<text x="920" y="342" font-size="14" fill="#172033" text-anchor="end">1,017.77 / 170.58</text>
+<circle cx="498.61" cy="335" r="4" fill="#1877b8"/>
+<circle cx="407.42" cy="340" r="4" fill="#b34b19"/>
+<text x="920" y="342" font-size="14" fill="#172033" text-anchor="end">1,328.89 / 142.38</text>
 <text x="24" y="367" font-size="15" fill="#172033" text-anchor="start">github_token</text>
-<circle cx="536.37" cy="360" r="4" fill="#1877b8"/>
-<circle cx="470.70" cy="365" r="4" fill="#b34b19"/>
-<text x="920" y="367" font-size="14" fill="#172033" text-anchor="end">1,699.29 / 246.58</text>
+<circle cx="493.90" cy="360" r="4" fill="#1877b8"/>
+<circle cx="404.19" cy="365" r="4" fill="#b34b19"/>
+<text x="920" y="367" font-size="14" fill="#172033" text-anchor="end">1,184.25 / 131.53</text>
 <text x="24" y="392" font-size="15" fill="#172033" text-anchor="start">google_api_key</text>
-<circle cx="538.77" cy="385" r="4" fill="#1877b8"/>
-<circle cx="481.12" cy="390" r="4" fill="#b34b19"/>
-<text x="920" y="392" font-size="14" fill="#172033" text-anchor="end">1,823.65 / 334.91</text>
+<circle cx="485.30" cy="385" r="4" fill="#1877b8"/>
+<circle cx="417.89" cy="390" r="4" fill="#b34b19"/>
+<text x="920" y="392" font-size="14" fill="#172033" text-anchor="end">959.13 / 183.99</text>
 <text x="24" y="417" font-size="15" fill="#172033" text-anchor="start">iban</text>
-<circle cx="531.24" cy="410" r="4" fill="#1877b8"/>
-<circle cx="439.35" cy="415" r="4" fill="#b34b19"/>
-<text x="920" y="417" font-size="14" fill="#172033" text-anchor="end">1,461.30 / 98.12</text>
+<circle cx="478.38" cy="410" r="4" fill="#1877b8"/>
+<circle cx="367.68" cy="415" r="4" fill="#b34b19"/>
+<text x="920" y="417" font-size="14" fill="#172033" text-anchor="end">809.72 / 53.78</text>
 <text x="24" y="442" font-size="15" fill="#172033" text-anchor="start">ipaddr</text>
-<circle cx="649.48" cy="435" r="4" fill="#1877b8"/>
-<circle cx="413.46" cy="440" r="4" fill="#b34b19"/>
-<text x="920" y="442" font-size="14" fill="#172033" text-anchor="end">47,223.18 / 45.84</text>
+<circle cx="620.42" cy="435" r="4" fill="#1877b8"/>
+<circle cx="385.62" cy="440" r="4" fill="#b34b19"/>
+<text x="920" y="442" font-size="14" fill="#172033" text-anchor="end">26,264.08 / 83.46</text>
 <text x="24" y="467" font-size="15" fill="#172033" text-anchor="start">jwt</text>
-<circle cx="522.60" cy="460" r="4" fill="#1877b8"/>
-<circle cx="398.13" cy="465" r="4" fill="#b34b19"/>
-<text x="920" y="467" font-size="14" fill="#172033" text-anchor="end">1,133.57 / 29.21</text>
+<circle cx="519.92" cy="460" r="4" fill="#1877b8"/>
+<circle cx="365.84" cy="465" r="4" fill="#b34b19"/>
+<text x="920" y="467" font-size="14" fill="#172033" text-anchor="end">2,240.06 / 51.41</text>
 <text x="24" y="492" font-size="15" fill="#172033" text-anchor="start">merchant_id</text>
-<circle cx="481.68" cy="485" r="4" fill="#1877b8"/>
-<circle cx="370.62" cy="490" r="4" fill="#b34b19"/>
-<text x="920" y="492" font-size="14" fill="#172033" text-anchor="end">340.50 / 13.01</text>
+<circle cx="466.95" cy="485" r="4" fill="#1877b8"/>
+<circle cx="329.29" cy="490" r="4" fill="#b34b19"/>
+<text x="920" y="492" font-size="14" fill="#172033" text-anchor="end">611.90 / 21.00</text>
 <text x="24" y="517" font-size="15" fill="#172033" text-anchor="start">mynumber</text>
-<circle cx="471.42" cy="510" r="4" fill="#1877b8"/>
-<circle cx="417.52" cy="515" r="4" fill="#b34b19"/>
-<text x="920" y="517" font-size="14" fill="#172033" text-anchor="end">251.85 / 51.64</text>
+<circle cx="453.60" cy="510" r="4" fill="#1877b8"/>
+<circle cx="387.04" cy="515" r="4" fill="#b34b19"/>
+<text x="920" y="517" font-size="14" fill="#172033" text-anchor="end">441.20 / 86.41</text>
 <text x="24" y="542" font-size="15" fill="#172033" text-anchor="start">pan</text>
-<circle cx="573.26" cy="535" r="4" fill="#1877b8"/>
-<circle cx="411.14" cy="540" r="4" fill="#b34b19"/>
-<text x="920" y="542" font-size="14" fill="#172033" text-anchor="end">5,025.22 / 42.81</text>
+<circle cx="556.64" cy="535" r="4" fill="#1877b8"/>
+<circle cx="358.54" cy="540" r="4" fill="#b34b19"/>
+<text x="920" y="542" font-size="14" fill="#172033" text-anchor="end">5,506.73 / 42.99</text>
 <text x="24" y="567" font-size="15" fill="#172033" text-anchor="start">payment_token</text>
-<circle cx="452.09" cy="560" r="4" fill="#1877b8"/>
-<circle cx="449.60" cy="565" r="4" fill="#b34b19"/>
-<text x="920" y="567" font-size="14" fill="#172033" text-anchor="end">142.66 / 132.59</text>
+<circle cx="407.33" cy="560" r="4" fill="#1877b8"/>
+<circle cx="404.88" cy="565" r="4" fill="#b34b19"/>
+<text x="920" y="567" font-size="14" fill="#172033" text-anchor="end">142.05 / 133.78</text>
 <text x="24" y="592" font-size="15" fill="#172033" text-anchor="start">phone_jp</text>
-<circle cx="628.20" cy="585" r="4" fill="#1877b8"/>
-<circle cx="411.85" cy="590" r="4" fill="#b34b19"/>
-<text x="920" y="592" font-size="14" fill="#172033" text-anchor="end">25,268.77 / 43.71</text>
+<circle cx="618.32" cy="585" r="4" fill="#1877b8"/>
+<circle cx="358.80" cy="590" r="4" fill="#b34b19"/>
+<text x="920" y="592" font-size="14" fill="#172033" text-anchor="end">24,948.09 / 43.27</text>
 <text x="24" y="617" font-size="15" fill="#172033" text-anchor="start">private_key_pem</text>
-<circle cx="510.40" cy="610" r="4" fill="#1877b8"/>
-<circle cx="445.07" cy="615" r="4" fill="#b34b19"/>
-<text x="920" y="617" font-size="14" fill="#172033" text-anchor="end">791.94 / 116.08</text>
+<circle cx="502.67" cy="610" r="4" fill="#1877b8"/>
+<circle cx="395.84" cy="615" r="4" fill="#b34b19"/>
+<text x="920" y="617" font-size="14" fill="#172033" text-anchor="end">1,467.90 / 107.20</text>
 <text x="24" y="642" font-size="15" fill="#172033" text-anchor="start">slack_token</text>
-<circle cx="523.71" cy="635" r="4" fill="#1877b8"/>
-<circle cx="430.73" cy="640" r="4" fill="#b34b19"/>
-<text x="920" y="642" font-size="14" fill="#172033" text-anchor="end">1,171.15 / 76.15</text>
+<circle cx="513.10" cy="635" r="4" fill="#1877b8"/>
+<circle cx="392.10" cy="640" r="4" fill="#b34b19"/>
+<text x="920" y="642" font-size="14" fill="#172033" text-anchor="end">1,895.25 / 97.82</text>
 <text x="24" y="667" font-size="15" fill="#172033" text-anchor="start">swiftbic</text>
-<circle cx="460.39" cy="660" r="4" fill="#1877b8"/>
-<circle cx="404.83" cy="665" r="4" fill="#b34b19"/>
-<text x="920" y="667" font-size="14" fill="#172033" text-anchor="end">182.09 / 35.57</text>
+<circle cx="435.72" cy="660" r="4" fill="#1877b8"/>
+<circle cx="371.83" cy="665" r="4" fill="#b34b19"/>
+<text x="920" y="667" font-size="14" fill="#172033" text-anchor="end">284.77 / 59.54</text>
 <text x="24" y="692" font-size="15" fill="#172033" text-anchor="start">uk_sortcode</text>
-<circle cx="483.41" cy="685" r="4" fill="#1877b8"/>
-<circle cx="412.90" cy="690" r="4" fill="#b34b19"/>
-<text x="920" y="692" font-size="14" fill="#172033" text-anchor="end">358.23 / 45.08</text>
+<circle cx="470.90" cy="685" r="4" fill="#1877b8"/>
+<circle cx="384.94" cy="690" r="4" fill="#b34b19"/>
+<text x="920" y="692" font-size="14" fill="#172033" text-anchor="end">674.09 / 82.08</text>
 <text x="24" y="755" font-size="21" fill="#172033" text-anchor="start">slog · µs per event · lower is faster</text>
 <text x="24" y="790" font-size="14" fill="#172033" text-anchor="start">Plain · clean</text>
-<rect x="205" y="777" width="66.93" height="15" rx="2" fill="#1877b8"/>
-<text x="700" y="790" font-size="14" fill="#172033" text-anchor="start">0.82 µs</text>
+<rect x="205" y="777" width="40.49" height="15" rx="2" fill="#1877b8"/>
+<text x="700" y="790" font-size="14" fill="#172033" text-anchor="start">0.50 µs</text>
 <text x="24" y="813" font-size="14" fill="#172033" text-anchor="start">Masked · clean</text>
-<rect x="205" y="800" width="405.64" height="15" rx="2" fill="#b34b19"/>
-<text x="700" y="813" font-size="14" fill="#172033" text-anchor="start">4.95 µs</text>
+<rect x="205" y="800" width="317.41" height="15" rx="2" fill="#b34b19"/>
+<text x="700" y="813" font-size="14" fill="#172033" text-anchor="start">3.89 µs</text>
 <text x="24" y="836" font-size="14" fill="#172033" text-anchor="start">Plain · sensitive</text>
-<rect x="205" y="823" width="66.16" height="15" rx="2" fill="#1877b8"/>
-<text x="700" y="836" font-size="14" fill="#172033" text-anchor="start">0.81 µs</text>
+<rect x="205" y="823" width="50.73" height="15" rx="2" fill="#1877b8"/>
+<text x="700" y="836" font-size="14" fill="#172033" text-anchor="start">0.62 µs</text>
 <text x="24" y="859" font-size="14" fill="#172033" text-anchor="start">Masked · sensitive</text>
 <rect x="205" y="846" width="470.00" height="15" rx="2" fill="#b34b19"/>
-<text x="700" y="859" font-size="14" fill="#172033" text-anchor="start">5.74 µs</text>
+<text x="700" y="859" font-size="14" fill="#172033" text-anchor="start">5.76 µs</text>
 </g></svg>

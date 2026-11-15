@@ -16,7 +16,7 @@ go get github.com/nao1215/embargo@main
 |---|---|
 | [gitleaks](https://github.com/gitleaks/gitleaks) | Scan Git history, directories or stdin for secrets. |
 | [trufflehog](https://github.com/trufflesecurity/trufflehog) | Scan repositories, files and other configured sources. |
-| [Presidio](https://microsoft.github.io/presidio/) | Detect and anonymize personal data with Python analyzers and services. |
+| [Presidio](https://presidio.dataprivacystack.org/) | Detect and anonymize personal data with Python analyzers and services. |
 | Secret wrappers | Hide values explicitly wrapped by the application; wrapping does not discover sensitive text. |
 | embargo | Scan and mask text inside a Go program, then observe real output in tests. |
 

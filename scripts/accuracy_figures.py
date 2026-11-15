@@ -66,6 +66,8 @@ HARD_CASES = {
 
 def excerpt(value):
     # Keep public documentation free of complete generated credential-shaped tokens.
+    if '?value=' in value:
+        value = 'value=' + value.split('?value=', 1)[1].split('&result=', 1)[0]
     value = value.replace('\n',' ↵ ').replace('|','&#124;').replace('`','&#96;')
     return value if len(value) <= 65 else value[:40]+'…'+value[-12:]
 
@@ -86,6 +88,7 @@ def page(rows):
            'Surroundings include logs, JSON, URLs, line endings and Japanese text, with full-width digits and separators for supported numeric families. Negative controls include UUIDs, Git SHAs, hashes, timestamps, order/invoice identifiers, base64 without a JWT header, versions and phone-shaped serial numbers. Detector-specific negatives include bad checksums, invalid prefixes, short credentials and invalid months.', '',
            'A hit requires an unused expected range with the same detector kind and exact original byte positions. Partial, duplicate and extra matches are false positives; an unmatched expected range is a false negative. Precision is TP/(TP+FP), and recall is TP/(TP+FN).', '',
            'Each detector runs alone at the default confidence threshold. URL-encoded positives remain labeled sensitive even where the scanner cannot decode them. This deliberately exposes misses instead of redefining the expected answer.', '',
+           'The samples cover only the listed format variants. They do not establish account existence, credential validity or behavior on other encodings.', '',
            '[Scoring tests](../tests/accuracy_test.go) cover partial, wrong-kind and duplicate matches. [Regression tests](../tests/accuracy_regression_test.go) reject new mismatches and obsolete exceptions. The reviewed [limit list](../tests/testdata/accuracy_limits.jsonl) records each mismatch and its reason; the first expanded run failed before those limits were documented.', '',
            '## Results', '',
            '![Precision and recall on synthetic samples](images/accuracy.svg)', '',
@@ -107,7 +110,7 @@ def page(rows):
             if key in seen: continue
             seen.add(key);selected.append((limit,sample))
         if not selected:
-            out += ['No misses or false alarms appeared in these samples. The covered format variants are limited; the chart does not establish account existence, credential validity or behavior on other encodings.']
+            out += ['No misses or false alarms appeared in these samples.']
         else:
             out += ['| Observed limit | Input example | Why it remains |','|---|---|---|']
             for limit,sample in selected:

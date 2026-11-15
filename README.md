@@ -20,7 +20,6 @@ embargo detects and masks sensitive text in Go programs, logs and test output.
 
 ## Quick start
 
-
 These examples use the unreleased API on main (Go 1.26.11 or later).
 
 ```sh
@@ -51,7 +50,7 @@ func main() {
 
 ## Why embargo?
 
-[gitleaks](https://github.com/gitleaks/gitleaks) and [trufflehog](https://github.com/trufflesecurity/trufflehog) scan repositories and files; [Presidio](https://microsoft.github.io/presidio/) provides Python analyzers. Secret wrappers hide values you mark but do not detect sensitive text. embargo runs inside Go: it masks logs through slog, hides Secret values, and checks actual test output with canaries and detectors.
+[gitleaks](https://github.com/gitleaks/gitleaks) and [trufflehog](https://github.com/trufflesecurity/trufflehog) scan repositories and files; [Presidio](https://presidio.dataprivacystack.org/) provides Python analyzers. Secret wrappers hide marked values without detecting sensitive text. embargo runs inside Go to mask logs, hide Secret values, and check real output with canaries and detectors.
 
 | Inside your Go program | What happens |
 |---|---|
@@ -87,7 +86,6 @@ fmt.Println(key)
 // Output: [REDACTED]
 ```
 
-
 [Formatting, decoding with Input, and deliberate access with Reveal](doc/values.md).
 
 ## Mask logs
@@ -108,11 +106,11 @@ logger.Info("checkout", "email", "alice@example.com")
 
 ## Logger adapters
 
-| Logger | Adapter | Runnable example |
+| Logger | Adapter example | Output excerpt |
 |---|---|---|
-| zap | `embargozap.NewWriteSyncer` | [JSON output](adapters/zap/example_test.go) |
-| zerolog | `embargozerolog.NewWriter` | [JSON output](adapters/zerolog/example_test.go) |
-| logrus | `embargologrus.NewFormatter` | [JSON output](adapters/logrus/example_test.go) |
+| zap | [NewWriteSyncer](adapters/zap/example_test.go) | `"email":"[REDACTED]"` |
+| zerolog | [NewWriter](adapters/zerolog/example_test.go) | `"email":"[REDACTED]"` |
+| logrus | [NewFormatter](adapters/logrus/example_test.go) | `"email":"[REDACTED]"` |
 
 Each optional module masks the logger's encoded JSON, including nested values. [Installation, APIs and encoded-binary limits](doc/adapters.md).
 
@@ -152,8 +150,8 @@ Each link opens the test that produces and checks the shown output.
 | [zap JSON core](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L61-L67) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
 | [zerolog JSON](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L68-L72) | `{"level":"info","token":"[REDACTED]","message":"event"}` |
 | [logrus JSON](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L73-L79) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
-| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/telemetry_integration_test.go#L21-L97) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
-| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/sentry_integration_test.go#L64-L135) | `"signing":{"key":"[REDACTED]"}` |
+| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/telemetry_integration_test.go#L24-L103) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
+| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/sentry_integration_test.go#L67-L141) | `"signing":{"key":"[REDACTED]"}` |
 | [HTTP](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L120-L142) | `[REDACTED]` |
 | [Child panic](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L144-L154) | `panic: [REDACTED]` |
 <!-- tested-outputs:end -->
@@ -190,7 +188,7 @@ This chart measures detection on a synthetic corpus. [Generation, test cases and
 | Real output tests | Leaks after encoding or buffering | [Loggers](tests/compatibility_integration_test.go), [HTTP](tests/http_integration_test.go) |
 
 <!-- testing-metrics:start -->
-Coverage 96.7% · mutation score 86.79% · 6 fuzz targets, 1442158 executions.
+Coverage 96.6% · mutation score 87.38% · 7 fuzz targets, 3181704 executions.
 <!-- testing-metrics:end -->
 
 [Commands, measurement scope and conditions](doc/testing.md).
@@ -200,11 +198,10 @@ Coverage 96.7% · mutation score 86.79% · 6 fuzz targets, 1442158 executions.
 <!-- benchmarks:start -->
 ![Scanner throughput and slog time](doc/images/benchmarks.svg)
 
-All detectors scan sensitive text at 4.39 MB/s; masking a clean slog event takes 4.95 µs, 6.1× the plain handler.
+All detectors scan sensitive text at 9.89 MB/s; masking a clean slog event takes 3.89 µs, 7.8× the plain handler.
 <!-- benchmarks:end -->
 
 [Machine, method, profiles and full results](doc/benchmarks.md).
-
 
 ## Contributing
 
@@ -212,14 +209,11 @@ All detectors scan sensitive text at 4.39 MB/s; masking a clean slog event takes
 
 ## License
 
-
 [MIT License](LICENSE).
 
 The [Go gopher](https://go.dev/blog/gopher) was designed by [Renee French](https://reneefrench.blogspot.com/) and is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
-
 ## Contributors
-
 
 Thanks to our contributors:
 

@@ -2,6 +2,20 @@
 
 These optional modules mask at the final JSON boundary, after the real logger has called object/array marshalers and encoded With/context fields. The shared internal/output parser belongs to the dependency-free root module and imports only the root scanner and standard library. Each adapter module owns its SDK requirements. The root go.mod has no require directives.
 
+## Installation
+
+Until the owner publishes adapter releases, select the required module from main:
+
+```sh
+go get github.com/nao1215/embargo/adapters/zap@main
+go get github.com/nao1215/embargo/adapters/zerolog@main
+go get github.com/nao1215/embargo/adapters/logrus@main
+```
+
+Use only the module for your logger. The [zap](../adapters/zap/example_test.go), [zerolog](../adapters/zerolog/example_test.go) and [logrus](../adapters/logrus/example_test.go) Examples show complete setup and their actual JSON output.
+
+## API
+
 | Package | Public API | Why this boundary |
 |---|---|---|
 | embargozap | NewWriteSyncer(next zapcore.WriteSyncer, scanner *embargo.Scanner) zapcore.WriteSyncer | Fits zapcore.NewCore with a JSON encoder and inspects the actual representation of every field type; Sync validates buffered output and delegates to the sink. |
@@ -18,7 +32,7 @@ The stream writer serializes calls and retains the first parse/write failure. Wh
 
 ## Limits exercised by tests
 
-- Only newline-delimited JSON objects are accepted. Zap console encoding, zerolog CBOR/binary builds or a ConsoleWriter before the adapter, and logrus TextFormatter fail closed. Place human-readable rendering after a masked JSON stream if needed.
+- The stream writers accept newline-delimited JSON objects; the logrus formatter accepts one JSON object. Zap console encoding, zerolog CBOR/binary builds or a ConsoleWriter before the adapter, and logrus TextFormatter fail closed. Place human-readable rendering after a masked JSON stream if needed.
 - Base64 binary fields (zap Binary and logrus byte slices), zerolog Hex, compression, encryption and application-defined encodings are not decoded. Negative-control tests write an encoded canary through each real logger and require embargotest to detect the leak. Use Secret before the logger encodes those values, or add an application detector for the encoded form.
 - Only the connected sink/formatter is covered. Zap ErrorOutput, logger hooks with independent destinations, other cores, downstream code that adds data and values reconstructed from separate fields need their own observation or masking policy.
 - Detection has the scanner's documented precision/recall limits. A canary is not automatically a runtime pattern: the positive tests register a literal detector for it, independently of embargotest's canary checks.

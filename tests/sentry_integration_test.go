@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,6 +15,8 @@ import (
 	"github.com/nao1215/embargo"
 	"github.com/nao1215/embargo/embargotest"
 )
+
+const sentryOutputExcerpt = `"signing":{"key":"[REDACTED]"}`
 
 // bufferedTransport is a sentry.Transport that holds events until Flush and
 // then writes the JSON the real SDK would send, one event per line. Holding
@@ -101,6 +104,9 @@ func checkSentryAcceptance(t *testing.T) {
 			}
 
 			r.Expect("sentry", func(data []byte) bool {
+				if !bytes.Contains(data, []byte(sentryOutputExcerpt)) {
+					return false
+				}
 				var event struct {
 					Message   string                    `json:"message"`
 					Tags      map[string]string         `json:"tags"`

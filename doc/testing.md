@@ -30,13 +30,13 @@ The generator rejects incomplete mutation/fuzz runs and records source-log hashe
 ## Measured results
 
 <!-- testing-metrics:start -->
-Measured 2026-11-15 at [72e9a6a](https://github.com/nao1215/embargo/commit/72e9a6a0b0da5f55256eee8568d1eb304cfa270c).
+Measured 2026-11-15 at [765f3a9](https://github.com/nao1215/embargo/commit/765f3a9bc692dfeaec4d6bdd660872252c473ccc).
 
 | Measurement | Result | Conditions |
 |---|---|---|
-| Statement coverage | 96.7% (2203/2278) | Root and integration suites combined |
-| Mutation score | 86.79% | gremlins v0.6.0, root tests, 4 workers, 10x timeout |
-| Mutations | 1353 killed, 206 lived, 110 uncovered, 34 timed out | Timeouts do not count as killed |
-| Mutation coverage | 93.41% | Mutated statements exercised by root tests |
-| Fuzzing | 6 targets, 1442158 executions | 10 seconds per target |
+| Statement coverage | 96.6% (2320/2402) | Root and integration suites combined |
+| Mutation score | 87.38% | gremlins v0.6.0, root tests, 4 workers, 10x timeout |
+| Mutations | 1385 killed, 200 lived, 112 uncovered, 39 timed out | Timeouts do not count as killed |
+| Mutation coverage | 93.40% | Mutated statements exercised by root tests |
+| Fuzzing | 7 targets, 3181704 executions | 10 seconds per target |
 <!-- testing-metrics:end -->

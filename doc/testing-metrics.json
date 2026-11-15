@@ -1,55 +1,60 @@
 {
   "date": "2026-11-15",
-  "commit": "72e9a6a0b0da5f55256eee8568d1eb304cfa270c",
-  "covered_statements": 2203,
-  "total_statements": 2278,
+  "commit": "765f3a9bc692dfeaec4d6bdd660872252c473ccc",
+  "covered_statements": 2320,
+  "total_statements": 2402,
   "mutation": {
-    "killed": 1353,
-    "lived": 206,
-    "uncovered": 110,
-    "timed_out": 34,
+    "killed": 1385,
+    "lived": 200,
+    "uncovered": 112,
+    "timed_out": 39,
     "not_viable": 0,
     "skipped": 0
   },
-  "efficacy": 86.79,
+  "efficacy": 87.38,
   "mutation_timeout_coefficient": 10,
   "mutation_workers": 4,
-  "mutator_coverage": 93.41,
+  "mutator_coverage": 93.4,
   "fuzz": [
     {
       "target": "FuzzScanner",
-      "executions": 129119,
+      "executions": 74396,
       "seconds_requested": 10
     },
     {
       "target": "FuzzScanLines",
-      "executions": 203549,
+      "executions": 116522,
       "seconds_requested": 10
     },
     {
       "target": "FuzzMask",
-      "executions": 521422,
+      "executions": 880541,
       "seconds_requested": 10
     },
     {
       "target": "FuzzInput",
-      "executions": 390538,
+      "executions": 484477,
       "seconds_requested": 10
     },
     {
       "target": "FuzzCanary",
-      "executions": 19687,
+      "executions": 31782,
       "seconds_requested": 10
     },
     {
       "target": "FuzzJSONStream",
-      "executions": 177843,
+      "executions": 56929,
+      "seconds_requested": 10
+    },
+    {
+      "target": "FuzzOutputJSON",
+      "executions": 1537057,
       "seconds_requested": 10
     }
   ],
   "source_sha256": {
-    "coverage": "76e4dcbf67717bf5e8e75bb1105b25835bd2c72d9ee96a7b47b9150a74e06a27",
-    "mutation": "950fb02b7b0282a1c3b7af6fefcf106538bfc941d7d3ad039bfefdbe2c007940",
-    "fuzz": "aa4a200b71594a8d1dcb00f7c751f58c9f8003fbcdd187a55beec67cbe8c1d90"
+    "coverage": "6c056e08781e12659810dc9c2134a013c2283482c8fbeba0e97dd0f4cff4b454",
+    "mutation": "61adeea3810db579c4d6be9a1304bcc3cc3d11201a7c9cca9f4b291bde9a23ad",
+    "fuzz": "43d0df9100d04d82a865dbdc80c3873114b5329f00ce87fe5148b4d853d4c2ae"
   }
 }

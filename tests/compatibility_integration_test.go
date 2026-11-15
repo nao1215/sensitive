@@ -106,8 +106,8 @@ func TestCompatibilityTable(t *testing.T) {
 		source string
 		symbol string
 	}{
-		{name: "OTel SDK", call: "an exported span event and raw RecordError", result: `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}`, source: "telemetry_integration_test.go", symbol: "checkOTelAcceptance", check: checkOTelAcceptance},
-		{name: "Sentry", call: "Secret in scope context, CaptureException and Recover", result: `"signing":{"key":"[REDACTED]"}`, source: "sentry_integration_test.go", symbol: "checkSentryAcceptance", check: checkSentryAcceptance},
+		{name: "OTel SDK", call: "an exported span event and raw RecordError", result: otelOutputExcerpt, source: "telemetry_integration_test.go", symbol: "checkOTelAcceptance", check: checkOTelAcceptance},
+		{name: "Sentry", call: "Secret in scope context, CaptureException and Recover", result: sentryOutputExcerpt, source: "sentry_integration_test.go", symbol: "checkSentryAcceptance", check: checkSentryAcceptance},
 		{name: "HTTP", call: "a real handler writing status, headers, body and trailers", result: "[REDACTED]", source: "compatibility_integration_test.go", symbol: "checkHTTPOutput", check: checkHTTPOutput},
 		{name: "Child panic", call: "panic(secret) in a real test subprocess", result: "panic: [REDACTED]", source: "compatibility_integration_test.go", symbol: "checkChildOutput", check: checkChildOutput},
 	} {

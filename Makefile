@@ -37,7 +37,7 @@ help:
 .PHONY: arch race properties mutation fuzz
 arch: ## Check production package boundaries
 	go run github.com/fe3dback/go-arch-lint@v1.19.0 check
-race: ## Run race detection in both modules
+race: ## Run race detection in all modules
 	go test -race ./...
 	go -C tests test -race ./...
 	@for module in zap zerolog logrus; do go -C adapters/$$module test -race ./... || exit; done

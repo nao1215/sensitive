@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -16,6 +17,8 @@ import (
 	"github.com/nao1215/embargo"
 	"github.com/nao1215/embargo/embargotest"
 )
+
+const otelOutputExcerpt = `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}`
 
 //nolint:gocognit,goconst // Keep the expected outputs and failure modes together in this acceptance matrix.
 func checkOTelAcceptance(t *testing.T) {
@@ -59,6 +62,9 @@ func checkOTelAcceptance(t *testing.T) {
 				t.Fatal("export serialization failed")
 			}
 			r.Expect("sdk", func(data []byte) bool {
+				if !bytes.Contains(data, []byte(otelOutputExcerpt)) {
+					return false
+				}
 				//nolint:tagliatelle // The OTel SpanStub JSON uses SDK field names.
 				var spans []struct {
 					SpanContext struct {
