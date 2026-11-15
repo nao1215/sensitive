@@ -2,10 +2,10 @@
   "date": "2026-11-15",
   "command": "GOMAXPROCS=1 GOTOOLCHAIN=go1.26.11 go -C tests test -run '^$' -bench '^Benchmark(Comparison|StructuredPath)' -benchmem -benchtime=200ms -count=10 .",
   "go": "go version go1.26.11 linux/amd64",
-  "base_commit": "85b2b44f92ddaf329746ea7be54c65b59dd93829",
-  "source_sha256": "dd5091c0f82b4c6ae7fb411b8bb2157ad43b82e8f6565a53c8cde36df867fb56",
-  "raw_sha256": "bb03e8faa2f9da30a208b2d29b0a42adcb9c7f5bcbbc5c7f2d44032f0edb68f0",
-  "benchstat_sha256": "8a2853d721324e07e43b04bbbb93d81d54f0b68055c8ecc55a2b2859c8e8fb36",
+  "base_commit": "da95fde8d01b3e3214d70a131aceb07696eedca9",
+  "source_sha256": "0817b9e6b14e563dcffb81cdf26e3aaacf96e1ee4b22660c07618da5dda5d518",
+  "raw_sha256": "d97a11bb6bd995d5135af0fcbd56dbc08e3be5c3207306900aed30ae5eb0c6cc",
+  "benchstat_sha256": "a4a7fb8ee238b265dbd5be2ed73e5d0f0194f88f9b10ab4a03f1f31373bd4068",
   "cpu": "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S",
   "affinity": [
     8
