@@ -7,6 +7,20 @@ This compares overlapping use cases, not overall library quality or adoption. ma
 The first eight cases reproduce the original comparison probe. Both libraries receive identical events through slog.JSONHandler. masq gets precompiled email and 13–19 digit card regexes, Password/password/token field rules and `masq:"secret"`, with time.Time and slog.Level allowed; embargo selects email/PAN detectors, confidence 0.7 and its default sensitive keys plus `recovery`. The tagged Recovery field is protected by that key rule in embargo. These are practical documented configurations; neither claims that regex syntax provides a checksum validator.
 
 <!-- correctness:start -->
+| Case | masq v0.2.3 output fragment | embargo output fragment |
+|---|---|---|
+| nested_struct | `"user":{"ID":"u123","Email":"[REDACTED]"}` | `"user":{"ID":"u123","Email":"[REDACTED]"}` |
+| message | `"msg":"[REDACTED]"` | `"msg":"login failed for [REDACTED]"` |
+| attribute_key | `"alice@example.com":"ok"` | `"[REDACTED]":"ok"` |
+| group_name | `"alice@example.com":{"status":"ok"}` | `"[REDACTED]":{"status":"ok"}` |
+| marshal_json | `"email":"alice@example.com"` | `"email":"[REDACTED]"` |
+| wrapped_error | `"error":"[REDACTED]"` | `"error":"request failed: [REDACTED]"` |
+| opaque_password | `"Password":"[REDACTED]"` | `"Password":"[REDACTED]"` |
+| secret_wrapper | `"Password":"[REDACTED]"` | `"Password":"[REDACTED]"` |
+| tag_or_key | `"Recovery":"[REDACTED]"` | `"Recovery":"[REDACTED]"` |
+| valid_card | `"card":"[REDACTED]"` | `"card":"[REDACTED]"` |
+| invalid_luhn | `"order":"[REDACTED]"` | `"order":"4111111111111112"` |
+| map | `"data":{"count":17,"email":null,"password":null}` | `"data":{"count":17,"email":"[REDACTED]","password":"[REDACTED]"}` |
 <!-- correctness:end -->
 
 masq requires user rules to find the email and card; plain `masq.New()` does not detect them. Its standard redactor removes an entire matched message/error string; embargo keeps the surrounding context. masq can use RedactString for partial replacement or a custom censor for validation. With this configuration it leaves attribute keys, group names and custom MarshalJSON-generated data visible. Both retain struct shape; masq v0.2.3 replaces matching interface-valued map entries with null in this fixture, while embargo uses a string marker. These are observed version-specific outputs, not claims that all masq configurations behave identically.
@@ -18,9 +32,36 @@ The invalid-Luhn row is a deliberate negative example. embargo's default minimum
 ![Median JSON logging cost by event](images/comparison.svg)
 
 <!-- comparison:start -->
+| Benchmark | ns/op | B/op | allocs/op |
+|---|---:|---:|---:|
+| Comparison/clean/embargo | 2,169.0 | 88 | 11 |
+| Comparison/clean/masq | 6,480.0 | 792 | 50 |
+| Comparison/flat/embargo | 3,563.5 | 624 | 21 |
+| Comparison/flat/masq | 6,859.5 | 672 | 32 |
+| Comparison/large50/embargo | 30,410.5 | 10,001 | 125 |
+| Comparison/large50/masq | 134,369.0 | 12,710 | 561 |
+| Comparison/map/embargo | 9,743.5 | 1,496 | 56 |
+| Comparison/map/masq | 12,830.0 | 1,744 | 63 |
+| Comparison/nested/embargo | 8,069.5 | 960 | 44 |
+| Comparison/nested/masq | 11,718.5 | 1,784 | 61 |
+| ComparisonFormatter/clean | 633.0 | 0 | 0 |
+| ComparisonFormatter/flat | 701.3 | 32 | 2 |
+| ComparisonFormatter/large50 | 16,329.0 | 7,873 | 10 |
+| ComparisonFormatter/map | 496.5 | 0 | 0 |
+| ComparisonFormatter/nested | 591.0 | 0 | 0 |
+| ComparisonStruct/embargo | 5,066.5 | 1,000 | 42 |
+| ComparisonStruct/go_mask | 1,260.0 | 328 | 7 |
+| ComparisonText/embargo | 4,598.0 | 1,640 | 42 |
+| ComparisonText/godlp | 70,260.0 | 11,714 | 59 |
+| StructuredPath/json_shape | 4,964.0 | 1,000 | 42 |
+| StructuredPath/old_string | 1,879.5 | 752 | 14 |
+
+Measured 2026-11-15 with go version go1.26.11 linux/amd64, Linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S; GOMAXPROCS=1, ten 200 ms samples per case. Construction is outside the timed loop; JSON encoding and masking are included. Source and dependency fingerprints, CPU affinity and command are in [comparison.json](comparison.json).
 <!-- comparison:end -->
 
 The five head-to-head events are a flat email/card pair, a nested struct with opaque password and tagged recovery field, a map, a clean event, and 50 attributes (48 clean plus the flat pair). Both loggers use the same io.Discard sink. masq uses its documented WithAllowedType for time.Time and slog.Level, matching embargo's decision to preserve that metadata; this avoids charging masq for an unnecessary reflection traversal. Masker/scanner construction and regex compilation are excluded for both. The tests use prebuilt slog.Attr slices and LogAttrs to avoid attributing caller argument construction to either library.
+
+In these five configured events, embargo used 24–77% less time than masq and fewer bytes and allocations in every case; masq was not faster in this measured set. The flat-event timings have substantial spread (masq ±47%), so the raw samples and confidence intervals matter more than a single rounded speedup. This does not predict tag-only or type-only masq policies, other payloads or machines.
 
 [Raw ten-sample output](comparison.raw.txt), [benchstat comparison including significance, B/op and allocs/op](comparison.benchstat.txt), [benchmark source and correctness assertions](../tests/comparison_test.go).
 
@@ -30,7 +71,7 @@ Run `make comparison-doc` to rerun ten samples, benchstat and all generated comp
 
 ## Other overlapping libraries
 
-[Exact outputs for the same events and text fixtures](comparison-libraries.md) are regenerated and asserted by [comparison_libraries_test.go](../tests/comparison_libraries_test.go). The additional timing rows measure different contracts and must not be interpreted as equivalent protection.
+[Exact outputs for the same events and text fixtures](comparison-libraries.md) are regenerated and asserted by [comparison_libraries_test.go](../tests/comparison_libraries_test.go). The additional timing rows measure different contracts and must not be interpreted as equivalent protection. PIIFormatter and go-mask are faster on their measured tasks: they apply configured field transformations without embargo's text detection, and PIIFormatter removes the nested Any object. godlp is slower on the text fixture but supports phone families embargo does not. The new JSON path costs about 2.64 times the old string-only work in the measured struct case.
 
 | Library and version | Configuration and useful differences |
 |---|---|
