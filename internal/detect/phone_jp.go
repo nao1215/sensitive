@@ -56,20 +56,6 @@ func jpPhoneRules() []jpPhoneRule {
 	}
 }
 
-// invalidLandlinePrefixes contains digit pairs (digits[1:3]) that are NOT valid
-// Japanese landline area code prefixes.
-//
-// Rejected prefixes:
-//   - 050, 070, 080, 090: require 11 digits (mobile/IP phone), not 10
-//   - 020, 021, 051, 057, 060, 071, 081, 091: not assigned as area codes
-func invalidLandlinePrefixes() map[string]bool {
-	return map[string]bool{
-		"50": true, "70": true, "80": true, "90": true,
-		"20": true, "21": true, "51": true, "57": true,
-		"60": true, "71": true, "81": true, "91": true,
-	}
-}
-
 // JPPhone detects Japanese phone numbers by prefix and length.
 //
 //  1. Extract numbers beginning with 0, allowing hyphens, parentheses, and spaces (e.g., 03(1234)5678 or 090 1234 5678).
@@ -237,5 +223,10 @@ func isValidLandlinePrefix(digits []byte) bool {
 	if len(digits) < 3 {
 		return false
 	}
-	return !invalidLandlinePrefixes()[string(digits[1:3])]
+	switch string(digits[1:3]) {
+	case "50", "70", "80", "90", "20", "21", "51", "57", "60", "71", "81", "91":
+		return false
+	default:
+		return true
+	}
 }

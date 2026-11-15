@@ -78,7 +78,7 @@ Dedicated parsers and checksum checks help distinguish candidates from ordinary 
 | `WithPrivateKeyPEM()` | PEM private key headers (RSA/EC/DSA/OpenSSH/PKCS#8) | `-----BEGIN [ALGO ]PRIVATE KEY-----` header parse |
 | `WithAll()` | All of the above | |
 
-The table summarizes validation; each [detector type](https://pkg.go.dev/github.com/nao1215/embargo/detector) documents its exact acceptance rules and score. Detection does not establish that an account exists or that a credential authenticates. [WithAll](https://pkg.go.dev/github.com/nao1215/embargo#WithAll) includes context-based matches; use individual options when false positives are costly.
+The table summarizes validation; each [Scanner](https://pkg.go.dev/github.com/nao1215/embargo#Scanner) documents its exact acceptance rules and score. Detection does not establish that an account exists or that a credential authenticates. [WithAll](https://pkg.go.dev/github.com/nao1215/embargo#WithAll) includes context-based matches; use individual options when false positives are costly.
 
 ## Installation and requirements
 
@@ -108,9 +108,9 @@ The method docs specify line limits, offsets, callback lifetime, and read errors
 
 ## Work with findings
 
-[Finding](https://pkg.go.dev/github.com/nao1215/embargo/detector#Finding) exposes the matched value and detector-specific detail. Use `Is` or an `Is*` method to select a detector, `Kind` to classify financial data, PII, or credentials, and typed accessors such as `PANDetail` to read metadata without a direct type assertion.
+[Finding](https://pkg.go.dev/github.com/nao1215/embargo#Finding) exposes the matched value and detector-specific detail. Use `Is` or an `Is*` method to select a detector, `Kind` to classify financial data, PII, or credentials, and typed accessors such as `PANDetail` to read metadata without a direct type assertion.
 
-The [detail example](https://pkg.go.dev/github.com/nao1215/embargo/detector#example-Finding.PANDetail) shows brand and last-four access. [Scanner options](https://pkg.go.dev/github.com/nao1215/embargo#example-NewScanner-Options) show how to retain overlapping matches and order findings by position. [Full-width digit support](https://pkg.go.dev/github.com/nao1215/embargo/detector#hdr-Full_Width_Digits_and_Boundaries) lists the detectors that normalize Japanese numeric text.
+The [detail example](https://pkg.go.dev/github.com/nao1215/embargo#example-Finding.PANDetail) shows brand and last-four access. [Scanner options](https://pkg.go.dev/github.com/nao1215/embargo#example-NewScanner-Options) show how to retain overlapping matches and order findings by position. [Full-width digit support](https://pkg.go.dev/github.com/nao1215/embargo#hdr-Full_Width_Digits_and_Boundaries) lists the detectors that normalize Japanese numeric text.
 
 ## Filter by confidence
 
@@ -135,7 +135,7 @@ Read the [confidence model](https://pkg.go.dev/github.com/nao1215/embargo#hdr-Co
 
 ## Mask findings
 
-Import `detector` and `mask` alongside `embargo` to assign a strategy to each detector:
+Import `mask` alongside `embargo` to assign a strategy to each detector:
 
 <!-- example: mask/example_test.go:ExampleMask -->
 ```go
@@ -145,8 +145,8 @@ findings := scanner.ScanString(text)
 
 // Apply different masking strategies per detector.
 masked := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{
-	detector.NamePAN:   mask.Last4,
-	detector.NameEmail: mask.Partial,
+	"pan":   mask.Last4,
+	"email": mask.Partial,
 })
 
 fmt.Println(masked)
@@ -158,7 +158,7 @@ fmt.Println(masked)
 
 ## Add a detector
 
-Use [WithDetector](https://pkg.go.dev/github.com/nao1215/embargo#example-WithDetector) with `detector.NewRegex` for a custom pattern such as a ticket ID. For domain validation, implement [Detector](https://pkg.go.dev/github.com/nao1215/embargo/detector#Detector). The [custom detector guide](https://pkg.go.dev/github.com/nao1215/embargo#hdr-Custom_Detectors) explains hint selection and links the runnable example.
+Implement [Detector](https://pkg.go.dev/github.com/nao1215/embargo#Detector) with a name, exhaustive hints, and a Scan method, then register it with [WithDetector](https://pkg.go.dev/github.com/nao1215/embargo#example-WithDetector). The runnable example uses a regular expression for ticket IDs and only imports public packages.
 
 ## Testing
 

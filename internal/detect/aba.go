@@ -135,11 +135,11 @@ func abaFederalReserveDistrict(digits []byte) string {
 
 	switch {
 	case prefix >= 1 && prefix <= 12:
-		return abaDistrictNames()[prefix]
+		return abaDistrictName(prefix)
 	case prefix >= 21 && prefix <= 32:
-		return abaDistrictNames()[prefix-20]
+		return abaDistrictName(prefix - 20)
 	case prefix >= 61 && prefix <= 72:
-		return abaDistrictNames()[prefix-60]
+		return abaDistrictName(prefix - 60)
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 	case prefix == 80:
 		return "Traveler's Cheques"
@@ -148,20 +148,34 @@ func abaFederalReserveDistrict(digits []byte) string {
 	}
 }
 
-// abaDistrictNames maps Federal Reserve district numbers (1-12) to their names.
-func abaDistrictNames() map[int]string {
-	return map[int]string{
-		1:  "01-Boston",
-		2:  "02-New York",
-		3:  "03-Philadelphia",
-		4:  "04-Cleveland",
-		5:  "05-Richmond",
-		6:  "06-Atlanta",
-		7:  "07-Chicago",
-		8:  "08-St. Louis",
-		9:  "09-Minneapolis",
-		10: "10-Kansas City",
-		11: "11-Dallas",
-		12: "12-San Francisco",
+// abaDistrictName returns a Federal Reserve district name.
+func abaDistrictName(district int) string {
+	switch district {
+	case 1:
+		return "01-Boston"
+	case 2:
+		return "02-New York"
+	case 3:
+		return "03-Philadelphia"
+	case 4:
+		return "04-Cleveland"
+	case 5:
+		return "05-Richmond"
+	case 6:
+		return "06-Atlanta"
+	case 7:
+		return "07-Chicago"
+	case 8:
+		return "08-St. Louis"
+	case 9:
+		return "09-Minneapolis"
+	case 10:
+		return "10-Kansas City"
+	case 11:
+		return "11-Dallas"
+	case 12:
+		return "12-San Francisco"
+	default:
+		return ""
 	}
 }

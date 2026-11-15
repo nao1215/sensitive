@@ -164,3 +164,18 @@ func TestExamplesAppearInGodoc(t *testing.T) {
 		})
 	}
 }
+
+func TestPublicExamplesOnlyImportPublicPackages(t *testing.T) {
+	t.Parallel()
+	for _, name := range []string{"example_test.go", "mask/example_test.go"} {
+		f, err := parser.ParseFile(token.NewFileSet(), name, nil, parser.ImportsOnly)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, imp := range f.Imports {
+			if strings.Contains(imp.Path.Value, "/internal/") {
+				t.Errorf("%s imports a private implementation", name)
+			}
+		}
+	}
+}
