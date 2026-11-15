@@ -95,6 +95,18 @@ func TestPercentDecodingPolicy(t *testing.T) {
 	}
 }
 
+func TestPercentPositionMapStaysWithinOriginalSize(t *testing.T) {
+	t.Parallel()
+	for _, input := range []string{"%41", "prefix%41suffix", "%41%42%43", "prefix%41%0"} {
+		decoded, positions := decodePercent([]byte(input))
+		// One decoded escape saves two bytes, enough for the end sentinel.
+		// Reserving more than the original size is unnecessary and risks overflow.
+		if cap(positions) > len(input) || len(positions) != len(decoded)+1 {
+			t.Fatalf("position map for %q exceeds its original-size budget", input)
+		}
+	}
+}
+
 type originalPercentDetector struct{ t *testing.T }
 
 func (d originalPercentDetector) Scan(data []byte) []Finding {

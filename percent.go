@@ -21,7 +21,9 @@ func decodePercent(data []byte) (decoded []byte, positions []int) {
 		if decoded == nil {
 			decoded = make([]byte, 0, len(data))
 			decoded = append(decoded, data[:i]...)
-			positions = make([]int, i, len(data)+1)
+			// The first escape removes two bytes, leaving room for the sentinel
+			// within len(data) and avoiding overflow from adding capacity.
+			positions = make([]int, i, len(data))
 			for j := range positions {
 				positions[j] = j
 			}
