@@ -162,7 +162,7 @@ Use [WithDetector](https://pkg.go.dev/github.com/nao1215/sensitive#example-WithD
 
 ## Testing
 
-The library has zero dependencies; test-only tools live in the separate [tests/](tests/) module (Go 1.23+). Run `go test ./...` in both directories; this executes the Go examples and checks README snippets against them. See [testing](doc/testing.md) for lint, vet, fuzzing, golden updates, coverage, and mutation checks.
+The library has zero dependencies; test-only tools live in the separate [tests/](tests/) module (Go 1.26.0+). Run `go test ./...` in both directories; this executes the Go examples and checks README snippets against them. See [testing](doc/testing.md) for lint, vet, fuzzing, golden updates, coverage, and mutation checks.
 
 ## Contributing
 

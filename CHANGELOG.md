@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Raise the separate test module minimum to Go 1.26.0, required by `golang.org/x/crypto` v0.59.0; the root library still requires Go 1.22 and has no external dependencies ([PR #52](https://github.com/nao1215/sensitive/pull/52), [33da87a](https://github.com/nao1215/sensitive/commit/33da87af35dbb5b4ab64b884a29c5daf12279235)).
 - Shorten the README around runnable examples, move detailed contracts and benchmarks to linked documentation, and condense public API comments while retaining detector algorithms; keep Contributors unchanged ([PR #51](https://github.com/nao1215/sensitive/pull/51), [21ac25a](https://github.com/nao1215/sensitive/commit/21ac25a6073b43ddd2c5f8501eda38924dd76bb2)).
 - Consolidate runnable examples and check README snippets, expected output, and godoc example placement in the test suite without changing library behavior or dependencies ([PR #51](https://github.com/nao1215/sensitive/pull/51), [21ac25a](https://github.com/nao1215/sensitive/commit/21ac25a6073b43ddd2c5f8501eda38924dd76bb2)).
 
