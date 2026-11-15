@@ -52,37 +52,42 @@ func checkPrintingScope(t *testing.T, path string) {
 			qualifier = imp.Name.Name
 		}
 	}
-	for _, decl := range file.Decls {
-		fn, ok := decl.(*ast.FuncDecl)
-		if !ok || strings.HasPrefix(fn.Name.Name, "Example") {
-			continue
+	ast.Inspect(file, func(node ast.Node) bool {
+		if fn, ok := node.(*ast.FuncDecl); ok && fn.Recv == nil && strings.HasPrefix(fn.Name.Name, "Example") && len(fn.Type.Params.List) == 0 && fn.Type.Results == nil {
+			return false
 		}
-		ast.Inspect(fn, func(node ast.Node) bool {
-			expression := uncheckedExpression(node)
-			call, ok := expression.(*ast.CallExpr)
-			if !ok {
-				return true
-			}
-			selector, ok := call.Fun.(*ast.SelectorExpr)
-			if !ok {
-				return true
-			}
-			id, ok := selector.X.(*ast.Ident)
-			if !ok || id.Name != qualifier {
-				return true
-			}
-			switch selector.Sel.Name {
-			case "Print", "Printf", "Println", "Fprint", "Fprintf", "Fprintln":
-				t.Errorf("%s: unchecked fmt output in %s; only Example functions are exempt", path, fn.Name.Name)
-			}
+		expression := uncheckedExpression(node)
+		call, ok := expression.(*ast.CallExpr)
+		if !ok {
 			return true
-		})
-	}
+		}
+		selector, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		id, ok := selector.X.(*ast.Ident)
+		if !ok || id.Name != qualifier {
+			return true
+		}
+		switch selector.Sel.Name {
+		case "Print", "Printf", "Println", "Fprint", "Fprintf", "Fprintln":
+			t.Errorf("%s: unchecked fmt output outside an Example; only Example functions are exempt", path)
+		}
+		return true
+	})
 }
 
 func uncheckedExpression(node ast.Node) ast.Expr {
 	var expression ast.Expr
 	switch statement := node.(type) {
+	case *ast.GoStmt:
+		expression = statement.Call
+	case *ast.DeferStmt:
+		expression = statement.Call
+	case *ast.ValueSpec:
+		if len(statement.Names) == 2 && len(statement.Values) == 1 && statement.Names[1].Name == "_" {
+			expression = statement.Values[0]
+		}
 	case *ast.ExprStmt:
 		expression = statement.X
 	case *ast.AssignStmt:
