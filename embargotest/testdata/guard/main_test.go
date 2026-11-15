@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 	case "overflow":
 		opts = append(opts, embargotest.WithLimits(128, time.Minute))
 	case "timeout":
-		opts = append(opts, embargotest.WithTimeout(100*time.Millisecond))
+		opts = append(opts, embargotest.WithLimits(1<<20, 100*time.Millisecond))
 	}
 	os.Exit(embargotest.Guard(m, opts...))
 }

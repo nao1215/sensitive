@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+//nolint:goconst // Keep child modes and their expected diagnostics together.
 func TestPackageGuard(t *testing.T) {
 	t.Parallel()
 	const safeMode = "safe"
