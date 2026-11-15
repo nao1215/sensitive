@@ -34,6 +34,16 @@ func (s *Scanner) buildDispatch() {
 }
 
 func (s *Scanner) selectDetectors(data []byte) uint32 {
+	// A single detector benefits from the standard library substring search;
+	// walking every byte through dispatch buckets would add work for no sharing.
+	if len(s.detectors) == 1 {
+		var folded []byte
+		var ready bool
+		if matchesAnyHint(s.hintCache[0], data, &folded, &ready) {
+			return 1
+		}
+		return 0
+	}
 	selected := s.unconditional
 	all := uint32(1)<<len(s.detectors) - 1
 	for i, b := range data {

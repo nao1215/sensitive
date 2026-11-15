@@ -48,7 +48,9 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 		}
 	}
 	s.hintCache = buildHintCache(s.detectors)
-	s.buildDispatch()
+	if len(s.detectors) > 1 {
+		s.buildDispatch()
+	}
 	return s
 }
 

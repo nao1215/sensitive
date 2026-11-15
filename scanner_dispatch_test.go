@@ -74,9 +74,11 @@ func TestDispatchExhaustiveNumericAndTerminalHints(t *testing.T) {
 		{KindBankAccount, "12345678 bank account", 8},
 		{KindACHTrace, "021000021123456 ACH trace", 15},
 	} {
-		got := NewScanner(WithKinds(tc.kind)).ScanString(tc.input)
-		if len(got) != 1 || got[0].Start != 0 || got[0].End != tc.end {
-			t.Fatal(tc.kind, got)
+		for _, scanner := range []*Scanner{NewScanner(WithKinds(tc.kind)), NewScanner(WithAll())} {
+			got := scanner.ScanString(tc.input)
+			if len(got) != 1 || got[0].Kind != tc.kind || got[0].Start != 0 || got[0].End != tc.end {
+				t.Fatal(tc.kind, got)
+			}
 		}
 	}
 }
