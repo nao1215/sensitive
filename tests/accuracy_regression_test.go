@@ -145,10 +145,11 @@ func checkAccuracyRegressions(t *testing.T, set string) {
 		}
 		known[limit.ID] = limit
 	}
+	scanners := map[embargo.Kind]*embargo.Scanner{}
 	seen := map[string]bool{}
 	for _, sample := range allAccuracySamples(t, set) {
 		seen[sample.ID] = true
-		findings := embargo.NewScanner(embargo.WithKinds(sample.Kind)).ScanString(sample.Text)
+		findings := accuracyScanner(scanners, sample.Kind, 0).ScanString(sample.Text)
 		got := scoreAccuracy(sample.Kind, findings, sample.Expected)
 		limit, exists := known[sample.ID]
 		if got.fp == 0 && got.fn == 0 {

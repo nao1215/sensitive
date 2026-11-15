@@ -41,6 +41,12 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ matrix.go }}
+          cache-dependency-path: |
+            go.mod
+            adapters/*/go.sum
+
+      - name: Download optional module dependencies
+        run: python3 scripts/download_modules.py adapters/zap adapters/zerolog adapters/logrus
 
       - name: Run unit tests
         shell: bash
@@ -126,6 +132,8 @@ jobs:
         run: |
           go mod tidy -diff
           test "$(go list -m all)" = github.com/nao1215/embargo
+      - name: Download test module dependencies
+        run: python3 scripts/download_modules.py tests
       - name: Check test module and run properties
         shell: bash
         working-directory: tests

@@ -33,6 +33,8 @@ func TestPackageOutput(t *testing.T) {
 		t.Log(strings.Repeat("x", 1024))
 	case "timeout":
 		time.Sleep(10 * time.Second)
+	case "subtest":
+		t.Run("leaking_child", func(t *testing.T) { t.Log(secret) })
 	case "stdout":
 		if _, err := fmt.Fprintln(os.Stdout, secret); err != nil {
 			t.Fatal(err)

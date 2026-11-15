@@ -18,23 +18,31 @@ func TestPackageGuard(t *testing.T) {
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build: %v %s", err, output)
 	}
-	for _, mode := range []string{safeMode, "stdout", "stderr", "slog", "tlog", "detector", "panic", "subprocess", "overflow", "timeout"} {
+	for _, mode := range []string{safeMode, "stdout", "stderr", "slog", "tlog", "detector", "subtest", "panic", "subprocess", "overflow", "timeout"} {
 		t.Run(mode, func(t *testing.T) {
 			t.Parallel()
-			cmd := exec.CommandContext(t.Context(), binary)
+			args := []string{}
+			if mode == "stdout" {
+				args = append(args, "-test.run=^TestPackageOutput$")
+			}
+			// #nosec G204 -- The binary is built above; arguments select a fixed fixture test.
+			cmd := exec.CommandContext(t.Context(), binary, args...)
 			cmd.Env = append(os.Environ(), "GUARD_CASE="+mode)
 			output, err := cmd.CombinedOutput()
 			if (err == nil) != (mode == safeMode) {
 				t.Fatalf("wrong verdict: %v %s", err, output)
 			}
-			if mode == "overflow" || mode == "timeout" {
+			if incompleteGuardMode(mode) {
 				if !bytes.Contains(output, []byte("incomplete, truncated or timed out")) {
 					t.Fatal("missing incomplete capture diagnosis")
 				}
 				return
 			}
-			if mode != safeMode && (!bytes.Contains(output, []byte("observed test-start frames:")) || !bytes.Contains(output, []byte("embargotest: package leak"))) {
+			if mode != safeMode && (!bytes.Contains(output, []byte("active tests:")) || !bytes.Contains(output, []byte("embargotest: package leak"))) {
 				t.Fatalf("missing diagnosis: %s", output)
+			}
+			if mode == "subtest" && !bytes.Contains(output, []byte("TestPackageOutput/leaking_child")) {
+				t.Fatalf("missing leaking subtest name: %s", output)
 			}
 			if mode == "stdout" {
 				checkGuardSnapshot(t, output)
@@ -86,3 +94,5 @@ func checkGuardSnapshot(t *testing.T, output []byte) {
 	}
 	t.Fatal("Guard diagnostic missing")
 }
+
+func incompleteGuardMode(mode string) bool { return mode == "overflow" || mode == "timeout" }

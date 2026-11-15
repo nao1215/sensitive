@@ -9,7 +9,9 @@
     "ci": "unit_test:unit_test",
     "commands": [
       "go test \"${args[@]}\" ./..."
-    ]
+    ],
+    "summary": "Wrong public outputs",
+    "anchor": "examples-and-unit-tests"
   },
   {
     "name": "Generated properties",
@@ -23,7 +25,9 @@
     "commands": [
       "working-directory: tests",
       "go test \"${args[@]}\" ./..."
-    ]
+    ],
+    "summary": "Missing checksum combinations",
+    "anchor": "generated-properties"
   },
   {
     "name": "Metamorphic relations",
@@ -35,7 +39,9 @@
     "commands": [
       "working-directory: tests",
       "go test \"${args[@]}\" ./..."
-    ]
+    ],
+    "summary": "Inconsistent transformed findings",
+    "anchor": "metamorphic-relations"
   },
   {
     "name": "Quint and model replay",
@@ -50,7 +56,9 @@
       "scripts/quint_models.py --check",
       "go test ./embargotest -run '^TestQuint'",
       "go -C tests test . -run '^TestQuint'"
-    ]
+    ],
+    "summary": "Invalid lifecycle transitions",
+    "anchor": "quint-and-model-replay"
   },
   {
     "name": "Lean reference proofs",
@@ -62,7 +70,9 @@
     "ci": "verification:formal",
     "commands": [
       "scripts/check_lean.py"
-    ]
+    ],
+    "summary": "Arithmetic and interval errors",
+    "anchor": "lean-reference-proofs"
   },
   {
     "name": "Intentional snapshots",
@@ -76,7 +86,9 @@
     "commands": [
       "go test \"${args[@]}\" ./...",
       "go -C adapters/$module test \"${args[@]}\""
-    ]
+    ],
+    "summary": "Changed output structure",
+    "anchor": "intentional-snapshots"
   },
   {
     "name": "Independent differential oracles",
@@ -89,7 +101,9 @@
     "commands": [
       "TestExternal|TestStandardLibrary",
       "TestDispatchDifferential"
-    ]
+    ],
+    "summary": "Shared oracle mistakes",
+    "anchor": "independent-differential-oracles"
   },
   {
     "name": "Structure-aware fuzzing",
@@ -101,7 +115,9 @@
     "ci": "fuzz:fuzz",
     "commands": [
       "-fuzz \"^${NAME}\\$\""
-    ]
+    ],
+    "summary": "Malformed nested inputs",
+    "anchor": "structure-aware-fuzzing"
   },
   {
     "name": "Mutation testing",
@@ -113,7 +129,9 @@
     "commands": [
       "make mutation",
       "scripts/mutation_attribution.py"
-    ]
+    ],
+    "summary": "Assertions missing changed logic",
+    "anchor": "mutation-testing"
   },
   {
     "name": "Real logger and SDK output",
@@ -126,7 +144,9 @@
     "commands": [
       "working-directory: tests",
       "go test \"${args[@]}\" ./..."
-    ]
+    ],
+    "summary": "Serializer and SDK leaks",
+    "anchor": "real-logger-and-sdk-output"
   },
   {
     "name": "Race and lifecycle tests",
@@ -139,7 +159,9 @@
     "commands": [
       "-race",
       "go test \"${args[@]}\" ./..."
-    ]
+    ],
+    "summary": "Races and hanging pipes",
+    "anchor": "race-and-lifecycle-tests"
   },
   {
     "name": "Paired CI benchmarks",
@@ -150,7 +172,9 @@
     "ci": "verification:benchmark",
     "commands": [
       "scripts/ci_benchmark.py"
-    ]
+    ],
+    "summary": "Runner noise hiding regressions",
+    "anchor": "paired-ci-benchmarks"
   },
   {
     "name": "Prose and policy checks",
@@ -163,7 +187,9 @@
     "commands": [
       "scripts/check_prose.py",
       "scripts/check_policies.py"
-    ]
+    ],
+    "summary": "Stale docs and rules",
+    "anchor": "prose-and-policy-checks"
   },
   {
     "name": "Adversarial budgets",
@@ -176,6 +202,8 @@
     "commands": [
       "TestAdversarial",
       "BenchmarkAdversarialScaling"
-    ]
+    ],
+    "summary": "Resource amplification and spoofing",
+    "anchor": "adversarial-budgets"
   }
 ]

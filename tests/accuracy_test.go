@@ -83,6 +83,7 @@ func scoreAccuracyTable(t *testing.T, set string, threshold float64) {
 	t.Helper()
 	samples := allAccuracySamples(t, set)
 
+	scanners := map[embargo.Kind]*embargo.Scanner{}
 	counts := map[string]accuracyCount{}
 	inputs := map[string][2]int{}
 
@@ -94,7 +95,7 @@ func scoreAccuracyTable(t *testing.T, set string, threshold float64) {
 			input[0]++
 		}
 		inputs[string(sample.Kind)] = input
-		findings := embargo.NewScanner(embargo.WithKinds(sample.Kind), embargo.WithMinConfidence(threshold)).ScanString(sample.Text)
+		findings := accuracyScanner(scanners, sample.Kind, threshold).ScanString(sample.Text)
 		result := scoreAccuracy(sample.Kind, findings, sample.Expected)
 		count := counts[string(sample.Kind)]
 		count.tp += result.tp
@@ -273,4 +274,14 @@ func accuracyEntrance(t *testing.T, names []string) string {
 		writeAccuracyText(t, &entrance, "\n")
 	}
 	return entrance.String()
+}
+
+// Each table has one immutable scanner per kind and threshold; fixtures never change its options.
+func accuracyScanner(scanners map[embargo.Kind]*embargo.Scanner, kind embargo.Kind, threshold float64) *embargo.Scanner {
+	scanner := scanners[kind]
+	if scanner == nil {
+		scanner = embargo.NewScanner(embargo.WithKinds(kind), embargo.WithMinConfidence(threshold))
+		scanners[kind] = scanner
+	}
+	return scanner
 }

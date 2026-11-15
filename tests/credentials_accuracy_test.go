@@ -30,6 +30,7 @@ func TestCredentialAccuracy(t *testing.T) {
 			t.Fatal(err)
 		}
 		for _, threshold := range []float64{0, 0.5} {
+			scanners := map[embargo.Kind]*embargo.Scanner{}
 			counts := map[embargo.Kind]accuracyCount{}
 			negative := map[string][2]int{}
 			lines := bufio.NewScanner(strings.NewReader(string(data)))
@@ -44,7 +45,7 @@ func TestCredentialAccuracy(t *testing.T) {
 				if err := json.Unmarshal(lines.Bytes(), &sample); err != nil {
 					t.Fatal(err)
 				}
-				findings := embargo.NewScanner(embargo.WithKinds(sample.Kind), embargo.WithMinConfidence(threshold)).ScanString(sample.Text)
+				findings := accuracyScanner(scanners, sample.Kind, threshold).ScanString(sample.Text)
 				result := scoreAccuracy(sample.Kind, findings, sample.Expected)
 				count := counts[sample.Kind]
 				count.tp += result.tp

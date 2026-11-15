@@ -1,0 +1,182 @@
+[
+  {
+    "set": "development",
+    "tier": "critical",
+    "threshold": 0,
+    "tp": 1648,
+    "fp": 97,
+    "fn": 0,
+    "exposed_secrets": 0,
+    "residual_bytes": 0
+  },
+  {
+    "set": "development",
+    "tier": "high",
+    "threshold": 0,
+    "tp": 730,
+    "fp": 33,
+    "fn": 0,
+    "exposed_secrets": 0,
+    "residual_bytes": 0
+  },
+  {
+    "set": "development",
+    "tier": "standard",
+    "threshold": 0,
+    "tp": 1580,
+    "fp": 272,
+    "fn": 0,
+    "exposed_secrets": 0,
+    "residual_bytes": 0
+  },
+  {
+    "set": "development",
+    "tier": "critical",
+    "threshold": 0.5,
+    "tp": 1648,
+    "fp": 64,
+    "fn": 0,
+    "exposed_secrets": 0,
+    "residual_bytes": 0
+  },
+  {
+    "set": "development",
+    "tier": "high",
+    "threshold": 0.5,
+    "tp": 730,
+    "fp": 0,
+    "fn": 0,
+    "exposed_secrets": 0,
+    "residual_bytes": 0
+  },
+  {
+    "set": "development",
+    "tier": "standard",
+    "threshold": 0.5,
+    "tp": 1460,
+    "fp": 120,
+    "fn": 120,
+    "exposed_secrets": 120,
+    "residual_bytes": 4800
+  },
+  {
+    "set": "development",
+    "tier": "critical",
+    "threshold": 0.7,
+    "tp": 1648,
+    "fp": 0,
+    "fn": 0,
+    "exposed_secrets": 0,
+    "residual_bytes": 0
+  },
+  {
+    "set": "development",
+    "tier": "high",
+    "threshold": 0.7,
+    "tp": 578,
+    "fp": 0,
+    "fn": 152,
+    "exposed_secrets": 152,
+    "residual_bytes": 1215
+  },
+  {
+    "set": "development",
+    "tier": "standard",
+    "threshold": 0.7,
+    "tp": 1460,
+    "fp": 120,
+    "fn": 120,
+    "exposed_secrets": 120,
+    "residual_bytes": 4800
+  },
+  {
+    "set": "held",
+    "tier": "critical",
+    "threshold": 0,
+    "tp": 1632,
+    "fp": 96,
+    "fn": 0,
+    "exposed_secrets": 0,
+    "residual_bytes": 0
+  },
+  {
+    "set": "held",
+    "tier": "high",
+    "threshold": 0,
+    "tp": 720,
+    "fp": 32,
+    "fn": 0,
+    "exposed_secrets": 0,
+    "residual_bytes": 0
+  },
+  {
+    "set": "held",
+    "tier": "standard",
+    "threshold": 0,
+    "tp": 1558,
+    "fp": 150,
+    "fn": 2,
+    "exposed_secrets": 2,
+    "residual_bytes": 80
+  },
+  {
+    "set": "held",
+    "tier": "critical",
+    "threshold": 0.5,
+    "tp": 1632,
+    "fp": 64,
+    "fn": 0,
+    "exposed_secrets": 0,
+    "residual_bytes": 0
+  },
+  {
+    "set": "held",
+    "tier": "high",
+    "threshold": 0.5,
+    "tp": 720,
+    "fp": 0,
+    "fn": 0,
+    "exposed_secrets": 0,
+    "residual_bytes": 0
+  },
+  {
+    "set": "held",
+    "tier": "standard",
+    "threshold": 0.5,
+    "tp": 1440,
+    "fp": 0,
+    "fn": 120,
+    "exposed_secrets": 120,
+    "residual_bytes": 4800
+  },
+  {
+    "set": "held",
+    "tier": "critical",
+    "threshold": 0.7,
+    "tp": 1632,
+    "fp": 0,
+    "fn": 0,
+    "exposed_secrets": 0,
+    "residual_bytes": 0
+  },
+  {
+    "set": "held",
+    "tier": "high",
+    "threshold": 0.7,
+    "tp": 570,
+    "fp": 0,
+    "fn": 150,
+    "exposed_secrets": 150,
+    "residual_bytes": 1200
+  },
+  {
+    "set": "held",
+    "tier": "standard",
+    "threshold": 0.7,
+    "tp": 1440,
+    "fp": 0,
+    "fn": 120,
+    "exposed_secrets": 120,
+    "residual_bytes": 4800
+  }
+]

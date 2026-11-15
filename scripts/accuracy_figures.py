@@ -96,6 +96,21 @@ def sample_index(held):
     return samples
 
 
+def severity_section():
+    rows = json.loads((ROOT/'doc/severity.json').read_text())
+    out = ['## Severity and residual exposure', '',
+           'These evaluation tiers are private to the test suite. Critical covers credentials, service and payment tokens, cloud and VCS tokens, private keys, PAN and JWT. High covers national IDs, bank accounts, IBAN and routing numbers, including UK sort codes. Email, phone, IP, crypto addresses and the remaining kinds are standard. Tier labels do not change the public Scanner API.', '',
+           'Both committed synthetic corpora are combined with the credential corpus for the same split. Each detector runs alone. Recall still requires an exact kind and span; residual exposure independently counts original bytes outside the union of masked ranges for every expected secret. A partially masked value remains exposed. Overlapping findings cover a byte once, and an invalid range follows Mask’s whole-input redaction rule. The [per-secret ledger](../tests/testdata/residual-exposure.json) records every expected range and its unmasked byte count at threshold zero, including zeros. These historical held fixtures are regression evidence after inspection.', '',
+           '| Set | Tier | Threshold | TP / FP / misses | Recall | Exposed values / bytes |',
+           '|---|---|---:|---:|---:|---:|']
+    for row in rows:
+        recall = 100*row['tp']/(row['tp']+row['fn'])
+        out.append(f"| {row['set']} | {row['tier']} | {row['threshold']:.1f} | {row['tp']} / {row['fp']} / {row['fn']} | {recall:.2f}% | {row['exposed_secrets']} / {row['residual_bytes']} |")
+    out += ['', 'The critical gate requires the current 100% exact-span recall and zero residual bytes in each split at threshold zero. Updating a snapshot cannot relax this assertion. Unit tests inject a partial mask, overlapping ranges, missing findings and an empty corpus to check the gate and exposure calculation.', '',
+            'The default confidence decision is 0 for every tier. Critical precision improves at 0.7 on these committed fixtures, but the fixtures do not establish that a mislabeled card can be discarded safely; a business label can reduce a real PAN’s score to 0.4. High loses 152 development and 150 held findings at 0.7, leaving 1,215 and 1,200 bytes exposed. Standard loses all 120 entropy positives in each split at 0.5. Entropy remains opt-in because its public-ID negatives have the same value distribution. These observations support retaining findings and selecting kinds or sensitive keys for a particular output boundary; they do not support an implicit per-tier cutoff.', '']
+    return out
+
+
 def page(rows):
     development = json.loads((ROOT/'doc/accuracy.json').read_text())
     dev50 = json.loads((ROOT/'doc/accuracy-50.json').read_text())
@@ -147,6 +162,7 @@ def page(rows):
             'The 0.7 results improve PAN, My Number and phone precision on both sets without losing recall in these samples; the default retains their ambiguous business identifiers. Email and encoded-form recall improve on both sets. SWIFT word false positives remain: the rejected attachment rule improved development precision but failed held-out evaluation. Round 12 adds development regressions for reserved IBAN check digits 00, 01 and 99 and rejects them before MOD 97. The four formerly held-out false positives are fixed; this historical set is now regression evidence, not unseen evaluation.', '',
             'PEM samples test headers, not full private keys. Generated service tokens test syntax, not authentication. Do not use synthetic identities, account or phone values for transactions or contacting people.', '', '[Support maintenance](https://github.com/sponsors/nao1215).', '']
     out += ['', (ROOT/'doc/credentials-accuracy.md').read_text(), '', '## Default policy decision', '', 'Scanner, slog, adapters and embargotest keep threshold 0. NewScanner and the zero Scanner now omit KindHighEntropy; WithAll or WithKinds(KindHighEntropy) enables it. The historical credential held set gave entropy 50.0% precision and 98.3% recall: public random IDs share the token distribution. The real-log study removed 273 path findings but cannot establish that a bare random token is a secret. Opt-in keeps that trade-off visible instead of disguising it with a confidence adjustment. Slog and adapters honor the explicit Scanner supplied by the caller, while embargotest favors finding forgotten values. Threshold 0.5 removes business-label candidates but retains PAN checksum failures and loses every unlabeled entropy finding. Threshold 0.7 additionally loses bank-account and some sort-code findings. Neither becomes a hidden default. Choose a threshold explicitly for the selected kinds; confidence is not probability. SWIFT development precision remains 54.9%; changing the global threshold does not repair ambiguous alphabetic bank codes.', '']
+    out += ['', *severity_section()]
     out += ['', (ROOT/'doc/real-logs.md').read_text(encoding='utf-8')]
     return '\n'.join(out)
 

@@ -2,7 +2,6 @@ package embargotest
 
 import (
 	"bytes"
-	"strconv"
 	"testing"
 )
 
@@ -30,9 +29,11 @@ func FuzzGuardFraming(f *testing.F) {
 		if !bytes.Equal(joined, data[:len(joined)]) {
 			t.Fatal("capture reframed bytes")
 		}
-		count, err := strconv.Atoi(guardTests(data))
-		if err != nil || count < 0 || count > bytes.Count(data, []byte("\n"))+1 {
-			t.Fatal("untrusted framing escaped fixed diagnostic")
+		policy := guardPolicy(nil)
+		leaks, _ := guardLeaks(capture.data[0], policy)
+		names := guardTests(capture, 0, leaks, policy)
+		if containsCanary([]byte(names), policy.needles) {
+			t.Fatal("diagnostic repeated canary")
 		}
 	})
 }

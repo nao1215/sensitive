@@ -32,22 +32,90 @@ The generator rejects incomplete mutation/fuzz runs and records source-log hashe
 ## Technique inventory
 
 <!-- techniques:start -->
-| Technique | Bug class caught here | Tests | CI |
-|---|---|---|---|
-| Examples and unit tests | Incorrect fixed outputs and public usage contracts | [example_test](../example_test.go), [doc_sync_test](../doc_sync_test.go) | unit_test:unit_test |
-| Generated properties | Combinations absent from handwritten checksum fixtures | [properties_test](../tests/properties_test.go), [mask_test](../tests/mask_test.go), [mask_oracle_test](../mask_oracle_test.go) | unit_test:property_tests |
-| Metamorphic relations | Context, kind selection, encoding or formatting changes findings | [metamorphic_test](../tests/metamorphic_test.go) | unit_test:property_tests |
-| Quint and model replay | Invalid operation sequences, sticky failures and unsafe replay | [guard](../tests/models/guard.qnt), [model_replay_test](../embargotest/model_replay_test.go), [model_input_test](../tests/model_input_test.go) | verification:formal |
-| Lean reference proofs | Arithmetic and interval errors beyond a finite random sample | [Reference](../tests/lean/Reference.lean), [lean_vectors_test](../tests/lean_vectors_test.go) | verification:formal |
-| Intentional snapshots | Unreviewed output shape changes despite correct redaction | [snapshot_test](../snapshot_test.go), [snapshot_test](../adapters/zap/snapshot_test.go), [guard_test](../embargotest/guard_test.go) | unit_test:unit_test |
-| Independent differential oracles | A shared implementation mistake in locally written expected values | [external_oracles_test](../tests/external_oracles_test.go), [scanner_dispatch_test](../scanner_dispatch_test.go) | verification:policies |
-| Structure-aware fuzzing | Malformed nested paths, quoted credentials and split stream frames | [structure_fuzz_test](../structure_fuzz_test.go), [guard_fuzz_test](../embargotest/guard_fuzz_test.go) | fuzz:fuzz |
-| Mutation testing | Assertions that execute changed logic without detecting it | [mutation_attribution](../scripts/mutation_attribution.py) | heavy:mutation |
-| Real logger and SDK output | Serializer or adapter behavior outside the scanner model | [compatibility_integration_test](../tests/compatibility_integration_test.go), [telemetry_logs_test](../tests/telemetry_logs_test.go) | unit_test:property_tests |
-| Race and lifecycle tests | Shared-state races, pipe hangs and detached goroutines | [lifecycle_test](../tests/lifecycle_test.go), [main_test](../tests/guardlifecycle/main_test.go) | unit_test:property_tests |
-| Paired CI benchmarks | Speed regressions hidden by noise between runners | [ci_benchmark](../scripts/ci_benchmark.py) | verification:benchmark |
-| Prose and policy checks | Stale documentation and unimplemented repository rules | [check_prose](../scripts/check_prose.py), [check_policies](../scripts/check_policies.py) | verification:policies |
-| Adversarial budgets | Resource amplification, framing spoofing and ambiguous encodings | [adversarial_test](../adversarial_test.go), [guard_adversarial_test](../embargotest/guard_adversarial_test.go) | heavy:scaling |
+<a id="examples-and-unit-tests"></a>
+
+### Examples and unit tests
+
+Incorrect fixed outputs and public usage contracts. Tests: [example_test](../example_test.go), [doc_sync_test](../doc_sync_test.go). CI: `unit_test:unit_test`.
+
+<a id="generated-properties"></a>
+
+### Generated properties
+
+Combinations absent from handwritten checksum fixtures. Tests: [properties_test](../tests/properties_test.go), [mask_test](../tests/mask_test.go), [mask_oracle_test](../mask_oracle_test.go). CI: `unit_test:property_tests`.
+
+<a id="metamorphic-relations"></a>
+
+### Metamorphic relations
+
+Context, kind selection, encoding or formatting changes findings. Tests: [metamorphic_test](../tests/metamorphic_test.go). CI: `unit_test:property_tests`.
+
+<a id="quint-and-model-replay"></a>
+
+### Quint and model replay
+
+Invalid operation sequences, sticky failures and unsafe replay. Tests: [guard](../tests/models/guard.qnt), [model_replay_test](../embargotest/model_replay_test.go), [model_input_test](../tests/model_input_test.go). CI: `verification:formal`.
+
+<a id="lean-reference-proofs"></a>
+
+### Lean reference proofs
+
+Arithmetic and interval errors beyond a finite random sample. Tests: [Reference](../tests/lean/Reference.lean), [lean_vectors_test](../tests/lean_vectors_test.go). CI: `verification:formal`.
+
+<a id="intentional-snapshots"></a>
+
+### Intentional snapshots
+
+Unreviewed output shape changes despite correct redaction. Tests: [snapshot_test](../snapshot_test.go), [snapshot_test](../adapters/zap/snapshot_test.go), [guard_test](../embargotest/guard_test.go). CI: `unit_test:unit_test`.
+
+<a id="independent-differential-oracles"></a>
+
+### Independent differential oracles
+
+A shared implementation mistake in locally written expected values. Tests: [external_oracles_test](../tests/external_oracles_test.go), [scanner_dispatch_test](../scanner_dispatch_test.go). CI: `verification:policies`.
+
+<a id="structure-aware-fuzzing"></a>
+
+### Structure-aware fuzzing
+
+Malformed nested paths, quoted credentials and split stream frames. Tests: [structure_fuzz_test](../structure_fuzz_test.go), [guard_fuzz_test](../embargotest/guard_fuzz_test.go). CI: `fuzz:fuzz`.
+
+<a id="mutation-testing"></a>
+
+### Mutation testing
+
+Assertions that execute changed logic without detecting it. Tests: [mutation_attribution](../scripts/mutation_attribution.py). CI: `heavy:mutation`.
+
+<a id="real-logger-and-sdk-output"></a>
+
+### Real logger and SDK output
+
+Serializer or adapter behavior outside the scanner model. Tests: [compatibility_integration_test](../tests/compatibility_integration_test.go), [telemetry_logs_test](../tests/telemetry_logs_test.go). CI: `unit_test:property_tests`.
+
+<a id="race-and-lifecycle-tests"></a>
+
+### Race and lifecycle tests
+
+Shared-state races, pipe hangs and detached goroutines. Tests: [lifecycle_test](../tests/lifecycle_test.go), [main_test](../tests/guardlifecycle/main_test.go). CI: `unit_test:property_tests`.
+
+<a id="paired-ci-benchmarks"></a>
+
+### Paired CI benchmarks
+
+Speed regressions hidden by noise between runners. Tests: [ci_benchmark](../scripts/ci_benchmark.py). CI: `verification:benchmark`.
+
+<a id="prose-and-policy-checks"></a>
+
+### Prose and policy checks
+
+Stale documentation and unimplemented repository rules. Tests: [check_prose](../scripts/check_prose.py), [check_policies](../scripts/check_policies.py). CI: `verification:policies`.
+
+<a id="adversarial-budgets"></a>
+
+### Adversarial budgets
+
+Resource amplification, framing spoofing and ambiguous encodings. Tests: [adversarial_test](../adversarial_test.go), [guard_adversarial_test](../embargotest/guard_adversarial_test.go). CI: `heavy:scaling`.
+
 <!-- techniques:end -->
 
 ## Measured results
@@ -114,7 +182,7 @@ Same-runner benchmarks build base and head once and alternate ten measurements i
 |---|---|---|
 | Public API goldens | Constants are included; promoted members are rejected | contracts/api_test.go |
 | Logger event snapshots | Valid JSON, no canary/email, retained nested object and array fields | Each adapter snapshot_test.go |
-| Guard failure message | No supplied test name or canary appears; failure exits nonzero | guard_adversarial_test.go and guard_test.go |
+| Guard failure message | Active test names survive validation; canaries and rejected names do not | guard_adversarial_test.go and guard_test.go |
 | Large MaskJSON snapshot | Every sensitive field removed; exact integer and public fields retained | snapshot_test.go |
 | Accuracy tables and figures | Unique exact-span matching, valid counters and measured-data rendering | accuracy_test.go and test_accuracy_figures.py |
 | Benchmark tables and figures | Parsed samples, confidence intervals and masking correctness | benchmark_docs_test.go and log_benchmark_contract_test.go |

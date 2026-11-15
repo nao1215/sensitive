@@ -1,6 +1,6 @@
 # Repository policies
 
-The inventory below translates the owner's active repository instructions into checks. Sources are CLAUDE.md, CONTRIBUTING.md, the linked design documents, round reports 2–13 and the owner's master checklist reviewed on 2026-11-16. The reports and checklist live in the owner's private work directory; their decisions are restated here so CI does not require that directory. Later instructions supersede earlier ones: the coverage floor is 97%, the root package layout is internal, and round 14 forbids a release.
+The inventory below translates the owner's active repository instructions into checks. Sources are CLAUDE.md, CONTRIBUTING.md, the linked design documents, round reports 2–14 and the owner's master checklist reviewed on 2026-11-16. The reports and checklist live in the owner's private work directory; their decisions are restated here so CI does not require that directory. Later instructions supersede earlier ones: the coverage floor is 97%, the root package layout is internal, and round 15 forbids a release.
 
 <!-- policy-map:start -->
 | Rule | Source | Check | Where it runs |
@@ -57,13 +57,18 @@ The inventory below translates the owner's active repository instructions into c
 | Squash only the owned PR after green CI and resolved review | R6; M14 | [check_merge](../scripts/check_merge.py) | Pre-merge audit |
 | No force push, release or third-party mutations in this workflow | M14 | [owned_repository](../scripts/check_merge.py) | Pre-merge audit |
 | Production fixes retain failing-first evidence | CLAUDE; M14 | [regression-evidence](../scripts/check_policies.py) | Verification |
+| Guard diagnostics validate names and track active tests | M15 | [TestGuardNamesAtLeak](../embargotest/guard_names_test.go) | MultiPlatformUnitTest |
+| Critical recall cannot drop or retain unmasked expected bytes | M15 | [TestSeverityAccuracy](../tests/severity_test.go) | MultiPlatformUnitTest |
+| README techniques link bug classes to individual sections | M15 | [test_readme_links_each_bug_to_its_section](../scripts/test_testing_techniques.py) | Verification |
+| Module downloads retry without retrying failed tests | M15 | [test_persistent_failure_is_not_swallowed](../scripts/test_download_modules.py) | Verification |
+| Quint npm bumps must match the pinned release evaluator | M15 | [test_changed_expected_version_fails_before_cached_install](../scripts/test_install_quint_evaluator.py) | Verification |
 <!-- policy-map:end -->
 
 ## Changing a rule
 
 Update scripts/policies.json with a concrete check and the workflow that executes it, then run `python3 scripts/check_policies.py --write`. A missing implementation, unknown workflow, absent test path or stale table fails Verification. The rule inventory is reviewed when an owner instruction changes; no parser can infer new instructions from an unstructured conversation. Checks for code and documents run in CI; merge-time checks inspect live GitHub state immediately before the authorized squash merge.
 
-Source labels R2–R13 refer to the corresponding owner round reports; M14 refers to the master checklist and round-14 request. Historical release and artwork approvals are not standing permission to publish releases or change artwork. Work on other repositories, new detector families and future release tags remain outside this round. Automated checks constrain this repository and its merge command; they cannot audit unrelated commands executed outside the repository.
+Source labels R2–R14 refer to the corresponding owner round reports; M14 refers to the master checklist and round-14 request. M15 refers to the Round 15 request, including the two-PR split and serial heavy jobs. Historical release and artwork approvals are not standing permission to publish releases or change artwork. Work on other repositories and future release tags remains outside this round. Round 15 authorizes the specified country detectors and isolated production hooks. Automated checks constrain this repository and its merge command; they cannot audit unrelated commands executed outside the repository.
 
 The TDD rule requires a failing regression before a production fix. The round report records that evidence; CI can verify the regression remains, but cannot reconstruct the order of uncommitted edits. Test readability, useful explanations, false-positive labeling and visual table layout also retain human review alongside the executable checks.
 
