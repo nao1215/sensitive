@@ -200,3 +200,9 @@ Contributions to this project are considered to be released under the project's 
 ---
 
 Thank you again for considering contributing! We sincerely look forward to your participation.
+
+## Documentation checks
+
+Pull requests and pushes always check README snippets against runnable Examples and validate generated accuracy, benchmark, testing and compatibility tables. The table-only compatibility check skips SDK, HTTP and child-process subtests; those remain in the full code suite. Documentation-only changes (*.md, doc/**, LICENSE, .all-contributorsrc and image files) skip the Go matrix, coverage, lint and vulnerability jobs through job conditions. Unrecognized paths, workflow changes and changes to executable tools run the full checks. Rename classification includes both the old and new paths, and missing Git history fails the classifier.
+
+CodeQL still runs on every pull request and main push to retain Scorecard SAST coverage of recent changesets. Nightly fuzz, scheduled Scorecard and scheduled vulnerability scans remain enabled. There is no pull-request mutation workflow; mutation remains an explicit make target. Workflow edits also run actionlint, and spelling review stays enabled for documentation. Branch rules had no required status checks when this policy was introduced; job-level conditions keep skipped checks visible instead of preventing workflow creation.

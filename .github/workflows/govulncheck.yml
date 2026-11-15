@@ -24,7 +24,12 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+
   govulncheck:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     name: govulncheck (${{ matrix.module }}, Go ${{ matrix.go }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
