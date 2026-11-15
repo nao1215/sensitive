@@ -188,3 +188,21 @@ func TestPhoneConfidenceAndContainsEdges(t *testing.T) {
 		t.Fatal("keyword language")
 	}
 }
+
+func TestAdjacentCandidatesAndChecksumRemainder(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		d    Detector
+		text string
+		want int
+	}{
+		{NewABARouting(), "021000021;021000021", 2},
+		{NewABARouting(), "123;021000021", 1},
+		{NewCardExpiry(), "expiry 12/29;01/30", 2},
+		{NewMyNumber(), "000000000060", 1},
+	} {
+		if got := tc.d.Scan([]byte(tc.text)); len(got) != tc.want {
+			t.Fatal(tc.d.Name(), tc.text, got)
+		}
+	}
+}
