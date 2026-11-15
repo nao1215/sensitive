@@ -16,13 +16,14 @@ func TestBenchmarkTable(t *testing.T) {
 		t.Fatal(err)
 	}
 	var snapshot struct {
-		Benchmarks map[string]map[string]float64 `json:"benchmarks"`
-		Date       string                        `json:"date"`
-		GoVersion  string                        `json:"go_version"`
-		OS         string                        `json:"os"`
-		Arch       string                        `json:"arch"`
-		CPU        string                        `json:"cpu"`
-		Commit     string                        `json:"commit"`
+		BackgroundLoad string                        `json:"background_load"`
+		Benchmarks     map[string]map[string]float64 `json:"benchmarks"`
+		Date           string                        `json:"date"`
+		GoVersion      string                        `json:"go_version"`
+		OS             string                        `json:"os"`
+		Arch           string                        `json:"arch"`
+		CPU            string                        `json:"cpu"`
+		Commit         string                        `json:"commit"`
 	}
 	if err := json.Unmarshal(data, &snapshot); err != nil {
 		t.Fatal(err)
@@ -34,6 +35,7 @@ func TestBenchmarkTable(t *testing.T) {
 		}
 	}
 	printLine("Measured %s with %s, %s/%s, %s, GOMAXPROCS=1; median of five 200 ms samples at [%s](https://github.com/nao1215/embargo/commit/%s).\n\n", snapshot.Date, snapshot.GoVersion, snapshot.OS, snapshot.Arch, snapshot.CPU, snapshot.Commit[:7], snapshot.Commit)
+	printLine("Background load: %s.\n\n", snapshot.BackgroundLoad)
 	printLine("| Operation | ns/op | MB/s | B/op | allocs/op |\n|---|---:|---:|---:|---:|\n")
 	for _, row := range []struct{ label, name string }{
 		{label: "Scanner WithAll, clean", name: "Scanner/all/clean"},

@@ -22,6 +22,8 @@ embargo detects and masks personal data, payment data and secrets in text, logs 
 
 ## Quick start
 
+These examples use the unreleased API on main (Go 1.26.11 or later).
+
 <!-- example: example_test.go:Example -->
 ```go
 text := "email=alice@example.com card=4111111111111111"
@@ -199,10 +201,10 @@ In application tests pass `t` to `embargotest.New`; this standalone example uses
 
 ## Accuracy
 
-These are sample-level results on a small labeled corpus, not a production accuracy claim. The corpus combines two synthetic/specification positives and two look-alikes per detector from [recall.json](testdata/recall.json) with 16 shared [negative controls](tests/testdata/accuracy_controls.json): UUIDs, git SHAs, hashes, timestamps, order/shipment IDs, base64 and ordinary logs. Labels were assigned from the fixture's intended meaning, independently of scanner output. Ambiguous order IDs deliberately reuse card/ID-shaped digits. Each detector runs alone with default confidence; a sample is positive if it produces any finding. The corpus has no live personal data, no representative prevalence and little linguistic variety. Precision is TP/(TP+FP); recall is TP/(TP+FN). Run `make accuracy-doc` to regenerate; CI rejects a stale table.
+These are exact-span results on a small labeled corpus, not a production accuracy claim. The corpus combines two synthetic/specification positives and two look-alikes per detector from [accuracy.json](tests/testdata/accuracy.json), with manually labeled original-byte ranges based on the existing recall fixtures, plus 16 shared [negative controls](tests/testdata/accuracy_controls.json): UUIDs, git SHAs, hashes, timestamps, order/shipment IDs, base64 and ordinary logs. Labels were assigned from the fixture's intended meaning, independently of scanner output. Ambiguous order IDs deliberately reuse card/ID-shaped digits. Each detector runs alone with default confidence; a true positive requires an unused expected range with exactly matching kind, start and end bytes. Partial, duplicate and extra findings count as false positives; unmatched expected spans count as false negatives. The corpus has no live personal data, no representative prevalence and little linguistic variety. Precision is TP/(TP+FP); recall is TP/(TP+FN); undefined ratios are n/a. Run `make accuracy-doc` to regenerate; CI rejects a stale table.
 
 <!-- accuracy:start -->
-| Detector | Positive / negative samples | TP / FP / FN | Precision | Recall |
+| Detector | Positive / negative inputs | TP / FP / FN spans | Precision | Recall |
 |---|---:|---:|---:|---:|
 | aba_routing | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
 | ach_trace | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
@@ -231,13 +233,66 @@ These are sample-level results on a small labeled corpus, not a production accur
 
 ## Testing
 
-The library has zero dependencies; test-only tools live in the separate [tests/](tests/) module (Go 1.26.11+). Run `go test ./...` in both directories; this executes the Go examples and checks README snippets against them. See [testing](doc/testing.md) for lint, vet, fuzzing, golden updates, coverage, and mutation checks.
+Unit tests check formats, checksums and failure states. rapid generates shrinking property cases; metamorphic tests check offsets and redaction, and differential tests compare HTTP behavior with httptest and cryptographic checksums with independent implementations. Native Go fuzzing exercises scanning, masking, Input, canary encodings and JSON streams. gremlins mutates the implementation; API/panic goldens, runnable Examples, real logger/SDK compatibility and Linux/macOS/Windows CI cover the surrounding contracts. goleak checks child-process cleanup. Root dependencies remain zero; external test tools live in [tests/](tests/).
+
+<!-- testing-metrics:start -->
+Final measurement is running; results are recorded before this change is merged.
+<!-- testing-metrics:end -->
+
+Run `go test ./...`, `go -C tests test ./...`, `make race`, `make fuzz`, `make mutation` and `make lint`. See [testing](doc/testing.md) for architecture checks and golden updates.
 
 ## Benchmarks
 
 `make benchmark-doc` measures Scanner throughput for every detector and WithAll, masking, Recorder construction/capture/Check against a plain buffer, and the slog wrapper against a plain JSONHandler. Clean inputs contain ordinary text; dirty inputs use the synthetic positive corpus. Recorder figures include test cleanup registration. These are local measurements, not service latency predictions. The [raw samples](doc/benchmarks.raw.txt) and [manual benchstat comparison](doc/benchmarks.md) make the measurement reproducible; CI checks the rendered table, without noisy timing thresholds on shared runners.
 
 <!-- benchmarks:start -->
+Measured 2026-11-15 with go1.26.11, linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          , GOMAXPROCS=1; median of five 200 ms samples at [2cfe331](https://github.com/nao1215/embargo/commit/2cfe3311d50949f112a33385168ca6e3f33c5867).
+
+Background load: mutation tests were running; this preliminary table will be refreshed after they finish.
+
+| Operation | ns/op | MB/s | B/op | allocs/op |
+|---|---:|---:|---:|---:|
+| Scanner WithAll, clean | 102060.0 | 26.96 | 52480 | 131 |
+| Scanner WithAll, dirty | 16130815.0 | 2.05 | 2397009 | 13186 |
+| Mask | 14085.0 | 209.02 | 13816 | 12 |
+| Writer only | 18.6 | 29325.94 | 0 | 0 |
+| Recorder + Check | 89817.0 | 6.06 | 35637 | 509 |
+| Plain slog, clean | 887.2 | — | 16 | 1 |
+| Masked slog, clean | 5792.0 | — | 864 | 17 |
+| Plain slog, dirty | 1845.0 | — | 16 | 1 |
+| Masked slog, dirty | 15502.0 | — | 1144 | 24 |
+
+<details>
+<summary>Per-detector Scanner throughput</summary>
+
+| Detector | Clean MB/s | Dirty MB/s |
+|---|---:|---:|
+| aba_routing | 132.64 | 40.06 |
+| ach_trace | 535.14 | 3.26 |
+| all | 26.96 | 2.05 |
+| awskey | 532.03 | 64.11 |
+| bank_account | 446.33 | 4.06 |
+| btc | 527.79 | 41.14 |
+| card_expiry | 864.66 | 0.74 |
+| cvv | 360.28 | 4.03 |
+| email | 31765.26 | 46.31 |
+| eth | 867.31 | 110.14 |
+| github_token | 861.53 | 118.40 |
+| google_api_key | 633.45 | 113.89 |
+| iban | 432.42 | 37.54 |
+| ipaddr | 14363.78 | 33.04 |
+| jwt | 739.00 | 22.18 |
+| merchant_id | 307.54 | 9.64 |
+| mynumber | 165.72 | 37.24 |
+| pan | 3778.67 | 27.58 |
+| payment_token | 137.60 | 84.16 |
+| phone_jp | 20619.89 | 29.20 |
+| private_key_pem | 677.00 | 88.74 |
+| slack_token | 1085.30 | 79.53 |
+| swiftbic | 89.10 | 20.07 |
+| uk_sortcode | 179.91 | 38.34 |
+
+</details>
 <!-- benchmarks:end -->
 
 ## Contributing

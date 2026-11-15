@@ -103,7 +103,8 @@ func BenchmarkPublishedRecorder(b *testing.B) {
 func BenchmarkPublishedSlog(b *testing.B) {
 	for _, name := range []string{"plain-clean", "masked-clean", "plain-dirty", "masked-dirty"} {
 		b.Run(name, func(b *testing.B) {
-			var handler slog.Handler = slog.NewJSONHandler(&benchmarkWriter{}, nil)
+			sink := &benchmarkWriter{}
+			var handler slog.Handler = slog.NewJSONHandler(sink, nil)
 			if strings.HasPrefix(name, "masked") {
 				handler = embargo.NewSlogHandler(handler, embargo.NewScanner())
 			}
@@ -115,6 +116,9 @@ func BenchmarkPublishedSlog(b *testing.B) {
 			b.ReportAllocs()
 			for b.Loop() {
 				logger.Info("request accepted", "reference", value)
+			}
+			if sink.written == 0 {
+				b.Fatal("benchmark skipped actual JSON encoding")
 			}
 		})
 	}

@@ -25,12 +25,14 @@ if not rows or any(len(values) != 5 for values in rows.values()):
 snapshot = {
     "date": datetime.datetime.now(datetime.timezone.utc).date().isoformat(),
     "go_version": subprocess.check_output(["go", "env", "GOVERSION"], env=environment, text=True).strip(),
-    "os": re.search(r"^goos: (.+)$", result.stdout, re.M)[1],
-    "arch": re.search(r"^goarch: (.+)$", result.stdout, re.M)[1],
-    "cpu": re.search(r"^cpu: (.+)$", result.stdout, re.M)[1],
+    "os": re.search(r"^goos: (.+)$", result.stdout, re.M)[1].strip(),
+    "arch": re.search(r"^goarch: (.+)$", result.stdout, re.M)[1].strip(),
+    "cpu": re.search(r"^cpu: (.+)$", result.stdout, re.M)[1].strip(),
     "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
     "command": "GOMAXPROCS=1 GOTOOLCHAIN=go1.26.11 " + " ".join(command),
     "samples": 5,
+    "cpu_affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
+    "background_load": os.environ.get("EMBARGO_BENCH_LOAD", "no intentional concurrent workload"),
     "benchmarks": {name: {unit: statistics.median(item[unit] for item in values) for unit in values[0]} for name, values in sorted(rows.items())},
 }
 (root / "doc/benchmarks.json").write_text(json.dumps(snapshot, indent=2) + "\n")

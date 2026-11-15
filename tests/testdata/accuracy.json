@@ -1,0 +1,700 @@
+[
+  {
+    "kind": "pan",
+    "text": "4532015112830366",
+    "expected": [
+      {
+        "start": 0,
+        "end": 16
+      }
+    ]
+  },
+  {
+    "kind": "pan",
+    "text": "374245455400126",
+    "expected": [
+      {
+        "start": 0,
+        "end": 15
+      }
+    ]
+  },
+  {
+    "kind": "pan",
+    "text": "version 1.2.3",
+    "expected": []
+  },
+  {
+    "kind": "pan",
+    "text": "123456789012",
+    "expected": []
+  },
+  {
+    "kind": "email",
+    "text": "alice@example.com",
+    "expected": [
+      {
+        "start": 0,
+        "end": 17
+      }
+    ]
+  },
+  {
+    "kind": "email",
+    "text": "build+test@example.org",
+    "expected": [
+      {
+        "start": 0,
+        "end": 22
+      }
+    ]
+  },
+  {
+    "kind": "email",
+    "text": "alice@example",
+    "expected": []
+  },
+  {
+    "kind": "email",
+    "text": "user@@example.com",
+    "expected": []
+  },
+  {
+    "kind": "phone_jp",
+    "text": "090-1234-5678",
+    "expected": [
+      {
+        "start": 0,
+        "end": 13
+      }
+    ]
+  },
+  {
+    "kind": "phone_jp",
+    "text": "03-1234-5678",
+    "expected": [
+      {
+        "start": 0,
+        "end": 12
+      }
+    ]
+  },
+  {
+    "kind": "phone_jp",
+    "text": "090-1234-567",
+    "expected": []
+  },
+  {
+    "kind": "phone_jp",
+    "text": "190-1234-5678",
+    "expected": []
+  },
+  {
+    "kind": "mynumber",
+    "text": "123456789018",
+    "expected": [
+      {
+        "start": 0,
+        "end": 12
+      }
+    ]
+  },
+  {
+    "kind": "mynumber",
+    "text": "１２３４５６７８９０１８",
+    "expected": [
+      {
+        "start": 0,
+        "end": 36
+      }
+    ]
+  },
+  {
+    "kind": "mynumber",
+    "text": "123456789019",
+    "expected": []
+  },
+  {
+    "kind": "mynumber",
+    "text": "12345678901",
+    "expected": []
+  },
+  {
+    "kind": "jwt",
+    "text": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhIn0.AAAA",
+    "expected": [
+      {
+        "start": 0,
+        "end": 41
+      }
+    ]
+  },
+  {
+    "kind": "jwt",
+    "text": "eyJhbGciOiJub25lIn0.eyJzdWIiOiJhIn0.",
+    "expected": [
+      {
+        "start": 0,
+        "end": 36
+      }
+    ]
+  },
+  {
+    "kind": "jwt",
+    "text": "eyJhbGciOiJIUzI1NiJ9.!invalid.AAAA",
+    "expected": []
+  },
+  {
+    "kind": "jwt",
+    "text": "eyJhbGciOiJIUzI1NiJ9",
+    "expected": []
+  },
+  {
+    "kind": "awskey",
+    "text": "AKIAIOSFODNN7EXAMPLE",
+    "expected": [
+      {
+        "start": 0,
+        "end": 20
+      }
+    ]
+  },
+  {
+    "kind": "awskey",
+    "text": "ASIAIOSFODNN7EXAMPLE",
+    "expected": [
+      {
+        "start": 0,
+        "end": 20
+      }
+    ]
+  },
+  {
+    "kind": "awskey",
+    "text": "AKIAIOSFODNN7EXAMPL",
+    "expected": []
+  },
+  {
+    "kind": "awskey",
+    "text": "xAKIAIOSFODNN7EXAMPLE",
+    "expected": []
+  },
+  {
+    "kind": "iban",
+    "text": "DE89370400440532013000",
+    "expected": [
+      {
+        "start": 0,
+        "end": 22
+      }
+    ]
+  },
+  {
+    "kind": "iban",
+    "text": "GB82WEST12345698765432",
+    "expected": [
+      {
+        "start": 0,
+        "end": 22
+      }
+    ]
+  },
+  {
+    "kind": "iban",
+    "text": "DE89370400440532013001",
+    "expected": []
+  },
+  {
+    "kind": "iban",
+    "text": "GB82WEST1234569876543",
+    "expected": []
+  },
+  {
+    "kind": "ipaddr",
+    "text": "192.0.2.1",
+    "expected": [
+      {
+        "start": 0,
+        "end": 9
+      }
+    ]
+  },
+  {
+    "kind": "ipaddr",
+    "text": "2001:db8::1",
+    "expected": [
+      {
+        "start": 0,
+        "end": 11
+      }
+    ]
+  },
+  {
+    "kind": "ipaddr",
+    "text": "999.0.0.1",
+    "expected": []
+  },
+  {
+    "kind": "ipaddr",
+    "text": "1.2.3.999",
+    "expected": []
+  },
+  {
+    "kind": "swiftbic",
+    "text": "TESTGB1A",
+    "expected": [
+      {
+        "start": 0,
+        "end": 8
+      }
+    ]
+  },
+  {
+    "kind": "swiftbic",
+    "text": "SWIFT: TESTGBAB",
+    "expected": [
+      {
+        "start": 7,
+        "end": 15
+      }
+    ]
+  },
+  {
+    "kind": "swiftbic",
+    "text": "TEST001A",
+    "expected": []
+  },
+  {
+    "kind": "swiftbic",
+    "text": "TESTGB1",
+    "expected": []
+  },
+  {
+    "kind": "aba_routing",
+    "text": "021000021",
+    "expected": [
+      {
+        "start": 0,
+        "end": 9
+      }
+    ]
+  },
+  {
+    "kind": "aba_routing",
+    "text": "011000015",
+    "expected": [
+      {
+        "start": 0,
+        "end": 9
+      }
+    ]
+  },
+  {
+    "kind": "aba_routing",
+    "text": "021000022",
+    "expected": []
+  },
+  {
+    "kind": "aba_routing",
+    "text": "001000003",
+    "expected": []
+  },
+  {
+    "kind": "uk_sortcode",
+    "text": "12-34-56",
+    "expected": [
+      {
+        "start": 0,
+        "end": 8
+      }
+    ]
+  },
+  {
+    "kind": "uk_sortcode",
+    "text": "sort code: 01 00 00 ",
+    "expected": [
+      {
+        "start": 11,
+        "end": 19
+      }
+    ]
+  },
+  {
+    "kind": "uk_sortcode",
+    "text": "00-00-00",
+    "expected": []
+  },
+  {
+    "kind": "uk_sortcode",
+    "text": "12-34-56-78",
+    "expected": []
+  },
+  {
+    "kind": "cvv",
+    "text": "CVV: 123",
+    "expected": [
+      {
+        "start": 5,
+        "end": 8
+      }
+    ]
+  },
+  {
+    "kind": "cvv",
+    "text": "security code: 4567",
+    "expected": [
+      {
+        "start": 15,
+        "end": 19
+      }
+    ]
+  },
+  {
+    "kind": "cvv",
+    "text": "CVV: 12",
+    "expected": []
+  },
+  {
+    "kind": "cvv",
+    "text": "CVV: 12345",
+    "expected": []
+  },
+  {
+    "kind": "card_expiry",
+    "text": "expiry 12/28",
+    "expected": [
+      {
+        "start": 7,
+        "end": 12
+      }
+    ]
+  },
+  {
+    "kind": "card_expiry",
+    "text": "exp 01/2030",
+    "expected": [
+      {
+        "start": 4,
+        "end": 11
+      }
+    ]
+  },
+  {
+    "kind": "card_expiry",
+    "text": "expiry 13/28",
+    "expected": []
+  },
+  {
+    "kind": "card_expiry",
+    "text": "expiry 00/28",
+    "expected": []
+  },
+  {
+    "kind": "payment_token",
+    "parts": [
+      "sk_",
+      "live_",
+      "aaaaaaaaaaaaaaaaaaaaaaaa"
+    ],
+    "expected": [
+      {
+        "start": 0,
+        "end": 32
+      }
+    ]
+  },
+  {
+    "kind": "payment_token",
+    "parts": [
+      "sk_",
+      "test_",
+      "bbbbbbbbbbbbbbbbbbbbbbbb"
+    ],
+    "expected": [
+      {
+        "start": 0,
+        "end": 32
+      }
+    ]
+  },
+  {
+    "kind": "payment_token",
+    "text": "sk_live_short",
+    "expected": []
+  },
+  {
+    "kind": "payment_token",
+    "text": "sk_test_",
+    "expected": []
+  },
+  {
+    "kind": "bank_account",
+    "text": "bank account 12345678",
+    "expected": [
+      {
+        "start": 13,
+        "end": 21
+      }
+    ]
+  },
+  {
+    "kind": "bank_account",
+    "text": "口座番号 1234567",
+    "expected": [
+      {
+        "start": 13,
+        "end": 20
+      }
+    ]
+  },
+  {
+    "kind": "bank_account",
+    "text": "bank account 12",
+    "expected": []
+  },
+  {
+    "kind": "bank_account",
+    "text": "bank account 123456789012345678901234",
+    "expected": []
+  },
+  {
+    "kind": "ach_trace",
+    "text": "ACH trace 021000021123456",
+    "expected": [
+      {
+        "start": 10,
+        "end": 25
+      }
+    ]
+  },
+  {
+    "kind": "ach_trace",
+    "text": "ACH trace 011000015123456",
+    "expected": [
+      {
+        "start": 10,
+        "end": 25
+      }
+    ]
+  },
+  {
+    "kind": "ach_trace",
+    "text": "ACH trace 02100002112345",
+    "expected": []
+  },
+  {
+    "kind": "ach_trace",
+    "text": "ACH trace 0210000211234567",
+    "expected": []
+  },
+  {
+    "kind": "merchant_id",
+    "text": "merchant ID ABCDE12345FGHI6",
+    "expected": [
+      {
+        "start": 12,
+        "end": 27
+      }
+    ]
+  },
+  {
+    "kind": "merchant_id",
+    "text": "TID 12345678",
+    "expected": [
+      {
+        "start": 4,
+        "end": 12
+      }
+    ]
+  },
+  {
+    "kind": "merchant_id",
+    "text": "merchant ID AB",
+    "expected": []
+  },
+  {
+    "kind": "merchant_id",
+    "text": "TID 12",
+    "expected": []
+  },
+  {
+    "kind": "btc",
+    "text": "1111111111111111111114oLvT2",
+    "expected": [
+      {
+        "start": 0,
+        "end": 27
+      }
+    ]
+  },
+  {
+    "kind": "btc",
+    "text": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+    "expected": [
+      {
+        "start": 0,
+        "end": 42
+      }
+    ]
+  },
+  {
+    "kind": "btc",
+    "text": "1111111111111111111114oLvT3",
+    "expected": []
+  },
+  {
+    "kind": "btc",
+    "text": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3tq",
+    "expected": []
+  },
+  {
+    "kind": "eth",
+    "text": "0x0000000000000000000000000000000000000000",
+    "expected": [
+      {
+        "start": 0,
+        "end": 42
+      }
+    ]
+  },
+  {
+    "kind": "eth",
+    "text": "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+    "expected": [
+      {
+        "start": 0,
+        "end": 42
+      }
+    ]
+  },
+  {
+    "kind": "eth",
+    "text": "0xgggggggggggggggggggggggggggggggggggggggg",
+    "expected": []
+  },
+  {
+    "kind": "eth",
+    "text": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "expected": []
+  },
+  {
+    "kind": "github_token",
+    "text": "ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "expected": [
+      {
+        "start": 0,
+        "end": 40
+      }
+    ]
+  },
+  {
+    "kind": "github_token",
+    "text": "github_pat_bbbbbbbbbbbbbbbbbbbbbb",
+    "expected": [
+      {
+        "start": 0,
+        "end": 33
+      }
+    ]
+  },
+  {
+    "kind": "github_token",
+    "text": "ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "expected": []
+  },
+  {
+    "kind": "github_token",
+    "text": "ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "expected": []
+  },
+  {
+    "kind": "slack_token",
+    "text": "xoxb-aaaaaaaaaa",
+    "expected": [
+      {
+        "start": 0,
+        "end": 15
+      }
+    ]
+  },
+  {
+    "kind": "slack_token",
+    "text": "xoxp-bbbbbbbbbbbbbbbbbbbb",
+    "expected": [
+      {
+        "start": 0,
+        "end": 25
+      }
+    ]
+  },
+  {
+    "kind": "slack_token",
+    "text": "xoxb-aaaaaaaaa",
+    "expected": []
+  },
+  {
+    "kind": "slack_token",
+    "text": "xoxz-aaaaaaaaaaaaaaaaaaaa",
+    "expected": []
+  },
+  {
+    "kind": "google_api_key",
+    "text": "AIzaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "expected": [
+      {
+        "start": 0,
+        "end": 39
+      }
+    ]
+  },
+  {
+    "kind": "google_api_key",
+    "text": "AIzabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "expected": [
+      {
+        "start": 0,
+        "end": 39
+      }
+    ]
+  },
+  {
+    "kind": "google_api_key",
+    "text": "AIzaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "expected": []
+  },
+  {
+    "kind": "google_api_key",
+    "text": "AIzaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "expected": []
+  },
+  {
+    "kind": "private_key_pem",
+    "text": "-----BEGIN RSA PRIVATE KEY-----",
+    "expected": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ]
+  },
+  {
+    "kind": "private_key_pem",
+    "text": "-----BEGIN OPENSSH PRIVATE KEY-----",
+    "expected": [
+      {
+        "start": 0,
+        "end": 35
+      }
+    ]
+  },
+  {
+    "kind": "private_key_pem",
+    "text": "-----BEGIN PUBLIC KEY-----",
+    "expected": []
+  },
+  {
+    "kind": "private_key_pem",
+    "text": "-----BEGIN CERTIFICATE-----",
+    "expected": []
+  }
+]

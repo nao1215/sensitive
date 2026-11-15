@@ -1,0 +1,342 @@
+{
+  "date": "2026-11-15",
+  "go_version": "go1.26.11",
+  "os": "linux",
+  "arch": "amd64",
+  "cpu": "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          ",
+  "commit": "2cfe3311d50949f112a33385168ca6e3f33c5867",
+  "command": "GOMAXPROCS=1 GOTOOLCHAIN=go1.26.11 go -C tests test -run ^$ -bench ^BenchmarkPublished -benchmem -benchtime=200ms -count=5 .",
+  "samples": 5,
+  "cpu_affinity": [
+    31
+  ],
+  "background_load": "mutation tests were running; this preliminary table will be refreshed after they finish",
+  "benchmarks": {
+    "BenchmarkPublishedMask": {
+      "ns/op": 14085.0,
+      "MB/s": 209.02,
+      "B/op": 13816.0,
+      "allocs/op": 12.0
+    },
+    "BenchmarkPublishedRecorder/checked": {
+      "ns/op": 89817.0,
+      "MB/s": 6.06,
+      "B/op": 35637.0,
+      "allocs/op": 509.0
+    },
+    "BenchmarkPublishedRecorder/plain": {
+      "ns/op": 18.55,
+      "MB/s": 29325.94,
+      "B/op": 0.0,
+      "allocs/op": 0.0
+    },
+    "BenchmarkPublishedScanner/aba_routing/clean": {
+      "ns/op": 20748.0,
+      "MB/s": 132.64,
+      "B/op": 24576.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedScanner/aba_routing/dirty": {
+      "ns/op": 15975.0,
+      "MB/s": 40.06,
+      "B/op": 23712.0,
+      "allocs/op": 143.0
+    },
+    "BenchmarkPublishedScanner/ach_trace/clean": {
+      "ns/op": 5143.0,
+      "MB/s": 535.14,
+      "B/op": 3072.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedScanner/ach_trace/dirty": {
+      "ns/op": 510115.0,
+      "MB/s": 3.26,
+      "B/op": 93160.0,
+      "allocs/op": 802.0
+    },
+    "BenchmarkPublishedScanner/all/clean": {
+      "ns/op": 102060.0,
+      "MB/s": 26.96,
+      "B/op": 52480.0,
+      "allocs/op": 131.0
+    },
+    "BenchmarkPublishedScanner/all/dirty": {
+      "ns/op": 16130815.0,
+      "MB/s": 2.05,
+      "B/op": 2397009.0,
+      "allocs/op": 13186.0
+    },
+    "BenchmarkPublishedScanner/awskey/clean": {
+      "ns/op": 5173.0,
+      "MB/s": 532.03,
+      "B/op": 3072.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedScanner/awskey/dirty": {
+      "ns/op": 20965.0,
+      "MB/s": 64.11,
+      "B/op": 20256.0,
+      "allocs/op": 143.0
+    },
+    "BenchmarkPublishedScanner/bank_account/clean": {
+      "ns/op": 6166.0,
+      "MB/s": 446.33,
+      "B/op": 3072.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedScanner/bank_account/dirty": {
+      "ns/op": 346444.0,
+      "MB/s": 4.06,
+      "B/op": 63816.0,
+      "allocs/op": 481.0
+    },
+    "BenchmarkPublishedScanner/btc/clean": {
+      "ns/op": 5214.0,
+      "MB/s": 527.79,
+      "B/op": 0.0,
+      "allocs/op": 0.0
+    },
+    "BenchmarkPublishedScanner/btc/dirty": {
+      "ns/op": 43556.0,
+      "MB/s": 41.14,
+      "B/op": 21408.0,
+      "allocs/op": 206.0
+    },
+    "BenchmarkPublishedScanner/card_expiry/clean": {
+      "ns/op": 3183.0,
+      "MB/s": 864.66,
+      "B/op": 3072.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedScanner/card_expiry/dirty": {
+      "ns/op": 1129783.0,
+      "MB/s": 0.74,
+      "B/op": 33394.0,
+      "allocs/op": 288.0
+    },
+    "BenchmarkPublishedScanner/cvv/clean": {
+      "ns/op": 7639.0,
+      "MB/s": 360.28,
+      "B/op": 3072.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedScanner/cvv/dirty": {
+      "ns/op": 142886.0,
+      "MB/s": 4.03,
+      "B/op": 66760.0,
+      "allocs/op": 535.0
+    },
+    "BenchmarkPublishedScanner/email/clean": {
+      "ns/op": 86.64,
+      "MB/s": 31765.26,
+      "B/op": 0.0,
+      "allocs/op": 0.0
+    },
+    "BenchmarkPublishedScanner/email/dirty": {
+      "ns/op": 24878.0,
+      "MB/s": 46.31,
+      "B/op": 20896.0,
+      "allocs/op": 270.0
+    },
+    "BenchmarkPublishedScanner/eth/clean": {
+      "ns/op": 3173.0,
+      "MB/s": 867.31,
+      "B/op": 3072.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedScanner/eth/dirty": {
+      "ns/op": 24987.0,
+      "MB/s": 110.14,
+      "B/op": 25568.0,
+      "allocs/op": 207.0
+    },
+    "BenchmarkPublishedScanner/github_token/clean": {
+      "ns/op": 3194.0,
+      "MB/s": 861.53,
+      "B/op": 3072.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedScanner/github_token/dirty": {
+      "ns/op": 22163.0,
+      "MB/s": 118.4,
+      "B/op": 23072.0,
+      "allocs/op": 143.0
+    },
+    "BenchmarkPublishedScanner/google_api_key/clean": {
+      "ns/op": 4344.0,
+      "MB/s": 633.45,
+      "B/op": 3072.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedScanner/google_api_key/dirty": {
+      "ns/op": 22478.0,
+      "MB/s": 113.89,
+      "B/op": 22048.0,
+      "allocs/op": 79.0
+    },
+    "BenchmarkPublishedScanner/iban/clean": {
+      "ns/op": 6364.0,
+      "MB/s": 432.42,
+      "B/op": 0.0,
+      "allocs/op": 0.0
+    },
+    "BenchmarkPublishedScanner/iban/dirty": {
+      "ns/op": 39216.0,
+      "MB/s": 37.54,
+      "B/op": 20512.0,
+      "allocs/op": 270.0
+    },
+    "BenchmarkPublishedScanner/ipaddr/clean": {
+      "ns/op": 191.6,
+      "MB/s": 14363.78,
+      "B/op": 0.0,
+      "allocs/op": 0.0
+    },
+    "BenchmarkPublishedScanner/ipaddr/dirty": {
+      "ns/op": 19370.0,
+      "MB/s": 33.04,
+      "B/op": 17824.0,
+      "allocs/op": 142.0
+    },
+    "BenchmarkPublishedScanner/jwt/clean": {
+      "ns/op": 3724.0,
+      "MB/s": 739.0,
+      "B/op": 3072.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedScanner/jwt/dirty": {
+      "ns/op": 121206.0,
+      "MB/s": 22.18,
+      "B/op": 68640.0,
+      "allocs/op": 975.0
+    },
+    "BenchmarkPublishedScanner/merchant_id/clean": {
+      "ns/op": 8948.0,
+      "MB/s": 307.54,
+      "B/op": 3072.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedScanner/merchant_id/dirty": {
+      "ns/op": 185796.0,
+      "MB/s": 9.64,
+      "B/op": 39968.0,
+      "allocs/op": 408.0
+    },
+    "BenchmarkPublishedScanner/mynumber/clean": {
+      "ns/op": 16607.0,
+      "MB/s": 165.72,
+      "B/op": 24576.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedScanner/mynumber/dirty": {
+      "ns/op": 22344.0,
+      "MB/s": 37.24,
+      "B/op": 25120.0,
+      "allocs/op": 207.0
+    },
+    "BenchmarkPublishedScanner/pan/clean": {
+      "ns/op": 728.3,
+      "MB/s": 3778.67,
+      "B/op": 0.0,
+      "allocs/op": 0.0
+    },
+    "BenchmarkPublishedScanner/pan/dirty": {
+      "ns/op": 39455.0,
+      "MB/s": 27.58,
+      "B/op": 33408.0,
+      "allocs/op": 397.0
+    },
+    "BenchmarkPublishedScanner/payment_token/clean": {
+      "ns/op": 20000.0,
+      "MB/s": 137.6,
+      "B/op": 3072.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedScanner/payment_token/dirty": {
+      "ns/op": 25096.0,
+      "MB/s": 84.16,
+      "B/op": 23584.0,
+      "allocs/op": 144.0
+    },
+    "BenchmarkPublishedScanner/phone_jp/clean": {
+      "ns/op": 133.5,
+      "MB/s": 20619.89,
+      "B/op": 0.0,
+      "allocs/op": 0.0
+    },
+    "BenchmarkPublishedScanner/phone_jp/dirty": {
+      "ns/op": 30683.0,
+      "MB/s": 29.2,
+      "B/op": 28040.0,
+      "allocs/op": 269.0
+    },
+    "BenchmarkPublishedScanner/private_key_pem/clean": {
+      "ns/op": 4065.0,
+      "MB/s": 677.0,
+      "B/op": 3072.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedScanner/private_key_pem/dirty": {
+      "ns/op": 23078.0,
+      "MB/s": 88.74,
+      "B/op": 22432.0,
+      "allocs/op": 207.0
+    },
+    "BenchmarkPublishedScanner/slack_token/clean": {
+      "ns/op": 2536.0,
+      "MB/s": 1085.3,
+      "B/op": 3072.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedScanner/slack_token/dirty": {
+      "ns/op": 12876.0,
+      "MB/s": 79.53,
+      "B/op": 19360.0,
+      "allocs/op": 143.0
+    },
+    "BenchmarkPublishedScanner/swiftbic/clean": {
+      "ns/op": 30886.0,
+      "MB/s": 89.1,
+      "B/op": 256.0,
+      "allocs/op": 128.0
+    },
+    "BenchmarkPublishedScanner/swiftbic/dirty": {
+      "ns/op": 28699.0,
+      "MB/s": 20.07,
+      "B/op": 21920.0,
+      "allocs/op": 334.0
+    },
+    "BenchmarkPublishedScanner/uk_sortcode/clean": {
+      "ns/op": 15296.0,
+      "MB/s": 179.91,
+      "B/op": 0.0,
+      "allocs/op": 0.0
+    },
+    "BenchmarkPublishedScanner/uk_sortcode/dirty": {
+      "ns/op": 15023.0,
+      "MB/s": 38.34,
+      "B/op": 18336.0,
+      "allocs/op": 206.0
+    },
+    "BenchmarkPublishedSlog/masked-clean": {
+      "ns/op": 5792.0,
+      "B/op": 864.0,
+      "allocs/op": 17.0
+    },
+    "BenchmarkPublishedSlog/masked-dirty": {
+      "ns/op": 15502.0,
+      "B/op": 1144.0,
+      "allocs/op": 24.0
+    },
+    "BenchmarkPublishedSlog/plain-clean": {
+      "ns/op": 887.2,
+      "B/op": 16.0,
+      "allocs/op": 1.0
+    },
+    "BenchmarkPublishedSlog/plain-dirty": {
+      "ns/op": 1845.0,
+      "B/op": 16.0,
+      "allocs/op": 1.0
+    }
+  }
+}
