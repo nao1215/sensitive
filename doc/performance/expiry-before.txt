@@ -1,7 +1,7 @@
 goos: linux
 goarch: amd64
 pkg: github.com/nao1215/embargo/tests
-cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S
 BenchmarkPublishedScanner/card_expiry/dirty         	     385	    918056 ns/op	   0.91 MB/s	   33394 B/op	     288 allocs/op
 BenchmarkPublishedScanner/card_expiry/dirty         	     391	    932607 ns/op	   0.89 MB/s	   33394 B/op	     288 allocs/op
 BenchmarkPublishedScanner/card_expiry/dirty         	     386	    919843 ns/op	   0.90 MB/s	   33394 B/op	     288 allocs/op

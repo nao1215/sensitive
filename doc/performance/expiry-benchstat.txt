@@ -1,7 +1,7 @@
 goos: linux
 goarch: amd64
 pkg: github.com/nao1215/embargo/tests
-cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S
                                    │ ../evidence/expiry-before-idle.txt │ ../evidence/expiry-after-noalloc.txt │
                                    │               sec/op               │    sec/op      vs base               │
 PublishedScanner/card_expiry/dirty                         919.8µ ± ∞ ¹    221.3µ ± ∞ ¹  -75.94% (p=0.008 n=5)
