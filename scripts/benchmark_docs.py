@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+"""Run the published Go benchmarks and store their medians and provenance."""
+import datetime
+import json
+import os
+import pathlib
+import re
+import statistics
+import subprocess
+
+root = pathlib.Path(__file__).resolve().parents[1]
+command = ["go", "-C", "tests", "test", "-run", "^$", "-bench", "^BenchmarkPublished", "-benchmem", "-benchtime=200ms", "-count=5", "."]
+environment = dict(os.environ, GOMAXPROCS="1", GOTOOLCHAIN="go1.26.11")
+result = subprocess.run(command, cwd=root, env=environment, text=True, stdout=subprocess.PIPE, check=True)
+(root / "doc/benchmarks.raw.txt").write_text(result.stdout)
+rows = {}
+for line in result.stdout.splitlines():
+    match = re.match(r"(BenchmarkPublished\S+?)(?:-\d+)?\s+\d+\s+(.+)", line)
+    if not match:
+        continue
+    values = {unit: float(value) for value, unit in re.findall(r"([\d.]+)\s+(ns/op|MB/s|B/op|allocs/op)", match[2])}
+    rows.setdefault(match[1], []).append(values)
+if not rows or any(len(values) != 5 for values in rows.values()):
+    raise RuntimeError("each benchmark must have five samples")
+snapshot = {
+    "date": datetime.datetime.now(datetime.timezone.utc).date().isoformat(),
+    "go_version": subprocess.check_output(["go", "env", "GOVERSION"], env=environment, text=True).strip(),
+    "os": re.search(r"^goos: (.+)$", result.stdout, re.M)[1],
+    "arch": re.search(r"^goarch: (.+)$", result.stdout, re.M)[1],
+    "cpu": re.search(r"^cpu: (.+)$", result.stdout, re.M)[1],
+    "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
+    "command": "GOMAXPROCS=1 GOTOOLCHAIN=go1.26.11 " + " ".join(command),
+    "samples": 5,
+    "benchmarks": {name: {unit: statistics.median(item[unit] for item in values) for unit in values[0]} for name, values in sorted(rows.items())},
+}
+(root / "doc/benchmarks.json").write_text(json.dumps(snapshot, indent=2) + "\n")
+subprocess.run(["go", "-C", "tests", "test", "-run", "^TestBenchmarkTable$", "-count=1", "."], cwd=root, env=dict(environment, UPDATE_DOCS="1"), check=True)

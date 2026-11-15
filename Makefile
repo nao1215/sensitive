@@ -56,3 +56,11 @@ fuzz: ## Smoke test every root fuzz target
 .PHONY: compatibility-doc
 compatibility-doc: ## Regenerate the table from real output tests
 	UPDATE_DOCS=1 go -C tests test -run '^TestCompatibilityTable$$' -count=1 .
+
+.PHONY: accuracy-doc
+accuracy-doc: ## Regenerate precision and recall from the labeled corpus
+	UPDATE_DOCS=1 go -C tests test -run '^TestAccuracyTable$$' -count=1 .
+
+.PHONY: benchmark-doc
+benchmark-doc: ## Run and publish reproducible benchmark samples
+	python3 scripts/benchmark_docs.py

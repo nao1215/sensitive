@@ -1,13 +1,24 @@
 # embargo
 
-embargo detects and masks personal data, payment data and secrets in text, with zero dependencies and cross-platform support.
+embargo detects and masks personal data, payment data and secrets in text, logs and test output: a cross-platform Go library with zero dependencies.
 
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 [![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/embargo.svg)](https://pkg.go.dev/github.com/nao1215/embargo)
-![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/embargo/coverage.svg)
 [![MultiPlatformUnitTest](https://github.com/nao1215/embargo/actions/workflows/unit_test.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/unit_test.yml)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nao1215/embargo/badge)](https://scorecard.dev/viewer/?uri=github.com/nao1215/embargo)
+[![reviewdog](https://github.com/nao1215/embargo/actions/workflows/reviewdog.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/reviewdog.yml)
+[![govulncheck](https://github.com/nao1215/embargo/actions/workflows/govulncheck.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/govulncheck.yml)
+[![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/embargo/coverage.svg)](https://github.com/nao1215/embargo/actions/workflows/coverage.yml)
+[![OpenSSF Scorecard](https://github.com/nao1215/embargo/actions/workflows/scorecard.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/scorecard.yml)
+[![License](https://img.shields.io/github/license/nao1215/embargo)](LICENSE)
 
-![logo](./doc/images/logo-small.png)
+<img src="doc/images/logo-small.png" alt="embargo" width="320">
+
+- Mask card numbers and emails before logs leave your service.
+- Check in tests that an HTTP handler or child process never writes a secret.
+- Scan support messages and imported files for personal data.
+- Detect Japanese phone numbers and My Number, including full-width digits.
 
 ## Quick start
 
@@ -60,9 +71,18 @@ Dedicated parsers and checksum checks help distinguish candidates from ordinary 
 
 Detection does not establish that an account exists or that a credential authenticates. Scores are heuristics, not probabilities.
 
-## Installation and requirements
+## Installation
 
-In an existing Go module, run `go get github.com/nao1215/embargo`. The library requires Go 1.26.11 or later and is tested on Linux, macOS, and Windows.
+```sh
+go get github.com/nao1215/embargo
+```
+
+Requirements:
+
+- Go 1.26.11 or later.
+- Linux, macOS or Windows; the library also cross-builds for FreeBSD, OpenBSD and NetBSD.
+
+The renamed module was first released as v0.3.0. The APIs below are on main pending the next release; to try them now, use `go get github.com/nao1215/embargo@main`.
 
 ## Scanning and masking
 
@@ -177,9 +197,48 @@ In application tests pass `t` to `embargotest.New`; this standalone example uses
 | Child panic | panic(secret) in a real test subprocess | panic marker and stack on stderr; canary absent |
 <!-- tested-outputs:end -->
 
+## Accuracy
+
+These are sample-level results on a small labeled corpus, not a production accuracy claim. The corpus combines two synthetic/specification positives and two look-alikes per detector from [recall.json](testdata/recall.json) with 16 shared [negative controls](tests/testdata/accuracy_controls.json): UUIDs, git SHAs, hashes, timestamps, order/shipment IDs, base64 and ordinary logs. Labels were assigned from the fixture's intended meaning, independently of scanner output. Ambiguous order IDs deliberately reuse card/ID-shaped digits. Each detector runs alone with default confidence; a sample is positive if it produces any finding. The corpus has no live personal data, no representative prevalence and little linguistic variety. Precision is TP/(TP+FP); recall is TP/(TP+FN). Run `make accuracy-doc` to regenerate; CI rejects a stale table.
+
+<!-- accuracy:start -->
+| Detector | Positive / negative samples | TP / FP / FN | Precision | Recall |
+|---|---:|---:|---:|---:|
+| aba_routing | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| ach_trace | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| awskey | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| bank_account | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| btc | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| card_expiry | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| cvv | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| email | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| eth | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| github_token | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| google_api_key | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| iban | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| ipaddr | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| jwt | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| merchant_id | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| mynumber | 2 / 18 | 2 / 1 / 0 | 66.7% | 100.0% |
+| pan | 2 / 18 | 2 / 1 / 0 | 66.7% | 100.0% |
+| payment_token | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| phone_jp | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| private_key_pem | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| slack_token | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| swiftbic | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+| uk_sortcode | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+<!-- accuracy:end -->
+
 ## Testing
 
 The library has zero dependencies; test-only tools live in the separate [tests/](tests/) module (Go 1.26.11+). Run `go test ./...` in both directories; this executes the Go examples and checks README snippets against them. See [testing](doc/testing.md) for lint, vet, fuzzing, golden updates, coverage, and mutation checks.
+
+## Benchmarks
+
+`make benchmark-doc` measures Scanner throughput for every detector and WithAll, masking, Recorder construction/capture/Check against a plain buffer, and the slog wrapper against a plain JSONHandler. Clean inputs contain ordinary text; dirty inputs use the synthetic positive corpus. Recorder figures include test cleanup registration. These are local measurements, not service latency predictions. The [raw samples](doc/benchmarks.raw.txt) and [manual benchstat comparison](doc/benchmarks.md) make the measurement reproducible; CI checks the rendered table, without noisy timing thresholds on shared runners.
+
+<!-- benchmarks:start -->
+<!-- benchmarks:end -->
 
 ## Contributing
 
@@ -209,4 +268,4 @@ Thanks to our contributors:
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification.
