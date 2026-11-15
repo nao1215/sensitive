@@ -30,6 +30,7 @@ func Mask(text string, findings []Finding) string
 func MaskFunc(text string, findings []Finding, replace func(kind Kind, value string) string) string
 func NewScanner(opts ...ScannerOption) *Scanner
 func NewSecret[T any](v T) Secret[T]
+func NewSlogHandler(next slog.Handler, scanner *Scanner) slog.Handler
 func WithAll() ScannerOption
 func WithDetector(d Detector) ScannerOption
 func WithKinds(kinds ...Kind) ScannerOption

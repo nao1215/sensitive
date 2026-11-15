@@ -50,6 +50,13 @@ with tempfile.TemporaryDirectory(prefix="embargo-lint-") as directory:
         reject(repo, ["golangci-lint", "run", "--enable-only", "exhaustruct_v5"], "addedContractField")
     finally:
         recorder.write_text(original)
+    handler = repo / "slog_handler.go"
+    original_handler = handler.read_text()
+    handler.write_text(original_handler.replace("type slogHandler struct {", "type slogHandler struct {\n addedContractField bool", 1))
+    try:
+        reject(repo, ["golangci-lint", "run", "--enable-only", "exhaustruct_v5"], "addedContractField")
+    finally:
+        handler.write_text(original_handler)
     # A mixed receiver outside Input's two explicit decoder exceptions must fail.
     fixture = repo / "lint_contract_fixture.go"
     fixture.write_text('package embargo\ntype receiverContract struct{}\nfunc (receiverContract) Read() {}\nfunc (*receiverContract) Write() {}\n')

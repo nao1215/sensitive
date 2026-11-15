@@ -86,6 +86,38 @@ if _, err := fmt.Println(key); err != nil {
 // Output: [REDACTED]
 ```
 
+## Mask logs
+
+Wrap a standard slog handler to scan messages, keys, groups and values before they reach its writer. Pass NewScanner() for all built-ins or WithKinds to narrow detection. Any and error values become scanned strings; metadata and clean scalar types are preserved.
+
+<!-- example: slog_example_test.go:ExampleNewSlogHandler -->
+```go
+package main
+
+import (
+ "log/slog"
+ "os"
+
+ "github.com/nao1215/embargo"
+)
+
+func main() {
+	next := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		ReplaceAttr: func(_ []string, attr slog.Attr) slog.Attr {
+			if attr.Key == slog.TimeKey {
+				return slog.Attr{}
+			}
+			return attr
+		},
+	})
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN))
+	logger := slog.New(embargo.NewSlogHandler(next, scanner))
+	logger.Info("checkout", "email", "alice@example.com", "card", "4532015112830366")
+
+	// Output: level=INFO msg=checkout email=[REDACTED] card=[REDACTED]
+}
+```
+
 ## Check test output
 
 Use embargotest to capture a writer, an HTTP response, or a test child process. Check requires output and a content expectation, then checks every capture for a known fake secret and detector findings. Narrow the scanner or allow exact fixture values when needed; canary checks remain active.
