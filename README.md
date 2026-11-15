@@ -148,34 +148,22 @@ Each link opens the test that produces and checks the shown output.
 
 ## Accuracy
 
-This synthetic corpus measures format recognition in generated text. See [detector rules](doc/detectors.md) and [the cases behind the scores](doc/accuracy.md).
+This chart measures detection on a synthetic corpus.
+[Generation, test cases and observed misses](doc/accuracy.md) explain the scores.
 
 <!-- accuracy:start -->
-| Detector | Positive / negative inputs | TP / FP / FN spans | Precision | Recall |
-|---|---:|---:|---:|---:|
-| aba_routing | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| ach_trace | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| awskey | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| bank_account | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| btc | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| card_expiry | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| cvv | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| email | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| eth | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| github_token | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| google_api_key | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| iban | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| ipaddr | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| jwt | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| merchant_id | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| mynumber | 2 / 18 | 2 / 1 / 0 | 66.7% | 100.0% |
-| pan | 2 / 18 | 2 / 1 / 0 | 66.7% | 100.0% |
-| payment_token | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| phone_jp | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| private_key_pem | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| slack_token | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| swiftbic | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
-| uk_sortcode | 2 / 18 | 2 / 0 / 0 | 100.0% | 100.0% |
+![Precision and recall on synthetic samples](doc/images/accuracy.svg)
+
+| Detector details | | |
+|---|---|---|
+| [aba_routing](doc/accuracy.md#aba-routing) | [ach_trace](doc/accuracy.md#ach-trace) | [awskey](doc/accuracy.md#awskey) |
+| [bank_account](doc/accuracy.md#bank-account) | [btc](doc/accuracy.md#btc) | [card_expiry](doc/accuracy.md#card-expiry) |
+| [cvv](doc/accuracy.md#cvv) | [email](doc/accuracy.md#email) | [eth](doc/accuracy.md#eth) |
+| [github_token](doc/accuracy.md#github-token) | [google_api_key](doc/accuracy.md#google-api-key) | [iban](doc/accuracy.md#iban) |
+| [ipaddr](doc/accuracy.md#ipaddr) | [jwt](doc/accuracy.md#jwt) | [merchant_id](doc/accuracy.md#merchant-id) |
+| [mynumber](doc/accuracy.md#mynumber) | [pan](doc/accuracy.md#pan) | [payment_token](doc/accuracy.md#payment-token) |
+| [phone_jp](doc/accuracy.md#phone-jp) | [private_key_pem](doc/accuracy.md#private-key-pem) | [slack_token](doc/accuracy.md#slack-token) |
+| [swiftbic](doc/accuracy.md#swiftbic) | [uk_sortcode](doc/accuracy.md#uk-sortcode) | |
 <!-- accuracy:end -->
 
 ## Testing

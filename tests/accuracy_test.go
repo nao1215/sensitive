@@ -1,6 +1,8 @@
 package tests
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -22,6 +24,7 @@ type accuracySpan struct {
 	End   int `json:"end"`
 }
 type labeledAccuracySample struct {
+	ID       string         `json:"id"`
 	Kind     embargo.Kind   `json:"kind"`
 	Text     string         `json:"text"`
 	Parts    []string       `json:"parts"`
@@ -68,6 +71,7 @@ func TestAccuracyTable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	//nolint:prealloc // JSON decoding determines the initial slice length.
 	var samples []labeledAccuracySample
 	if decodeErr := json.Unmarshal(corpus, &samples); decodeErr != nil {
 		t.Fatal(decodeErr)
@@ -76,6 +80,7 @@ func TestAccuracyTable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	//nolint:prealloc // JSON decoding determines the initial slice length.
 	var controls []struct {
 		Source string `json:"source"`
 		Text   string `json:"text"`
@@ -83,6 +88,12 @@ func TestAccuracyTable(t *testing.T) {
 	if err := json.Unmarshal(data, &controls); err != nil {
 		t.Fatal(err)
 	}
+	samples = append(samples, readGeneratedAccuracy[labeledAccuracySample](t, "testdata/accuracy_generated.jsonl")...)
+	controls = append(controls, readGeneratedAccuracy[struct {
+		Source string `json:"source"`
+		Text   string `json:"text"`
+	}](t, "testdata/accuracy_generated_controls.jsonl")...)
+
 	counts := map[string]accuracyCount{}
 	inputs := map[string][2]int{}
 
@@ -123,18 +134,13 @@ func TestAccuracyTable(t *testing.T) {
 		names = append(names, name)
 	}
 	sort.Strings(names)
-	var table strings.Builder
-	if _, err := fmt.Fprintln(&table, "| Detector | Positive / negative inputs | TP / FP / FN spans | Precision | Recall |\n|---|---:|---:|---:|---:|"); err != nil {
-		t.Fatal(err)
-	}
+	summaries := make([]accuracySummary, 0, len(names))
 	for _, name := range names {
 		count := counts[name]
-
-		if _, err := fmt.Fprintf(&table, "| %s | %d / %d | %d / %d / %d | %s | %s |\n", name, inputs[name][0], inputs[name][1], count.tp, count.fp, count.fn, accuracyRatio(count.tp, count.tp+count.fp), accuracyRatio(count.tp, count.tp+count.fn)); err != nil {
-			t.Fatal(err)
-		}
+		summaries = append(summaries, accuracySummary{Detector: name, Positive: inputs[name][0], Negative: inputs[name][1], TP: count.tp, FP: count.fp, FN: count.fn, Precision: accuracyRatio(count.tp, count.tp+count.fp), Recall: accuracyRatio(count.tp, count.tp+count.fn)})
 	}
-	syncReadmeTable(t, "accuracy", table.String())
+	syncAccuracySnapshot(t, summaries)
+	syncReadmeTable(t, "accuracy", accuracyEntrance(t, names))
 }
 
 func syncReadmeTable(t *testing.T, name, table string) {
@@ -190,4 +196,94 @@ func TestAccuracyRequiresExactUnusedSpans(t *testing.T) {
 	if accuracyRatio(0, 0) != "n/a" {
 		t.Fatal("undefined precision must not imply zero accuracy")
 	}
+}
+
+func readGeneratedAccuracy[T any](t *testing.T, path string) []T {
+	t.Helper()
+	// #nosec G304 -- callers supply only repository fixture paths.
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var rows []T
+	scanner := bufio.NewScanner(strings.NewReader(string(data)))
+	for scanner.Scan() {
+		var row T
+		if err := json.Unmarshal(scanner.Bytes(), &row); err != nil {
+			t.Fatal(err)
+		}
+		rows = append(rows, row)
+	}
+	if err := scanner.Err(); err != nil {
+		t.Fatal(err)
+	}
+	return rows
+}
+
+type accuracySummary struct {
+	Detector  string `json:"detector"`
+	Precision string `json:"precision"`
+	Recall    string `json:"recall"`
+	Positive  int    `json:"positive"`
+	Negative  int    `json:"negative"`
+	TP        int    `json:"tp"`
+	FP        int    `json:"fp"`
+	FN        int    `json:"fn"`
+}
+
+func writeAccuracyText(t *testing.T, out *strings.Builder, value string) {
+	t.Helper()
+	if _, err := out.WriteString(value); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func syncAccuracySnapshot(t *testing.T, rows []accuracySummary) {
+	t.Helper()
+	//nolint:errchkjson // Keep encoding failure handling explicit for future snapshot fields.
+	data, err := json.MarshalIndent(rows, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	data = append(data, '\n')
+	const path = "../doc/accuracy.json"
+	if os.Getenv("UPDATE_DOCS") == "1" {
+		if writeErr := os.WriteFile(path, data, 0o600); writeErr != nil {
+			t.Fatal(writeErr)
+		}
+		return
+	}
+	actual, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(bytes.ReplaceAll(actual, []byte("\r\n"), []byte("\n")), data) {
+		t.Fatal("accuracy snapshot differs from scored corpus; run make accuracy-doc")
+	}
+}
+
+func accuracyEntrance(t *testing.T, names []string) string {
+	t.Helper()
+	var entrance strings.Builder
+	if _, err := entrance.WriteString("![Precision and recall on synthetic samples](doc/images/accuracy.svg)\n\n| Detector details | | |\n|---|---|---|\n"); err != nil {
+		t.Fatal(err)
+	}
+	for index, name := range names {
+		if index%3 == 0 {
+			writeAccuracyText(t, &entrance, "|")
+		}
+		if _, err := fmt.Fprintf(&entrance, " [%s](doc/accuracy.md#%s) |", name, strings.ReplaceAll(name, "_", "-")); err != nil {
+			t.Fatal(err)
+		}
+		if index%3 == 2 {
+			writeAccuracyText(t, &entrance, "\n")
+		}
+	}
+	if len(names)%3 != 0 {
+		for index := len(names) % 3; index < 3; index++ {
+			writeAccuracyText(t, &entrance, " |")
+		}
+		writeAccuracyText(t, &entrance, "\n")
+	}
+	return entrance.String()
 }
