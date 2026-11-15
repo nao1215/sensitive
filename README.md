@@ -208,7 +208,7 @@ Round 13: 8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification r
 | Real output tests | [Loggers](tests/compatibility_integration_test.go), [HTTP](tests/http_integration_test.go) |
 
 <!-- testing-metrics:start -->
-Coverage 97.0% · mutation score 86.21% · 9 fuzz targets, 2726828 executions.
+Coverage 97.1% · mutation score 88.26% · 9 fuzz targets, 2388415 executions.
 <!-- testing-metrics:end -->
 
 [Commands, measurement scope and conditions](doc/testing.md).
