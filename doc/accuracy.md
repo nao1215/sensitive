@@ -213,6 +213,7 @@ Verified by the [mynumber format tests](../internal/detect/mynumber_test.go) and
 | Observed limit | Input example | Why it remains |
 |---|---|---|
 | `mynumber/control/invoice/0` | `Invoice: 100042543904` | Numeric shapes do not establish intent: synthetic order/invoice identifiers can satisfy financial or identity formats; no business-context classifier is implemented. |
+| `mynumber/hand-control/3836757899a21400855fd9348f29bdf993ae1ab030af419e1da21cf369256503` | `Shipment ID: 123456789018` | Business identifiers can share valid sensitive-number shapes and checksums; their intended meaning is not recoverable from this text alone. |
 | `mynumber/positive/11/url` | `value=%EF%BC%94%EF%BC%91%EF%BC%92%EF%BC%…%98%EF%BC%91` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
 
 [Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).
@@ -226,6 +227,7 @@ Verified by the [pan format tests](../internal/detect/pan_test.go) and the [corp
 | Observed limit | Input example | Why it remains |
 |---|---|---|
 | `pan/control/order/0` | `Order ID: 4763270889822167` | Numeric shapes do not establish intent: synthetic order/invoice identifiers can satisfy financial or identity formats; no business-context classifier is implemented. |
+| `pan/hand-control/01ef18b4b7eb0e54db6141d48ce1cdf84370d86e40f77cdfe2461e1f7366bd46` | `Order ID: 4532015112830366` | Business identifiers can share valid sensitive-number shapes and checksums; their intended meaning is not recoverable from this text alone. |
 | `pan/negative/0/japanese` | `処理結果【card-like 4033438821713084】を記録しました` | PAN deliberately returns BIN/length candidates with a failing Luhn checksum at lower confidence; default confidence accepts them. |
 | `pan/positive/11/url` | `value=%EF%BC%93%EF%BC%95%EF%BC%92%EF%BC%…%98%EF%BC%95` | Percent decoding is not a general scanner contract: encoded digits, separators or context words can be missed or matched only in part. Decode the application field before scanning. |
 

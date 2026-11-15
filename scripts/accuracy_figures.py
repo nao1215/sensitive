@@ -2,6 +2,7 @@
 """Render scored synthetic fixtures and reviewed misses without rescoring inputs."""
 import argparse
 import html
+import hashlib
 import json
 from pathlib import Path
 
@@ -75,6 +76,9 @@ def excerpt(value):
 def page(rows):
     samples = {row['id']:row for row in read_jsonl('accuracy_generated.jsonl')}
     controls = {row['id']:row for row in read_jsonl('accuracy_generated_controls.jsonl')}
+    for row in json.loads((ROOT/'tests/testdata/accuracy_controls.json').read_text(encoding='utf-8')):
+        key = 'hand-control/' + hashlib.sha256((row['source']+'\0'+row['text']).encode()).hexdigest()
+        controls[key] = row
     for kind in [row['detector'] for row in rows]:
         for key, row in controls.items(): samples[kind+'/'+key] = row
     hand = json.loads((ROOT/'tests/testdata/accuracy.json').read_text(encoding='utf-8'))

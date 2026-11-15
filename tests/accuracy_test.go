@@ -67,32 +67,7 @@ func accuracyRatio(numerator, denominator int) string {
 
 func TestAccuracyTable(t *testing.T) {
 	t.Parallel()
-	corpus, err := os.ReadFile("testdata/accuracy.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	//nolint:prealloc // JSON decoding determines the initial slice length.
-	var samples []labeledAccuracySample
-	if decodeErr := json.Unmarshal(corpus, &samples); decodeErr != nil {
-		t.Fatal(decodeErr)
-	}
-	data, err := os.ReadFile("testdata/accuracy_controls.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	//nolint:prealloc // JSON decoding determines the initial slice length.
-	var controls []struct {
-		Source string `json:"source"`
-		Text   string `json:"text"`
-	}
-	if err := json.Unmarshal(data, &controls); err != nil {
-		t.Fatal(err)
-	}
-	samples = append(samples, readGeneratedAccuracy[labeledAccuracySample](t, "testdata/accuracy_generated.jsonl")...)
-	controls = append(controls, readGeneratedAccuracy[struct {
-		Source string `json:"source"`
-		Text   string `json:"text"`
-	}](t, "testdata/accuracy_generated_controls.jsonl")...)
+	samples := allAccuracySamples(t)
 
 	counts := map[string]accuracyCount{}
 	inputs := map[string][2]int{}
@@ -105,7 +80,7 @@ func TestAccuracyTable(t *testing.T) {
 			input[0]++
 		}
 		inputs[string(sample.Kind)] = input
-		findings := embargo.NewScanner(embargo.WithKinds(sample.Kind)).ScanString(sample.Text + strings.Join(sample.Parts, ""))
+		findings := embargo.NewScanner(embargo.WithKinds(sample.Kind)).ScanString(sample.Text)
 		result := scoreAccuracy(sample.Kind, findings, sample.Expected)
 		count := counts[string(sample.Kind)]
 		count.tp += result.tp
@@ -118,21 +93,10 @@ func TestAccuracyTable(t *testing.T) {
 	}
 
 	names := make([]string, 0, len(counts))
-	for name, count := range counts {
-		input := inputs[name]
-		input[1] += len(controls)
-		inputs[name] = input
-		scanner := embargo.NewScanner(embargo.WithKinds(embargo.Kind(name)))
-		for _, control := range controls {
-			if found := len(scanner.ScanString(control.Text)); found > 0 {
-				count.fp += found
-			} else {
-				count.tn++
-			}
-		}
-		counts[name] = count
+	for name := range counts {
 		names = append(names, name)
 	}
+
 	sort.Strings(names)
 	summaries := make([]accuracySummary, 0, len(names))
 	for _, name := range names {

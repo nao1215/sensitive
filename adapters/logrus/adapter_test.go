@@ -32,11 +32,11 @@ func (d literal) Scan(data []byte) []embargo.Finding {
 func TestRealLoggerMasksOutput(t *testing.T) {
 	t.Parallel()
 	canary := "public-fake-canary-0123456789"
-	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN), embargo.WithDetector(literal{value: []byte(canary)}))
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN, embargo.KindCVV), embargo.WithDetector(literal{value: []byte(canary)}))
 	r := embargotest.New(t, embargotest.WithCanary([]byte(canary)), embargotest.WithScanner(scanner))
 	emit(t, r.Writer("logs"), scanner, canary)
 	//nolint:goconst // Spell out each field expectation as an independent output contract.
-	r.ExpectJSON("logs", nil, map[string]string{"msg": "[REDACTED]", "pre": "[REDACTED]", "card": "[REDACTED]", "secret": "[REDACTED]"}, 1)
+	r.ExpectJSON("logs", nil, map[string]string{"msg": "[REDACTED]", "pre": "[REDACTED]", "card": "[REDACTED]", "cvv": "[REDACTED]", "secret": "[REDACTED]"}, 1)
 	if !r.Check() {
 		t.Fatal("real logger output failed inspection")
 	}
@@ -48,7 +48,7 @@ func emit(t *testing.T, out io.Writer, scanner *embargo.Scanner, canary string) 
 	logger := logrus.New()
 	logger.SetOutput(out)
 	logger.SetFormatter(embargologrus.NewFormatter(&logrus.JSONFormatter{DisableTimestamp: true}, scanner))
-	logger.WithField("pre", canary).WithFields(logrus.Fields{canary: "alice@example.com", "card": int64(4111111111111111), "secret": embargo.NewSecret(canary), "nested": map[string]any{"email": "alice@example.com", "values": []string{canary}}, "error": errors.New(canary)}).Info(canary)
+	logger.WithField("pre", canary).WithFields(logrus.Fields{canary: "alice@example.com", "card": int64(4111111111111111), "cvv": 123, "secret": embargo.NewSecret(canary), "nested": map[string]any{"email": "alice@example.com", "values": []string{canary}}, "error": errors.New(canary)}).Info(canary)
 }
 
 type failedObservation struct {

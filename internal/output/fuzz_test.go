@@ -9,7 +9,7 @@ import (
 )
 
 func FuzzOutputJSON(f *testing.F) {
-	for _, seed := range []string{`{"email":"alice@example.com"}`, `{"card":4111111111111111}`, `{"x":null,"x":true}`, `[]`, `{"x":"\u0040"}`} {
+	for _, seed := range []string{`{"email":"alice@example.com"}`, `{"card":4111111111111111}`, `{"x":null,"x":true}`, `[]`, `{"x":1e400}`, `{"x":"\u0040"}`} {
 		f.Add(seed)
 	}
 	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN))
@@ -24,7 +24,7 @@ func FuzzOutputJSON(f *testing.F) {
 		if !json.Valid(data) || len(data) > maxEventBytes || !strings.HasSuffix(string(data), "\n") {
 			t.Fatal("successful event violated output framing")
 		}
-		var value map[string]any
+		var value map[string]json.RawMessage
 		if err := json.Unmarshal(data, &value); err != nil {
 			t.Fatal(err)
 		}

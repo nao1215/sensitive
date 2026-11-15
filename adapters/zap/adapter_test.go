@@ -33,11 +33,11 @@ func (d literal) Scan(data []byte) []embargo.Finding {
 func TestRealLoggerMasksOutput(t *testing.T) {
 	t.Parallel()
 	canary := "public-fake-canary-0123456789"
-	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN), embargo.WithDetector(literal{value: []byte(canary)}))
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN, embargo.KindCVV), embargo.WithDetector(literal{value: []byte(canary)}))
 	r := embargotest.New(t, embargotest.WithCanary([]byte(canary)), embargotest.WithScanner(scanner))
 	emit(t, r.Writer("logs"), scanner, canary)
 	//nolint:goconst // Spell out each field expectation as an independent output contract.
-	r.ExpectJSON("logs", nil, map[string]string{"msg": "[REDACTED]", "pre": "[REDACTED]", "card": "[REDACTED]", "secret": "[REDACTED]"}, 1)
+	r.ExpectJSON("logs", nil, map[string]string{"msg": "[REDACTED]", "pre": "[REDACTED]", "card": "[REDACTED]", "cvv": "[REDACTED]", "secret": "[REDACTED]"}, 1)
 	if !r.Check() {
 		t.Fatal("real logger output failed inspection")
 	}
@@ -48,7 +48,7 @@ func emit(t *testing.T, out io.Writer, scanner *embargo.Scanner, canary string) 
 	sink := embargozap.NewWriteSyncer(zapcore.AddSync(out), scanner)
 	logger := zap.New(zapcore.NewCore(zapcore.NewJSONEncoder(zapcore.EncoderConfig{MessageKey: "msg"}), sink, zap.DebugLevel))
 	logger = logger.With(zap.String("pre", canary)).Named("alice@example.com")
-	logger.Info(canary, zap.String(canary, "alice@example.com"), zap.Int64("card", 4111111111111111), zap.Any("secret", embargo.NewSecret(canary)), zap.Any("nested", map[string]any{"email": "alice@example.com", "values": []string{canary}}), zap.Error(errors.New(canary)))
+	logger.Info(canary, zap.String(canary, "alice@example.com"), zap.Int64("card", 4111111111111111), zap.Int("cvv", 123), zap.Any("secret", embargo.NewSecret(canary)), zap.Any("nested", map[string]any{"email": "alice@example.com", "values": []string{canary}}), zap.Error(errors.New(canary)))
 	if err := logger.Sync(); err != nil {
 		t.Fatal(err)
 	}

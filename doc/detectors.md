@@ -11,7 +11,7 @@
 | `KindAWSKey` | AWS Access Key IDs (`AKIA...` / `ASIA...`) | Prefix + 20-char alphanumeric |
 | `KindIBAN` | International Bank Account Numbers | Country code + MOD 97 check digit |
 | `KindIPAddr` | IPv4 and IPv6 addresses | `net.ParseIP` + octet range |
-| `KindSWIFTBIC` | SWIFT/BIC codes | Format + country code validation |
+| `KindSWIFTBIC` | SWIFT/BIC codes | Format + country code validation; all-letter codes such as DEUTDEFF also need nearby swift, bic, bank identifier or wire text |
 | `KindABARouting` | US ABA routing numbers | Prefix range + checksum |
 | `KindUKSortCode` | UK sort codes (XX-XX-XX) | Pattern + boundary checks |
 | `KindCVV` | Card verification values (CVV/CVC/CID) | Context keyword + digit length (context-based, weaker) |

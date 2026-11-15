@@ -9,6 +9,9 @@
 // malformed, oversized or incomplete JSON. Close checks completeness and seals
 // the adapter without closing the caller-owned sink; always check its error.
 //
+// Cumulative scanner input, including repeated field names, is limited to 4 MiB
+// per event; exceeding it fails closed.
+//
 // Use the default JSON encoder. Binary/CBOR builds and ConsoleWriter before the
 // adapter are unsupported and fail closed. Hex and other application encodings
 // are not decoded; wrap values in embargo.Secret before encoding. Hooks cannot

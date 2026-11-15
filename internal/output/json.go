@@ -12,14 +12,21 @@ import (
 const (
 	maxEventBytes = 1 << 20
 	maxDepth      = 64
+	maxScanBytes  = 4 * maxEventBytes
 )
+
+type eventScanner struct {
+	scanner   *embargo.Scanner
+	remaining int
+}
 
 func failure() error { return errors.New("embargo: invalid or unmaskable JSON log event") }
 
 // JSON masks decoded strings (including keys) and numeric representations in one
 // JSON object, returning a newline-terminated object. Duplicate keys and clean
-// scalar types are preserved. Malformed, oversized, deeply nested or panicking
-// input returns a fixed error and no output; panic values are never formatted.
+// scalar types are preserved. Events exceeding size, depth or cumulative scan
+// limits, malformed input and panics return a fixed error and no output.
+// Panic values are never formatted.
 func JSON(data []byte, scanner *embargo.Scanner) (masked []byte, err error) {
 	complete := false
 	defer func() {
@@ -38,7 +45,7 @@ func JSON(data []byte, scanner *embargo.Scanner) (masked []byte, err error) {
 	}
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.UseNumber()
-	masked, err = readValue(decoder, scanner, 0, "")
+	masked, err = readValue(decoder, &eventScanner{scanner: scanner, remaining: maxScanBytes}, 0, "")
 	if err != nil || len(masked) >= maxEventBytes {
 		return nil, failure()
 	}
@@ -47,7 +54,7 @@ func JSON(data []byte, scanner *embargo.Scanner) (masked []byte, err error) {
 	return masked, nil
 }
 
-func readValue(decoder *json.Decoder, scanner *embargo.Scanner, depth int, context string) ([]byte, error) {
+func readValue(decoder *json.Decoder, scanner *eventScanner, depth int, context string) ([]byte, error) {
 	if depth > maxDepth {
 		return nil, failure()
 	}
@@ -59,10 +66,17 @@ func readValue(decoder *json.Decoder, scanner *embargo.Scanner, depth int, conte
 	case json.Delim:
 		return readContainer(decoder, scanner, depth, value, context)
 	case string:
-		return json.Marshal(maskScalar(scanner, value, context))
+		masked, err := scanner.maskScalar(value, context)
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(masked)
 	case json.Number:
 		text := value.String()
-		masked := maskScalar(scanner, text, context)
+		masked, err := scanner.maskScalar(text, context)
+		if err != nil {
+			return nil, err
+		}
 		if masked != text {
 			return json.Marshal(masked)
 		}
@@ -76,7 +90,7 @@ func readValue(decoder *json.Decoder, scanner *embargo.Scanner, depth int, conte
 	}
 }
 
-func readContainer(decoder *json.Decoder, scanner *embargo.Scanner, depth int, open json.Delim, context string) ([]byte, error) {
+func readContainer(decoder *json.Decoder, scanner *eventScanner, depth int, open json.Delim, context string) ([]byte, error) {
 	result := []byte(open.String())
 	first := true
 	for decoder.More() {
@@ -95,8 +109,12 @@ func readContainer(decoder *json.Decoder, scanner *embargo.Scanner, depth int, o
 				return nil, failure()
 			}
 			fieldContext = key
+			masked, err := scanner.maskScalar(key, "")
+			if err != nil {
+				return nil, err
+			}
 			//nolint:errchkjson // Keep the explicit error check required by strict errcheck.
-			maskedKey, err := json.Marshal(embargo.Mask(key, scanner.ScanString(key)))
+			maskedKey, err := json.Marshal(masked)
 			if err != nil {
 				return nil, failure()
 			}
@@ -125,12 +143,21 @@ func readContainer(decoder *json.Decoder, scanner *embargo.Scanner, depth int, o
 
 // Include the field name so context-based detectors can recognize, for example,
 // {"cvv":123}. Translate findings back to value bytes before replacing them.
-func maskScalar(scanner *embargo.Scanner, value, context string) string {
-	prefix := ""
+func (s *eventScanner) maskScalar(value, context string) (string, error) {
+	// Charge before allocating the prefix or invoking any detector.
+	prefixBytes := 0
 	if context != "" {
-		prefix = context + ": "
+		prefixBytes = len(context) + len(": ")
 	}
-	findings := scanner.ScanString(prefix + value)
+	if prefixBytes > s.remaining || len(value) > s.remaining-prefixBytes {
+		return "", failure()
+	}
+	s.remaining -= prefixBytes + len(value)
+	if prefixBytes == 0 {
+		return embargo.Mask(value, s.scanner.ScanString(value)), nil
+	}
+	prefix := context + ": "
+	findings := s.scanner.ScanString(prefix + value)
 	spans := make([]embargo.Finding, 0, len(findings))
 	for _, finding := range findings {
 		if finding.End <= len(prefix) {
@@ -140,5 +167,5 @@ func maskScalar(scanner *embargo.Scanner, value, context string) string {
 		finding.End -= len(prefix)
 		spans = append(spans, finding)
 	}
-	return embargo.Mask(value, spans)
+	return embargo.Mask(value, spans), nil
 }

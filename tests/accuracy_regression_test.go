@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -15,6 +16,29 @@ type accuracyLimit struct {
 	ID     string         `json:"id"`
 	Reason string         `json:"reason"`
 	Found  []accuracySpan `json:"found"`
+}
+
+type accuracyControl struct {
+	ID     string `json:"id"`
+	Source string `json:"source"`
+	Text   string `json:"text"`
+}
+
+func allAccuracyControls(t *testing.T) []accuracyControl {
+	t.Helper()
+	data, err := os.ReadFile("testdata/accuracy_controls.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	//nolint:prealloc // JSON decoding determines the initial slice length.
+	var controls []accuracyControl
+	if err := json.Unmarshal(data, &controls); err != nil {
+		t.Fatal(err)
+	}
+	for i := range controls {
+		controls[i].ID = fmt.Sprintf("hand-control/%x", sha256.Sum256([]byte(controls[i].Source+"\x00"+controls[i].Text)))
+	}
+	return append(controls, readGeneratedAccuracy[accuracyControl](t, "testdata/accuracy_generated_controls.jsonl")...)
 }
 
 func allAccuracySamples(t *testing.T) []labeledAccuracySample {
@@ -34,10 +58,7 @@ func allAccuracySamples(t *testing.T) []labeledAccuracySample {
 		kinds[rows[i].Kind] = true
 	}
 	rows = append(rows, readGeneratedAccuracy[labeledAccuracySample](t, "testdata/accuracy_generated.jsonl")...)
-	controls := readGeneratedAccuracy[struct {
-		ID   string `json:"id"`
-		Text string `json:"text"`
-	}](t, "testdata/accuracy_generated_controls.jsonl")
+	controls := allAccuracyControls(t)
 	for kind := range kinds {
 		for _, c := range controls {
 			rows = append(rows, labeledAccuracySample{ID: string(kind) + "/" + c.ID, Kind: kind, Text: c.Text})

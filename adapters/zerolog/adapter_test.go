@@ -32,11 +32,11 @@ func (d literal) Scan(data []byte) []embargo.Finding {
 func TestRealLoggerMasksOutput(t *testing.T) {
 	t.Parallel()
 	canary := "public-fake-canary-0123456789"
-	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN), embargo.WithDetector(literal{value: []byte(canary)}))
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN, embargo.KindCVV), embargo.WithDetector(literal{value: []byte(canary)}))
 	r := embargotest.New(t, embargotest.WithCanary([]byte(canary)), embargotest.WithScanner(scanner))
 	emit(t, r.Writer("logs"), scanner, canary)
 	//nolint:goconst // Spell out each field expectation as an independent output contract.
-	r.ExpectJSON("logs", nil, map[string]string{"message": "[REDACTED]", "pre": "[REDACTED]", "card": "[REDACTED]", "secret": "[REDACTED]"}, 1)
+	r.ExpectJSON("logs", nil, map[string]string{"message": "[REDACTED]", "pre": "[REDACTED]", "card": "[REDACTED]", "cvv": "[REDACTED]", "secret": "[REDACTED]"}, 1)
 	if !r.Check() {
 		t.Fatal("real logger output failed inspection")
 	}
@@ -46,7 +46,7 @@ func emit(t *testing.T, out io.Writer, scanner *embargo.Scanner, canary string) 
 	t.Helper()
 	sink := embargozerolog.NewWriter(out, scanner)
 	logger := zerolog.New(sink).With().Str("pre", canary).Logger()
-	logger.Info().Str(canary, "alice@example.com").Int64("card", 4111111111111111).Interface("secret", embargo.NewSecret(canary)).Interface("nested", map[string]any{"email": "alice@example.com", "values": []string{canary}}).Err(errors.New(canary)).Msg(canary)
+	logger.Info().Str(canary, "alice@example.com").Int64("card", 4111111111111111).Int("cvv", 123).Interface("secret", embargo.NewSecret(canary)).Interface("nested", map[string]any{"email": "alice@example.com", "values": []string{canary}}).Err(errors.New(canary)).Msg(canary)
 	if err := sink.Close(); err != nil {
 		t.Fatal(err)
 	}
