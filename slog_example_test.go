@@ -42,3 +42,29 @@ func ExampleNewSlogHandler_short() {
 
 	// Output: {"level":"INFO","msg":"checkout","email":"[REDACTED]"}
 }
+
+func ExampleNewSlogHandler_struct() {
+	next := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.TimeKey {
+				return slog.Attr{}
+			}
+			return a
+		},
+	})
+
+	// README:begin
+
+	// An existing type: no tags, no embargo field types.
+	type User struct {
+		Name     string
+		Email    string
+		Password string
+	}
+	logger := slog.New(embargo.NewSlogHandler(next, embargo.NewScanner()))
+
+	logger.Info("signup", "user", User{Name: "carol", Email: "carol@example.com", Password: "hunter2"})
+	// README:end
+
+	// Output: {"level":"INFO","msg":"signup","user":{"Name":"carol","Email":"[REDACTED]","Password":"[REDACTED]"}}
+}

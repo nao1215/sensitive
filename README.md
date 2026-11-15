@@ -15,12 +15,16 @@
   <img src="doc/images/logo-small.png" alt="Go gopher peeking over the embargo title, with email and token values blacked out" width="320">
 </p>
 
-embargo finds secrets and personal data in the output of Go programs, masks them in logs and JSON, and fails your tests when one leaks.
+embargo keeps secrets and personal data out of what a Go program prints: logs, JSON, error messages and test output.
 
-- `postgres://reader:forgotten@db.example` in a log line becomes `postgres://reader:[REDACTED]@db.example` without any field rule.
-- slog, zap, zerolog and logrus keep their JSON shape; only the values change.
-- `embargo.NewSecret(key)` prints `[REDACTED]` wherever it is formatted.
-- A test fails when a fake secret planted in your code shows up in its output.
+| You have | embargo |
+|---|---|
+| An API key or password in a variable | [`Secret`](#values-that-must-never-print) prints `[REDACTED]` through fmt, slog, JSON, XML, templates, zap, zerolog, logrus and panics |
+| Card numbers, emails, Japanese phone numbers or DSN passwords inside free text | [26 built-in detectors](#find-and-mask-sensitive-text) find them and replace only the matched part |
+| Structs you already log or return as JSON | [Field values and key names are checked](#mask-structs-without-changing-their-types); no tags and no new field types |
+| slog, zap, zerolog or logrus | [One handler or adapter per logger](#loggers); the JSON shape stays the same |
+| Tests that should catch a leak | [One line in TestMain](#fail-tests-on-leaks) fails the package when a planted fake secret reaches its output |
+| A decision to make before adopting it | [Precision, recall, false positives on public logs](#accuracy) and [benchmarks](#benchmarks) produced by tests and CI |
 
 ## Quick start
 
@@ -50,6 +54,43 @@ func main() {
 }
 ```
 
+## Values that must never print
+
+Wrap the value once; every formatter then sees the marker.
+
+<!-- example: secret_example_test.go:ExampleNewSecret -->
+```go
+key := embargo.NewSecret("fake-key")
+
+fmt.Println(key)
+
+// Output: [REDACTED]
+```
+
+`key.Reveal()` returns the value when the program really needs it. [Tested outputs](#tested-outputs) lists every path checked to print `[REDACTED]`, and `Input` loads such values from JSON, config files and SQL rows. [Secret, Input and your own types](doc/values.md)
+
+## Find and mask sensitive text
+
+embargo has 26 built-in detectors (25 run by default). `NewScanner()` runs all of them except the entropy heuristic; `WithKinds` picks a subset and `WithAll` adds the heuristic. The scanner reads the text itself, so no field has to be listed first.
+
+<!-- example: credential_example_test.go:ExampleKindCredential -->
+```go
+text := "postgres://reader:forgotten@db.example/orders"
+scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindCredential))
+fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+// Output: postgres://reader:[REDACTED]@db.example/orders
+```
+
+| Group | Detectors | What is detected |
+|---|---:|---|
+| Credentials | 9 | URL and DSN passwords, `password=` and auth headers, tokens from AWS, GitHub, Slack, OpenAI and others, JWT, PEM keys |
+| Cards | 5 | Card numbers (Luhn), CVV, expiry, payment tokens, merchant ID |
+| Bank | 6 | IBAN, SWIFT/BIC, ABA routing, UK sort code, bank account, ACH trace |
+| Crypto | 2 | Bitcoin and Ethereum addresses |
+| Personal | 4 | Email, IP address, Japanese phone numbers and My Number, including full-width digits |
+
+[Every detector and how it validates](doc/detectors.md) · [Provider token formats](doc/credentials.md)
+
 Mask everything a scanner finds, or keep part of a value:
 
 <!-- masking:start -->
@@ -61,35 +102,55 @@ Mask everything a scanner finds, or keep part of a value:
 | [Overlapping matches](masking_example_test.go) | `token=abcdef` with `abcd cdef` → `token=[REDACTED]` |
 <!-- masking:end -->
 
-[Scanner options and custom replacements](doc/masking.md)
-
-## Detect without rules
-
-The scanner reads the text itself, so no field has to be listed first.
-
-<!-- example: credential_example_test.go:ExampleKindCredential -->
-```go
-text := "postgres://reader:forgotten@db.example/orders"
-scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindCredential))
-fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
-// Output: postgres://reader:[REDACTED]@db.example/orders
-```
-
-| Group | What is detected |
-|---|---|
-| Credentials | URL and DSN passwords, `password=` and auth headers, provider tokens, JWT, PEM keys |
-| Cards | Card numbers (Luhn), CVV, expiry, payment tokens, merchant ID |
-| Bank | IBAN, SWIFT/BIC, ABA routing, UK sort code, bank account, ACH trace |
-| Crypto | Bitcoin and Ethereum addresses |
-| Personal | Email, IP address, Japanese phone numbers and My Number, including full-width digits |
-
-[Every detector and how it validates](doc/detectors.md) · [Provider token formats](doc/credentials.md)
+`Scanner.ScanLines` reads files and streams line by line. [Scanner options and custom replacements](doc/masking.md)
 
 Pick the kinds you need: on 2.7 KB of log lines with no secret, `WithKinds(KindEmail)` returns in 0.11 µs because there is no `@` to inspect, while `WithAll()` takes 85 µs. [Per-detector benchmarks](doc/benchmarks.md)
 
-## Mask logs
+## Mask structs without changing their types
 
-`next` is the handler your logger already uses.
+Log the struct you already have. The handler encodes it as `slog.JSONHandler` would, masks detected values, and hides whole values under keys such as `password`, `token` or `authorization`.
+
+<!-- example: slog_example_test.go:ExampleNewSlogHandler_struct -->
+```go
+// An existing type: no tags, no embargo field types.
+type User struct {
+	Name     string
+	Email    string
+	Password string
+}
+logger := slog.New(embargo.NewSlogHandler(next, embargo.NewScanner()))
+
+logger.Info("signup", "user", User{Name: "carol", Email: "carol@example.com", Password: "hunter2"})
+
+// Output: {"level":"INFO","msg":"signup","user":{"Name":"carol","Email":"[REDACTED]","Password":"[REDACTED]"}}
+```
+
+`next` is the handler your logger already uses. The same rules apply to JSON that never reaches a logger, such as an API response or an audit export:
+
+<!-- example: structured_example_test.go:ExampleScanner_MaskJSON -->
+```go
+scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
+// Sanitize an audit export before uploading it to a support system.
+safe, err := scanner.MaskJSON([]byte(`{"user":{"email":"alice@example.com","password":"opaque"},"amount":125,"paid":true}`))
+if err != nil {
+	panic(err)
+}
+fmt.Println(string(safe))
+// Output:
+// {"user":{"email":"[REDACTED]","password":"[REDACTED]"},"amount":125,"paid":true}
+```
+
+Numbers and booleans keep their types. `WithSensitiveKeys` replaces the key list. [Structured values and key rules](doc/logging.md)
+
+## Loggers
+
+| Logger | Wrap it with | Module |
+|---|---|---|
+| log/slog: TextHandler, JSONHandler or any other slog.Handler | `embargo.NewSlogHandler(next, scanner)` | root, standard library only |
+| go.uber.org/zap | [`embargozap.NewWriteSyncer(next, scanner)`](adapters/zap/example_test.go) | `adapters/zap` |
+| github.com/rs/zerolog | [`embargozerolog.NewWriter(next, scanner)`](adapters/zerolog/example_test.go) | `adapters/zerolog` |
+| github.com/sirupsen/logrus | [`embargologrus.NewFormatter(next, scanner)`](adapters/logrus/example_test.go) | `adapters/logrus` |
+| log, fmt and anything else | `Secret` values, or `embargo.Mask` on the text before writing | root |
 
 <!-- example: slog_example_test.go:ExampleNewSlogHandler_short -->
 ```go
@@ -101,28 +162,11 @@ logger.Info("checkout", "email", "alice@example.com")
 // Output: {"level":"INFO","msg":"checkout","email":"[REDACTED]"}
 ```
 
-Values under keys such as `password`, `token` or `authorization` are masked whole, and structs and maps stay JSON objects. [Structured values and key rules](doc/logging.md)
-
-zap ([NewWriteSyncer](adapters/zap/example_test.go)), zerolog ([NewWriter](adapters/zerolog/example_test.go)) and logrus ([NewFormatter](adapters/logrus/example_test.go)) get the same detectors and key rules through optional modules. [Installation and limits](doc/adapters.md)
-
-## Values that must never print
-
-<!-- example: secret_example_test.go:ExampleNewSecret -->
-```go
-key := embargo.NewSecret("fake-key")
-
-fmt.Println(key)
-
-// Output: [REDACTED]
-```
-
-`key.Reveal()` returns the value. [Tested outputs](#tested-outputs) lists every path checked to print `[REDACTED]`.
-
-`Input` loads secrets from JSON, config files and SQL rows.
-
-Prefer your own types? Follow the [standard-library-only pattern](doc/values.md) and check them with `embargotest.CheckValue`.
+The adapters use the same detectors and key rules as the slog handler. [Installation and limits](doc/adapters.md)
 
 ## Fail tests on leaks
+
+Add one line to a package's tests:
 
 `func TestMain(m *testing.M) { os.Exit(embargotest.Guard(m)) }`
 
