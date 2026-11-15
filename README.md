@@ -9,7 +9,7 @@
 ![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/embargo/coverage.svg)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nao1215/embargo/badge)](https://scorecard.dev/viewer/?uri=github.com/nao1215/embargo)
 
-<img src="doc/images/logo-small.png" alt="embargo gopher with redacted email and token values" width="320">
+<img src="doc/images/logo-small.png" alt="Go gopher peeking over the embargo title, with email and token values blacked out" width="320">
 
 embargo detects and masks sensitive text in Go programs, logs and test output.
 
