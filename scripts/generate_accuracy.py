@@ -149,6 +149,9 @@ def generate():
             ('invoice', 'Invoice: ' + mynumber(digits(rng,11))),
             ('base64', base64.b64encode(raw).decode()),
             ('version', f'release v{i+1}.26.11 build-20261115'),
+            ('phone-shaped serial', f'Serial: 090-{1000+i:04}-{2000+i:04}'),
+            ('invalid phone prefix', f'Serial: 190-{1000+i:04}-{2000+i:04}'),
+            ('base64 without JWT header', 'e30.e30.' + base64.urlsafe_b64encode(raw).decode().rstrip('=')),
         ]: controls.append(dict(id=f'control/{source}/{i}', source=source, text=text))
     # Keep synthetic credential prefixes split in source, as in accuracy.json,
     # so hosting push protection does not mistake offline fixtures for live keys.

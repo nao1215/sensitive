@@ -211,38 +211,22 @@ In application tests pass `t` to `embargotest.New`; this standalone example uses
 
 ## Accuracy
 
-This is a synthetic corpus, not an estimate of production accuracy. Each detector has 146 positive and 338 negative inputs (11,132 detector/input evaluations in total). A [fixed-seed generator](scripts/generate_accuracy.py) constructs 24 values per detector with independent checksum encoders where applicable, then places each in six surroundings: plain text, log lines, JSON, URLs, Japanese text and multiline output. PAN, Japanese phone and My Number variants include full-width digits; PAN and phone variants include separators. Format-valid tokens and PEM headers do not establish that credentials authenticate or that accounts exist.
-
-The corpus retains the original hand-labeled fixtures and adds invalid candidates plus UUIDs, git SHAs, hashes, timestamps, order and invoice numbers, base64 and version strings. Phone-like negatives have invalid prefixes; card-like negatives fail Luhn. Byte-span labels come from construction, never scanner output. A true positive requires exact kind/start/end agreement with an unused label; partial, duplicate and extra findings are false positives, and unmatched labels are false negatives. Precision is TP/(TP+FP), recall is TP/(TP+FN), and undefined ratios are n/a. Repeated surroundings are correlated samples; the corpus is neither representative nor a statistical confidence estimate.
-
-[Known limits](doc/accuracy.md) remain in the scores: percent-encoded content is not generally decoded, SWIFT context can admit ordinary words, numeric order/invoice IDs can look valid, and PAN intentionally reports invalid-checksum candidates at lower confidence. Each observed generated mismatch has an explicit reason and expected spans in the regression inventory; new mismatches fail tests. Run `make accuracy-doc` to regenerate fixtures and the table; CI checks deterministic regeneration and rejects stale documentation.
+This chart measures detection on a synthetic corpus.
+[Generation, test cases and observed misses](doc/accuracy.md) explain the scores.
 
 <!-- accuracy:start -->
-| Detector | Positive / negative inputs | TP / FP / FN spans | Precision | Recall |
-|---|---:|---:|---:|---:|
-| aba_routing | 146 / 338 | 146 / 0 / 0 | 100.0% | 100.0% |
-| ach_trace | 146 / 338 | 146 / 0 / 0 | 100.0% | 100.0% |
-| awskey | 146 / 338 | 146 / 0 / 0 | 100.0% | 100.0% |
-| bank_account | 146 / 338 | 122 / 0 / 24 | 100.0% | 83.6% |
-| btc | 146 / 338 | 146 / 0 / 0 | 100.0% | 100.0% |
-| card_expiry | 146 / 338 | 122 / 0 / 24 | 100.0% | 83.6% |
-| cvv | 146 / 338 | 146 / 0 / 0 | 100.0% | 100.0% |
-| email | 146 / 338 | 122 / 24 / 24 | 83.6% | 83.6% |
-| eth | 146 / 338 | 146 / 0 / 0 | 100.0% | 100.0% |
-| github_token | 146 / 338 | 146 / 0 / 0 | 100.0% | 100.0% |
-| google_api_key | 146 / 338 | 146 / 0 / 0 | 100.0% | 100.0% |
-| iban | 146 / 338 | 146 / 0 / 0 | 100.0% | 100.0% |
-| ipaddr | 146 / 338 | 146 / 0 / 0 | 100.0% | 100.0% |
-| jwt | 146 / 338 | 146 / 0 / 0 | 100.0% | 100.0% |
-| merchant_id | 146 / 338 | 122 / 0 / 24 | 100.0% | 83.6% |
-| mynumber | 146 / 338 | 138 / 33 / 8 | 80.7% | 94.5% |
-| pan | 146 / 338 | 138 / 97 / 8 | 58.7% | 94.5% |
-| payment_token | 146 / 338 | 146 / 0 / 0 | 100.0% | 100.0% |
-| phone_jp | 146 / 338 | 138 / 0 / 8 | 100.0% | 94.5% |
-| private_key_pem | 146 / 338 | 122 / 0 / 24 | 100.0% | 83.6% |
-| slack_token | 146 / 338 | 146 / 0 / 0 | 100.0% | 100.0% |
-| swiftbic | 146 / 338 | 146 / 120 / 0 | 54.9% | 100.0% |
-| uk_sortcode | 146 / 338 | 145 / 0 / 1 | 100.0% | 99.3% |
+![Precision and recall on synthetic samples](doc/images/accuracy.svg)
+
+| Detector details | | |
+|---|---|---|
+| [aba_routing](doc/accuracy.md#aba-routing) | [ach_trace](doc/accuracy.md#ach-trace) | [awskey](doc/accuracy.md#awskey) |
+| [bank_account](doc/accuracy.md#bank-account) | [btc](doc/accuracy.md#btc) | [card_expiry](doc/accuracy.md#card-expiry) |
+| [cvv](doc/accuracy.md#cvv) | [email](doc/accuracy.md#email) | [eth](doc/accuracy.md#eth) |
+| [github_token](doc/accuracy.md#github-token) | [google_api_key](doc/accuracy.md#google-api-key) | [iban](doc/accuracy.md#iban) |
+| [ipaddr](doc/accuracy.md#ipaddr) | [jwt](doc/accuracy.md#jwt) | [merchant_id](doc/accuracy.md#merchant-id) |
+| [mynumber](doc/accuracy.md#mynumber) | [pan](doc/accuracy.md#pan) | [payment_token](doc/accuracy.md#payment-token) |
+| [phone_jp](doc/accuracy.md#phone-jp) | [private_key_pem](doc/accuracy.md#private-key-pem) | [slack_token](doc/accuracy.md#slack-token) |
+| [swiftbic](doc/accuracy.md#swiftbic) | [uk_sortcode](doc/accuracy.md#uk-sortcode) | |
 <!-- accuracy:end -->
 
 ## Testing

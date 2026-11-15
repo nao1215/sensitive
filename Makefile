@@ -61,6 +61,7 @@ compatibility-doc: ## Regenerate the table from real output tests
 accuracy accuracy-doc: ## Regenerate precision and recall from the labeled corpus
 	python3 scripts/generate_accuracy.py
 	UPDATE_DOCS=1 go -C tests test -run '^TestAccuracyTable$$' -count=1 .
+	python3 scripts/accuracy_figures.py
 
 .PHONY: benchmark-doc
 benchmark-doc: ## Run and publish reproducible benchmark samples

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="143" viewBox="0 0 960 143" role="img">
+<title>Precision and recall on synthetic samples</title>
+<desc>Blue bars show precision; orange bars show recall. Counts are positive and negative inputs per detector.</desc>
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="Arial, sans-serif" font-size="14" fill="#172033">
+<text x="20" y="28" font-size="21">Precision and recall · synthetic corpus</text>
+<text x="20" y="54" font-size="14">Precision: how many reported matches were correct. Recall: how many expected matches were found.</text>
+<text x="20" y="81" font-size="14">Detector</text>
+<text x="205" y="81" font-size="15">Precision</text>
+<text x="435" y="81" font-size="15">Recall</text>
+<text x="685" y="81" font-size="14">Positive / negative inputs</text>
+<text x="20" y="110" font-size="14">card_expiry</text>
+<rect x="205" y="96" width="150" height="14" fill="#edf0f4"/>
+<rect x="205" y="96" width="150.00" height="14" fill="#1877b8"/>
+<text x="363" y="109" font-size="14">100.0%</text>
+<rect x="435" y="96" width="150" height="14" fill="#edf0f4"/>
+<rect x="435" y="96" width="125.40" height="14" fill="#b34b19"/>
+<text x="593" y="109" font-size="14">83.6%</text>
+<text x="730" y="110" font-size="14">146 / 434</text>
+</g></svg>
