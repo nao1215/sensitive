@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - NewSlogHandler masks messages, keys, groups and values with an explicit scanner, freezes WithAttrs values, preserves metadata and clean scalar types, and converts opaque Any/error values to scanned strings. Normalization or detector panics, including panic(nil) compatibility mode, suppress output with a fixed error.
 
-- Exercise Secret/Input with real fmt, slog, JSON/XML, templates, zap, zerolog, logrus, OTel, Sentry, HTTP and child panic outputs. Generate the README Tested outputs table from the executed acceptance cases; external SDKs remain in tests/go.mod.
+- Exercise Secret/Input with real fmt, slog, JSON/XML, templates, zap, zerolog, logrus, OTel, Sentry, HTTP and child panic outputs. Generate the README Tested outputs table from the executed acceptance cases; external SDKs remain in tests/go.mod ([PR #60](https://github.com/nao1215/embargo/pull/60), [fa73d0b](https://github.com/nao1215/embargo/commit/fa73d0b)).
 
 - embargotest captures writers, HTTP status/headers/body/trailers and child test processes, verifies expected content, and checks every output with the scanner and an encoded canary. Allow kinds or exact fixture values independently of the canary; empty output, cut-off output, repeated interim headers exceeding the budget, and child lifecycle failures cannot pass ([PR #59](https://github.com/nao1215/embargo/pull/59), [3649bed](https://github.com/nao1215/embargo/commit/3649bed)).
 

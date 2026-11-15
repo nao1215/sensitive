@@ -32,6 +32,7 @@ func (f failure) fields() map[string]string {
 
 type observationTB struct {
 	testing.TB
+
 	cleanup  []func()
 	messages []string
 	errors   int
