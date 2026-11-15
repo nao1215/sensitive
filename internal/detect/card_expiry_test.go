@@ -21,7 +21,7 @@ func TestCardExpiryDetector_Scan(t *testing.T) {
 			name:    "exp MM/YY format",
 			input:   "exp: 12/25",
 			wantLen: 1,
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			wantRaw:    "12/25",
 			wantMinCon: 0.8,
 		},
@@ -90,7 +90,7 @@ func TestCardExpiryDetector_Scan(t *testing.T) {
 			wantMinCon: 0,
 		},
 		{
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			name:       "empty input",
 			input:      "",
 			wantLen:    0,
@@ -263,7 +263,7 @@ func TestCardExpiryDetector_NoOverlapFromRepeatedKeywordMatches(t *testing.T) {
 		input   string
 		wantRaw []string
 	}{
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{name: "keyword matched once", input: "有効期限 01/01/00", wantRaw: []string{"01/01"}},
 		{name: "lowercase exp matched by three entries", input: "exp 01/01/00", wantRaw: []string{"01/01"}},
 		{name: "mixed case eXp", input: "eXp 01/01/00", wantRaw: []string{"01/01"}},

@@ -93,7 +93,7 @@ func TestFinding_DetailAccessors_NewDetectors(t *testing.T) {
 			name: "UKSortCodeDetail",
 			f: detect.Finding{
 				DetectorName: detect.NameUKSortCode,
-
+				//nolint:goconst // Each test states its fixture and expected result independently.
 				Detail: &detect.UKSortCodeDetail{FormattedValue: "12-34-56"},
 			},
 			expect: func(f detect.Finding) bool { _, ok := f.UKSortCodeDetail(); return ok },
@@ -183,13 +183,13 @@ func TestFinding_Level(t *testing.T) {
 		confidence float64
 		wantLevel  detect.ConfidenceLevel
 	}{
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{name: "high confidence (1.0)", confidence: 1.0, wantLevel: detect.ConfidenceHigh, wantStr: "high"},
 		{name: "high confidence (0.8)", confidence: 0.8, wantLevel: detect.ConfidenceHigh, wantStr: "high"},
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{name: "medium confidence (0.79)", confidence: 0.79, wantLevel: detect.ConfidenceMedium, wantStr: "medium"},
 		{name: "medium confidence (0.4)", confidence: 0.4, wantLevel: detect.ConfidenceMedium, wantStr: "medium"},
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{name: "low confidence (0.39)", confidence: 0.39, wantLevel: detect.ConfidenceLow, wantStr: "low"},
 		{name: "low confidence (0.0)", confidence: 0.0, wantLevel: detect.ConfidenceLow, wantStr: "low"},
 	}

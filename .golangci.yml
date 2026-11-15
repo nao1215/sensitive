@@ -1,110 +1,281 @@
-version: "2"
+version: '2'
 run:
-  # The language version go.mod declares. The linter assumes this when it
-  # decides what the code may use, so a higher number here would let a construct
-  # that does not compile on the supported floor through the gate.
-  go: "1.26"
+  go: '1.26'
+  timeout: 10m
+  tests: true
+  relative-path-mode: gomod
 linters:
+  default: none
   enable:
-    - asciicheck
-    - bidichk
-    - bodyclose
-    - canonicalheader
-    - containedctx
-    - copyloopvar
-    - decorder
-    - dogsled
-    - durationcheck
-    - errchkjson
-    - errname
-    - errorlint
-    - fatcontext
-    - forcetypeassert
-    - gocheckcompilerdirectives
-    - gochecknoinits
-    - goconst
-    - gomoddirectives
-    - gosec
-    - interfacebloat
-    - intrange
-    - makezero
-    - mirror
-    - misspell
-    - nakedret
-    - nilerr
-    - noctx
-    - nolintlint
-    - nosprintfhostport
-    - perfsprint
-    - prealloc
-    - predeclared
-    - reassign
-    - revive
-    - sloglint
-    - staticcheck
-    - tagliatelle
-    - thelper
-    - unconvert
-    - unparam
-    - usestdlibvars
-    - usetesting
-    - wastedassign
-    - whitespace
+  - asasalint
+  - asciicheck
+  - bidichk
+  - bodyclose
+  - canonicalheader
+  - containedctx
+  - contextcheck
+  - copyloopvar
+  - decorder
+  - depguard
+  - dogsled
+  - dupl
+  - dupword
+  - durationcheck
+  - embeddedstructfieldcheck
+  - errcheck
+  - errchkjson
+  - errname
+  - errorlint
+  - exhaustive
+  - exhaustruct_v5
+  - exptostd
+  - fatcontext
+  - forbidigo
+  - forcetypeassert
+  - gocheckcompilerdirectives
+  - gochecknoglobals
+  - gochecknoinits
+  - gocognit
+  - goconst
+  - gocritic
+  - gocyclo
+  - godot
+  - gomoddirectives
+  - gosec
+  - govet
+  - iface
+  - ineffassign
+  - interfacebloat
+  - intrange
+  - makezero
+  - mirror
+  - misspell
+  - mnd
+  - modernize
+  - musttag
+  - nakedret
+  - nestif
+  - nilerr
+  - nilnesserr
+  - nilnil
+  - noctx
+  - nolintlint
+  - nosprintfhostport
+  - paralleltest
+  - perfsprint
+  - prealloc
+  - predeclared
+  - reassign
+  - recvcheck
+  - revive
+  - rowserrcheck
+  - sloglint
+  - sqlclosecheck
+  - staticcheck
+  - tagliatelle
+  - testableexamples
+  - testifylint
+  - thelper
+  - tparallel
+  - unconvert
+  - unparam
+  - unused
+  - usestdlibvars
+  - usetesting
+  - wastedassign
+  - whitespace
   settings:
-    gomoddirectives:
-      replace-local: true
-      replace-allow-list:
-        - github.com/nao1215/embargo
+    depguard:
+      rules:
+        root-production:
+          list-mode: strict
+          files:
+          - $all
+          - '!$test'
+          - '!**/embargotest/**'
+          - '!**/tests/**'
+          - '!**/adapters/**'
+          allow:
+          - $gostd
+          - github.com/nao1215/embargo/internal/
+          deny:
+          - pkg: testing$
+            desc: Runtime packages must not depend on testing.
+          - pkg: testing/
+            desc: Runtime packages must not depend on testing helpers.
+        detectors:
+          list-mode: strict
+          files:
+          - '**/internal/detect/**/*.go'
+          - '!$test'
+          allow:
+          - $gostd
+          - github.com/nao1215/embargo/internal/ascii$
+        ascii:
+          list-mode: strict
+          files:
+          - '**/internal/ascii/*.go'
+          - '!$test'
+          allow:
+          - $gostd
+        recorder:
+          list-mode: strict
+          files:
+          - '**/embargotest/*.go'
+          - '!$test'
+          allow:
+          - $gostd
+          - github.com/nao1215/embargo$
+        root-tests:
+          list-mode: strict
+          files:
+          - $test
+          - '!**/tests/**'
+          - '!**/adapters/**'
+          allow:
+          - $gostd
+          - github.com/nao1215/embargo$
+          - github.com/nao1215/embargo/internal/
+          - github.com/nao1215/embargo/embargotest$
+        sdk-tests:
+          list-mode: strict
+          files:
+          - '**/tests/**/*.go'
+          allow:
+          - $gostd
+          - github.com/nao1215/embargo$
+          - github.com/nao1215/embargo/embargotest$
+          - github.com/nao1215/embargo/tests/
+          - pgregory.net/rapid$
+          - go.uber.org/goleak$
+          - go.uber.org/zap
+          - github.com/rs/zerolog
+          - github.com/sirupsen/logrus$
+          - go.opentelemetry.io/otel
+          - github.com/getsentry/sentry-go
+          - golang.org/x/crypto/
+          - golang.org/x/tools/go/
+          - go/types$
+          - go/token$
+          - go/constant$
     errcheck:
-      disable-default-exclusions: false
-      check-type-assertions: true
       check-blank: true
+      check-type-assertions: true
+      disable-default-exclusions: true
+      exclude-functions: []
+    errchkjson:
+      check-error-free-encoding: true
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+      allow-unused: false
+    dupl:
+      threshold: 150
+    gocognit:
+      min-complexity: 30
+    gocyclo:
+      min-complexity: 25
+    nestif:
+      min-complexity: 5
+    goconst:
+      ignore-tests: false
+    exhaustive:
+      default-signifies-exhaustive: false
+    exhaustruct_v5:
+      explicit-mode: true
+      enforce-patterns:
+      - github.com/nao1215/embargo/embargotest\.Recorder
+      - github.com/nao1215/embargo\.slogHandler
+    forbidigo:
+      analyze-types: true
+      forbid:
+      - pattern: ^fmt\.Print(f|ln)?$
+        msg: Use an injected writer; Examples need a local, justified suppression.
+      - pattern: ^os\.(Chdir|Setenv|Unsetenv|Clearenv)$
+        msg: Do not mutate process-global state; configure the child or use testing helpers.
+      - pattern: ^math/rand(/v2)?\.
+        msg: Use explicit fixtures or rapid generators, not uncontrolled randomness.
+      - pattern: ^time\.Sleep$
+        msg: Synchronize with channels or a bounded context.
+    gocritic:
+      enabled-tags:
+      - diagnostic
+      - style
+      - performance
+      disabled-checks: []
+    gosec:
+      excludes: []
+    govet:
+      enable-all: true
+    modernize:
+      disable: []
+    perfsprint:
+      concat-loop: true
+    recvcheck:
+      disable-builtin: true
+      exclusions:
+      - Input.UnmarshalJSON
+      - Input.UnmarshalText
+    revive:
+      enable-default-rules: true
+      rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-naming
+      - name: error-return
+      - name: error-strings
+      - name: errorf
+      - name: exported
+      - name: increment-decrement
+      - name: indent-error-flow
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: redefines-builtin-id
+      - name: superfluous-else
+      - name: time-naming
+      - name: unexported-return
+      - name: unreachable-code
+      - name: unused-parameter
+      - name: var-declaration
+      - name: var-naming
     tagliatelle:
       case:
         rules:
           json: snake
+          yaml: snake
         use-field-name: true
+    gomoddirectives:
+      replace-local: true
+      replace-allow-list:
+      - github.com/nao1215/embargo
   exclusions:
-    generated: lax
-    rules:
-      - linters:
-          - goconst
-        path: .*_test\.go
-      # G101 reports hardcoded credentials. This library's tests are made of
-      # them: a detector for AWS keys and Stripe tokens is tested by handing it
-      # AWS keys and Stripe tokens, and the published documentation examples show
-      # the same. The strings are the well-known non-secrets from each vendor's
-      # own docs (AKIAIOSFODNN7EXAMPLE, sk_live_4eC39Hq...), and there is nothing
-      # they could leak. In non-test code G101 stays on.
-      - linters:
-          - gosec
-        path: .*_test\.go
-        # Fixed seeds make specification generators reproducible; these are not credentials.
-        text: G101|G404
-      - linters:
-          - errcheck
-        source: defer
-      - path: (.+)\.go$
-        text: fmt.Fprintf
-      - path: (.+)\.go$
-        text: fmt.Fprintln
-      - path: (.+)\.go$
-        text: fmt.Fprint
-      - path: (.+)\.go$
-        text: fmt.Printf
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+    generated: disable
+    presets: []
+    rules: []
+    paths: []
 issues:
+  max-issues-per-linter: 0
   max-same-issues: 0
 formatters:
   enable:
-    - gofmt
-    - goimports
+  - gofumpt
+  - goimports
+  settings:
+    gofumpt:
+      extra:
+        group-params: true
+        clothe-returns: true
+        balance-calls: true
+    goimports:
+      local-prefixes:
+      - github.com/nao1215/embargo
   exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+    generated: disable
+    paths: []

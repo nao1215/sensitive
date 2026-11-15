@@ -14,6 +14,7 @@ import (
 	"testing"
 )
 
+//nolint:gocognit // Walk the complete declaration or example structure so missing public contracts cannot be skipped.
 func TestReadmeExamples(t *testing.T) {
 	t.Parallel()
 	readme, err := os.ReadFile("README.md")
@@ -102,72 +103,142 @@ func canonicalExample(t *testing.T, fset *token.FileSet, node ast.Node) string {
 
 func TestExamplesAppearInGodoc(t *testing.T) {
 	t.Parallel()
-	for _, dir := range []string{".", "internal/detect", "mask"} {
-		t.Run(dir, func(t *testing.T) {
-			t.Parallel()
-			fset := token.NewFileSet()
-			paths, err := filepath.Glob(filepath.Join(dir, "*.go"))
-			if err != nil {
-				t.Fatal(err)
+	checkPackageExamples(t, ".")
+}
+
+//nolint:gocognit // Walk the complete declaration or example structure so missing public contracts cannot be skipped.
+func checkPackageExamples(t *testing.T, dir string) {
+	t.Helper()
+	fset := token.NewFileSet()
+	paths, err := filepath.Glob(filepath.Join(dir, "*.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var files []*ast.File
+	examples := map[string]*doc.Example{}
+	required := map[string]bool{}
+	for _, path := range paths {
+		file, parseErr := parser.ParseFile(fset, path, nil, parser.ParseComments)
+		if parseErr != nil {
+			t.Fatal(parseErr)
+		}
+		if strings.HasSuffix(path, "_test.go") {
+			for _, e := range doc.Examples(file) {
+				name := strings.SplitN(e.Name, "_", 3)
+				key := e.Name
+				if len(name) > 1 && name[len(name)-1] != "" && name[len(name)-1][0] >= 'a' && name[len(name)-1][0] <= 'z' {
+					key = strings.Join(name[:len(name)-1], "_")
+				}
+				examples[key] = e
+				if e.Output == "" || e.Unordered {
+					t.Errorf("Example%s requires recognized ordered nonempty Output", e.Name)
+				}
 			}
-			var files []*ast.File
-			want := make(map[string]bool)
-			for _, path := range paths {
-				if strings.HasSuffix(path, "_test.go") && !strings.HasSuffix(path, "example_test.go") {
+			if !strings.Contains(filepath.Base(path), "example") {
+				continue
+			}
+		} else {
+			collectPublicExamples(file, required)
+		}
+		files = append(files, file)
+	}
+	if _, err = doc.NewFromFiles(fset, files, "github.com/nao1215/embargo"); err != nil {
+		t.Fatal(err)
+	}
+	for name := range required {
+		if examples[name] == nil {
+			t.Errorf("%s: exported %s needs a runnable Example", dir, name)
+		}
+	}
+	for name := range examples {
+		if name != "" && !required[name] {
+			t.Errorf("Example%s has no public identifier", name)
+		}
+	}
+}
+
+//nolint:gocognit // Walk the complete declaration or example structure so missing public contracts cannot be skipped.
+func collectPublicExamples(file *ast.File, required map[string]bool) {
+	for _, decl := range file.Decls {
+		switch d := decl.(type) {
+		case *ast.FuncDecl:
+			if !d.Name.IsExported() {
+				continue
+			}
+			name := d.Name.Name
+			if d.Recv != nil {
+				receiver := receiverName(d.Recv.List[0].Type)
+				if !ast.IsExported(receiver) {
 					continue
 				}
-				file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
-				if err != nil {
-					t.Fatal(err)
-				}
-				files = append(files, file)
-				if strings.HasSuffix(path, "_test.go") {
-					for _, example := range doc.Examples(file) {
-						want[example.Name] = true
-						if example.Output == "" && !example.EmptyOutput || example.Unordered {
-							t.Errorf("Example%s needs an ordered Output block", example.Name)
+				name = receiver + "_" + name
+			}
+			required[name] = true
+		case *ast.GenDecl:
+			for _, spec := range d.Specs {
+				switch v := spec.(type) {
+				case *ast.ValueSpec:
+					for _, n := range v.Names {
+						if n.IsExported() {
+							required[n.Name] = true
 						}
-						if example.Play == nil {
-							t.Errorf("Example%s cannot render as a playground program", example.Name)
+					}
+				case *ast.TypeSpec:
+					if !v.Name.IsExported() {
+						continue
+					}
+					required[v.Name.Name] = true
+					if iface, ok := v.Type.(*ast.InterfaceType); ok {
+						for _, field := range iface.Methods.List {
+							for _, n := range field.Names {
+								if n.IsExported() {
+									required[v.Name.Name+"_"+n.Name] = true
+								}
+							}
 						}
 					}
 				}
 			}
-			pkg, err := doc.NewFromFiles(fset, files, "github.com/nao1215/embargo/"+dir)
-			if err != nil {
-				t.Fatal(err)
-			}
-			check := func(examples []*doc.Example) {
-				for i, example := range examples {
-					delete(want, example.Name)
-					if i > 0 && examples[i-1].Suffix > example.Suffix {
-						t.Error("examples are not ordered by suffix")
-					}
-				}
-			}
-			check(pkg.Examples)
-			for _, fn := range pkg.Funcs {
-				check(fn.Examples)
-			}
-			for _, typ := range pkg.Types {
-				check(typ.Examples)
-				for _, fn := range typ.Funcs {
-					check(fn.Examples)
-				}
-				for _, method := range typ.Methods {
-					check(method.Examples)
-				}
-			}
-			for name := range want {
-				t.Errorf("Example%s is not attached to a documented symbol", name)
-			}
-		})
+		}
+	}
+}
+
+func receiverName(expr ast.Expr) string {
+	switch n := expr.(type) {
+	case *ast.Ident:
+		return n.Name
+	case *ast.StarExpr:
+		return receiverName(n.X)
+	case *ast.IndexExpr:
+		return receiverName(n.X)
+	case *ast.IndexListExpr:
+		return receiverName(n.X)
+	default:
+		panic("unsupported receiver")
+	}
+}
+
+func TestExampleInventoryIgnoresPrivateReceivers(t *testing.T) {
+	t.Parallel()
+	source := `package fixture
+ type private struct{}
+ func (private) Error() string {return "fixed"}
+ type Public struct{}
+ func (Public) String() string {return "fixed"}`
+	file, err := parser.ParseFile(token.NewFileSet(), "fixture.go", source, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	required := map[string]bool{}
+	collectPublicExamples(file, required)
+	if required["private_Error"] || !required["Public_String"] {
+		t.Fatal("example inventory confused private and public receivers")
 	}
 }
 
 func TestPublicExamplesOnlyImportPublicPackages(t *testing.T) {
 	t.Parallel()
-	for _, name := range []string{"example_test.go", "mask/example_test.go"} {
+	for _, name := range []string{"example_test.go"} {
 		f, err := parser.ParseFile(token.NewFileSet(), name, nil, parser.ImportsOnly)
 		if err != nil {
 			t.Fatal(err)

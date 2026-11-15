@@ -32,7 +32,7 @@ func TestPANDetector_Scan(t *testing.T) {
 		},
 		{
 			name: "Visa with dashes",
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			input:      "4532-0151-1283-0366",
 			wantLen:    1,
 			wantBrand:  detect.BrandVisa,
@@ -41,7 +41,7 @@ func TestPANDetector_Scan(t *testing.T) {
 		},
 		{
 			name: "Visa with spaces",
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			input:      "4532 0151 1283 0366",
 			wantLen:    1,
 			wantBrand:  detect.BrandVisa,
@@ -114,7 +114,7 @@ func TestPANDetector_Scan(t *testing.T) {
 			wantLen: 0,
 		},
 		{
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			name:    "empty input",
 			input:   "",
 			wantLen: 0,

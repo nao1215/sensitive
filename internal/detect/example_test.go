@@ -25,9 +25,9 @@ func ExamplePAN_Scan() {
 	// Detects PANs with various separators.
 	for _, input := range []string{
 		"4532015112830366",
-
+		//nolint:goconst // Each Example states its own fixture independently.
 		"4532-0151-1283-0366",
-
+		//nolint:goconst // Each Example states its own fixture independently.
 		"4532 0151 1283 0366",
 	} {
 		findings := d.Scan([]byte(input))
@@ -81,7 +81,7 @@ func ExampleNewMyNumber() {
 func ExampleNewJWT() {
 	d := detect.NewJWT()
 	// #nosec G101 -- test token for JWT detection
-
+	//nolint:goconst // Each Example states its own fixture independently.
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
 	findings := d.Scan([]byte("Bearer " + token))
 

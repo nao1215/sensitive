@@ -27,7 +27,7 @@ func TestBTCDetector_Scan(t *testing.T) {
 			input:    "send to 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa please",
 			wantLen:  1,
 			wantType: detect.BTCAddressP2PKH,
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			wantRaw:     "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
 			wantMinConf: 0.9,
 		},
@@ -54,7 +54,7 @@ func TestBTCDetector_Scan(t *testing.T) {
 			input:    "segwit: bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
 			wantLen:  1,
 			wantType: detect.BTCAddressBech32,
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			wantRaw:     "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
 			wantMinConf: 0.9,
 		},
@@ -129,7 +129,7 @@ func TestBTCDetector_Scan_NoMatch(t *testing.T) {
 		name  string
 		input string
 	}{
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{name: "empty input", input: ""},
 		{name: "plain text", input: "hello world no bitcoin here"},
 		{name: "short string starting with 1", input: "1abc"},
@@ -223,11 +223,11 @@ func TestBTCDetector_Scan_BoundaryChecks(t *testing.T) {
 		{name: "followed by space", input: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa ", wantLen: 1},
 		{name: "followed by comma", input: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa,", wantLen: 1},
 		{name: "followed by period", input: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa.", wantLen: 1},
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{name: "preceded by letter", input: "x1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", wantLen: 0},
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{name: "preceded by underscore", input: "_1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", wantLen: 0},
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{name: "followed by underscore", input: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa_", wantLen: 0},
 		{name: "preceded by digit", input: "91A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", wantLen: 0},
 		{name: "preceded by zero (non-base58)", input: "01A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", wantLen: 0},

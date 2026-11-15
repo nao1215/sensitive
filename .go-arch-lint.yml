@@ -1,0 +1,25 @@
+version: 3
+workdir: .
+allow:
+  depOnAnyVendor: false
+  deepScan: true
+exclude:
+- tests
+- adapters
+excludeFiles:
+- ^.*_test\.go$
+components:
+  runtime:
+    in: .
+  detectors:
+    in: internal/detect/**
+  ascii:
+    in: internal/ascii
+deps:
+  runtime:
+    mayDependOn:
+    - detectors
+    - ascii
+  detectors:
+    mayDependOn:
+    - ascii

@@ -17,7 +17,7 @@ func TestPaymentTokenDetector_Scan(t *testing.T) {
 		wantLen    int
 		wantMinCon float64
 	}{
-
+		//nolint:gosec // This public synthetic credential is a positive detection fixture, not an authentication secret.
 		{
 			name:       "Stripe secret key live",
 			input:      "key: sk_live_4eC39HqLyjWDarjtT1zdp7dc",
@@ -116,7 +116,7 @@ func TestPaymentTokenDetector_Scan(t *testing.T) {
 			wantRaw:    "",
 			wantMinCon: 0,
 		},
-
+		//nolint:gosec // This public synthetic credential is a positive detection fixture, not an authentication secret.
 		{
 			name:       "preceded by alphanumeric",
 			input:      "Xsk_live_4eC39HqLyjWDarjtT1zdp7dc",
@@ -124,9 +124,9 @@ func TestPaymentTokenDetector_Scan(t *testing.T) {
 			wantRaw:    "",
 			wantMinCon: 0,
 		},
-
+		//nolint:gosec // This public synthetic credential is a positive detection fixture, not an authentication secret.
 		{
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			name:       "preceded by underscore",
 			input:      "_sk_live_4eC39HqLyjWDarjtT1zdp7dc",
 			wantLen:    0,
@@ -134,7 +134,7 @@ func TestPaymentTokenDetector_Scan(t *testing.T) {
 			wantMinCon: 0,
 		},
 		{
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			name:       "empty input",
 			input:      "",
 			wantLen:    0,

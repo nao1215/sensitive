@@ -11,7 +11,10 @@ import (
 
 // TestLabeledRecall measures individual detectors, avoiding overlap suppression
 // by WithAll. Every positive must be found and every negative must be rejected.
+//
+//nolint:gocognit // Keep each acceptance table and its assertions together for review.
 func TestLabeledRecall(t *testing.T) {
+	t.Parallel()
 	data, err := os.ReadFile("testdata/recall.json")
 	if err != nil {
 		t.Fatal(err)
@@ -30,7 +33,8 @@ func TestLabeledRecall(t *testing.T) {
 		name := string(d.Name())
 		known[name] = true
 		t.Run(name, func(t *testing.T) {
-			s := embargo.NewScanner(embargo.WithDetector(d))
+			t.Parallel()
+			s := embargo.NewScanner(embargo.WithKinds(embargo.Kind(d.Name())))
 			pos, neg, tp, fp := 0, 0, 0, 0
 			for _, r := range rows {
 				if r.Detector != name {

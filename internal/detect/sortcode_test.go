@@ -21,7 +21,7 @@ func TestUKSortCodeDetector_Scan(t *testing.T) {
 			name:    "hyphen separated sort code",
 			input:   "sort code: 12-34-56",
 			wantLen: 1,
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			wantRaw:    "12-34-56",
 			wantMinCon: 0.6,
 		},
@@ -82,7 +82,7 @@ func TestUKSortCodeDetector_Scan(t *testing.T) {
 			wantMinCon: 0,
 		},
 		{
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			name:       "empty input",
 			input:      "",
 			wantLen:    0,

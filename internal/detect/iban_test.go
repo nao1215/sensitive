@@ -48,7 +48,7 @@ func TestIBANDetector_Scan(t *testing.T) {
 			wantLen: 0,
 		},
 		{
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			name:    "empty input",
 			input:   "",
 			wantLen: 0,
@@ -269,7 +269,7 @@ func TestIBANDetector_MultipleIBANs(t *testing.T) {
 
 func TestIBANFollowingWord(t *testing.T) {
 	t.Parallel()
-
+	//nolint:goconst // Each test states its fixture and expected result independently.
 	for _, raw := range []string{"GB82WEST12345698765432", "GB82 WEST 1234 5698 7654 32"} {
 		for _, suffix := range []string{" y", " today", " 123"} {
 			got := detect.NewIBAN().Scan([]byte("to " + raw + suffix))

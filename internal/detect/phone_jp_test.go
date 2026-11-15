@@ -21,7 +21,7 @@ func TestJPPhoneDetector_Scan(t *testing.T) {
 			name:    "mobile with dashes",
 			input:   "call 090-1234-5678 now",
 			wantLen: 1,
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			wantRaw:    "090-1234-5678",
 			wantMinCon: 0.8,
 		},
@@ -48,7 +48,7 @@ func TestJPPhoneDetector_Scan(t *testing.T) {
 		},
 		{
 			name: "IP phone",
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			input:      "050-1234-5678",
 			wantLen:    1,
 			wantRaw:    "050-1234-5678",
@@ -56,7 +56,7 @@ func TestJPPhoneDetector_Scan(t *testing.T) {
 		},
 		{
 			name: "toll-free 0120",
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			input:      "0120-123-456",
 			wantLen:    1,
 			wantRaw:    "0120-123-456",
@@ -77,7 +77,7 @@ func TestJPPhoneDetector_Scan(t *testing.T) {
 			wantLen: 0,
 		},
 		{
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			name:    "empty input",
 			input:   "",
 			wantLen: 0,
@@ -156,13 +156,13 @@ func TestJPPhoneDetector_Scan(t *testing.T) {
 
 		// Underscore boundary.
 		{
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			name:    "preceded by underscore",
 			input:   "_09012345678",
 			wantLen: 0,
 		},
 		{
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			name:    "followed by underscore",
 			input:   "09012345678_",
 			wantLen: 0,

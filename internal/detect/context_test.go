@@ -60,7 +60,7 @@ func TestFindKeywordPositions_WordBoundary(t *testing.T) {
 		{
 			name: "keyword at word boundary matches",
 			data: "exp: 12/25",
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			kw:      "exp",
 			wantLen: 1,
 		},

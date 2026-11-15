@@ -27,7 +27,7 @@ func TestETHDetector_Scan(t *testing.T) {
 			name:    "EIP-55 test vector 1",
 			input:   "addr: 0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
 			wantLen: 1,
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			wantRaw:     "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
 			wantEIP55:   true,
 			wantMinConf: 0.9,
@@ -144,20 +144,20 @@ func TestETHDetector_Scan_NoMatch(t *testing.T) {
 		name  string
 		input string
 	}{
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{name: "empty input", input: ""},
 		{name: "plain text", input: "hello world no ethereum here"},
 		{name: "0x too short", input: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAe"},
 		{name: "0x too long", input: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed0"},
 		{name: "non-hex chars", input: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BzZzz"},
 		{name: "invalid EIP-55 checksum", input: "0x5AAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"},
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{name: "preceded by letter", input: "x0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed"},
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{name: "preceded by underscore", input: "_0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed"},
 		{name: "followed by hex char", input: "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed0"},
 		{name: "followed by letter", input: "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaedx"},
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{name: "followed by underscore", input: "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed_"},
 		{name: "just 0x prefix", input: "0x"},
 		{name: "hex string without 0x", input: "5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"},

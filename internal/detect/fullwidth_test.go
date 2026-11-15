@@ -32,11 +32,11 @@ func TestNormalizeFullWidthDigits(t *testing.T) {
 		{
 			name:  "full-width hyphen U+FF0D",
 			input: "０９０－１２３４－５６７８",
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			wantNormalized: "090-1234-5678",
 		},
 		{
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			name:           "empty input",
 			input:          "",
 			wantNormalized: "",

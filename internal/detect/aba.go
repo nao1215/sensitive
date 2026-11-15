@@ -65,6 +65,13 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			continue
 		}
 
+		// A decimal component (including an RFC3339 fractional second) is not
+		// a standalone routing number, even when its digits satisfy the checksum.
+		if i >= 2 && data[i-1] == '.' && isDigit(data[i-2]) || end+1 < len(data) && data[end] == '.' && isDigit(data[end+1]) {
+			i = end - 1
+			continue
+		}
+
 		digits := data[i:end]
 
 		// Validate Federal Reserve routing symbol (first two digits).
@@ -137,8 +144,10 @@ func abaFederalReserveDistrict(digits []byte) string {
 	case prefix >= 1 && prefix <= 12:
 		return abaDistrictName(prefix)
 	case prefix >= 21 && prefix <= 32:
+		//nolint:mnd // Thrift institution prefixes are district plus 20.
 		return abaDistrictName(prefix - 20)
 	case prefix >= 61 && prefix <= 72:
+		//nolint:mnd // Electronic transaction prefixes are district plus 60.
 		return abaDistrictName(prefix - 60)
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 	case prefix == 80:
@@ -149,6 +158,8 @@ func abaFederalReserveDistrict(digits []byte) string {
 }
 
 // abaDistrictName returns a Federal Reserve district name.
+//
+//nolint:mnd // District numbers are fixed Federal Reserve identifiers.
 func abaDistrictName(district int) string {
 	switch district {
 	case 1:

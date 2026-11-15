@@ -33,3 +33,18 @@ benchmark: ## Run benchmark tests
 help:
 	@grep -E '^[0-9a-zA-Z_-]+[[:blank:]]*:.*?## .*$$' $(MAKEFILE_LIST) | sort \
 	| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[1;32m%-15s\033[0m %s\n", $$1, $$2}'
+
+.PHONY: arch race properties mutation fuzz
+arch: ## Check production package boundaries
+	go run github.com/fe3dback/go-arch-lint@v1.19.0 check
+race: ## Run race detection in both modules
+	go test -race ./...
+	go -C tests test -race ./...
+properties: ## Run property and API contract tests
+	go -C tests test ./...
+mutation: ## Mutate root module packages with gremlins
+	go run github.com/go-gremlins/gremlins/cmd/gremlins@v0.6.0 unleash --workers 4 --timeout-coefficient 100 .
+fuzz: ## Smoke test every root fuzz target
+	go test -run '^$$' -fuzz '^FuzzScanner$$' -fuzztime=10s .
+	go test -run '^$$' -fuzz '^FuzzScanLines$$' -fuzztime=10s .
+	go test -run '^$$' -fuzz '^FuzzMask$$' -fuzztime=10s .

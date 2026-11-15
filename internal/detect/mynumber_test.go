@@ -27,7 +27,7 @@ func TestMyNumberDetector_Scan(t *testing.T) {
 
 		{
 			name: "hyphen-separated My Number",
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			input:      "1234-5678-9018",
 			wantLen:    1,
 			wantRaw:    "1234-5678-9018",
@@ -58,7 +58,7 @@ func TestMyNumberDetector_Scan(t *testing.T) {
 			wantLen: 0,
 		},
 		{
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			name:    "empty input",
 			input:   "",
 			wantLen: 0,

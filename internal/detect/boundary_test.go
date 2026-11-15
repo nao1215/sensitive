@@ -24,22 +24,22 @@ func TestEncodedBoundary(t *testing.T) {
 		{d: detect.NewPAN(), raw: "4532015112830366"},
 		{d: detect.NewMyNumber(), raw: "123456789018"},
 		{d: detect.NewABARouting(), raw: "021000021"},
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{d: detect.NewJPPhone(), raw: "090-1234-5678"},
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{d: detect.NewUKSortCode(), raw: "12-34-56"},
 		{d: detect.NewIPAddr(), raw: "192.168.0.1"},
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{d: detect.NewBTC(), raw: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"},
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{d: detect.NewBTC(), raw: "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"},
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{d: detect.NewETH(), raw: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"},
-
-		{d: detect.NewAWSKey(), raw: "AKIAIOSFODNN7EXAMPLE"},
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
+		{d: detect.NewAWSKey(), raw: "AKIAIOSFODNN7EXAMPLE"}, //nolint:gosec // AWS publishes this example access key; it is not an authentication credential.
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{d: detect.NewIBAN(), raw: "GB82WEST12345698765432"},
-
+		//nolint:goconst // Each test states its fixture and expected result independently.
 		{d: detect.NewJWT(), raw: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"},
 	}
 	for _, sample := range samples {
@@ -59,6 +59,7 @@ func TestEncodedBoundaryRejectsWordAndMalformedEscapes(t *testing.T) {
 	t.Parallel()
 	for _, prefix := range []string{"v%41", "v%30", "v%5F", "v%2D", "v%GG", "v%3", "word", "v%FF"} {
 		for _, d := range []detect.Detector{detect.NewAWSKey(), detect.NewIBAN(), detect.NewETH()} {
+			//nolint:gosec // This public synthetic credential is a positive detection fixture, not an authentication secret.
 			raw := map[detect.DetectorName]string{detect.NameAWSKey: "AKIAIOSFODNN7EXAMPLE", detect.NameIBAN: "GB82WEST12345698765432", detect.NameETH: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"}[d.Name()]
 			if got := d.Scan([]byte(prefix + raw)); len(got) != 0 {
 				t.Errorf("%s %s: unexpected match", d.Name(), prefix)

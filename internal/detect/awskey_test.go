@@ -17,16 +17,16 @@ func TestAWSKeyDetector_Scan(t *testing.T) {
 		wantLen    int
 		wantMinCon float64
 	}{
-
+		//nolint:gosec // This public synthetic credential is a positive detection fixture, not an authentication secret.
 		{
 			name:    "AKIA prefix key",
 			input:   "aws_access_key_id = AKIAIOSFODNN7EXAMPLE",
 			wantLen: 1,
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			wantRaw:    "AKIAIOSFODNN7EXAMPLE",
 			wantMinCon: 0.9,
 		},
-
+		//nolint:gosec // This public synthetic credential is a positive detection fixture, not an authentication secret.
 		{
 			name:       "ASIA prefix key (STS)",
 			input:      "key: ASIAIMOSTEMPKEY12345",
@@ -41,7 +41,7 @@ func TestAWSKeyDetector_Scan(t *testing.T) {
 			input:   "AKIA1234",
 			wantLen: 0,
 		},
-
+		//nolint:gosec // This public synthetic credential is a positive detection fixture, not an authentication secret.
 		{
 			name:    "AKIA inside longer token",
 			input:   "xAKIAIOSFODNN7EXAMPLE",
@@ -53,7 +53,7 @@ func TestAWSKeyDetector_Scan(t *testing.T) {
 			wantLen: 0,
 		},
 		{
-
+			//nolint:goconst // Each test states its fixture and expected result independently.
 			name:    "empty input",
 			input:   "",
 			wantLen: 0,
@@ -90,9 +90,9 @@ func TestAWSKeyDetector_Detail(t *testing.T) {
 		input    string
 		wantType detect.AWSKeyType
 	}{
-
+		//nolint:gosec // This public synthetic credential is a positive detection fixture, not an authentication secret.
 		{input: "AKIAIOSFODNN7EXAMPLE", wantType: detect.AWSKeyTypeLongTerm},
-
+		//nolint:gosec // This public synthetic credential is a positive detection fixture, not an authentication secret.
 		{input: "ASIAIMOSTEMPKEY12345", wantType: detect.AWSKeyTypeTemporary},
 	}
 	for _, tt := range tests {

@@ -18,7 +18,7 @@ func BenchmarkScannerNoMatch(b *testing.B) {
 }
 
 func BenchmarkScannerWithPAN(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithPAN())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindPAN))
 	line := []byte(`payment processed for card 4532-0151-1283-0366 amount $99.99`)
 	b.ResetTimer()
 	for range b.N {
@@ -27,7 +27,7 @@ func BenchmarkScannerWithPAN(b *testing.B) {
 }
 
 func BenchmarkScannerWithEmail(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithEmail())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
 	line := []byte(`user tanaka@example.com logged in from 192.168.1.1`)
 	b.ResetTimer()
 	for range b.N {
@@ -36,7 +36,7 @@ func BenchmarkScannerWithEmail(b *testing.B) {
 }
 
 func BenchmarkScannerWithJPPhone(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithJPPhone())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindJPPhone))
 	line := []byte(`call center: 090-1234-5678`)
 	b.ResetTimer()
 	for range b.N {
@@ -45,7 +45,7 @@ func BenchmarkScannerWithJPPhone(b *testing.B) {
 }
 
 func BenchmarkScannerWithMyNumber(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithMyNumber())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindMyNumber))
 	line := []byte(`mynumber: 123456789018`)
 	b.ResetTimer()
 	for range b.N {
@@ -54,7 +54,7 @@ func BenchmarkScannerWithMyNumber(b *testing.B) {
 }
 
 func BenchmarkScannerWithJWT(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithJWT())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindJWT))
 	line := []byte(`Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c`)
 	b.ResetTimer()
 	for range b.N {
@@ -63,7 +63,7 @@ func BenchmarkScannerWithJWT(b *testing.B) {
 }
 
 func BenchmarkScannerWithAWSKey(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithAWSKey())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindAWSKey))
 	line := []byte(`aws_access_key_id = AKIAIOSFODNN7EXAMPLE`)
 	b.ResetTimer()
 	for range b.N {
@@ -72,7 +72,7 @@ func BenchmarkScannerWithAWSKey(b *testing.B) {
 }
 
 func BenchmarkScannerWithIBAN(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithIBAN())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindIBAN))
 	line := []byte(`IBAN: DE89370400440532013000`)
 	b.ResetTimer()
 	for range b.N {
@@ -81,7 +81,7 @@ func BenchmarkScannerWithIBAN(b *testing.B) {
 }
 
 func BenchmarkScannerWithIPAddr(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithIPAddr())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindIPAddr))
 	line := []byte(`client 2001:db8::1 connected`)
 	b.ResetTimer()
 	for range b.N {
@@ -90,7 +90,7 @@ func BenchmarkScannerWithIPAddr(b *testing.B) {
 }
 
 func BenchmarkScannerWithSWIFTBIC(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithSWIFTBIC())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindSWIFTBIC))
 	line := []byte(`SWIFT: DEUTDEFF`)
 	b.ResetTimer()
 	for range b.N {
@@ -99,7 +99,7 @@ func BenchmarkScannerWithSWIFTBIC(b *testing.B) {
 }
 
 func BenchmarkScannerWithABARouting(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithABARouting())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindABARouting))
 	line := []byte(`routing: 021000021`)
 	b.ResetTimer()
 	for range b.N {
@@ -108,7 +108,7 @@ func BenchmarkScannerWithABARouting(b *testing.B) {
 }
 
 func BenchmarkScannerWithUKSortCode(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithUKSortCode())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindUKSortCode))
 	line := []byte(`sort code: 12-34-56`)
 	b.ResetTimer()
 	for range b.N {
@@ -117,7 +117,7 @@ func BenchmarkScannerWithUKSortCode(b *testing.B) {
 }
 
 func BenchmarkScannerWithCVV(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithCVV())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindCVV))
 	line := []byte(`CVV 123`)
 	b.ResetTimer()
 	for range b.N {
@@ -126,7 +126,7 @@ func BenchmarkScannerWithCVV(b *testing.B) {
 }
 
 func BenchmarkScannerWithCardExpiry(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithCardExpiry())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindCardExpiry))
 	line := []byte(`exp 12/29`)
 	b.ResetTimer()
 	for range b.N {
@@ -135,7 +135,7 @@ func BenchmarkScannerWithCardExpiry(b *testing.B) {
 }
 
 func BenchmarkScannerWithPaymentToken(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithPaymentToken())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindPaymentToken))
 	line := []byte(`stripe key sk_live_1234567890abcdef`)
 	b.ResetTimer()
 	for range b.N {
@@ -144,7 +144,7 @@ func BenchmarkScannerWithPaymentToken(b *testing.B) {
 }
 
 func BenchmarkScannerWithBankAccount(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithBankAccount())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindBankAccount))
 	line := []byte(`bank account 12345678`)
 	b.ResetTimer()
 	for range b.N {
@@ -153,7 +153,7 @@ func BenchmarkScannerWithBankAccount(b *testing.B) {
 }
 
 func BenchmarkScannerWithACHTrace(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithACHTrace())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindACHTrace))
 	line := []byte(`ACH trace 021000021123456`)
 	b.ResetTimer()
 	for range b.N {
@@ -162,7 +162,7 @@ func BenchmarkScannerWithACHTrace(b *testing.B) {
 }
 
 func BenchmarkScannerWithMerchantID(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithMerchantID())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindMerchantID))
 	line := []byte(`merchant ID ABCDE12345FGHI6`)
 	b.ResetTimer()
 	for range b.N {
@@ -171,7 +171,7 @@ func BenchmarkScannerWithMerchantID(b *testing.B) {
 }
 
 func BenchmarkScannerWithBTC(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithBTC())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindBTC))
 	line := []byte(`btc: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa`)
 	b.ResetTimer()
 	for range b.N {
@@ -180,7 +180,7 @@ func BenchmarkScannerWithBTC(b *testing.B) {
 }
 
 func BenchmarkScannerWithETH(b *testing.B) {
-	scanner := embargo.NewScanner(embargo.WithETH())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindETH))
 	line := []byte(`eth: 0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed`)
 	b.ResetTimer()
 	for range b.N {
