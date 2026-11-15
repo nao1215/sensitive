@@ -25,7 +25,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache-dependency-path: tests/go.sum
-      - run: python3 -m unittest discover -s scripts -p 'test_check*.py'
+      - run: python3 -m unittest discover -s scripts -p 'test_*.py'
       - run: python3 scripts/check_prose.py
       - run: python3 scripts/check_policies.py
       - run: python3 scripts/testing_techniques.py --check
@@ -34,6 +34,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh extension install github/gh-actions-lock --pin v0.4.1
+          python3 scripts/lock_actions.py --check
           gh actions-lock --verify
       - name: Replay models, vectors and external oracles
         run: |
