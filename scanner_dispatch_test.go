@@ -1,8 +1,12 @@
 package embargo
 
 import (
+	"fmt"
 	"math/rand/v2"
+	"os"
 	"slices"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -85,5 +89,38 @@ func TestDispatchExhaustiveNumericAndTerminalHints(t *testing.T) {
 				t.Fatal(tc.kind, got)
 			}
 		}
+	}
+}
+
+// The README states how many detectors exist and how many NewScanner runs; a new
+// kind must update that sentence in the same change.
+func TestReadmeDetectorCounts(t *testing.T) {
+	t.Parallel()
+	readme, err := os.ReadFile("README.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := fmt.Sprintf("%d built-in detectors (%d run by default)", len(builtins()), len(NewScanner().detectors))
+	if !strings.Contains(string(readme), want) {
+		t.Fatalf("README must say %q", want)
+	}
+	_, table, found := strings.Cut(string(readme), "| Group | Detectors | What is detected |\n|---|---:|---|\n")
+	if !found {
+		t.Fatal("README detector group table not found")
+	}
+	total := 0
+	for row := range strings.Lines(table) {
+		cells := strings.Split(row, "|")
+		if len(cells) < 4 {
+			break
+		}
+		n, err := strconv.Atoi(strings.TrimSpace(cells[2]))
+		if err != nil {
+			t.Fatalf("README group row %q: %v", row, err)
+		}
+		total += n
+	}
+	if total != len(builtins()) {
+		t.Fatalf("README detector groups add up to %d, want %d", total, len(builtins()))
 	}
 }
