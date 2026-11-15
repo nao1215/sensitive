@@ -31,7 +31,7 @@ Implementation: [PR #56](https://github.com/nao1215/embargo/pull/56), [89eb73c](
 
 ### Fixed
 
-- Fail Recorder checks when a custom detector panics with nil under GODEBUG=panicnil=1. Successful checks now require the scanner to finish; validator panics remain failures with fixed diagnostics ([72e9a6a](https://github.com/nao1215/embargo/commit/72e9a6a)).
+- Fail Recorder checks when a custom detector panics with nil under GODEBUG=panicnil=1. Successful checks now require the scanner to finish; validator panics remain failures with fixed diagnostics ([PR #62](https://github.com/nao1215/embargo/pull/62), [72e9a6a](https://github.com/nao1215/embargo/commit/72e9a6a)).
 
 - Check normalization-map capacity before sentinel addition and backing-size arithmetic. CodeQL found the two potentially overflowing allocation expressions; a boundary regression checks the arithmetic without allocating oversized input.
 
