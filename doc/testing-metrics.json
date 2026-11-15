@@ -1,60 +1,60 @@
 {
   "date": "2026-11-15",
-  "commit": "765f3a9bc692dfeaec4d6bdd660872252c473ccc",
-  "covered_statements": 2320,
-  "total_statements": 2402,
+  "commit": "87191b97decbdee972eb94e8bad7fe9eb135f55a",
+  "covered_statements": 2333,
+  "total_statements": 2416,
   "mutation": {
-    "killed": 1385,
-    "lived": 200,
-    "uncovered": 112,
-    "timed_out": 39,
+    "killed": 1397,
+    "lived": 203,
+    "uncovered": 113,
+    "timed_out": 36,
     "not_viable": 0,
     "skipped": 0
   },
-  "efficacy": 87.38,
+  "efficacy": 87.31,
   "mutation_timeout_coefficient": 10,
   "mutation_workers": 4,
   "mutator_coverage": 93.4,
   "fuzz": [
     {
       "target": "FuzzScanner",
-      "executions": 74396,
+      "executions": 183507,
       "seconds_requested": 10
     },
     {
       "target": "FuzzScanLines",
-      "executions": 116522,
+      "executions": 186927,
       "seconds_requested": 10
     },
     {
       "target": "FuzzMask",
-      "executions": 880541,
+      "executions": 562429,
       "seconds_requested": 10
     },
     {
       "target": "FuzzInput",
-      "executions": 484477,
+      "executions": 561281,
       "seconds_requested": 10
     },
     {
       "target": "FuzzCanary",
-      "executions": 31782,
+      "executions": 36897,
       "seconds_requested": 10
     },
     {
       "target": "FuzzJSONStream",
-      "executions": 56929,
+      "executions": 186411,
       "seconds_requested": 10
     },
     {
       "target": "FuzzOutputJSON",
-      "executions": 1537057,
+      "executions": 1662122,
       "seconds_requested": 10
     }
   ],
   "source_sha256": {
-    "coverage": "6c056e08781e12659810dc9c2134a013c2283482c8fbeba0e97dd0f4cff4b454",
-    "mutation": "61adeea3810db579c4d6be9a1304bcc3cc3d11201a7c9cca9f4b291bde9a23ad",
-    "fuzz": "43d0df9100d04d82a865dbdc80c3873114b5329f00ce87fe5148b4d853d4c2ae"
+    "coverage": "afa4a049dc1d5b5ec05b44b3c94d4ad607555488692cb1abe6f981970e042ed7",
+    "mutation": "a30cf8502896d29822cee9f6642a7955393eac153547709c7fd0d7320f429960",
+    "fuzz": "44eb192c2663f27b48ff3e031e7d6ab940d7282c274bb0403644e2a6eef80452"
   }
 }

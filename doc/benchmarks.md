@@ -26,51 +26,51 @@ The [all-detector profile](performance/all-profile.txt) still attributes 17.51% 
 ## Measured results
 
 <!-- benchmarks:start -->
-Measured 2026-11-15 with go1.26.11, linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S, GOMAXPROCS=1; median of five 200 ms samples at [6eed0a6](https://github.com/nao1215/embargo/commit/6eed0a6d1c02ddd98984a8f750ebba14eefdb1b9).
+Measured 2026-11-15 with go1.26.11, linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S, GOMAXPROCS=1; median of five 200 ms samples at [87191b9](https://github.com/nao1215/embargo/commit/87191b97decbdee972eb94e8bad7fe9eb135f55a).
 
 Background load: no intentional concurrent workload.
 
 | Operation | ns/op | MB/s | B/op | allocs/op |
 |---|---:|---:|---:|---:|
-| Scanner WithAll, clean | 48769.0 | 56.43 | 52480 | 131 |
-| Scanner WithAll, dirty | 3344245.0 | 9.89 | 2397010 | 13186 |
-| Mask | 3359.0 | 876.55 | 13816 | 12 |
-| Writer only | 7.0 | 77416.20 | 0 | 0 |
-| Recorder + Check | 51074.0 | 10.65 | 35640 | 509 |
-| Plain slog, clean | 496.5 | — | 16 | 1 |
-| Masked slog, clean | 3892.0 | — | 864 | 17 |
-| Plain slog, dirty | 622.0 | — | 16 | 1 |
-| Masked slog, dirty | 5763.0 | — | 1144 | 24 |
+| Scanner WithAll, clean | 95501.0 | 28.82 | 52480 | 131 |
+| Scanner WithAll, dirty | 6375692.0 | 5.19 | 2397010 | 13186 |
+| Mask | 5446.0 | 540.60 | 13816 | 12 |
+| Writer only | 11.3 | 47975.29 | 0 | 0 |
+| Recorder + Check | 82141.0 | 6.62 | 35636 | 509 |
+| Plain slog, clean | 883.3 | — | 16 | 1 |
+| Masked slog, clean | 4920.0 | — | 864 | 17 |
+| Plain slog, dirty | 856.2 | — | 16 | 1 |
+| Masked slog, dirty | 5687.0 | — | 1144 | 24 |
 
 <details>
 <summary>Per-detector Scanner throughput</summary>
 
 | Detector | Clean MB/s | Dirty MB/s |
 |---|---:|---:|
-| aba_routing | 284.44 | 46.27 |
-| ach_trace | 637.14 | 5.03 |
-| all | 56.43 | 9.89 |
-| awskey | 771.68 | 180.42 |
-| bank_account | 539.67 | 8.88 |
-| btc | 1410.22 | 83.24 |
-| card_expiry | 1939.09 | 6.05 |
-| cvv | 686.09 | 6.30 |
-| email | 45384.28 | 60.30 |
-| eth | 1328.89 | 142.38 |
-| github_token | 1184.25 | 131.53 |
-| google_api_key | 959.13 | 183.99 |
-| iban | 809.72 | 53.78 |
-| ipaddr | 26264.08 | 83.46 |
-| jwt | 2240.06 | 51.41 |
-| merchant_id | 611.90 | 21.00 |
-| mynumber | 441.20 | 86.41 |
-| pan | 5506.73 | 42.99 |
-| payment_token | 142.05 | 133.78 |
-| phone_jp | 24948.09 | 43.27 |
-| private_key_pem | 1467.90 | 107.20 |
-| slack_token | 1895.25 | 97.82 |
-| swiftbic | 284.77 | 59.54 |
-| uk_sortcode | 674.09 | 82.08 |
+| aba_routing | 516.53 | 50.46 |
+| ach_trace | 639.39 | 4.87 |
+| all | 28.82 | 5.19 |
+| awskey | 773.06 | 99.54 |
+| bank_account | 591.37 | 5.72 |
+| btc | 1427.58 | 87.87 |
+| card_expiry | 964.85 | 4.86 |
+| cvv | 737.91 | 5.83 |
+| email | 85442.57 | 109.50 |
+| eth | 2581.14 | 205.20 |
+| github_token | 1008.60 | 165.18 |
+| google_api_key | 1831.24 | 110.69 |
+| iban | 400.18 | 91.00 |
+| ipaddr | 49273.61 | 59.70 |
+| jwt | 1435.07 | 53.68 |
+| merchant_id | 617.77 | 22.81 |
+| mynumber | 458.81 | 93.15 |
+| pan | 9173.05 | 43.18 |
+| payment_token | 141.47 | 131.26 |
+| phone_jp | 25201.24 | 43.52 |
+| private_key_pem | 774.86 | 113.84 |
+| slack_token | 954.71 | 73.51 |
+| swiftbic | 182.56 | 34.92 |
+| uk_sortcode | 370.66 | 44.74 |
 
 </details>
 <!-- benchmarks:end -->
