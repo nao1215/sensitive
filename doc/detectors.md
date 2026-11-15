@@ -26,6 +26,9 @@
 | `KindSlackToken` | Slack API tokens (`xoxb-`/`xoxp-`/`xoxa-`/`xoxo-`/`xoxr-`/`xoxs-`) | Prefix + type character + minimum body length |
 | `KindGoogleAPIKey` | Google API keys (`AIza...`) | Prefix + 35-char body |
 | `KindPrivateKeyPEM` | PEM private key headers (RSA/EC/DSA/OpenSSH/PKCS#8) | `-----BEGIN [ALGO ]PRIVATE KEY-----` header parse |
+| `KindCredential` | Secrets in assignments, headers, URLs and DSNs (`password=`, `"token":"..."`, `Authorization: Bearer`, `postgres://user:pass@host`) | Sensitive key or URL userinfo + value grammar; only the secret part is masked |
+| `KindServiceToken` | Provider tokens (OpenAI, Anthropic, Stripe, GitLab, npm, PyPI, Slack webhooks, SendGrid, Google OAuth) | Documented prefix + body length and character set |
+| `KindHighEntropy` | Long random-looking strings with no surrounding context | Base64-like run of 32–256 bytes with Shannon entropy of at least 4.5 bits per byte; low confidence (0.3) |
 | `WithAll()` | All of the above | |
 
 
