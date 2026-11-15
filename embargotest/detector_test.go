@@ -122,3 +122,42 @@ func TestInformationalHeadersConsumeTotalBudget(t *testing.T) {
 	}
 	probe.finish()
 }
+
+type nilPanicDetector struct{}
+
+//nolint:govet // Exercise pre-Go-1.21 nil-panic recovery under GODEBUG=panicnil=1.
+func (nilPanicDetector) Scan([]byte) []embargo.Finding { panic(nil) }
+
+func TestNilPanicCompatibility(t *testing.T) {
+	t.Setenv("GODEBUG", "panicnil=1")
+	const validator = "validator"
+	//nolint:paralleltest // Parent changes process-global GODEBUG; keep these subtests sequential.
+	for _, kind := range []string{"scanner", validator} {
+		t.Run(kind, func(t *testing.T) {
+			probe := &probeTB{TB: t}
+			scanner := embargo.NewScanner(embargo.WithKinds())
+			if kind == "scanner" {
+				scanner = embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(nilPanicDetector{}))
+			}
+			recorder := New(probe, WithScanner(scanner))
+			write(t, recorder, "out", []byte("accepted"))
+			recorder.Expect("out", func([]byte) bool {
+				if kind == validator {
+					panic(nil) //nolint:govet // Verify expectation failure in nil-panic compatibility mode.
+				}
+				return true
+			})
+			if recorder.Check() {
+				t.Fatal("panic(nil) was accepted as a completed check")
+			}
+			probe.finish()
+			want := "embargotest: scanner failed"
+			if kind == validator {
+				want = "embargotest: a content expectation was not met"
+			}
+			if len(probe.messages) != 1 || probe.messages[0] != want {
+				t.Fatal("panic(nil) must produce only the fixed failure message")
+			}
+		})
+	}
+}

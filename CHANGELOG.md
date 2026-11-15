@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Publish per-detector precision/recall from a labeled synthetic corpus and real Go benchmark samples for Scanner, Mask, Recorder and slog. Make targets generate README tables and tests reject stale output; introduce use cases and installation requirements at the README entrance ([PR #63](https://github.com/nao1215/embargo/pull/63), [1f2b4c2](https://github.com/nao1215/embargo/commit/1f2b4c2)).
+
 - NewSlogHandler masks messages, keys, groups and values with an explicit scanner, freezes WithAttrs values, preserves metadata and clean scalar types, and converts opaque Any/error values to scanned strings. Normalization or detector panics, including panic(nil) compatibility mode, suppress output with a fixed error ([PR #61](https://github.com/nao1215/embargo/pull/61), [8d439b0](https://github.com/nao1215/embargo/commit/8d439b0)).
 
 - Exercise Secret/Input with real fmt, slog, JSON/XML, templates, zap, zerolog, logrus, OTel, Sentry, HTTP and child panic outputs. Generate the README Tested outputs table from the executed acceptance cases; external SDKs remain in tests/go.mod ([PR #60](https://github.com/nao1215/embargo/pull/60), [fa73d0b](https://github.com/nao1215/embargo/commit/fa73d0b)).
@@ -30,6 +32,8 @@ Implementation: [PR #56](https://github.com/nao1215/embargo/pull/56), [89eb73c](
 - Go 1.26.11 is the minimum in both modules, keeping the previous supported Go series and the net/http fix for GO-2026-6859 required by the upcoming HTTP test recorder. The root module still has no requirements.
 
 ### Fixed
+
+- Fail Recorder checks when a custom detector panics with nil under GODEBUG=panicnil=1. Successful checks now require the scanner to finish; validator panics remain failures with fixed diagnostics ([PR #62](https://github.com/nao1215/embargo/pull/62), [72e9a6a](https://github.com/nao1215/embargo/commit/72e9a6a)).
 
 - Check normalization-map capacity before sentinel addition and backing-size arithmetic. CodeQL found the two potentially overflowing allocation expressions; a boundary regression checks the arithmetic without allocating oversized input.
 
