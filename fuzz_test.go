@@ -2,6 +2,7 @@ package embargo_test
 
 import (
 	"bytes"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
@@ -84,9 +85,10 @@ func FuzzScanner(f *testing.F) {
 			t.Fatal("input or entrypoint changed")
 		}
 		want := make(map[findingKey]int)
+		decoded, positions := percentOracle(text)
 		for _, d := range detectors {
-			for _, v := range d.Scan(data) {
-				want[findingKey{embargo.Kind(v.DetectorName), v.Start, v.End, v.Confidence}]++
+			for _, v := range d.Scan(decoded) {
+				want[findingKey{embargo.Kind(v.DetectorName), positions[v.Start], positions[v.End], v.Confidence}]++
 			}
 		}
 		if !sameKeys(keysOf(got), want) {
@@ -212,4 +214,24 @@ func checkEmbeddedSecret(t *testing.T, context string) {
 	if !found {
 		t.Fatal("embedded valid email lost")
 	}
+}
+
+// percentOracle uses the standard library on individual escapes, independently
+// of the production decoder, while preserving malformed sequences and '+'.
+func percentOracle(text string) ([]byte, []int) {
+	var data []byte
+	var positions []int
+	for i := 0; i < len(text); {
+		positions = append(positions, i)
+		if text[i] == '%' && len(text)-i >= 3 {
+			if decoded, err := url.PathUnescape(text[i : i+3]); err == nil {
+				data = append(data, decoded...)
+				i += 3
+				continue
+			}
+		}
+		data = append(data, text[i])
+		i++
+	}
+	return data, append(positions, len(text))
 }
