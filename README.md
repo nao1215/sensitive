@@ -154,8 +154,8 @@ Each link opens the test that produces and checks the shown output.
 | [zap JSON core](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L61-L67) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
 | [zerolog JSON](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L68-L72) | `{"level":"info","token":"[REDACTED]","message":"event"}` |
 | [logrus JSON](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L73-L79) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
-| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/telemetry_integration_test.go#L24-L103) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
-| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/sentry_integration_test.go#L67-L141) | `"signing":{"key":"[REDACTED]"}` |
+| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/telemetry_integration_test.go#L25-L104) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
+| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/sentry_integration_test.go#L68-L142) | `"signing":{"key":"[REDACTED]"}` |
 | [HTTP](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L120-L142) | `[REDACTED]` |
 | [Child panic](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L144-L154) | `panic: [REDACTED]` |
 <!-- tested-outputs:end -->

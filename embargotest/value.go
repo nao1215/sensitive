@@ -12,6 +12,11 @@ import (
 	texttemplate "text/template"
 )
 
+const (
+	valueSlogText = "slog/text"
+	valueSlogJSON = "slog/json"
+)
+
 // CheckValue constructs a value with a public fake canary and checks its output
 // through fmt (%v, %+v, %#v, %s, %q, %x), JSON, XML, TextMarshaler, text/template,
 // html/template, both slog handlers and wrapped errors. It reports the exact
@@ -33,7 +38,7 @@ func CheckValue(tb testing.TB, construct func(canary string) any) (safe bool) {
 	value := construct(defaultCanary)
 	completed = true
 	needles := representations([]byte(defaultCanary))
-	for _, path := range []string{"fmt/%v", "fmt/%+v", "fmt/%#v", "fmt/%s", "fmt/%q", "fmt/%x", "json", "xml", "text", "text/template", "html/template", "slog/text", "slog/json", "error/%v", "error/%w"} {
+	for _, path := range []string{"fmt/%v", "fmt/%+v", "fmt/%#v", "fmt/%s", "fmt/%q", "fmt/%x", "json", "xml", "text", "text/template", "html/template", valueSlogText, valueSlogJSON, "error/%v", "error/%w"} {
 		data, ok := formatValue(path, value)
 		if !ok {
 			tb.Error("embargotest: unsupported or failed value path: " + path)
@@ -54,6 +59,15 @@ func formatValue(path string, value any) (data []byte, ok bool) {
 			_ = recover() //nolint:errcheck // Discard panic contents.
 		}
 	}()
+	if path == valueSlogText || path == valueSlogJSON {
+		resolved := slog.AnyValue(value).Resolve()
+		if resolved.Kind() == slog.KindAny {
+			if _, failed := resolved.Any().(error); failed {
+				return nil, false
+			}
+		}
+		value = resolved
+	}
 	var buf bytes.Buffer
 	var err error
 	switch path {
@@ -78,10 +92,10 @@ func formatValue(path string, value any) (data []byte, ok bool) {
 	case "html/template":
 		err = htmltemplate.Must(htmltemplate.New("value").Parse("{{.}}")).Execute(&buf, value)
 		data = buf.Bytes()
-	case "slog/text":
+	case valueSlogText:
 		slog.New(slog.NewTextHandler(&buf, nil)).Info("check", slog.Any("value", value))
 		data = buf.Bytes()
-	case "slog/json":
+	case valueSlogJSON:
 		slog.New(slog.NewJSONHandler(&buf, nil)).Info("check", slog.Any("value", value))
 		data = buf.Bytes()
 	case "error/%v":
@@ -95,5 +109,7 @@ func formatValue(path string, value any) (data []byte, ok bool) {
 	default:
 		return nil, false
 	}
-	return data, err == nil
+	// fmt recovers formatter panics internally and emits a diagnostic instead.
+	// Such output is not a successful implementation of the formatting contract.
+	return data, err == nil && !bytes.Contains(data, []byte("%!"))
 }

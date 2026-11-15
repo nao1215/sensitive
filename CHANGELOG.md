@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Forgotten credentials and output contracts
 
+Implementation: [97a0585](https://github.com/nao1215/embargo/commit/97a0585).
+
 - Add `KindCredential`, `KindServiceToken` and `KindHighEntropy` for credential assignments, URL/DSN passwords, provider prefixes and uncertain random-looking tokens; preserve surrounding connection information, mask complete PEM bodies, and reject IBAN reserved check digits. Scanner and output paths retain the caller's confidence policy; publish separate 0, 0.5 and 0.7 results and the entropy trade-off in [accuracy](doc/accuracy.md).
 
 - Add `embargotest.Guard(m, opts...)` for one-line TestMain supervision of stdout, stderr, default slog, t.Log, panic and inherited subprocess output; fail on detected values, canaries, truncation and timeouts, with stream and candidate test names. Add `CheckValue(tb, constructor)` to exercise standard formatting, serialization, templates, slog and wrapped errors with exact failing paths.

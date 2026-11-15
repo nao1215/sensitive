@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -39,7 +40,7 @@ func checkOTelAcceptance(t *testing.T) {
 			}()
 			_, span := provider.Tracer("embargo-test").Start(context.Background(), "signer.sign")
 			if mode == "raw-error" {
-				span.RecordError(errors.New(string(r.Canary())), trace.WithStackTrace(true))
+				span.RecordError(fmt.Errorf("request: %w", errors.Join(errors.New("database unavailable"), errors.New("token="+string(r.Canary())))), trace.WithStackTrace(true))
 			} else {
 				selected := d
 				if mode == "regressed" {

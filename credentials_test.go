@@ -90,3 +90,13 @@ func TestCredentialAssignmentDelimiters(t *testing.T) {
 		}
 	}
 }
+
+func TestCredentialAWSContextDoesNotDuplicateAssignment(t *testing.T) {
+	t.Parallel()
+	value := "q8V2m0NxK7bJ3wTaZ9cF6rHsL5dY1pUgQx2A9cF6"
+	text := "AKIAIOSFODNN7EXAMPLE aws_secret_access_key=" + value
+	got := embargo.NewScanner(embargo.WithKinds(embargo.KindCredential)).ScanString(text)
+	if len(got) != 1 || text[got[0].Start:got[0].End] != value {
+		t.Fatalf("expected one credential span, got %v", got)
+	}
+}

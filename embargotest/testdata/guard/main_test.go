@@ -5,14 +5,23 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/nao1215/embargo"
 	"github.com/nao1215/embargo/embargotest"
 )
 
 func TestMain(m *testing.M) {
-	os.Exit(embargotest.Guard(m, embargotest.WithScanner(embargo.NewScanner(embargo.WithKinds(embargo.KindCredential)))))
+	opts := []embargotest.Option{embargotest.WithScanner(embargo.NewScanner(embargo.WithKinds(embargo.KindCredential)))}
+	switch os.Getenv("GUARD_CASE") {
+	case "overflow":
+		opts = append(opts, embargotest.WithLimits(128, time.Minute))
+	case "timeout":
+		opts = append(opts, embargotest.WithTimeout(100*time.Millisecond))
+	}
+	os.Exit(embargotest.Guard(m, opts...))
 }
 
 func TestPackageOutput(t *testing.T) {
@@ -20,6 +29,10 @@ func TestPackageOutput(t *testing.T) {
 	// #nosec G101 -- Public fake canary used only to assert leak detection.
 	secret := "embargo-fake-secret-0123456789ab"
 	switch os.Getenv("GUARD_CASE") {
+	case "overflow":
+		t.Log(strings.Repeat("x", 1024))
+	case "timeout":
+		time.Sleep(10 * time.Second)
 	case "stdout":
 		if _, err := fmt.Fprintln(os.Stdout, secret); err != nil {
 			t.Fatal(err)

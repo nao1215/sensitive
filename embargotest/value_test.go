@@ -2,6 +2,7 @@ package embargotest_test
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 	"testing"
 
@@ -57,5 +58,34 @@ func TestCheckValue(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+type panickingPassword struct{ embargo.Secret[string] }
+
+func (panickingPassword) Format(fmt.State, rune) { panic("formatter failed") }
+
+func TestCheckValueRejectsFormattingPanic(t *testing.T) {
+	t.Parallel()
+	p := &valueProbe{TB: t}
+	if embargotest.CheckValue(p, func(s string) any { return panickingPassword{embargo.NewSecret(s)} }) {
+		t.Fatal("fmt recovered a formatter panic but the contract passed")
+	}
+	if !strings.Contains(strings.Join(p.messages, "\n"), "fmt/%#v") {
+		t.Fatal("missing exact failing formatter path")
+	}
+}
+
+type panickingLogValue struct{ embargo.Secret[string] }
+
+func (panickingLogValue) LogValue() slog.Value { panic("log value failed") }
+func TestCheckValueRejectsLogValuePanic(t *testing.T) {
+	t.Parallel()
+	p := &valueProbe{TB: t}
+	if embargotest.CheckValue(p, func(s string) any { return panickingLogValue{embargo.NewSecret(s)} }) {
+		t.Fatal("slog panic accepted")
+	}
+	if !strings.Contains(strings.Join(p.messages, "\n"), "slog/json") {
+		t.Fatal("missing exact failing slog path")
 	}
 }

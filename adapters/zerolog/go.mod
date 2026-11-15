@@ -5,7 +5,7 @@ go 1.26.11
 replace github.com/nao1215/embargo => ../..
 
 require (
-	github.com/nao1215/embargo v0.3.1-0.20261115121544-62b655e8c4ad
+	github.com/nao1215/embargo v0.3.1-0.20261115132333-97a0585e4bbe
 	github.com/rs/zerolog v1.35.1
 )
 

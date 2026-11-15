@@ -2,6 +2,8 @@ package detect
 
 import (
 	"bytes"
+	"cmp"
+	"slices"
 	"strings"
 )
 
@@ -54,21 +56,37 @@ func SensitiveCredentialKey(key string) bool {
 }
 
 func (d *Credential) secretKey(key []byte) bool {
-	if d.MatchKey != nil {
-		if d.MatchKey(string(key)) {
-			return true
+	if d.MatchKey != nil && d.MatchKey(string(key)) {
+		return true
+	}
+	// Normalize once into stack storage; every built-in key fits this bound.
+	// Unknown labels are common in clean logs and must not allocate.
+	const maxKeyBytes = 32
+	var normalized [maxKeyBytes]byte
+	n := 0
+	for _, b := range key {
+		if b == '_' || b == '-' || b == '.' || b == ' ' {
+			continue
 		}
-	} else {
-		for _, name := range []string{"password", "passwd", "secret", credentialTokenKey, "apikey", authorizationKey, cookieKey, setCookieKey} {
-			if normalizedKeyEquals(key, name) {
-				return true
-			}
+		if n == len(normalized) {
+			return false
+		}
+		if b >= 'A' && b <= 'Z' {
+			b += 'a' - 'A'
+		}
+		normalized[n] = b
+		n++
+	}
+	name := string(normalized[:n])
+	if d.MatchKey == nil {
+		switch name {
+		case "password", "passwd", "secret", credentialTokenKey, "apikey", authorizationKey, cookieKey, setCookieKey:
+			return true
 		}
 	}
-	for _, name := range []string{"xamzsignature", "sig", "accountkey", "sharedaccesssignature", "awssecretaccesskey", "secretaccesskey", "privatekey", "clientsecret", "twilioauthtoken", "authtoken"} {
-		if normalizedKeyEquals(key, name) {
-			return true
-		}
+	switch name {
+	case "xamzsignature", "sig", "accountkey", "sharedaccesssignature", "awssecretaccesskey", "secretaccesskey", "privatekey", "clientsecret", "twilioauthtoken", "authtoken":
+		return true
 	}
 	return false
 }
@@ -105,7 +123,15 @@ func (d *Credential) Scan(data []byte) []Finding {
 		}
 	}
 	out = append(out, urlPasswords(data)...)
-	return append(out, awsSecretPair(data)...)
+	out = append(out, awsSecretPair(data)...)
+	// Context and assignment recognizers may identify the same credential.
+	slices.SortFunc(out, func(a, b Finding) int {
+		if n := cmp.Compare(a.Start, b.Start); n != 0 {
+			return n
+		}
+		return cmp.Compare(a.End, b.End)
+	})
+	return slices.CompactFunc(out, func(a, b Finding) bool { return a.Start == b.Start && a.End == b.End })
 }
 
 func assignmentKey(data []byte, end int) []byte {
@@ -216,23 +242,6 @@ func urlPasswords(data []byte) []Finding {
 	return out
 }
 func urlDelimiter(b byte) bool { return strings.ContainsRune(" \t\r\n\"'<>;", rune(b)) }
-
-func normalizedKeyEquals(key []byte, name string) bool {
-	i := 0
-	for _, b := range key {
-		if b == '_' || b == '-' || b == '.' || b == ' ' {
-			continue
-		}
-		if b >= 'A' && b <= 'Z' {
-			b += 'a' - 'A'
-		}
-		if i == len(name) || name[i] != b {
-			return false
-		}
-		i++
-	}
-	return i == len(name)
-}
 
 // awsSecretPair recognizes a 40-byte base64 secret within 128 bytes of an AWS
 // access key ID. It does not infer ownership or validate credentials remotely.

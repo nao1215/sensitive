@@ -8,7 +8,7 @@ require (
 	github.com/bytedance/godlp v1.2.15
 	github.com/getsentry/sentry-go v0.50.0
 	github.com/m-mizutani/masq v0.2.3
-	github.com/nao1215/embargo v0.3.1-0.20261115121544-62b655e8c4ad
+	github.com/nao1215/embargo v0.3.1-0.20261115132333-97a0585e4bbe
 	github.com/rs/zerolog v1.35.1
 	github.com/samber/slog-formatter v1.3.0
 	github.com/showa-93/go-mask v0.6.2
@@ -32,7 +32,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/nao1215/embargo/adapters/zap v0.0.0
+	github.com/nao1215/embargo/adapters/zap v0.0.0-20261115132333-97a0585e4bbe
 	github.com/samber/lo v1.53.0 // indirect
 	github.com/samber/slog-common v0.21.0 // indirect
 	github.com/samber/slog-multi v1.8.0 // indirect

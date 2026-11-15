@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"sync"
 	"testing"
@@ -88,7 +89,7 @@ func checkSentryAcceptance(t *testing.T) {
 
 			switch mode {
 			case "raw-error":
-				hub.CaptureException(errors.New("signing failed: " + key.Reveal()))
+				hub.CaptureException(fmt.Errorf("request: %w", errors.Join(errors.New("database unavailable"), errors.New("token="+key.Reveal()))))
 			case "raw-recover":
 				hub.Recover("signing failed: " + key.Reveal())
 			case "raw-context":
