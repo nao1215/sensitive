@@ -63,6 +63,7 @@ func TestRunJoinsChildGoroutines(t *testing.T) {
 	}{
 		{name: "success", helper: "TestLifecycleChild", timeout: 5 * time.Second},
 		{name: "panic", helper: "TestLifecyclePanic", exit: 2, timeout: 5 * time.Second},
+		//nolint:goconst // Independent acceptance scenarios keep their literal expected results local.
 		{name: "missing", helper: "TestLifecycleAbsent", timeout: 5 * time.Second, fails: true},
 		{name: "exit mismatch", helper: "TestLifecycleChild", exit: 1, timeout: 5 * time.Second, fails: true},
 		{name: "cancel", helper: "TestLifecycleWait", timeout: 5 * time.Second, cancel: true, fails: true},

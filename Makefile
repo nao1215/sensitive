@@ -52,3 +52,7 @@ fuzz: ## Smoke test every root fuzz target
 
 	go test -run '^$$' -fuzz '^FuzzCanary$$' -fuzztime=10s ./embargotest
 	go test -run '^$$' -fuzz '^FuzzJSONStream$$' -fuzztime=10s ./embargotest
+
+.PHONY: compatibility-doc
+compatibility-doc: ## Regenerate the table from real output tests
+	UPDATE_DOCS=1 go -C tests test -run '^TestCompatibilityTable$$' -count=1 .

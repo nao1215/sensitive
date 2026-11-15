@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Exercise Secret/Input with real fmt, slog, JSON/XML, templates, zap, zerolog, logrus, OTel, Sentry, HTTP and child panic outputs. Generate the README Tested outputs table from the executed acceptance cases; external SDKs remain in tests/go.mod ([PR #60](https://github.com/nao1215/embargo/pull/60), [fa73d0b](https://github.com/nao1215/embargo/commit/fa73d0b)).
+
 - embargotest captures writers, HTTP status/headers/body/trailers and child test processes, verifies expected content, and checks every output with the scanner and an encoded canary. Allow kinds or exact fixture values independently of the canary; empty output, cut-off output, repeated interim headers exceeding the budget, and child lifecycle failures cannot pass ([PR #59](https://github.com/nao1215/embargo/pull/59), [3649bed](https://github.com/nao1215/embargo/commit/3649bed)).
 
 - Secret and Input are now root runtime types. NewSecret wraps a shallow copy with unexported-pointer storage and [REDACTED] display through fmt, slog, JSON, text and XML; Reveal explicitly returns the value. Input copies decoded strings/bytes into a snapshot and rejects marker round trips, including JSON escaping and base64 ([PR #58](https://github.com/nao1215/embargo/pull/58), [c49392c](https://github.com/nao1215/embargo/commit/c49392c)).
@@ -26,6 +28,8 @@ Implementation: [PR #56](https://github.com/nao1215/embargo/pull/56), [89eb73c](
 - Go 1.26.11 is the minimum in both modules, keeping the previous supported Go series and the net/http fix for GO-2026-6859 required by the upcoming HTTP test recorder. The root module still has no requirements.
 
 ### Fixed
+
+- PAN no longer reports numeric fragments embedded in alphanumeric or underscore-delimited identifiers. Compatibility repetition exposed a Sentry event ID false positive; boundary regressions include full-width digits and preserve URL-encoded separators.
 
 - Do not classify decimal components or RFC3339 fractional seconds as ABA routing numbers, even if their digits satisfy the routing checksum. A regression test reproduces the timestamp false positive discovered through real slog output.
 
