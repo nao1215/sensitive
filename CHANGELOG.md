@@ -23,6 +23,10 @@ Implementation: [PR #56](https://github.com/nao1215/embargo/pull/56), [89eb73c](
 - Use embargo.Mask instead of mask.MaskAll with Redact. The replacement is [REDACTED], overlapping spans are merged, and invalid ranges redact the entire text. MaskFunc replaces custom Strategy, Last4, First1Last4, Partial and Hash; its callback receives the merged span and the highest-confidence kind. Filter findings explicitly for per-kind policies.
 - Go 1.26.11 is the minimum in both modules, keeping the previous supported Go series and the net/http fix for GO-2026-6859 required by the upcoming HTTP test recorder. The root module still has no requirements.
 
+### Fixed
+
+- Do not classify decimal components or RFC3339 fractional seconds as ABA routing numbers, even if their digits satisfy the routing checksum. A regression test reproduces the timestamp false positive discovered through real slog output.
+
 ### Testing
 
 - Lock the runtime API, constant values and complete method sets with a go/types golden, reject public struct embedding, and require recognized runnable Examples for every public identifier. Preserve internal detection fixtures, independent checksum oracles and rapid shrinking tests.
