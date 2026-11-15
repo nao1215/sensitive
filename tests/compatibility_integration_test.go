@@ -35,7 +35,7 @@ func TestCompatibilityTable(t *testing.T) {
 		call   string
 		output string
 	}{
-		{name: "fmt", output: "[REDACTED]", call: "`fmt.Fprintf(w, \"%+#v\", secret)`", emit: func(w io.Writer, s embargo.Secret[string]) error { _, err := fmt.Fprintf(w, "%+#v", s); return err }},
+		{name: "fmt", output: "embargo.Secret[string]([REDACTED])", call: "`fmt.Fprintf(w, \"%+#v\", secret)`", emit: func(w io.Writer, s embargo.Secret[string]) error { _, err := fmt.Fprintf(w, "%+#v", s); return err }},
 		{name: "slog TextHandler", output: "level=INFO msg=event token=[REDACTED] nested.again=[REDACTED]", call: "`With(\"token\", secret)` and a grouped attribute", emit: func(w io.Writer, s embargo.Secret[string]) error {
 			slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{ReplaceAttr: omitTime})).With("token", s).WithGroup("nested").Info("event", "again", s)
 			return nil

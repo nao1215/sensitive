@@ -99,3 +99,13 @@ leak-scenarios: ## Regenerate realistic service leak comparisons
 credential-accuracy: ## Regenerate independent credential precision and recall
 	python3 scripts/generate_credentials.py --check
 	UPDATE_DOCS=1 go -C tests test -run '^TestCredentialAccuracy$$' -count=1 .
+
+LOG_CACHE ?= $(HOME)/.cache/embargo-real-logs
+.PHONY: real-log-accuracy
+real-log-accuracy: ## Scan checksum-pinned public logs cached outside the repository
+	python3 scripts/real_logs.py --measure --cache "$(LOG_CACHE)"
+
+CPU ?= 0
+.PHONY: scanner-experiment
+scanner-experiment: ## Repeat the rejected lexer and kind-selection benchmarks (BASE clone, CPU)
+	python3 scripts/scanner_experiment.py --measure --base "$(BASE)" --cpu "$(CPU)"

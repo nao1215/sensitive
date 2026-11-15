@@ -137,3 +137,24 @@ func TestCheckValueRejectsNestedSlogFailures(t *testing.T) {
 		}
 	}
 }
+
+func TestCheckValueNamesUnexportedFieldLeak(t *testing.T) {
+	t.Parallel()
+	probe := &valueProbe{TB: t}
+	embargotest.CheckValue(probe, func(s string) any { return incompletePassword(s) })
+	if !strings.Contains(strings.Join(probe.messages, "\n"), "fmt/unexported/%v") {
+		t.Fatal("missing unexported field diagnostic", probe.messages)
+	}
+}
+
+type maskedError struct{ embargo.Secret[string] }
+
+//nolint:goconst // Keep the error marker explicit as an independent expected output.
+func (maskedError) Error() string { return "[REDACTED]" }
+
+func TestCheckValueAcceptsMaskedError(t *testing.T) {
+	t.Parallel()
+	if !embargotest.CheckValue(t, func(canary string) any { return maskedError{embargo.NewSecret(canary)} }) {
+		t.Fatal("safe error failed formatting and wrapping checks")
+	}
+}

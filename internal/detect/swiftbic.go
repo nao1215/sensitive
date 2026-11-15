@@ -47,7 +47,7 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 		}
 
 		end, branchCode, ok := determineSWIFTLength(data, i)
-		if !ok {
+		if !ok || entropyLocation(data, i, end) {
 			continue
 		}
 

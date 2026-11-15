@@ -11,6 +11,10 @@ import (
 
 // NewSlogHandler scans messages, keys, groups and values before forwarding to next.
 // Both arguments must be non-nil; invalid dependencies panic.
+// The supplied scanner controls selection: NewScanner omits unlabelled entropy tokens.
+// Choosing kinds is faster and avoids false positives from detectors the application does not need.
+// Scanner medians for 1/3/8 kinds were 0.097/14.70/17.40 µs clean and 0.038/0.598/2.791 ms dirty,
+// versus WithAll at 60.27 µs and 6.487 ms; these exclude handler encoding (doc/benchmarks.md).
 // Any values keep their encoded JSON shape; errors keep their Error text.
 // Clean scalars and record metadata keep their types; WithAttrs freezes values.
 //

@@ -75,7 +75,7 @@ func FuzzScanner(f *testing.F) {
 	for _, seed := range fuzzSeeds() {
 		f.Add(seed)
 	}
-	scanner := embargo.NewScanner()
+	scanner := embargo.NewScanner(embargo.WithAll())
 	detectors := builtinDetectors()
 	f.Fuzz(func(t *testing.T, text string) {
 		checkEmbeddedSecret(t, text)
@@ -118,7 +118,7 @@ func TestAllBuiltinsHaveSeeds(t *testing.T) {
 	t.Parallel()
 	seen := map[embargo.Kind]bool{}
 	for _, s := range fuzzSeeds() {
-		for _, f := range embargo.NewScanner().ScanString(s) {
+		for _, f := range embargo.NewScanner(embargo.WithAll()).ScanString(s) {
 			seen[f.Kind] = true
 		}
 	}

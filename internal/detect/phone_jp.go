@@ -146,7 +146,7 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		}
 
 		phoneType := classifyJPPhone(digits, digitLen)
-		if phoneType == "" {
+		if phoneType == "" || numericLogFragment(data, start, end) {
 			i = end
 			continue
 		}

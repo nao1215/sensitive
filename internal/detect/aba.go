@@ -91,7 +91,7 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		// Validate ABA checksum. Numbers that fail the checksum are
 		// unconditionally rejected to prevent false positives in
 		// financial contexts.
-		if !validateABAChecksum(digits) {
+		if !validateABAChecksum(digits) || operationalNumberContext(data, i) {
 			i = end - 1
 			continue
 		}

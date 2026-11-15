@@ -57,6 +57,11 @@ func (b *bufferedTransport) FlushWithContext(context.Context) bool {
 // sentryEvent uses an application-owned code and the SDK's argument-free stack representation.
 func sentryEvent(d failure) *sentry.Event {
 	stack := sentry.NewStacktrace()
+	// Exercise a long build path on every checkout, including short CI paths.
+	for i := range stack.Frames {
+		stack.Frames[i].AbsPath = "/tmp/BuildCache-20261116/Projects/PaymentGateway/RequestDiagnostics/SentryIntegration_test.go"
+		stack.Frames[i].Filename = "SentryIntegration_test.go"
+	}
 	event := sentry.NewEvent()
 	event.Level = sentry.LevelError
 	event.Message = d.message

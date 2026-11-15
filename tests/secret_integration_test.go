@@ -124,7 +124,11 @@ func TestFmtDifferential(t *testing.T) {
 		for _, width := range []string{"", "20.8"} {
 			for _, verb := range "vbcdoOqxXUeEfFgGstz" {
 				format := "%" + selected.String() + width + string(verb)
-				if fmt.Sprintf(format, s) != "[REDACTED]" || fmt.Sprintf(format, input) != "[REDACTED]" {
+				want := "[REDACTED]"
+				if verb == 'v' && strings.Contains(selected.String(), "#") {
+					want = "embargo.Secret[string]([REDACTED])"
+				}
+				if fmt.Sprintf(format, s) != want || fmt.Sprintf(format, input) != "[REDACTED]" {
 					t.Fatal("differential marker mismatch")
 				}
 			}

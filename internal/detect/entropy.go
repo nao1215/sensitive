@@ -9,6 +9,8 @@ import (
 // three character classes and Shannon entropy >=4.5 bits/byte. Confidence is
 // only 0.3: random public IDs are indistinguishable from secrets without context.
 // Hex hashes, UUIDs and tokens directly assigned to common ID labels are omitted.
+// Slash separates candidates; components adjacent to a slash, backslash or dotted name are excluded,
+// including random-looking filename and URL-path segments. Use key context for credentials in locations.
 type HighEntropy struct{}
 
 // Name returns the high entropy family.
@@ -30,7 +32,7 @@ func (d *HighEntropy) Scan(data []byte) []Finding {
 		for end < len(data) && entropyByte(data[end]) {
 			end++
 		}
-		if entropyCandidate(data[start:end]) && !ordinaryIDContext(data, start) {
+		if !entropyLocation(data, start, end) && entropyCandidate(data[start:end]) && !ordinaryIDContext(data, start) {
 			//nolint:mnd // Uncontextualized entropy is deliberately below masking precision thresholds.
 			out = append(out, Finding{DetectorName: d.Name(), Start: start, End: end, Confidence: 0.3, RawValue: string(data[start:end])})
 		}
@@ -39,7 +41,25 @@ func (d *HighEntropy) Scan(data []byte) []Finding {
 	return out
 }
 
-func entropyByte(b byte) bool { return tokenByte(b) || b == '+' || b == '/' }
+func entropyByte(b byte) bool { return tokenByte(b) || b == '+' }
+
+// A slash ends a candidate. Adjacent path separators or dotted components are
+// locations, even when a single component has enough entropy to look random.
+func entropyLocation(data []byte, start, end int) bool {
+	if start > 0 {
+		b := data[start-1]
+		if b == '/' || b == '\\' || (b == '.' && start > 1 && tokenByte(data[start-2])) {
+			return true
+		}
+	}
+	if end < len(data) {
+		b := data[end]
+		if b == '/' || b == '\\' || (b == '.' && end+1 < len(data) && tokenByte(data[end+1])) {
+			return true
+		}
+	}
+	return false
+}
 
 func entropyCandidate(data []byte) bool {
 	const minLength, maxLength, minEntropy = 32, 256, 4.5

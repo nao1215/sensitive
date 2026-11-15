@@ -91,7 +91,7 @@ func (o limitsOption) apply(r *Recorder) bool {
 
 // New creates a Recorder with a public 32-byte fake canary, 1 MiB total retained
 // output, a 5 second run limit, 16 sinks and 250 ms child WaitDelay. Nil options
-// do nothing. The default scanner includes all built-ins; use WithScanner to narrow it. Invalid options fail the test and leave Check unable to succeed.
+// do nothing. The default scanner omits unlabelled entropy tokens; use WithScanner to choose kinds. Invalid options fail the test and leave Check unable to succeed.
 func New(tb testing.TB, opts ...Option) *Recorder {
 	tb.Helper()
 	r := &Recorder{detected: false, scannerFailed: false, responses: nil, mu: sync.Mutex{}, needles: nil, retained: 0, expectations: nil, checked: false, failed: false, reported: false, leaked: false, running: 0, scanner: embargo.NewScanner(), allowedKinds: map[embargo.Kind]bool{}, allowedValues: map[string]bool{}, tb: tb, canary: []byte(defaultCanary), maxBytes: defaultMaxBytes, timeout: defaultTimeout, sinks: make(map[string]*stream)}

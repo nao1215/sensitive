@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings"
 	"testing"
 )
 
@@ -24,13 +25,17 @@ func TestSecret(t *testing.T) {
 		t.Fatal("nonzero reveal")
 	}
 	s := NewSecret(hostileValue{})
-	if s.String() != redactionMarker || s.GoString() != redactionMarker || s.LogValue().String() != redactionMarker {
+	if s.String() != redactionMarker || s.GoString() != "embargo.Secret[github.com/nao1215/embargo.hostileValue]([REDACTED])" || s.LogValue().String() != redactionMarker {
 		t.Fatal("display changed")
 	}
 	for _, verb := range "vbcdoOqxXUeEfFgGstpT%z" {
 		for _, flag := range []string{"", "+", "#", "-", " ", "0", "+#020.8"} {
 			output := fmt.Sprintf("%"+flag+string(verb), s)
-			if verb != 'p' && verb != 'T' && verb != '%' && output != redactionMarker {
+			want := redactionMarker
+			if verb == 'v' && strings.Contains(flag, "#") {
+				want = s.GoString()
+			}
+			if verb != 'p' && verb != 'T' && verb != '%' && output != want {
 				t.Fatal("formatter redactionMarker changed")
 			}
 		}
