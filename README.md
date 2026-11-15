@@ -26,12 +26,22 @@ These examples use the unreleased API on main (Go 1.26.11 or later).
 
 <!-- example: example_test.go:Example -->
 ```go
-text := "email=alice@example.com card=4111111111111111"
+package main
+
+import (
+	"fmt"
+
+	"github.com/nao1215/embargo"
+)
+
+func main() {
+	text := "email=alice@example.com card=4111111111111111"
 	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN))
 	if _, err := fmt.Println(embargo.Mask(text, scanner.ScanString(text))); err != nil {
 		panic(err)
 	}
 	// Output: email=[REDACTED] card=[REDACTED]
+}
 ```
 
 NewScanner() and WithAll() enable every built-in, including IP addresses and context-based detectors. Use WithKinds to narrow the selection. Findings retain all overlaps and contain byte offsets rather than raw values.
@@ -236,7 +246,7 @@ These are exact-span results on a small labeled corpus, not a production accurac
 Unit tests check formats, checksums and failure states. rapid generates shrinking property cases; metamorphic tests check offsets and redaction, and differential tests compare HTTP behavior with httptest and cryptographic checksums with independent implementations. Native Go fuzzing exercises scanning, masking, Input, canary encodings and JSON streams. gremlins mutates the implementation; API/panic goldens, runnable Examples, real logger/SDK compatibility and Linux/macOS/Windows CI cover the surrounding contracts. goleak checks child-process cleanup. Root dependencies remain zero; external test tools live in [tests/](tests/).
 
 <!-- testing-metrics:start -->
-Final measurement is running; results are recorded before this change is merged.
+Measured 2026-11-15 at [72e9a6a](https://github.com/nao1215/embargo/commit/72e9a6a0b0da5f55256eee8568d1eb304cfa270c): 96.7% statement coverage (2203/2278, root and integration suites combined); gremlins v0.6.0 with root-module tests, 4 workers and 10x baseline timeout: efficacy 86.79% (1353 killed, 206 lived, 110 uncovered, 34 timed out; mutator coverage 93.41%); 6 fuzz targets at 10 seconds each, 1442158 executions. Timeouts are reported separately and do not count as killed. These are dated measurements, not guarantees for arbitrary inputs.
 <!-- testing-metrics:end -->
 
 Run `go test ./...`, `go -C tests test ./...`, `make race`, `make fuzz`, `make mutation` and `make lint`. See [testing](doc/testing.md) for architecture checks and golden updates.
@@ -246,51 +256,51 @@ Run `go test ./...`, `go -C tests test ./...`, `make race`, `make fuzz`, `make m
 `make benchmark-doc` measures Scanner throughput for every detector and WithAll, masking, Recorder construction/capture/Check against a plain buffer, and the slog wrapper against a plain JSONHandler. Clean inputs contain ordinary text; dirty inputs use the synthetic positive corpus. Recorder figures include test cleanup registration. These are local measurements, not service latency predictions. The [raw samples](doc/benchmarks.raw.txt) and [manual benchstat comparison](doc/benchmarks.md) make the measurement reproducible; CI checks the rendered table, without noisy timing thresholds on shared runners.
 
 <!-- benchmarks:start -->
-Measured 2026-11-15 with go1.26.11, linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          , GOMAXPROCS=1; median of five 200 ms samples at [2cfe331](https://github.com/nao1215/embargo/commit/2cfe3311d50949f112a33385168ca6e3f33c5867).
+Measured 2026-11-15 with go1.26.11, linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S, GOMAXPROCS=1; median of five 200 ms samples at [4174a6a](https://github.com/nao1215/embargo/commit/4174a6a59e5bffcaacaf5212432846873cbc6e4c).
 
-Background load: mutation tests were running; this preliminary table will be refreshed after they finish.
+Background load: no intentional concurrent workload.
 
 | Operation | ns/op | MB/s | B/op | allocs/op |
 |---|---:|---:|---:|---:|
-| Scanner WithAll, clean | 102060.0 | 26.96 | 52480 | 131 |
-| Scanner WithAll, dirty | 16130815.0 | 2.05 | 2397009 | 13186 |
-| Mask | 14085.0 | 209.02 | 13816 | 12 |
-| Writer only | 18.6 | 29325.94 | 0 | 0 |
-| Recorder + Check | 89817.0 | 6.06 | 35637 | 509 |
-| Plain slog, clean | 887.2 | — | 16 | 1 |
-| Masked slog, clean | 5792.0 | — | 864 | 17 |
-| Plain slog, dirty | 1845.0 | — | 16 | 1 |
-| Masked slog, dirty | 15502.0 | — | 1144 | 24 |
+| Scanner WithAll, clean | 95437.0 | 28.84 | 52480 | 131 |
+| Scanner WithAll, dirty | 7532386.0 | 4.39 | 2397010 | 13186 |
+| Mask | 6009.0 | 489.91 | 13816 | 12 |
+| Writer only | 11.3 | 48196.88 | 0 | 0 |
+| Recorder + Check | 80178.0 | 6.78 | 35637 | 509 |
+| Plain slog, clean | 817.4 | — | 16 | 1 |
+| Masked slog, clean | 4954.0 | — | 864 | 17 |
+| Plain slog, dirty | 808.0 | — | 16 | 1 |
+| Masked slog, dirty | 5740.0 | — | 1144 | 24 |
 
 <details>
 <summary>Per-detector Scanner throughput</summary>
 
 | Detector | Clean MB/s | Dirty MB/s |
 |---|---:|---:|
-| aba_routing | 132.64 | 40.06 |
-| ach_trace | 535.14 | 3.26 |
-| all | 26.96 | 2.05 |
-| awskey | 532.03 | 64.11 |
-| bank_account | 446.33 | 4.06 |
-| btc | 527.79 | 41.14 |
-| card_expiry | 864.66 | 0.74 |
-| cvv | 360.28 | 4.03 |
-| email | 31765.26 | 46.31 |
-| eth | 867.31 | 110.14 |
-| github_token | 861.53 | 118.40 |
-| google_api_key | 633.45 | 113.89 |
-| iban | 432.42 | 37.54 |
-| ipaddr | 14363.78 | 33.04 |
-| jwt | 739.00 | 22.18 |
-| merchant_id | 307.54 | 9.64 |
-| mynumber | 165.72 | 37.24 |
-| pan | 3778.67 | 27.58 |
-| payment_token | 137.60 | 84.16 |
-| phone_jp | 20619.89 | 29.20 |
-| private_key_pem | 677.00 | 88.74 |
-| slack_token | 1085.30 | 79.53 |
-| swiftbic | 89.10 | 20.07 |
-| uk_sortcode | 179.91 | 38.34 |
+| aba_routing | 496.03 | 35.43 |
+| ach_trace | 928.27 | 9.12 |
+| all | 28.84 | 4.39 |
+| awskey | 1086.78 | 170.21 |
+| bank_account | 1117.73 | 10.92 |
+| btc | 1380.38 | 90.61 |
+| card_expiry | 1312.22 | 0.74 |
+| cvv | 520.48 | 5.19 |
+| email | 70963.90 | 64.75 |
+| eth | 1017.77 | 170.58 |
+| github_token | 1699.29 | 246.58 |
+| google_api_key | 1823.65 | 334.91 |
+| iban | 1461.30 | 98.12 |
+| ipaddr | 47223.18 | 45.84 |
+| jwt | 1133.57 | 29.21 |
+| merchant_id | 340.50 | 13.01 |
+| mynumber | 251.85 | 51.64 |
+| pan | 5025.22 | 42.81 |
+| payment_token | 142.66 | 132.59 |
+| phone_jp | 25268.77 | 43.71 |
+| private_key_pem | 791.94 | 116.08 |
+| slack_token | 1171.15 | 76.15 |
+| swiftbic | 182.09 | 35.57 |
+| uk_sortcode | 358.23 | 45.08 |
 
 </details>
 <!-- benchmarks:end -->

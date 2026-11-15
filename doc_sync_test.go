@@ -46,6 +46,9 @@ func TestReadmeExamples(t *testing.T) {
 
 			source := string(block[3])
 			program := strings.HasPrefix(source, "package main\n")
+			if string(block[2]) == "Example" && !program {
+				t.Fatal("quick start must include package main and imports")
+			}
 			if program {
 				source = strings.Replace(source, "package main", "package snippet_test", 1)
 				source = strings.Replace(source, "func main()", "func Example()", 1)
