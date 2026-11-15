@@ -1,0 +1,55 @@
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo
+cpu: INTEL(R) XEON(R) PLATINUM 8573C
+                       │ /home/runner/work/embargo/embargo/benchmark-results/base.txt │ /home/runner/work/embargo/embargo/benchmark-results/head.txt │
+                       │                            sec/op                            │                sec/op                  vs base               │
+Narrowing/all/clean                                                       73.43µ ± 2%                             72.68µ ± 1%  -1.02% (p=0.043 n=10)
+Narrowing/all/dirty                                                       6.872m ± 2%                             6.825m ± 2%       ~ (p=0.123 n=10)
+Narrowing/kinds1/clean                                                    99.75n ± 1%                             99.36n ± 1%       ~ (p=0.470 n=10)
+Narrowing/kinds1/dirty                                                    32.80µ ± 2%                             33.06µ ± 2%       ~ (p=0.305 n=10)
+Narrowing/kinds3/clean                                                    13.86µ ± 1%                             14.77µ ± 2%  +6.63% (p=0.000 n=10)
+Narrowing/kinds3/dirty                                                    539.2µ ± 3%                             533.6µ ± 2%       ~ (p=0.165 n=10)
+Narrowing/kinds8/clean                                                    18.70µ ± 2%                             19.10µ ± 1%  +2.17% (p=0.019 n=10)
+Narrowing/kinds8/dirty                                                    2.593m ± 2%                             2.563m ± 1%       ~ (p=0.143 n=10)
+geomean                                                                   70.32µ                                  70.77µ       +0.63%
+
+                       │ /home/runner/work/embargo/embargo/benchmark-results/base.txt │ /home/runner/work/embargo/embargo/benchmark-results/head.txt │
+                       │                             B/s                              │                  B/s                   vs base               │
+Narrowing/all/clean                                                      35.74Mi ± 2%                            36.11Mi ± 1%  +1.04% (p=0.045 n=10)
+Narrowing/all/dirty                                                      5.488Mi ± 2%                            5.527Mi ± 2%       ~ (p=0.118 n=10)
+Narrowing/kinds1/clean                                                   25.70Gi ± 1%                            25.80Gi ± 1%       ~ (p=0.481 n=10)
+Narrowing/kinds1/dirty                                                   1.123Gi ± 2%                            1.114Gi ± 2%       ~ (p=0.315 n=10)
+Narrowing/kinds3/clean                                                   189.4Mi ± 1%                            177.7Mi ± 2%  -6.22% (p=0.000 n=10)
+Narrowing/kinds3/dirty                                                   69.95Mi ± 3%                            70.69Mi ± 2%       ~ (p=0.172 n=10)
+Narrowing/kinds8/clean                                                   140.4Mi ± 2%                            137.4Mi ± 1%  -2.12% (p=0.019 n=10)
+Narrowing/kinds8/dirty                                                   14.55Mi ± 2%                            14.72Mi ± 1%       ~ (p=0.142 n=10)
+geomean                                                                  141.5Mi                                 140.6Mi       -0.63%
+
+                       │ /home/runner/work/embargo/embargo/benchmark-results/base.txt │ /home/runner/work/embargo/embargo/benchmark-results/head.txt │
+                       │                             B/op                             │                B/op                  vs base                 │
+Narrowing/all/clean                                                      0.000 ± 0%                              0.000 ± 0%       ~ (p=1.000 n=10) ¹
+Narrowing/all/dirty                                                    1.132Mi ± 0%                            1.132Mi ± 0%       ~ (p=0.585 n=10)
+Narrowing/kinds1/clean                                                   0.000 ± 0%                              0.000 ± 0%       ~ (p=1.000 n=10) ¹
+Narrowing/kinds1/dirty                                                 20.41Ki ± 0%                            20.41Ki ± 0%       ~ (p=1.000 n=10) ¹
+Narrowing/kinds3/clean                                                   0.000 ± 0%                              0.000 ± 0%       ~ (p=1.000 n=10) ¹
+Narrowing/kinds3/dirty                                                 142.0Ki ± 0%                            142.0Ki ± 0%       ~ (p=1.000 n=10) ¹
+Narrowing/kinds8/clean                                                   0.000 ± 0%                              0.000 ± 0%       ~ (p=1.000 n=10) ¹
+Narrowing/kinds8/dirty                                                 345.8Ki ± 0%                            345.8Ki ± 0%       ~ (p=1.000 n=10) ¹
+geomean                                                                             ²                                        +0.00%                ²
+¹ all samples are equal
+² summaries must be >0 to compute geomean
+
+                       │ /home/runner/work/embargo/embargo/benchmark-results/base.txt │ /home/runner/work/embargo/embargo/benchmark-results/head.txt │
+                       │                          allocs/op                           │              allocs/op               vs base                 │
+Narrowing/all/clean                                                      0.000 ± 0%                              0.000 ± 0%       ~ (p=1.000 n=10) ¹
+Narrowing/all/dirty                                                     14.11k ± 0%                             14.11k ± 0%       ~ (p=1.000 n=10) ¹
+Narrowing/kinds1/clean                                                   0.000 ± 0%                              0.000 ± 0%       ~ (p=1.000 n=10) ¹
+Narrowing/kinds1/dirty                                                   270.0 ± 0%                              270.0 ± 0%       ~ (p=1.000 n=10) ¹
+Narrowing/kinds3/clean                                                   0.000 ± 0%                              0.000 ± 0%       ~ (p=1.000 n=10) ¹
+Narrowing/kinds3/dirty                                                  4.330k ± 0%                             4.330k ± 0%       ~ (p=1.000 n=10) ¹
+Narrowing/kinds8/clean                                                   0.000 ± 0%                              0.000 ± 0%       ~ (p=1.000 n=10) ¹
+Narrowing/kinds8/dirty                                                  7.566k ± 0%                             7.566k ± 0%       ~ (p=1.000 n=10) ¹
+geomean                                                                             ²                                        +0.00%                ²
+¹ all samples are equal
+² summaries must be >0 to compute geomean

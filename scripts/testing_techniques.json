@@ -1,0 +1,181 @@
+[
+  {
+    "name": "Examples and unit tests",
+    "bug": "Incorrect fixed outputs and public usage contracts",
+    "paths": [
+      "example_test.go",
+      "doc_sync_test.go"
+    ],
+    "ci": "unit_test:unit_test",
+    "commands": [
+      "go test \"${args[@]}\" ./..."
+    ]
+  },
+  {
+    "name": "Generated properties",
+    "bug": "Combinations absent from handwritten checksum fixtures",
+    "paths": [
+      "tests/properties_test.go",
+      "tests/mask_test.go",
+      "mask_oracle_test.go"
+    ],
+    "ci": "unit_test:property_tests",
+    "commands": [
+      "working-directory: tests",
+      "go test \"${args[@]}\" ./..."
+    ]
+  },
+  {
+    "name": "Metamorphic relations",
+    "bug": "Context, kind selection, encoding or formatting changes findings",
+    "paths": [
+      "tests/metamorphic_test.go"
+    ],
+    "ci": "unit_test:property_tests",
+    "commands": [
+      "working-directory: tests",
+      "go test \"${args[@]}\" ./..."
+    ]
+  },
+  {
+    "name": "Quint and model replay",
+    "bug": "Invalid operation sequences, sticky failures and unsafe replay",
+    "paths": [
+      "tests/models/guard.qnt",
+      "embargotest/model_replay_test.go",
+      "tests/model_input_test.go"
+    ],
+    "ci": "verification:formal",
+    "commands": [
+      "scripts/quint_models.py --check",
+      "go test ./embargotest -run '^TestQuint'",
+      "go -C tests test . -run '^TestQuint'"
+    ]
+  },
+  {
+    "name": "Lean reference proofs",
+    "bug": "Arithmetic and interval errors beyond a finite random sample",
+    "paths": [
+      "tests/lean/Reference.lean",
+      "tests/lean_vectors_test.go"
+    ],
+    "ci": "verification:formal",
+    "commands": [
+      "scripts/check_lean.py"
+    ]
+  },
+  {
+    "name": "Intentional snapshots",
+    "bug": "Unreviewed output shape changes despite correct redaction",
+    "paths": [
+      "snapshot_test.go",
+      "adapters/zap/snapshot_test.go",
+      "embargotest/guard_test.go"
+    ],
+    "ci": "unit_test:unit_test",
+    "commands": [
+      "go test \"${args[@]}\" ./...",
+      "go -C adapters/$module test \"${args[@]}\""
+    ]
+  },
+  {
+    "name": "Independent differential oracles",
+    "bug": "A shared implementation mistake in locally written expected values",
+    "paths": [
+      "tests/external_oracles_test.go",
+      "scanner_dispatch_test.go"
+    ],
+    "ci": "verification:policies",
+    "commands": [
+      "TestExternal|TestStandardLibrary",
+      "TestDispatchDifferential"
+    ]
+  },
+  {
+    "name": "Structure-aware fuzzing",
+    "bug": "Malformed nested paths, quoted credentials and split stream frames",
+    "paths": [
+      "structure_fuzz_test.go",
+      "embargotest/guard_fuzz_test.go"
+    ],
+    "ci": "fuzz:fuzz",
+    "commands": [
+      "-fuzz \"^${NAME}\\$\""
+    ]
+  },
+  {
+    "name": "Mutation testing",
+    "bug": "Assertions that execute changed logic without detecting it",
+    "paths": [
+      "scripts/mutation_attribution.py"
+    ],
+    "ci": "heavy:mutation",
+    "commands": [
+      "make mutation",
+      "scripts/mutation_attribution.py"
+    ]
+  },
+  {
+    "name": "Real logger and SDK output",
+    "bug": "Serializer or adapter behavior outside the scanner model",
+    "paths": [
+      "tests/compatibility_integration_test.go",
+      "tests/telemetry_logs_test.go"
+    ],
+    "ci": "unit_test:property_tests",
+    "commands": [
+      "working-directory: tests",
+      "go test \"${args[@]}\" ./..."
+    ]
+  },
+  {
+    "name": "Race and lifecycle tests",
+    "bug": "Shared-state races, pipe hangs and detached goroutines",
+    "paths": [
+      "tests/lifecycle_test.go",
+      "tests/guardlifecycle/main_test.go"
+    ],
+    "ci": "unit_test:property_tests",
+    "commands": [
+      "-race",
+      "go test \"${args[@]}\" ./..."
+    ]
+  },
+  {
+    "name": "Paired CI benchmarks",
+    "bug": "Speed regressions hidden by noise between runners",
+    "paths": [
+      "scripts/ci_benchmark.py"
+    ],
+    "ci": "verification:benchmark",
+    "commands": [
+      "scripts/ci_benchmark.py"
+    ]
+  },
+  {
+    "name": "Prose and policy checks",
+    "bug": "Stale documentation and unimplemented repository rules",
+    "paths": [
+      "scripts/check_prose.py",
+      "scripts/check_policies.py"
+    ],
+    "ci": "verification:policies",
+    "commands": [
+      "scripts/check_prose.py",
+      "scripts/check_policies.py"
+    ]
+  },
+  {
+    "name": "Adversarial budgets",
+    "bug": "Resource amplification, framing spoofing and ambiguous encodings",
+    "paths": [
+      "adversarial_test.go",
+      "embargotest/guard_adversarial_test.go"
+    ],
+    "ci": "heavy:scaling",
+    "commands": [
+      "TestAdversarial",
+      "BenchmarkAdversarialScaling"
+    ]
+  }
+]

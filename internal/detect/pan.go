@@ -47,7 +47,7 @@ type PANDetail struct {
 // An attached business identifier label lowers confidence to 0.4 without dropping the candidate.
 type PAN struct{}
 
-// NewPAN creates a new PAN detect.
+// NewPAN checks issuer prefixes, lengths and Luhn confidence.
 func NewPAN() *PAN {
 	return &PAN{}
 }

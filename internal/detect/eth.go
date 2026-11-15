@@ -18,7 +18,7 @@ type ETHDetail struct {
 //  3. For mixed-case hex, require the EIP-55 checksum using Keccak-256 (the pre-FIPS-202 hash); reject failures and score valid matches as 0.95.
 type ETH struct{}
 
-// NewETH creates a new Ethereum address detect.
+// NewETH accepts uniform-case addresses and verifies EIP-55 for mixed-case addresses.
 func NewETH() *ETH {
 	return &ETH{}
 }

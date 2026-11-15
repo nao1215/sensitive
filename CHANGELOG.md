@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+Round 14 implementation: [PR #83](https://github.com/nao1215/embargo/pull/83), [c7685ad](https://github.com/nao1215/embargo/commit/c7685adc40edbbad3ef87f28b813f68023db9fa8).
+
+- Exclude unspecified and loopback addresses from ipaddr findings while retaining other private endpoints. Guard diagnostics count untrusted test-start frames without echoing child-controlled names.
+- Add metamorphic relations, Quint lifecycle replay, compiled Lean reference vectors, offline validation oracles, semantic snapshots and structured adversarial fuzzing. Document encoding and resource limits, including My Number's single-digit collision.
+- Check owner policies and prose in CI, verify the Actions lockfile while retaining SHA pins, compare base/head benchmarks on one runner and schedule mutation and scaling separately from pull requests.
+
+
 Implementation: [PR #81](https://github.com/nao1215/embargo/pull/81), [9b1baf4](https://github.com/nao1215/embargo/commit/9b1baf479421d5d01736c8aeec7cf331e03579a1).
 
 - Reject entropy candidates in paths and dotted names, numeric log fragments, operational counters and Java object references under unquoted token keys. Make the Sentry fixture use a fixed long source path. Publish measurements from licensed, checksum-pinned public logs, manual classification rules and FP/GB estimates without redistributing the datasets.
@@ -191,7 +198,7 @@ Implementation: [PR #56](https://github.com/nao1215/embargo/pull/56), [89eb73c](
 
 - ScanLines ErrTooLong regression test ([b71bf3d](https://github.com/nao1215/embargo/commit/b71bf3d)): Verifies that lines exceeding the 1 MB buffer return `bufio.ErrTooLong`.
 - ScanLines buffer copy safety test ([5e24472](https://github.com/nao1215/embargo/commit/5e24472)): Verifies that retained `line` slices from the callback are not corrupted by subsequent scans.
-- WithMinConfidence boundary value tests ([cf0a3f0](https://github.com/nao1215/embargo/commit/cf0a3f0)): Verifies that a finding with confidence exactly equal to the threshold is included, and one just below is excluded.
+- WithMinConfidence boundary value tests ([cf0a3f0](https://github.com/nao1215/embargo/commit/cf0a3f0)): Verifies that a finding with confidence exactly equal to the threshold is included, and one below is excluded.
 - RawValue == input[Start:End] invariant test ([54eaa2c](https://github.com/nao1215/embargo/commit/54eaa2c)): Verifies across all built-in detectors that every finding's `RawValue` matches the corresponding `input[Start:End]` slice, preventing mask output corruption.
 
 ## [0.0.2] - 2026-02-08

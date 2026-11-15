@@ -17,7 +17,7 @@ type EmailDetail struct {
 //  3. Score the structure as 0.7, add 0.2 for a known TLD (case-insensitive), and add 0.1 for a domain without consecutive dots.
 type Email struct{}
 
-// NewEmail creates a new Email detect.
+// NewEmail recognizes ASCII local parts and dotted domain names.
 func NewEmail() *Email {
 	return &Email{}
 }

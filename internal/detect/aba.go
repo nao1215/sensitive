@@ -14,7 +14,7 @@ type ABARoutingDetail struct {
 //  3. Score a valid match as 0.85.
 type ABARouting struct{}
 
-// NewABARouting creates a new US ABA routing number detect.
+// NewABARouting combines US routing-prefix ranges with the weighted checksum.
 func NewABARouting() *ABARouting {
 	return &ABARouting{}
 }

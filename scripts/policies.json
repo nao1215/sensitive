@@ -1,0 +1,314 @@
+[
+  {
+    "rule": "Root has no requirements; tools use separate modules",
+    "source": "CLAUDE; R6; M14",
+    "check": "root-module",
+    "where": "Verification"
+  },
+  {
+    "rule": "Architecture and package inventory remain explicit",
+    "source": "CLAUDE; R6",
+    "check": "tests/contracts/policy_test.go#TestProductionPackageInventory",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Runtime cannot import test helpers or detector internals",
+    "source": "R6; doc/design.md",
+    "check": "scripts/check_lint_contracts.py#edges",
+    "where": "golangci-lint"
+  },
+  {
+    "rule": "Secrets have no runtime dependencies or implicit SQL output",
+    "source": "R6; R11",
+    "check": "tests/contracts/policy_test.go#TestSecretFilesHaveNoRuntimeDependencies",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "No struct-tag masking API; Reveal stays explicit",
+    "source": "R11; doc/api-review.md",
+    "check": "api-boundary",
+    "where": "Verification"
+  },
+  {
+    "rule": "No globals; check errors; use typed error comparisons",
+    "source": "CLAUDE",
+    "check": "lint-config",
+    "where": "Verification"
+  },
+  {
+    "rule": "Constructor fields and receiver exceptions stay narrow",
+    "source": "R11; R13",
+    "check": "scripts/check_lint_contracts.py#addedContractField",
+    "where": "golangci-lint"
+  },
+  {
+    "rule": "Printing exceptions apply only to runnable Examples",
+    "source": "R13",
+    "check": "tests/contracts/example_print_test.go#TestUncheckedPrintingIsOnlyInExamples",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Exported declarations and fields have useful English godoc",
+    "source": "CLAUDE; M14",
+    "check": "scripts/check_prose.py#godoc",
+    "where": "Verification"
+  },
+  {
+    "rule": "Runtime public API has runnable godoc Examples",
+    "source": "CLAUDE; R3; R6",
+    "check": "doc_sync_test.go#TestExamplesAppearInGodoc",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "README Go blocks equal runnable public Examples",
+    "source": "R3; R6",
+    "check": "doc_sync_test.go#TestReadmeExamples",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Examples avoid private imports",
+    "source": "R6",
+    "check": "doc_sync_test.go#TestPublicExamplesOnlyImportPublicPackages",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "API signatures and constant values require review",
+    "source": "R6; R13",
+    "check": "tests/contracts/api_test.go#TestAPIGoldenIncludesConstantValues",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Prose avoids filler, bold, emoji and wrapped paragraphs",
+    "source": "R3; R8; M14",
+    "check": "scripts/check_prose.py#markdown",
+    "where": "Verification"
+  },
+  {
+    "rule": "Godoc varies its openings and avoids repeated benchmark claims",
+    "source": "M14; R13",
+    "check": "scripts/check_prose.py#repeated-sentence",
+    "where": "Verification"
+  },
+  {
+    "rule": "Tables fit a 120-character cell budget with reasoned exceptions",
+    "source": "M14",
+    "check": "scripts/check_prose.py#table",
+    "where": "Verification"
+  },
+  {
+    "rule": "Badge set, order, centered logo and sponsor link stay intact",
+    "source": "CLAUDE; R8; R11",
+    "check": "branding",
+    "where": "Verification"
+  },
+  {
+    "rule": "Root coverage is at least 97%; child modules are excluded",
+    "source": "R13",
+    "check": ".octocov.yml#acceptable: 97%",
+    "where": "Coverage"
+  },
+  {
+    "rule": "Tests run on three OSes and minimum/stable Go",
+    "source": "CLAUDE; R6",
+    "check": ".github/workflows/unit_test.yml#macos-latest",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "BSD builds remain; unknown paths run full CI",
+    "source": "R7",
+    "check": "scripts/test_ci_changes.py#class",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "State failures clear Input and retain Secret snapshots",
+    "source": "R11; M14",
+    "check": "tests/model_input_test.go#TestQuintInputReplay",
+    "where": "Verification"
+  },
+  {
+    "rule": "Recorder requires observed bytes and checked expectations",
+    "source": "R6; M14",
+    "check": "embargotest/model_replay_test.go#TestQuintRecorderReplay",
+    "where": "Verification"
+  },
+  {
+    "rule": "Guard shares limits and replays only safe complete streams",
+    "source": "R12; M14",
+    "check": "embargotest/model_replay_test.go#TestQuintGuardReplay",
+    "where": "Verification"
+  },
+  {
+    "rule": "Recorder cannot start detached goroutines",
+    "source": "R6",
+    "check": "tests/contracts/policy_test.go#TestRecorderDoesNotStartDetachedGoroutines",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Slog failures suppress output and emit fixed errors",
+    "source": "R6; R11",
+    "check": "slog_handler_test.go#TestSlogSuppressesNormalizationFailures",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Structured masking preserves shape and bounds its work",
+    "source": "R11",
+    "check": "structured_test.go#TestMaskJSONFailureBounds",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "HTTP interim responses share the retention budget",
+    "source": "R6",
+    "check": "embargotest/detector_test.go#TestInformationalHeadersConsumeTotalBudget",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Hint dispatch agrees with exhaustive scanning",
+    "source": "CLAUDE; R9",
+    "check": "scanner_dispatch_test.go#TestDispatchDifferential",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Clean scanning retains deterministic allocation gates",
+    "source": "CLAUDE; R9",
+    "check": "scanner_dispatch_test.go#TestCleanScanAllocationBudget",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Full-width numeric positions map to original bytes",
+    "source": "CLAUDE; R9",
+    "check": "internal/detect/mutation_round9_test.go#TestNormalizationIdentityDifferential",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Confidence is a score; business labels keep lower-confidence findings",
+    "source": "R9",
+    "check": "internal/detect/mutation_round9_test.go#TestBusinessLabelsAtFieldBoundaries",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "IP unspecified and loopback addresses are excluded",
+    "source": "M14",
+    "check": "internal/detect/ip_policy_test.go#Test",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Adapters stay isolated and work without local replace directives",
+    "source": "R7; R11",
+    "check": "scripts/check_adapter_dependencies.py#replace",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Generated documents have semantic and staleness checks",
+    "source": "R3; R9; M14",
+    "check": "scripts/test_doc_figures.py#class",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Synthetic corpus is deterministic and exact-span scored",
+    "source": "R9; R12",
+    "check": "tests/accuracy_test.go#TestAccuracyRequiresExactUnusedSpans",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Real logs are checksum-pinned and raw bytes stay out of Git",
+    "source": "R13",
+    "check": "scripts/test_real_logs.py#class",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Held data seen during fixes is disclosed",
+    "source": "M14",
+    "check": "scripts/check_policies.py#held-split",
+    "where": "Verification"
+  },
+  {
+    "rule": "Every listed technique has tests and a CI job",
+    "source": "M14",
+    "check": "technique-links",
+    "where": "Verification"
+  },
+  {
+    "rule": "Every rule has an implementation and a CI mapping",
+    "source": "M14",
+    "check": "scripts/check_policies.py#mapping",
+    "where": "Verification"
+  },
+  {
+    "rule": "Fuzz search and mutation are scheduled; PRs run seeds",
+    "source": "R7; M14",
+    "check": "schedules",
+    "where": "Verification"
+  },
+  {
+    "rule": "Quint traces and Lean vectors cannot silently drift",
+    "source": "M14",
+    "check": "scripts/check_lean.py#lake",
+    "where": "Verification"
+  },
+  {
+    "rule": "External oracles use a pinned offline distribution",
+    "source": "M14",
+    "check": "tests/oracles/validate.py#sha256",
+    "where": "Verification"
+  },
+  {
+    "rule": "Benchmarks alternate base and head on one runner",
+    "source": "R6; M14",
+    "check": "scripts/ci_benchmark.py#order",
+    "where": "Verification"
+  },
+  {
+    "rule": "Every round records workflow and job timings",
+    "source": "M14",
+    "check": "scripts/check_policies.py#ci-timing",
+    "where": "Verification"
+  },
+  {
+    "rule": "Actions use full SHA pins and explicit least privileges",
+    "source": "R11; M14",
+    "check": "workflow-security",
+    "where": "Verification"
+  },
+  {
+    "rule": "Lockfile freshness and remote action provenance are checked",
+    "source": "M14",
+    "check": ".github/workflows/verification.yml#gh actions-lock --verify",
+    "where": "Verification"
+  },
+  {
+    "rule": "Lockfile keys match the full-SHA workflow references exactly",
+    "source": "M14",
+    "check": "scripts/lock_actions.py#check_exact_refs",
+    "where": "Verification"
+  },
+  {
+    "rule": "Vulnerability scans and CodeQL retain scheduled/PR coverage",
+    "source": "R7; R11",
+    "check": "scripts/check_policies.py#security-scans",
+    "where": "Verification"
+  },
+  {
+    "rule": "PR titles are English Conventional Commits without agent trailers",
+    "source": "R6; M14",
+    "check": "pr-metadata",
+    "where": "Verification"
+  },
+  {
+    "rule": "Squash only the owned PR after green CI and resolved review",
+    "source": "R6; M14",
+    "check": "scripts/check_merge.py#check_merge",
+    "where": "Pre-merge audit"
+  },
+  {
+    "rule": "No force push, release or third-party mutations in this workflow",
+    "source": "M14",
+    "check": "scripts/check_merge.py#owned_repository",
+    "where": "Pre-merge audit"
+  },
+  {
+    "rule": "Production fixes retain failing-first evidence",
+    "source": "CLAUDE; M14",
+    "check": "scripts/check_policies.py#regression-evidence",
+    "where": "Verification"
+  }
+]

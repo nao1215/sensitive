@@ -154,6 +154,7 @@ func (r *Recorder) writer(name string) *stream {
 	return s
 }
 
+// Write appends to this sink; late or truncated writes make Check fail.
 func (s *stream) Write(p []byte) (int, error) {
 	r := s.recorder
 	r.mu.Lock()

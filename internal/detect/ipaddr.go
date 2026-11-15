@@ -15,10 +15,10 @@ type IPAddrDetail struct {
 //
 //  1. Extract dot-separated decimal candidates or colon-separated hexadecimal candidates, including IPv6 :: shorthand.
 //  2. Validate with net.ParseIP, requiring four octets in 0–255 for IPv4.
-//  3. Score valid addresses as 0.8 and record their version.
+//  3. Exclude unspecified and loopback addresses; score other valid addresses as 0.8 and record their version.
 type IPAddr struct{}
 
-// NewIPAddr creates a new IP address detect.
+// NewIPAddr excludes unspecified and loopback addresses while retaining other valid endpoints.
 func NewIPAddr() *IPAddr {
 	return &IPAddr{}
 }
@@ -90,7 +90,7 @@ func (d *IPAddr) tryIPv4(data []byte, i int) (Finding, int, bool) {
 
 	candidate := string(data[i:j])
 	ip := net.ParseIP(candidate)
-	if ip == nil || ip.To4() == nil {
+	if ip == nil || ip.To4() == nil || ip.IsUnspecified() || ip.IsLoopback() {
 		return Finding{}, j, false
 	}
 
@@ -144,7 +144,7 @@ func (d *IPAddr) tryIPv6(data []byte, i int) (Finding, int, bool) {
 
 	candidate := string(data[i:j])
 	ip := net.ParseIP(candidate)
-	if ip == nil || ip.To4() != nil {
+	if ip == nil || ip.To4() != nil || ip.IsUnspecified() || ip.IsLoopback() {
 		return Finding{}, j, false
 	}
 

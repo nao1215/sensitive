@@ -1,70 +1,90 @@
 {
   "date": "2026-11-15",
-  "commit": "a7dd142532cdcddf8237ba0d099827d27154bf6e",
-  "covered_statements": 3032,
-  "total_statements": 3123,
+  "commit": "c7685adc40edbbad3ef87f28b813f68023db9fa8",
+  "covered_statements": 3026,
+  "total_statements": 3115,
   "mutation": {
-    "killed": 1864,
-    "lived": 248,
-    "uncovered": 220,
-    "timed_out": 39,
+    "killed": 1869,
+    "lived": 246,
+    "uncovered": 243,
+    "timed_out": 38,
     "not_viable": 0,
     "skipped": 0
   },
-  "efficacy": 88.26,
+  "efficacy": 88.37,
   "mutation_timeout_coefficient": 10,
-  "mutation_workers": 4,
-  "mutator_coverage": 90.57,
+  "mutation_workers": 2,
+  "mutator_coverage": 89.69,
   "fuzz": [
     {
-      "target": "FuzzScanner",
-      "executions": 110793,
-      "seconds_requested": 10
-    },
-    {
-      "target": "FuzzScanLines",
-      "executions": 133680,
-      "seconds_requested": 10
-    },
-    {
-      "target": "FuzzMask",
-      "executions": 605653,
-      "seconds_requested": 10
-    },
-    {
-      "target": "FuzzMaskJSON",
-      "executions": 133130,
-      "seconds_requested": 10
-    },
-    {
-      "target": "FuzzJSONShape",
-      "executions": 88620,
-      "seconds_requested": 10
-    },
-    {
-      "target": "FuzzInput",
-      "executions": 376138,
-      "seconds_requested": 10
-    },
-    {
       "target": "FuzzCanary",
-      "executions": 12344,
+      "executions": 16219,
       "seconds_requested": 10
     },
     {
       "target": "FuzzJSONStream",
-      "executions": 9373,
+      "executions": 64686,
+      "seconds_requested": 10
+    },
+    {
+      "target": "FuzzGuardFraming",
+      "executions": 464832,
+      "seconds_requested": 10
+    },
+    {
+      "target": "FuzzScanner",
+      "executions": 117359,
+      "seconds_requested": 10
+    },
+    {
+      "target": "FuzzScanLines",
+      "executions": 146933,
+      "seconds_requested": 10
+    },
+    {
+      "target": "FuzzInput",
+      "executions": 514518,
       "seconds_requested": 10
     },
     {
       "target": "FuzzOutputJSON",
-      "executions": 918684,
+      "executions": 1025922,
+      "seconds_requested": 10
+    },
+    {
+      "target": "FuzzMask",
+      "executions": 616650,
+      "seconds_requested": 10
+    },
+    {
+      "target": "FuzzJSONPaths",
+      "executions": 152660,
+      "seconds_requested": 10
+    },
+    {
+      "target": "FuzzAdversarialBudgets",
+      "executions": 42235,
+      "seconds_requested": 10
+    },
+    {
+      "target": "FuzzCredentialGrammar",
+      "executions": 26005,
+      "seconds_requested": 10
+    },
+    {
+      "target": "FuzzMaskJSON",
+      "executions": 114754,
+      "seconds_requested": 10
+    },
+    {
+      "target": "FuzzJSONShape",
+      "executions": 51276,
       "seconds_requested": 10
     }
   ],
   "source_sha256": {
-    "coverage": "cbb65bdf3ff3dffddab6a743ee44f447830387c564a3d0d32f750cb441592e4f",
-    "mutation": "ba958ca6651580cc9826400b434c718b9bfb90d46c81fd86dea87432040d343f",
-    "fuzz": "4b8bdb05b1c6c973b210c4aad96b7d60d9e622c9d73f5192e2065f7f33f0be77"
+    "coverage": "51b9c9db096017c500d3c69c5ad356e574df3b1881c634a041fec35076277d3d",
+    "mutation": "0efb3d1f63f7d9a90262a9c751020dd540f90295e1257c1243957b463ff1d7ef",
+    "fuzz": "64686c1dbe7599e2c44917e207f811a0a0b72a293cf72b0a294a237d4eb1e94a"
   }
 }

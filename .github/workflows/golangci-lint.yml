@@ -13,6 +13,8 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  GOMAXPROCS: '4'
 permissions:
   contents: read
 
@@ -51,9 +53,7 @@ jobs:
           version: v2.15.0
 
       - name: Exercise forbidden imports and strict constructor rules
-        run: |
-          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
-          python3 scripts/check_lint_contracts.py
+        run: python3 scripts/check_lint_contracts.py
 
   property_lint:
     needs: changes
@@ -63,6 +63,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: "1.26.11"
@@ -81,6 +83,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: "1.26.11"

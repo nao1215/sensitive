@@ -1,0 +1,36 @@
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S
+BenchmarkAdversarialScaling/MaskDense/forward/1024-4         	       1	     25239 ns/op	  40.57 MB/s	    4000 B/op	       8 allocs/op
+BenchmarkAdversarialScaling/MaskDense/forward/1024-4         	       1	     17179 ns/op	  59.61 MB/s	    4000 B/op	       8 allocs/op
+BenchmarkAdversarialScaling/MaskDense/forward/1024-4         	       1	     12289 ns/op	  83.33 MB/s	    4000 B/op	       8 allocs/op
+BenchmarkAdversarialScaling/MaskDense/reverse/1024-4         	       1	     16100 ns/op	  63.60 MB/s	    4000 B/op	       8 allocs/op
+BenchmarkAdversarialScaling/MaskDense/reverse/1024-4         	       1	     18769 ns/op	  54.56 MB/s	    4000 B/op	       8 allocs/op
+BenchmarkAdversarialScaling/MaskDense/reverse/1024-4         	       1	     12809 ns/op	  79.94 MB/s	    4000 B/op	       8 allocs/op
+BenchmarkAdversarialScaling/MaskDense/forward/16384-4        	       1	     49598 ns/op	 330.34 MB/s	  105120 B/op	      17 allocs/op
+BenchmarkAdversarialScaling/MaskDense/forward/16384-4        	       1	     56898 ns/op	 287.95 MB/s	  105120 B/op	      17 allocs/op
+BenchmarkAdversarialScaling/MaskDense/forward/16384-4        	       1	     38209 ns/op	 428.80 MB/s	  105120 B/op	      17 allocs/op
+BenchmarkAdversarialScaling/MaskDense/reverse/16384-4        	       1	    149996 ns/op	 109.23 MB/s	  105120 B/op	      17 allocs/op
+BenchmarkAdversarialScaling/MaskDense/reverse/16384-4        	       1	    168864 ns/op	  97.02 MB/s	  105120 B/op	      17 allocs/op
+BenchmarkAdversarialScaling/MaskDense/reverse/16384-4        	       1	    147645 ns/op	 110.97 MB/s	  105136 B/op	      18 allocs/op
+BenchmarkAdversarialScaling/MaskDense/forward/262144-4       	       1	    622421 ns/op	 421.17 MB/s	 1512864 B/op	      26 allocs/op
+BenchmarkAdversarialScaling/MaskDense/forward/262144-4       	       1	    293521 ns/op	 893.10 MB/s	 1512864 B/op	      26 allocs/op
+BenchmarkAdversarialScaling/MaskDense/forward/262144-4       	       1	    271461 ns/op	 965.68 MB/s	 1512864 B/op	      26 allocs/op
+BenchmarkAdversarialScaling/MaskDense/reverse/262144-4       	       1	   2149632 ns/op	 121.95 MB/s	 1512864 B/op	      26 allocs/op
+BenchmarkAdversarialScaling/MaskDense/reverse/262144-4       	       1	   2150362 ns/op	 121.91 MB/s	 1512864 B/op	      26 allocs/op
+BenchmarkAdversarialScaling/MaskDense/reverse/262144-4       	       1	   2164741 ns/op	 121.10 MB/s	 1512864 B/op	      26 allocs/op
+BenchmarkAdversarialScaling/MaskDense/forward/1048576-4      	       1	   2770323 ns/op	 378.50 MB/s	 6550944 B/op	      32 allocs/op
+BenchmarkAdversarialScaling/MaskDense/forward/1048576-4      	       1	   2209361 ns/op	 474.61 MB/s	 6550944 B/op	      32 allocs/op
+BenchmarkAdversarialScaling/MaskDense/forward/1048576-4      	       1	   1574200 ns/op	 666.10 MB/s	 6550960 B/op	      33 allocs/op
+BenchmarkAdversarialScaling/MaskDense/reverse/1048576-4      	       1	   9536530 ns/op	 109.95 MB/s	 6550944 B/op	      32 allocs/op
+BenchmarkAdversarialScaling/MaskDense/reverse/1048576-4      	       1	  10878257 ns/op	  96.39 MB/s	 6550944 B/op	      32 allocs/op
+BenchmarkAdversarialScaling/MaskDense/reverse/1048576-4      	       1	   9696795 ns/op	 108.14 MB/s	 6550944 B/op	      32 allocs/op
+BenchmarkAdversarialScaling/MaskDense/forward/16777216-4     	       1	  71193166 ns/op	 235.66 MB/s	123606432 B/op	      45 allocs/op
+BenchmarkAdversarialScaling/MaskDense/forward/16777216-4     	       1	  49904548 ns/op	 336.19 MB/s	123606432 B/op	      45 allocs/op
+BenchmarkAdversarialScaling/MaskDense/forward/16777216-4     	       1	  43171509 ns/op	 388.62 MB/s	123606432 B/op	      45 allocs/op
+BenchmarkAdversarialScaling/MaskDense/reverse/16777216-4     	       1	 180515551 ns/op	  92.94 MB/s	123612008 B/op	      52 allocs/op
+BenchmarkAdversarialScaling/MaskDense/reverse/16777216-4     	       1	 184595302 ns/op	  90.89 MB/s	123606432 B/op	      45 allocs/op
+BenchmarkAdversarialScaling/MaskDense/reverse/16777216-4     	       1	 177388591 ns/op	  94.58 MB/s	123606432 B/op	      45 allocs/op
+PASS
+ok  	github.com/nao1215/embargo	0.874s

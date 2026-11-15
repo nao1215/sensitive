@@ -33,7 +33,7 @@ type SlackTokenDetail struct {
 //  3. Enforce a leading word boundary and score a match as 0.9.
 type SlackToken struct{}
 
-// NewSlackToken creates a new Slack token detect.
+// NewSlackToken recognizes Slack token families and their body grammar.
 func NewSlackToken() *SlackToken {
 	return &SlackToken{}
 }

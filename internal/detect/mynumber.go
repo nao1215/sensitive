@@ -16,7 +16,7 @@ type MyNumberDetail struct {
 // An attached business identifier label lowers confidence to 0.4 without dropping the candidate.
 type MyNumber struct{}
 
-// NewMyNumber creates a new My Number detect.
+// NewMyNumber validates the weighted MOD 11 check digit after digit normalization.
 func NewMyNumber() *MyNumber {
 	return &MyNumber{}
 }

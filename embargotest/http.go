@@ -38,7 +38,11 @@ func (r *Recorder) HTTP(name string) http.ResponseWriter {
 	r.responses = append(r.responses, w)
 	return w
 }
+
+// Header exposes the response header map used by the HTTP writer contract.
 func (w *response) Header() http.Header { return w.header }
+
+// WriteHeader observes interim headers and commits the final response status.
 func (w *response) WriteHeader(code int) {
 	w.recorder.mu.Lock()
 	defer w.recorder.mu.Unlock()
@@ -75,6 +79,7 @@ func (w *response) commit(code int) {
 	w.recordHeaders(w.headers, snapshot)
 }
 
+// Write captures body bytes under the shared output limit.
 func (w *response) Write(data []byte) (int, error) {
 	r := w.recorder
 	r.mu.Lock()
@@ -96,7 +101,10 @@ func (w *response) Write(data []byte) (int, error) {
 	}
 	return r.capture(w.body, data)
 }
+
+// Flush records an implicit successful status before flushing the response.
 func (w *response) Flush() { w.WriteHeader(http.StatusOK) }
+
 func (w *response) finalize() {
 	if w.finalized {
 		return

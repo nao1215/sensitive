@@ -11,7 +11,7 @@
 | `KindAWSKey` | AWS Access Key IDs (`AKIA...` / `ASIA...`) | Prefix + 20-char alphanumeric |
 | `KindIBAN` | International Bank Account Numbers | Country code + MOD 97 check digit |
 | `KindIPAddr` | IPv4 and IPv6 addresses | `net.ParseIP` + octet range |
-| `KindSWIFTBIC` | SWIFT/BIC codes | Format + country code validation; all-letter codes such as DEUTDEFF also need nearby swift, bic, bank identifier or wire text |
+| `KindSWIFTBIC` | SWIFT/BIC codes | [Explanation 1](#table-explanation-1) |
 | `KindABARouting` | US ABA routing numbers | Prefix range + checksum |
 | `KindUKSortCode` | UK sort codes (XX-XX-XX) | Pattern + boundary checks |
 | `KindCVV` | Card verification values (CVV/CVC/CID) | Context keyword + digit length (context-based, weaker) |
@@ -26,7 +26,7 @@
 | `KindSlackToken` | Slack API tokens (`xoxb-`/`xoxp-`/`xoxa-`/`xoxo-`/`xoxr-`/`xoxs-`) | Prefix + type character + minimum body length |
 | `KindGoogleAPIKey` | Google API keys (`AIza...`) | Prefix + 35-char body |
 | `KindPrivateKeyPEM` | PEM private key headers (RSA/EC/DSA/OpenSSH/PKCS#8) | `-----BEGIN [ALGO ]PRIVATE KEY-----` header parse |
-| `KindCredential` | Secrets in assignments, headers, URLs and DSNs (`password=`, `"token":"..."`, `Authorization: Bearer`, `postgres://user:pass@host`) | Sensitive key or URL userinfo + value grammar; only the secret part is masked |
+| `KindCredential` | [Explanation 2](#table-explanation-2) | Sensitive key or URL userinfo + value grammar; only the secret part is masked |
 | `KindServiceToken` | Provider tokens (OpenAI, Anthropic, Stripe, GitLab, npm, PyPI, Slack webhooks, SendGrid, Google OAuth) | Documented prefix + body length and character set |
 | `KindHighEntropy` | Long random-looking strings with no surrounding context | Base64-like run of 32–256 bytes with Shannon entropy of at least 4.5 bits per byte; low confidence (0.3) |
 | `WithAll()` | All of the above | |
@@ -35,3 +35,13 @@
 Validation checks format, not account existence or credential authentication. Confidence scores are heuristics, not probabilities. See the [accuracy corpus](accuracy.md) for examples of misses and false alarms.
 
 [Support maintenance](https://github.com/sponsors/nao1215).
+
+## Table explanations
+
+<a id="table-explanation-1"></a>
+
+Format + country code validation; all-letter codes such as DEUTDEFF also need nearby swift, bic, bank identifier or wire text
+
+<a id="table-explanation-2"></a>
+
+Secrets in assignments, headers, URLs and DSNs (`password=`, `"token":"..."`, `Authorization: Bearer`, `postgres://user:pass@host`)

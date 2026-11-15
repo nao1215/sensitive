@@ -1,7 +1,7 @@
 {
-  "source_sha256": "e8894fa265b133ef1081f8e9f6559bc0469a553f3dbc3396bf3782251a0915a1",
+  "source_sha256": "f6ec3356ef1c2bbcbe14171f053b3672122aa41548502d7a987bb7e2baf77d95",
   "manifest_sha256": "5557570ef5c2ba27b2e97663f0e3edecdf8ff4908e71cdaf5d1a2c2d9df8b7e8",
-  "labels_sha256": "b8c11a553bd8242afdd251618b1bc588e1c56eb53808033ba11a69988371cf0b",
+  "labels_sha256": "db411eed8e80efc1dfe2852e98da6e4f278d982e2fddd7f6fa652550666922da",
   "baseline_sha256": "a509ff0c7089381396e9dfc12d96fc8c4cd6e9e7b187c81a50cbe3497fff3cfe",
   "datasets": [
     {
@@ -243,12 +243,12 @@
       "counts": {
         "all": {
           "email": 32,
-          "ipaddr": 6088,
+          "ipaddr": 6062,
           "swiftbic": 1
         },
         "default": {
           "email": 32,
-          "ipaddr": 6088,
+          "ipaddr": 6062,
           "swiftbic": 1
         },
         "kinds1": {
@@ -259,11 +259,11 @@
         },
         "kinds8": {
           "email": 32,
-          "ipaddr": 6088
+          "ipaddr": 6062
         }
       },
       "dataset": "Linux",
-      "findings_sha256": "e766e3381ceebbec6b093bebe73c153d7e5fb2cfffae53e2572feb94f059ef26",
+      "findings_sha256": "0086d739c0bdb1e284143f5b875de37fafc14fe7c93b6d840366509571811aee",
       "bytes": 2349686,
       "lines": 25567,
       "strata": {
@@ -363,21 +363,21 @@
     {
       "counts": {
         "all": {
-          "ipaddr": 542852,
+          "ipaddr": 542844,
           "swiftbic": 24
         },
         "default": {
-          "ipaddr": 542852,
+          "ipaddr": 542844,
           "swiftbic": 24
         },
         "kinds1": {},
         "kinds3": {},
         "kinds8": {
-          "ipaddr": 542852
+          "ipaddr": 542844
         }
       },
       "dataset": "OpenSSH",
-      "findings_sha256": "69364590df6b9d5fba10e4b30c3cece315e337c10db7663002bee0490f479825",
+      "findings_sha256": "f73ca5763070ac120e82b1543dfb0b2b860f46c61a76da25c7084d928bddbb2e",
       "bytes": 73417506,
       "lines": 655147,
       "strata": {
@@ -530,20 +530,20 @@
       "counts": {
         "all": {
           "aba_routing": 2,
-          "ipaddr": 54012
+          "ipaddr": 34894
         },
         "default": {
           "aba_routing": 2,
-          "ipaddr": 54012
+          "ipaddr": 34894
         },
         "kinds1": {},
         "kinds3": {},
         "kinds8": {
-          "ipaddr": 54012
+          "ipaddr": 34894
         }
       },
       "dataset": "Zookeeper",
-      "findings_sha256": "500a67eb9ad64bfba5a83e697ae53e104d07825eb111b32088fe3bc6a218202f",
+      "findings_sha256": "e56e6d01d97e8cf3b7ec7a35957ae0f10d497e9245a75f7ed641cfb720652db3",
       "bytes": 10426438,
       "lines": 74380,
       "strata": {
@@ -564,13 +564,8 @@
             "0004267d2e24d01e3e129c343fe66dfe5998e6439953641985dc2eb8740392cd",
             "0004b9b41717f281710b7553ab273fc24d8ac08b33dde3201439e4777f4fb3ff",
             "0006573d153feef9778d37f4f6071e74ebb594fac1b0421bb223f54e8b54406b",
-            "00095af1435c0ad95dab80874799c2a56e346594b6ce18266b16fa4b58cab3d7",
-            "00097ff2a68413add65870830b5b096805c69a453dcd31d6519c48f88684d644",
             "000b07907f97daf049891e3e56065fe8307d0e49f097d7d7c9b610974cfb4ad2",
-            "000c7074d0e7a87fb9fd617c6b08d4de3f038f9f5eb37d102746b64ad23830ea",
-            "000d070412e8f9cb9ece5343e27fd31a32b823c7a22d80bb32c7f7dfe2516fa1",
             "000db3abf4f10bd26bbe7772492809d1cba7a4fc7be08f72196a07a66baa7c19",
-            "000dbbfcd812e5de20f4f598047991a4c2fdddf6b19c3677c9538071d7c54898",
             "000e7c8692d4f61121d8ed57568573b6cc125a1830a3115803e916bc75ace5ae",
             "000e924c5ccd84c5c725be34ad92eb3e8f3cf64496c7f706813668c8fbaeccfc",
             "000f35551ab1c453b9920243183d07934d3cfff9497d1ecd6cca4661af5e44e0",
@@ -582,24 +577,29 @@
             "001f0761fd0fe08aa80512e53f0f3e2bc4c8c9eab516b208fcf0dfd6f4f3c8d3",
             "002175cb35af870688be777064d2862d177d0faab4b2abbcf99ee86653e882fe",
             "0022369b7b6be9c2a991bbeecb9b8a229c5f8e49bddd45803fd6b773cabc7fd0",
-            "0026fd0b96bae0869863d67458fa0a49830b585e9da18d87ef4473ed6cb03d1f",
             "002859975ce7e9e3a17aec98e706d9ed1f71fcdd5dbf78c3488bd1639adbe19b",
-            "0028e09a2616b56a98498eb2de977178476105cb066ea9ee9f0ed2abcabee12a",
             "00291c56dc3a2c94dc2df0f0198aacaa6da081ffc7aa2ed3f7a404d9d0eb0743",
             "00294037503967198d105b8bd807a9e27b8f868b4dce74733e3837ba56b2292c",
             "002e503fcea5339ba874d0e82e5d33aa4fe4b12e4a8bde7194960f44139e989d",
             "002f591316b3afa84554cfd1cdddbb5c9704fc135180cceefa631128be2e0909",
-            "002f8403e7ad4f38f6af2b3366f9cf3a9db818be875edb3a8dd1d71e29859510",
             "003268631c9b57cfaee3030bc968967ac3fa7190e1ce28360e7e97417aab7b35",
-            "0034080487523ae5939089d360bdd28df67172da60c0ce951fb7a4858e12a487",
             "003452abea1258f1a605a8ce250b9fcdc5f04013b64ee2b65c785fd6e587918f",
             "0035c44f7e33ceab3654944b699a22ee732794d93e9bd6eb68b1832642c56abb",
             "0035cb12df0081c6f92e0cfedc74c4a651009e41ae6a9b731adae2a541180737",
             "00362ba6da09b6c2c6040c78a53ae564818fccd90000ad34e445f6c935e651df",
-            "00375566bcf50f089eefc23337fe1ec4e658137be68f2823e5ee05a9dcbdf01a"
+            "00375566bcf50f089eefc23337fe1ec4e658137be68f2823e5ee05a9dcbdf01a",
+            "00397115534961037ef83d7a50bcfbb83b02b45fa347b6f4376b7e7a53da38b2",
+            "003b30d9f7cd9ea9a41cda6d56557cd476fa6be7009bb0df84e38f9d3aaf1709",
+            "003f83998ca3758e9af39e01d67f94786e26e434d4b47048eb7c5dc616d503fa",
+            "00402016051016facae044d9495c376dd476c5a0e30068514a355fbcf4a8816c",
+            "00405aecda22f9aa93911db39b2b897470920ba8c6998cf51bef163e31288c3e",
+            "004357e3cc43a9cc344d646540ad6feb6622a8728312183d47c3bce64e2d9162",
+            "0043859eae969ffc3bf23d1a02f16e21055be9bec2efdb97962b68c63319e0cc",
+            "0043e20d72c98cd20c884131b5d05a09e3376c322c8a877e3c9feafbf684834b",
+            "004851ada6c9b523ab4614c1a8f507cebfe7b38b57fc59f8686d5dd9c0f9c7ad"
           ],
           "sample_count": 40,
-          "sample_fp": 9
+          "sample_fp": 0
         }
       }
     }

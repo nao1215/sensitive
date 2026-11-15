@@ -36,3 +36,8 @@ go.work.sum
 __pycache__/
 # Shrunk failures are promoted to named regression tests before committing.
 /tests/testdata/rapid/
+
+/tests/models/node_modules/
+/tests/lean/.lake/
+/_apalache-out/
+/benchmark-results/

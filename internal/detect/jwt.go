@@ -42,7 +42,7 @@ type JWTDetail struct {
 //  3. Add 0.2 when the header decodes as a JSON object and 0.1 when it contains an alg key; record alg when it is a string.
 type JWT struct{}
 
-// NewJWT creates a new JWT detect.
+// NewJWT checks three base64url segments and the decoded header.
 func NewJWT() *JWT {
 	return &JWT{}
 }

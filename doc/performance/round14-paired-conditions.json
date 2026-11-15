@@ -1,0 +1,49 @@
+{
+  "base": "83e325c17805df1ab35f53d115776978bec1b829",
+  "head": "aee3d602148152ca8270c3caa526e2fdff7e227c",
+  "order": [
+    [
+      "base",
+      "head"
+    ],
+    [
+      "head",
+      "base"
+    ],
+    [
+      "base",
+      "head"
+    ],
+    [
+      "head",
+      "base"
+    ],
+    [
+      "base",
+      "head"
+    ],
+    [
+      "head",
+      "base"
+    ],
+    [
+      "base",
+      "head"
+    ],
+    [
+      "head",
+      "base"
+    ],
+    [
+      "base",
+      "head"
+    ],
+    [
+      "head",
+      "base"
+    ]
+  ],
+  "go": "go version go1.26.11 linux/amd64",
+  "gomaxprocs": 1,
+  "benchtime": "100ms"
+}

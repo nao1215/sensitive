@@ -1,0 +1,18 @@
+--- FAIL: TestIPLocalAddressesAreNotPrivateEndpoints (0.00s)
+    --- FAIL: TestIPLocalAddressesAreNotPrivateEndpoints/0.0.0.0 (0.00s)
+        ip_policy_test.go:11: host-independent address must not identify a private endpoint
+    --- FAIL: TestIPLocalAddressesAreNotPrivateEndpoints/:: (0.00s)
+        ip_policy_test.go:11: host-independent address must not identify a private endpoint
+    --- FAIL: TestIPLocalAddressesAreNotPrivateEndpoints/127.255.255.254 (0.00s)
+        ip_policy_test.go:11: host-independent address must not identify a private endpoint
+    --- FAIL: TestIPLocalAddressesAreNotPrivateEndpoints/127.0.0.1 (0.00s)
+        ip_policy_test.go:11: host-independent address must not identify a private endpoint
+    --- FAIL: TestIPLocalAddressesAreNotPrivateEndpoints/::1 (0.00s)
+        ip_policy_test.go:11: host-independent address must not identify a private endpoint
+FAIL
+FAIL	github.com/nao1215/embargo/internal/detect	0.005s
+--- FAIL: TestGuardForgedTestNamesNeverReachDiagnostics (0.00s)
+    guard_adversarial_test.go:14: untrusted stream framing echoed input into a Guard diagnostic
+FAIL
+FAIL	github.com/nao1215/embargo/embargotest	0.004s
+FAIL

@@ -19,7 +19,7 @@ type PrivateKeyPEMDetail struct {
 //  3. Include the body through a matching END marker when present, then return confidence 0.99 and the algorithm text (RSA, EC, DSA, OPENSSH, ENCRYPTED, or empty for PKCS#8).
 type PrivateKeyPEM struct{}
 
-// NewPrivateKeyPEM creates a new PEM private key detect.
+// NewPrivateKeyPEM retains the key body through its matching END marker when present.
 func NewPrivateKeyPEM() *PrivateKeyPEM {
 	return &PrivateKeyPEM{}
 }

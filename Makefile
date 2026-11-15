@@ -1,5 +1,7 @@
 .PHONY: test clean lint benchmark tools help
 
+export GOMAXPROCS := 4
+
 APP         = embargo
 GO          = go
 GO_BUILD    = $(GO) build
@@ -44,18 +46,10 @@ race: ## Run race detection in all modules
 properties: ## Run property and API contract tests
 	go -C tests test ./...
 mutation: ## Mutate root module packages with gremlins
-	go run github.com/go-gremlins/gremlins/cmd/gremlins@v0.6.0 unleash --workers 4 --timeout-coefficient 100 .
+	go run github.com/go-gremlins/gremlins/cmd/gremlins@v0.6.0 unleash --workers 2 --timeout-coefficient 10 .
 fuzz: ## Smoke test every root fuzz target
-	go test -run '^$$' -fuzz '^FuzzScanner$$' -fuzztime=10s .
-	go test -run '^$$' -fuzz '^FuzzScanLines$$' -fuzztime=10s .
-	go test -run '^$$' -fuzz '^FuzzMask$$' -fuzztime=10s .
-	go test -run '^$$' -fuzz '^FuzzMaskJSON$$' -fuzztime=10s .
-	go test -run '^$$' -fuzz '^FuzzJSONShape$$' -fuzztime=10s .
-	go test -run '^$$' -fuzz '^FuzzInput$$' -fuzztime=10s .
+	python3 scripts/fuzz_targets.py --run 10s
 
-	go test -run '^$$' -fuzz '^FuzzCanary$$' -fuzztime=10s ./embargotest
-	go test -run '^$$' -fuzz '^FuzzJSONStream$$' -fuzztime=10s ./embargotest
-	go test -run '^$$' -fuzz '^FuzzOutputJSON$$' -fuzztime=10s ./internal/output
 
 .PHONY: compatibility-doc
 compatibility-doc: ## Regenerate the table from real output tests
@@ -71,7 +65,7 @@ accuracy accuracy-doc: credential-accuracy ## Regenerate precision and recall fr
 benchmark-doc: ## Run and publish reproducible benchmark samples
 	python3 scripts/benchmark_docs.py
 
-DOC_MUTATION_TIMEOUT ?= 100
+DOC_MUTATION_TIMEOUT ?= 10
 
 .PHONY: testing-doc
 testing-doc: ## Publish completed measurement logs (DOC_COVERAGE, DOC_MUTATION, DOC_FUZZ, DOC_COMMIT)

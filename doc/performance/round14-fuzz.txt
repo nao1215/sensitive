@@ -1,0 +1,117 @@
+go test -run '^$' -fuzz '^FuzzCanary$' -fuzztime=10s ./embargotest
+fuzz: elapsed: 0s, gathering baseline coverage: 0/575 completed
+fuzz: elapsed: 2s, gathering baseline coverage: 575/575 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 4371 (1457/sec), new interesting: 10 (total: 585)
+fuzz: elapsed: 6s, execs: 10708 (2112/sec), new interesting: 18 (total: 593)
+fuzz: elapsed: 9s, execs: 16219 (1837/sec), new interesting: 24 (total: 599)
+fuzz: elapsed: 11s, execs: 16219 (0/sec), new interesting: 24 (total: 599)
+PASS
+ok  	github.com/nao1215/embargo/embargotest	11.050s
+go test -run '^$' -fuzz '^FuzzJSONStream$' -fuzztime=10s ./embargotest
+fuzz: elapsed: 0s, gathering baseline coverage: 0/691 completed
+fuzz: elapsed: 2s, gathering baseline coverage: 691/691 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 4616 (1538/sec), new interesting: 3 (total: 694)
+fuzz: elapsed: 6s, execs: 12253 (2545/sec), new interesting: 7 (total: 698)
+fuzz: elapsed: 9s, execs: 64686 (17483/sec), new interesting: 10 (total: 701)
+fuzz: elapsed: 11s, execs: 64686 (0/sec), new interesting: 10 (total: 701)
+PASS
+ok  	github.com/nao1215/embargo/embargotest	11.049s
+go test -run '^$' -fuzz '^FuzzGuardFraming$' -fuzztime=10s ./embargotest
+fuzz: elapsed: 0s, gathering baseline coverage: 0/18 completed
+fuzz: elapsed: 0s, gathering baseline coverage: 18/18 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 134654 (44882/sec), new interesting: 3 (total: 21)
+fuzz: elapsed: 6s, execs: 276226 (47188/sec), new interesting: 3 (total: 21)
+fuzz: elapsed: 9s, execs: 415946 (46574/sec), new interesting: 3 (total: 21)
+fuzz: elapsed: 10s, execs: 464832 (44922/sec), new interesting: 3 (total: 21)
+PASS
+ok  	github.com/nao1215/embargo/embargotest	10.101s
+go test -run '^$' -fuzz '^FuzzScanner$' -fuzztime=10s .
+fuzz: elapsed: 0s, gathering baseline coverage: 0/1084 completed
+fuzz: elapsed: 3s, gathering baseline coverage: 1084/1084 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 4358 (1453/sec), new interesting: 0 (total: 1084)
+fuzz: elapsed: 6s, execs: 58688 (18107/sec), new interesting: 14 (total: 1098)
+fuzz: elapsed: 9s, execs: 103386 (14903/sec), new interesting: 22 (total: 1106)
+fuzz: elapsed: 11s, execs: 117359 (6842/sec), new interesting: 23 (total: 1107)
+PASS
+ok  	github.com/nao1215/embargo	11.087s
+go test -run '^$' -fuzz '^FuzzScanLines$' -fuzztime=10s .
+fuzz: elapsed: 0s, gathering baseline coverage: 0/1019 completed
+fuzz: elapsed: 2s, gathering baseline coverage: 1019/1019 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 12696 (4231/sec), new interesting: 5 (total: 1024)
+fuzz: elapsed: 6s, execs: 76585 (21301/sec), new interesting: 22 (total: 1041)
+fuzz: elapsed: 9s, execs: 136333 (19915/sec), new interesting: 34 (total: 1053)
+fuzz: elapsed: 11s, execs: 146933 (5240/sec), new interesting: 35 (total: 1054)
+PASS
+ok  	github.com/nao1215/embargo	11.067s
+go test -run '^$' -fuzz '^FuzzInput$' -fuzztime=10s .
+fuzz: elapsed: 0s, gathering baseline coverage: 0/445 completed
+fuzz: elapsed: 1s, gathering baseline coverage: 445/445 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 148733 (49577/sec), new interesting: 0 (total: 445)
+fuzz: elapsed: 6s, execs: 290554 (47259/sec), new interesting: 0 (total: 445)
+fuzz: elapsed: 9s, execs: 457091 (55522/sec), new interesting: 0 (total: 445)
+fuzz: elapsed: 10s, execs: 514518 (51839/sec), new interesting: 0 (total: 445)
+PASS
+ok  	github.com/nao1215/embargo	10.134s
+go test -run '^$' -fuzz '^FuzzOutputJSON$' -fuzztime=10s ./internal/output
+fuzz: elapsed: 0s, gathering baseline coverage: 0/324 completed
+fuzz: elapsed: 0s, gathering baseline coverage: 324/324 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 275012 (91670/sec), new interesting: 2 (total: 326)
+fuzz: elapsed: 6s, execs: 596879 (107268/sec), new interesting: 4 (total: 328)
+fuzz: elapsed: 9s, execs: 916812 (106659/sec), new interesting: 5 (total: 329)
+fuzz: elapsed: 10s, execs: 1025922 (97528/sec), new interesting: 6 (total: 330)
+PASS
+ok  	github.com/nao1215/embargo/internal/output	10.159s
+go test -run '^$' -fuzz '^FuzzMask$' -fuzztime=10s .
+fuzz: elapsed: 0s, gathering baseline coverage: 0/13 completed
+fuzz: elapsed: 0s, gathering baseline coverage: 13/13 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 166412 (55470/sec), new interesting: 0 (total: 13)
+fuzz: elapsed: 6s, execs: 338707 (57428/sec), new interesting: 0 (total: 13)
+fuzz: elapsed: 9s, execs: 544054 (68438/sec), new interesting: 0 (total: 13)
+fuzz: elapsed: 10s, execs: 616650 (65171/sec), new interesting: 0 (total: 13)
+PASS
+ok  	github.com/nao1215/embargo	10.123s
+go test -run '^$' -fuzz '^FuzzJSONPaths$' -fuzztime=10s .
+fuzz: elapsed: 0s, gathering baseline coverage: 0/5 completed
+fuzz: elapsed: 0s, gathering baseline coverage: 5/5 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 67049 (22347/sec), new interesting: 93 (total: 98)
+fuzz: elapsed: 6s, execs: 95974 (9639/sec), new interesting: 96 (total: 101)
+fuzz: elapsed: 9s, execs: 124129 (9385/sec), new interesting: 98 (total: 103)
+fuzz: elapsed: 11s, execs: 152660 (14226/sec), new interesting: 98 (total: 103)
+PASS
+ok  	github.com/nao1215/embargo	11.021s
+go test -run '^$' -fuzz '^FuzzAdversarialBudgets$' -fuzztime=10s .
+fuzz: elapsed: 0s, gathering baseline coverage: 0/6 completed
+fuzz: elapsed: 0s, gathering baseline coverage: 6/6 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 22833 (7611/sec), new interesting: 196 (total: 202)
+fuzz: elapsed: 6s, execs: 35379 (4182/sec), new interesting: 311 (total: 317)
+fuzz: elapsed: 9s, execs: 40288 (1635/sec), new interesting: 346 (total: 352)
+fuzz: elapsed: 11s, execs: 42235 (966/sec), new interesting: 368 (total: 374)
+PASS
+ok  	github.com/nao1215/embargo	11.035s
+go test -run '^$' -fuzz '^FuzzCredentialGrammar$' -fuzztime=10s .
+fuzz: elapsed: 0s, gathering baseline coverage: 0/5 completed
+fuzz: elapsed: 0s, gathering baseline coverage: 5/5 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 24799 (8264/sec), new interesting: 51 (total: 56)
+fuzz: elapsed: 6s, execs: 26005 (402/sec), new interesting: 52 (total: 57)
+fuzz: elapsed: 9s, execs: 26005 (0/sec), new interesting: 52 (total: 57)
+fuzz: elapsed: 11s, execs: 26005 (0/sec), new interesting: 52 (total: 57)
+PASS
+ok  	github.com/nao1215/embargo	11.043s
+go test -run '^$' -fuzz '^FuzzMaskJSON$' -fuzztime=10s .
+fuzz: elapsed: 0s, gathering baseline coverage: 0/511 completed
+fuzz: elapsed: 2s, gathering baseline coverage: 511/511 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 39657 (13219/sec), new interesting: 2 (total: 513)
+fuzz: elapsed: 6s, execs: 78011 (12782/sec), new interesting: 4 (total: 515)
+fuzz: elapsed: 9s, execs: 114754 (12248/sec), new interesting: 6 (total: 517)
+fuzz: elapsed: 11s, execs: 114754 (0/sec), new interesting: 6 (total: 517)
+PASS
+ok  	github.com/nao1215/embargo	11.171s
+go test -run '^$' -fuzz '^FuzzJSONShape$' -fuzztime=10s .
+fuzz: elapsed: 0s, gathering baseline coverage: 0/322 completed
+fuzz: elapsed: 1s, gathering baseline coverage: 322/322 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 46934 (15642/sec), new interesting: 0 (total: 322)
+fuzz: elapsed: 6s, execs: 51276 (1447/sec), new interesting: 0 (total: 322)
+fuzz: elapsed: 9s, execs: 51276 (0/sec), new interesting: 0 (total: 322)
+fuzz: elapsed: 11s, execs: 51276 (0/sec), new interesting: 0 (total: 322)
+PASS
+ok  	github.com/nao1215/embargo	11.120s

@@ -22,6 +22,8 @@ on:
         options: ["30s", "1m", "5m", "20m"]
         default: "5m"
 
+env:
+  GOMAXPROCS: '4'
 permissions:
   contents: read
 
@@ -36,21 +38,7 @@ jobs:
           persist-credentials: false
       - id: find
         run: |
-          grep -rlE '^func Fuzz[A-Za-z0-9_]*\(' --include='*_test.go' . \
-            | grep -v '/testdata/' \
-            | while read -r f; do
-                # "./" keeps `go test` from reading internal/x as a std path;
-                # the root package stays ".".
-                dir=$(dirname "$f"); case "$dir" in .|./*) ;; *) dir="./$dir" ;; esac
-                # A target inside a nested module (its own go.mod) cannot be
-                # run from the root; skip it.
-                d=$dir; nested=""
-                while [ "$d" != "." ]; do [ -f "$d/go.mod" ] && nested=1; d=$(dirname "$d"); done
-                [ -n "$nested" ] && continue
-                grep -oE '^func Fuzz[A-Za-z0-9_]*' "$f" | awk '{print $2}' \
-                  | while read -r name; do printf '{"pkg":"%s","name":"%s"}\n' "$dir" "$name"; done
-              done \
-            | jq -sc '{target: .}' > matrix.json
+          python3 scripts/fuzz_targets.py > matrix.json
           cat matrix.json
           echo "matrix=$(cat matrix.json)" >> "$GITHUB_OUTPUT"
 

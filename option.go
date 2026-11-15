@@ -34,10 +34,8 @@ func WithKinds(kinds ...Kind) ScannerOption {
 }
 
 // WithAll opts into every built-in, including low-confidence unlabelled entropy tokens.
-// Choosing relevant kinds with WithKinds is faster and avoids false positives from omitted kinds.
-// In the published 10-sample scan, 1/3/8 kinds took 0.097/14.70/17.40 µs on clean text
-// and 0.038/0.598/2.791 ms on dirty text, versus 60.27 µs and 6.487 ms here.
-// Inputs, kind sets and uncertainty are recorded in doc/benchmarks.md.
+// WithKinds avoids scanning for formats the application never handles and usually costs less.
+// Measurements and the recall tradeoff are in https://github.com/nao1215/embargo/blob/main/doc/benchmarks.md.
 func WithAll() ScannerOption {
 	return scannerOption(func(s *Scanner) { s.kinds = nil; s.allKinds = true })
 }

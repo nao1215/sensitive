@@ -22,7 +22,7 @@ type SWIFTBICDetail struct {
 //  3. Score a match as 0.85; an absent branch denotes the head office.
 type SWIFTBIC struct{}
 
-// NewSWIFTBIC creates a new SWIFT/BIC code detect.
+// NewSWIFTBIC validates country and code shape without checking institution assignment.
 func NewSWIFTBIC() *SWIFTBIC {
 	return &SWIFTBIC{}
 }

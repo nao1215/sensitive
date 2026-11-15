@@ -90,7 +90,10 @@ type childOutput struct {
 	complete bool
 }
 
+// Write captures child output under the shared limit.
 func (c *childOutput) Write(p []byte) (int, error) { return c.stream.Write(p) }
+
+// ReadFrom drains the child reader through the same bounded capture path.
 func (c *childOutput) ReadFrom(src io.Reader) (int64, error) {
 	var total int64
 	//nolint:mnd // This bound follows HTTP sniffing, JSON nesting, metadata encoding, or child-name limits.

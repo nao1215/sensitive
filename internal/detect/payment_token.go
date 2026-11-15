@@ -16,7 +16,7 @@ type PaymentTokenDetail struct {
 //  3. Score a match as 0.9 and record the provider and token type; no service authentication is attempted.
 type PaymentToken struct{}
 
-// NewPaymentToken creates a new payment processor token detect.
+// NewPaymentToken recognizes payment-provider prefixes without authenticating the tokens.
 func NewPaymentToken() *PaymentToken {
 	return &PaymentToken{}
 }

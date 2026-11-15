@@ -13,7 +13,7 @@ type IBANDetail struct {
 //  3. Reject reserved check digits 00, 01 and 99, require MOD 97 (ISO 7064) validation, and score the match as 0.95.
 type IBAN struct{}
 
-// NewIBAN creates a new IBAN detect.
+// NewIBAN combines country lengths with MOD 97 validation.
 func NewIBAN() *IBAN {
 	return &IBAN{}
 }

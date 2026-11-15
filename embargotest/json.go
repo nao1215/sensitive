@@ -63,6 +63,7 @@ func hasFields(object map[string]any, want map[string]string) bool {
 
 type jsonError struct{}
 
+// Error reports invalid JSON without including the rejected bytes.
 func (jsonError) Error() string { return "embargotest: invalid JSON record" }
 
 func jsonValue(decoder *json.Decoder, depth int) (any, error) {

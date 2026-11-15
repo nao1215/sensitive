@@ -17,7 +17,7 @@ type ACHTrace struct {
 	achKeywords *keywordSet
 }
 
-// NewACHTrace creates a new ACH trace number detect.
+// NewACHTrace uses ACH context and routing prefixes to find transaction trace numbers.
 func NewACHTrace() *ACHTrace {
 	return &ACHTrace{achKeywords: achKeywords()}
 }

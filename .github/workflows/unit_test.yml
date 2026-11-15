@@ -7,6 +7,8 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  GOMAXPROCS: '4'
 permissions:
   contents: read
 
@@ -33,20 +35,28 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ matrix.go }}
 
-      - name: Run tests with coverage report output
-        run: go test -cover -coverpkg=./... -coverprofile=coverage.out ./...
+      - name: Run unit tests
+        shell: bash
+        run: |
+          args=()
+          if [[ "${{ matrix.go }}" == stable ]]; then args+=(-race); fi
+          go test "${args[@]}" ./...
 
       - name: Test optional logger modules
         shell: bash
         run: |
+          args=()
+          if [[ "${{ matrix.go }}" == stable ]]; then args+=(-race); fi
           for module in zap zerolog logrus; do
             go -C adapters/$module mod tidy -diff
-            go -C adapters/$module test -race ./...
+            go -C adapters/$module test "${args[@]}" ./...
           done
 
       - name: Verify declared adapter dependencies without local replacements
@@ -76,6 +86,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -98,6 +110,8 @@ jobs:
         go: ["1.26.11", "stable"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ matrix.go }}
@@ -117,7 +131,9 @@ jobs:
         working-directory: tests
         run: |
           go mod tidy -diff
-          go test ./...
+          args=()
+          if [[ "${{ matrix.go }}" == stable ]]; then args+=(-race); fi
+          go test "${args[@]}" ./...
 
   documentation:
     name: README and runnable Examples

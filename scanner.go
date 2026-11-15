@@ -36,9 +36,8 @@ type hintEntry struct {
 
 // NewScanner starts with every built-in except KindHighEntropy; WithAll opts into that heuristic.
 // Minimum confidence defaults to 0, so ambiguous numeric and contextual candidates remain.
-// Choose WithKinds for faster scans and fewer false positives from irrelevant kinds.
-// Published 1/3/8-kind medians were 0.097/14.70/17.40 µs clean and 0.038/0.598/2.791 ms dirty;
-// WithAll took 60.27 µs and 6.487 ms on those inputs (doc/benchmarks.md).
+// Select WithKinds when the application knows which data it handles; fewer detectors reduce work and unrelated findings.
+// See https://github.com/nao1215/embargo/blob/main/doc/benchmarks.md for measured kind sets.
 // Options apply in order; nil options are ignored.
 func NewScanner(opts ...ScannerOption) *Scanner {
 	s := &Scanner{initialized: true}

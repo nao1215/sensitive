@@ -16,6 +16,7 @@ type Input[T interface{ ~string | ~[]byte }] struct{ secret Secret[T] }
 
 type inputError struct{}
 
+// Error reports a decode failure without including input bytes.
 func (inputError) Error() string { return "embargo: invalid input" }
 
 // UnmarshalJSON accepts only JSON strings; byte slices use base64 decoding.

@@ -26,7 +26,7 @@ type MerchantID struct {
 	terminalKeywords *keywordSet
 }
 
-// NewMerchantID creates a new merchant/terminal ID detect.
+// NewMerchantID selects merchant and terminal identifier grammars from nearby keywords.
 func NewMerchantID() *MerchantID {
 	return &MerchantID{merchantKeywords: merchantKeywords(), terminalKeywords: terminalKeywords()}
 }

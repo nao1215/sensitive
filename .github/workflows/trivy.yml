@@ -7,6 +7,8 @@ on:
     branches: [main]
   schedule:
     - cron: '23 3 * * *'
+env:
+  GOMAXPROCS: '4'
 permissions:
   contents: read
 jobs:

@@ -60,3 +60,21 @@ updates:
         applies-to: version-updates
         patterns:
           - "*"
+  - package-ecosystem: gomod
+    directory: "/tests/tools"
+    schedule:
+      interval: monthly
+    groups:
+      benchmark-tools:
+        applies-to: version-updates
+        patterns:
+          - "*"
+  - package-ecosystem: npm
+    directory: "/tests/models"
+    schedule:
+      interval: monthly
+    groups:
+      model-tools:
+        applies-to: version-updates
+        patterns:
+          - "*"

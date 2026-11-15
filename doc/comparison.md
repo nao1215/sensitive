@@ -34,31 +34,31 @@ The invalid-Luhn row is a deliberate negative example. embargo's default minimum
 <!-- comparison:start -->
 | Benchmark | ns/op | B/op | allocs/op |
 |---|---:|---:|---:|
-| Comparison/clean/embargo | 1,394.0 | 88 | 11 |
-| Comparison/clean/masq | 2,958.5 | 792 | 50 |
-| Comparison/flat/embargo | 3,088.0 | 624 | 21 |
-| Comparison/flat/masq | 6,229.5 | 672 | 32 |
-| Comparison/large50/embargo | 13,396.0 | 10,001 | 125 |
-| Comparison/large50/masq | 61,390.5 | 12,710 | 561 |
-| Comparison/map/embargo | 4,843.5 | 1,496 | 56 |
-| Comparison/map/masq | 10,865.0 | 1,744 | 63 |
-| Comparison/nested/embargo | 6,958.0 | 960 | 44 |
-| Comparison/nested/masq | 10,051.0 | 1,784 | 61 |
-| ComparisonFormatter/clean | 1,146.0 | 0 | 0 |
-| ComparisonFormatter/flat | 1,194.0 | 32 | 2 |
-| ComparisonFormatter/large50 | 7,232.5 | 7,873 | 10 |
-| ComparisonFormatter/map | 919.0 | 0 | 0 |
-| ComparisonFormatter/nested | 911.5 | 0 | 0 |
-| ComparisonStruct/embargo | 4,482.0 | 1,000 | 42 |
-| ComparisonStruct/go_mask | 1,096.0 | 328 | 7 |
-| ComparisonText/embargo | 3,981.5 | 1,640 | 42 |
-| ComparisonText/godlp | 60,843.0 | 11,714 | 59 |
-| StructuredPath/json_shape | 4,201.5 | 1,000 | 42 |
-| StructuredPath/old_string | 842.2 | 752 | 14 |
+| Comparison/clean/embargo | 1,780.0 | 88 | 11 |
+| Comparison/clean/masq | 5,526.5 | 792 | 50 |
+| Comparison/flat/embargo | 2,736.0 | 624 | 21 |
+| Comparison/flat/masq | 5,622.0 | 672 | 32 |
+| Comparison/large50/embargo | 25,511.0 | 10,001 | 125 |
+| Comparison/large50/masq | 113,209.0 | 12,710 | 561 |
+| Comparison/map/embargo | 7,232.5 | 1,496 | 56 |
+| Comparison/map/masq | 9,923.5 | 1,744 | 63 |
+| Comparison/nested/embargo | 6,300.5 | 960 | 44 |
+| Comparison/nested/masq | 8,978.5 | 1,784 | 61 |
+| ComparisonFormatter/clean | 986.1 | 0 | 0 |
+| ComparisonFormatter/flat | 1,220.5 | 32 | 2 |
+| ComparisonFormatter/large50 | 12,989.0 | 7,873 | 10 |
+| ComparisonFormatter/map | 805.8 | 0 | 0 |
+| ComparisonFormatter/nested | 904.4 | 0 | 0 |
+| ComparisonStruct/embargo | 3,860.0 | 1,000 | 42 |
+| ComparisonStruct/go_mask | 673.0 | 328 | 7 |
+| ComparisonText/embargo | 3,558.0 | 1,640 | 42 |
+| ComparisonText/godlp | 64,494.5 | 11,714 | 59 |
+| StructuredPath/json_shape | 2,568.0 | 1,000 | 42 |
+| StructuredPath/old_string | 1,461.0 | 752 | 14 |
 
 Measured 2026-11-15 with go version go1.26.11 linux/amd64, Linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S; GOMAXPROCS=1, ten 200 ms samples per case. Construction is outside the timed loop; JSON encoding and masking are included. Source and dependency fingerprints, CPU affinity and command are in [comparison.json](comparison.json).
 
-For these five configured events, embargo/masq median time ranges from 0.22 to 0.69; below 1 means less time for embargo. The structured JSON path uses 4.99 times the old string-only time. These ratios are regenerated from the same samples as the table.
+For these five configured events, embargo/masq median time ranges from 0.23 to 0.73; below 1 means less time for embargo. The structured JSON path uses 1.76 times the old string-only time. These ratios are regenerated from the same samples as the table.
 <!-- comparison:end -->
 
 The five head-to-head events are a flat email/card pair, a nested struct with opaque password and tagged recovery field, a map, a clean event, and 50 attributes (48 clean plus the flat pair). Both loggers use the same io.Discard sink. masq uses its documented WithAllowedType for time.Time and slog.Level, matching embargo's decision to preserve that metadata; this avoids charging masq for an unnecessary reflection traversal. Masker/scanner construction and regex compilation are excluded for both. The tests use prebuilt slog.Attr slices and LogAttrs to avoid attributing caller argument construction to either library.
@@ -77,13 +77,13 @@ Run `make comparison-doc` to rerun ten samples, benchstat and all generated comp
 
 | Library and version | Configuration and useful differences |
 |---|---|
-| [samber/slog-formatter v1.3.0](https://github.com/samber/slog-formatter/tree/v1.3.0) | PIIFormatter for email/card/user/data; preserves a four-character prefix of long strings, preserves ID fields in slog groups, and replaces Any objects with a marker rather than preserving their nested JSON fields. The same five events are measured. |
-| [bytedance/godlp v1.2.15](https://github.com/bytedance/godlp/tree/v1.2.15) | Embedded documented rules 1/2/6/16/20/35 for phone/email/card/IP; no rewritten detector regexes. It masks email/card partially, detects but deliberately does not mask IP under its default IP rule, and handles US/Chinese phones rather than embargo's Japanese phone family. The table shows both Japanese and US fixtures. The project has been archived since 2023. |
-| [showa-93/go-mask v0.6.2](https://github.com/showa-93/go-mask/tree/v0.6.2) | Documented fixed string masker plus field registration for Email/Password/Recovery/email/password/card; same event payloads and nested struct. It returns a Go value copy suitable for callers that need that type, rather than encoded JSON. |
-| [ggwhite/go-masker v3.3.0](https://github.com/ggwhite/go-masker/tree/v3.3.0) | Tag-based copies and field-specific partial masking for API display; also Sensitive[T] wrappers with Reveal and an optional full-redaction mode. Reviewed for scope; no performance ranking is claimed here. |
-| [cockroachdb/redact v1.1.8](https://github.com/cockroachdb/redact/tree/v1.1.8) | Safe/unsafe markers and redactable formatting let an application mark trusted context and later strip unsafe spans. embargo does not provide a provenance-preserving redactable string format. |
-| [zap v1.28.0](https://github.com/uber-go/zap/tree/v1.28.0) | ObjectMarshaler/LogObjectMarshaler and typed fields let application code select exactly what to emit. The embargo adapter also examines the final encoded bytes, but is not a substitute for domain-specific allowlisting. |
-| [OTel Collector redaction processor v0.165.1](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.165.1/processor/redactionprocessor) | Collector-side allowed/ignored keys, regex rules and hashing can enforce a centralized telemetry policy outside a Go process. embargo does not provide a Collector processor, telemetry allowlist or keyed pseudonymization. |
+| [samber/slog-formatter v1.3.0](https://github.com/samber/slog-formatter/tree/v1.3.0) | [Explanation 1](#table-explanation-1) |
+| [bytedance/godlp v1.2.15](https://github.com/bytedance/godlp/tree/v1.2.15) | [Explanation 2](#table-explanation-2) |
+| [showa-93/go-mask v0.6.2](https://github.com/showa-93/go-mask/tree/v0.6.2) | [Explanation 3](#table-explanation-3) |
+| [ggwhite/go-masker v3.3.0](https://github.com/ggwhite/go-masker/tree/v3.3.0) | [Explanation 4](#table-explanation-4) |
+| [cockroachdb/redact v1.1.8](https://github.com/cockroachdb/redact/tree/v1.1.8) | [Explanation 5](#table-explanation-5) |
+| [zap v1.28.0](https://github.com/uber-go/zap/tree/v1.28.0) | [Explanation 6](#table-explanation-6) |
+| [OTel Collector redaction processor v0.165.1](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.165.1/processor/redactionprocessor) | [Explanation 7](#table-explanation-7) |
 
 ## Remaining use cases
 
@@ -112,3 +112,33 @@ The runnable `scenarioService` handles HTTP requests using a database DSN, an op
 Run `make leak-scenarios` to regenerate this table. `TestLeakScenarios` checks it for staleness, and `TestLeakScenarioGuard` verifies that a real recorder rejects the planted logs and accepts the masked slog and zap variants. Caught means the entire planted value disappeared from the observed output; it does not imply arbitrary secrets are detected. SDK serialization and unrelated output paths require their own checks.
 
 The staleness check fingerprints embargo production code, comparison tests, the Go/toolchain directives and the compared libraries with their reached module dependencies. An unrelated SDK bump, such as Sentry, no longer invalidates timing evidence. `comparison.json` also keeps `full_source_sha256`, including complete tests/go.mod and tests/go.sum, so the original environment remains auditable. When a compared library changes, recheck its dependency closure with `go list -deps` and remeasure; changing its code paths still invalidates the comparison.
+
+## Table explanations
+
+<a id="table-explanation-1"></a>
+
+PIIFormatter for email/card/user/data; preserves a four-character prefix of long strings, preserves ID fields in slog groups, and replaces Any objects with a marker rather than preserving their nested JSON fields. The same five events are measured.
+
+<a id="table-explanation-2"></a>
+
+Embedded documented rules 1/2/6/16/20/35 for phone/email/card/IP; no rewritten detector regexes. It masks email/card partially, detects but deliberately does not mask IP under its default IP rule, and handles US/Chinese phones rather than embargo's Japanese phone family. The table shows both Japanese and US fixtures. The project has been archived since 2023.
+
+<a id="table-explanation-3"></a>
+
+Documented fixed string masker plus field registration for Email/Password/Recovery/email/password/card; same event payloads and nested struct. It returns a Go value copy suitable for callers that need that type, rather than encoded JSON.
+
+<a id="table-explanation-4"></a>
+
+Tag-based copies and field-specific partial masking for API display; also Sensitive[T] wrappers with Reveal and an optional full-redaction mode. Reviewed for scope; no performance ranking is claimed here.
+
+<a id="table-explanation-5"></a>
+
+Safe/unsafe markers and redactable formatting let an application mark trusted context and later strip unsafe spans. embargo does not provide a provenance-preserving redactable string format.
+
+<a id="table-explanation-6"></a>
+
+ObjectMarshaler/LogObjectMarshaler and typed fields let application code select exactly what to emit. The embargo adapter also examines the final encoded bytes, but is not a substitute for domain-specific allowlisting.
+
+<a id="table-explanation-7"></a>
+
+Collector-side allowed/ignored keys, regex rules and hashing can enforce a centralized telemetry policy outside a Go process. embargo does not provide a Collector processor, telemetry allowlist or keyed pseudonymization.

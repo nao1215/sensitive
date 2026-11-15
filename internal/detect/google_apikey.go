@@ -10,7 +10,7 @@ type GoogleAPIKeyDetail struct{}
 //  3. Enforce word boundaries and score a match as 0.9.
 type GoogleAPIKey struct{}
 
-// NewGoogleAPIKey creates a new Google API key detect.
+// NewGoogleAPIKey selects the AIza prefix and fixed API key length.
 func NewGoogleAPIKey() *GoogleAPIKey {
 	return &GoogleAPIKey{}
 }

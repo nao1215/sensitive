@@ -32,7 +32,7 @@ type BTCDetail struct {
 //  4. Score a valid match as 0.95.
 type BTC struct{}
 
-// NewBTC creates a new Bitcoin address detect.
+// NewBTC validates mainnet Base58Check, SegWit and Taproot address checksums.
 func NewBTC() *BTC {
 	return &BTC{}
 }

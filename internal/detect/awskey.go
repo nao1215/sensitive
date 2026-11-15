@@ -23,7 +23,7 @@ type AWSKeyDetail struct {
 //  3. Score a match as 0.95 and record [AWSKeyDetail.KeyType].
 type AWSKey struct{}
 
-// NewAWSKey creates a new AWS Access Key detect.
+// NewAWSKey recognizes long-term and temporary access-key ID prefixes.
 func NewAWSKey() *AWSKey {
 	return &AWSKey{}
 }

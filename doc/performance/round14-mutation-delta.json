@@ -1,0 +1,389 @@
+{
+  "base": "a7dd142532cdcddf8237ba0d099827d27154bf6e",
+  "head": "c7685adc40edbbad3ef87f28b813f68023db9fa8",
+  "matching_rule": "unchanged git source line, same column and mutator; no semantic-equivalence claim",
+  "transitions": {
+    "NOT COVERED -> NOT COVERED": 218,
+    "KILLED -> KILLED": 1855,
+    "LIVED -> LIVED": 244,
+    "TIMED OUT -> TIMED OUT": 37,
+    "TIMED OUT -> KILLED": 2,
+    "KILLED -> TIMED OUT": 1,
+    "LIVED -> KILLED": 4,
+    "NOT COVERED -> LIVED": 2
+  },
+  "changed_outcomes": [
+    {
+      "path": "internal/detect/btc.go",
+      "base_line": 54,
+      "head_line": 54,
+      "column": 30,
+      "kind": "INCREMENT_DECREMENT",
+      "before": "TIMED OUT",
+      "after": "KILLED"
+    },
+    {
+      "path": "internal/detect/github_token.go",
+      "base_line": 66,
+      "head_line": 66,
+      "column": 16,
+      "kind": "CONDITIONALS_NEGATION",
+      "before": "KILLED",
+      "after": "TIMED OUT"
+    },
+    {
+      "path": "internal/detect/google_apikey.go",
+      "base_line": 37,
+      "head_line": 37,
+      "column": 5,
+      "kind": "INCREMENT_DECREMENT",
+      "before": "TIMED OUT",
+      "after": "KILLED"
+    },
+    {
+      "path": "internal/detect/swiftbic.go",
+      "base_line": 117,
+      "head_line": 117,
+      "column": 15,
+      "kind": "CONDITIONALS_BOUNDARY",
+      "before": "LIVED",
+      "after": "KILLED"
+    },
+    {
+      "path": "json.go",
+      "base_line": 79,
+      "head_line": 79,
+      "column": 11,
+      "kind": "CONDITIONALS_BOUNDARY",
+      "before": "LIVED",
+      "after": "KILLED"
+    },
+    {
+      "path": "json.go",
+      "base_line": 198,
+      "head_line": 198,
+      "column": 32,
+      "kind": "CONDITIONALS_NEGATION",
+      "before": "LIVED",
+      "after": "KILLED"
+    },
+    {
+      "path": "json.go",
+      "base_line": 199,
+      "head_line": 199,
+      "column": 45,
+      "kind": "CONDITIONALS_NEGATION",
+      "before": "LIVED",
+      "after": "KILLED"
+    },
+    {
+      "path": "mask.go",
+      "base_line": 66,
+      "head_line": 66,
+      "column": 31,
+      "kind": "CONDITIONALS_BOUNDARY",
+      "before": "NOT COVERED",
+      "after": "LIVED"
+    },
+    {
+      "path": "mask.go",
+      "base_line": 66,
+      "head_line": 66,
+      "column": 31,
+      "kind": "CONDITIONALS_NEGATION",
+      "before": "NOT COVERED",
+      "after": "LIVED"
+    }
+  ],
+  "unmatched_before": [
+    {
+      "path": "embargotest/guard.go",
+      "line": 82,
+      "column": 100,
+      "kind": "ARITHMETIC_BASE",
+      "status": "KILLED"
+    },
+    {
+      "path": "embargotest/guard.go",
+      "line": 82,
+      "column": 77,
+      "kind": "ARITHMETIC_BASE",
+      "status": "KILLED"
+    },
+    {
+      "path": "embargotest/guard.go",
+      "line": 82,
+      "column": 68,
+      "kind": "ARITHMETIC_BASE",
+      "status": "KILLED"
+    },
+    {
+      "path": "embargotest/guard.go",
+      "line": 149,
+      "column": 16,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "KILLED"
+    },
+    {
+      "path": "internal/detect/ipaddr.go",
+      "line": 93,
+      "column": 8,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "KILLED"
+    },
+    {
+      "path": "internal/detect/ipaddr.go",
+      "line": 93,
+      "column": 27,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "KILLED"
+    },
+    {
+      "path": "internal/detect/ipaddr.go",
+      "line": 147,
+      "column": 8,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "KILLED"
+    },
+    {
+      "path": "internal/detect/ipaddr.go",
+      "line": 147,
+      "column": 27,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "KILLED"
+    }
+  ],
+  "unmatched_after": [
+    {
+      "path": "embargotest/guard.go",
+      "line": 81,
+      "column": 112,
+      "kind": "ARITHMETIC_BASE",
+      "status": "KILLED"
+    },
+    {
+      "path": "embargotest/guard.go",
+      "line": 81,
+      "column": 77,
+      "kind": "ARITHMETIC_BASE",
+      "status": "KILLED"
+    },
+    {
+      "path": "embargotest/guard.go",
+      "line": 81,
+      "column": 68,
+      "kind": "ARITHMETIC_BASE",
+      "status": "KILLED"
+    },
+    {
+      "path": "embargotest/guard.go",
+      "line": 140,
+      "column": 9,
+      "kind": "INCREMENT_DECREMENT",
+      "status": "KILLED"
+    },
+    {
+      "path": "internal/detect/ipaddr.go",
+      "line": 93,
+      "column": 8,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "KILLED"
+    },
+    {
+      "path": "internal/detect/ipaddr.go",
+      "line": 93,
+      "column": 27,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "KILLED"
+    },
+    {
+      "path": "internal/detect/ipaddr.go",
+      "line": 147,
+      "column": 8,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "KILLED"
+    },
+    {
+      "path": "internal/detect/ipaddr.go",
+      "line": 147,
+      "column": 27,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "KILLED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 24,
+      "column": 23,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 31,
+      "column": 18,
+      "kind": "CONDITIONALS_BOUNDARY",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 31,
+      "column": 18,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 37,
+      "column": 14,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 41,
+      "column": 10,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 45,
+      "column": 51,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 45,
+      "column": 74,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 45,
+      "column": 95,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 57,
+      "column": 9,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 66,
+      "column": 9,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 72,
+      "column": 10,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 97,
+      "column": 12,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 101,
+      "column": 20,
+      "kind": "CONDITIONALS_BOUNDARY",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 101,
+      "column": 20,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 101,
+      "column": 52,
+      "kind": "CONDITIONALS_BOUNDARY",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 101,
+      "column": 52,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 102,
+      "column": 19,
+      "kind": "ARITHMETIC_BASE",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 107,
+      "column": 22,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 111,
+      "column": 10,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 112,
+      "column": 19,
+      "kind": "ARITHMETIC_BASE",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 112,
+      "column": 102,
+      "kind": "ARITHMETIC_BASE",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 126,
+      "column": 11,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 137,
+      "column": 12,
+      "kind": "CONDITIONALS_NEGATION",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 159,
+      "column": 24,
+      "kind": "ARITHMETIC_BASE",
+      "status": "NOT COVERED"
+    },
+    {
+      "path": "tests/cmd/prose/main.go",
+      "line": 159,
+      "column": 20,
+      "kind": "ARITHMETIC_BASE",
+      "status": "NOT COVERED"
+    }
+  ]
+}

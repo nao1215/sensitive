@@ -21,17 +21,17 @@ These are equivalence arguments for the public Scanner outputs, not exclusions f
 
 | Location / mutation family | Reason |
 |---|---|
-| `scanner.go`, building dispatch for one detector | The single-detector path uses its substring hint cache regardless of the dispatch index; building the unused index only changes construction cost. |
-| `scanner_dispatch.go`, all-detectors early-exit mask arithmetic | Once every selected bit is set, scanning more input cannot clear a bit; changing the early-exit condition only changes work performed. |
-| `scanner_dispatch.go`, numeric hint upper bound at 9 | Only hintless My Number and ABA use these synthetic hints. An all-9 My Number fails its checksum, and an all-9 ABA fails its district check. Every accepted ASCII candidate contains another digit; full-width inputs use their own hint. |
+| `scanner.go`, building dispatch for one detector | [Explanation 1](#table-explanation-1) |
+| `scanner_dispatch.go`, all-detectors early-exit mask arithmetic | [Explanation 2](#table-explanation-2) |
+| `scanner_dispatch.go`, numeric hint upper bound at 9 | [Explanation 3](#table-explanation-3) |
 | `internal/detect/label.go`, empty-prefix loop boundary | One extra iteration obtains an empty word, which matches no label and returns the same confidence. |
-| `internal/detect/pan.go`, Luhn `n > 9` boundary | The value has just been doubled and is even, so it cannot equal 9. |
+| `internal/detect/pan.go`, Luhn `n > 9` boundary | The value has been doubled and is even, so it cannot equal 9. |
 | `internal/detect/regex.go`, clamp boundaries at 0 and 1 | Clamping either endpoint returns the same endpoint. |
-| `internal/detect/fullwidth.go`, fallback end calculation and sentinel boundary | Valid normalized spans always have an end sentinel, which overwrites the fallback end calculation; the end index never equals the map length. |
+| `internal/detect/fullwidth.go`, fallback end calculation and sentinel boundary | [Explanation 4](#table-explanation-4) |
 | `internal/detect/fullwidth.go`, ASCII fast-path boundary at 0x80 | The invalid UTF-8 byte 0x80 is preserved by normalization; taking the other path changes allocation, not findings. |
 | `internal/detect/btc.go`, HRP expansion capacity | The scanner supplies the fixed HRP `bc`; changing capacity does not change appended values. |
-| `internal/detect/eth.go`, skipping digits in EIP-55 case checks | The following upper/lowercase tests cannot reject a decimal digit, so executing them instead of skipping produces the same answer. |
-| `internal/detect/eth.go`, full-block Keccak loop and remainder | EIP-55 passes exactly 40 bytes, below the 136-byte block size, so the full-block loop is not reached and its offset stays zero. |
+| `internal/detect/eth.go`, skipping digits in EIP-55 case checks | [Explanation 5](#table-explanation-5) |
+| `internal/detect/eth.go`, full-block Keccak loop and remainder | [Explanation 6](#table-explanation-6) |
 
 Other survivors include defensive bounds already constrained by callers, cursor optimizations that need more adversarial sequencing, and internal details that the public Finding does not expose. Their raw locations remain visible; this review does not claim that every lived mutant is equivalent or that mutation testing proves detector accuracy.
 
@@ -57,7 +57,7 @@ The final focused follow-up, using the a7dd142 production code plus the trailing
 
 | Remaining changed-line survivor | Review |
 |---|---|
-| `numericLogFragment`: `end+2` becomes `end-2` | The valid candidate ends in digits; the extra iterations visit only those digits, the already-checked hyphen and first hostname letter. The first later dot and the stopping delimiter are unchanged. |
+| `numericLogFragment`: `end+2` becomes `end-2` | [Explanation 7](#table-explanation-7) |
 | `objectReference`: `start > 0` becomes `start >= 0` | The sole caller supplies a value after a parsed key and delimiter, so start cannot be zero. |
 | `objectReference`: `split <= 0` becomes `split < 0` | An empty class name still fails the uppercase-letter requirement. |
 | `swiftSlashList`: `codeEnd(...) > 0` becomes `>= 0` | codeEnd yields -1 or the end of a valid code of at least eight bytes; it cannot yield zero. |
@@ -65,3 +65,60 @@ The final focused follow-up, using the a7dd142 production code plus the trailing
 The 37 uncovered mutations comprise 34 in the cached-log command and three in ABA log-context operations. The combined root statement profile exercises those ABA operations through Scanner tests, but gremlins still marks them uncovered in this run; they are retained in the denominator. These arguments cover the four listed survivors only, not every survivor in the full mutation log.
 
 [Support maintenance](https://github.com/sponsors/nao1215).
+
+## Table explanations
+
+<a id="table-explanation-1"></a>
+
+The single-detector path uses its substring hint cache regardless of the dispatch index; building the unused index only changes construction cost.
+
+<a id="table-explanation-2"></a>
+
+Once every selected bit is set, scanning more input cannot clear a bit; changing the early-exit condition only changes work performed.
+
+<a id="table-explanation-3"></a>
+
+Only hintless My Number and ABA use these synthetic hints. An all-9 My Number fails its checksum, and an all-9 ABA fails its district check. Every accepted ASCII candidate contains another digit; full-width inputs use their own hint.
+
+<a id="table-explanation-4"></a>
+
+Valid normalized spans always have an end sentinel, which overwrites the fallback end calculation; the end index never equals the map length.
+
+<a id="table-explanation-5"></a>
+
+The following upper/lowercase tests cannot reject a decimal digit, so executing them instead of skipping produces the same answer.
+
+<a id="table-explanation-6"></a>
+
+EIP-55 passes exactly 40 bytes, below the 136-byte block size, so the full-block loop is not reached and its offset stays zero.
+
+<a id="table-explanation-7"></a>
+
+The valid candidate ends in digits; the extra iterations visit only those digits, the already-checked hyphen and first hostname letter. The first later dot and the stopping delimiter are unchanged.
+
+## Round 14 technique attribution
+
+The fixed full-run source is c7685ad, using gremlins v0.6.0, GOMAXPROCS=4, two workers and timeout coefficient 10. No Lean build, model checker, fuzz search, race run or benchmark shares that local run. The completed run took 39 minutes 35 seconds. The independent replay below does not substitute for it.
+
+| Snapshot | Killed | Lived | Uncovered | Timed out | Efficacy | Mutator coverage |
+|---|---:|---:|---:|---:|---:|---:|
+| Round 13, a7dd142 | 1864 | 248 | 220 | 39 | 88.26% | 90.57% |
+| Round 14 full, c7685ad | 1869 | 246 | 243 | 38 | 88.37% | 89.69% |
+
+The [complete log](performance/round14-mutation.txt) includes every outcome. The [source-line comparison](performance/round14-mutation-delta.json), generated by [mutation_delta.py](../scripts/mutation_delta.py), matches unchanged lines, columns and mutator names across snapshots. Four old LIVED sites became KILLED: json.go:79, :198 and :199 through depth/Unicode handling, and swiftbic.go:117 through the trailing-context assertion already added at the end of round 13. The latter is not credited to a new round-14 technique. Two old timeouts became kills and one kill became a timeout; these timing-sensitive transitions are reported without an assertion-strength claim.
+
+Two previously uncovered mask.go:66 comparison mutations are now exercised but survive. At that point kind and confidence are equal; choosing a different best finding changes neither the merged range nor the callback kind, so these tie-coordinate variants have the same public output. They remain in the reported denominator. The 25 newly uncovered mutations are in the tests-module prose extractor, which has its own unit tests but is outside the root gremlins run. Eight old runtime sites and eight replacement sites do not match because Guard and IP source changed; all were killed. There are no new LIVED sites among those unmatched expressions. The score rises by 0.11 points while mutation coverage falls by 0.88 points; neither change alone measures all new techniques.
+
+The [attribution runner](../scripts/mutation_attribution.py) verifies seven identities against the retained round-13 LIVED log, creates a temporary source copy, checks each unmutated technique group, then changes one expression at a time. Compiler failures are infrastructure failures, not kills. This includes tests-module and adapter techniques that the default gremlins root run does not execute.
+
+| Round-13 survivor | New technique that detects it | Interpretation |
+|---|---|---|
+| json.go:79, depth greater-than becomes greater-or-equal | Adversarial depth boundary | Depth 64 remains valid |
+| json.go:68, whitespace cursor comparison negated | Metamorphic compact/pretty JSON | Equivalent documents must mask equally |
+| json.go:121, scalar true-prefix comparison negated | Logger snapshot semantic assertion | Numeric sensitive values still require scanning |
+| json.go:198, escaped-string test negated | Adversarial JSON Unicode escape | Decoded secrets must be masked |
+| json.go:199, decoder-error comparison negated | Adversarial and structured-fuzz seeds | A valid escaped value must not produce an error |
+| mask.go:28, empty range accepted | Bitmap oracle boundary follow-up | Isolate the zero-width range from other invalid ranges |
+| embargotest/recorder.go:233, empty sink count admitted | None in these groups | Check still fails; an extra diagnostic reason is not asserted |
+
+The [focused outcomes](performance/round14-attribution.json) record six kills among the seven selected old survivors across the technique groups. The initial bitmap generator missed the empty-range mutation because another invalid range in the same case could trigger full redaction first. A follow-up supplies one zero-width range at every position independently and requires that the callback is never invoked. Its result is reported separately from the fixed full run; the published full-run percentage remains tied to c7685ad and does not incorporate that later boundary assertion. The recorder survivor is not claimed equivalent in diagnostic text. Lean, Quint and external-oracle groups did not kill these selected expressions; their different bug classes do not imply a higher score for this sample.

@@ -194,21 +194,32 @@ Held-out synthetic set, default minimum confidence 0. [Generation, test cases an
 <!-- real-logs-summary:start -->
 ![Estimated false positives on public logs](doc/images/real-logs.svg)
 
-Round 13: 8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates; contact and endpoint references count as sensitive data, and no recall claim is made.
+Round 14: 8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.
 <!-- real-logs-summary:end -->
 
 ## Testing
 
+<!-- techniques:start -->
 | Technique | Tests |
 |---|---|
-| Examples and unit tests | [Examples](example_test.go), [masking](tests/mask_test.go) |
-| Generated properties | [Properties](tests/properties_test.go), [Bitcoin](tests/bitcoin_test.go) |
-| Fuzzing | [Scanner](fuzz_test.go), [recorder](embargotest/fuzz_test.go) |
-| Mutation | [gremlins command](Makefile) |
-| Real output tests | [Loggers](tests/compatibility_integration_test.go), [HTTP](tests/http_integration_test.go) |
+| Examples and unit tests | [Examples and unit tests](doc/testing.md) |
+| Generated properties | [Generated properties](doc/testing.md) |
+| Metamorphic relations | [Metamorphic relations](doc/testing.md) |
+| Quint and model replay | [Quint and model replay](doc/testing.md) |
+| Lean reference proofs | [Lean reference proofs](doc/testing.md) |
+| Intentional snapshots | [Intentional snapshots](doc/testing.md) |
+| Independent differential oracles | [Independent differential oracles](doc/testing.md) |
+| Structure-aware fuzzing | [Structure-aware fuzzing](doc/testing.md) |
+| Mutation testing | [Mutation testing](doc/testing.md) |
+| Real logger and SDK output | [Real logger and SDK output](doc/testing.md) |
+| Race and lifecycle tests | [Race and lifecycle tests](doc/testing.md) |
+| Paired CI benchmarks | [Paired CI benchmarks](doc/testing.md) |
+| Prose and policy checks | [Prose and policy checks](doc/testing.md) |
+| Adversarial budgets | [Adversarial budgets](doc/testing.md) |
+<!-- techniques:end -->
 
 <!-- testing-metrics:start -->
-Coverage 97.1% · mutation score 88.26% · 9 fuzz targets, 2388415 executions.
+Coverage 97.1% · mutation score 88.37% · 13 fuzz targets, 3354049 executions.
 <!-- testing-metrics:end -->
 
 [Commands, measurement scope and conditions](doc/testing.md).

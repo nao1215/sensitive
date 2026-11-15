@@ -18,9 +18,9 @@ Use only the module for your logger. The [zap](../adapters/zap/example_test.go),
 
 | Package | Public API | Why this boundary |
 |---|---|---|
-| embargozap | NewWriteSyncer(next zapcore.WriteSyncer, scanner *embargo.Scanner) zapcore.WriteSyncer | Fits zapcore.NewCore with a JSON encoder and inspects the actual representation of every field type; Sync validates buffered output and delegates to the sink. |
-| embargozerolog | NewWriter(next io.Writer, scanner *embargo.Scanner) io.WriteCloser | A Hook cannot remove fields already encoded in an Event. The writer buffers split JSON records and Close rejects an incomplete record without closing the caller-owned sink. |
-| embargologrus | NewFormatter(next logrus.Formatter, scanner *embargo.Scanner) logrus.Formatter | Wraps JSONFormatter after it formats the Entry, without modifying caller-owned fields or trusting a second serialization of an arbitrary value. |
+| embargozap | NewWriteSyncer(next zapcore.WriteSyncer, scanner *embargo.Scanner) zapcore.WriteSyncer | [Explanation 1](#table-explanation-1) |
+| embargozerolog | NewWriter(next io.Writer, scanner *embargo.Scanner) io.WriteCloser | [Explanation 2](#table-explanation-2) |
+| embargologrus | NewFormatter(next logrus.Formatter, scanner *embargo.Scanner) logrus.Formatter | [Explanation 3](#table-explanation-3) |
 
 All constructors require non-nil dependencies, including typed-nil checks, and panic with a fixed message on invalid configuration. Scanner policy is explicit. The adapters add no public option types or configuration objects.
 
@@ -46,3 +46,17 @@ Each adapter is its own module with its own tag (adapters/zap/vX.Y.Z, adapters/z
 ## Shared JSON policy
 
 The adapters use the same `Scanner.MaskJSON` engine as structured slog Any values. It masks decoded string leaves and object keys, preserves clean numeric lexemes without float64 conversion, and replaces the entire value of a sensitive key. `WithSensitiveKeys` therefore covers third-party structs, maps and HTTP headers after their logger encodes them, including custom marshaler output. See [the logging model and limits](logging.md) and [tag migration](values.md). Embargo's root module still has zero requirements; logger SDKs and comparison libraries stay in optional/test modules.
+
+## Table explanations
+
+<a id="table-explanation-1"></a>
+
+Fits zapcore.NewCore with a JSON encoder and inspects the actual representation of every field type; Sync validates buffered output and delegates to the sink.
+
+<a id="table-explanation-2"></a>
+
+A Hook cannot remove fields already encoded in an Event. The writer buffers split JSON records and Close rejects an incomplete record without closing the caller-owned sink.
+
+<a id="table-explanation-3"></a>
+
+Wraps JSONFormatter after it formats the Entry, without modifying caller-owned fields or trusting a second serialization of an arbitrary value.
