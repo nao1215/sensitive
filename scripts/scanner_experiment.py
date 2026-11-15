@@ -43,9 +43,9 @@ def measure(base, cpu):
             for kind in order if pair%2 == 0 else reversed(order):
                 outputs['narrowing'].append(run(['taskset','-c',str(cpu),str(tmp/'head.test'),'-test.run=^$', '-test.bench=^BenchmarkNarrowing/'+kind+'/(clean|dirty)$', '-test.benchtime=200ms','-test.count=1','-test.benchmem']))
         for name,chunks in outputs.items():
-            (OUT/('round13-'+name+'-bench.txt')).write_text(''.join(chunks))
+            (OUT/('round13-'+name+'-bench.txt')).write_text(''.join(chunks),encoding='utf-8')
         metadata = {'date':datetime.datetime.now(datetime.timezone.utc).isoformat(), 'go':run(['go','version']).strip(), 'baseline':run(['git','rev-parse','HEAD'],baseline).strip(), 'head_base':run(['git','rev-parse','HEAD']).strip(), 'affinity':[cpu], 'samples':10, 'pair_order':'base/head/candidate then candidate/head/base; narrowing kind order reversed each pair', 'background_load':'operator must record concurrent workload', 'commands':commands, 'binary_sha256':{name:hashlib.sha256((tmp/(name+'.test')).read_bytes()).hexdigest() for name in ('base','head')}}
-    (OUT/'round13-bench-metadata.json').write_text(json.dumps(metadata,indent=2)+'\n')
+    (OUT/'round13-bench-metadata.json').write_text(json.dumps(metadata,indent=2)+'\n',encoding='utf-8')
     benchstats()
 
 
@@ -54,14 +54,14 @@ def benchstats():
         tmp = pathlib.Path(tmp)
         for name in ('base','head','candidate'):
             shutil.copy2(OUT/('round13-'+name+'-bench.txt'),tmp/(name+'.txt'))
-        raw = (OUT/'round13-narrowing-bench.txt').read_text()
+        raw = (OUT/'round13-narrowing-bench.txt').read_text(encoding="utf-8")
         for kind in ('all','kinds1','kinds3','kinds8'):
             lines = [line.replace('BenchmarkNarrowing/'+kind,'BenchmarkNarrowing') for line in raw.splitlines() if not line.startswith('Benchmark') or line.startswith('BenchmarkNarrowing/'+kind+'/')]
-            (tmp/(kind+'.txt')).write_text('\n'.join(lines)+'\n')
+            (tmp/(kind+'.txt')).write_text('\n'.join(lines)+'\n',encoding='utf-8')
         pairs = [('before-after','base','head'),('candidate','head','candidate')]+[('narrow-'+kind,'all',kind) for kind in ('kinds1','kinds3','kinds8')]
         for name,left,right in pairs:
             stats = subprocess.check_output(['benchstat',left+'.txt',right+'.txt'],cwd=tmp,text=True)
-            (OUT/('round13-'+name+'-benchstat.txt')).write_text(stats)
+            (OUT/('round13-'+name+'-benchstat.txt')).write_text(stats,encoding="utf-8")
 
 
 def medians(raw):
@@ -75,20 +75,20 @@ def medians(raw):
 
 
 def render(check):
-    raw = (OUT/'round13-narrowing-bench.txt').read_text()
+    raw = (OUT/'round13-narrowing-bench.txt').read_text(encoding="utf-8")
     values = medians(raw)
     table = '| Selection | Clean ns/op | Dirty ns/op | Clean / dirty speedup over WithAll |\n|---|---:|---:|---|\n'
     for kind in ('all','kinds1','kinds3','kinds8'):
         clean,dirty = values[kind,'clean'],values[kind,'dirty']
         table += f"| {kind} | {clean:,.3f} | {dirty:,.1f} | {values['all','clean']/clean:.2f}× / {values['all','dirty']/dirty:.2f}× |\n"
     page = ROOT/'doc/benchmarks.md'
-    original = page.read_text()
+    original = page.read_text(encoding="utf-8")
     pattern = r'(?s)(<!-- narrowing:start -->\n).*?(<!-- narrowing:end -->)'
     if len(re.findall(pattern,original)) != 1:
         raise ValueError('expected one narrowing block')
     updated = re.sub(pattern,lambda m:m[1]+table+m[2],original)
     readme = ROOT/'README.md'
-    existing = readme.read_text()
+    existing = readme.read_text(encoding="utf-8")
     synopsis = 'Round 13 scanner medians (ten interleaved samples):\n\n'+table+'\n[kinds1/3/8 definitions, input sizes and uncertainty](doc/benchmarks.md#choose-the-kinds-the-application-needs). Narrower selection avoids irrelevant detections and gives up their recall.\n'
     readme_pattern = r'(?s)(<!-- narrowing-summary:start -->\n).*?(<!-- narrowing-summary:end -->)'
     if len(re.findall(readme_pattern,existing)) != 1:
@@ -100,8 +100,8 @@ def render(check):
         if original != updated:
             raise SystemExit('stale narrowing table: run python3 scripts/scanner_experiment.py')
     else:
-        page.write_text(updated)
-        readme.write_text(changed)
+        page.write_text(updated,encoding="utf-8")
+        readme.write_text(changed,encoding="utf-8")
 
 
 def main():

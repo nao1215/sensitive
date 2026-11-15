@@ -33,6 +33,13 @@ class RealLogEvidenceTests(unittest.TestCase):
         self.assertEqual(real_logs.estimate(rows, ['a','b'], 'all'), (120,40.0,8,4))
         self.assertEqual(real_logs.estimate(rows, ['a'], 'all'), (100,25.0,4,1))
 
+    def test_narrowing_check_uses_utf8_on_windows(self):
+        original = pathlib.Path.read_text
+        def legacy_read(path, encoding=None, **kwargs):
+            return original(path, encoding=encoding or 'cp1252', **kwargs)
+        with patch.object(pathlib.Path, 'read_text', legacy_read):
+            scanner_experiment.render(check=True)
+
     def test_benchmark_parser_rejects_missing_configuration(self):
         with self.assertRaisesRegex(ValueError,'ten samples'):
             scanner_experiment.medians('BenchmarkNarrowing/all/clean 100 40 ns/op\n'*10)

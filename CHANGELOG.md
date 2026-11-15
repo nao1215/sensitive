@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Implementation: [9b1baf4](https://github.com/nao1215/embargo/commit/9b1baf479421d5d01736c8aeec7cf331e03579a1).
+Implementation: [PR #81](https://github.com/nao1215/embargo/pull/81), [9b1baf4](https://github.com/nao1215/embargo/commit/9b1baf479421d5d01736c8aeec7cf331e03579a1).
 
 - Reject entropy candidates in paths and dotted names, numeric log fragments, operational counters and Java object references under unquoted token keys. Make the Sentry fixture use a fixed long source path. Publish licensed, checksum-pinned public-log samples, manual classification rules and FP/GB estimates without redistributing the datasets.
 - Make unlabelled entropy detection opt-in through WithAll or WithKinds. Keep its confidence at 0.3 and the scanner threshold at zero; describe the recall trade-off in the migration notes. Retain all twelve consumer-facing identifiers from rounds 11 and 12 after reviewing their callers.
