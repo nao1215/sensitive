@@ -144,8 +144,10 @@ func abaFederalReserveDistrict(digits []byte) string {
 	case prefix >= 1 && prefix <= 12:
 		return abaDistrictName(prefix)
 	case prefix >= 21 && prefix <= 32:
+		//nolint:mnd // Thrift institution prefixes are district plus 20.
 		return abaDistrictName(prefix - 20)
 	case prefix >= 61 && prefix <= 72:
+		//nolint:mnd // Electronic transaction prefixes are district plus 60.
 		return abaDistrictName(prefix - 60)
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 	case prefix == 80:
