@@ -206,3 +206,32 @@ func TestAdjacentCandidatesAndChecksumRemainder(t *testing.T) {
 		}
 	}
 }
+
+func TestContextCanFollowSensitiveValue(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		d    Detector
+		text string
+		end  int
+	}{
+		{NewCVV(), "123 CVV", 3},
+		{NewBankAccount(), "12345678 bank account", 8},
+		{NewACHTrace(), "021000021123456 ACH trace", 15},
+		{NewMerchantID(), "ABCDE12345FGHI6 merchant ID", 15},
+	} {
+		got := tc.d.Scan([]byte(tc.text))
+		if len(got) != 1 || got[0].Start != 0 || got[0].End != tc.end {
+			t.Fatal(tc.d.Name(), got)
+		}
+	}
+}
+
+func TestBusinessLabelsAtFieldBoundaries(t *testing.T) {
+	t.Parallel()
+	for _, prefix := range []string{"[Order ID: ", ";invoice=", "\ntracking: ", "{\"serial\":\""} {
+		got := NewPAN().Scan([]byte(prefix + "4242424242424242"))
+		if len(got) != 1 || got[0].Confidence != .4 {
+			t.Fatal(prefix, got)
+		}
+	}
+}
