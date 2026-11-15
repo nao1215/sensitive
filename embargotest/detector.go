@@ -49,9 +49,10 @@ func (o valuesOption) apply(r *Recorder) bool {
 }
 
 func (r *Recorder) scan(data []byte) (found, failed bool) {
+	failed = true
 	defer func() {
-		if recover() != nil {
-			failed = true
+		if failed {
+			_ = recover() //nolint:errcheck // Discard panic values, including panic(nil) compatibility mode.
 		}
 	}()
 	for _, f := range r.scanner.Scan(data) {
