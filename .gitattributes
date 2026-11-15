@@ -13,3 +13,6 @@ testdata/mixed.golden text eol=lf
 
 # Public-log evidence fingerprints use committed JSON bytes.
 doc/real-logs-*.json text eol=lf
+
+# Preserve Go benchmark CPU headers exactly, including padded processor names.
+doc/performance/*-bench*.txt whitespace=-blank-at-eol
