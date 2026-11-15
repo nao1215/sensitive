@@ -1,7 +1,5 @@
 # embargo
 
-embargo detects and masks personal data, payment data and secrets in text, logs and test output: a cross-platform Go library with zero dependencies.
-
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
@@ -12,6 +10,8 @@ embargo detects and masks personal data, payment data and secrets in text, logs 
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nao1215/embargo/badge)](https://scorecard.dev/viewer/?uri=github.com/nao1215/embargo)
 
 <img src="doc/images/logo-small.png" alt="embargo" width="320">
+
+embargo detects and masks personal data, payment data and secrets in text, logs and test output: a cross-platform Go library with zero dependencies.
 
 - Mask card numbers and emails before logs leave your service.
 - Check in tests that an HTTP handler or child process never writes a secret.
