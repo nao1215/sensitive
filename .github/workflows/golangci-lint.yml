@@ -17,7 +17,12 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+
   golangci-lint:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     name: golangci-lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -51,6 +56,8 @@ jobs:
           python3 scripts/check_lint_contracts.py
 
   property_lint:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     name: golangci-lint (tests module)
     runs-on: ubuntu-latest
     timeout-minutes: 10
