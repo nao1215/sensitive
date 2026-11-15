@@ -49,6 +49,7 @@ func (d *PaymentToken) Hints() [][]byte {
 // Scan returns matches in data using the rules documented on [PaymentToken].
 func (d *PaymentToken) Scan(data []byte) []Finding {
 	var findings []Finding
+	patterns := tokenPatterns()
 
 	for i := 0; i < len(data); i++ {
 		// Word boundary: preceding character must not be alphanumeric or underscore.
@@ -56,7 +57,7 @@ func (d *PaymentToken) Scan(data []byte) []Finding {
 			continue
 		}
 
-		for _, pattern := range tokenPatterns() {
+		for _, pattern := range patterns {
 			prefix := pattern.prefix
 			if i+len(prefix) > len(data) {
 				continue
