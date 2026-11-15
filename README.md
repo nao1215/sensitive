@@ -313,6 +313,9 @@ Bug reports, feature requests, and pull requests are welcome through [GitHub Iss
 
 [MIT License](LICENSE).
 
+The [Go gopher](https://go.dev/blog/gopher) was designed by [Renee French](https://reneefrench.blogspot.com/) and is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
+
 ## Contributors
 
 Thanks to our contributors:
