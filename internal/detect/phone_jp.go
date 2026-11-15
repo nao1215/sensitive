@@ -65,7 +65,7 @@ func jpPhoneRules() []jpPhoneRule {
 // An attached business identifier label lowers confidence to 0.4 without dropping the candidate.
 type JPPhone struct{}
 
-// NewJPPhone creates a new Japanese phone number detect.
+// NewJPPhone combines supported Japanese prefixes with ten- or eleven-digit lengths.
 func NewJPPhone() *JPPhone {
 	return &JPPhone{}
 }

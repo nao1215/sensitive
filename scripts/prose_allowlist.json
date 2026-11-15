@@ -1,0 +1,4 @@
+{
+  "internal/detect:repeated-sentence:0cb8845ec62cf0e3": "Hintless detectors share this exact reason: there is no exhaustive selective substring. Varying it would imply a different prefilter contract.",
+  "CONTRIBUTING.md:filler:3460db0c296ea814": "The contributing guide must name the exact forbidden words so authors can fix violations."
+}

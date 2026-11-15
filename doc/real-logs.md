@@ -14,6 +14,8 @@
 | Spark | held | official 2,000-line sample | 196,268 | 2,000 | [LogHub research/academic use](https://github.com/logpai/loghub/blob/dd61d0952749ee7963bde24220d1be5ede023033/LICENSE); [provenance](https://github.com/logpai/loghub/blob/dd61d0952749ee7963bde24220d1be5ede023033/Spark/README.md) |
 | Zookeeper | held | complete | 10,426,438 | 74,380 | [LogHub research/academic use](https://github.com/logpai/loghub/blob/dd61d0952749ee7963bde24220d1be5ede023033/LICENSE); [provenance](https://github.com/logpai/loghub/blob/dd61d0952749ee7963bde24220d1be5ede023033/Zookeeper/README.md) |
 
+Before retains the round-13 baseline; after is the round-14 policy. The held split has now been seen and serves as regression data, not an independent evaluation of this change.
+
 Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), not counts of affected lines. IP addresses and published user/contact identities are sensitive references under this evaluation policy; the unspecified listener address 0.0.0.0 is an FP. Checksums do not establish a real account. A hostname fragment is an FP for MyNumber even if the hostname itself identifies a machine.
 
 | Detector | Development before / GB | Development after / GB | Held before / GB | Held after / GB |
@@ -32,7 +34,7 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 | google_api_key | 0.0 | 0.0 | 0.0 | 0.0 |
 | high_entropy | 31,294.7 | 0.0 | 248.9 | 0.0 |
 | iban | 0.0 | 0.0 | 0.0 | 0.0 |
-| ipaddr | 0.0 | 0.0 | 144,062.1 | 144,062.1 |
+| ipaddr | 0.0 | 0.0 | 144,062.1 | 0.0 |
 | jwt | 0.0 | 0.0 | 0.0 | 0.0 |
 | merchant_id | 0.0 | 0.0 | 0.0 | 0.0 |
 | mynumber | 8,072.0 | 0.0 | 912.8 | 0.0 |
@@ -47,11 +49,11 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 
 | Configuration | Development before / GB | Development after / GB | Held before / GB | Held after / GB |
 |---|---:|---:|---:|---:|
-| WithAll | 827,818.9 | 124.2 | 145,650.6 | 144,465.2 |
-| Default slog handler | 827,818.9 | 124.2 | 145,650.6 | 144,465.2 |
+| WithAll | 827,818.9 | 124.2 | 145,650.6 | 403.0 |
+| Default slog handler | 827,818.9 | 124.2 | 145,650.6 | 403.0 |
 | kinds1 | 0.0 | 0.0 | 0.0 | 0.0 |
 | kinds3 | 44,955.1 | 0.0 | 0.0 | 0.0 |
-| kinds8 | 47,563.0 | 0.0 | 144,062.1 | 144,062.1 |
+| kinds8 | 47,563.0 | 0.0 | 144,062.1 | 0.0 |
 
 The handler receives each raw line as its message and no attributes; its encoded message is checked against the scanner mask after JSON UTF-8 replacement. These numbers do not measure application-specific field-key policies. All 26 detectors also run separately, with exact findings compared to WithAll.
 

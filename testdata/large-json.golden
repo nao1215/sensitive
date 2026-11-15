@@ -1,0 +1,233 @@
+{
+  "header": {
+    "sequence": 9007199254740993,
+    "ok": true
+  },
+  "rows": [
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    },
+    {
+      "email": "[REDACTED]",
+      "password": "[REDACTED]",
+      "clean": "public",
+      "dup": 1,
+      "dup": 2
+    }
+  ],
+  "tail": null
+}

@@ -20,6 +20,8 @@ on:
   schedule:
     - cron: "0 4 * * *"
 
+env:
+  GOMAXPROCS: '4'
 permissions:
   contents: read
 

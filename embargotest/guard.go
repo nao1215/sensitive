@@ -7,8 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"slices"
-	"strings"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -25,8 +24,8 @@ import (
 // Options use the Recorder policy, but Guard needs no expectations. The default
 // timeout is 5 minutes and total retained output is 1 MiB. Overflow, timeout,
 // scanner failure or any leak fails the package. Safe output is replayed only
-// after checking. Reports name the stream and tests observed in that process;
-// raw output from parallel tests cannot be attributed to one test reliably.
+// after checking. Reports name the stream and count test-start frames in that process;
+// frames are untrusted and cannot attribute raw output to a test reliably.
 // Independently redirected subprocess output and output before TestMain are
 // outside this boundary. Fixtures must use the configured public fake canary.
 // Explicit -test.v=false suppresses passing t.Log output; test2json framing is
@@ -74,12 +73,12 @@ func guardCommand(ctx context.Context, cmd *exec.Cmd, policy *Recorder, stdout, 
 	if runErr != nil {
 		code = 1
 	}
-	tests := guardTests(capture.data[0], policy)
+	tests := guardTests(capture.data[0])
 	for i, stream := range []string{"stdout", "stderr"} {
 		data := capture.data[i]
 		found, failed := policy.scan(data)
 		if failed || found || containsCanary(data, policy.needles) {
-			guardMessage("embargotest: package leak or scanner failure on " + stream + "; observed tests: " + tests)
+			guardMessage("embargotest: package leak or scanner failure on " + stream + "; observed test-start frames: " + tests)
 			code = 1
 			continue
 		}
@@ -119,6 +118,7 @@ type guardStream struct {
 	index   int
 }
 
+// Write drains the child while retaining at most the shared capture limit.
 func (w *guardStream) Write(data []byte) (int, error) {
 	c := w.capture
 	c.mu.Lock()
@@ -130,26 +130,17 @@ func (w *guardStream) Write(data []byte) (int, error) {
 	return len(data), nil
 }
 
-func guardTests(data []byte, policy *Recorder) string {
-	var names []string
+// Child output is untrusted, including testing's text framing. Count frames,
+// but never echo names: an opaque secret need not match any detector.
+func guardTests(data []byte) string {
+	count := 0
 	for line := range bytes.SplitSeq(data, []byte("\n")) {
 		line = bytes.TrimPrefix(line, []byte{0x16})
-		if !bytes.HasPrefix(line, []byte("=== RUN   ")) {
-			continue
-		}
-		name := strings.TrimSpace(string(line[len("=== RUN   "):]))
-		found, failed := policy.scan([]byte(name))
-		if found || failed || containsCanary([]byte(name), policy.needles) {
-			name = "[REDACTED TEST NAME]"
-		}
-		if !slices.Contains(names, name) {
-			names = append(names, name)
+		if bytes.HasPrefix(line, []byte("=== RUN   ")) {
+			count++
 		}
 	}
-	if len(names) == 0 {
-		return "package setup or unobserved test"
-	}
-	return strings.Join(names, ", ")
+	return strconv.Itoa(count)
 }
 
 func guardMessage(message string) {

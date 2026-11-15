@@ -29,7 +29,7 @@ type BankAccount struct {
 	bankAccountKeywords *keywordSet
 }
 
-// NewBankAccount creates a new bank account context detect.
+// NewBankAccount finds account-shaped digits near banking labels without assuming a universal checksum.
 func NewBankAccount() *BankAccount {
 	return &BankAccount{bankAccountKeywords: bankAccountKeywords()}
 }

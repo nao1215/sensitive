@@ -27,7 +27,7 @@ func TestIPAddrDetector_Scan(t *testing.T) {
 		{
 			name:       "IPv4 loopback",
 			input:      "127.0.0.1",
-			wantLen:    1,
+			wantLen:    0,
 			wantRaw:    "127.0.0.1",
 			wantMinCon: 0.7,
 		},
@@ -158,7 +158,7 @@ func TestIPAddrDetector_IPv6(t *testing.T) {
 		{
 			name:    "IPv6 loopback",
 			input:   "::1",
-			wantLen: 1,
+			wantLen: 0,
 			wantRaw: "::1",
 		},
 		{

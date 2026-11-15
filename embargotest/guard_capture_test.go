@@ -107,10 +107,10 @@ func TestGuardNamesAndPolicy(t *testing.T) {
 		t.Fatal("invalid guard option accepted")
 	}
 	data := []byte("\x16=== RUN   TestSafe\n=== RUN   TestSafe\n=== RUN   " + defaultCanary + "\n=== RUN   alice@example.com\n")
-	if got := guardTests(data, policy); got != "TestSafe, [REDACTED TEST NAME]" {
+	if got := guardTests(data); got != "4" {
 		t.Fatal(got)
 	}
-	if got := guardTests([]byte("setup"), policy); got != "package setup or unobserved test" {
+	if got := guardTests([]byte("setup")); got != "0" {
 		t.Fatal(got)
 	}
 }

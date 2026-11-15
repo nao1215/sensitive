@@ -15,7 +15,7 @@ type UKSortCodeDetail struct {
 //  3. Score other formatted matches as 0.7.
 type UKSortCode struct{}
 
-// NewUKSortCode creates a new UK sort code detect.
+// NewUKSortCode requires sort-code context around six digits.
 func NewUKSortCode() *UKSortCode {
 	return &UKSortCode{}
 }

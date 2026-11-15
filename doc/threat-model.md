@@ -1,0 +1,41 @@
+# Threat model
+
+Embargo inspects bytes at an output boundary. The application chooses kinds, sensitive keys, canaries and output wrappers; its users choose field values and sometimes field names. A compromised dependency can return hostile formatter results, construct malformed JSON or write directly to a stream. A child under Guard controls both output pipes and any apparent Go test framing. Findings are a classification decision, not proof that a value is a real identity or a secret.
+
+| Actor and controlled bytes | Undesirable result | Executable boundary |
+|---|---|---|
+| User: text, keys, JSON strings | Unmasked recognized value or destroyed audit context | Encoding and scoping cases in adversarial_test.go |
+| Dependency: formatter and LogValuer results | Panic text echoed, invalid JSON or partial record | slog_handler_test.go and structured_test.go |
+| Child: stdout, stderr, test-start frames | Secret replay, forged test name in diagnostics, unbounded retention | Guard model, guard_adversarial_test.go and guard_fuzz_test.go |
+| Application: detector, limits, policy | Silent scanner failure or unexpected cross-policy findings | runtime_contract_test.go, model replay and metamorphic tests |
+| User: very large or nested input | Superlinear work, stack exhaustion or memory amplification | Adversarial budget tests and scheduled scaling matrix |
+
+## Resource boundaries
+
+Raw Scan accepts arbitrary byte slices and does not impose an input limit. The scheduled matrix measures every detector, WithAll, Mask, MaskJSON and slog at 1 KB, 16 KB, 256 KB, 1 MB and 16 MB, using repeated digit separators, credential prefixes, percent prefixes and IBAN prefixes. Time and allocated bytes are reported per input byte; fixed allocation budgets fail ordinary tests. FuzzAdversarialBudgets also checks allocation amplification and a five-second per-input ceiling in serial fuzz workers, then requires exactly one valid JSON log record. This is a coarse hang budget, not a performance threshold. Scaling is observed on a finite matrix, not a proof for every input. Run the matrix in an isolated job; do not infer an algorithmic regression from a shared-runner wall-time threshold.
+
+The round-14 [scaling samples](performance/round14-scaling.txt) contain 1,800 measurements across 600 conditions. Median 16 MiB WithAll times ranged from 0.225 to 0.725 seconds on the recorded host; the largest allocation ratio was 13.29 bytes per input byte for slog with percent prefixes. None of these paths increased time per byte between 1 KiB and 16 MiB. MaskJSON rejects oversized documents, so its large-size numbers measure rejection rather than parsing. A separate [dense-range sample](performance/round14-mask-scaling.txt) supplies one range per 32 bytes in forward and reverse order: 16 MiB took 0.050 and 0.181 seconds respectively, with about 7.37 allocated bytes per input byte. Mask sorts caller-provided ranges, so arbitrary range order has sorting cost in addition to scanning and copying; this finite experiment does not establish a universal linear-time guarantee.
+
+MaskJSON limits input/output and cumulative scan work to the limits documented in json.go; JSON nesting is limited to 64. Inputs over 1 MiB or over the nesting bound return a fixed error and no output. The structured normalizer also bounds slog Any values; a failed record is suppressed. Slog messages and typed string attributes use raw Scan and do not inherit the JSON input limit, so callers must bound their record size. Tests cover deep trees, wide objects, large scalars and invalid strings. ScanLines has the documented bufio line limit and returns an error for an oversized line; direct Scan is the path for a caller that explicitly accepts larger lines. Guard and Recorder share a retained-byte budget across streams and reject overflow; timeout and scanner failure prevent replay. A synchronous custom detector can still loop forever: the caller must trust extensions or isolate them in a process.
+
+## Encodings and audit tradeoffs
+
+| Attempt | Status | Test or limit |
+|---|---|---|
+| JSON Unicode escapes | Caught after JSON decoding | TestAdversarialEncodingBoundary |
+| One percent-encoding layer | Caught with original-byte positions | Metamorphic and Lean vector tests |
+| Double percent encoding | Limit: no recursive decoding | TestAdversarialEncodingBoundary |
+| Base64 | Limit for arbitrary text; registered canaries include encoded forms | canary_test.go |
+| Zero-width text and letter homoglyphs | Limit: no general Unicode confusable normalization | TestAdversarialEncodingBoundary |
+| Full-width numeric digits | Caught by numeric normalization | mutation_round9_test.go |
+| A forged redaction marker or finding label | Does not bypass scanning adjacent secrets | TestAdversarialEncodingBoundary |
+| Secret split across writes | Caught after complete stream assembly | Guard model and framing fuzz target |
+| Secret split across logical fields or lines | Limit: no reconstruction across semantic fields | Caller must mark the owning value or key |
+| Fake Go test framing | Counted as untrusted framing; its name is never echoed | TestGuardForgedTestNamesNeverReachDiagnostics |
+| Output flood or inherited pipes | Bounded retention and process timeout | guard_capture_test.go and lifecycle tests |
+
+An attacker can choose a username that looks like an email, PAN or national identifier. Masking that field can remove useful audit context even though the value is not private. Select WithKinds for the data present at the boundary, or disable content detectors with WithKinds() and declare only secret fields through WithSensitiveKeys. Keep an application-generated opaque audit identifier when correlation matters. An existing literal redaction marker is indistinguishable from one produced by masking; neither a marker nor a printed finding is an authenticity signal.
+
+Unspecified addresses and loopback addresses identify a local endpoint, so ipaddr excludes 0.0.0.0, ::, 127.0.0.0/8 and ::1. Other private and documentation ranges remain findings; applications decide whether such addresses are sensitive. The round-13 held split has been inspected and is now regression data. Remaining ABA and SWIFT false positives must be investigated on development data before choosing a rule.
+
+Embargo-generated errors use fixed messages. Tests plant opaque values in formatter panics, malformed Input and forged Guard frames and require those values to stay out of diagnostics. Guard may replay safe streams by policy; unknown secrets that have neither a recognizable detector nor a registered canary remain a detection limit. An application or dependency that writes outside the wrapped boundary is outside that wrapper's protection.

@@ -24,6 +24,7 @@ type formatter struct {
 	scanner *embargo.Scanner
 }
 
+// Format masks the completed JSON event and returns a fixed error on failure.
 func (f *formatter) Format(entry *logrus.Entry) (data []byte, err error) {
 	complete := false
 	defer func() {

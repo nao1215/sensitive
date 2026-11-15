@@ -27,7 +27,7 @@ type GitHubTokenDetail struct {
 //  3. Enforce word boundaries and score a match as 0.95; [GitHubTokenType] identifies the family.
 type GitHubToken struct{}
 
-// NewGitHubToken creates a new GitHub token detect.
+// NewGitHubToken recognizes GitHub token prefixes and their required body lengths.
 func NewGitHubToken() *GitHubToken {
 	return &GitHubToken{}
 }

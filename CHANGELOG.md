@@ -191,7 +191,7 @@ Implementation: [PR #56](https://github.com/nao1215/embargo/pull/56), [89eb73c](
 
 - ScanLines ErrTooLong regression test ([b71bf3d](https://github.com/nao1215/embargo/commit/b71bf3d)): Verifies that lines exceeding the 1 MB buffer return `bufio.ErrTooLong`.
 - ScanLines buffer copy safety test ([5e24472](https://github.com/nao1215/embargo/commit/5e24472)): Verifies that retained `line` slices from the callback are not corrupted by subsequent scans.
-- WithMinConfidence boundary value tests ([cf0a3f0](https://github.com/nao1215/embargo/commit/cf0a3f0)): Verifies that a finding with confidence exactly equal to the threshold is included, and one just below is excluded.
+- WithMinConfidence boundary value tests ([cf0a3f0](https://github.com/nao1215/embargo/commit/cf0a3f0)): Verifies that a finding with confidence exactly equal to the threshold is included, and one below is excluded.
 - RawValue == input[Start:End] invariant test ([54eaa2c](https://github.com/nao1215/embargo/commit/54eaa2c)): Verifies across all built-in detectors that every finding's `RawValue` matches the corresponding `input[Start:End]` slice, preventing mask output corruption.
 
 ## [0.0.2] - 2026-02-08

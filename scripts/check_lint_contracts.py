@@ -16,7 +16,7 @@ def reject(cwd, command, needle):
 
 with tempfile.TemporaryDirectory(prefix="embargo-lint-") as directory:
     repo = pathlib.Path(directory) / "repo"
-    shutil.copytree(ROOT, repo, ignore=shutil.ignore_patterns(".git", "cover.*", "coverage*", ".gremlins"))
+    shutil.copytree(ROOT, repo, ignore=shutil.ignore_patterns(".git", "cover.*", "coverage*", ".gremlins", "node_modules", ".lake", "_apalache-out", "benchmark-results"))
     # go-arch-lint parses imports without asking the compiler to resolve cycles.
     edges = [
         (".", "embargo", "github.com/nao1215/embargo/embargotest"),

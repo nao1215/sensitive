@@ -33,8 +33,11 @@ func TestPackageGuard(t *testing.T) {
 				}
 				return
 			}
-			if mode != safeMode && (!bytes.Contains(output, []byte("TestPackageOutput")) || !bytes.Contains(output, []byte("embargotest: package leak"))) {
+			if mode != safeMode && (!bytes.Contains(output, []byte("observed test-start frames:")) || !bytes.Contains(output, []byte("embargotest: package leak"))) {
 				t.Fatalf("missing diagnosis: %s", output)
+			}
+			if mode == "stdout" {
+				checkGuardSnapshot(t, output)
 			}
 			if bytes.Contains(output, []byte(defaultCanary)) {
 				t.Fatal("guard repeated the canary")
@@ -64,4 +67,22 @@ func testGuardArguments(t *testing.T, binary string) {
 			}
 		})
 	}
+}
+
+func checkGuardSnapshot(t *testing.T, output []byte) {
+	t.Helper()
+	for line := range bytes.SplitSeq(output, []byte("\n")) {
+		if !bytes.HasPrefix(line, []byte("embargotest: package leak")) {
+			continue
+		}
+		want, err := os.ReadFile("testdata/guard-failure.golden")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(append(bytes.Clone(line), '\n'), want) {
+			t.Fatal("Guard diagnostic snapshot changed")
+		}
+		return
+	}
+	t.Fatal("Guard diagnostic missing")
 }

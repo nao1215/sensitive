@@ -1,0 +1,8 @@
+name = "embargo_reference"
+version = "0.0.0"
+defaultTargets = ["vectors"]
+[[lean_lib]]
+name = "Reference"
+[[lean_exe]]
+name = "vectors"
+root = "Main"

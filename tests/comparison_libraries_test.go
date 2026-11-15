@@ -54,6 +54,7 @@ func TestComparisonOtherLibraries(t *testing.T) {
 	engine := godlpEngine(t)
 	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN, embargo.KindJPPhone, embargo.KindIPAddr), embargo.WithMinConfidence(0.7))
 	var table strings.Builder
+	var details strings.Builder
 	writeComparisonTable(t, &table, "| Text fixture | godlp v1.2.15 | godlp findings | embargo | embargo findings |\n|---|---|---:|---|---:|\n")
 	for _, text := range []string{"email alice@example.com", "credit card 4111111111111111", "IP 192.0.2.1", "phone 03-1234-5678", "phone 202-555-0123", "credit card 4111111111111112"} {
 		safe, found, err := engine.Deidentify(text)
@@ -91,9 +92,15 @@ func TestComparisonOtherLibraries(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		// Preserve full outputs in the fixture; the prose explains shape differences.
-		writeComparisonTable(t, &table, "| %s | `%s` | `%s` |\n", name, encoded, masked)
+		// Keep long output outside table cells so the diff stays readable.
+		if len(encoded) > 120 || len(masked) > 120 {
+			writeComparisonTable(t, &table, "| %s | [Full formatter output](#%s-output) | [Full copy output](#%s-output) |\n", name, name, name)
+			writeComparisonTable(t, &details, "\n### %s output\n\nFormatter:\n\n```json\n%s\n```\n\nCopy:\n\n```json\n%s\n```\n", name, encoded, masked)
+		} else {
+			writeComparisonTable(t, &table, "| %s | `%s` | `%s` |\n", name, encoded, masked)
+		}
 	}
+	writeComparisonTable(t, &table, "%s", details.String())
 	path := "../doc/comparison-libraries.md"
 	if os.Getenv("UPDATE_DOCS") == "1" {
 		if err := os.WriteFile(path, []byte(table.String()), 0o600); err != nil {

@@ -133,9 +133,16 @@ def page(rows):
             out += ['At the default threshold, no misses or false alarms appeared in either set.']
         else:
             out += ['| Set / observed limit | Input example | Why it remains |', '|---|---|---|']
+            explanations = []
             for name, limit, sample in selected:
                 original = sample.get('text', '')+''.join(sample.get('parts', []))
-                out.append(f"| {name}: `{limit['id']}` | `{excerpt(original)}` | {limit['reason']} |")
+                reason = limit['reason']
+                if len(reason) > 120:
+                    explanations.append(reason)
+                    reason = f'Explanation {len(explanations)} below.'
+                out.append(f"| {name}: `{limit['id']}` | `{excerpt(original)}` | {reason} |")
+            for index, reason in enumerate(explanations, 1):
+                out += ['', f'{index}. {reason}']
     out += ['', '## Regeneration', '', '```sh', 'make accuracy-doc', 'python3 scripts/generate_accuracy.py --check', 'python3 scripts/accuracy_figures.py --check', 'go -C tests test -run "Test(Accuracy|GeneratedAccuracy)" .', '```', '',
             'The 0.7 results improve PAN, My Number and phone precision on both sets without losing recall in these samples; the default retains their ambiguous business identifiers. Email and encoded-form recall improve on both sets. SWIFT word false positives remain: the rejected attachment rule improved development precision but failed held-out evaluation. Round 12 adds development regressions for reserved IBAN check digits 00, 01 and 99 and rejects them before MOD 97. The four formerly held-out false positives are fixed; this historical set is now regression evidence, not unseen evaluation.', '',
             'PEM samples test headers, not full private keys. Generated service tokens test syntax, not authentication. Do not use synthetic identities, account or phone values for transactions or contacting people.', '', '[Support maintenance](https://github.com/sponsors/nao1215).', '']

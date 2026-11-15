@@ -23,12 +23,14 @@ type writeSyncer struct {
 	mu     sync.Mutex
 }
 
+// Write buffers split events until a complete JSON line can be checked.
 func (w *writeSyncer) Write(data []byte) (int, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	return w.writer.Write(data)
 }
 
+// Sync rejects an incomplete event before flushing the downstream sink.
 func (w *writeSyncer) Sync() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()

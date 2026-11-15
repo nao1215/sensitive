@@ -6381,6 +6381,42 @@
       "end": 30,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
+    },
+    "00397115534961037ef83d7a50bcfbb83b02b45fa347b6f4376b7e7a53da38b2": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
+    },
+    "003b30d9f7cd9ea9a41cda6d56557cd476fa6be7009bb0df84e38f9d3aaf1709": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
+    },
+    "003f83998ca3758e9af39e01d67f94786e26e434d4b47048eb7c5dc616d503fa": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
+    },
+    "00402016051016facae044d9495c376dd476c5a0e30068514a355fbcf4a8816c": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
+    },
+    "00405aecda22f9aa93911db39b2b897470920ba8c6998cf51bef163e31288c3e": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
+    },
+    "004357e3cc43a9cc344d646540ad6feb6622a8728312183d47c3bce64e2d9162": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
+    },
+    "0043859eae969ffc3bf23d1a02f16e21055be9bec2efdb97962b68c63319e0cc": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
+    },
+    "0043e20d72c98cd20c884131b5d05a09e3376c322c8a877e3c9feafbf684834b": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
+    },
+    "004851ada6c9b523ab4614c1a8f507cebfe7b38b57fc59f8686d5dd9c0f9c7ad": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
     }
   }
 }

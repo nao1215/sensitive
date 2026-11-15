@@ -1,0 +1,86 @@
+[
+  {
+    "mutant": "CONDITIONALS_BOUNDARY at mask.go:28:27",
+    "results": {
+      "bitmap oracle": "survived",
+      "adversarial": "survived",
+      "logger snapshot": "survived",
+      "snapshot": "survived",
+      "structure fuzz seeds": "survived",
+      "Quint replay": "survived",
+      "metamorphic": "survived",
+      "Lean vectors": "survived",
+      "external oracles": "survived"
+    }
+  },
+  {
+    "mutant": "CONDITIONALS_BOUNDARY at json.go:79:11",
+    "results": {
+      "bitmap oracle": "survived",
+      "adversarial": "killed",
+      "logger snapshot": "survived",
+      "snapshot": "survived",
+      "structure fuzz seeds": "survived",
+      "Quint replay": "survived",
+      "metamorphic": "survived",
+      "Lean vectors": "survived",
+      "external oracles": "survived"
+    }
+  },
+  {
+    "mutant": "CONDITIONALS_NEGATION at json.go:68:12",
+    "results": {
+      "bitmap oracle": "survived",
+      "adversarial": "survived",
+      "logger snapshot": "survived",
+      "snapshot": "survived",
+      "structure fuzz seeds": "survived",
+      "Quint replay": "survived",
+      "metamorphic": "killed",
+      "Lean vectors": "survived",
+      "external oracles": "survived"
+    }
+  },
+  {
+    "mutant": "CONDITIONALS_NEGATION at json.go:121:12",
+    "results": {
+      "bitmap oracle": "survived",
+      "adversarial": "survived",
+      "logger snapshot": "killed",
+      "snapshot": "survived",
+      "structure fuzz seeds": "survived",
+      "Quint replay": "survived",
+      "metamorphic": "survived",
+      "Lean vectors": "survived",
+      "external oracles": "survived"
+    }
+  },
+  {
+    "mutant": "CONDITIONALS_NEGATION at json.go:198:32",
+    "results": {
+      "bitmap oracle": "survived",
+      "adversarial": "killed",
+      "logger snapshot": "survived",
+      "snapshot": "survived",
+      "structure fuzz seeds": "survived",
+      "Quint replay": "survived",
+      "metamorphic": "survived",
+      "Lean vectors": "survived",
+      "external oracles": "survived"
+    }
+  },
+  {
+    "mutant": "CONDITIONALS_BOUNDARY at embargotest/recorder.go:233:31",
+    "results": {
+      "bitmap oracle": "survived",
+      "adversarial": "survived",
+      "logger snapshot": "survived",
+      "snapshot": "survived",
+      "structure fuzz seeds": "survived",
+      "Quint replay": "survived",
+      "metamorphic": "survived",
+      "Lean vectors": "survived",
+      "external oracles": "survived"
+    }
+  }
+]

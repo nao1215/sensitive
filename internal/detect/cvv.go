@@ -15,7 +15,7 @@ type CVV struct {
 	cvvKeywords *keywordSet
 }
 
-// NewCVV creates a new CVV/CVC detect.
+// NewCVV requires card-verification context around three or four digits.
 func NewCVV() *CVV {
 	return &CVV{cvvKeywords: cvvKeywords()}
 }

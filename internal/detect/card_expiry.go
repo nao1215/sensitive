@@ -17,7 +17,7 @@ type CardExpiry struct {
 	expiryKeywords *keywordSet
 }
 
-// NewCardExpiry creates a new card expiry date detect.
+// NewCardExpiry finds labeled expiration dates without requiring them to be in the future.
 func NewCardExpiry() *CardExpiry {
 	return &CardExpiry{expiryKeywords: expiryKeywords()}
 }
