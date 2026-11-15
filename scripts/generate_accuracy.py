@@ -171,8 +171,8 @@ def main():
         data = ''.join(json.dumps(row, ensure_ascii=False, separators=(',', ':'))+'\n' for row in rows)
         path = ROOT / 'tests/testdata' / name
         if args.check:
-            if path.read_text() != data: raise SystemExit(f'{name} is stale')
-        else: path.write_text(data)
+            if path.read_text(encoding='utf-8') != data: raise SystemExit(f'{name} is stale')
+        else: path.write_text(data, encoding='utf-8', newline='\n')
 
 
 if __name__ == '__main__':
