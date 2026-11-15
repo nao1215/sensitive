@@ -25,14 +25,6 @@ func runExample(f func(testing.TB) bool) bool {
 	return passed
 }
 
-func show(passed bool) {
-	//nolint:forbidigo // The example or isolated child deliberately writes to captured stdout.
-	//nolint:forbidigo // Isolated child output is the behavior under test.
-	if _, err := fmt.Println(passed); err != nil {
-		panic(err)
-	}
-}
-
 func ExampleNew() {
 	passed := false
 	testing.Benchmark(func(b *testing.B) {
@@ -45,9 +37,7 @@ func ExampleNew() {
 		passed = recorder.Check()
 	})
 
-	if _, err := fmt.Println(passed); err != nil {
-		panic(err)
-	}
+	fmt.Println(passed)
 
 	// Output: true
 }
@@ -82,33 +72,33 @@ func TestRecorderExample(t *testing.T) {
 }
 
 func ExampleWithCanary() {
-	show(runExample(func(tb testing.TB) bool {
+	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
 		r := embargotest.New(tb, embargotest.WithCanary([]byte("public-fake-canary-0123456789")))
 		r.Expect("out", func(data []byte) bool { return string(data) == "[REDACTED]" })
-		if _, err := fmt.Fprint(r.Writer("out"), embargo.NewSecret(r.Canary())); err != nil {
-			panic(err)
-		}
+
+		fmt.Fprint(r.Writer("out"), embargo.NewSecret(r.Canary()))
 		return r.Check()
 	}))
+
 	// Output: true
 }
 
 func ExampleWithLimits() {
-	show(runExample(func(tb testing.TB) bool {
+	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
 		r := embargotest.New(tb, embargotest.WithLimits(4096, time.Second))
 		r.Expect("out", func(data []byte) bool { return string(data) == "ok" })
-		if _, err := fmt.Fprint(r.Writer("out"), "ok"); err != nil {
-			panic(err)
-		}
+
+		fmt.Fprint(r.Writer("out"), "ok")
 		return r.Check()
 	}))
+
 	// Output: true
 }
 
 func ExampleRecorder_ExpectJSON() {
-	show(runExample(func(tb testing.TB) bool {
+	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
 		r := embargotest.New(tb)
 		logger := slog.New(slog.NewJSONHandler(r.Writer("logs"), nil))
@@ -118,11 +108,12 @@ func ExampleRecorder_ExpectJSON() {
 		r.ExpectJSON("logs", nil, map[string]string{"msg": "request failed", "code": "signing_failed"}, 1)
 		return r.Check()
 	}))
+
 	// Output: true
 }
 
 func ExampleRecorder_HTTP() {
-	show(runExample(func(tb testing.TB) bool {
+	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
 		r := embargotest.New(tb)
 		response := r.HTTP("response")
@@ -131,6 +122,7 @@ func ExampleRecorder_HTTP() {
 		r.Expect("response/status", func(data []byte) bool { return string(data) == "202" })
 		return r.Check()
 	}))
+
 	// Output: true
 }
 
@@ -139,14 +131,13 @@ func TestExampleChild(t *testing.T) {
 	if os.Getenv("EMBARGO_TEST_CHILD") != "TestExampleChild" {
 		return
 	}
-	//nolint:forbidigo // Isolated child output is the behavior under test.
 	if _, err := fmt.Println("public operation completed"); err != nil {
 		panic(err)
 	}
 }
 
 func ExampleRecorder_Run() {
-	show(runExample(func(tb testing.TB) bool {
+	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
 		r := embargotest.New(tb)
 		r.Expect("stdout", func(data []byte) bool { return bytes.Contains(data, []byte("public operation completed")) })
@@ -155,6 +146,7 @@ func ExampleRecorder_Run() {
 		}
 		return r.Check()
 	}))
+
 	// Output: true
 }
 
@@ -192,7 +184,6 @@ func TestPanicGolden(t *testing.T) {
 func TestChildRequest(t *testing.T) {
 	t.Parallel()
 	if os.Getenv("EMBARGO_TEST_CHILD") == "TestChildRequest" {
-		//nolint:forbidigo // Isolated child output is the behavior under test.
 		if _, err := fmt.Println("request rejected"); err != nil {
 			panic(err)
 		}
@@ -210,12 +201,11 @@ func TestChildRequest(t *testing.T) {
 // end child
 
 func ExampleRecorder() {
-	show(runExample(func(tb testing.TB) bool {
+	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
 		recorder := embargotest.New(tb)
-		if _, err := fmt.Fprint(recorder.Writer("out"), "accepted"); err != nil {
-			panic(err)
-		}
+
+		fmt.Fprint(recorder.Writer("out"), "accepted")
 		recorder.Expect("out", func(data []byte) bool { return string(data) == "accepted" })
 		return recorder.Check()
 	}))
@@ -224,13 +214,12 @@ func ExampleRecorder() {
 }
 
 func ExampleOption() {
-	show(runExample(func(tb testing.TB) bool {
+	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
 		options := []embargotest.Option{embargotest.WithLimits(4096, time.Second)}
 		recorder := embargotest.New(tb, options...)
-		if _, err := fmt.Fprint(recorder.Writer("out"), "accepted"); err != nil {
-			panic(err)
-		}
+
+		fmt.Fprint(recorder.Writer("out"), "accepted")
 		recorder.Expect("out", func(data []byte) bool { return string(data) == "accepted" })
 		return recorder.Check()
 	}))
@@ -239,12 +228,11 @@ func ExampleOption() {
 }
 
 func ExampleRecorder_Canary() {
-	show(runExample(func(tb testing.TB) bool {
+	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
 		recorder := embargotest.New(tb)
-		if _, err := fmt.Fprint(recorder.Writer("out"), embargo.NewSecret(recorder.Canary())); err != nil {
-			panic(err)
-		}
+
+		fmt.Fprint(recorder.Writer("out"), embargo.NewSecret(recorder.Canary()))
 		recorder.Expect("out", func(data []byte) bool { return string(data) == "[REDACTED]" })
 		return recorder.Check()
 	}))
@@ -253,16 +241,14 @@ func ExampleRecorder_Canary() {
 }
 
 func ExampleRecorder_Writer() {
-	show(runExample(func(tb testing.TB) bool {
+	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
 		recorder := embargotest.New(tb)
 		output := recorder.Writer("out")
-		if _, err := fmt.Fprint(output, "accep"); err != nil {
-			panic(err)
-		}
-		if _, err := fmt.Fprint(output, "ted"); err != nil {
-			panic(err)
-		}
+
+		fmt.Fprint(output, "accep")
+
+		fmt.Fprint(output, "ted")
 		recorder.Expect("out", func(data []byte) bool { return string(data) == "accepted" })
 		return recorder.Check()
 	}))
@@ -271,12 +257,11 @@ func ExampleRecorder_Writer() {
 }
 
 func ExampleRecorder_Expect() {
-	show(runExample(func(tb testing.TB) bool {
+	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
 		recorder := embargotest.New(tb)
-		if _, err := fmt.Fprint(recorder.Writer("out"), "accepted"); err != nil {
-			panic(err)
-		}
+
+		fmt.Fprint(recorder.Writer("out"), "accepted")
 		recorder.Expect("out", func(data []byte) bool { return string(data) == "accepted" })
 		return recorder.Check()
 	}))
@@ -285,12 +270,11 @@ func ExampleRecorder_Expect() {
 }
 
 func ExampleRecorder_Check() {
-	show(runExample(func(tb testing.TB) bool {
+	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
 		recorder := embargotest.New(tb)
-		if _, err := fmt.Fprint(recorder.Writer("out"), "accepted"); err != nil {
-			panic(err)
-		}
+
+		fmt.Fprint(recorder.Writer("out"), "accepted")
 		recorder.Expect("out", func(data []byte) bool { return string(data) == "accepted" })
 		return recorder.Check()
 	}))
@@ -299,12 +283,11 @@ func ExampleRecorder_Check() {
 }
 
 func ExampleWithScanner() {
-	show(runExample(func(tb testing.TB) bool {
+	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
 		recorder := embargotest.New(tb, embargotest.WithScanner(embargo.NewScanner(embargo.WithKinds(embargo.KindPAN))))
-		if _, err := fmt.Fprint(recorder.Writer("out"), "accepted"); err != nil {
-			panic(err)
-		}
+
+		fmt.Fprint(recorder.Writer("out"), "accepted")
 		recorder.Expect("out", func(data []byte) bool { return string(data) == "accepted" })
 		return recorder.Check()
 	}))
@@ -313,12 +296,11 @@ func ExampleWithScanner() {
 }
 
 func ExampleWithAllowedKinds() {
-	show(runExample(func(tb testing.TB) bool {
+	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
 		recorder := embargotest.New(tb, embargotest.WithAllowedKinds(embargo.KindEmail))
-		if _, err := fmt.Fprint(recorder.Writer("out"), "alice@example.com"); err != nil {
-			panic(err)
-		}
+
+		fmt.Fprint(recorder.Writer("out"), "alice@example.com")
 		recorder.Expect("out", func(data []byte) bool { return string(data) == "alice@example.com" })
 		return recorder.Check()
 	}))
@@ -327,12 +309,11 @@ func ExampleWithAllowedKinds() {
 }
 
 func ExampleWithAllowedValues() {
-	show(runExample(func(tb testing.TB) bool {
+	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
 		recorder := embargotest.New(tb, embargotest.WithAllowedValues("alice@example.com"))
-		if _, err := fmt.Fprint(recorder.Writer("out"), "alice@example.com"); err != nil {
-			panic(err)
-		}
+
+		fmt.Fprint(recorder.Writer("out"), "alice@example.com")
 		recorder.Expect("out", func(data []byte) bool { return string(data) == "alice@example.com" })
 		return recorder.Check()
 	}))

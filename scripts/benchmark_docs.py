@@ -37,3 +37,5 @@ snapshot = {
 }
 (root / "doc/benchmarks.json").write_text(json.dumps(snapshot, indent=2) + "\n")
 subprocess.run(["go", "-C", "tests", "test", "-run", "^TestBenchmarkTable$", "-count=1", "."], cwd=root, env=dict(environment, UPDATE_DOCS="1"), check=True)
+
+subprocess.run(["python3", "scripts/doc_figures.py"], cwd=root, check=True)

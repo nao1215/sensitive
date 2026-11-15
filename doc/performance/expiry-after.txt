@@ -1,0 +1,16 @@
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo/tests
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S
+BenchmarkPublishedScanner/card_expiry/dirty         	    1372	    225696 ns/op	   3.69 MB/s	   33394 B/op	     288 allocs/op
+BenchmarkPublishedScanner/card_expiry/dirty         	    1692	    217073 ns/op	   3.83 MB/s	   33394 B/op	     288 allocs/op
+BenchmarkPublishedScanner/card_expiry/dirty         	    1698	    222454 ns/op	   3.74 MB/s	   33394 B/op	     288 allocs/op
+BenchmarkPublishedScanner/card_expiry/dirty         	    1674	    216063 ns/op	   3.85 MB/s	   33394 B/op	     288 allocs/op
+BenchmarkPublishedScanner/card_expiry/dirty         	    1689	    221340 ns/op	   3.76 MB/s	   33394 B/op	     288 allocs/op
+BenchmarkPublishedScanner/all/dirty                 	      61	   6276239 ns/op	   5.27 MB/s	 2397010 B/op	   13186 allocs/op
+BenchmarkPublishedScanner/all/dirty                 	      61	   6353982 ns/op	   5.21 MB/s	 2397011 B/op	   13186 allocs/op
+BenchmarkPublishedScanner/all/dirty                 	      61	   6255951 ns/op	   5.29 MB/s	 2397009 B/op	   13186 allocs/op
+BenchmarkPublishedScanner/all/dirty                 	      56	   6427925 ns/op	   5.15 MB/s	 2397009 B/op	   13186 allocs/op
+BenchmarkPublishedScanner/all/dirty                 	      61	   6402209 ns/op	   5.17 MB/s	 2397010 B/op	   13186 allocs/op
+PASS
+ok  	github.com/nao1215/embargo/tests	3.706s

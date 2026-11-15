@@ -5,9 +5,12 @@ import (
 	"io"
 )
 
-// ScanLines calls fn synchronously for each line containing findings, with 1-based line numbers and line-relative byte offsets. The line excludes its LF or CRLF terminator and is a copy that fn may retain.
+// ScanLines calls fn synchronously for lines containing findings, using 1-based
+// line numbers and line-relative byte offsets. Each line excludes its LF or
+// CRLF terminator and is a copy that fn may retain.
 //
-// The buffer starts at 64 KiB and grows to 1 MiB, including space needed for the line terminator. A line that exceeds the buffer limit returns [bufio.ErrTooLong]; use an explicit bounded read and [Scanner.Scan] for longer lines. Read errors are returned after any callbacks already made.
+// The buffer limit is 1 MiB including delimiter space; longer lines return
+// [bufio.ErrTooLong]. Read errors are returned after any callbacks already made.
 func (s *Scanner) ScanLines(r io.Reader, fn func(lineNum int, line []byte, findings []Finding)) error {
 	sc := bufio.NewScanner(r)
 	//nolint:mnd // The documented buffer limits are 64 KiB and 1 MiB.

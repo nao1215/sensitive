@@ -37,9 +37,10 @@ help:
 .PHONY: arch race properties mutation fuzz
 arch: ## Check production package boundaries
 	go run github.com/fe3dback/go-arch-lint@v1.19.0 check
-race: ## Run race detection in both modules
+race: ## Run race detection in all modules
 	go test -race ./...
 	go -C tests test -race ./...
+	@for module in zap zerolog logrus; do go -C adapters/$$module test -race ./... || exit; done
 properties: ## Run property and API contract tests
 	go -C tests test ./...
 mutation: ## Mutate root module packages with gremlins
@@ -52,6 +53,7 @@ fuzz: ## Smoke test every root fuzz target
 
 	go test -run '^$$' -fuzz '^FuzzCanary$$' -fuzztime=10s ./embargotest
 	go test -run '^$$' -fuzz '^FuzzJSONStream$$' -fuzztime=10s ./embargotest
+	go test -run '^$$' -fuzz '^FuzzOutputJSON$$' -fuzztime=10s ./internal/output
 
 .PHONY: compatibility-doc
 compatibility-doc: ## Regenerate the table from real output tests
@@ -59,7 +61,9 @@ compatibility-doc: ## Regenerate the table from real output tests
 
 .PHONY: accuracy accuracy-doc
 accuracy accuracy-doc: ## Regenerate precision and recall from the labeled corpus
+	python3 scripts/generate_accuracy.py
 	UPDATE_DOCS=1 go -C tests test -run '^TestAccuracyTable$$' -count=1 .
+	python3 scripts/accuracy_figures.py
 
 .PHONY: benchmark-doc
 benchmark-doc: ## Run and publish reproducible benchmark samples
@@ -70,3 +74,15 @@ DOC_MUTATION_TIMEOUT ?= 100
 .PHONY: testing-doc
 testing-doc: ## Publish completed measurement logs (DOC_COVERAGE, DOC_MUTATION, DOC_FUZZ, DOC_COMMIT)
 	python3 scripts/testing_docs.py --coverage "$(DOC_COVERAGE)" --mutation "$(DOC_MUTATION)" --fuzz "$(DOC_FUZZ)" --commit "$(DOC_COMMIT)" --mutation-timeout-coefficient "$(DOC_MUTATION_TIMEOUT)"
+
+.PHONY: doc-figures
+doc-figures: ## Regenerate figures from measured data
+	python3 scripts/doc_figures.py
+
+.PHONY: masking-doc
+masking-doc: ## Regenerate masking views from runnable Examples
+	UPDATE_DOCS=1 go test . -run '^TestReadmeMaskingFigure$$' -count=1
+
+.PHONY: adapters
+adapters: ## Test all optional logger modules
+	@for module in zap zerolog logrus; do go -C adapters/$$module test ./... || exit; done

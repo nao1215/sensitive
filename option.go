@@ -52,7 +52,7 @@ func WithDetector(d Detector) ScannerOption {
 	return scannerOption(func(s *Scanner) { s.custom = append(s.custom, d) })
 }
 
-// WithMinConfidence keeps findings at or above min. Non-finite scores or values outside [0,1] panic.
+// WithMinConfidence keeps findings at or above threshold. Non-finite scores or values outside [0,1] panic.
 func WithMinConfidence(threshold float64) ScannerOption {
 	if !validScore(threshold) {
 		panic("embargo: invalid minimum confidence")

@@ -12,18 +12,11 @@ import (
 	"strings"
 )
 
-// Run executes a named top-level Test helper in the current test executable.
-// The helper must guard its body with EMBARGO_TEST_CHILD == its name; the fake
-// canary is base64 in EMBARGO_TEST_CANARY. No parent application environment is
-// inherited. Output appends to stdout and stderr sinks, including -test.v's
-// start marker, which proves a matching test ran. Set content expectations too.
-//
-// The earlier of ctx's deadline and WithLimits' timeout supervises the child.
-// Cancel kills the direct child; Wait joins os/exec's pipe-copy and watcher
-// goroutines before return. WaitDelay bounds pipes held open after child exit.
-// Helpers must not create unmanaged descendants. Cancellation, timeouts,
-// unexpected exits and incomplete pipes fail Check. Returned errors are fixed
-// messages or context sentinels; they never carry child output.
+// Run executes a named top-level Test helper in the current test executable and
+// appends its output to the stdout and stderr sinks. Unexpected exits, timeouts
+// and incomplete output fail Check; returned errors never contain child output.
+// See the package Child processes section for the required helper guard and
+// environment protocol.
 func (r *Recorder) Run(ctx context.Context, helper string, wantExit int) error {
 	executable, err := os.Executable()
 	if err != nil {

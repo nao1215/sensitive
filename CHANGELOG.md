@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Follow-up review
+
+- Add optional zap, zerolog and logrus modules with JSON output masking, runnable Examples, real-output tests, all-platform CI and a nested-module release plan ([PR #70](https://github.com/nao1215/embargo/pull/70), [implementation](https://github.com/nao1215/embargo/commit/586448a)).
+
+- Replace the README walls of text with checked outputs and generated accuracy/benchmark figures, expand the synthetic corpus, scope unchecked fmt printing to Examples, audit godoc, align badges and add attributed gopher artwork ([PR #70](https://github.com/nao1215/embargo/pull/70), [integration](https://github.com/nao1215/embargo/commit/6eed0a6)).
+
+- Avoid redundant expiry overlap probes before parsing candidates, preserving overlap behavior while reducing measured scan time ([PR #70](https://github.com/nao1215/embargo/pull/70), [implementation](https://github.com/nao1215/embargo/commit/4c5281e)).
+
+- Skip expensive Go checks for documentation-only changes while keeping README/Example checks and CodeQL ([PR #66](https://github.com/nao1215/embargo/pull/66), [cafc62e](https://github.com/nao1215/embargo/commit/cafc62e)).
+
 ### Added
 
 - Replace the logo with embargo branding and add a 1280x640 Open Graph image at doc/images/ogp.png for repository settings ([PR #64](https://github.com/nao1215/embargo/pull/64), [573fa10](https://github.com/nao1215/embargo/commit/573fa10)).

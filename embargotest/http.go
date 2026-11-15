@@ -18,13 +18,10 @@ type response struct {
 	finalized                       bool
 }
 
-// HTTP returns a bounded ResponseWriter with Flusher support. It starts no
-// handler or goroutine. Stop the handler before Check; Header has the usual
-// http.ResponseWriter map concurrency rules. Expect uses name/body, /headers,
-// /trailers and /status. Headers and trailers are JSON objects of string arrays;
-// status is decimal text. Four of the sixteen sink slots are used per response.
-// Hijacker and Pusher are intentionally absent. This records handler output,
-// not a server's wire encoding or arbitrary middleware outside this writer.
+// HTTP returns a recorder for one handler's status, headers, body and trailers.
+// Expectations use name/status, name/headers, name/body and name/trailers.
+// Stop the handler before Check; see the package HTTP section for representation
+// and concurrency rules.
 func (r *Recorder) HTTP(name string) http.ResponseWriter {
 	r.mu.Lock()
 	defer r.mu.Unlock()

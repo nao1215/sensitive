@@ -1,6 +1,6 @@
 # Test-only tools
 
-Both modules require Go 1.26.11. The root library remains dependency-free; external test tools and SDKs stay in this module. It uses rapid v1.3.0 for generation and automatic shrinking; `golang.org/x/crypto/sha3` supplies an independent Keccak oracle for EIP-55. Only its SHA-3 package is used. No test-only dependency enters the root module.
+All modules require Go 1.26.11. The root library remains dependency-free; external test tools and compatibility SDKs stay in this module. The optional logger adapters each have their own module. This test module uses rapid v1.3.0 for generation and automatic shrinking; `golang.org/x/crypto/sha3` supplies an independent Keccak oracle for EIP-55.
 
 Run `go test ./... -rapid.checks=100` here, or increase `-rapid.checks` for exploration. On failure rapid prints a replay seed and stores a minimized case under `testdata/rapid/`; promote useful failures to named regression tests in the root. The local sanity check deliberately asserted that every integer in [0,100000] was below 7 and shrank to 7; that failing test is not committed.
 
@@ -12,6 +12,6 @@ The root retains specification vectors, finite generated examples, golden logs, 
 
 For comparable mutation measurements, run `GOMAXPROCS=4 make mutation` from the root of an isolated snapshot. Use gremlins v0.6.0 without `--test-cpu`: that release passes its value as a single malformed Go flag, which can falsely label mutants killed. Confirm the unmutated snapshot passes before measuring. This measures all root-module packages with their root-module tests, not rapid or SDK acceptance in the nested module; report that scope with the numbers. The byte alphabet, context window, date-ambiguity, and checksum regression tests target surviving mutants. Coverage CI separately instruments root packages from both modules and merges source blocks before octocov, so each statement contributes once.
 
-Real logger/SDK acceptance, child-process goleak checks, API goldens and go/doc Example checks run here. The accuracy and benchmark documentation tests verify README tables against labeled spans and recorded raw benchmark samples. Regeneration commands are in [doc/testing.md](../doc/testing.md).
+Real logger/SDK acceptance, child-process goleak checks, API goldens and go/doc Example checks run here. The accuracy tests score the expanded synthetic corpus, including reviewed misses; Python checks connect those scores to the charts. Benchmark documentation tests compare recorded medians with every raw sample. Regeneration commands are in [doc/testing.md](../doc/testing.md).
 
 Contributions and additional synthetic edge cases are welcome; please [sponsor maintenance](https://github.com/sponsors/nao1215).
