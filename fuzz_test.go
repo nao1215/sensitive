@@ -2,17 +2,15 @@ package embargo_test
 
 import (
 	"bytes"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/nao1215/embargo"
-	"github.com/nao1215/embargo/detector"
+	"github.com/nao1215/embargo/internal/detect"
 )
 
-// fuzzSeeds returns inputs that reach every built-in detector, plus a few
-// shapes that stress the scanners' boundaries (full-width digits, invalid
-// UTF-8, repeated pivots, CRLF).
 func fuzzSeeds() []string {
 	return []string{
 		"v%20021000021", "v%20123456789018", "v%0909012345678", "v%3A2001:db8::1", "v%３D021000021",
@@ -51,87 +49,12 @@ func fuzzSeeds() []string {
 	}
 }
 
-// builtinDetectors returns a fresh instance of every built-in detector.
-// Keep this in sync with WithAll: TestFuzzBuiltinDetectorsMatchesWithAll
-// fails if a detector is added to one list but not the other.
-func builtinDetectors() []embargo.Detector {
-	return []embargo.Detector{
-		detector.NewPAN(),
-		detector.NewEmail(),
-		detector.NewJPPhone(),
-		detector.NewMyNumber(),
-		detector.NewJWT(),
-		detector.NewAWSKey(),
-		detector.NewIBAN(),
-		detector.NewIPAddr(),
-		detector.NewSWIFTBIC(),
-		detector.NewABARouting(),
-		detector.NewUKSortCode(),
-		detector.NewCVV(),
-		detector.NewCardExpiry(),
-		detector.NewPaymentToken(),
-		detector.NewBankAccount(),
-		detector.NewACHTrace(),
-		detector.NewMerchantID(),
-		detector.NewBTC(),
-		detector.NewETH(),
-		detector.NewGitHubToken(),
-		detector.NewSlackToken(),
-		detector.NewGoogleAPIKey(),
-		detector.NewPrivateKeyPEM(),
-	}
+func builtinDetectors() []detect.Detector {
+	return []detect.Detector{detect.NewPAN(), detect.NewEmail(), detect.NewJPPhone(), detect.NewMyNumber(), detect.NewJWT(), detect.NewAWSKey(), detect.NewIBAN(), detect.NewIPAddr(), detect.NewSWIFTBIC(), detect.NewABARouting(), detect.NewUKSortCode(), detect.NewCVV(), detect.NewCardExpiry(), detect.NewPaymentToken(), detect.NewBankAccount(), detect.NewACHTrace(), detect.NewMerchantID(), detect.NewBTC(), detect.NewETH(), detect.NewGitHubToken(), detect.NewSlackToken(), detect.NewGoogleAPIKey(), detect.NewPrivateKeyPEM()}
 }
 
-func TestFuzzBuiltinDetectorsMatchesWithAll(t *testing.T) {
-	t.Parallel()
-
-	// WithoutDedup and a single input that hits nothing still lets us compare
-	// the registered set: scan an input seeded for every detector and make
-	// sure every detector name WithAll reports is one builtinDetectors knows.
-	known := make(map[embargo.DetectorName]bool)
-	for _, d := range builtinDetectors() {
-		known[d.Name()] = true
-	}
-	all := embargo.NewScanner(embargo.WithAll(), embargo.WithoutDedup())
-	seen := make(map[embargo.DetectorName]bool)
-	for _, seed := range fuzzSeeds() {
-		for _, f := range all.ScanString(seed) {
-			seen[f.DetectorName] = true
-			if !known[f.DetectorName] {
-				t.Errorf("WithAll reported %q, which builtinDetectors does not list", f.DetectorName)
-			}
-		}
-	}
-	for name := range known {
-		if !seen[name] {
-			t.Errorf("no fuzz seed reaches detector %q", name)
-		}
-	}
-}
-
-// checkFindings verifies the invariants every finding must satisfy against
-// the data it was produced from.
-func checkFindings(t *testing.T, data []byte, findings []embargo.Finding) {
-	t.Helper()
-	for _, f := range findings {
-		if f.Start < 0 || f.End > len(data) || f.Start >= f.End {
-			t.Fatalf("%s: position [%d:%d] outside input of %d bytes (%q)", f.DetectorName, f.Start, f.End, len(data), data)
-		}
-		if got := string(data[f.Start:f.End]); got != f.RawValue {
-			t.Fatalf("%s: RawValue %q != data[%d:%d] %q", f.DetectorName, f.RawValue, f.Start, f.End, got)
-		}
-		if f.Confidence < 0 || f.Confidence > 1 {
-			t.Fatalf("%s: confidence %v outside [0, 1]", f.DetectorName, f.Confidence)
-		}
-		if f.Kind() == "" {
-			t.Fatalf("%s: built-in detector has no Kind", f.DetectorName)
-		}
-	}
-}
-
-// findingKey identifies a finding independently of its Detail pointer.
 type findingKey struct {
-	name       embargo.DetectorName
+	name       embargo.Kind
 	start, end int
 	confidence float64
 }
@@ -139,99 +62,67 @@ type findingKey struct {
 func keysOf(findings []embargo.Finding) map[findingKey]int {
 	m := make(map[findingKey]int, len(findings))
 	for _, f := range findings {
-		m[findingKey{f.DetectorName, f.Start, f.End, f.Confidence}]++
+		m[findingKey{f.Kind, f.Start, f.End, f.Confidence}]++
 	}
 	return m
 }
 
-// FuzzScanner checks the Scanner over arbitrary text:
-//   - no panic, and every finding lies inside the input with RawValue equal to
-//     the bytes it points at and a confidence in [0, 1];
-//   - with dedup on (the default) no two findings overlap;
-//   - a single detector never reports two overlapping findings;
-//   - the hint pre-filter never hides a match: every finding a detector
-//     returns when called directly is also returned by a Scanner holding only
-//     that detector (the Detector.Hints contract says hints are exhaustive);
-//   - ScanString, ScanReader and Scan agree;
-//   - WithSortByPosition only reorders the default result.
+// FuzzScanner compares prefiltered scanning to every internal recognizer and checks
+// byte/string equivalence, immutable input and valid original-input spans.
 func FuzzScanner(f *testing.F) {
-	for _, s := range fuzzSeeds() {
-		f.Add(s)
+	for _, seed := range fuzzSeeds() {
+		f.Add(seed)
 	}
-	defaultScanner := embargo.NewScanner(embargo.WithAll())
-	byPosition := embargo.NewScanner(embargo.WithAll(), embargo.WithSortByPosition())
-	noDedup := embargo.NewScanner(embargo.WithAll(), embargo.WithoutDedup())
+	scanner := embargo.NewScanner()
 	detectors := builtinDetectors()
-	single := make([]*embargo.Scanner, len(detectors))
-	for i, d := range detectors {
-		single[i] = embargo.NewScanner(embargo.WithDetector(d), embargo.WithoutDedup())
-	}
-
 	f.Fuzz(func(t *testing.T, text string) {
 		checkEmbeddedSecret(t, text)
 		data := []byte(text)
-
-		raw := noDedup.Scan(data)
-		checkFindings(t, data, raw)
-
-		for i, d := range detectors {
-			direct := d.Scan(data)
-			checkFindings(t, data, direct)
-			// Email is exempt: in "a@b.co@c.org" both "a@b.co" and
-			// "b.co@c.org" are well-formed, and which one the writer meant
-			// is not decidable, so the detector reports both and leaves the
-			// choice to the Scanner's dedup.
-			for a := 0; a < len(direct) && d.Name() != detector.NameEmail; a++ {
-				for b := a + 1; b < len(direct); b++ {
-					if direct[a].Start < direct[b].End && direct[b].Start < direct[a].End {
-						t.Fatalf("%s: overlapping findings %q [%d:%d] and %q [%d:%d] in %q", d.Name(),
-							direct[a].RawValue, direct[a].Start, direct[a].End,
-							direct[b].RawValue, direct[b].Start, direct[b].End, text)
-					}
-				}
-			}
-			viaScanner := keysOf(single[i].Scan(data))
-			for _, fd := range direct {
-				k := findingKey{fd.DetectorName, fd.Start, fd.End, fd.Confidence}
-				if viaScanner[k] == 0 {
-					t.Fatalf("%s: hint pre-filter hides finding %q at [%d:%d] in %q", d.Name(), fd.RawValue, fd.Start, fd.End, text)
-				}
+		before := bytes.Clone(data)
+		got := scanner.Scan(data)
+		if !bytes.Equal(data, before) || !reflect.DeepEqual(got, scanner.ScanString(text)) {
+			t.Fatal("input or entrypoint changed")
+		}
+		want := make(map[findingKey]int)
+		for _, d := range detectors {
+			for _, v := range d.Scan(data) {
+				want[findingKey{embargo.Kind(v.DetectorName), v.Start, v.End, v.Confidence}]++
 			}
 		}
-
-		got := defaultScanner.Scan(data)
-		checkFindings(t, data, got)
-		byPos := byPosition.Scan(data)
-		for i := 1; i < len(byPos); i++ {
-			if byPos[i-1].End > byPos[i].Start {
-				t.Fatalf("deduplicated findings overlap: %s[%d:%d] and %s[%d:%d]",
-					byPos[i-1].DetectorName, byPos[i-1].Start, byPos[i-1].End,
-					byPos[i].DetectorName, byPos[i].Start, byPos[i].End)
+		if !sameKeys(keysOf(got), want) {
+			t.Fatal("hint filter changed matches")
+		}
+		for i, v := range got {
+			if v.Kind == "" || v.Start < 0 || v.End <= v.Start || v.End > len(data) || v.Confidence < 0 || v.Confidence > 1 {
+				t.Fatal("invalid finding")
 			}
-			if byPos[i-1].Start > byPos[i].Start {
-				t.Fatalf("WithSortByPosition returned Start %d before %d", byPos[i-1].Start, byPos[i].Start)
+			if i > 0 && got[i-1].Start > v.Start {
+				t.Fatal("position order")
 			}
-		}
-		if a, b := keysOf(got), keysOf(byPos); len(got) != len(byPos) || !sameKeys(a, b) {
-			t.Fatalf("WithSortByPosition changed the set of findings: %v vs %v", got, byPos)
-		}
-
-		if s := defaultScanner.ScanString(text); !sameKeys(keysOf(s), keysOf(got)) {
-			t.Fatalf("ScanString and Scan disagree on %q", text)
-		}
-		r, err := defaultScanner.ScanReader(bytes.NewReader(data))
-		if err != nil {
-			t.Fatalf("ScanReader: %v", err)
-		}
-		if !sameKeys(keysOf(r), keysOf(got)) {
-			t.Fatalf("ScanReader and Scan disagree on %q", text)
 		}
 	})
+}
+
+func TestAllBuiltinsHaveSeeds(t *testing.T) {
+	t.Parallel()
+	seen := map[embargo.Kind]bool{}
+	for _, s := range fuzzSeeds() {
+		for _, f := range embargo.NewScanner().ScanString(s) {
+			seen[f.Kind] = true
+		}
+	}
+	for _, d := range builtinDetectors() {
+		if !seen[embargo.Kind(d.Name())] {
+			t.Errorf("uncovered builtin %s", d.Name())
+		}
+	}
 }
 
 // FuzzScanLines checks that ScanLines reports, for every line, exactly what
 // Scan reports on that line alone, with 1-based line numbers and the line's
 // own bytes.
+//
+//nolint:gocognit // The line-stream oracle checks content, numbering, and omissions together against independent splitting.
 func FuzzScanLines(f *testing.F) {
 	for _, s := range fuzzSeeds() {
 		f.Add(s)
@@ -242,15 +133,15 @@ func FuzzScanLines(f *testing.F) {
 	f.Fuzz(func(t *testing.T, text string) {
 		checkEmbeddedSecret(t, text)
 		type lineResult struct {
-			line     string
 			findings map[findingKey]int
+			line     string
 		}
 		got := make(map[int]lineResult)
 		err := scanner.ScanLines(strings.NewReader(text), func(lineNum int, line []byte, findings []embargo.Finding) {
 			if _, dup := got[lineNum]; dup {
 				t.Fatalf("line %d reported twice", lineNum)
 			}
-			got[lineNum] = lineResult{string(line), keysOf(findings)}
+			got[lineNum] = lineResult{line: string(line), findings: keysOf(findings)}
 		})
 		if err != nil {
 			t.Fatalf("ScanLines: %v", err)
@@ -311,10 +202,10 @@ func checkEmbeddedSecret(t *testing.T, context string) {
 	t.Helper()
 	raw := "user" + strconv.Itoa(len(context)) + "@example.com"
 	text := context + "\n[" + raw + "]\n" + context
-	s := embargo.NewScanner(embargo.WithEmail())
+	s := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
 	found := false
 	for _, f := range s.ScanString(text) {
-		if f.RawValue == raw && f.Start == len(context)+2 {
+		if text[f.Start:f.End] == raw && f.Start == len(context)+2 {
 			found = true
 		}
 	}

@@ -1,6 +1,6 @@
 # embargo
 
-sensitive detects sensitive data in text and returns its type, byte positions, and confidence, with optional masking.
+embargo detects and masks personal data, payment data and secrets in text, with zero dependencies and cross-platform support.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/embargo.svg)](https://pkg.go.dev/github.com/nao1215/embargo)
 ![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/embargo/coverage.svg)
@@ -11,37 +11,17 @@ sensitive detects sensitive data in text and returns its type, byte positions, a
 
 ## Quick start
 
-Save this as `main.go` in a new directory:
-
 <!-- example: example_test.go:Example -->
 ```go
-package main
-
-import (
-	"fmt"
-
-	"github.com/nao1215/embargo"
-)
-
-func main() {
-	scanner := embargo.NewScanner(embargo.WithPAN(), embargo.WithEmail())
-	text := "user tanaka@example.com paid with 4532015112830366"
-	for _, f := range scanner.ScanString(text) {
-		fmt.Printf("%s: %s (%.2f)\n", f.DetectorName, f.RawValue, f.Confidence)
+text := "email=alice@example.com card=4111111111111111"
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN))
+	if _, err := fmt.Println(embargo.Mask(text, scanner.ScanString(text))); err != nil {
+		panic(err)
 	}
-	// Output:
-	// pan: 4532015112830366 (1.00)
-	// email: tanaka@example.com (1.00)
-}
+	// Output: email=[REDACTED] card=[REDACTED]
 ```
 
-```sh
-go mod init example.com/scan
-go get github.com/nao1215/embargo
-go run .
-```
-
-This uses a test card number and an `example.com` address. Choose detectors explicitly as above; [NewScanner](https://pkg.go.dev/github.com/nao1215/embargo#NewScanner) shows empty, selected, and all-detector configurations.
+NewScanner() and WithAll() enable every built-in, including IP addresses and context-based detectors. Use WithKinds to narrow the selection. Findings retain all overlaps and contain byte offsets rather than raw values.
 
 ## Why embargo?
 
@@ -51,118 +31,50 @@ Dedicated parsers and checksum checks help distinguish candidates from ordinary 
 
 ## Supported detectors
 
-| Option | Detects | Validation |
+| Kind | Detects | Validation |
 |--------|---------|------------|
-| `WithPAN()` | Credit card numbers (Visa, Mastercard, Amex, JCB, Discover, Diners, UnionPay) | BIN prefix + Luhn algorithm |
-| `WithEmail()` | Email addresses | Structure + known TLD check |
-| `WithJPPhone()` | Japanese phone numbers (mobile, landline, IP phone, toll-free, M2M/IoT, service) | Prefix classification + digit count |
-| `WithMyNumber()` | Japanese My Number (12-digit individual number) | MOD 11 check digit |
-| `WithJWT()` | JSON Web Tokens | Header decode + `alg` key check |
-| `WithAWSKey()` | AWS Access Key IDs (`AKIA...` / `ASIA...`) | Prefix + 20-char alphanumeric |
-| `WithIBAN()` | International Bank Account Numbers | Country code + MOD 97 check digit |
-| `WithIPAddr()` | IPv4 and IPv6 addresses | `net.ParseIP` + octet range |
-| `WithSWIFTBIC()` | SWIFT/BIC codes | Format + country code validation |
-| `WithABARouting()` | US ABA routing numbers | Prefix range + checksum |
-| `WithUKSortCode()` | UK sort codes (XX-XX-XX) | Pattern + boundary checks |
-| `WithCVV()` | Card verification values (CVV/CVC/CID) | Context keyword + digit length (context-based, weaker) |
-| `WithCardExpiry()` | Card expiration dates | Context keyword + MM/YY validation (context-based, weaker) |
-| `WithPaymentToken()` | Payment processor tokens (Stripe/PayPal/Square) | Prefix + minimum body length |
-| `WithBankAccount()` | Bank account numbers (context-based) | Context keyword + digit range (context-based, weaker) |
-| `WithACHTrace()` | ACH trace numbers | Context keyword + prefix range (context-based, weaker) |
-| `WithMerchantID()` | Merchant/terminal IDs | Context keyword + format (context-based, weaker) |
-| `WithBTC()` | Bitcoin addresses (P2PKH, P2SH, Bech32, Bech32m/Taproot) | Base58Check (double SHA-256) / Bech32 polynomial checksum |
-| `WithETH()` | Ethereum addresses (0x + 40 hex) | EIP-55 mixed-case checksum (Keccak-256) |
-| `WithGitHubToken()` | GitHub tokens (classic `ghp_`/`gho_`/`ghu_`/`ghs_`/`ghr_`, fine-grained `github_pat_`) | Prefix + body character set + length |
-| `WithSlackToken()` | Slack API tokens (`xoxb-`/`xoxp-`/`xoxa-`/`xoxo-`/`xoxr-`/`xoxs-`) | Prefix + type character + minimum body length |
-| `WithGoogleAPIKey()` | Google API keys (`AIza...`) | Prefix + 35-char body |
-| `WithPrivateKeyPEM()` | PEM private key headers (RSA/EC/DSA/OpenSSH/PKCS#8) | `-----BEGIN [ALGO ]PRIVATE KEY-----` header parse |
+| `KindPAN` | Credit card numbers (Visa, Mastercard, Amex, JCB, Discover, Diners, UnionPay) | BIN prefix + Luhn algorithm |
+| `KindEmail` | Email addresses | Structure + known TLD check |
+| `KindJPPhone` | Japanese phone numbers (mobile, landline, IP phone, toll-free, M2M/IoT, service) | Prefix classification + digit count |
+| `KindMyNumber` | Japanese My Number (12-digit individual number) | MOD 11 check digit |
+| `KindJWT` | JSON Web Tokens | Header decode + `alg` key check |
+| `KindAWSKey` | AWS Access Key IDs (`AKIA...` / `ASIA...`) | Prefix + 20-char alphanumeric |
+| `KindIBAN` | International Bank Account Numbers | Country code + MOD 97 check digit |
+| `KindIPAddr` | IPv4 and IPv6 addresses | `net.ParseIP` + octet range |
+| `KindSWIFTBIC` | SWIFT/BIC codes | Format + country code validation |
+| `KindABARouting` | US ABA routing numbers | Prefix range + checksum |
+| `KindUKSortCode` | UK sort codes (XX-XX-XX) | Pattern + boundary checks |
+| `KindCVV` | Card verification values (CVV/CVC/CID) | Context keyword + digit length (context-based, weaker) |
+| `KindCardExpiry` | Card expiration dates | Context keyword + MM/YY validation (context-based, weaker) |
+| `KindPaymentToken` | Payment processor tokens (Stripe/PayPal/Square) | Prefix + minimum body length |
+| `KindBankAccount` | Bank account numbers (context-based) | Context keyword + digit range (context-based, weaker) |
+| `KindACHTrace` | ACH trace numbers | Context keyword + prefix range (context-based, weaker) |
+| `KindMerchantID` | Merchant/terminal IDs | Context keyword + format (context-based, weaker) |
+| `KindBTC` | Bitcoin addresses (P2PKH, P2SH, Bech32, Bech32m/Taproot) | Base58Check (double SHA-256) / Bech32 polynomial checksum |
+| `KindETH` | Ethereum addresses (0x + 40 hex) | EIP-55 mixed-case checksum (Keccak-256) |
+| `KindGitHubToken` | GitHub tokens (classic `ghp_`/`gho_`/`ghu_`/`ghs_`/`ghr_`, fine-grained `github_pat_`) | Prefix + body character set + length |
+| `KindSlackToken` | Slack API tokens (`xoxb-`/`xoxp-`/`xoxa-`/`xoxo-`/`xoxr-`/`xoxs-`) | Prefix + type character + minimum body length |
+| `KindGoogleAPIKey` | Google API keys (`AIza...`) | Prefix + 35-char body |
+| `KindPrivateKeyPEM` | PEM private key headers (RSA/EC/DSA/OpenSSH/PKCS#8) | `-----BEGIN [ALGO ]PRIVATE KEY-----` header parse |
 | `WithAll()` | All of the above | |
 
-The table summarizes validation; each [detector type](https://pkg.go.dev/github.com/nao1215/embargo/detector) documents its exact acceptance rules and score. Detection does not establish that an account exists or that a credential authenticates. [WithAll](https://pkg.go.dev/github.com/nao1215/embargo#WithAll) includes context-based matches; use individual options when false positives are costly.
+Detection does not establish that an account exists or that a credential authenticates. Scores are heuristics, not probabilities.
 
 ## Installation and requirements
 
-In an existing Go module, run `go get github.com/nao1215/embargo`. The library requires Go 1.22 or later and is tested on Linux, macOS, and Windows.
+In an existing Go module, run `go get github.com/nao1215/embargo`. The library requires Go 1.26.11 or later and is tested on Linux, macOS, and Windows.
 
-## Scan bytes, strings, or streams
+## Scanning and masking
 
-Use [Scan](https://pkg.go.dev/github.com/nao1215/embargo#Scanner.Scan) for `[]byte`, [ScanString](https://pkg.go.dev/github.com/nao1215/embargo#Scanner.ScanString) for strings, or [ScanReader](https://pkg.go.dev/github.com/nao1215/embargo#Scanner.ScanReader) for a reader whose content fits in memory. For line-oriented logs, import `strings` and use [ScanLines](https://pkg.go.dev/github.com/nao1215/embargo#Scanner.ScanLines):
+Use Scan for bytes, ScanString for text, or ScanLines for independent lines. Findings contain Kind, Start, End and Confidence; slice the original input when you need the matched value. Every overlap remains visible, ordered by position. ScanLines limits lines to 1 MiB and reports line-relative offsets.
 
-<!-- example: example_test.go:ExampleScanner_ScanLines -->
-```go
-scanner := embargo.NewScanner(embargo.WithEmail())
-input := "safe line\nadmin@example.com\n"
-err := scanner.ScanLines(strings.NewReader(input), func(n int, line []byte, findings []embargo.Finding) {
-	for _, f := range findings {
-		fmt.Printf("line %d [%d:%d]: %s\n", n, f.Start, f.End, line[f.Start:f.End])
-	}
-})
-if err != nil {
-	fmt.Println("error:", err)
-}
-// Output:
-// line 2 [0:17]: admin@example.com
-```
+Mask replaces the union of overlapping spans with [REDACTED]. MaskFunc accepts your replacement function, for example to keep a card's last four digits. Invalid ranges redact the entire input. See the [runnable examples](https://pkg.go.dev/github.com/nao1215/embargo#example-MaskFunc).
 
-The method docs specify line limits, offsets, callback lifetime, and read errors. The [package documentation](https://pkg.go.dev/github.com/nao1215/embargo) explains the scanning pipeline; [benchmarks](doc/benchmarks.md) record its measurements.
-
-## Work with findings
-
-[Finding](https://pkg.go.dev/github.com/nao1215/embargo/detector#Finding) exposes the matched value and detector-specific detail. Use `Is` or an `Is*` method to select a detector, `Kind` to classify financial data, PII, or credentials, and typed accessors such as `PANDetail` to read metadata without a direct type assertion.
-
-The [detail example](https://pkg.go.dev/github.com/nao1215/embargo/detector#example-Finding.PANDetail) shows brand and last-four access. [Scanner options](https://pkg.go.dev/github.com/nao1215/embargo#example-NewScanner-Options) show how to retain overlapping matches and order findings by position. [Full-width digit support](https://pkg.go.dev/github.com/nao1215/embargo/detector#hdr-Full_Width_Digits_and_Boundaries) lists the detectors that normalize Japanese numeric text.
-
-## Filter by confidence
-
-[WithMinConfidence](https://pkg.go.dev/github.com/nao1215/embargo#WithMinConfidence) selects the results to keep:
-
-<!-- example: example_test.go:ExampleWithMinConfidence -->
-```go
-text := "user tanaka@example.com bank account 12345678"
-for _, threshold := range []float64{0.4, 0.8} {
-	scanner := embargo.NewScanner(
-		embargo.WithEmail(), embargo.WithBankAccount(),
-		embargo.WithMinConfidence(threshold),
-	)
-	fmt.Printf("threshold %.1f: %d findings\n", threshold, len(scanner.ScanString(text)))
-}
-// Output:
-// threshold 0.4: 2 findings
-// threshold 0.8: 1 findings
-```
-
-Read the [confidence model](https://pkg.go.dev/github.com/nao1215/embargo#hdr-Confidence) before using the score as a policy; `Finding.Level` offers named categories when an exact number is unnecessary.
-
-## Mask findings
-
-Import `detector` and `mask` alongside `embargo` to assign a strategy to each detector:
-
-<!-- example: mask/example_test.go:ExampleMask -->
-```go
-scanner := embargo.NewScanner(embargo.WithPAN(), embargo.WithEmail())
-text := "user tanaka@example.com paid with 4532015112830366"
-findings := scanner.ScanString(text)
-
-// Apply different masking strategies per detector.
-masked := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{
-	detector.NamePAN:   mask.Last4,
-	detector.NameEmail: mask.Partial,
-})
-
-fmt.Println(masked)
-// Output:
-// user t*****@example.com paid with ************0366
-```
-
-[MaskAll](https://pkg.go.dev/github.com/nao1215/embargo/mask#MaskAll) applies one strategy to every finding. The [strategy example](https://pkg.go.dev/github.com/nao1215/embargo/mask#example-Mask-Strategies) compares `Redact`, `Last4`, `First1Last4`, `Partial`, and `Hash`; their docs specify what remains visible and how overlaps are handled.
-
-## Add a detector
-
-Use [WithDetector](https://pkg.go.dev/github.com/nao1215/embargo#example-WithDetector) with `detector.NewRegex` for a custom pattern such as a ticket ID. For domain validation, implement [Detector](https://pkg.go.dev/github.com/nao1215/embargo/detector#Detector). The [custom detector guide](https://pkg.go.dev/github.com/nao1215/embargo#hdr-Custom_Detectors) explains hint selection and links the runnable example.
+Implement Detector.Scan for application-specific tokens and add it with WithDetector. Custom detectors must return valid spans and scores, leave input unchanged, and support concurrent calls when shared.
 
 ## Testing
 
-The library has zero dependencies; test-only tools live in the separate [tests/](tests/) module (Go 1.26.0+). Run `go test ./...` in both directories; this executes the Go examples and checks README snippets against them. See [testing](doc/testing.md) for lint, vet, fuzzing, golden updates, coverage, and mutation checks.
+The library has zero dependencies; test-only tools live in the separate [tests/](tests/) module (Go 1.26.11+). Run `go test ./...` in both directories; this executes the Go examples and checks README snippets against them. See [testing](doc/testing.md) for lint, vet, fuzzing, golden updates, coverage, and mutation checks.
 
 ## Contributing
 
@@ -172,9 +84,9 @@ Bug reports, feature requests, and pull requests are welcome through [GitHub Iss
 
 [MIT License](LICENSE).
 
-## Contributors ✨
+## Contributors
 
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/en/reference/emoji-key/)):
+Thanks to our contributors:
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -182,7 +94,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/e
 <table>
   <tbody>
     <tr>
-      <td align="center" valign="top" width="14.28%"><a href="https://debimate.jp/"><img src="https://avatars.githubusercontent.com/u/22737008?v=4?s=75" width="75px;" alt="CHIKAMATSU Naohiro"/><br /><sub><b>CHIKAMATSU Naohiro</b></sub></a><br /><a href="https://github.com/nao1215/embargo/commits?author=nao1215" title="Code">💻</a> <a href="https://github.com/nao1215/embargo/commits?author=nao1215" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://debimate.jp/"><img src="https://avatars.githubusercontent.com/u/22737008?v=4?s=75" width="75px;" alt="CHIKAMATSU Naohiro"/><br /><sub>CHIKAMATSU Naohiro</sub></a><br /><a href="https://github.com/nao1215/embargo/commits?author=nao1215" title="Code">Code</a> <a href="https://github.com/nao1215/embargo/commits?author=nao1215" title="Documentation">Documentation</a></td>
     </tr>
   </tbody>
 </table>

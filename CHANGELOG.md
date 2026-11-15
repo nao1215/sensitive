@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Breaking changes
+
+- Runtime operations now live in embargo. Use NewScanner(WithKinds(KindEmail, KindPAN)) instead of individual WithEmail/WithPAN options or detector.NewX constructors; detector implementations are internal. NewScanner() and a zero Scanner enable all built-ins, including IP addresses and context-based detectors; WithKinds() explicitly selects none and WithAll() resets all.
+- Finding has Kind, Start, End and Confidence. Replace DetectorName, SensitiveKind, Is/IsX and Kind() with Kind comparisons, and RawValue with a slice of the original input. Detail structs, typed accessors, interpretation enums, Level and public normalization are removed; use a domain parser when interpretation is needed.
+- Detector requires only Scan([]byte) []Finding. Implement custom matching directly instead of detector.NewRegex, Name and Hints. WithDetector appends independently of built-ins; nil or typed-nil detectors and invalid findings panic with fixed messages.
+- ScannerOption is sealed and replaces Option. WithKinds replaces the built-in selection; custom registrations no longer replace one another by name. Invalid WithMinConfidence values panic instead of clamping.
+- All overlaps are retained and findings are sorted by start, descending end, kind and descending confidence. Remove WithoutDedup and WithSortByPosition. ScanReader is removed; explicitly bound and read the input before Scan, or use ScanLines for independent lines.
+- Use embargo.Mask instead of mask.MaskAll with Redact. The replacement is [REDACTED], overlapping spans are merged, and invalid ranges redact the entire text. MaskFunc replaces custom Strategy, Last4, First1Last4, Partial and Hash; its callback receives the merged span and the highest-confidence kind. Filter findings explicitly for per-kind policies.
+- Go 1.26.11 is the minimum in both modules, keeping the previous supported Go series and the net/http fix for GO-2026-6859 required by the upcoming HTTP test recorder. The root module still has no requirements.
+
+### Testing
+
+- Lock the runtime API, constant values and complete method sets with a go/types golden, reject public struct embedding, and require recognized runnable Examples for every public identifier. Preserve internal detection fixtures, independent checksum oracles and rapid shrinking tests.
+- Enable the 77-linter union audited across the owner's Go libraries, with named and explained local suppressions, and enforce dependency direction with depguard and go-arch-lint. Add interval-union property and fuzz tests for caller-controlled masking.
+
+
 ## [0.3.0] - 2026-11-15
 
 ### Changed

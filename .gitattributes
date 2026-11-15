@@ -5,3 +5,8 @@ testdata/mixed.golden text eol=lf
 # go mod tidy emits LF on every platform.
 *.mod text eol=lf
 *.sum text eol=lf
+
+# API snapshots and executable documentation compare exact bytes.
+*.golden text eol=lf
+*.md text eol=lf
+*.go text eol=lf

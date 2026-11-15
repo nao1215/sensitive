@@ -1,6 +1,6 @@
 # embargo
 
-sensitive is a Go library for detecting sensitive data in text. It detects credit card numbers (PAN), email addresses, phone numbers, My Number (Japanese national ID), and other confidential information, returning the position, type, and confidence level of each finding. Masking is optional — the library focuses on detection, allowing users to implement their own masking logic using the detection results.
+embargo is a Go library for detecting sensitive data in text. It detects credit card numbers (PAN), email addresses, phone numbers, My Number (Japanese national ID), and other confidential information, returning the position, type, and confidence level of each finding. Masking is optional — the library focuses on detection, allowing users to implement their own masking logic using the detection results.
 
 ## Codebase Information
 ### Development Commands
@@ -19,11 +19,11 @@ sensitive is a Go library for detecting sensitive data in text. It detects credi
 - Custom detectors: Users can register their own detectors via the Detector interface
 
 ### Architecture
-- `embargo.go`: Core definitions (Scanner, Finding, Detector interfaces)
+- `finding.go` / `detector.go`: Root Finding, Kind and custom Detector contracts
 - `scanner.go`: Scanner implementation with multi-stage filtering
-- `finding.go`: Finding struct and related types
-- `detector/`: Individual detector implementations (PAN, email, phone, etc.)
-- `mask/`: Optional masking helper package
+- `mask.go`: Mask and caller-controlled MaskFunc
+- `internal/detect/`: Private detector implementations and validation algorithms
+- `embargotest/`: Test-only output recorder (added separately)
 
 ## Development Rules
 - Test-Driven Development: We adopt the test-driven development promoted by t-wada (Takuto Wada). Always write test code and be mindful of the test pyramid.

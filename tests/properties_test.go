@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-
 	"io"
 	"math/big"
 	"os"
@@ -17,11 +16,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nao1215/embargo"
-	"github.com/nao1215/embargo/detector"
-	"github.com/nao1215/embargo/mask"
 	"golang.org/x/crypto/sha3"
 	"pgregory.net/rapid"
+
+	"github.com/nao1215/embargo"
 )
 
 // Each draw is visible to rapid's shrinker; no opaque PRNG seeds are used.
@@ -40,6 +38,7 @@ func changedDigit(raw string, i int) string {
 func context(t *rapid.T) string {
 	return chars(t, " ;,:=\t\"()[]{}", rapid.IntRange(0, 80).Draw(t, "context length"))
 }
+
 func check(t *rapid.T, d embargo.Detector, raw, label string) {
 	prefix := context(t)
 	if rapid.Bool().Draw(t, "encoded separator") {
@@ -48,10 +47,10 @@ func check(t *rapid.T, d embargo.Detector, raw, label string) {
 	prefix += label
 	suffix := context(t)
 	text := prefix + raw + suffix
-	s := embargo.NewScanner(embargo.WithDetector(d))
+	s := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(d))
 	want := s.ScanString(text)
-	if len(want) != 1 || want[0].RawValue != raw || want[0].Start != len(prefix) || want[0].End != len(prefix)+len(raw) {
-		t.Fatalf("%s rejected/mislocated %q: %+v", d.Name(), text, want)
+	if len(want) != 1 || text[want[0].Start:want[0].End] != raw || want[0].Start != len(prefix) || want[0].End != len(prefix)+len(raw) {
+		t.Fatalf("%s rejected/mislocated %q: %+v", "selected detector", text, want)
 	}
 	if !reflect.DeepEqual(want, s.Scan([]byte(text))) {
 		t.Fatal("Scan differs")
@@ -67,12 +66,8 @@ func check(t *rapid.T, d embargo.Detector, raw, label string) {
 		t.Fatal("offset changed detection")
 	}
 	chunk := rapid.IntRange(1, len(raw)+17).Draw(t, "reader chunk")
-	got, err := s.ScanReader(&chunkReader{strings.NewReader(padded), chunk})
-	if err != nil || !reflect.DeepEqual(expected, got) {
-		t.Fatalf("ScanReader mismatch: %v", err)
-	}
 	var lines []embargo.Finding
-	err = s.ScanLines(&chunkReader{strings.NewReader(padded), chunk}, func(n int, line []byte, f []embargo.Finding) {
+	err := s.ScanLines(&chunkReader{strings.NewReader(padded), chunk}, func(n int, line []byte, f []embargo.Finding) {
 		if n != 1 || string(line) != padded {
 			t.Fatal("line changed")
 		}
@@ -81,15 +76,15 @@ func check(t *rapid.T, d embargo.Detector, raw, label string) {
 	if err != nil || !reflect.DeepEqual(expected, lines) {
 		t.Fatalf("ScanLines mismatch: %v", err)
 	}
-	redacted := mask.MaskAll(text, want, mask.Redact)
-	if redacted != prefix+strings.Repeat("*", len(raw))+suffix {
+	redacted := embargo.Mask(text, want)
+	if redacted != prefix+"[REDACTED]"+suffix {
 		t.Fatal("redaction changed context or leaked value")
 	}
-	if mask.MaskAll(redacted, want, mask.Redact) != redacted {
-		t.Fatal("same-findings redaction is not idempotent")
+	if embargo.Mask(redacted, s.ScanString(redacted)) != redacted {
+		t.Fatal("rescan redaction is not idempotent")
 	}
-	if len(raw) > 4 && mask.MaskAll(text, want, mask.Last4) != prefix+strings.Repeat("*", len(raw)-4)+raw[len(raw)-4:]+suffix {
-		t.Fatal("Last4 contract")
+	if len(raw) > 4 && embargo.MaskFunc(text, want, func(_ embargo.Kind, v string) string { return "[REDACTED]" + v[len(v)-4:] }) != prefix+"[REDACTED]"+raw[len(raw)-4:]+suffix {
+		t.Fatal("last four replacement")
 	}
 }
 
@@ -104,21 +99,38 @@ func (r *chunkReader) Read(p []byte) (int, error) {
 	}
 	return r.reader.Read(p)
 }
+
 func rejects(t *rapid.T, d embargo.Detector, raw string) {
 	if got := d.Scan([]byte(raw)); len(got) != 0 {
-		t.Fatalf("%s accepted near-miss %q: %+v", d.Name(), raw, got)
+		t.Fatalf("%s accepted near-miss %q: %+v", "selected detector", raw, got)
 	}
 }
 
 func TestPAN(t *testing.T) {
+	t.Parallel()
 	for _, spec := range []struct {
 		prefix  string
 		lengths []int
 	}{
-		{"4", []int{13, 16}}, {"51", []int{16}}, {"55", []int{16}}, {"2221", []int{16}}, {"2720", []int{16}},
-		{"34", []int{15}}, {"37", []int{15}}, {"6011", []int{16}}, {"65", []int{16}}, {"3528", []int{16}}, {"3589", []int{16}}, {"36", []int{14, 15, 16}}, {"38", []int{14, 15, 16}}, {"300", []int{14, 15, 16}}, {"644", []int{16}}, {"62", []int{16, 17, 18, 19}},
+		{prefix: "4", lengths: []int{13, 16}},
+		{prefix: "51", lengths: []int{16}},
+		{prefix: "55", lengths: []int{16}},
+		{prefix: "2221", lengths: []int{16}},
+		{prefix: "2720", lengths: []int{16}},
+		{prefix: "34", lengths: []int{15}},
+		{prefix: "37", lengths: []int{15}},
+		{prefix: "6011", lengths: []int{16}},
+		{prefix: "65", lengths: []int{16}},
+		{prefix: "3528", lengths: []int{16}},
+		{prefix: "3589", lengths: []int{16}},
+		{prefix: "36", lengths: []int{14, 15, 16}},
+		{prefix: "38", lengths: []int{14, 15, 16}},
+		{prefix: "300", lengths: []int{14, 15, 16}},
+		{prefix: "644", lengths: []int{16}},
+		{prefix: "62", lengths: []int{16, 17, 18, 19}},
 	} {
 		t.Run(spec.prefix, func(t *testing.T) {
+			t.Parallel()
 			rapid.Check(t, func(t *rapid.T) {
 				n := rapid.SampledFrom(spec.lengths).Draw(t, "PAN length")
 				prefix := spec.prefix
@@ -147,7 +159,7 @@ func TestPAN(t *testing.T) {
 					sum += v
 				}
 				raw += strconv.Itoa((10 - sum%10) % 10)
-				d := detector.NewPAN()
+				d := embargo.NewScanner(embargo.WithKinds(embargo.KindPAN))
 				check(t, d, raw, "")
 				if got := d.Scan([]byte(raw)); got[0].Confidence < 0.99 {
 					t.Fatal("valid Luhn confidence")
@@ -163,7 +175,9 @@ func TestPAN(t *testing.T) {
 }
 
 func TestNumericChecksums(t *testing.T) {
+	t.Parallel()
 	t.Run("my_number", func(t *testing.T) {
+		t.Parallel()
 		rapid.Check(t, func(t *rapid.T) {
 			raw := digits(t, 11)
 			sum := 0
@@ -175,13 +189,14 @@ func TestNumericChecksums(t *testing.T) {
 				c = 0
 			}
 			raw += strconv.Itoa(c)
-			d := detector.NewMyNumber()
+			d := embargo.NewScanner(embargo.WithKinds(embargo.KindMyNumber))
 			check(t, d, raw, "")
 			rejects(t, d, changedDigit(raw, 11))
 			rejects(t, d, raw+"0")
 		})
 	})
 	t.Run("aba", func(t *testing.T) {
+		t.Parallel()
 		rapid.Check(t, func(t *rapid.T) {
 			prefix := rapid.SampledFrom([]int{1, 12, 21, 32, 61, 72, 80}).Draw(t, "district")
 			raw := fmt.Sprintf("%02d", prefix) + digits(t, 6)
@@ -193,7 +208,7 @@ func TestNumericChecksums(t *testing.T) {
 				sum += int(b-'0') * []int{3, 7, 1}[i%3]
 			}
 			raw += strconv.Itoa((10 - sum%10) % 10)
-			d := detector.NewABARouting()
+			d := embargo.NewScanner(embargo.WithKinds(embargo.KindABARouting))
 			check(t, d, raw, "")
 			rejects(t, d, changedDigit(raw, 8))
 			rejects(t, d, raw+"0")
@@ -201,14 +216,18 @@ func TestNumericChecksums(t *testing.T) {
 	})
 }
 
+//nolint:gocognit // Keep the independent checksum encoder with the generated inputs it validates.
 func TestIBAN(t *testing.T) {
-	data, err := os.ReadFile("../detector/testdata/iban-registry.json")
+	t.Parallel()
+	data, err := os.ReadFile("../internal/detect/testdata/iban-registry.json")
 	if err != nil {
 		t.Fatal(err)
 	}
 	var countries []struct {
-		Country, Structure, Example string
-		Length                      int
+		Country   string `json:"country"`
+		Structure string `json:"structure"`
+		Example   string `json:"example"`
+		Length    int    `json:"length"`
 	}
 	if err = json.Unmarshal(data, &countries); err != nil {
 		t.Fatal(err)
@@ -218,6 +237,7 @@ func TestIBAN(t *testing.T) {
 	}
 	for _, c := range countries {
 		t.Run(c.Country, func(t *testing.T) {
+			t.Parallel()
 			rapid.Check(t, func(t *rapid.T) {
 				var bbanBuilder strings.Builder
 				for _, g := range regexp.MustCompile(`(\d+)!([nac])`).FindAllStringSubmatch(c.Structure, -1) {
@@ -225,14 +245,17 @@ func TestIBAN(t *testing.T) {
 					if e != nil {
 						t.Fatal(e)
 					}
+					//nolint:errcheck // strings.Builder writes always succeed.
 					bbanBuilder.WriteString(chars(t, map[string]string{"n": "0123456789", "a": "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "c": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"}[g[2]], n))
 				}
 				bban := bbanBuilder.String()
 				var number strings.Builder
 				for _, r := range bban + c.Country + "00" {
 					if r >= 'A' && r <= 'Z' {
+						//nolint:errcheck // strings.Builder writes always succeed.
 						number.WriteString(strconv.Itoa(int(r-'A') + 10))
 					} else {
+						//nolint:errcheck // strings.Builder writes always succeed.
 						number.WriteRune(r)
 					}
 				}
@@ -244,7 +267,7 @@ func TestIBAN(t *testing.T) {
 				if len(raw) != c.Length {
 					t.Fatal("registry length")
 				}
-				d := detector.NewIBAN()
+				d := embargo.NewScanner(embargo.WithKinds(embargo.KindIBAN))
 				check(t, d, raw, "")
 				rejects(t, d, changedDigit(raw, 3))
 				rejects(t, d, raw[:len(raw)-1])
@@ -255,19 +278,21 @@ func TestIBAN(t *testing.T) {
 }
 
 func TestTokens(t *testing.T) {
+	t.Parallel()
 	for _, family := range []string{"aws", "github", "slack", "google", "jwt", "pem", "swift", "sort"} {
 		t.Run(family, func(t *testing.T) {
+			t.Parallel()
 			rapid.Check(t, func(t *rapid.T) {
 				const alnum = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 				var d embargo.Detector
 				var raw, bad, label string
 				switch family {
 				case "aws":
-					d = detector.NewAWSKey()
+					d = embargo.NewScanner(embargo.WithKinds(embargo.KindAWSKey))
 					raw = rapid.SampledFrom([]string{"AKIA", "ASIA"}).Draw(t, "prefix") + chars(t, "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 16)
 					bad = raw[:19]
 				case "github":
-					d = detector.NewGitHubToken()
+					d = embargo.NewScanner(embargo.WithKinds(embargo.KindGitHubToken))
 					p := rapid.SampledFrom([]string{"ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_"}).Draw(t, "prefix")
 					if p == "github_pat_" {
 						raw = p + chars(t, alnum+"_", rapid.IntRange(22, 200).Draw(t, "body length"))
@@ -278,16 +303,16 @@ func TestTokens(t *testing.T) {
 						rejects(t, d, raw+chars(t, alnum, rapid.IntRange(1, 40).Draw(t, "excess length")))
 					}
 				case "slack":
-					d = detector.NewSlackToken()
+					d = embargo.NewScanner(embargo.WithKinds(embargo.KindSlackToken))
 					p := "xox" + chars(t, "bpaors", 1) + "-"
 					raw = p + chars(t, alnum+"-", rapid.IntRange(10, 200).Draw(t, "body length"))
 					bad = p + chars(t, alnum, 9)
 				case "google":
-					d = detector.NewGoogleAPIKey()
+					d = embargo.NewScanner(embargo.WithKinds(embargo.KindGoogleAPIKey))
 					raw = "AIza" + chars(t, alnum+"_-", 35)
 					bad = raw[:38]
 				case "jwt":
-					d = detector.NewJWT()
+					d = embargo.NewScanner(embargo.WithKinds(embargo.KindJWT))
 					alg := rapid.SampledFrom([]string{"HS256", "RS256", "none"}).Draw(t, "algorithm")
 					h := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"` + alg + `","typ":"JWT"}`))
 					p := base64.RawURLEncoding.EncodeToString([]byte(`{"sub":"` + chars(t, alnum, rapid.IntRange(1, 200).Draw(t, "subject length")) + `"}`))
@@ -298,12 +323,12 @@ func TestTokens(t *testing.T) {
 					raw = h + "." + p + "." + sig
 					bad = h + ".!invalid." + sig
 				case "pem":
-					d = detector.NewPrivateKeyPEM()
+					d = embargo.NewScanner(embargo.WithKinds(embargo.KindPrivateKeyPEM))
 					kind := rapid.SampledFrom([]string{"PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY", "DSA PRIVATE KEY", "OPENSSH PRIVATE KEY", "ENCRYPTED PRIVATE KEY"}).Draw(t, "kind")
 					raw = "-----BEGIN " + kind + "-----"
 					bad = strings.Replace(raw, "PRIVATE", "PUBLIC", 1)
 				case "swift":
-					d = detector.NewSWIFTBIC()
+					d = embargo.NewScanner(embargo.WithKinds(embargo.KindSWIFTBIC))
 					raw = chars(t, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 4) + rapid.SampledFrom([]string{"GB", "JP", "US", "DE", "FR"}).Draw(t, "country") + chars(t, "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 2)
 					if rapid.Bool().Draw(t, "branch") {
 						raw += chars(t, "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 3)
@@ -311,7 +336,7 @@ func TestTokens(t *testing.T) {
 					label = "SWIFT: "
 					bad = raw[:4] + "00" + raw[6:]
 				case "sort":
-					d = detector.NewUKSortCode()
+					d = embargo.NewScanner(embargo.WithKinds(embargo.KindUKSortCode))
 					sep := rapid.SampledFrom([]string{"-", " "}).Draw(t, "separator")
 					raw = digits(t, 2) + sep + digits(t, 2) + sep + digits(t, 2)
 					if strings.ReplaceAll(raw, sep, "") == "000000" {
@@ -327,9 +352,13 @@ func TestTokens(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // Keep the independent checksum encoder with the generated inputs it validates.
 func TestBitcoin(t *testing.T) {
+	t.Parallel()
+	//nolint:goconst // Keep Bitcoin address family names explicit in the independent oracle.
 	for _, kind := range []string{"p2pkh", "p2sh", "p2wpkh", "p2wsh", "p2tr"} {
 		t.Run(kind, func(t *testing.T) {
+			t.Parallel()
 			rapid.Check(t, func(t *rapid.T) {
 				n := 20
 				if kind == "p2wsh" || kind == "p2tr" {
@@ -368,7 +397,7 @@ func TestBitcoin(t *testing.T) {
 					}
 					raw = encodeWitness(v, payload)
 				}
-				d := detector.NewBTC()
+				d := embargo.NewScanner(embargo.WithKinds(embargo.KindBTC))
 				check(t, d, raw, "")
 				b := []byte(raw)
 				if b[len(b)-1] == 'q' {
@@ -384,6 +413,7 @@ func TestBitcoin(t *testing.T) {
 
 // x/crypto supplies an independent Keccak oracle; it is test-only.
 func TestEIP55(t *testing.T) {
+	t.Parallel()
 	rapid.Check(t, func(t *rapid.T) {
 		b := rapid.SliceOfN(rapid.Byte(), 20, 20).Draw(t, "address")
 		lower := hex.EncodeToString(b)
@@ -399,7 +429,7 @@ func TestEIP55(t *testing.T) {
 			}
 		}
 		raw := "0x" + string(out)
-		d := detector.NewETH()
+		d := embargo.NewScanner(embargo.WithKinds(embargo.KindETH))
 		check(t, d, raw, "")
 		rejects(t, d, raw+"0")
 		// Uniform case is accepted by design, so a flip must leave mixed case.

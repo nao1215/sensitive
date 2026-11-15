@@ -9,57 +9,7 @@ import (
 	"testing"
 
 	"github.com/nao1215/embargo"
-	"github.com/nao1215/embargo/detector"
 )
-
-func TestScanner_ScanReader(t *testing.T) {
-	t.Parallel()
-
-	t.Run("detects sensitive data from reader", func(t *testing.T) {
-		t.Parallel()
-
-		scanner := embargo.NewScanner(embargo.WithEmail())
-		r := strings.NewReader("contact: tanaka@example.com")
-
-		findings, err := scanner.ScanReader(r)
-		if err != nil {
-			t.Fatalf("ScanReader returned error: %v", err)
-		}
-		if len(findings) != 1 {
-			t.Fatalf("expected 1 finding, got %d", len(findings))
-		}
-		if !findings[0].IsEmail() {
-			t.Error("expected email finding")
-		}
-	})
-
-	t.Run("empty reader returns nil findings", func(t *testing.T) {
-		t.Parallel()
-
-		scanner := embargo.NewScanner(embargo.WithAll())
-		r := strings.NewReader("")
-
-		findings, err := scanner.ScanReader(r)
-		if err != nil {
-			t.Fatalf("ScanReader returned error: %v", err)
-		}
-		if len(findings) != 0 {
-			t.Errorf("expected 0 findings, got %d", len(findings))
-		}
-	})
-
-	t.Run("reader error is propagated", func(t *testing.T) {
-		t.Parallel()
-
-		scanner := embargo.NewScanner(embargo.WithAll())
-		r := &errorReader{err: io.ErrUnexpectedEOF}
-
-		_, err := scanner.ScanReader(r)
-		if !errors.Is(err, io.ErrUnexpectedEOF) {
-			t.Errorf("expected ErrUnexpectedEOF, got %v", err)
-		}
-	})
-}
 
 func TestScanner_ScanLines(t *testing.T) {
 	t.Parallel()
@@ -67,7 +17,7 @@ func TestScanner_ScanLines(t *testing.T) {
 	t.Run("calls fn for lines with findings", func(t *testing.T) {
 		t.Parallel()
 
-		scanner := embargo.NewScanner(embargo.WithEmail(), embargo.WithPAN())
+		scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN))
 		input := "no sensitive data here\n" +
 			"user tanaka@example.com logged in\n" +
 			"another clean line\n" +
@@ -75,14 +25,14 @@ func TestScanner_ScanLines(t *testing.T) {
 		r := strings.NewReader(input)
 
 		var results []struct {
-			lineNum  int
 			findings []embargo.Finding
+			lineNum  int
 		}
 		err := scanner.ScanLines(r, func(lineNum int, _ []byte, findings []embargo.Finding) {
 			results = append(results, struct {
-				lineNum  int
 				findings []embargo.Finding
-			}{lineNum, findings})
+				lineNum  int
+			}{lineNum: lineNum, findings: findings})
 		})
 		if err != nil {
 			t.Fatalf("ScanLines returned error: %v", err)
@@ -96,16 +46,16 @@ func TestScanner_ScanLines(t *testing.T) {
 		if results[0].lineNum != 2 {
 			t.Errorf("first result lineNum = %d, want 2", results[0].lineNum)
 		}
-		if results[0].findings[0].DetectorName != detector.NameEmail {
-			t.Errorf("first result detector = %q, want email", results[0].findings[0].DetectorName)
+		if results[0].findings[0].Kind != embargo.KindEmail {
+			t.Errorf("first result detector = %q, want email", results[0].findings[0].Kind)
 		}
 
 		// Line 4: PAN
 		if results[1].lineNum != 4 {
 			t.Errorf("second result lineNum = %d, want 4", results[1].lineNum)
 		}
-		if results[1].findings[0].DetectorName != detector.NamePAN {
-			t.Errorf("second result detector = %q, want pan", results[1].findings[0].DetectorName)
+		if results[1].findings[0].Kind != embargo.KindPAN {
+			t.Errorf("second result detector = %q, want pan", results[1].findings[0].Kind)
 		}
 	})
 
@@ -145,7 +95,7 @@ func TestScanner_ScanLines(t *testing.T) {
 func TestScanner_ScanLines_lineBytesAreSafeToRetain(t *testing.T) {
 	t.Parallel()
 
-	scanner := embargo.NewScanner(embargo.WithEmail())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
 	input := "user tanaka@example.com logged in\n" +
 		"admin admin@example.com logged in\n"
 	r := strings.NewReader(input)
@@ -176,7 +126,7 @@ func TestScanner_ScanLines_lineBytesAreSafeToRetain(t *testing.T) {
 func TestScanner_ScanLines_longLineReturnsErrTooLong(t *testing.T) {
 	t.Parallel()
 
-	scanner := embargo.NewScanner(embargo.WithEmail())
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
 
 	// Build a single line that exceeds the 1 MB buffer limit.
 	// The line contains an email so ScanLines would call fn if it could
@@ -207,7 +157,7 @@ func (r *errorReader) Read([]byte) (int, error) {
 
 func TestScannerPathsAtBufferBoundaries(t *testing.T) {
 	t.Parallel()
-	s := embargo.NewScanner(embargo.WithAll(), embargo.WithSortByPosition())
+	s := embargo.NewScanner(embargo.WithAll())
 	// ScanLines reports line-relative offsets and cannot match across newlines;
 	// this equivalence deliberately uses one line below the documented 1 MiB cap.
 	for _, offset := range []int{0, 1, 509, 510, 511, 512, 4093, 4095, 4096, 65515, 65535, 65536, 131071} {
@@ -216,12 +166,8 @@ func TestScannerPathsAtBufferBoundaries(t *testing.T) {
 		if !sameKeys(want, keysOf(s.ScanString(input))) {
 			t.Fatal("ScanString differs")
 		}
-		got, err := s.ScanReader(strings.NewReader(input))
-		if err != nil || !sameKeys(want, keysOf(got)) {
-			t.Fatalf("reader offset %d: %v", offset, err)
-		}
 		var lines []embargo.Finding
-		err = s.ScanLines(strings.NewReader(input), func(_ int, _ []byte, findings []embargo.Finding) { lines = append(lines, findings...) })
+		err := s.ScanLines(strings.NewReader(input), func(_ int, _ []byte, findings []embargo.Finding) { lines = append(lines, findings...) })
 		if err != nil || !sameKeys(want, keysOf(lines)) {
 			t.Fatalf("lines offset %d: %v", offset, err)
 		}

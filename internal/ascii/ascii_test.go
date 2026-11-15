@@ -14,12 +14,12 @@ func TestHasLetter(t *testing.T) {
 		input []byte
 		want  bool
 	}{
-		{"lowercase letter", []byte("abc"), true},
-		{"uppercase letter", []byte("ABC"), true},
-		{"mixed", []byte("123a456"), true},
-		{"digits only", []byte("123456"), false},
-		{"empty", []byte{}, false},
-		{"symbols only", []byte("!@#$%"), false},
+		{name: "lowercase letter", input: []byte("abc"), want: true},
+		{name: "uppercase letter", input: []byte("ABC"), want: true},
+		{name: "mixed", input: []byte("123a456"), want: true},
+		{name: "digits only", input: []byte("123456"), want: false},
+		{name: "empty", input: []byte{}, want: false},
+		{name: "symbols only", input: []byte("!@#$%"), want: false},
 	}
 
 	for _, tt := range tests {
@@ -39,15 +39,16 @@ func TestLowerCopy(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		input []byte
 		want  string
+		input []byte
 	}{
-		{"all uppercase", []byte("ABC"), "abc"},
-		{"mixed case", []byte("AbC"), "abc"},
-		{"already lowercase", []byte("abc"), "abc"},
-		{"digits unchanged", []byte("123"), "123"},
-		{"empty", []byte{}, ""},
-		{"non-ASCII unchanged", []byte{0x80, 'A', 0xFF}, string([]byte{0x80, 'a', 0xFF})},
+		//nolint:goconst // Each test states its fixture and expected result independently.
+		{name: "all uppercase", input: []byte("ABC"), want: "abc"},
+		{name: "mixed case", input: []byte("AbC"), want: "abc"},
+		{name: "already lowercase", input: []byte("abc"), want: "abc"},
+		{name: "digits unchanged", input: []byte("123"), want: "123"},
+		{name: "empty", input: []byte{}, want: ""},
+		{name: "non-ASCII unchanged", input: []byte{0x80, 'A', 0xFF}, want: string([]byte{0x80, 'a', 0xFF})},
 	}
 
 	for _, tt := range tests {
@@ -70,11 +71,11 @@ func TestToLower(t *testing.T) {
 		input byte
 		want  byte
 	}{
-		{"uppercase A", 'A', 'a'},
-		{"uppercase Z", 'Z', 'z'},
-		{"already lowercase", 'a', 'a'},
-		{"digit unchanged", '0', '0'},
-		{"symbol unchanged", '@', '@'},
+		{name: "uppercase A", input: 'A', want: 'a'},
+		{name: "uppercase Z", input: 'Z', want: 'z'},
+		{name: "already lowercase", input: 'a', want: 'a'},
+		{name: "digit unchanged", input: '0', want: '0'},
+		{name: "symbol unchanged", input: '@', want: '@'},
 	}
 
 	for _, tt := range tests {

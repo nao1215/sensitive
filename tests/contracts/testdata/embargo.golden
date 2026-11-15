@@ -1,0 +1,44 @@
+Finding.Confidence float64
+Finding.End int
+Finding.Kind Kind
+Finding.Start int
+const KindABARouting Kind = "aba_routing"
+const KindACHTrace Kind = "ach_trace"
+const KindAWSKey Kind = "awskey"
+const KindBTC Kind = "btc"
+const KindBankAccount Kind = "bank_account"
+const KindCVV Kind = "cvv"
+const KindCardExpiry Kind = "card_expiry"
+const KindETH Kind = "eth"
+const KindEmail Kind = "email"
+const KindGitHubToken Kind = "github_token"
+const KindGoogleAPIKey Kind = "google_api_key"
+const KindIBAN Kind = "iban"
+const KindIPAddr Kind = "ipaddr"
+const KindJPPhone Kind = "phone_jp"
+const KindJWT Kind = "jwt"
+const KindMerchantID Kind = "merchant_id"
+const KindMyNumber Kind = "mynumber"
+const KindPAN Kind = "pan"
+const KindPaymentToken Kind = "payment_token"
+const KindPrivateKeyPEM Kind = "private_key_pem"
+const KindSWIFTBIC Kind = "swiftbic"
+const KindSlackToken Kind = "slack_token"
+const KindUKSortCode Kind = "uk_sortcode"
+func (Detector).Scan(data []byte) []Finding
+func Mask(text string, findings []Finding) string
+func MaskFunc(text string, findings []Finding, replace func(kind Kind, value string) string) string
+func NewScanner(opts ...ScannerOption) *Scanner
+func WithAll() ScannerOption
+func WithDetector(d Detector) ScannerOption
+func WithKinds(kinds ...Kind) ScannerOption
+func WithMinConfidence(threshold float64) ScannerOption
+methodset *Scanner func (*Scanner).Scan(data []byte) []Finding
+methodset *Scanner func (*Scanner).ScanLines(r io.Reader, fn func(lineNum int, line []byte, findings []Finding)) error
+methodset *Scanner func (*Scanner).ScanString(text string) []Finding
+methodset Detector func (Detector).Scan(data []byte) []Finding
+type Detector interface
+type Finding struct
+type Kind string
+type Scanner struct
+type ScannerOption interface (sealed)
