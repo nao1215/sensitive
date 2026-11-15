@@ -36,7 +36,7 @@ func TestEncodedBoundary(t *testing.T) {
 		//nolint:goconst // Each test states its fixture and expected result independently.
 		{d: detect.NewETH(), raw: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"},
 		//nolint:goconst // Each test states its fixture and expected result independently.
-		{d: detect.NewAWSKey(), raw: "AKIAIOSFODNN7EXAMPLE"}, //nolint:gosec // AWS publishes this example access key; it is not an authentication credential.
+		{d: detect.NewAWSKey(), raw: "AKIAIOSFODNN7EXAMPLE"}, // #nosec G101 -- AWS publishes this example access key; it is not an authentication credential.
 		//nolint:goconst // Each test states its fixture and expected result independently.
 		{d: detect.NewIBAN(), raw: "GB82WEST12345698765432"},
 		//nolint:goconst // Each test states its fixture and expected result independently.
@@ -59,7 +59,7 @@ func TestEncodedBoundaryRejectsWordAndMalformedEscapes(t *testing.T) {
 	t.Parallel()
 	for _, prefix := range []string{"v%41", "v%30", "v%5F", "v%2D", "v%GG", "v%3", "word", "v%FF"} {
 		for _, d := range []detect.Detector{detect.NewAWSKey(), detect.NewIBAN(), detect.NewETH()} {
-			//nolint:gosec // This public synthetic credential is a positive detection fixture, not an authentication secret.
+			// #nosec G101 -- This public synthetic credential is a positive detection fixture, not an authentication secret.
 			raw := map[detect.DetectorName]string{detect.NameAWSKey: "AKIAIOSFODNN7EXAMPLE", detect.NameIBAN: "GB82WEST12345698765432", detect.NameETH: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"}[d.Name()]
 			if got := d.Scan([]byte(prefix + raw)); len(got) != 0 {
 				t.Errorf("%s %s: unexpected match", d.Name(), prefix)

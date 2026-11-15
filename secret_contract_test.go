@@ -42,7 +42,7 @@ func TestSecretPanic(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	//nolint:gosec // The executable is the current test binary, with an exact helper test name and isolated environment.
+	// #nosec G204 -- The executable is the current test binary, with an exact helper test name and isolated environment.
 	cmd := exec.CommandContext(t.Context(), executable, "-test.run=^TestSecretPanic$")
 	cmd.Env = []string{"EMBARGO_SECRET_CHILD=1"}
 	if root, ok := os.LookupEnv("SystemRoot"); ok {
@@ -62,7 +62,7 @@ func TestNoRetiredMarker(t *testing.T) {
 			t.Fatal(err)
 		}
 		for _, path := range paths {
-			//nolint:gosec // Paths come from fixed local package globs, not caller input.
+			// #nosec G304 -- Paths come from fixed local package globs, not caller input.
 			data, readErr := os.ReadFile(path)
 			if readErr != nil {
 				t.Fatal(readErr)

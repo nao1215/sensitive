@@ -35,6 +35,8 @@ func WithAll() ScannerOption
 func WithDetector(d Detector) ScannerOption
 func WithKinds(kinds ...Kind) ScannerOption
 func WithMinConfidence(threshold float64) ScannerOption
+func WithSensitiveKeys(keys ...string) ScannerOption
+methodset *Input[T interface{~string | ~[]byte}] func (*Input[T]).Scan(src any) error
 methodset *Input[T interface{~string | ~[]byte}] func (*Input[T]).UnmarshalJSON(data []byte) error
 methodset *Input[T interface{~string | ~[]byte}] func (*Input[T]).UnmarshalText(data []byte) error
 methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).Format(state fmt.State, verb rune)
@@ -44,6 +46,7 @@ methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).MarshalJSON() (
 methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).MarshalText() ([]byte, error)
 methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).Secret() Secret[T]
 methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).String() string
+methodset *Scanner func (*Scanner).MaskJSON(data []byte) (masked []byte, err error)
 methodset *Scanner func (*Scanner).Scan(data []byte) []Finding
 methodset *Scanner func (*Scanner).ScanLines(r io.Reader, fn func(lineNum int, line []byte, findings []Finding)) error
 methodset *Scanner func (*Scanner).ScanString(text string) []Finding

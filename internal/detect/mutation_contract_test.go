@@ -73,7 +73,7 @@ func TestContextWindowContract(t *testing.T) {
 func TestCredentialBoundaryContract(t *testing.T) {
 	t.Parallel()
 	for _, d := range []Detector{NewAWSKey(), NewGitHubToken(), NewGoogleAPIKey(), NewSlackToken(), NewETH()} {
-		//nolint:gosec // This public synthetic credential is a positive detection fixture, not an authentication secret.
+		// #nosec G101 -- This public synthetic credential is a positive detection fixture, not an authentication secret.
 		raw := map[DetectorName]string{NameAWSKey: "AKIAIOSFODNN7EXAMPLE", NameGitHubToken: "ghp_" + strings.Repeat("a", 36), NameGoogleAPIKey: "AIza" + strings.Repeat("a", 35), NameSlackToken: "xoxb-" + strings.Repeat("a", 10), NameETH: "0x" + strings.Repeat("a", 40)}[d.Name()]
 		for _, b := range []byte("AZaz09_") {
 			if d.Name() == NameAWSKey && b == '_' {

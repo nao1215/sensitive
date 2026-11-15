@@ -78,3 +78,20 @@ func TestEncodedBinaryIsADocumentedLimit(t *testing.T) {
 		t.Fatal("encoded canary must expose the documented runtime detection limit")
 	}
 }
+
+func TestSensitiveKeyPolicy(t *testing.T) {
+	t.Parallel()
+	scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithSensitiveKeys("api_key", "pin"))
+	var out bytes.Buffer
+	sink := embargozap.NewWriteSyncer(zapcore.AddSync(&out), scanner)
+	logger := zap.New(zapcore.NewCore(zapcore.NewJSONEncoder(zapcore.EncoderConfig{MessageKey: "msg"}), sink, zap.DebugLevel))
+	logger.Info("request", zap.Any("data", map[string]any{"API-Key": "opaque", "pin": "123x", "count": 7}))
+	if err := logger.Sync(); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`"API-Key":"[REDACTED]"`, `"pin":"[REDACTED]"`, `"count":7`} {
+		if !bytes.Contains(out.Bytes(), []byte(want)) {
+			t.Fatalf("output %s lacks %s", out.Bytes(), want)
+		}
+	}
+}

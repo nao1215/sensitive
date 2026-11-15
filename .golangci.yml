@@ -180,6 +180,10 @@ linters:
           - github.com/sirupsen/logrus$
           - go.opentelemetry.io/otel
           - github.com/getsentry/sentry-go
+          - github.com/m-mizutani/masq$
+          - github.com/samber/slog-formatter$
+          - github.com/showa-93/go-mask$
+          - github.com/bytedance/godlp
           - golang.org/x/crypto/
           - golang.org/x/tools/go/
           - go/types$
@@ -249,6 +253,7 @@ linters:
       exclusions:
       - Input.UnmarshalJSON
       - Input.UnmarshalText
+      - Input.Scan
     revive:
       enable-default-rules: true
       rules:

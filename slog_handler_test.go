@@ -40,7 +40,7 @@ type changingString struct {
 	text  string
 }
 
-func (s changingString) String() string { s.calls.Add(1); return s.text }
+func (s changingString) MarshalJSON() ([]byte, error) { s.calls.Add(1); return json.Marshal(s.text) }
 
 type secretLogValue string
 
@@ -60,7 +60,7 @@ func (panicLogValue) LogValue() slog.Value { panic("synthetic panic must not app
 
 type panicString struct{}
 
-func (panicString) String() string { panic("synthetic panic must not appear") }
+func (panicString) MarshalJSON() ([]byte, error) { panic("synthetic panic must not appear") }
 
 type panicDetector struct{}
 

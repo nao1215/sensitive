@@ -86,3 +86,7 @@ masking-doc: ## Regenerate masking views from runnable Examples
 .PHONY: adapters
 adapters: ## Test all optional logger modules
 	@for module in zap zerolog logrus; do go -C adapters/$$module test ./... || exit; done
+
+.PHONY: comparison-doc
+comparison-doc: ## Measure masking libraries and regenerate comparison tables and chart
+	python3 scripts/comparison_docs.py --measure

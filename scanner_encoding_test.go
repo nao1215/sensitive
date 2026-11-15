@@ -65,7 +65,7 @@ func TestPercentEncodedFindings(t *testing.T) {
 // Random partial escaping checks exact byte ranges after a UTF-8 prefix.
 func TestPercentRoundTripOffsets(t *testing.T) {
 	t.Parallel()
-	//nolint:gosec // Fixed seed for reproducible synthetic tests.
+	// #nosec G404 -- Fixed seed for reproducible synthetic tests.
 	rng := rand.New(rand.NewPCG(91, 27))
 	scanner := NewScanner(WithKinds(KindEmail))
 	for range 2000 {

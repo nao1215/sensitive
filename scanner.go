@@ -12,6 +12,7 @@ import (
 // Scanner holds immutable scan policy. Its zero value selects all built-in detectors.
 // Concurrent use requires custom detectors to support concurrent Scan calls.
 type Scanner struct {
+	sensitiveKeys map[string]struct{}
 	kinds         map[Kind]bool
 	detectors     []detect.Detector
 	hintCache     [][]hintEntry
