@@ -167,7 +167,11 @@ func collectPublicExamples(file *ast.File, required map[string]bool) {
 			}
 			name := d.Name.Name
 			if d.Recv != nil {
-				name = receiverName(d.Recv.List[0].Type) + "_" + name
+				receiver := receiverName(d.Recv.List[0].Type)
+				if !ast.IsExported(receiver) {
+					continue
+				}
+				name = receiver + "_" + name
 			}
 			required[name] = true
 		case *ast.GenDecl:
@@ -211,5 +215,23 @@ func receiverName(expr ast.Expr) string {
 		return receiverName(n.X)
 	default:
 		panic("unsupported receiver")
+	}
+}
+
+func TestExampleInventoryIgnoresPrivateReceivers(t *testing.T) {
+	t.Parallel()
+	source := `package fixture
+ type private struct{}
+ func (private) Error() string {return "fixed"}
+ type Public struct{}
+ func (Public) String() string {return "fixed"}`
+	file, err := parser.ParseFile(token.NewFileSet(), "fixture.go", source, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	required := map[string]bool{}
+	collectPublicExamples(file, required)
+	if required["private_Error"] || !required["Public_String"] {
+		t.Fatal("example inventory confused private and public receivers")
 	}
 }
