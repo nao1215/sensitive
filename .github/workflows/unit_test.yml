@@ -11,7 +11,12 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+
   unit_test:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     name: Unit test
 
     strategy:
@@ -37,6 +42,8 @@ jobs:
         run: go test -cover -coverpkg=./... -coverprofile=coverage.out ./...
 
   cross_build:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     name: Cross build (${{ matrix.goos }})
 
     # The matrix above runs on the three operating systems GitHub hosts runners
@@ -67,6 +74,8 @@ jobs:
         run: go build ./...
 
   property_tests:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     name: Property tests (${{ matrix.os }}, Go ${{ matrix.go }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
@@ -95,3 +104,24 @@ jobs:
         run: |
           go mod tidy -diff
           go test ./...
+
+  documentation:
+    name: README and runnable Examples
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: tests/go.sum
+      - name: Check README snippets and run Examples
+        run: go test ./... -run '^(Example|TestReadme|TestExamples|TestPublicExamples)'
+      - name: Check generated documentation
+        # The impossible subtest pattern checks the compatibility table itself
+        # without running the SDK, HTTP or child-process compatibility suites.
+        run: go -C tests test . -run '^(TestAccuracyTable|TestBenchmarkTable|TestTestingMetrics|TestCompatibilityTable)$/^$'
+      - name: Check documentation tools and change classification
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
