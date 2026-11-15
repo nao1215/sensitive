@@ -13,7 +13,7 @@ embargo is a Go library for detecting sensitive data in text. It detects credit 
 ### Key Features
 - Detection-first design: Detection is the core, masking is optional
 - Zero dependencies: Standard library only, no external dependencies
-- Multi-stage filtering: Hint-based pre-filtering with bytes.Contains (SIMD-optimized) skips 99%+ of non-matching lines
+- Multi-stage filtering: Hint-based pre-filtering with bytes.Contains skips parser work when required keywords are absent
 - Japanese data type support: My Number, Japanese phone numbers, full-width digit normalization
 - Confidence scoring: Each finding includes a confidence level (0.0-1.0)
 - Custom detectors: Users can register their own detectors via the Detector interface
@@ -23,7 +23,7 @@ embargo is a Go library for detecting sensitive data in text. It detects credit 
 - `scanner.go`: Scanner implementation with multi-stage filtering
 - `mask.go`: Mask and caller-controlled MaskFunc
 - `internal/detect/`: Private detector implementations and validation algorithms
-- `embargotest/`: Test-only output recorder (added separately)
+- `embargotest/`: Test-only output recorder with canary and detector checks
 
 ## Development Rules
 - Test-Driven Development: We adopt the test-driven development promoted by t-wada (Takuto Wada). Always write test code and be mindful of the test pyramid.

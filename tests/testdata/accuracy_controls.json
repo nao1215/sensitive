@@ -1,0 +1,18 @@
+[
+ {"source":"UUID", "text":"550e8400-e29b-41d4-a716-446655440000"},
+ {"source":"UUID", "text":"f55593266701308e8b4397a2551a9228d6"},
+ {"source":"git SHA", "text":"7e3b2485a79804638617f2f7b18a508be332c9ed"},
+ {"source":"git SHA with card-shaped digits", "text":"ab4532015112830366cd0123456789abcdef012345"},
+ {"source":"SHA-256 hash", "text":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+ {"source":"MD5 hash", "text":"d41d8cd98f00b204e9800998ecf8427e"},
+ {"source":"timestamp", "text":"2026-11-15T12:34:56.021000021+09:00"},
+ {"source":"timestamp", "text":"1794700800000"},
+ {"source":"order ID", "text":"ORDER_4532015112830366"},
+ {"source":"ambiguous order ID", "text":"Order ID: 4532015112830366"},
+ {"source":"ambiguous shipment ID", "text":"Shipment ID: 123456789018"},
+ {"source":"base64", "text":"VGhpcyBpcyBhIHB1YmxpYyB0ZXN0IHJlY29yZC4="},
+ {"source":"base64 encoded synthetic card", "text":"NDUzMjAxNTExMjgzMDM2Ng=="},
+ {"source":"version", "text":"release v1.26.11 build-20261115"},
+ {"source":"decimal", "text":"measurement 0.021000021"},
+ {"source":"ordinary log", "text":"INFO worker completed request reference=abc123 duration=17ms"}
+]
