@@ -37,9 +37,9 @@ import (
 func main() {
 	text := "email=alice@example.com card=4111111111111111"
 	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN))
-	if _, err := fmt.Println(embargo.Mask(text, scanner.ScanString(text))); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+
 	// Output: email=[REDACTED] card=[REDACTED]
 }
 ```
@@ -111,9 +111,8 @@ Secret hides its value from fmt, slog, JSON, text and XML output. Reveal deliber
 <!-- example: secret_example_test.go:ExampleNewSecret -->
 ```go
 key := embargo.NewSecret("fake-key")
-if _, err := fmt.Println(key); err != nil {
-    panic(err)
-}
+
+fmt.Println(key)
 
 // Output: [REDACTED]
 ```
@@ -190,9 +189,7 @@ func main() {
 		passed = recorder.Check()
 	})
 
-	if _, err := fmt.Println(passed); err != nil {
-		panic(err)
-	}
+	fmt.Println(passed)
 
 	// Output: true
 }

@@ -44,10 +44,9 @@ func ExampleDetector() {
 	custom := markerDetector{marker: []byte("INTERNAL-ONLY")}
 	scanner := custom
 	for _, f := range scanner.Scan([]byte("scope: INTERNAL-ONLY")) {
-		if _, err := fmt.Printf("%s [%d:%d]: %s\n", f.DetectorName, f.Start, f.End, f.RawValue); err != nil {
-			panic(err)
-		}
+		fmt.Printf("%s [%d:%d]: %s\n", f.DetectorName, f.Start, f.End, f.RawValue)
 	}
+
 	// Output:
 	// internal_marker [7:20]: INTERNAL-ONLY
 }
