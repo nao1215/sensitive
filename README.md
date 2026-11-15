@@ -154,8 +154,8 @@ Each link opens the test that produces and checks the shown output.
 | [zap JSON core](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L61-L67) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
 | [zerolog JSON](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L68-L72) | `{"level":"info","token":"[REDACTED]","message":"event"}` |
 | [logrus JSON](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L73-L79) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
-| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/telemetry_integration_test.go#L24-L103) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
-| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/sentry_integration_test.go#L67-L141) | `"signing":{"key":"[REDACTED]"}` |
+| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/telemetry_integration_test.go#L26-L114) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
+| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/sentry_integration_test.go#L69-L152) | `"signing":{"key":"[REDACTED]"}` |
 | [HTTP](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L120-L142) | `[REDACTED]` |
 | [Child panic](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L144-L154) | `panic: [REDACTED]` |
 <!-- tested-outputs:end -->
@@ -192,7 +192,7 @@ This chart shows the held-out synthetic set at the default minimum confidence of
 | Real output tests | Leaks after encoding or buffering | [Loggers](tests/compatibility_integration_test.go), [HTTP](tests/http_integration_test.go) |
 
 <!-- testing-metrics:start -->
-Coverage 96.8% · mutation score 90.68% · 7 fuzz targets, 2949231 executions.
+Coverage 94.9% · mutation score 90.06% · 9 fuzz targets, 2323625 executions.
 <!-- testing-metrics:end -->
 
 [Commands, measurement scope and conditions](doc/testing.md).
@@ -202,7 +202,7 @@ Coverage 96.8% · mutation score 90.68% · 7 fuzz targets, 2949231 executions.
 <!-- benchmarks:start -->
 ![Scanner throughput and slog time](doc/images/benchmarks.svg)
 
-All detectors scan sensitive text at 9.89 MB/s; masking a clean slog event takes 2.26 µs, 2.7× the plain handler.
+All detectors scan sensitive text at 4.76 MB/s; masking a clean slog event takes 2.57 µs, 2.9× the plain handler.
 <!-- benchmarks:end -->
 
 [Machine, method, profiles and full results](doc/benchmarks.md).

@@ -5,7 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -63,7 +65,7 @@ func sentryEvent(d failure) *sentry.Event {
 	return event
 }
 
-//nolint:goconst // Keep the expected outputs and failure modes together in this acceptance matrix.
+//nolint:gocognit,goconst // Keep the expected outputs and failure modes together in this acceptance matrix.
 func checkSentryAcceptance(t *testing.T) {
 	t.Helper()
 	for _, mode := range []string{"safe", "raw-error", "raw-recover", "raw-context", "missing-flush", "regressed"} {
@@ -88,7 +90,7 @@ func checkSentryAcceptance(t *testing.T) {
 
 			switch mode {
 			case "raw-error":
-				hub.CaptureException(errors.New("signing failed: " + key.Reveal()))
+				hub.CaptureException(fmt.Errorf("request: %w", errors.Join(errors.New("database unavailable"), errors.New("token="+key.Reveal()))))
 			case "raw-recover":
 				hub.Recover("signing failed: " + key.Reveal())
 			case "raw-context":
@@ -104,6 +106,9 @@ func checkSentryAcceptance(t *testing.T) {
 			}
 
 			r.Expect("sentry", func(data []byte) bool {
+				if mode == "raw-error" {
+					return json.Valid(data) && bytes.Contains(data, []byte("request:")) && bytes.Contains(data, r.Canary())
+				}
 				if !bytes.Contains(data, []byte(sentryOutputExcerpt)) {
 					return false
 				}
@@ -134,6 +139,12 @@ func checkSentryAcceptance(t *testing.T) {
 			})
 			if r.Check() != (mode == "safe") {
 				t.Fatalf("Sentry detector returned wrong verdict: %v", probe.messages)
+			}
+			if mode == "raw-error" {
+				messages := strings.Join(probe.messages, "\n")
+				if !strings.Contains(messages, "the fake secret appeared") || strings.Contains(messages, "content expectation") {
+					t.Fatal("wrapped error must fail for a leak, not a missing export", probe.messages)
+				}
 			}
 			probe.finish()
 		})

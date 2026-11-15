@@ -33,7 +33,7 @@ func TestPrivateKeyPEMDetector_Scan(t *testing.T) {
 			name:     "RSA private key header",
 			input:    pemHeader("RSA") + "\nMIIEow...\n-----END RSA PRIVATE KEY-----",
 			wantLen:  1,
-			wantRaw:  pemHeader("RSA"),
+			wantRaw:  pemHeader("RSA") + "\nMIIEow...\n-----END RSA PRIVATE KEY-----",
 			wantAlgo: "RSA",
 		},
 		{
@@ -106,5 +106,15 @@ func TestPEMHeaderVectors(t *testing.T) {
 		if len(detect.NewPrivateKeyPEM().Scan([]byte(bad))) != 0 {
 			t.Fatal("public header accepted")
 		}
+	}
+}
+
+func TestPEMIncompleteBlockDoesNotConsumeNextKey(t *testing.T) {
+	t.Parallel()
+	first := pemHeader("")
+	second := first + "\nFAKE\n-----END PRIVATE KEY-----"
+	got := detect.NewPrivateKeyPEM().Scan([]byte(first + "\n" + second))
+	if len(got) != 2 || got[0].RawValue != first || got[1].RawValue != second {
+		t.Fatalf("wrong block bounds: %v", got)
 	}
 }

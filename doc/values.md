@@ -55,3 +55,68 @@ credentials := Credentials{Recovery: embargo.NewSecret("synthetic-recovery-code"
 A database/config DTO can instead declare `Recovery embargo.Input[string]` and copy its Secret into the application's immutable Credentials after loading. Both wrappers mask themselves through fmt, encoding/json and their other supported formatting interfaces. This is not memory erasure or protection after an explicit Reveal, a custom formatter that ignores the interfaces, or a process memory dump. [Runnable Secret Examples](../secret_example_test.go) and [cross-encoder tests](../tests/compatibility_integration_test.go) define the supported paths.
 
 [Support maintenance](https://github.com/sponsors/nao1215).
+
+## Keep domain types independent of embargo
+
+A domain package can implement standard output interfaces without importing embargo. The complete example below is compiled in `tests/domain`; `TestDomainValueContract` runs it through `embargotest.CheckValue` and both embargo slog encoders with detector selection disabled, so detection cannot conceal a missing method.
+
+<!-- domain-value:start -->
+```go
+// Package domain demonstrates a secret type that imports only the standard library.
+package domain
+
+import (
+	"encoding/json"
+	"encoding/xml"
+	"fmt"
+	"io"
+	"log/slog"
+)
+
+// Password is an application-owned credential with explicit output behavior.
+type Password string
+
+// String protects ordinary string formatting and templates.
+func (Password) String() string { return "[REDACTED]" }
+
+// GoString protects Go-syntax formatting.
+func (Password) GoString() string { return "[REDACTED]" }
+
+// Format protects every fmt verb, including quotes and hexadecimal.
+func (Password) Format(state fmt.State, _ rune) {
+	if _, err := io.WriteString(state, "[REDACTED]"); err != nil {
+		return
+	}
+}
+
+// LogValue protects a direct slog attribute.
+func (Password) LogValue() slog.Value { return slog.StringValue("[REDACTED]") }
+
+// MarshalJSON protects JSON leaves, including nested structured logger values.
+func (Password) MarshalJSON() ([]byte, error) { return json.Marshal("[REDACTED]") }
+
+// MarshalText protects text encoding; JSON bypasses it for string-typed map keys.
+func (Password) MarshalText() ([]byte, error) { return []byte("[REDACTED]"), nil }
+
+// MarshalXML protects XML element content.
+func (Password) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	return e.EncodeElement("[REDACTED]", start)
+}
+```
+<!-- domain-value:end -->
+
+| Method | Covered output | Boundary |
+|---|---|---|
+| String | Ordinary fmt string output and templates | `%#v` uses GoString; a formatter can supersede String |
+| GoString | `%#v` | Does not protect JSON or slog |
+| Format | `%v`, `%+v`, `%#v`, `%s`, `%q`, `%x` | fmt itself handles `%T` and `%p` |
+| LogValue | Direct slog attributes, including embargo's handler | Nested JSON fields do not call LogValue |
+| MarshalJSON | JSON values, nested structs/maps and JSON-based logger paths | String-typed JSON map keys bypass both marshaling methods |
+| MarshalText | Text encoders and XML fallback | JSON calls this for non-string map-key types; string kinds take precedence |
+| MarshalXML | XML element content | Does not protect another serialization format |
+
+The embargo handler resolves direct LogValuer values and honors encoding/json's MarshalJSON and MarshalText rules for structured values. Adapters inspect the bytes their logger actually encoded; they honor methods that logger invokes and cannot invent missing method calls. embargotest observes the resulting bytes. `CheckValue(t, func(canary string) any { return Password(canary) })` checks all supported formatter paths and names each path that leaks or cannot be exercised. It also checks Secret and Input in this repository. Homemade types often omit `%#v`, `%+v`, `%q`, MarshalText or LogValue; Secret exists to maintain that contract for users who want it.
+
+A plain string or struct remains supported: the sensitive-key rule and detectors provide the net for values that have neither a wrapper nor formatting methods. No formatter contract protects an explicit conversion such as `string(password)`, a deliberate Reveal, or a debugger memory dump.
+
+CheckValue exercises values, not map keys. In particular, encoding/json reads a defined string type used as a map key directly, even when it implements MarshalText; `map[Password]string` therefore exposes the underlying key. Keep secrets out of map keys, or use a comparable struct wrapper with MarshalText such as Secret. This is a standard-library dispatch rule that an output adapter cannot change before encoding; detectors remain a separate safeguard.

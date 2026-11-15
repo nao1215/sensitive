@@ -10,7 +10,7 @@ type IBANDetail struct {
 //
 //  1. Find two ASCII letters followed by two check digits; uppercase letters for lookup in the supported SWIFT registry country table.
 //  2. Extract the country's required length (up to 30 BBAN characters after the prefix), allowing internal spaces; following spaces delimit text, while adjacent letters or digits reject the candidate.
-//  3. Require MOD 97 (ISO 7064) validation and score the match as 0.95.
+//  3. Reject reserved check digits 00, 01 and 99, require MOD 97 (ISO 7064) validation, and score the match as 0.95.
 type IBAN struct{}
 
 // NewIBAN creates a new IBAN detect.
@@ -98,8 +98,7 @@ func (d *IBAN) Scan(data []byte) []Finding {
 //
 // This avoids heap allocation and is significantly faster for bulk scanning.
 func validateIBANMod97(iban []byte) bool {
-	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-	if len(iban) < 5 {
+	if len(iban) < 5 || (iban[2] == '0' && iban[3] < '2') || (iban[2] == '9' && iban[3] == '9') {
 		return false
 	}
 

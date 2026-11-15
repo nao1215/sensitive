@@ -98,6 +98,8 @@ def sample_index(held):
 
 def page(rows):
     development = json.loads((ROOT/'doc/accuracy.json').read_text())
+    dev50 = json.loads((ROOT/'doc/accuracy-50.json').read_text())
+    held50 = json.loads((ROOT/'doc/accuracy-held-50.json').read_text())
     dev70 = json.loads((ROOT/'doc/accuracy-70.json').read_text())
     held70 = json.loads((ROOT/'doc/accuracy-held-70.json').read_text())
     out = ['# Synthetic accuracy corpus', '', '## Conditions', '',
@@ -107,11 +109,13 @@ def page(rows):
            'A hit requires the same kind and exact unused original byte range. Partial, duplicate and extra matches count as false positives; missing expected ranges count as false negatives. Precision is TP/(TP+FP); recall is TP/(TP+FN). Each detector runs alone.', '',
            'The default minimum confidence remains 0: ambiguous candidates are included. Confidence is a heuristic, not a probability. PAN checksum failures score 0.6; PAN, My Number and Japanese phone candidates with an attached order, invoice, tracking, version, build, serial or shipment label score 0.4. `WithMinConfidence(0.7)` excludes these candidates and can therefore miss genuine secrets under misleading business labels. A global 0.7 threshold also removes the 0.5–0.65 bank-account findings and some sort-code findings; it is not a universal accuracy setting. Both policies are measured below; the README chart uses held-out results at the default threshold.', '',
            '## Encoding policy', '',
-           'Built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in the input before detection. Findings map back to original bytes, so masking covers the escaped representation. Literal `+` and malformed percent escapes remain unchanged. Custom detectors receive the original bytes. Base64, hexadecimal, HTML entities, JSON escapes and recursively percent-encoded forms are not decoded by Scanner; decode application fields explicitly when needed. The logger adapters separately decode JSON strings at their output boundary.', '',
+           'The original 23 built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in the input before detection. Findings map back to original bytes, so masking covers the escaped representation. Literal `+` and malformed percent escapes remain unchanged. Custom detectors receive the original bytes. Base64, hexadecimal, HTML entities, JSON escapes and recursively percent-encoded forms are not decoded by Scanner; decode application fields explicitly when needed. The logger adapters separately decode JSON strings at their output boundary.', '',
            '[Round-trip and offset properties](../scanner_encoding_test.go) exercise random partial escaping and all byte values. [Regression tests](../tests/accuracy_regression_test.go) reject new mismatches and obsolete exceptions in both sets. Known limits retain reasons in [development](../tests/testdata/accuracy_limits.jsonl) and [held-out](../tests/testdata/accuracy_held_limits.jsonl) fixtures.', '',
            '## Held-out results: default threshold 0', '',
            '![Held-out precision and recall](images/accuracy.svg)', ''] + result_table(rows)
     out += ['', '## Development results: default threshold 0', ''] + result_table(development)
+    out += ['', '## Held-out results: minimum confidence 0.5', ''] + result_table(held50)
+    out += ['', '## Development results: minimum confidence 0.5', ''] + result_table(dev50)
     out += ['', '## Held-out results: minimum confidence 0.7', ''] + result_table(held70)
     out += ['', '## Development results: minimum confidence 0.7', ''] + result_table(dev70)
     limits = [(name, sample_index(held), read_jsonl(('accuracy_held_' if held else 'accuracy_')+'limits.jsonl')) for name, held in [('development', False), ('held-out', True)]]
@@ -133,8 +137,9 @@ def page(rows):
                 original = sample.get('text', '')+''.join(sample.get('parts', []))
                 out.append(f"| {name}: `{limit['id']}` | `{excerpt(original)}` | {limit['reason']} |")
     out += ['', '## Regeneration', '', '```sh', 'make accuracy-doc', 'python3 scripts/generate_accuracy.py --check', 'python3 scripts/accuracy_figures.py --check', 'go -C tests test -run "Test(Accuracy|GeneratedAccuracy)" .', '```', '',
-            'The 0.7 results improve PAN, My Number and phone precision on both sets without losing recall in these samples; the default retains their ambiguous business identifiers. Email and encoded-form recall improve on both sets. SWIFT word false positives remain: the rejected attachment rule improved development precision but failed held-out evaluation. A held-out IBAN with check digits 00 passed MOD 97; that discovery remains a documented limit for a future development set.', '',
+            'The 0.7 results improve PAN, My Number and phone precision on both sets without losing recall in these samples; the default retains their ambiguous business identifiers. Email and encoded-form recall improve on both sets. SWIFT word false positives remain: the rejected attachment rule improved development precision but failed held-out evaluation. Round 12 adds development regressions for reserved IBAN check digits 00, 01 and 99 and rejects them before MOD 97. The four formerly held-out false positives are fixed; this historical set is now regression evidence, not unseen evaluation.', '',
             'PEM samples test headers, not full private keys. Generated service tokens test syntax, not authentication. Do not use synthetic identities, account or phone values for transactions or contacting people.', '', '[Support maintenance](https://github.com/sponsors/nao1215).', '']
+    out += ['', (ROOT/'doc/credentials-accuracy.md').read_text(), '', '## Default policy decision', '', 'Scanner, slog, adapters and embargotest keep threshold 0. Slog and adapters honor the explicit Scanner supplied by the caller, while embargotest favors finding forgotten values. Threshold 0.5 removes business-label candidates but retains PAN checksum failures and loses every unlabeled entropy finding. Threshold 0.7 additionally loses bank-account and some sort-code findings. Neither becomes a hidden default. Choose a threshold explicitly for the selected kinds; confidence is not probability. SWIFT development precision remains 54.9%; changing the global threshold does not repair ambiguous alphabetic bank codes.', '']
     return '\n'.join(out)
 
 

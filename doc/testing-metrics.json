@@ -1,60 +1,70 @@
 {
   "date": "2026-11-15",
-  "commit": "7d54404faaecbc271d95f8ad6751fc063e64b65a",
-  "covered_statements": 2453,
-  "total_statements": 2533,
+  "commit": "da95fde8d01b3e3214d70a131aceb07696eedca9",
+  "covered_statements": 2893,
+  "total_statements": 3048,
   "mutation": {
-    "killed": 1517,
-    "lived": 156,
-    "uncovered": 124,
-    "timed_out": 37,
+    "killed": 1676,
+    "lived": 185,
+    "uncovered": 316,
+    "timed_out": 36,
     "not_viable": 0,
     "skipped": 0
   },
-  "efficacy": 90.68,
+  "efficacy": 90.06,
   "mutation_timeout_coefficient": 10,
   "mutation_workers": 4,
-  "mutator_coverage": 93.1,
+  "mutator_coverage": 85.48,
   "fuzz": [
     {
       "target": "FuzzScanner",
-      "executions": 193988,
+      "executions": 88301,
       "seconds_requested": 10
     },
     {
       "target": "FuzzScanLines",
-      "executions": 155656,
+      "executions": 152260,
       "seconds_requested": 10
     },
     {
       "target": "FuzzMask",
-      "executions": 534192,
+      "executions": 546777,
+      "seconds_requested": 10
+    },
+    {
+      "target": "FuzzMaskJSON",
+      "executions": 73008,
+      "seconds_requested": 10
+    },
+    {
+      "target": "FuzzJSONShape",
+      "executions": 75011,
       "seconds_requested": 10
     },
     {
       "target": "FuzzInput",
-      "executions": 418575,
+      "executions": 289735,
       "seconds_requested": 10
     },
     {
       "target": "FuzzCanary",
-      "executions": 63239,
+      "executions": 15082,
       "seconds_requested": 10
     },
     {
       "target": "FuzzJSONStream",
-      "executions": 164044,
+      "executions": 33795,
       "seconds_requested": 10
     },
     {
       "target": "FuzzOutputJSON",
-      "executions": 1419537,
+      "executions": 1049656,
       "seconds_requested": 10
     }
   ],
   "source_sha256": {
-    "coverage": "4cb54150a8f6b5b9f30291172c59126b11e011a590adf58141d05c0fafd5ba9b",
-    "mutation": "0746206fe89b06af8b8fd08b93e62e76ff6bbea1c1ad469dc2c4dc074ead0000",
-    "fuzz": "f343290d994782bcb91eae945ad8899d9b55435e7544dd86afbb8ad9aa7a5a90"
+    "coverage": "8af2883461ebe48300dcf53e9af09cfae47077f7a1b670f0bed2b2f48ffd62d2",
+    "mutation": "827546863229ff9a1b45b3ff92f0963d95f93b5b11d4b0f9b83666ee3d9ec3e0",
+    "fuzz": "3160114031979c58f5d7d82fff8e33870db6793358f0e5f933195c18632a4874"
   }
 }

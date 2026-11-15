@@ -1,3 +1,5 @@
+func CheckValue(tb testing.TB, construct func(canary string) any) (safe bool)
+func Guard(m *testing.M, opts ...Option) int
 func New(tb testing.TB, opts ...Option) *Recorder
 func WithAllowedKinds(kinds ...embargo.Kind) Option
 func WithAllowedValues(values ...string) Option
@@ -8,8 +10,12 @@ methodset *Recorder func (*Recorder).Canary() []byte
 methodset *Recorder func (*Recorder).Check() bool
 methodset *Recorder func (*Recorder).Expect(name string, validate func([]byte) bool)
 methodset *Recorder func (*Recorder).ExpectJSON(name string, path []string, fields map[string]string, count int)
+methodset *Recorder func (*Recorder).File(name string) string
 methodset *Recorder func (*Recorder).HTTP(name string) http.ResponseWriter
+methodset *Recorder func (*Recorder).Header(name string) http.Header
+methodset *Recorder func (*Recorder).Reader() io.Reader
 methodset *Recorder func (*Recorder).Run(ctx context.Context, helper string, wantExit int) error
+methodset *Recorder func (*Recorder).Setenv(key string)
 methodset *Recorder func (*Recorder).Writer(name string) io.Writer
 type Option interface (sealed)
 type Recorder struct

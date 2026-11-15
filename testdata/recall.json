@@ -66,7 +66,7 @@
   },
   {
     "detector": "mynumber",
-    "text": "１２３４５６７８９０１８",
+    "text": "\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18\uff19\uff10\uff11\uff18",
     "positive": true
   },
   {
@@ -294,7 +294,7 @@
   },
   {
     "detector": "bank_account",
-    "text": "口座番号 1234567",
+    "text": "\u53e3\u5ea7\u756a\u53f7 1234567",
     "positive": true
   },
   {
@@ -465,6 +465,36 @@
   {
     "detector": "private_key_pem",
     "text": "-----BEGIN CERTIFICATE-----",
+    "positive": false
+  },
+  {
+    "detector": "credential",
+    "text": "password=forgotten",
+    "positive": true
+  },
+  {
+    "detector": "credential",
+    "text": "passwordless=true",
+    "positive": false
+  },
+  {
+    "detector": "service_token",
+    "text": "sk-proj-Fake0Fake0Fake0Fake0Fake0Fake0Fake0Fake0",
+    "positive": true
+  },
+  {
+    "detector": "service_token",
+    "text": "npm_package_name",
+    "positive": false
+  },
+  {
+    "detector": "high_entropy",
+    "text": "q8V2m0NxK7bJ3wTaZ9cF6rHsL5dY1pUg",
+    "positive": true
+  },
+  {
+    "detector": "high_entropy",
+    "text": "550e8400-e29b-41d4-a716-446655440000",
     "positive": false
   }
 ]

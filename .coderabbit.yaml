@@ -7,5 +7,7 @@ reviews:
     - "!tests/testdata/accuracy_generated_controls.jsonl"
     - "!tests/testdata/accuracy_held_generated.jsonl"
     - "!tests/testdata/accuracy_held_generated_controls.jsonl"
+    - "!tests/testdata/credentials-development.jsonl"
+    - "!tests/testdata/credentials-held.jsonl"
     - "!doc/benchmarks.raw.txt"
     - "!doc/performance/*.txt"

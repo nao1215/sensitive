@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Forgotten credentials and output contracts
+
+Implementation: [PR #77](https://github.com/nao1215/embargo/pull/77), [97a0585](https://github.com/nao1215/embargo/commit/97a0585).
+
+- Add `KindCredential`, `KindServiceToken` and `KindHighEntropy` for credential assignments, URL/DSN passwords, provider prefixes and uncertain random-looking tokens; preserve surrounding connection information, mask complete PEM bodies, and reject IBAN reserved check digits. Scanner and output paths retain the caller's confidence policy; publish separate 0, 0.5 and 0.7 results and the entropy trade-off in [accuracy](doc/accuracy.md).
+
+- Add `embargotest.Guard(m, opts...)` for one-line TestMain supervision of stdout, stderr, default slog, t.Log, panic and inherited subprocess output; fail on detected values, canaries, truncation and timeouts, with stream and candidate test names. Add `CheckValue(tb, constructor)` to exercise standard formatting, serialization, templates, slog and wrapped errors with exact failing paths.
+
+- Add `Recorder.Setenv`, `File`, `Header` and `Reader` for standard environment, config-file and HTTP inputs; use the existing Canary as a plain database row value. Cover every new identifier with godoc, runnable Examples and API goldens, and hold homemade types, Secret and Input to the same formatter contract.
+
+- Add generated service leak comparisons for embargo slog/zap, masq, slog-formatter and go-mask, plus in-memory OTel log export, joined-error, HTTP redirect/error and goleak lifecycle checks. Keep the noisy name-analyzer prototype test-only and omit an error wrapper whose Unwrap would re-expose original messages; document both decisions and the standard-interface domain pattern.
+
 ### Structured application masking
 
 - Add `Scanner.MaskJSON(data []byte) ([]byte, error)` and `WithSensitiveKeys(keys ...string) ScannerOption` to share detector and normalized key rules across JSON documents, structured slog values and all logger adapters; retain JSON shape, duplicate keys and numeric precision, with bounded work and fixed failures ([optimized JSON traversal](https://github.com/nao1215/embargo/commit/62b655e)) ([PR #76](https://github.com/nao1215/embargo/pull/76), [implementation](https://github.com/nao1215/embargo/commit/66099c0)). The default keys mask opaque passwords, tokens and HTTP authorization/cookie values; callers can extend or replace the set.

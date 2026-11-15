@@ -14,6 +14,7 @@ import (
 
 func fuzzSeeds() []string {
 	return []string{
+		"password=forgotten", "sk-proj-" + strings.Repeat("Fake0", 8), "q8V2m0NxK7bJ3wTaZ9cF6rHsL5dY1pUg",
 		"v%20021000021", "v%20123456789018", "v%0909012345678", "v%3A2001:db8::1", "v%３D021000021",
 		"",
 		"user tanaka@example.com paid with 4532015112830366",
@@ -51,7 +52,7 @@ func fuzzSeeds() []string {
 }
 
 func builtinDetectors() []detect.Detector {
-	return []detect.Detector{detect.NewPAN(), detect.NewEmail(), detect.NewJPPhone(), detect.NewMyNumber(), detect.NewJWT(), detect.NewAWSKey(), detect.NewIBAN(), detect.NewIPAddr(), detect.NewSWIFTBIC(), detect.NewABARouting(), detect.NewUKSortCode(), detect.NewCVV(), detect.NewCardExpiry(), detect.NewPaymentToken(), detect.NewBankAccount(), detect.NewACHTrace(), detect.NewMerchantID(), detect.NewBTC(), detect.NewETH(), detect.NewGitHubToken(), detect.NewSlackToken(), detect.NewGoogleAPIKey(), detect.NewPrivateKeyPEM()}
+	return []detect.Detector{&detect.Credential{}, &detect.ServiceToken{}, &detect.HighEntropy{}, detect.NewPAN(), detect.NewEmail(), detect.NewJPPhone(), detect.NewMyNumber(), detect.NewJWT(), detect.NewAWSKey(), detect.NewIBAN(), detect.NewIPAddr(), detect.NewSWIFTBIC(), detect.NewABARouting(), detect.NewUKSortCode(), detect.NewCVV(), detect.NewCardExpiry(), detect.NewPaymentToken(), detect.NewBankAccount(), detect.NewACHTrace(), detect.NewMerchantID(), detect.NewBTC(), detect.NewETH(), detect.NewGitHubToken(), detect.NewSlackToken(), detect.NewGoogleAPIKey(), detect.NewPrivateKeyPEM()}
 }
 
 type findingKey struct {
@@ -87,7 +88,15 @@ func FuzzScanner(f *testing.F) {
 		want := make(map[findingKey]int)
 		decoded, positions := percentOracle(text)
 		for _, d := range detectors {
-			for _, v := range d.Scan(decoded) {
+			input := decoded
+			if d.Name() == "credential" {
+				input = data
+			}
+			for _, v := range d.Scan(input) {
+				if d.Name() == "credential" {
+					want[findingKey{embargo.Kind(v.DetectorName), v.Start, v.End, v.Confidence}]++
+					continue
+				}
 				want[findingKey{embargo.Kind(v.DetectorName), positions[v.Start], positions[v.End], v.Confidence}]++
 			}
 		}
