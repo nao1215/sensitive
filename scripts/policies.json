@@ -276,6 +276,12 @@
     "where": "Verification"
   },
   {
+    "rule": "Lockfile keys match the full-SHA workflow references exactly",
+    "source": "M14",
+    "check": "scripts/lock_actions.py#check_exact_refs",
+    "where": "Verification"
+  },
+  {
     "rule": "Vulnerability scans and CodeQL retain scheduled/PR coverage",
     "source": "R7; R11",
     "check": "scripts/check_policies.py#security-scans",

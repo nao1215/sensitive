@@ -51,6 +51,7 @@ The inventory below translates the owner's active repository instructions into c
 | Every round records workflow and job timings | M14 | [ci-timing](../scripts/check_policies.py) | Verification |
 | Actions use full SHA pins and explicit least privileges | R11; M14 | [workflow-security](../scripts/check_policies.py) | Verification |
 | Lockfile freshness and remote action provenance are checked | M14 | [gh actions-lock --verify](../.github/workflows/verification.yml) | Verification |
+| Lockfile keys match the full-SHA workflow references exactly | M14 | [check_exact_refs](../scripts/lock_actions.py) | Verification |
 | Vulnerability scans and CodeQL retain scheduled/PR coverage | R7; R11 | [security-scans](../scripts/check_policies.py) | Verification |
 | PR titles are English Conventional Commits without agent trailers | R6; M14 | [pr-metadata](../scripts/check_policies.py) | Verification |
 | Squash only the owned PR after green CI and resolved review | R6; M14 | [check_merge](../scripts/check_merge.py) | Pre-merge audit |

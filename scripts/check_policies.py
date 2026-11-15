@@ -80,7 +80,7 @@ def schedules():
     require('scripts/fuzz_targets.py' in text, 'fuzz inventory must be discovered')
     for path in ['.github/workflows/verification.yml','.github/workflows/heavy.yml']:
         require((ROOT/path).is_file(), 'missing technique workflow '+path)
-    for name in ['quint_models.py','check_lean.py','check_prose.py','check_policies.py']:
+    for name in ['quint_models.py','check_lean.py','check_prose.py','check_policies.py','lock_actions.py --check']:
         require(name in read('.github/workflows/verification.yml'), 'verification is not wired: '+name)
 
 

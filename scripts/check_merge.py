@@ -14,6 +14,13 @@ def owned_repository(repo):
         raise ValueError('this workflow only operates on nao1215/embargo')
 
 
+def explicit_review_limit(entry):
+    """Accept the service's explicit limit response, never an ordinary skip."""
+    if entry['author']['login'] not in {'coderabbitai', 'coderabbitai[bot]'}:
+        return False
+    return bool(re.search(r'review rate limit|rate limit exceeded|<!-- This is an auto-generated comment: rate limited by coderabbit.ai -->', entry['body'], re.I))
+
+
 def check_merge(number):
     repo = 'nao1215/embargo'
     owned_repository(repo)
@@ -34,7 +41,7 @@ def check_merge(number):
         cursor = threads['pageInfo']['endCursor']
     rabbit = [x for x in pr['reviews']+pr['comments'] if 'coderabbit' in x['author']['login'].lower()]
     reviewed = any(x.get('commit',{}).get('oid') == pr['headRefOid'] for x in rabbit)
-    rate_limited = any(re.search(r'review rate limit|rate limit exceeded',x['body'],re.I) for x in rabbit)
+    rate_limited = any(explicit_review_limit(x) for x in rabbit)
     if not reviewed and not rate_limited: raise ValueError('current-head CodeRabbit review or explicit rate limit required')
     print(json.dumps({'repository':repo,'pr':number,'head':pr['headRefOid'],'checks':len(checks),'unresolved_threads':0,'explicit_review_rate_limit':rate_limited},indent=2))
     # No release, push, issue edits, or external repository writes occur here.

@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Round 14 implementation: [c7685ad](https://github.com/nao1215/embargo/commit/c7685adc40edbbad3ef87f28b813f68023db9fa8).
+Round 14 implementation: [PR #83](https://github.com/nao1215/embargo/pull/83), [c7685ad](https://github.com/nao1215/embargo/commit/c7685adc40edbbad3ef87f28b813f68023db9fa8).
 
 - Exclude unspecified and loopback addresses from ipaddr findings while retaining other private endpoints. Guard diagnostics count untrusted test-start frames without echoing child-controlled names.
 - Add metamorphic relations, Quint lifecycle replay, compiled Lean reference vectors, offline validation oracles, semantic snapshots and structured adversarial fuzzing. Document encoding and resource limits, including My Number's single-digit collision.
