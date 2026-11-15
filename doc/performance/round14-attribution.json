@@ -2,7 +2,7 @@
   {
     "mutant": "CONDITIONALS_BOUNDARY at mask.go:28:27",
     "results": {
-      "bitmap oracle": "survived",
+      "bitmap oracle": "killed",
       "adversarial": "survived",
       "logger snapshot": "survived",
       "snapshot": "survived",
@@ -77,6 +77,20 @@
       "logger snapshot": "survived",
       "snapshot": "survived",
       "structure fuzz seeds": "survived",
+      "Quint replay": "survived",
+      "metamorphic": "survived",
+      "Lean vectors": "survived",
+      "external oracles": "survived"
+    }
+  },
+  {
+    "mutant": "CONDITIONALS_NEGATION at json.go:199:45",
+    "results": {
+      "bitmap oracle": "survived",
+      "adversarial": "killed",
+      "logger snapshot": "survived",
+      "snapshot": "survived",
+      "structure fuzz seeds": "killed",
       "Quint replay": "survived",
       "metamorphic": "survived",
       "Lean vectors": "survived",

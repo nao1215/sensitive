@@ -53,15 +53,15 @@ The generator rejects incomplete mutation/fuzz runs and records source-log hashe
 ## Measured results
 
 <!-- testing-metrics:start -->
-Measured 2026-11-15 at [a7dd142](https://github.com/nao1215/embargo/commit/a7dd142532cdcddf8237ba0d099827d27154bf6e).
+Measured 2026-11-15 at [c7685ad](https://github.com/nao1215/embargo/commit/c7685adc40edbbad3ef87f28b813f68023db9fa8).
 
 | Measurement | Result | Conditions |
 |---|---|---|
-| Statement coverage | 97.1% (3032/3123) | Root and integration suites combined |
-| Mutation score | 88.26% | gremlins v0.6.0, root tests, 4 workers, 10x timeout |
-| Mutations | 1864 killed, 248 lived, 220 uncovered, 39 timed out | Timeouts do not count as killed |
-| Mutation coverage | 90.57% | Mutated statements exercised by root tests |
-| Fuzzing | 9 targets, 2388415 executions | 10 seconds per target |
+| Statement coverage | 97.1% (3026/3115) | Root and integration suites combined |
+| Mutation score | 88.37% | gremlins v0.6.0, root tests, 2 workers, 10x timeout |
+| Mutations | 1869 killed, 246 lived, 243 uncovered, 38 timed out | Timeouts do not count as killed |
+| Mutation coverage | 89.69% | Mutated statements exercised by root tests |
+| Fuzzing | 13 targets, 3354049 executions | 10 seconds per target |
 <!-- testing-metrics:end -->
 
 ## Round 13 measurement boundary
@@ -73,9 +73,13 @@ The full-run efficacy changed from 90.06% in round 12 to 88.26%; exercised mutat
 The round-13 root mutation command used four workers and timeout coefficient 10; round 14 caps workers at two. Timeouts remain a separate category. The nine ten-second fuzz runs completed under GOMAXPROCS=4; their execution counts are observations, not a stable throughput benchmark. The Guard fixture separately exercises real process output, timeout/overflow, parallel tests and inherited child descriptors, and the CI matrix runs its goleak lifecycle on Linux, Windows and macOS.
 
 The coverage gate measures root-module packages from `go list ./...`, including internal detectors and embargotest. Integration tests contribute coverage for those packages; nested test-tool and adapter modules do not enter the denominator. `scripts/merge_coverage.py --root-module root.cover properties.cover` enforces that scope, and CI requires at least 97%. The cached-log command is exercised by the real-log measurement, separately from this library statement metric.
+## Round 14 measurement boundary
+
+The [full mutation log](performance/round14-mutation.txt), [fuzz log](performance/round14-fuzz.txt) and [combined coverage profile](performance/round14-coverage.txt) retain the c7685ad measurement. Gremlins ran alone with two workers and GOMAXPROCS=4. The [matched survivor review](mutation-review.md#round-14-technique-attribution) separates source changes, newly covered equivalent tie comparisons, nested-tool coverage gaps and timeout transitions. A later zero-width Mask boundary assertion is measured through focused attribution; it is not folded into the published full-run score. Real-log metamorphic checks and snapshot shape assertions were also strengthened afterward without changing runtime code.
+
 ## Round 14 technique decisions
 
-Metamorphic relations compare a line with independent clean lines around it, line permutations, separate and combined kind selections, percent-encoded email spans, repeated masking, compact and pretty JSON, and real slog output. These catch transformations that break consistency even when each individual output looks plausible. The generated independent lines avoid cross-record context: raw Scan uses bounded context windows that may cross a newline, so a keyword in one line and an ambiguous candidate in another are not independent. Inserting a business label inside a line can intentionally change confidence; ScanLines provides explicit record isolation. Percent decoding is one layer; credential grammar still depends on original delimiters. The optional real-log replay uses the checksum-pinned round-13 cache and never commits raw log lines. The round-13 held split has been seen and is now regression data, not an independent estimate for new policy decisions.
+Metamorphic relations compare a line with independent clean lines around it, line permutations, separate and combined kind selections, percent-encoded email spans, repeated masking, compact and pretty JSON, and real slog output. These catch transformations that break consistency even when each individual output looks plausible. The generated independent lines avoid cross-record context: raw Scan uses bounded context windows that may cross a newline, so a keyword in one line and an ambiguous candidate in another are not independent. Inserting a business label inside a line can intentionally change confidence; ScanLines provides explicit record isolation. Percent decoding is one layer; credential grammar still depends on original delimiters. The optional real-log replay uses the checksum-pinned round-13 cache and never commits raw log lines. Every line checks padding, idempotence, the union of two disjoint kind sets, and JSON/slog agreement. Email encoding excludes already-percent-escaped lines because the decoder has one layer. The first 64 adjacent pairs per dataset also check permutation with long clean separators that isolate context windows. The round-13 held split has been seen and is now regression data, not an independent estimate for new policy decisions.
 
 Quint 0.33.1 models Input initialization/failure/snapshots, Recorder writer/expectation/check/cleanup sequences, and Guard parent/child stream limits, exit failures, timeouts, scanner failures and replay. Each model runs 64 simulator traces of 12 transitions and Apalache 0.62.4 checks the invariant to depth eight. Committed deterministic traces are replayed against the Go objects; Guard also drives real child processes and pipes. This reaches combinations that isolated lifecycle examples do not enumerate. The bounds are explicit, and the sequential model does not prove concurrent scheduling or arbitrary custom-detector termination.
 
@@ -109,7 +113,7 @@ Same-runner benchmarks build base and head once and alternate ten measurements i
 | Artifact | Content property before equality | Check |
 |---|---|---|
 | Public API goldens | Constants are included; promoted members are rejected | contracts/api_test.go |
-| Logger event snapshots | Valid JSON, no canary/email, retained nested public fields | Each adapter snapshot_test.go |
+| Logger event snapshots | Valid JSON, no canary/email, retained nested object and array fields | Each adapter snapshot_test.go |
 | Guard failure message | No supplied test name or canary appears; failure exits nonzero | guard_adversarial_test.go and guard_test.go |
 | Large MaskJSON snapshot | Every sensitive field removed; exact integer and public fields retained | snapshot_test.go |
 | Accuracy tables and figures | Unique exact-span matching, valid counters and measured-data rendering | accuracy_test.go and test_accuracy_figures.py |
@@ -120,3 +124,5 @@ Same-runner benchmarks build base and head once and alternate ten measurements i
 | Policy and technique tables | Every row names a real check and CI entry | check_policies.py and testing_techniques.py |
 
 A golden diff is reviewed as an output contract change. Updating a golden cannot suppress its semantic assertions. Generated tables remain dated measurements; equality checks prevent accidental drift and property checks validate the measurement pipeline, not the truth of an unreviewed label.
+
+[Support maintenance](https://github.com/sponsors/nao1215).

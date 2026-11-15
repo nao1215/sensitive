@@ -10,7 +10,7 @@ import (
 
 func TestLargeJSONSnapshot(t *testing.T) {
 	t.Parallel()
-	// Duplicate keys, exact integers, arrays and escaped field names stay visible
+	// Duplicate keys, exact integers and arrays stay visible
 	// in the diff. Inspect their meaning before comparing stored bytes.
 	source := `{"header":{"sequence":9007199254740993,"ok":true},"rows":[` + strings.TrimSuffix(strings.Repeat(`{"email":"alice@example.com","password":{"opaque":"fixture-private"},"clean":"public","dup":1,"dup":2},`, 32), ",") + `],"tail":null}`
 	output, err := NewScanner(WithAll()).MaskJSON([]byte(source))

@@ -102,18 +102,7 @@ func TestMetamorphicKindsAndPercent(t *testing.T) {
 		a := embargo.NewScanner(embargo.WithKinds(kind)).ScanString(raw)
 		b := embargo.NewScanner(embargo.WithKinds(other)).ScanString(raw)
 		union := embargo.NewScanner(embargo.WithKinds(kind, other)).ScanString(raw)
-		want := make(map[embargo.Finding]bool)
-		for _, finding := range append(a, b...) {
-			want[finding] = true
-		}
-		if len(union) != len(want) {
-			t.Fatal("kind union count")
-		}
-		for _, finding := range union {
-			if !want[finding] {
-				t.Fatal("kind selection changes finding")
-			}
-		}
+		checkKindUnion(t, union, a, b)
 		// Credential grammar intentionally sees original URL delimiters; arbitrary
 		// percent encoding is only an invariant for built-ins that decode one layer.
 		scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
@@ -126,6 +115,55 @@ func TestMetamorphicKindsAndPercent(t *testing.T) {
 			t.Fatal("encoded finding does not cover original bytes")
 		}
 	})
+}
+
+func checkKindUnion(t relationTB, union, a, b []embargo.Finding) {
+	t.Helper()
+	want := make(map[embargo.Finding]bool)
+	for _, finding := range append(a, b...) {
+		want[finding] = true
+	}
+	if len(union) != len(want) {
+		t.Fatal("kind union count")
+	}
+	for _, finding := range union {
+		if !want[finding] {
+			t.Fatal("kind selection changes finding")
+		}
+	}
+}
+
+// Encode every original byte; pre-escaped text is outside the one-layer relation.
+func checkRealEmailEncoding(t relationTB, scanner *embargo.Scanner, line string) {
+	t.Helper()
+	if strings.Contains(line, "%") {
+		return
+	}
+	encoded := make([]byte, 0, len(line)*3)
+	for _, c := range []byte(line) {
+		encoded = append(encoded, '%', "0123456789ABCDEF"[c>>4], "0123456789ABCDEF"[c&15])
+	}
+	want := scanner.ScanString(line)
+	for i := range want {
+		want[i].Start *= 3
+		want[i].End *= 3
+	}
+	if got := scanner.Scan(encoded); !slices.Equal(got, want) {
+		t.Fatal("real email percent relation changed spans")
+	}
+}
+
+func checkIsolatedRealLines(t relationTB, scanner *embargo.Scanner, a, b string) {
+	t.Helper()
+	// Long clean separators keep bounded context windows inside their record.
+	padding := "\n" + strings.Repeat(" ", 160) + "\n"
+	lines := []string{padding + a + padding, padding + b + padding}
+	for range 2 {
+		if got := scanner.ScanString(strings.Join(lines, "\n")); !slices.Equal(got, findingsByLine(scanner, lines)) {
+			t.Fatal("isolated real-line permutation changed findings")
+		}
+		slices.Reverse(lines)
+	}
 }
 
 func TestMetamorphicJSONAndSlog(t *testing.T) {
@@ -189,6 +227,17 @@ func TestMetamorphicRealLogs(t *testing.T) {
 		t.Skip("set EMBARGO_LOG_CACHE to the verified round-13 cache")
 	}
 	scanner := embargo.NewScanner(embargo.WithAll())
+	kinds := []embargo.Kind{
+		embargo.KindPAN, embargo.KindEmail, embargo.KindJPPhone, embargo.KindMyNumber, embargo.KindJWT,
+		embargo.KindAWSKey, embargo.KindIBAN, embargo.KindIPAddr, embargo.KindSWIFTBIC, embargo.KindABARouting,
+		embargo.KindUKSortCode, embargo.KindCVV, embargo.KindCardExpiry, embargo.KindPaymentToken, embargo.KindBankAccount,
+		embargo.KindACHTrace, embargo.KindMerchantID, embargo.KindBTC, embargo.KindETH, embargo.KindGitHubToken,
+		embargo.KindSlackToken, embargo.KindGoogleAPIKey, embargo.KindPrivateKeyPEM, embargo.KindCredential,
+		embargo.KindServiceToken, embargo.KindHighEntropy,
+	}
+	first := embargo.NewScanner(embargo.WithKinds(kinds[:13]...))
+	second := embargo.NewScanner(embargo.WithKinds(kinds[13:]...))
+	email := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
 	for _, name := range []string{"Apache/Apache.log", "Linux/Linux.log", "Android/Android_2k.log", "HDFS/HDFS_2k.log", "OpenSSH/OpenSSH.log", "Zookeeper/Zookeeper.log", "BGL/BGL_2k.log", "Spark/Spark_2k.log"} {
 		t.Run(name, func(t *testing.T) {
 			f, err := os.Open(filepath.Join(cache, name)) // #nosec G304 G703 -- Fixed corpus paths under the operator-selected cache.
@@ -203,9 +252,16 @@ func TestMetamorphicRealLogs(t *testing.T) {
 			reader := bufio.NewScanner(f)
 			reader.Buffer(make([]byte, 4096), 16<<20)
 			count := 0
+			previous := ""
 			for reader.Scan() {
 				line := reader.Text()
 				checkLineRelations(t, scanner, line)
+				checkKindUnion(t, scanner.ScanString(line), first.ScanString(line), second.ScanString(line))
+				checkRealEmailEncoding(t, email, line)
+				if count > 0 && count <= 64 {
+					checkIsolatedRealLines(t, scanner, previous, line)
+				}
+				previous = line
 				checkJSONPaths(t, map[string]any{metamorphicMessageKey: line})
 				count++
 			}

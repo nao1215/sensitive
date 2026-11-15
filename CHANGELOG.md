@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+Round 14 implementation: [c7685ad](https://github.com/nao1215/embargo/commit/c7685adc40edbbad3ef87f28b813f68023db9fa8).
+
+- Exclude unspecified and loopback addresses from ipaddr findings while retaining other private endpoints. Guard diagnostics count untrusted test-start frames without echoing child-controlled names.
+- Add metamorphic relations, Quint lifecycle replay, compiled Lean reference vectors, offline validation oracles, semantic snapshots and structured adversarial fuzzing. Document encoding and resource limits, including My Number's single-digit collision.
+- Check owner policies and prose in CI, verify the Actions lockfile while retaining SHA pins, compare base/head benchmarks on one runner and schedule mutation and scaling separately from pull requests.
+
+
 Implementation: [PR #81](https://github.com/nao1215/embargo/pull/81), [9b1baf4](https://github.com/nao1215/embargo/commit/9b1baf479421d5d01736c8aeec7cf331e03579a1).
 
 - Reject entropy candidates in paths and dotted names, numeric log fragments, operational counters and Java object references under unquoted token keys. Make the Sentry fixture use a fixed long source path. Publish measurements from licensed, checksum-pinned public logs, manual classification rules and FP/GB estimates without redistributing the datasets.

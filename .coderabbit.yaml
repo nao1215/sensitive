@@ -11,3 +11,7 @@ reviews:
     - "!tests/testdata/credentials-held.jsonl"
     - "!doc/benchmarks.raw.txt"
     - "!doc/performance/*.txt"
+    - "!tests/lean/vectors.tsv"
+    - "!tests/models/input.json"
+    - "!tests/models/recorder.json"
+    - "!tests/models/guard.json"

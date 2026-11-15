@@ -13,6 +13,19 @@ import (
 //nolint:gocognit // Keep the independent bitmap and invalid-range oracle in one test.
 func TestMaskByteCoverageOracle(t *testing.T) {
 	t.Parallel()
+	// One invalid range at a time prevents another invalid range from hiding it.
+	for position := range 129 {
+		text := strings.Repeat("x", 128)
+		findings := []Finding{{Kind: KindEmail, Start: position, End: position, Confidence: 1}}
+		called := false
+		got := MaskFunc(text, findings, func(_ Kind, value string) string {
+			called = true
+			return value
+		})
+		if called || got != redactionMarker {
+			t.Fatalf("zero-width range at %d did not fail closed before replacement", position)
+		}
+	}
 	rng := rand.New(rand.NewPCG(14, 81)) // #nosec G404 -- Reproducible synthetic test data.
 	for trial := range 1000 {
 		length := rng.IntN(129)

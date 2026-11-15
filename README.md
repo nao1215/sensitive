@@ -219,7 +219,7 @@ Round 14: 8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification r
 <!-- techniques:end -->
 
 <!-- testing-metrics:start -->
-Coverage 97.1% · mutation score 88.26% · 9 fuzz targets, 2388415 executions.
+Coverage 97.1% · mutation score 88.37% · 13 fuzz targets, 3354049 executions.
 <!-- testing-metrics:end -->
 
 [Commands, measurement scope and conditions](doc/testing.md).

@@ -13,6 +13,7 @@ import (
 // assertions run even in update mode, before accepting new output bytes.
 func TestLoggerSnapshot(t *testing.T) {
 	t.Parallel()
+	const marker = "[REDACTED]"
 	const canary = "public-fake-canary-0123456789"
 	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN, embargo.KindCVV), embargo.WithDetector(literal{value: []byte(canary)}))
 	var output bytes.Buffer
@@ -28,8 +29,16 @@ func TestLoggerSnapshot(t *testing.T) {
 		if err := json.Unmarshal(line, &event); err != nil {
 			t.Fatal(err)
 		}
-		if event["pre"] != "[REDACTED]" || event["card"] != "[REDACTED]" || event["cvv"] != "[REDACTED]" || event["nested"] == nil {
+		if event["pre"] != marker || event["card"] != marker || event["cvv"] != marker || event["nested"] == nil {
 			t.Fatal("snapshot lost masking or structure")
+		}
+		nested, ok := event["nested"].(map[string]any)
+		if !ok || nested["email"] != marker {
+			t.Fatal("snapshot lost the nested object")
+		}
+		values, ok := nested["values"].([]any)
+		if !ok || len(values) != 1 || values[0] != marker {
+			t.Fatal("snapshot lost the nested array")
 		}
 		if bytes.Contains(line, []byte(canary)) || bytes.Contains(line, []byte("alice@example.com")) {
 			t.Fatal("snapshot contains synthetic secret")

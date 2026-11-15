@@ -16,6 +16,7 @@ CASES = [
     ('json-space', 'CONDITIONALS_NEGATION at json.go:68:12', 'json.go', 'for w.pos < len(w.data) {', 'for w.pos >= len(w.data) {'),
     ('json-scalar', 'CONDITIONALS_NEGATION at json.go:121:12', 'json.go', "raw[0] == 't'", "raw[0] != 't'"),
     ('json-escaped', 'CONDITIONALS_NEGATION at json.go:198:32', 'json.go', "bytes.IndexByte(raw, '\\\\') >= 0", "bytes.IndexByte(raw, '\\\\') < 0"),
+    ('json-unmarshal', 'CONDITIONALS_NEGATION at json.go:199:45', 'json.go', 'if err := json.Unmarshal(raw, &text); err != nil {', 'if err := json.Unmarshal(raw, &text); err == nil {'),
     ('recorder-empty', 'CONDITIONALS_BOUNDARY at embargotest/recorder.go:233:31', 'embargotest/recorder.go', 'len(r.sinks) > 0 && len(r.expectations) > 0', 'len(r.sinks) >= 0 && len(r.expectations) > 0'),
 ]
 GROUPS = {
@@ -46,6 +47,7 @@ def execute(command, root):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--case', action='append', choices=[row[0] for row in CASES])
     args = parser.parse_args()
     baseline = (ROOT/'doc/performance/round13-mutation.txt').read_text()
     results = []
@@ -57,6 +59,8 @@ def main():
             if status != 'survived':
                 raise RuntimeError('unmutated technique failed: '+name)
         for name, identity, filename, original, changed in CASES:
+            if args.case and name not in args.case:
+                continue
             if 'LIVED '+identity not in baseline:
                 raise ValueError('not a baseline survivor: '+identity)
             path = copy/filename

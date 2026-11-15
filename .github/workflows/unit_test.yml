@@ -52,9 +52,11 @@ jobs:
       - name: Test optional logger modules
         shell: bash
         run: |
+          args=()
+          if [[ "${{ matrix.go }}" == stable ]]; then args+=(-race); fi
           for module in zap zerolog logrus; do
             go -C adapters/$module mod tidy -diff
-            go -C adapters/$module test -race ./...
+            go -C adapters/$module test "${args[@]}" ./...
           done
 
       - name: Verify declared adapter dependencies without local replacements

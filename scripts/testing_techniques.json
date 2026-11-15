@@ -75,7 +75,7 @@
     "ci": "unit_test:unit_test",
     "commands": [
       "go test \"${args[@]}\" ./...",
-      "go -C adapters/$module test -race"
+      "go -C adapters/$module test \"${args[@]}\""
     ]
   },
   {
