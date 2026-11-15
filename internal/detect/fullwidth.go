@@ -1,6 +1,10 @@
 package detect
 
-import "unicode/utf8"
+import (
+	"math"
+	"strconv"
+	"unicode/utf8"
+)
 
 // NormalizeFullWidthDigits converts U+FF10–U+FF19 digits and hyphen variants U+FF0D, U+30FC, and U+2010 to ASCII. The returned map translates normalized byte indexes to original indexes, including an end sentinel equal to len(data).
 //
@@ -16,7 +20,7 @@ func NormalizeFullWidthDigits(data []byte) (normalizedData []byte, positions []i
 		}
 	}
 	if !hasMultiByte {
-		posMap := make([]int, len(data)+1)
+		posMap := make([]int, normalizationMapSize(len(data)))
 		for i := range posMap {
 			posMap[i] = i
 		}
@@ -24,7 +28,7 @@ func NormalizeFullWidthDigits(data []byte) (normalizedData []byte, positions []i
 	}
 
 	normalized := make([]byte, 0, len(data))
-	posMap := make([]int, 0, len(data)+1)
+	posMap := make([]int, 0, normalizationMapSize(len(data)))
 
 	i := 0
 	for i < len(data) {
@@ -65,4 +69,13 @@ func mapOriginalRange(posMap []int, start, end int) (origStart, origEnd int) {
 		origEnd = posMap[end]
 	}
 	return origStart, origEnd
+}
+
+func normalizationMapSize(length int) int {
+	// Bound the sentinel addition and the int slice backing storage before arithmetic.
+	const bytesPerInt = strconv.IntSize / 8
+	if length > math.MaxInt/bytesPerInt-1 {
+		panic("embargo: input too large")
+	}
+	return length + 1
 }
