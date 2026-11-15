@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- Replace the logo with embargo branding and add a 1280x640 Open Graph image at doc/images/ogp.png for repository settings ([573fa10](https://github.com/nao1215/embargo/commit/573fa10)).
+- Replace the logo with embargo branding and add a 1280x640 Open Graph image at doc/images/ogp.png for repository settings ([PR #64](https://github.com/nao1215/embargo/pull/64), [573fa10](https://github.com/nao1215/embargo/commit/573fa10)).
 
 - Publish per-detector precision/recall from a labeled synthetic corpus and real Go benchmark samples for Scanner, Mask, Recorder and slog. Make targets generate README tables and tests reject stale output; introduce use cases and installation requirements at the README entrance ([PR #63](https://github.com/nao1215/embargo/pull/63), [1f2b4c2](https://github.com/nao1215/embargo/commit/1f2b4c2)).
 
