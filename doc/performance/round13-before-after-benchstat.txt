@@ -1,0 +1,31 @@
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+                          │ base-bench.txt │            head-bench.txt            │
+                          │     sec/op     │    sec/op     vs base                │
+CandidateExperiment/clean     84.55µ ± 85%   68.13µ ± 62%        ~ (p=0.529 n=10)
+CandidateExperiment/dirty     8.097m ± 47%   6.323m ± 36%        ~ (p=0.436 n=10)
+geomean                       827.4µ         656.4µ        -20.67%
+
+                          │ base-bench.txt │            head-bench.txt             │
+                          │      B/s       │      B/s       vs base                │
+CandidateExperiment/clean    31.04Mi ± 65%   38.53Mi ± 95%        ~ (p=0.529 n=10)
+CandidateExperiment/dirty    4.659Mi ± 88%   6.304Mi ± 46%        ~ (p=0.436 n=10)
+geomean                      12.03Mi         15.58Mi        +29.59%
+
+                          │ base-bench.txt │            head-bench.txt             │
+                          │      B/op      │     B/op      vs base                 │
+CandidateExperiment/clean     0.000 ± 0%       0.000 ± 0%       ~ (p=1.000 n=10) ¹
+CandidateExperiment/dirty   1.132Mi ± 0%     1.132Mi ± 0%       ~ (p=0.104 n=10)
+geomean                                  ²                 +0.00%                ²
+¹ all samples are equal
+² summaries must be >0 to compute geomean
+
+                          │ base-bench.txt │            head-bench.txt            │
+                          │   allocs/op    │  allocs/op   vs base                 │
+CandidateExperiment/clean     0.000 ± 0%      0.000 ± 0%       ~ (p=1.000 n=10) ¹
+CandidateExperiment/dirty    14.11k ± 0%     14.11k ± 0%       ~ (p=1.000 n=10) ¹
+geomean                                  ²                +0.00%                ²
+¹ all samples are equal
+² summaries must be >0 to compute geomean

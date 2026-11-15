@@ -1,0 +1,70 @@
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+BenchmarkCandidateExperiment/clean         	    6776	     33278 ns/op	  82.70 MB/s	       0 B/op	       0 allocs/op
+BenchmarkCandidateExperiment/dirty         	      66	   4046540 ns/op	   9.77 MB/s	 1187112 B/op	   14113 allocs/op
+PASS
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+BenchmarkCandidateExperiment/clean         	    3496	     66753 ns/op	  41.23 MB/s	       0 B/op	       0 allocs/op
+BenchmarkCandidateExperiment/dirty         	      32	   7868424 ns/op	   5.03 MB/s	 1187113 B/op	   14113 allocs/op
+PASS
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+BenchmarkCandidateExperiment/clean         	    6648	     34920 ns/op	  78.81 MB/s	       0 B/op	       0 allocs/op
+BenchmarkCandidateExperiment/dirty         	      61	   4104983 ns/op	   9.64 MB/s	 1187112 B/op	   14113 allocs/op
+PASS
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+BenchmarkCandidateExperiment/clean         	    2086	    110235 ns/op	  24.96 MB/s	       0 B/op	       0 allocs/op
+BenchmarkCandidateExperiment/dirty         	      58	   4321951 ns/op	   9.15 MB/s	 1187112 B/op	   14113 allocs/op
+PASS
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+BenchmarkCandidateExperiment/clean         	    6424	     40898 ns/op	  67.29 MB/s	       0 B/op	       0 allocs/op
+BenchmarkCandidateExperiment/dirty         	      42	   4851351 ns/op	   8.15 MB/s	 1187110 B/op	   14113 allocs/op
+PASS
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+BenchmarkCandidateExperiment/clean         	    3906	     95827 ns/op	  28.72 MB/s	       0 B/op	       0 allocs/op
+BenchmarkCandidateExperiment/dirty         	      54	   4334773 ns/op	   9.12 MB/s	 1187111 B/op	   14113 allocs/op
+PASS
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+BenchmarkCandidateExperiment/clean         	    2407	     92030 ns/op	  29.90 MB/s	       0 B/op	       0 allocs/op
+BenchmarkCandidateExperiment/dirty         	      31	   8573027 ns/op	   4.61 MB/s	 1187112 B/op	   14113 allocs/op
+PASS
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+BenchmarkCandidateExperiment/clean         	    1536	    151438 ns/op	  18.17 MB/s	       0 B/op	       0 allocs/op
+BenchmarkCandidateExperiment/dirty         	      19	  12835149 ns/op	   3.08 MB/s	 1187113 B/op	   14113 allocs/op
+PASS
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+BenchmarkCandidateExperiment/clean         	    3436	     66973 ns/op	  41.09 MB/s	       0 B/op	       0 allocs/op
+BenchmarkCandidateExperiment/dirty         	      32	   7834251 ns/op	   5.05 MB/s	 1187114 B/op	   14113 allocs/op
+PASS
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+BenchmarkCandidateExperiment/clean         	    3516	     69296 ns/op	  39.71 MB/s	       0 B/op	       0 allocs/op
+BenchmarkCandidateExperiment/dirty         	      32	   7795531 ns/op	   5.07 MB/s	 1187112 B/op	   14113 allocs/op
+PASS

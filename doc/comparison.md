@@ -34,31 +34,31 @@ The invalid-Luhn row is a deliberate negative example. embargo's default minimum
 <!-- comparison:start -->
 | Benchmark | ns/op | B/op | allocs/op |
 |---|---:|---:|---:|
-| Comparison/clean/embargo | 2,173.0 | 88 | 11 |
-| Comparison/clean/masq | 6,776.0 | 792 | 50 |
-| Comparison/flat/embargo | 3,627.5 | 624 | 21 |
-| Comparison/flat/masq | 7,139.5 | 672 | 32 |
-| Comparison/large50/embargo | 30,511.5 | 10,001 | 125 |
-| Comparison/large50/masq | 139,243.0 | 12,710 | 561 |
-| Comparison/map/embargo | 10,074.0 | 1,496 | 56 |
-| Comparison/map/masq | 12,950.5 | 1,744 | 63 |
-| Comparison/nested/embargo | 8,312.5 | 960 | 44 |
-| Comparison/nested/masq | 11,522.0 | 1,784 | 61 |
-| ComparisonFormatter/clean | 828.2 | 0 | 0 |
-| ComparisonFormatter/flat | 689.2 | 32 | 2 |
-| ComparisonFormatter/large50 | 11,913.5 | 7,873 | 10 |
-| ComparisonFormatter/map | 506.2 | 0 | 0 |
-| ComparisonFormatter/nested | 502.2 | 0 | 0 |
-| ComparisonStruct/embargo | 5,406.0 | 1,000 | 42 |
-| ComparisonStruct/go_mask | 1,284.0 | 328 | 7 |
-| ComparisonText/embargo | 4,279.5 | 1,640 | 42 |
-| ComparisonText/godlp | 47,288.0 | 11,714 | 59 |
-| StructuredPath/json_shape | 5,311.5 | 1,000 | 42 |
-| StructuredPath/old_string | 1,858.5 | 752 | 14 |
+| Comparison/clean/embargo | 1,585.5 | 88 | 11 |
+| Comparison/clean/masq | 5,600.0 | 792 | 50 |
+| Comparison/flat/embargo | 3,008.0 | 624 | 21 |
+| Comparison/flat/masq | 6,209.0 | 672 | 32 |
+| Comparison/large50/embargo | 20,248.5 | 10,001 | 125 |
+| Comparison/large50/masq | 69,021.5 | 12,710 | 561 |
+| Comparison/map/embargo | 8,452.0 | 1,496 | 56 |
+| Comparison/map/masq | 10,855.5 | 1,744 | 63 |
+| Comparison/nested/embargo | 7,025.5 | 960 | 44 |
+| Comparison/nested/masq | 9,948.5 | 1,784 | 61 |
+| ComparisonFormatter/clean | 1,105.0 | 0 | 0 |
+| ComparisonFormatter/flat | 1,212.5 | 32 | 2 |
+| ComparisonFormatter/large50 | 13,955.0 | 7,873 | 10 |
+| ComparisonFormatter/map | 895.2 | 0 | 0 |
+| ComparisonFormatter/nested | 900.1 | 0 | 0 |
+| ComparisonStruct/embargo | 3,592.5 | 1,000 | 42 |
+| ComparisonStruct/go_mask | 1,061.5 | 328 | 7 |
+| ComparisonText/embargo | 4,083.5 | 1,640 | 42 |
+| ComparisonText/godlp | 59,626.0 | 11,714 | 59 |
+| StructuredPath/json_shape | 2,226.5 | 1,000 | 42 |
+| StructuredPath/old_string | 922.1 | 752 | 14 |
 
 Measured 2026-11-15 with go version go1.26.11 linux/amd64, Linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S; GOMAXPROCS=1, ten 200 ms samples per case. Construction is outside the timed loop; JSON encoding and masking are included. Source and dependency fingerprints, CPU affinity and command are in [comparison.json](comparison.json).
 
-For these five configured events, embargo/masq median time ranges from 0.22 to 0.78; below 1 means less time for embargo. The structured JSON path uses 2.86 times the old string-only time. These ratios are regenerated from the same samples as the table.
+For these five configured events, embargo/masq median time ranges from 0.28 to 0.78; below 1 means less time for embargo. The structured JSON path uses 2.41 times the old string-only time. These ratios are regenerated from the same samples as the table.
 <!-- comparison:end -->
 
 The five head-to-head events are a flat email/card pair, a nested struct with opaque password and tagged recovery field, a map, a clean event, and 50 attributes (48 clean plus the flat pair). Both loggers use the same io.Discard sink. masq uses its documented WithAllowedType for time.Time and slog.Level, matching embargo's decision to preserve that metadata; this avoids charging masq for an unnecessary reflection traversal. Masker/scanner construction and regex compilation are excluded for both. The tests use prebuilt slog.Attr slices and LogAttrs to avoid attributing caller argument construction to either library.
@@ -110,3 +110,5 @@ The runnable `scenarioService` handles HTTP requests using a database DSN, an op
 <!-- leak-scenarios:end -->
 
 Run `make leak-scenarios` to regenerate this table. `TestLeakScenarios` checks it for staleness, and `TestLeakScenarioGuard` verifies that a real recorder rejects the planted logs and accepts the masked slog and zap variants. Caught means the entire planted value disappeared from the observed output; it does not imply arbitrary secrets are detected. SDK serialization and unrelated output paths require their own checks.
+
+The staleness check fingerprints embargo production code, comparison tests, the Go/toolchain directives and the compared libraries with their reached module dependencies. An unrelated SDK bump, such as Sentry, no longer invalidates timing evidence. `comparison.json` also keeps `full_source_sha256`, including complete tests/go.mod and tests/go.sum, so the original environment remains auditable. When a compared library changes, recheck its dependency closure with `go list -deps` and remeasure; changing its code paths still invalidates the comparison.

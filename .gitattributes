@@ -10,3 +10,6 @@ testdata/mixed.golden text eol=lf
 *.golden text eol=lf
 *.md text eol=lf
 *.go text eol=lf
+
+# Public-log evidence fingerprints use committed JSON bytes.
+doc/real-logs-*.json text eol=lf

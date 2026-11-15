@@ -103,54 +103,54 @@ CPU 31 is specific to this machine; select an available CPU on another host. The
 ## Measured results
 
 <!-- benchmarks:start -->
-Measured 2026-11-15 with go1.26.11, linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S, GOMAXPROCS=1; median of ten 200 ms samples at [da95fde](https://github.com/nao1215/embargo/commit/da95fde8d01b3e3214d70a131aceb07696eedca9).
+Measured 2026-11-15 with go1.26.11, linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S, GOMAXPROCS=1; median of ten 200 ms samples at [9b1baf4](https://github.com/nao1215/embargo/commit/9b1baf479421d5d01736c8aeec7cf331e03579a1).
 
 Background load: no intentional concurrent workload.
 
 | Operation | ns/op | MB/s | B/op | allocs/op |
 |---|---:|---:|---:|---:|
-| Scanner WithAll, clean | 84640.5 | 32.52 | 0 | 0 |
-| Scanner WithAll, dirty | 8299013.0 | 4.76 | 1187111 | 14113 |
-| Mask | 6343.0 | 464.15 | 13816 | 12 |
-| Writer only | 11.5 | 47162.61 | 0 | 0 |
-| Recorder + Check | 76290.5 | 7.13 | 40396 | 590 |
-| Plain slog, clean | 875.7 | — | 16 | 1 |
-| Masked slog, clean | 2573.5 | — | 80 | 5 |
-| Plain slog, dirty | 896.4 | — | 16 | 1 |
-| Masked slog, dirty | 3503.0 | — | 352 | 13 |
+| Scanner WithAll, clean | 68989.5 | 39.89 | 0 | 0 |
+| Scanner WithAll, dirty | 8074645.5 | 4.89 | 1187111 | 14113 |
+| Mask | 6298.0 | 467.47 | 13816 | 12 |
+| Writer only | 11.5 | 47141.93 | 0 | 0 |
+| Recorder + Check | 76321.0 | 7.12 | 40396 | 590 |
+| Plain slog, clean | 874.1 | — | 16 | 1 |
+| Masked slog, clean | 2571.0 | — | 80 | 5 |
+| Plain slog, dirty | 862.6 | — | 16 | 1 |
+| Masked slog, dirty | 3488.5 | — | 352 | 13 |
 
 <details>
 <summary>Per-detector Scanner throughput</summary>
 
 | Detector | Clean MB/s | Dirty MB/s |
 |---|---:|---:|
-| aba_routing | 443.04 | 47.84 |
-| ach_trace | 594.19 | 5.01 |
-| all | 32.52 | 4.76 |
-| awskey | 747.04 | 91.90 |
-| bank_account | 719.00 | 9.00 |
-| btc | 802.57 | 45.16 |
-| card_expiry | 1050.50 | 3.58 |
-| credential | 85.18 | 37.79 |
-| cvv | 371.16 | 4.54 |
-| email | 25376.29 | 56.95 |
-| eth | 1246.43 | 142.25 |
-| github_token | 1129.17 | 125.68 |
-| google_api_key | 959.06 | 175.00 |
-| high_entropy | 1219.29 | 51.75 |
-| iban | 787.13 | 50.66 |
-| ipaddr | 17452.50 | 42.64 |
-| jwt | 1085.11 | 27.48 |
-| merchant_id | 681.92 | 15.79 |
-| mynumber | 747.06 | 55.23 |
-| pan | 9653.92 | 57.45 |
-| payment_token | 171.72 | 117.73 |
-| phone_jp | 31310.58 | 39.88 |
-| private_key_pem | 782.56 | 99.37 |
-| service_token | 239.24 | 203.36 |
-| slack_token | 956.59 | 70.90 |
-| swiftbic | 159.53 | 34.18 |
-| uk_sortcode | 444.26 | 43.47 |
+| aba_routing | 694.10 | 57.34 |
+| ach_trace | 647.02 | 5.96 |
+| all | 39.89 | 4.89 |
+| awskey | 663.82 | 94.09 |
+| bank_account | 587.60 | 6.16 |
+| btc | 737.63 | 44.96 |
+| card_expiry | 1056.85 | 3.74 |
+| credential | 278.00 | 47.23 |
+| cvv | 371.15 | 4.88 |
+| email | 25090.67 | 58.23 |
+| eth | 1288.01 | 113.13 |
+| github_token | 1160.04 | 125.66 |
+| google_api_key | 970.67 | 175.25 |
+| high_entropy | 693.81 | 51.83 |
+| iban | 790.59 | 51.76 |
+| ipaddr | 18162.89 | 43.03 |
+| jwt | 1110.44 | 27.51 |
+| merchant_id | 338.71 | 12.32 |
+| mynumber | 444.37 | 47.18 |
+| pan | 4748.35 | 39.56 |
+| payment_token | 242.92 | 232.71 |
+| phone_jp | 17620.32 | 40.05 |
+| private_key_pem | 777.13 | 98.14 |
+| service_token | 238.88 | 202.51 |
+| slack_token | 966.84 | 71.19 |
+| swiftbic | 172.34 | 31.59 |
+| uk_sortcode | 514.99 | 37.72 |
 
 </details>
 <!-- benchmarks:end -->
@@ -166,3 +166,30 @@ All-detector clean scans increase from 47.33 to 85.35 µs (+80.32%) because the 
 The published all-detector dirty corpus now includes the three new families, so its throughput is not an identical-work comparison with round 11. The paired clean comparison above keeps the input unchanged and exposes the default-policy cost. The generated table includes individual clean/dirty measurements for all 26 detectors.
 
 The full-matrix publication is a snapshot, not a paired regression estimate. Some unchanged cases differ substantially from narrow runs: Japanese-phone clean input is about 87.9 ns in the full matrix versus 161.2 ns in the paired run. The input and source are unchanged, so these observations do not establish a code improvement. Retain the raw samples and use the alternating comparisons above to assess this round; further isolation is needed to explain the matrix-dependent timing variation.
+
+## Round 13: candidate lexer experiment
+
+The test-only prototype walks each input once for digit runs with separators, base64-like runs, hex runs and @ anchors. A hand-written Aho-Corasick trie combines detector hints; validators then inspect merged candidate windows with 64 preceding and 256 following bytes. The production scanner remains the hint dispatcher. Candidate windows cannot safely bound arbitrary credential values or PEM bodies, and their allocations outweigh the work saved on these inputs.
+
+The final differential run compared exact kinds, offsets, confidence and order for 15,792 generated inputs and 819,576 real-log lines without a mismatch. Three additional long-input cases all differed: an assignment value, a PEM body and a provider token extended beyond their windows. These failures independently disqualify the prototype. [Differential counts and spans](performance/round13-candidate-gate-final.json) contain no public log excerpts; run `EMBARGO_CANDIDATE_REPORT=/tmp/candidate.json EMBARGO_LOG_CACHE=/external/log-cache go test -run '^TestCandidateExperimentGate$' -count=1 .` to repeat it.
+
+Ten 200 ms samples per variant ran on CPU 8, GOMAXPROCS=1, Go 1.26.11, with base/head/candidate and candidate/head/base orders alternating. No intentional concurrent workload ran, but timings varied substantially. Production clean median was 68.13 µs and the prototype 92.26 µs (p=0.436); dirty was 6.323 ms and 9.082 ms (p=0.089). The prototype increased dirty allocation from 1.132 MiB to 2.833 MiB and from 14,110 to 16,030 allocations. It did not meet the speed gate and is not adopted. [Benchstat](performance/round13-candidate-benchstat.txt), [production samples](performance/round13-head-bench.txt), [prototype samples](performance/round13-candidate-bench.txt), [commands and binary hashes](performance/round13-bench-metadata.json).
+
+Before changes, the clean CPU profile attributed 31.39% cumulative time to URL-password parsing, 21.94% to detector selection and 5.28% to entropy scanning. [Clean CPU profile](performance/round13-base-clean-top.txt) and [dirty CPU profile](performance/round13-base-dirty-top.txt) record the call costs. The smaller production change skips URL parsing without an @ and uses a delimiter switch; an independent copy of the old parser agrees over 30,976 generated cases. Base-to-head timing differences were not significant (clean p=0.529, dirty p=0.436); no overall speed improvement is claimed from this run. [Before/after benchstat](performance/round13-before-after-benchstat.txt) preserves that result. Accuracy changes have separate regression tests and the [real-log evaluation](accuracy.md#public-system-logs).
+
+## Choose the kinds the application needs
+
+WithKinds avoids running irrelevant detectors and removes their false-positive findings. The following measurements use identical input for all selections: 2,752 bytes of clean worker text and 39,552 bytes containing every detector's synthetic positive fixture. They measure scanning only, not logger encoding. The clean fixture has no @, so email-only scanning exits after a substring check; its ratio should not be extrapolated to arbitrary logs.
+
+<!-- narrowing:start -->
+| Selection | Clean ns/op | Dirty ns/op | Clean / dirty speedup over WithAll |
+|---|---:|---:|---|
+| all | 60,274.000 | 6,487,012.0 | 1.00× / 1.00× |
+| kinds1 | 96.955 | 38,425.5 | 621.67× / 168.82× |
+| kinds3 | 14,700.500 | 598,465.0 | 4.10× / 10.84× |
+| kinds8 | 17,402.000 | 2,790,511.5 | 3.46× / 2.32× |
+<!-- narrowing:end -->
+
+The one-kind set is email; three kinds add PAN and credential; eight add Japanese phone, IP address, GitHub token, service token and private-key PEM. These are also the sets in the [real-log FP table](accuracy.md#public-system-logs). Omitting kinds deliberately gives up their recall. The eight-kind set still includes wildcard-IP false positives, while one and three kinds had no sampled FP in this source mix; absence in the sample is not a zero-error guarantee.
+
+Each selection ran ten times, reversing the order on alternate rounds. All clean/dirty comparisons to WithAll had p≤0.002, although intervals were wide (WithAll clean ±101%). Treat these as workload-specific medians. [Raw samples](performance/round13-narrowing-bench.txt) and benchstat for [one](performance/round13-narrow-kinds1-benchstat.txt), [three](performance/round13-narrow-kinds3-benchstat.txt) and [eight](performance/round13-narrow-kinds8-benchstat.txt) kinds retain the variation. Run `make scanner-experiment BASE=/path/to/baseline CPU=8` on an idle Linux machine to repeat the interleaved measurements; `python3 scripts/scanner_experiment.py --check` only checks the committed table and requires no timing run.

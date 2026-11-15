@@ -141,6 +141,6 @@ jobs:
       - name: Check generated documentation
         # The impossible subtest pattern checks the compatibility table itself
         # without running the SDK, HTTP or child-process compatibility suites.
-        run: go -C tests test . -run '^(TestAccuracyTable|TestBenchmarkTable|TestTestingMetrics|TestCompatibilityTable|TestComparisonDocuments)$/^$'
+        run: go -C tests test . -run '^(TestAccuracyTable|TestBenchmarkTable|TestTestingMetrics|TestCompatibilityTable|TestComparisonDocuments|TestRealLogDocuments)$/^$'
       - name: Check documentation tools and change classification
         run: python3 -m unittest discover -s scripts -p 'test_*.py'

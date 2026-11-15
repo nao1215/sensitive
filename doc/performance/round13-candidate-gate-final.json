@@ -1,0 +1,106 @@
+{
+  "counts": {
+    "Android": {
+      "inputs": 2000,
+      "different": 0
+    },
+    "Apache": {
+      "inputs": 56482,
+      "different": 0
+    },
+    "BGL": {
+      "inputs": 2000,
+      "different": 0
+    },
+    "HDFS": {
+      "inputs": 2000,
+      "different": 0
+    },
+    "Linux": {
+      "inputs": 25567,
+      "different": 0
+    },
+    "OpenSSH": {
+      "inputs": 655147,
+      "different": 0
+    },
+    "Spark": {
+      "inputs": 2000,
+      "different": 0
+    },
+    "Zookeeper": {
+      "inputs": 74380,
+      "different": 0
+    },
+    "accuracy_generated.jsonl": {
+      "inputs": 4784,
+      "different": 0
+    },
+    "accuracy_generated_controls.jsonl": {
+      "inputs": 352,
+      "different": 0
+    },
+    "accuracy_held_generated.jsonl": {
+      "inputs": 4784,
+      "different": 0
+    },
+    "accuracy_held_generated_controls.jsonl": {
+      "inputs": 352,
+      "different": 0
+    },
+    "credentials-development.jsonl": {
+      "inputs": 2760,
+      "different": 0
+    },
+    "credentials-held.jsonl": {
+      "inputs": 2760,
+      "different": 0
+    },
+    "long-candidate-boundaries": {
+      "inputs": 3,
+      "different": 3
+    }
+  },
+  "examples": [
+    {
+      "source": "long-candidate-boundaries",
+      "production": [
+        {
+          "Kind": "credential",
+          "Start": 9,
+          "End": 1161,
+          "Confidence": 0.95
+        }
+      ],
+      "candidate": [
+        {
+          "Kind": "credential",
+          "Start": 9,
+          "End": 265,
+          "Confidence": 0.95
+        }
+      ],
+      "line": 1
+    },
+    {
+      "source": "long-candidate-boundaries",
+      "production": [
+        {
+          "Kind": "private_key_pem",
+          "Start": 0,
+          "End": 953,
+          "Confidence": 0.99
+        }
+      ],
+      "candidate": [
+        {
+          "Kind": "private_key_pem",
+          "Start": 0,
+          "End": 27,
+          "Confidence": 0.99
+        }
+      ],
+      "line": 2
+    }
+  ]
+}

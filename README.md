@@ -155,7 +155,7 @@ Each link opens the test that produces and checks the shown output.
 <!-- tested-outputs:start -->
 | Output | Actual output (excerpt for SDKs) |
 |---|---|
-| [fmt](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L38-L38) | `[REDACTED]` |
+| [fmt](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L38-L38) | `embargo.Secret[string]([REDACTED])` |
 | [slog TextHandler](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L39-L42) | `level=INFO msg=event token=[REDACTED] nested.again=[REDACTED]` |
 | [slog JSONHandler](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L43-L46) | `{"level":"INFO","msg":"event","token":"[REDACTED]","nested":{"again":"[REDACTED]"}}` |
 | [encoding/json](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L47-L47) | `"[REDACTED]"` |
@@ -165,7 +165,7 @@ Each link opens the test that produces and checks the shown output.
 | [zerolog JSON](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L68-L72) | `{"level":"info","token":"[REDACTED]","message":"event"}` |
 | [logrus JSON](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L73-L79) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
 | [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/telemetry_integration_test.go#L26-L114) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
-| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/sentry_integration_test.go#L69-L152) | `"signing":{"key":"[REDACTED]"}` |
+| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/sentry_integration_test.go#L74-L157) | `"signing":{"key":"[REDACTED]"}` |
 | [HTTP](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L120-L142) | `[REDACTED]` |
 | [Child panic](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L144-L154) | `panic: [REDACTED]` |
 <!-- tested-outputs:end -->
@@ -191,6 +191,12 @@ Held-out synthetic set, default minimum confidence 0. [Generation, test cases an
 | [swiftbic](doc/accuracy.md#swiftbic) | [uk_sortcode](doc/accuracy.md#uk-sortcode) | |
 <!-- accuracy:end -->
 
+<!-- real-logs-summary:start -->
+![Estimated false positives on public logs](doc/images/real-logs.svg)
+
+Round 13: 8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates; contact and endpoint references count as sensitive data, and no recall claim is made.
+<!-- real-logs-summary:end -->
+
 ## Testing
 
 | Technique | Tests |
@@ -212,8 +218,21 @@ Coverage 94.9% · mutation score 90.06% · 9 fuzz targets, 2323625 executions.
 <!-- benchmarks:start -->
 ![Scanner throughput and slog time](doc/images/benchmarks.svg)
 
-All detectors scan sensitive text at 4.76 MB/s; masking a clean slog event takes 2.57 µs, 2.9× the plain handler.
+All detectors scan sensitive text at 4.89 MB/s; masking a clean slog event takes 2.57 µs, 2.9× the plain handler.
 <!-- benchmarks:end -->
+
+<!-- narrowing-summary:start -->
+Round 13 scanner medians (ten interleaved samples):
+
+| Selection | Clean ns/op | Dirty ns/op | Clean / dirty speedup over WithAll |
+|---|---:|---:|---|
+| all | 60,274.000 | 6,487,012.0 | 1.00× / 1.00× |
+| kinds1 | 96.955 | 38,425.5 | 621.67× / 168.82× |
+| kinds3 | 14,700.500 | 598,465.0 | 4.10× / 10.84× |
+| kinds8 | 17,402.000 | 2,790,511.5 | 3.46× / 2.32× |
+
+[kinds1/3/8 definitions, input sizes and uncertainty](doc/benchmarks.md#choose-the-kinds-the-application-needs). Narrower selection avoids irrelevant detections and gives up their recall.
+<!-- narrowing-summary:end -->
 
 [Machine, method, profiles and full results](doc/benchmarks.md).
 
