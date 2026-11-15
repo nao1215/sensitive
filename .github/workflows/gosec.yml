@@ -23,4 +23,4 @@ jobs:
           persist-credentials: false
       - uses: securego/gosec@14c713478ed40c9bdfa56d35d9c2142b91608106 # v2.30.0 post-release action image fix
         with:
-          args: '-tests ${{ matrix.module }}/...'
+          args: '-tests ./${{ matrix.module }}/...'
