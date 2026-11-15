@@ -217,7 +217,7 @@ All detectors scan sensitive text at 4.76 MB/s; masking a clean slog event takes
 
 [Machine, method, profiles and full results](doc/benchmarks.md).
 
-Same slog events through masq v0.2.3: 52–78% less time on four of five events, no significant difference on the map event, fewer allocations on all five. [Comparison](doc/comparison.md) · [benchstat](doc/comparison.benchstat.txt)
+Same slog events through masq v0.2.3: 22–78% less time and fewer allocations on all five events. [Comparison](doc/comparison.md) · [benchstat](doc/comparison.benchstat.txt)
 
 ## Contributing
 
