@@ -137,12 +137,18 @@ type Detector interface {
 
 // Finding describes a match in the original input using a half-open byte range [Start:End), not rune indexes.
 type Finding struct {
-	Detail       any
+	// Detail holds optional detector-specific metadata, checked with the typed accessors.
+	Detail any
+	// DetectorName identifies the detector that produced the match.
 	DetectorName DetectorName
-	RawValue     string
-	Start        int
-	End          int
-	Confidence   float64
+	// RawValue is the exact matched input string.
+	RawValue string
+	// Start is the inclusive byte offset in the original input.
+	Start int
+	// End is the exclusive byte offset in the original input.
+	End int
+	// Confidence is a score in [0, 1], using detector-specific scoring rules.
+	Confidence float64
 }
 
 // Is reports whether the detector name matches detectorName; built-in names use Name* constants.

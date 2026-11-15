@@ -108,7 +108,7 @@ func validateSWIFTStructure(data []byte, i int) (countryCode string, ok bool) {
 		return "", false
 	}
 	cc := string([]byte{toUpperByte(data[i+4]), toUpperByte(data[i+5])})
-	if !swiftCountryCodes()[cc] {
+	if !isSWIFTCountry(cc) {
 		return "", false
 	}
 	return cc, true
@@ -176,71 +176,44 @@ func swiftContextKeywords() [][]byte {
 	}
 }
 
-// swiftCountryCodes is the set of ISO 3166-1 alpha-2 country codes used for
-// SWIFT/BIC country code validation.
-// Source: https://www.iso.org/iso-3166-country-codes.html
-func swiftCountryCodes() map[string]bool {
-	return map[string]bool{
-		"AD": true, "AE": true, "AF": true, "AG": true, "AI": true,
-		"AL": true, "AM": true, "AO": true, "AR": true, "AS": true,
-		"AT": true, "AU": true, "AW": true, "AX": true, "AZ": true,
-		"BA": true, "BB": true, "BD": true, "BE": true, "BF": true,
-		"BG": true, "BH": true, "BI": true, "BJ": true, "BL": true,
-		"BM": true, "BN": true, "BO": true, "BR": true, "BS": true,
-		"BT": true, "BW": true, "BY": true, "BZ": true,
-		"CA": true, "CC": true, "CD": true, "CF": true, "CG": true,
-		"CH": true, "CI": true, "CK": true, "CL": true, "CM": true,
-		"CN": true, "CO": true, "CR": true, "CU": true, "CV": true,
-		"CW": true, "CX": true, "CY": true, "CZ": true,
-		"DE": true, "DJ": true, "DK": true, "DM": true, "DO": true,
-		"DZ": true,
-		"EC": true, "EE": true, "EG": true, "ER": true, "ES": true,
-		"ET": true,
-		"FI": true, "FJ": true, "FK": true, "FM": true, "FO": true,
-		"FR": true,
-		"GA": true, "GB": true, "GD": true, "GE": true, "GF": true,
-		"GG": true, "GH": true, "GI": true, "GL": true, "GM": true,
-		"GN": true, "GP": true, "GQ": true, "GR": true, "GT": true,
-		"GU": true, "GW": true, "GY": true,
-		"HK": true, "HN": true, "HR": true, "HT": true, "HU": true,
-		"ID": true, "IE": true, "IL": true, "IM": true, "IN": true,
-		"IO": true, "IQ": true, "IR": true, "IS": true, "IT": true,
-		"JE": true, "JM": true, "JO": true, "JP": true,
-		"KE": true, "KG": true, "KH": true, "KI": true, "KM": true,
-		"KN": true, "KP": true, "KR": true, "KW": true, "KY": true,
-		"KZ": true,
-		"LA": true, "LB": true, "LC": true, "LI": true, "LK": true,
-		"LR": true, "LS": true, "LT": true, "LU": true, "LV": true,
-		"LY": true,
-		"MA": true, "MC": true, "MD": true, "ME": true, "MF": true,
-		"MG": true, "MH": true, "MK": true, "ML": true, "MM": true,
-		"MN": true, "MO": true, "MP": true, "MQ": true, "MR": true,
-		"MS": true, "MT": true, "MU": true, "MV": true, "MW": true,
-		"MX": true, "MY": true, "MZ": true,
-		"NA": true, "NC": true, "NE": true, "NF": true, "NG": true,
-		"NI": true, "NL": true, "NO": true, "NP": true, "NR": true,
-		"NU": true, "NZ": true,
-		"OM": true,
-		"PA": true, "PE": true, "PF": true, "PG": true, "PH": true,
-		"PK": true, "PL": true, "PM": true, "PN": true, "PR": true,
-		"PS": true, "PT": true, "PW": true, "PY": true,
-		"QA": true,
-		"RE": true, "RO": true, "RS": true, "RU": true, "RW": true,
-		"SA": true, "SB": true, "SC": true, "SD": true, "SE": true,
-		"SG": true, "SH": true, "SI": true, "SJ": true, "SK": true,
-		"SL": true, "SM": true, "SN": true, "SO": true, "SR": true,
-		"SS": true, "ST": true, "SV": true, "SX": true, "SY": true,
-		"SZ": true,
-		"TC": true, "TD": true, "TF": true, "TG": true, "TH": true,
-		"TJ": true, "TK": true, "TL": true, "TM": true, "TN": true,
-		"TO": true, "TR": true, "TT": true, "TV": true, "TW": true,
-		"TZ": true,
-		"UA": true, "UG": true, "US": true, "UY": true, "UZ": true,
-		"VA": true, "VC": true, "VE": true, "VG": true, "VI": true,
-		"VN": true, "VU": true,
-		"WF": true, "WS": true,
-		"XK": true,
-		"YE": true, "YT": true,
-		"ZA": true, "ZM": true, "ZW": true,
+// isSWIFTCountry checks the supported ISO 3166-1 alpha-2 country codes.
+func isSWIFTCountry(code string) bool {
+	switch code {
+	case "AD", "AE", "AF", "AG", "AI", "AL", "AM", "AO", "AR", "AS", "AT", "AU", "AW", "AX", "AZ":
+		return true
+	case "BA", "BB", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BL", "BM", "BN", "BO", "BR", "BS":
+		return true
+	case "BT", "BW", "BY", "BZ", "CA", "CC", "CD", "CF", "CG", "CH", "CI", "CK", "CL", "CM", "CN":
+		return true
+	case "CO", "CR", "CU", "CV", "CW", "CX", "CY", "CZ", "DE", "DJ", "DK", "DM", "DO", "DZ", "EC":
+		return true
+	case "EE", "EG", "ER", "ES", "ET", "FI", "FJ", "FK", "FM", "FO", "FR", "GA", "GB", "GD", "GE":
+		return true
+	case "GF", "GG", "GH", "GI", "GL", "GM", "GN", "GP", "GQ", "GR", "GT", "GU", "GW", "GY", "HK":
+		return true
+	case "HN", "HR", "HT", "HU", "ID", "IE", "IL", "IM", "IN", "IO", "IQ", "IR", "IS", "IT", "JE":
+		return true
+	case "JM", "JO", "JP", "KE", "KG", "KH", "KI", "KM", "KN", "KP", "KR", "KW", "KY", "KZ", "LA":
+		return true
+	case "LB", "LC", "LI", "LK", "LR", "LS", "LT", "LU", "LV", "LY", "MA", "MC", "MD", "ME", "MF":
+		return true
+	case "MG", "MH", "MK", "ML", "MM", "MN", "MO", "MP", "MQ", "MR", "MS", "MT", "MU", "MV", "MW":
+		return true
+	case "MX", "MY", "MZ", "NA", "NC", "NE", "NF", "NG", "NI", "NL", "NO", "NP", "NR", "NU", "NZ":
+		return true
+	case "OM", "PA", "PE", "PF", "PG", "PH", "PK", "PL", "PM", "PN", "PR", "PS", "PT", "PW", "PY":
+		return true
+	case "QA", "RE", "RO", "RS", "RU", "RW", "SA", "SB", "SC", "SD", "SE", "SG", "SH", "SI", "SJ":
+		return true
+	case "SK", "SL", "SM", "SN", "SO", "SR", "SS", "ST", "SV", "SX", "SY", "SZ", "TC", "TD", "TF":
+		return true
+	case "TG", "TH", "TJ", "TK", "TL", "TM", "TN", "TO", "TR", "TT", "TV", "TW", "TZ", "UA", "UG":
+		return true
+	case "US", "UY", "UZ", "VA", "VC", "VE", "VG", "VI", "VN", "VU", "WF", "WS", "XK", "YE", "YT":
+		return true
+	case "ZA", "ZM", "ZW":
+		return true
+	default:
+		return false
 	}
 }
