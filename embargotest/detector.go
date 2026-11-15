@@ -49,18 +49,25 @@ func (o valuesOption) apply(r *Recorder) bool {
 }
 
 func (r *Recorder) scan(data []byte) (found, failed bool) {
+	findings, failed := r.scanFindings(data)
+	return len(findings) > 0, failed
+}
+
+func (r *Recorder) scanFindings(data []byte) (findings []embargo.Finding, failed bool) {
 	failed = true
 	defer func() {
 		if failed {
 			_ = recover() //nolint:errcheck // Discard panic values, including panic(nil) compatibility mode.
 		}
 	}()
-	for _, f := range r.scanner.Scan(data) {
+	all := r.scanner.Scan(data)
+	findings = all[:0]
+	for _, f := range all {
 		if !r.allowedKinds[f.Kind] && !r.allowedValues[string(data[f.Start:f.End])] {
-			found = true
+			findings = append(findings, f)
 		}
 	}
-	return found, false
+	return findings, false
 }
 
 // observeMetadata checks transient HTTP data while the recorder lock is held.

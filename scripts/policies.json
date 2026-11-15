@@ -310,5 +310,35 @@
     "source": "CLAUDE; M14",
     "check": "scripts/check_policies.py#regression-evidence",
     "where": "Verification"
+  },
+  {
+    "rule": "Guard diagnostics validate names and track active tests",
+    "source": "M15",
+    "check": "embargotest/guard_names_test.go#TestGuardNamesAtLeak",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Critical recall cannot drop or retain unmasked expected bytes",
+    "source": "M15",
+    "check": "tests/severity_test.go#TestSeverityAccuracy",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "README techniques link bug classes to individual sections",
+    "source": "M15",
+    "check": "scripts/test_testing_techniques.py#test_readme_links_each_bug_to_its_section",
+    "where": "Verification"
+  },
+  {
+    "rule": "Module downloads retry without retrying failed tests",
+    "source": "M15",
+    "check": "scripts/test_download_modules.py#test_persistent_failure_is_not_swallowed",
+    "where": "Verification"
+  },
+  {
+    "rule": "Quint npm bumps must match the pinned release evaluator",
+    "source": "M15",
+    "check": "scripts/test_install_quint_evaluator.py#test_changed_expected_version_fails_before_cached_install",
+    "where": "Verification"
   }
 ]

@@ -1,13 +1,11 @@
 package embargotest
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"io"
 	"os"
 	"os/exec"
-	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -24,8 +22,9 @@ import (
 // Options use the Recorder policy, but Guard needs no expectations. The default
 // timeout is 5 minutes and total retained output is 1 MiB. Overflow, timeout,
 // scanner failure or any leak fails the package. Safe output is replayed only
-// after checking. Reports name the stream and count test-start frames in that process;
-// frames are untrusted and cannot attribute raw output to a test reliably.
+// after checking. Reports list tests active in observed Go framing at the leak, after checking
+// each name for canaries, detector findings and permitted characters. Parallel
+// tests and independently drained pipes prevent exact attribution to a writer.
 // Independently redirected subprocess output and output before TestMain are
 // outside this boundary. Fixtures must use the configured public fake canary.
 // Explicit -test.v=false suppresses passing t.Log output; test2json framing is
@@ -73,12 +72,12 @@ func guardCommand(ctx context.Context, cmd *exec.Cmd, policy *Recorder, stdout, 
 	if runErr != nil {
 		code = 1
 	}
-	tests := guardTests(capture.data[0])
 	for i, stream := range []string{"stdout", "stderr"} {
 		data := capture.data[i]
-		found, failed := policy.scan(data)
-		if failed || found || containsCanary(data, policy.needles) {
-			guardMessage("embargotest: package leak or scanner failure on " + stream + "; observed test-start frames: " + tests)
+		leaks, failed := guardLeaks(data, policy)
+		if failed || len(leaks) > 0 {
+			tests := guardTests(capture, i, leaks, policy)
+			guardMessage("embargotest: package leak or scanner failure on " + stream + "; active tests: " + tests)
 			code = 1
 			continue
 		}
@@ -108,6 +107,7 @@ func guardPolicy(opts []Option) *Recorder {
 }
 
 type guardCapture struct {
+	stderrWrites       []guardWrite
 	data               [2][]byte
 	mu                 sync.Mutex
 	retained, maxBytes int64
@@ -124,23 +124,13 @@ func (w *guardStream) Write(data []byte) (int, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	keep := min(int64(len(data)), c.maxBytes-c.retained)
+	if w.index == 1 && keep > 0 {
+		c.stderrWrites = append(c.stderrWrites, guardWrite{start: len(c.data[1]), end: len(c.data[1]) + int(keep), stdout: len(c.data[0])})
+	}
 	c.data[w.index] = append(c.data[w.index], data[:keep]...)
 	c.retained += keep
 	c.overflow = c.overflow || keep < int64(len(data))
 	return len(data), nil
-}
-
-// Child output is untrusted, including testing's text framing. Count frames,
-// but never echo names: an opaque secret need not match any detector.
-func guardTests(data []byte) string {
-	count := 0
-	for line := range bytes.SplitSeq(data, []byte("\n")) {
-		line = bytes.TrimPrefix(line, []byte{0x16})
-		if bytes.HasPrefix(line, []byte("=== RUN   ")) {
-			count++
-		}
-	}
-	return strconv.Itoa(count)
 }
 
 func guardMessage(message string) {

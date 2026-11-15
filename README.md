@@ -244,22 +244,22 @@ Round 14: 8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification r
 ## Testing
 
 <!-- techniques:start -->
-| Technique | Tests |
+| Technique | Bug class caught here |
 |---|---|
-| Examples and unit tests | [Examples and unit tests](doc/testing.md) |
-| Generated properties | [Generated properties](doc/testing.md) |
-| Metamorphic relations | [Metamorphic relations](doc/testing.md) |
-| Quint and model replay | [Quint and model replay](doc/testing.md) |
-| Lean reference proofs | [Lean reference proofs](doc/testing.md) |
-| Intentional snapshots | [Intentional snapshots](doc/testing.md) |
-| Independent differential oracles | [Independent differential oracles](doc/testing.md) |
-| Structure-aware fuzzing | [Structure-aware fuzzing](doc/testing.md) |
-| Mutation testing | [Mutation testing](doc/testing.md) |
-| Real logger and SDK output | [Real logger and SDK output](doc/testing.md) |
-| Race and lifecycle tests | [Race and lifecycle tests](doc/testing.md) |
-| Paired CI benchmarks | [Paired CI benchmarks](doc/testing.md) |
-| Prose and policy checks | [Prose and policy checks](doc/testing.md) |
-| Adversarial budgets | [Adversarial budgets](doc/testing.md) |
+| Examples and unit tests | [Wrong public outputs](doc/testing.md#examples-and-unit-tests) |
+| Generated properties | [Missing checksum combinations](doc/testing.md#generated-properties) |
+| Metamorphic relations | [Inconsistent transformed findings](doc/testing.md#metamorphic-relations) |
+| Quint and model replay | [Invalid lifecycle transitions](doc/testing.md#quint-and-model-replay) |
+| Lean reference proofs | [Arithmetic and interval errors](doc/testing.md#lean-reference-proofs) |
+| Intentional snapshots | [Changed output structure](doc/testing.md#intentional-snapshots) |
+| Independent differential oracles | [Shared oracle mistakes](doc/testing.md#independent-differential-oracles) |
+| Structure-aware fuzzing | [Malformed nested inputs](doc/testing.md#structure-aware-fuzzing) |
+| Mutation testing | [Assertions missing changed logic](doc/testing.md#mutation-testing) |
+| Real logger and SDK output | [Serializer and SDK leaks](doc/testing.md#real-logger-and-sdk-output) |
+| Race and lifecycle tests | [Races and hanging pipes](doc/testing.md#race-and-lifecycle-tests) |
+| Paired CI benchmarks | [Runner noise hiding regressions](doc/testing.md#paired-ci-benchmarks) |
+| Prose and policy checks | [Stale docs and rules](doc/testing.md#prose-and-policy-checks) |
+| Adversarial budgets | [Resource amplification and spoofing](doc/testing.md#adversarial-budgets) |
 <!-- techniques:end -->
 
 <!-- testing-metrics:start -->

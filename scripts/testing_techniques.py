@@ -12,10 +12,13 @@ def generate(check=False):
         path = ROOT/filename
         detailed = filename.startswith('doc/')
         prefix = '../' if detailed else ''
-        table = '| Technique | Bug class caught here | Tests | CI |\n|---|---|---|---|\n' if detailed else '| Technique | Tests |\n|---|---|\n'
+        table = '' if detailed else '| Technique | Bug class caught here |\n|---|---|\n'
         for row in rows:
             links = ', '.join(f'[{Path(p).stem}]({prefix}{p})' for p in row['paths'])
-            table += f"| {row['name']} | {row['bug']} | {links} | {row['ci']} |\n" if detailed else f"| {row['name']} | [{row['name']}](doc/testing.md) |\n"
+            if detailed:
+                table += f'<a id="{row["anchor"]}"></a>\n\n### {row["name"]}\n\n{row["bug"]}. Tests: {links}. CI: `{row["ci"]}`.\n\n'
+            else:
+                table += f"| {row['name']} | [{row['summary']}](doc/testing.md#{row['anchor']}) |\n"
         text = path.read_text()
         start, end = '<!-- techniques:start -->', '<!-- techniques:end -->'
         expected = text.split(start)[0]+start+'\n'+table+end+text.split(end)[1]
