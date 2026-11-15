@@ -4,18 +4,18 @@
 <rect width="920" height="440" fill="#101923"/>
 <g font-family="sans-serif" fill="#eff6ff"><text x="24" y="32" font-size="22">JSON logging · median ns/op · lower is faster</text><text x="24" y="58" font-size="14">masq v0.2.3 (blue) / embargo (green) · ten samples</text>
 <text x="24" y="110" font-size="16">flat</text>
-<rect x="130" y="90" width="29.61" height="19" rx="3" fill="#68a6fa"/><text x="169.61" y="105" font-size="13">6,859.5</text>
-<rect x="130" y="115" width="15.38" height="19" rx="3" fill="#55d6b0"/><text x="155.38" y="130" font-size="13">3,563.5</text>
+<rect x="130" y="90" width="30.78" height="19" rx="3" fill="#68a6fa"/><text x="170.78" y="105" font-size="13">6,950.0</text>
+<rect x="130" y="115" width="14.97" height="19" rx="3" fill="#55d6b0"/><text x="154.97" y="130" font-size="13">3,380.5</text>
 <text x="24" y="174" font-size="16">nested</text>
-<rect x="130" y="154" width="50.58" height="19" rx="3" fill="#68a6fa"/><text x="190.58" y="169" font-size="13">11,718.5</text>
-<rect x="130" y="179" width="34.83" height="19" rx="3" fill="#55d6b0"/><text x="174.83" y="194" font-size="13">8,069.5</text>
+<rect x="130" y="154" width="50.58" height="19" rx="3" fill="#68a6fa"/><text x="190.58" y="169" font-size="13">11,421.0</text>
+<rect x="130" y="179" width="34.22" height="19" rx="3" fill="#55d6b0"/><text x="174.22" y="194" font-size="13">7,727.0</text>
 <text x="24" y="238" font-size="16">map</text>
-<rect x="130" y="218" width="55.38" height="19" rx="3" fill="#68a6fa"/><text x="195.38" y="233" font-size="13">12,830.0</text>
-<rect x="130" y="243" width="42.06" height="19" rx="3" fill="#55d6b0"/><text x="182.06" y="258" font-size="13">9,743.5</text>
+<rect x="130" y="218" width="55.66" height="19" rx="3" fill="#68a6fa"/><text x="195.66" y="233" font-size="13">12,569.5</text>
+<rect x="130" y="243" width="42.30" height="19" rx="3" fill="#55d6b0"/><text x="182.30" y="258" font-size="13">9,551.5</text>
 <text x="24" y="302" font-size="16">clean</text>
-<rect x="130" y="282" width="27.97" height="19" rx="3" fill="#68a6fa"/><text x="167.97" y="297" font-size="13">6,480.0</text>
-<rect x="130" y="307" width="9.36" height="19" rx="3" fill="#55d6b0"/><text x="149.36" y="322" font-size="13">2,169.0</text>
+<rect x="130" y="282" width="28.42" height="19" rx="3" fill="#68a6fa"/><text x="168.42" y="297" font-size="13">6,418.5</text>
+<rect x="130" y="307" width="9.37" height="19" rx="3" fill="#55d6b0"/><text x="149.37" y="322" font-size="13">2,115.5</text>
 <text x="24" y="366" font-size="16">large50</text>
-<rect x="130" y="346" width="580.00" height="19" rx="3" fill="#68a6fa"/><text x="720.00" y="361" font-size="13">134,369.0</text>
-<rect x="130" y="371" width="131.27" height="19" rx="3" fill="#55d6b0"/><text x="271.27" y="386" font-size="13">30,410.5</text>
+<rect x="130" y="346" width="580.00" height="19" rx="3" fill="#68a6fa"/><text x="720.00" y="361" font-size="13">130,974.0</text>
+<rect x="130" y="371" width="135.32" height="19" rx="3" fill="#55d6b0"/><text x="275.32" y="386" font-size="13">30,558.5</text>
 </g></svg>
