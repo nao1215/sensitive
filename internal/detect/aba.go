@@ -65,6 +65,13 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			continue
 		}
 
+		// A decimal component (including an RFC3339 fractional second) is not
+		// a standalone routing number, even when its digits satisfy the checksum.
+		if i >= 2 && data[i-1] == '.' && isDigit(data[i-2]) || end+1 < len(data) && data[end] == '.' && isDigit(data[end+1]) {
+			i = end - 1
+			continue
+		}
+
 		digits := data[i:end]
 
 		// Validate Federal Reserve routing symbol (first two digits).
