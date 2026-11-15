@@ -1,13 +1,17 @@
 # embargo
 
-embargo detects and masks personal data, payment data and secrets in text, logs and test output: a cross-platform Go library with zero dependencies.
-
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
-[![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/embargo.svg)](https://pkg.go.dev/github.com/nao1215/embargo) [![MultiPlatformUnitTest](https://github.com/nao1215/embargo/actions/workflows/unit_test.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/unit_test.yml) [![reviewdog](https://github.com/nao1215/embargo/actions/workflows/reviewdog.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/reviewdog.yml) [![govulncheck](https://github.com/nao1215/embargo/actions/workflows/govulncheck.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/govulncheck.yml) [![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/embargo/coverage.svg)](https://github.com/nao1215/embargo/actions/workflows/coverage.yml) [![OpenSSF Scorecard](https://github.com/nao1215/embargo/actions/workflows/scorecard.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/scorecard.yml) [![License](https://img.shields.io/github/license/nao1215/embargo)](LICENSE)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/embargo.svg)](https://pkg.go.dev/github.com/nao1215/embargo)
+[![MultiPlatformUnitTest](https://github.com/nao1215/embargo/actions/workflows/unit_test.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/unit_test.yml)
+[![reviewdog](https://github.com/nao1215/embargo/actions/workflows/reviewdog.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/reviewdog.yml)
+![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/embargo/coverage.svg)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nao1215/embargo/badge)](https://scorecard.dev/viewer/?uri=github.com/nao1215/embargo)
 
 <img src="doc/images/logo-small.png" alt="embargo" width="320">
+
+embargo detects and masks sensitive text in Go programs, logs and test output.
 
 - Mask card numbers and emails before logs leave your service.
 - Check in tests that an HTTP handler or child process never writes a secret.
