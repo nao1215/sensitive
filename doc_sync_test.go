@@ -6,10 +6,12 @@ import (
 	"go/doc"
 	"go/format"
 	"go/parser"
+	"go/scanner"
 	"go/token"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -67,7 +69,7 @@ func TestReadmeExamples(t *testing.T) {
 			if got.Output != want.Output || got.EmptyOutput != want.EmptyOutput || got.Unordered != want.Unordered {
 				t.Fatalf("README output differs from %s", block[2])
 			}
-			gotCode, wantCode := got.Code, want.Code
+			gotCode, wantCode := got.Code, readmeExcerpt(t, file, want.Code)
 			if program {
 				if got.Play == nil || want.Play == nil {
 					t.Fatal("quick start must be a standalone runnable program")
@@ -101,7 +103,19 @@ func canonicalExample(t *testing.T, fset *token.FileSet, node ast.Node) string {
 	if err := format.Node(&buf, cleanSet, clean); err != nil {
 		t.Fatal(err)
 	}
-	return buf.String()
+	// Token comparison ignores source-position blank lines while retaining every
+	// byte of string literals, including meaningful whitespace in raw strings.
+	var lexer scanner.Scanner
+	lexer.Init(token.NewFileSet().AddFile("formatted.go", -1, buf.Len()), buf.Bytes(), nil, 0)
+	var tokens []string
+	for {
+		_, kind, literal := lexer.Scan()
+		if kind == token.EOF {
+			break
+		}
+		tokens = append(tokens, kind.String()+":"+strconv.Quote(literal))
+	}
+	return strings.Join(tokens, " ")
 }
 
 func TestExamplesAppearInGodoc(t *testing.T) {
@@ -253,4 +267,42 @@ func TestPublicExamplesOnlyImportPublicPackages(t *testing.T) {
 			}
 		}
 	}
+}
+
+// readmeExcerpt keeps logger setup in the runnable Example while the README
+// shows the application-facing calls between explicit source markers.
+func readmeExcerpt(t *testing.T, file *ast.File, code ast.Node) ast.Node {
+	t.Helper()
+	body, ok := code.(*ast.BlockStmt)
+	if !ok {
+		return code
+	}
+	var start, end token.Pos
+	for _, group := range file.Comments {
+		if group.Pos() < body.Pos() || group.End() > body.End() {
+			continue
+		}
+		switch strings.TrimSpace(group.Text()) {
+		case "README:begin":
+			start = group.End()
+		case "README:end":
+			end = group.Pos()
+		}
+	}
+	if start == token.NoPos && end == token.NoPos {
+		return code
+	}
+	if start == token.NoPos || end <= start {
+		t.Fatal("invalid README excerpt markers")
+	}
+	var statements []ast.Stmt
+	for _, statement := range body.List {
+		if statement.Pos() > start && statement.End() < end {
+			statements = append(statements, statement)
+		}
+	}
+	if len(statements) == 0 {
+		t.Fatal("empty README excerpt")
+	}
+	return &ast.BlockStmt{Lbrace: body.Lbrace, List: statements, Rbrace: body.Rbrace}
 }

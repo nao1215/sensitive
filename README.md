@@ -23,6 +23,10 @@ embargo detects and masks sensitive text in Go programs, logs and test output.
 
 These examples use the unreleased API on main (Go 1.26.11 or later).
 
+```sh
+go get github.com/nao1215/embargo@main
+```
+
 <!-- example: example_test.go:Example -->
 ```go
 package main
@@ -60,11 +64,12 @@ func main() {
 ## Scanning and masking
 
 <!-- masking:start -->
-| Operation | Input | Output |
-|---|---|---|
-| [Mask](masking_example_test.go) | `INFO checkout email=alice@example.com card=4111111111111111` | `INFO checkout email=[REDACTED] card=[REDACTED]` |
-| [MaskFunc: keep last four](masking_example_test.go) | same log line | `INFO checkout email=[REDACTED] card=[REDACTED]1111` |
-| [Overlapping findings](masking_example_test.go) | `token=abcdef` with matches `abcd cdef` | `token=[REDACTED]` |
+| Operation | Actual text |
+|---|---|
+| Input | `INFO checkout email=alice@example.com card=4111111111111111` |
+| [Mask](masking_example_test.go) | `INFO checkout email=[REDACTED] card=[REDACTED]` |
+| [MaskFunc: keep last four](masking_example_test.go) | `INFO checkout email=[REDACTED] card=[REDACTED]1111` |
+| [Overlapping matches](masking_example_test.go) | `token=abcdef` with `abcd cdef` → `token=[REDACTED]` |
 <!-- masking:end -->
 
 [Scanner options, custom replacements and overlapping matches](doc/masking.md).
@@ -87,24 +92,19 @@ fmt.Println(key)
 
 ## Mask logs
 
+`next` is the handler your logger already uses.
+
 <!-- example: slog_example_test.go:ExampleNewSlogHandler_short -->
 ```go
 scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
-logger := slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-    ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
-        if a.Key == slog.TimeKey {
-            return slog.Attr{}
-        }
-        return a
-    },
-}), scanner))
+logger := slog.New(embargo.NewSlogHandler(next, scanner))
 
 logger.Info("checkout", "email", "alice@example.com")
 
 // Output: {"level":"INFO","msg":"checkout","email":"[REDACTED]"}
 ```
 
-[Groups, value handling and output failures](doc/logging.md).
+[Full runnable example](slog_example_test.go) · [Groups, value handling and output failures](doc/logging.md).
 
 ## Check test output
 
@@ -152,8 +152,7 @@ Each link opens the test that produces and checks the shown output.
 
 ## Accuracy
 
-This chart measures detection on a synthetic corpus.
-[Generation, test cases and observed misses](doc/accuracy.md) explain the scores.
+This chart measures detection on a synthetic corpus. [Generation, test cases and observed misses](doc/accuracy.md) explain the scores.
 
 <!-- accuracy:start -->
 ![Precision and recall on synthetic samples](doc/images/accuracy.svg)
@@ -196,13 +195,6 @@ All detectors scan sensitive text at 4.39 MB/s; masking a clean slog event takes
 
 [Machine, method, profiles and full results](doc/benchmarks.md).
 
-## Installation
-
-```sh
-go get github.com/nao1215/embargo@main
-```
-
-Go 1.26.11 or later, on Linux, macOS or Windows. [Release history and migration](CHANGELOG.md).
 
 ## Contributing
 

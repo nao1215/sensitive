@@ -1,5 +1,15 @@
 # Runtime masking and output checks
 
+## Installation
+
+Use Go 1.26.11 or later on Linux, macOS or Windows. The examples use main until the owner publishes the next release.
+
+```sh
+go get github.com/nao1215/embargo@main
+```
+
+[Release history and migration](../CHANGELOG.md).
+
 ## What runs where?
 
 | Tool | Input and use |

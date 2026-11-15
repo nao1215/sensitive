@@ -64,7 +64,7 @@ func TestReadmeMaskingFigure(t *testing.T) {
 	}
 	log, overlap := outputs["Mask_log"], outputs["Mask_overlap"]
 	//nolint:gocritic // Markdown code spans need literal backticks, not Go string quoting.
-	table := fmt.Sprintf("| Operation | Input | Output |\n|---|---|---|\n| [Mask](masking_example_test.go) | `%s` | `%s` |\n| [MaskFunc: keep last four](masking_example_test.go) | same log line | `%s` |\n| [Overlapping findings](masking_example_test.go) | `%s` with matches `%s` | `%s` |\n", log[0], log[1], log[2], overlap[0], overlap[1], overlap[2])
+	table := fmt.Sprintf("| Operation | Actual text |\n|---|---|\n| Input | `%s` |\n| [Mask](masking_example_test.go) | `%s` |\n| [MaskFunc: keep last four](masking_example_test.go) | `%s` |\n| [Overlapping matches](masking_example_test.go) | `%s` with `%s` → `%s` |\n", log[0], log[1], log[2], overlap[0], overlap[1], overlap[2])
 	syncVisualDocument(t, "README.md", "masking", table)
 	//nolint:dupword,gocritic // Mermaid labels and consecutive edges require literal quotes and repeated node names.
 	diagram := fmt.Sprintf("```mermaid\nflowchart LR\n  input[\"%s\"] --> first[\"Match: %s\"]\n  input --> second[\"Match: %s\"]\n  first --> union[\"Merge overlapping spans\"]\n  second --> union\n  union --> output[\"%s\"]\n```\n", overlap[0], strings.Fields(overlap[1])[0], strings.Fields(overlap[1])[1], overlap[2])
