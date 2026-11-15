@@ -13,6 +13,11 @@ import (
 	"github.com/nao1215/embargo"
 )
 
+const (
+	developmentAccuracySet = "development"
+	heldAccuracySet        = "held"
+)
+
 type accuracySample struct {
 	Detector string   `json:"detector"`
 	Text     string   `json:"text"`
@@ -67,7 +72,16 @@ func accuracyRatio(numerator, denominator int) string {
 
 func TestAccuracyTable(t *testing.T) {
 	t.Parallel()
-	samples := allAccuracySamples(t)
+	for _, set := range selectedAccuracySets(t) {
+		for _, threshold := range []float64{0, .7} {
+			t.Run(fmt.Sprintf("%s/%.1f", set, threshold), func(t *testing.T) { t.Parallel(); scoreAccuracyTable(t, set, threshold) })
+		}
+	}
+}
+
+func scoreAccuracyTable(t *testing.T, set string, threshold float64) {
+	t.Helper()
+	samples := allAccuracySamples(t, set)
 
 	counts := map[string]accuracyCount{}
 	inputs := map[string][2]int{}
@@ -80,7 +94,7 @@ func TestAccuracyTable(t *testing.T) {
 			input[0]++
 		}
 		inputs[string(sample.Kind)] = input
-		findings := embargo.NewScanner(embargo.WithKinds(sample.Kind)).ScanString(sample.Text)
+		findings := embargo.NewScanner(embargo.WithKinds(sample.Kind), embargo.WithMinConfidence(threshold)).ScanString(sample.Text)
 		result := scoreAccuracy(sample.Kind, findings, sample.Expected)
 		count := counts[string(sample.Kind)]
 		count.tp += result.tp
@@ -103,8 +117,10 @@ func TestAccuracyTable(t *testing.T) {
 		count := counts[name]
 		summaries = append(summaries, accuracySummary{Detector: name, Positive: inputs[name][0], Negative: inputs[name][1], TP: count.tp, FP: count.fp, FN: count.fn, Precision: accuracyRatio(count.tp, count.tp+count.fp), Recall: accuracyRatio(count.tp, count.tp+count.fn)})
 	}
-	syncAccuracySnapshot(t, summaries)
-	syncReadmeTable(t, "accuracy", accuracyEntrance(t, names))
+	syncAccuracySnapshot(t, set, threshold, summaries)
+	if set == heldAccuracySet && threshold == 0 {
+		syncReadmeTable(t, "accuracy", accuracyEntrance(t, names))
+	}
 }
 
 func syncReadmeTable(t *testing.T, name, table string) {
@@ -202,7 +218,7 @@ func writeAccuracyText(t *testing.T, out *strings.Builder, value string) {
 	}
 }
 
-func syncAccuracySnapshot(t *testing.T, rows []accuracySummary) {
+func syncAccuracySnapshot(t *testing.T, set string, threshold float64, rows []accuracySummary) {
 	t.Helper()
 	//nolint:errchkjson // Keep encoding failure handling explicit for future snapshot fields.
 	data, err := json.MarshalIndent(rows, "", "  ")
@@ -210,7 +226,14 @@ func syncAccuracySnapshot(t *testing.T, rows []accuracySummary) {
 		t.Fatal(err)
 	}
 	data = append(data, '\n')
-	const path = "../doc/accuracy.json"
+	path := "../doc/accuracy"
+	if set == heldAccuracySet {
+		path += "-held"
+	}
+	if threshold > 0 {
+		path += "-70"
+	}
+	path += ".json"
 	if os.Getenv("UPDATE_DOCS") == "1" {
 		if writeErr := os.WriteFile(path, data, 0o600); writeErr != nil {
 			t.Fatal(writeErr)
@@ -229,7 +252,7 @@ func syncAccuracySnapshot(t *testing.T, rows []accuracySummary) {
 func accuracyEntrance(t *testing.T, names []string) string {
 	t.Helper()
 	var entrance strings.Builder
-	if _, err := entrance.WriteString("![Precision and recall on synthetic samples](doc/images/accuracy.svg)\n\n| Detector details | | |\n|---|---|---|\n"); err != nil {
+	if _, err := entrance.WriteString("![Precision and recall on held-out synthetic samples](doc/images/accuracy.svg)\n\n| Detector details | | |\n|---|---|---|\n"); err != nil {
 		t.Fatal(err)
 	}
 	for index, name := range names {

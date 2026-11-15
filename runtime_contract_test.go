@@ -92,3 +92,29 @@ func TestMaskUnion(t *testing.T) {
 	}
 	mustPanic(t, func() { embargo.MaskFunc("", nil, nil) })
 }
+
+func TestScannerMutationEdges(t *testing.T) {
+	t.Parallel()
+	equal := embargo.Finding{Kind: "a", Start: 0, End: 1, Confidence: .5}
+	got := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(literalDetector{equal}), embargo.WithMinConfidence(.5)).ScanString("x")
+	if !slices.Equal(got, []embargo.Finding{equal}) {
+		t.Fatal("inclusive confidence threshold", got)
+	}
+	for _, f := range []embargo.Finding{{Kind: "a", Start: 0, End: 0}, {Kind: "a", Start: 1, End: 1}, {Kind: "a", Start: 1, End: 0}} {
+		mustPanic(t, func() {
+			embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(literalDetector{f})).ScanString("xy")
+		})
+	}
+	want := []embargo.Finding{
+		{Kind: "z", Start: 0, End: 3, Confidence: .5},
+		{Kind: "a", Start: 0, End: 2, Confidence: 1},
+		{Kind: "a", Start: 0, End: 2, Confidence: .5},
+		{Kind: "b", Start: 0, End: 2, Confidence: 1},
+	}
+	input := slices.Clone(want)
+	slices.Reverse(input)
+	got = embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(literalDetector(input))).ScanString("xyz")
+	if !slices.Equal(got, want) {
+		t.Fatal("sort tie breaking", got)
+	}
+}

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Accuracy and scanning
+
+- Decode one layer of percent escapes with original byte offsets, lower confidence for business-labeled numeric candidates, reject embedded My Number fragments, and share hint dispatch across selected detectors while removing unnecessary ASCII position maps ([PR #73](https://github.com/nao1215/embargo/pull/73), [implementation](https://github.com/nao1215/embargo/commit/29ce283)). Public API signatures and the default threshold of 0 are unchanged; see the [behavior migration note](doc/migration.md).
+
+- Separate development and held-out synthetic evaluation, publish both default and 0.7 confidence policies, retain reviewed limits, and extend differential, offset and mutation assertions ([PR #73](https://github.com/nao1215/embargo/pull/73), [assertions](https://github.com/nao1215/embargo/commit/789318d)). The stricter SWIFT context experiment was rejected after held-out recall regressed.
+
+- Bound percent-decoding map capacity without addition, skip unused decoding for empty or custom-only scanners, recognize business labels at query boundaries, and reject invalid accuracy-set selections ([PR #73](https://github.com/nao1215/embargo/pull/73), [allocation bound](https://github.com/nao1215/embargo/commit/5a32a38), [review fixes](https://github.com/nao1215/embargo/commit/7d54404)).
+
 ### Follow-up review
 
 - Add optional zap, zerolog and logrus modules with JSON output masking, runnable Examples, real-output tests, all-platform CI and a nested-module release plan ([PR #70](https://github.com/nao1215/embargo/pull/70), [implementation](https://github.com/nao1215/embargo/commit/586448a)).

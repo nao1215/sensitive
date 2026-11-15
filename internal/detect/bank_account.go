@@ -62,7 +62,7 @@ func (d *BankAccount) Hints() [][]byte {
 
 // Scan returns matches in data using the rules documented on [BankAccount].
 func (d *BankAccount) Scan(data []byte) []Finding {
-	normalized, posMap := NormalizeFullWidthDigits(data)
+	normalized, posMap := normalizeDigits(data)
 	return d.scanNormalized(data, normalized, posMap)
 }
 

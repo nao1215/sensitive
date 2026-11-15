@@ -160,10 +160,10 @@ Each link opens the test that produces and checks the shown output.
 
 ## Accuracy
 
-This chart measures detection on a synthetic corpus. [Generation, test cases and observed misses](doc/accuracy.md) explain the scores.
+This chart shows the held-out synthetic set at the default minimum confidence of 0. [Generation, test cases and observed misses](doc/accuracy.md) explain the scores.
 
 <!-- accuracy:start -->
-![Precision and recall on synthetic samples](doc/images/accuracy.svg)
+![Precision and recall on held-out synthetic samples](doc/images/accuracy.svg)
 
 | Detector details | | |
 |---|---|---|
@@ -188,7 +188,7 @@ This chart measures detection on a synthetic corpus. [Generation, test cases and
 | Real output tests | Leaks after encoding or buffering | [Loggers](tests/compatibility_integration_test.go), [HTTP](tests/http_integration_test.go) |
 
 <!-- testing-metrics:start -->
-Coverage 96.6% · mutation score 87.31% · 7 fuzz targets, 3379574 executions.
+Coverage 96.8% · mutation score 90.68% · 7 fuzz targets, 2949231 executions.
 <!-- testing-metrics:end -->
 
 [Commands, measurement scope and conditions](doc/testing.md).
@@ -198,7 +198,7 @@ Coverage 96.6% · mutation score 87.31% · 7 fuzz targets, 3379574 executions.
 <!-- benchmarks:start -->
 ![Scanner throughput and slog time](doc/images/benchmarks.svg)
 
-All detectors scan sensitive text at 5.19 MB/s; masking a clean slog event takes 4.92 µs, 5.6× the plain handler.
+All detectors scan sensitive text at 9.89 MB/s; masking a clean slog event takes 2.26 µs, 2.7× the plain handler.
 <!-- benchmarks:end -->
 
 [Machine, method, profiles and full results](doc/benchmarks.md).

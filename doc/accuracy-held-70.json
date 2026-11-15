@@ -1,0 +1,232 @@
+[
+  {
+    "detector": "aba_routing",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "ach_trace",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "awskey",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "bank_account",
+    "precision": "n/a",
+    "recall": "0.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 0,
+    "fp": 0,
+    "fn": 144
+  },
+  {
+    "detector": "btc",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "card_expiry",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "cvv",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "email",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "eth",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "github_token",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "google_api_key",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "iban",
+    "precision": "97.3%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 4,
+    "fn": 0
+  },
+  {
+    "detector": "ipaddr",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "jwt",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "merchant_id",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "mynumber",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "pan",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "payment_token",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "phone_jp",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "private_key_pem",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "slack_token",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "swiftbic",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "detector": "uk_sortcode",
+    "precision": "100.0%",
+    "recall": "95.8%",
+    "positive": 144,
+    "negative": 416,
+    "tp": 138,
+    "fp": 0,
+    "fn": 6
+  }
+]

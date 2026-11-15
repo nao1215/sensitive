@@ -16,7 +16,9 @@ type Scanner struct {
 	detectors     []detect.Detector
 	hintCache     [][]hintEntry
 	custom        []Detector
+	hintIndex     [256][]dispatchHint
 	minConfidence float64
+	unconditional uint32
 	initialized   bool
 }
 
@@ -31,7 +33,8 @@ type hintEntry struct {
 }
 
 // NewScanner selects all built-ins by default, including IP addresses and context-based
-// detectors. Use WithKinds to narrow selection. Options apply in order; nil options are ignored.
+// detectors. The default minimum confidence is 0, including ambiguous candidates.
+// Use WithKinds to narrow selection. Options apply in order; nil options are ignored.
 func NewScanner(opts ...ScannerOption) *Scanner {
 	s := &Scanner{initialized: true}
 	for _, opt := range opts {
@@ -45,6 +48,9 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 		}
 	}
 	s.hintCache = buildHintCache(s.detectors)
+	if len(s.detectors) > 1 {
+		s.buildDispatch()
+	}
 	return s
 }
 
@@ -71,7 +77,10 @@ func buildHintCache(detectors []detect.Detector) [][]hintEntry {
 }
 
 // Scan returns every finding, including overlaps, ordered by start, descending end,
-// kind, then descending confidence. Invalid custom findings panic with a fixed message.
+// kind, then descending confidence. Built-ins decode one layer of valid percent
+// escapes (%HH), preserving literal + and invalid escapes; offsets always refer
+// to original bytes. Other encodings are not decoded. Custom detectors receive
+// the original bytes. Invalid custom findings panic with a fixed message.
 func (s *Scanner) Scan(data []byte) []Finding {
 	if len(data) == 0 {
 		return nil
@@ -79,14 +88,22 @@ func (s *Scanner) Scan(data []byte) []Finding {
 	if !s.initialized {
 		return NewScanner().Scan(data)
 	}
+	scanData := data
+	var positions []int
+	var selected uint32
+	if len(s.detectors) > 0 {
+		scanData, positions = decodePercent(data)
+		selected = s.selectDetectors(scanData)
+	}
 	var findings []Finding
-	var folded []byte
-	var ready bool
 	for i, d := range s.detectors {
-		if !matchesAnyHint(s.hintCache[i], data, &folded, &ready) {
+		if selected&(1<<i) == 0 {
 			continue
 		}
-		for _, f := range d.Scan(data) {
+		for _, f := range d.Scan(scanData) {
+			if positions != nil {
+				f.Start, f.End = positions[f.Start], positions[f.End]
+			}
 			findings = append(findings, Finding{Kind: Kind(f.DetectorName), Start: f.Start, End: f.End, Confidence: f.Confidence})
 		}
 	}

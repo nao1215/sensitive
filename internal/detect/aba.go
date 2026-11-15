@@ -31,7 +31,7 @@ func (d *ABARouting) Hints() [][]byte {
 
 // Scan returns matches in data using the rules documented on [ABARouting].
 func (d *ABARouting) Scan(data []byte) []Finding {
-	normalized, posMap := NormalizeFullWidthDigits(data)
+	normalized, posMap := normalizeDigits(data)
 	return d.scanNormalized(data, normalized, posMap)
 }
 
@@ -41,7 +41,8 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 
 	for i := 0; i < len(data); i++ {
 		// Escape bytes cannot become part of a numeric candidate.
-		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(orig, posMap[i+3]) {
+		//nolint:mnd // A percent escape occupies three bytes.
+		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(orig, originalPosition(posMap, i+3)) {
 			i += 2
 			continue
 		}
@@ -50,7 +51,7 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		}
 
 		// Word boundary: preceding character must not be alphanumeric.
-		if i > 0 && isAlphaNum(data[i-1]) && !encodedSeparatorBefore(orig, posMap[i]) {
+		if i > 0 && isAlphaNum(data[i-1]) && !encodedSeparatorBefore(orig, originalPosition(posMap, i)) {
 			continue
 		}
 

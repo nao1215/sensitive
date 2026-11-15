@@ -32,12 +32,12 @@
   {
     "detector": "bank_account",
     "precision": "100.0%",
-    "recall": "83.6%",
+    "recall": "100.0%",
     "positive": 146,
     "negative": 434,
-    "tp": 122,
+    "tp": 146,
     "fp": 0,
-    "fn": 24
+    "fn": 0
   },
   {
     "detector": "btc",
@@ -52,12 +52,12 @@
   {
     "detector": "card_expiry",
     "precision": "100.0%",
-    "recall": "83.6%",
+    "recall": "100.0%",
     "positive": 146,
     "negative": 434,
-    "tp": 122,
+    "tp": 146,
     "fp": 0,
-    "fn": 24
+    "fn": 0
   },
   {
     "detector": "cvv",
@@ -71,13 +71,13 @@
   },
   {
     "detector": "email",
-    "precision": "83.6%",
-    "recall": "83.6%",
+    "precision": "100.0%",
+    "recall": "100.0%",
     "positive": 146,
     "negative": 434,
-    "tp": 122,
-    "fp": 24,
-    "fn": 24
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
   },
   {
     "detector": "eth",
@@ -142,32 +142,32 @@
   {
     "detector": "merchant_id",
     "precision": "100.0%",
-    "recall": "83.6%",
+    "recall": "100.0%",
     "positive": 146,
     "negative": 434,
-    "tp": 122,
+    "tp": 146,
     "fp": 0,
-    "fn": 24
+    "fn": 0
   },
   {
     "detector": "mynumber",
-    "precision": "80.7%",
-    "recall": "94.5%",
+    "precision": "81.6%",
+    "recall": "100.0%",
     "positive": 146,
     "negative": 434,
-    "tp": 138,
+    "tp": 146,
     "fp": 33,
-    "fn": 8
+    "fn": 0
   },
   {
     "detector": "pan",
-    "precision": "58.7%",
-    "recall": "94.5%",
+    "precision": "60.1%",
+    "recall": "100.0%",
     "positive": 146,
     "negative": 434,
-    "tp": 138,
+    "tp": 146,
     "fp": 97,
-    "fn": 8
+    "fn": 0
   },
   {
     "detector": "payment_token",
@@ -181,23 +181,23 @@
   },
   {
     "detector": "phone_jp",
-    "precision": "81.2%",
-    "recall": "94.5%",
+    "precision": "82.0%",
+    "recall": "100.0%",
     "positive": 146,
     "negative": 434,
-    "tp": 138,
+    "tp": 146,
     "fp": 32,
-    "fn": 8
+    "fn": 0
   },
   {
     "detector": "private_key_pem",
     "precision": "100.0%",
-    "recall": "83.6%",
+    "recall": "100.0%",
     "positive": 146,
     "negative": 434,
-    "tp": 122,
+    "tp": 146,
     "fp": 0,
-    "fn": 24
+    "fn": 0
   },
   {
     "detector": "slack_token",
@@ -222,11 +222,11 @@
   {
     "detector": "uk_sortcode",
     "precision": "100.0%",
-    "recall": "99.3%",
+    "recall": "100.0%",
     "positive": 146,
     "negative": 434,
-    "tp": 145,
+    "tp": 146,
     "fp": 0,
-    "fn": 1
+    "fn": 0
   }
 ]

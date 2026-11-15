@@ -61,6 +61,8 @@ func jpPhoneRules() []jpPhoneRule {
 //  1. Extract numbers beginning with 0, allowing hyphens, parentheses, and spaces (e.g., 03(1234)5678 or 090 1234 5678).
 //  2. Require 10 or 11 digits and a supported [JPPhoneType] prefix; reject adjacent letters, digits, or underscores.
 //  3. Score landlines as 0.8 and mobile, IP phone, toll-free, M2M/IoT, and service numbers as 0.9.
+//
+// An attached business identifier label lowers confidence to 0.4 without dropping the candidate.
 type JPPhone struct{}
 
 // NewJPPhone creates a new Japanese phone number detect.
@@ -83,7 +85,7 @@ func (d *JPPhone) Hints() [][]byte {
 
 // Scan returns matches in data using the rules documented on [JPPhone].
 func (d *JPPhone) Scan(data []byte) []Finding {
-	normalized, posMap := NormalizeFullWidthDigits(data)
+	normalized, posMap := normalizeDigits(data)
 	return d.scanNormalized(data, normalized, posMap)
 }
 
@@ -95,7 +97,8 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	i := 0
 	for i < len(data) {
 		// Escape bytes cannot become part of a numeric candidate.
-		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(orig, posMap[i+3]) {
+		//nolint:mnd // A percent escape occupies three bytes.
+		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(orig, originalPosition(posMap, i+3)) {
 			i += 3
 			continue
 		}
@@ -107,7 +110,7 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		// Check that '0' is not part of a longer word-like token.
 		// Underscores are treated as word characters to prevent matching
 		// identifiers like _09012345678.
-		if i > 0 && isPhoneWordChar(data[i-1]) && !encodedSeparatorBefore(orig, posMap[i]) {
+		if i > 0 && isPhoneWordChar(data[i-1]) && !encodedSeparatorBefore(orig, originalPosition(posMap, i)) {
 			i++
 			continue
 		}
@@ -160,7 +163,7 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			DetectorName: d.Name(),
 			Start:        origStart,
 			End:          origEnd,
-			Confidence:   confidence,
+			Confidence:   businessConfidence(orig, origStart, confidence),
 			RawValue:     string(orig[origStart:origEnd]),
 			Detail:       &JPPhoneDetail{PhoneType: phoneType},
 		})

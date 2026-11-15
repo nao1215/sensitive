@@ -16,13 +16,13 @@ def read_jsonl(name):
 def chart(rows):
     height = 113+30*len(rows)
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="960" height="{height}" viewBox="0 0 960 {height}" role="img">',
-             '<title>Precision and recall on synthetic samples</title>',
+             '<title>Precision and recall on held-out synthetic samples</title>',
              '<desc>Blue bars show precision; orange bars show recall. Counts are positive and negative inputs per detector.</desc>',
              '<rect width="100%" height="100%" fill="white"/>',
              '<g font-family="Arial, sans-serif" font-size="14" fill="#172033">']
     def text(x,y,value,size=14):
         parts.append(f'<text x="{x}" y="{y}" font-size="{size}">{html.escape(str(value))}</text>')
-    text(20,28,'Precision and recall · synthetic corpus',21)
+    text(20,28,'Precision and recall · held-out synthetic corpus',21)
     text(20,54,'Precision: how many reported matches were correct. Recall: how many expected matches were found.',14)
     text(20,81,'Detector');text(205,81,'Precision',15);text(435,81,'Recall',15);text(685,81,'Positive / negative inputs')
     for i,row in enumerate(rows):
@@ -73,62 +73,73 @@ def excerpt(value):
     return value if len(value) <= 65 else value[:40]+'…'+value[-12:]
 
 
-def page(rows):
-    samples = {row['id']:row for row in read_jsonl('accuracy_generated.jsonl')}
-    controls = {row['id']:row for row in read_jsonl('accuracy_generated_controls.jsonl')}
-    for row in json.loads((ROOT/'tests/testdata/accuracy_controls.json').read_text(encoding='utf-8')):
-        key = 'hand-control/' + hashlib.sha256((row['source']+'\0'+row['text']).encode()).hexdigest()
-        controls[key] = row
-    for kind in [row['detector'] for row in rows]:
+def result_table(rows):
+    out = ['| Detector | Positive / negative inputs | TP / FP / FN spans | Precision | Recall |', '|---|---:|---:|---:|---:|']
+    for row in rows:
+        k = row['detector']
+        out.append(f"| [{k}](#{k.replace('_','-')}) | {row['positive']} / {row['negative']} | {row['tp']} / {row['fp']} / {row['fn']} | {row['precision']} | {row['recall']} |")
+    return out
+
+
+def sample_index(held):
+    prefix = 'accuracy_held_' if held else 'accuracy_'
+    samples = {row['id']: row for row in read_jsonl(prefix+'generated.jsonl')}
+    controls = {row['id']: row for row in read_jsonl(prefix+'generated_controls.jsonl')}
+    if not held:
+        for row in json.loads((ROOT/'tests/testdata/accuracy_controls.json').read_text(encoding='utf-8')):
+            key = 'hand-control/' + hashlib.sha256((row['source']+'\0'+row['text']).encode()).hexdigest()
+            controls[key] = row
+        hand = json.loads((ROOT/'tests/testdata/accuracy.json').read_text(encoding='utf-8'))
+        samples.update({'hand/'+str(i): row for i, row in enumerate(hand)})
+    for kind in HARD_CASES:
         for key, row in controls.items(): samples[kind+'/'+key] = row
-    hand = json.loads((ROOT/'tests/testdata/accuracy.json').read_text(encoding='utf-8'))
-    samples.update({'hand/'+str(i):row for i,row in enumerate(hand)})
-    limits=read_jsonl('accuracy_limits.jsonl')
-    total=sum(row['positive']+row['negative'] for row in rows)
-    out = ['# Synthetic accuracy corpus', '',
-           '## Conditions', '',
-           f'This corpus contains {total:,} detector/input evaluations. It is generated offline with Python `random.Random(20261115)` and contains no production observations. Repeated surroundings reuse values, so sample counts are not independent statistical trials.', '',
-           f'The [generator](../scripts/generate_accuracy.py) constructs values and byte ranges without invoking embargo. Each detector receives {rows[0]["positive"]} positive inputs and {rows[0]["negative"]} negative inputs: two hand-written positives plus 24 values in six surroundings, and hand-written, generated and shared negative controls. CI checks the generated fixtures, scores, figures and this page for drift.', '',
-           'Surroundings include logs, JSON, URLs, line endings and Japanese text, with full-width digits and separators for supported numeric families. Negative controls include UUIDs, Git SHAs, hashes, timestamps, order/invoice identifiers, base64 without a JWT header, versions and phone-shaped serial numbers. Detector-specific negatives include bad checksums, invalid prefixes, short credentials and invalid months.', '',
-           'A hit requires an unused expected range with the same detector kind and exact original byte positions. Partial, duplicate and extra matches are false positives; an unmatched expected range is a false negative. Precision is TP/(TP+FP), and recall is TP/(TP+FN).', '',
-           'Each detector runs alone at the default confidence threshold. URL-encoded positives remain labeled sensitive even where the scanner cannot decode them. This deliberately exposes misses instead of redefining the expected answer.', '',
-           'The samples cover only the listed format variants. They do not establish account existence, credential validity or behavior on other encodings.', '',
-           '[Scoring tests](../tests/accuracy_test.go) cover partial, wrong-kind and duplicate matches. [Regression tests](../tests/accuracy_regression_test.go) reject new mismatches and obsolete exceptions. The reviewed [limit list](../tests/testdata/accuracy_limits.jsonl) records each mismatch and its reason; the first expanded run failed before those limits were documented.', '',
-           '## Results', '',
-           '![Precision and recall on synthetic samples](images/accuracy.svg)', '',
-           '| Detector | Positive / negative inputs | TP / FP / FN spans | Precision | Recall |',
-           '|---|---:|---:|---:|---:|']
+    return samples
+
+
+def page(rows):
+    development = json.loads((ROOT/'doc/accuracy.json').read_text())
+    dev70 = json.loads((ROOT/'doc/accuracy-70.json').read_text())
+    held70 = json.loads((ROOT/'doc/accuracy-held-70.json').read_text())
+    out = ['# Synthetic accuracy corpus', '', '## Conditions', '',
+           'The development set uses Python `random.Random(20261115)`; the held-out set uses `random.Random(20270129)` and six different surrounding templates. Both were fixed before detector changes. Tuning used development failures and independent code-review regressions; the held-out evaluation rejected a stricter SWIFT context rule because it reduced recall. We treated this as overfitting and reverted the rule; no held-out failure was used to tune the retained changes.', '',
+           f'Development contains {sum(r["positive"]+r["negative"] for r in development):,} evaluations; held-out contains {sum(r["positive"]+r["negative"] for r in rows):,}. The [generator](../scripts/generate_accuracy.py) constructs values and original byte ranges without invoking embargo. Development includes hand-written controls; held-out includes only independently generated values and controls. Repeated surroundings reuse values, and deterministic format examples such as email names and date cycles occur in both sets. Counts are not independent statistical trials. This is synthetic evaluation, not evidence of production accuracy or credential validity.', '',
+           'Surroundings include logs, JSON, URLs, line endings and Japanese text. Negative controls include hashes, UUIDs, timestamps, order/invoice/tracking identifiers, versions, invalid checksums and malformed credentials. Labels and templates are not a substitute for a real-world corpus.', '',
+           'A hit requires the same kind and exact unused original byte range. Partial, duplicate and extra matches count as false positives; missing expected ranges count as false negatives. Precision is TP/(TP+FP); recall is TP/(TP+FN). Each detector runs alone.', '',
+           'The default minimum confidence remains 0: ambiguous candidates are included. Confidence is a heuristic, not a probability. PAN checksum failures score 0.6; PAN, My Number and Japanese phone candidates with an attached order, invoice, tracking, version, build, serial or shipment label score 0.4. `WithMinConfidence(0.7)` excludes these candidates and can therefore miss genuine secrets under misleading business labels. A global 0.7 threshold also removes the 0.5–0.65 bank-account findings and some sort-code findings; it is not a universal accuracy setting. Both policies are measured below; the README chart uses held-out results at the default threshold.', '',
+           '## Encoding policy', '',
+           'Built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in the input before detection. Findings map back to original bytes, so masking covers the escaped representation. Literal `+` and malformed percent escapes remain unchanged. Custom detectors receive the original bytes. Base64, hexadecimal, HTML entities, JSON escapes and recursively percent-encoded forms are not decoded by Scanner; decode application fields explicitly when needed. The logger adapters separately decode JSON strings at their output boundary.', '',
+           '[Round-trip and offset properties](../scanner_encoding_test.go) exercise random partial escaping and all byte values. [Regression tests](../tests/accuracy_regression_test.go) reject new mismatches and obsolete exceptions in both sets. Known limits retain reasons in [development](../tests/testdata/accuracy_limits.jsonl) and [held-out](../tests/testdata/accuracy_held_limits.jsonl) fixtures.', '',
+           '## Held-out results: default threshold 0', '',
+           '![Held-out precision and recall](images/accuracy.svg)', ''] + result_table(rows)
+    out += ['', '## Development results: default threshold 0', ''] + result_table(development)
+    out += ['', '## Held-out results: minimum confidence 0.7', ''] + result_table(held70)
+    out += ['', '## Development results: minimum confidence 0.7', ''] + result_table(dev70)
+    limits = [(name, sample_index(held), read_jsonl(('accuracy_held_' if held else 'accuracy_')+'limits.jsonl')) for name, held in [('development', False), ('held-out', True)]]
     for row in rows:
-        k=row['detector'];out.append(f"| [{k}](#{k.replace('_','-')}) | {row['positive']} / {row['negative']} | {row['tp']} / {row['fp']} / {row['fn']} | {row['precision']} | {row['recall']} |")
-    for row in rows:
-        kind=row['detector']; test=TEST_FILES.get(kind,kind)
-        if not (ROOT/f'internal/detect/{test}_test.go').exists(): raise ValueError(kind)
-        out += ['',f"## {kind.replace('_',' ')}",'',f'![{kind} precision and recall](images/accuracy-{kind}.svg)', '',
-                f"Verified by the [{kind} format tests](../internal/detect/{test}_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). {HARD_CASES[kind]}", '']
-        selected=[];seen=set()
-        for limit in limits:
-            sample=samples.get(limit['id'])
-            if sample is None: raise ValueError('missing sample '+limit['id'])
-            if sample.get('kind',limit['id'].split('/')[0]) != kind: continue
-            key=limit['reason']
-            if key in seen: continue
-            seen.add(key);selected.append((limit,sample))
+        kind = row['detector']; test = TEST_FILES.get(kind, kind)
+        out += ['', f"## {kind.replace('_', ' ')}", '', f'![Held-out {kind} precision and recall](images/accuracy-{kind}.svg)', '', f"Verified by the [{kind} format tests](../internal/detect/{test}_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). {HARD_CASES[kind]}", '']
+        selected = []; seen = set()
+        for name, samples, entries in limits:
+            for limit in entries:
+                sample = samples[limit['id']]
+                if sample.get('kind', limit['id'].split('/')[0]) != kind: continue
+                if limit['reason'] in seen: continue
+                seen.add(limit['reason']); selected.append((name, limit, sample))
         if not selected:
-            out += ['No misses or false alarms appeared in these samples.']
+            out += ['At the default threshold, no misses or false alarms appeared in either set.']
         else:
-            out += ['| Observed limit | Input example | Why it remains |','|---|---|---|']
-            for limit,sample in selected:
-                original=sample.get('text','')+''.join(sample.get('parts',[]))
-                out.append(f"| `{limit['id']}` | `{excerpt(original)}` | {limit['reason']} |")
-        out += ['', '[Inspect generated inputs and original byte ranges](../tests/testdata/accuracy_generated.jsonl).']
+            out += ['| Set / observed limit | Input example | Why it remains |', '|---|---|---|']
+            for name, limit, sample in selected:
+                original = sample.get('text', '')+''.join(sample.get('parts', []))
+                out.append(f"| {name}: `{limit['id']}` | `{excerpt(original)}` | {limit['reason']} |")
     out += ['', '## Regeneration', '', '```sh', 'make accuracy-doc', 'python3 scripts/generate_accuracy.py --check', 'python3 scripts/accuracy_figures.py --check', 'go -C tests test -run "Test(Accuracy|GeneratedAccuracy)" .', '```', '',
-            'PEM fixtures test headers rather than complete private keys. Generated service tokens test syntax, not authentication; generated identity and phone values must not be used for contacting people or transactions.', '',
-            '[Support maintenance](https://github.com/sponsors/nao1215).', '']
+            'The 0.7 results improve PAN, My Number and phone precision on both sets without losing recall in these samples; the default retains their ambiguous business identifiers. Email and encoded-form recall improve on both sets. SWIFT word false positives remain: the rejected attachment rule improved development precision but failed held-out evaluation. A held-out IBAN with check digits 00 passed MOD 97; that discovery remains a documented limit for a future development set.', '',
+            'PEM samples test headers, not full private keys. Generated service tokens test syntax, not authentication. Do not use synthetic identities, account or phone values for transactions or contacting people.', '', '[Support maintenance](https://github.com/sponsors/nao1215).', '']
     return '\n'.join(out)
 
 
 def artifacts():
-    rows=json.loads((ROOT/'doc/accuracy.json').read_text(encoding='utf-8'))
+    rows=json.loads((ROOT/'doc/accuracy-held.json').read_text(encoding='utf-8'))
     yield ROOT/'doc/images/accuracy.svg',chart(rows)
     for row in rows: yield ROOT/f"doc/images/accuracy-{row['detector']}.svg",chart([row])
     yield ROOT/'doc/accuracy.md',page(rows)
