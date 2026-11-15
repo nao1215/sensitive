@@ -12,6 +12,8 @@ type MyNumberDetail struct {
 //  1. Extract exactly 12 digits; the final digit is the check digit.
 //  2. For the first 11 digits, count n from the right starting at 0 and use weight n+2 for n < 6, otherwise n-4; sum digit times weight.
 //  3. Let r be the sum modulo 11; require check digit 0 when r <= 1, otherwise 11-r. Score a valid match as 0.95.
+//
+// An attached business identifier label lowers confidence to 0.4 without dropping the candidate.
 type MyNumber struct{}
 
 // NewMyNumber creates a new My Number detect.
@@ -31,7 +33,7 @@ func (d *MyNumber) Hints() [][]byte {
 
 // Scan returns matches in data using the rules documented on [MyNumber].
 func (d *MyNumber) Scan(data []byte) []Finding {
-	normalized, posMap := NormalizeFullWidthDigits(data)
+	normalized, posMap := normalizeDigits(data)
 	return d.scanNormalized(data, normalized, posMap)
 }
 
@@ -42,7 +44,8 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 
 	i := 0
 	for i < len(data) {
-		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(orig, posMap[i+3]) {
+		//nolint:mnd // A percent escape occupies three bytes.
+		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(orig, originalPosition(posMap, i+3)) {
 			i += 3
 			continue
 		}
@@ -52,7 +55,7 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		}
 
 		// Check that this digit is not part of a longer alphanumeric token.
-		if i > 0 && isAlpha(data[i-1]) && !encodedSeparatorBefore(orig, posMap[i]) {
+		if i > 0 && isPhoneWordChar(data[i-1]) && !encodedSeparatorBefore(orig, originalPosition(posMap, i)) {
 			i++
 			continue
 		}
@@ -67,7 +70,7 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			i = end
 			continue
 		}
-		if end < len(data) && isDigit(data[end]) {
+		if end < len(data) && isPhoneWordChar(data[end]) {
 			i = end
 			continue
 		}
@@ -80,7 +83,7 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 				Start:        origStart,
 				End:          origEnd,
 				//nolint:mnd // The detector contract documents this heuristic score.
-				Confidence: 0.95,
+				Confidence: businessConfidence(orig, origStart, 0.95),
 				RawValue:   string(orig[origStart:origEnd]),
 				Detail:     &MyNumberDetail{CheckDigitValid: true},
 			})

@@ -42,8 +42,7 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 	var findings []Finding
 
 	for i := 0; i < len(data)-7; i++ {
-		countryCode, ok := validateSWIFTStructure(data, i)
-		if !ok {
+		if !validateSWIFTStructure(data, i) {
 			continue
 		}
 
@@ -79,7 +78,7 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 			RawValue:   string(data[i:end]),
 			Detail: &SWIFTBICDetail{
 				BankCode:     bankCode,
-				CountryCode:  countryCode,
+				CountryCode:  string([]byte{toUpperByte(data[i+4]), toUpperByte(data[i+5])}),
 				LocationCode: locationCode,
 				BranchCode:   branchCode,
 			},
@@ -94,24 +93,21 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 // validateSWIFTStructure checks the first 8 characters at data[i] for valid
 // SWIFT/BIC structure: 4 alpha (bank) + 2 alpha (country) + 2 alphanumeric
 // (location), with word boundary check and ISO country code validation.
-func validateSWIFTStructure(data []byte, i int) (countryCode string, ok bool) {
+func validateSWIFTStructure(data []byte, i int) bool {
 	if !isAlpha(data[i]) || !isAlpha(data[i+1]) || !isAlpha(data[i+2]) || !isAlpha(data[i+3]) {
-		return "", false
+		return false
 	}
 	if !isAlpha(data[i+4]) || !isAlpha(data[i+5]) {
-		return "", false
+		return false
 	}
 	if !isAlphaNum(data[i+6]) || !isAlphaNum(data[i+7]) {
-		return "", false
+		return false
 	}
 	if i > 0 && isAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
-		return "", false
+		return false
 	}
-	cc := string([]byte{toUpperByte(data[i+4]), toUpperByte(data[i+5])})
-	if !isSWIFTCountry(cc) {
-		return "", false
-	}
-	return cc, true
+	cc := [2]byte{toUpperByte(data[i+4]), toUpperByte(data[i+5])}
+	return isSWIFTCountry(string(cc[:]))
 }
 
 // determineSWIFTLength determines whether the SWIFT/BIC code at data[i] is

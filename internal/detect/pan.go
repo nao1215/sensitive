@@ -43,6 +43,8 @@ type PANDetail struct {
 //  1. Extract 13–19 digits at identifier boundaries, allowing spaces and hyphens, and require a known [CardBrand] BIN prefix.
 //  2. Score the length as 0.3 and the known prefix as another 0.3; unknown brands are rejected.
 //  3. Add 0.4 for a valid Luhn checksum and the brand's expected length. A Luhn-valid candidate with the wrong brand length scores 0.4 and is rejected; a failed checksum remains at 0.6.
+//
+// An attached business identifier label lowers confidence to 0.4 without dropping the candidate.
 type PAN struct{}
 
 // NewPAN creates a new PAN detect.
@@ -75,7 +77,7 @@ func (d *PAN) Hints() [][]byte {
 
 // Scan returns matches in data using the rules documented on [PAN].
 func (d *PAN) Scan(data []byte) []Finding {
-	normalized, posMap := NormalizeFullWidthDigits(data)
+	normalized, posMap := normalizeDigits(data)
 	return d.scanNormalized(data, normalized, posMap)
 }
 
@@ -89,7 +91,8 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	i := 0
 	for i < len(data) {
 		// Escape bytes cannot become part of a numeric candidate.
-		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(orig, posMap[i+3]) {
+		//nolint:mnd // A percent escape occupies three bytes.
+		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(orig, originalPosition(posMap, i+3)) {
 			i += 3
 			continue
 		}
@@ -118,7 +121,7 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 
 		// Check digit count: valid PANs are 13-19 digits.
 		digitLen := len(digits)
-		leadingBoundary := start == 0 || (!isAlphaNum(data[start-1]) && data[start-1] != '_') || encodedSeparatorBefore(orig, posMap[start])
+		leadingBoundary := start == 0 || (!isAlphaNum(data[start-1]) && data[start-1] != '_') || encodedSeparatorBefore(orig, originalPosition(posMap, start))
 		trailingBoundary := end == len(data) || (!isAlphaNum(data[end]) && data[end] != '_')
 		if f, ok := d.evaluateCandidate(orig, posMap, digits, digitLen, start, end); ok && leadingBoundary && trailingBoundary {
 			findings = append(findings, f)
@@ -177,7 +180,7 @@ func (d *PAN) evaluateCandidate(orig []byte, posMap []int, digits []byte, digitL
 		DetectorName: d.Name(),
 		Start:        origStart,
 		End:          origEnd,
-		Confidence:   confidence,
+		Confidence:   businessConfidence(orig, origStart, confidence),
 		RawValue:     string(orig[origStart:origEnd]),
 		Detail: &PANDetail{
 			Brand:  brand,
