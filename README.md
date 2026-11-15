@@ -17,10 +17,10 @@
 
 embargo finds secrets and personal data in the output of Go programs, masks them in logs and JSON, and fails your tests when one leaks.
 
-- Mask slog, zap, zerolog and logrus output and keep its JSON structure.
-- Catch values nobody marked as secret: passwords in database URLs, API tokens, card numbers, emails, My Number.
-- Keep a value out of every formatter with `Secret[T]`, and out of API responses with `MaskJSON`.
-- Fail tests when a canary reaches stdout, stderr, logs, HTTP responses or child processes.
+- `postgres://reader:forgotten@db.example` in a log line becomes `postgres://reader:[REDACTED]@db.example` without any field rule.
+- slog, zap, zerolog and logrus keep their JSON shape; only the values change.
+- `embargo.NewSecret(key)` prints `[REDACTED]` wherever it is formatted.
+- A test fails when a fake secret planted in your code shows up in its output.
 
 ## Quick start
 
@@ -63,9 +63,9 @@ Mask everything a scanner finds, or keep part of a value:
 
 [Scanner options and custom replacements](doc/masking.md)
 
-## Catch what nobody declared
+## Detect without rules
 
-Field rules only hide the fields someone listed. embargo also reads the text, so a password inside a connection string is masked without any rule.
+The scanner reads the text itself, so no field has to be listed first.
 
 <!-- example: credential_example_test.go:ExampleKindCredential -->
 ```go
@@ -78,12 +78,14 @@ fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
 | Group | What is detected |
 |---|---|
 | Credentials | URL and DSN passwords, `password=` and auth headers, provider tokens, JWT, PEM keys |
-| Payment | Card numbers (Luhn), CVV, expiry, IBAN, SWIFT/BIC, ABA routing, UK sort code, bank account, ACH trace, merchant ID, payment tokens, Bitcoin and Ethereum addresses |
+| Cards | Card numbers (Luhn), CVV, expiry, payment tokens, merchant ID |
+| Bank | IBAN, SWIFT/BIC, ABA routing, UK sort code, bank account, ACH trace |
+| Crypto | Bitcoin and Ethereum addresses |
 | Personal | Email, IP address, Japanese phone numbers and My Number, including full-width digits |
 
 [Every detector and how it validates](doc/detectors.md) · [Provider token formats](doc/credentials.md)
 
-Select only the kinds you need. On the same 2.7 KB of clean text, `WithKinds(KindEmail)` takes 0.11 µs and `WithAll()` takes 85 µs, and fewer kinds also mean fewer false positives. [Per-detector benchmarks](doc/benchmarks.md)
+Pick the kinds you need: on 2.7 KB of log lines with no secret, `WithKinds(KindEmail)` returns in 0.11 µs because there is no `@` to inspect, while `WithAll()` takes 85 µs. [Per-detector benchmarks](doc/benchmarks.md)
 
 ## Mask logs
 
@@ -99,15 +101,9 @@ logger.Info("checkout", "email", "alice@example.com")
 // Output: {"level":"INFO","msg":"checkout","email":"[REDACTED]"}
 ```
 
-Structs, maps and slices stay JSON objects and arrays, and values under keys such as `password`, `token` or `authorization` are masked whole. Messages, keys and group names are scanned too. [Structured values and key rules](doc/logging.md)
+Values under keys such as `password`, `token` or `authorization` are masked whole, and structs and maps stay JSON objects. [Structured values and key rules](doc/logging.md)
 
-| Logger | Adapter example | Output excerpt |
-|---|---|---|
-| zap | [NewWriteSyncer](adapters/zap/example_test.go) | `"email":"[REDACTED]"` |
-| zerolog | [NewWriter](adapters/zerolog/example_test.go) | `"email":"[REDACTED]"` |
-| logrus | [NewFormatter](adapters/logrus/example_test.go) | `"email":"[REDACTED]"` |
-
-The adapters apply the same detectors and key rules to the encoded JSON. [Installation and limits](doc/adapters.md)
+zap ([NewWriteSyncer](adapters/zap/example_test.go)), zerolog ([NewWriter](adapters/zerolog/example_test.go)) and logrus ([NewFormatter](adapters/logrus/example_test.go)) get the same detectors and key rules through optional modules. [Installation and limits](doc/adapters.md)
 
 ## Values that must never print
 
@@ -120,15 +116,17 @@ fmt.Println(key)
 // Output: [REDACTED]
 ```
 
-`Secret` prints `[REDACTED]` through fmt, encoding/json, encoding/xml, text marshaling, templates and slog; `Reveal()` is the one way back. `Input` loads secrets from JSON, config files and SQL rows. Teams that keep their own types can follow a [standard-library-only pattern](doc/values.md) and check it with `embargotest.CheckValue`, which fails on the first output path that prints the value.
+`key.Reveal()` returns the value. [Tested outputs](#tested-outputs) lists every path checked to print `[REDACTED]`.
 
-## Prove nothing leaks
+`Input` loads secrets from JSON, config files and SQL rows.
 
-One line guards every test in a package:
+Prefer your own types? Follow the [standard-library-only pattern](doc/values.md) and check them with `embargotest.CheckValue`.
+
+## Fail tests on leaks
 
 `func TestMain(m *testing.M) { os.Exit(embargotest.Guard(m)) }`
 
-Guard reruns the package tests, scans their stdout, stderr, default slog output and child processes, and fails the run when a canary or a detected value appears. [ExampleGuard](embargotest/injection_example_test.go)
+Guard reruns the package tests and fails when a canary (a fake secret) or a detected value appears in stdout, stderr, default slog output or child processes. [ExampleGuard](embargotest/injection_example_test.go)
 
 For one test, a recorder checks both that the expected output exists and that no canary escaped:
 
@@ -148,10 +146,7 @@ func TestReadmeCheckOutput(t *testing.T) {
 
 [HTTP, child processes, and canaries in env, files and headers](doc/testing-output.md)
 
-## Measured
-
-- In a sample service with planted leaks (a DSN, wrapped and joined errors, an Authorization header, a token in a request body), embargo's slog and zap paths masked every leak that reached a logger. A redirect URL never reaches a logger; `embargotest.HTTP` catches it. [Scenario table](doc/comparison.md#service-leak-scenarios)
-- The same slog events through masq v0.2.3 and embargo: embargo took 52–78% less time on four of five events and allocated less on all five; the map event showed no significant difference. [Comparison](doc/comparison.md) · [benchstat](doc/comparison.benchstat.txt)
+In a sample service with planted leaks (a DSN, wrapped errors, an Authorization header, a token in a request body), the slog and zap paths masked every leak that reached a logger. The redirect URL never reaches a logger; `embargotest.HTTP` catches it. [Scenario table](doc/comparison.md#service-leak-scenarios)
 
 ## Tested outputs
 
@@ -179,7 +174,7 @@ Each link opens the test that produces and checks the shown output.
 
 ## Accuracy
 
-This chart shows the held-out synthetic set at the default minimum confidence of 0. [Generation, test cases and observed misses](doc/accuracy.md) explain the scores; [credential detectors](doc/credentials-accuracy.md) are measured separately.
+Held-out synthetic set, default minimum confidence 0. [Generation, test cases and observed misses](doc/accuracy.md) · [Credential detectors](doc/credentials-accuracy.md), measured separately
 
 <!-- accuracy:start -->
 ![Precision and recall on held-out synthetic samples](doc/images/accuracy.svg)
@@ -198,13 +193,13 @@ This chart shows the held-out synthetic set at the default minimum confidence of
 
 ## Testing
 
-| Technique | Bugs it catches | Tests |
-|---|---|---|
-| Examples and unit tests | Wrong outputs and broken contracts | [Examples](example_test.go), [masking](tests/mask_test.go) |
-| Generated properties | Checksum and boundary mistakes | [Properties](tests/properties_test.go), [Bitcoin](tests/bitcoin_test.go) |
-| Fuzzing | Panics and broken input handling | [Scanner](fuzz_test.go), [recorder](embargotest/fuzz_test.go) |
-| Mutation | Missing assertions | [gremlins command](Makefile) |
-| Real output tests | Leaks after encoding or buffering | [Loggers](tests/compatibility_integration_test.go), [HTTP](tests/http_integration_test.go) |
+| Technique | Tests |
+|---|---|
+| Examples and unit tests | [Examples](example_test.go), [masking](tests/mask_test.go) |
+| Generated properties | [Properties](tests/properties_test.go), [Bitcoin](tests/bitcoin_test.go) |
+| Fuzzing | [Scanner](fuzz_test.go), [recorder](embargotest/fuzz_test.go) |
+| Mutation | [gremlins command](Makefile) |
+| Real output tests | [Loggers](tests/compatibility_integration_test.go), [HTTP](tests/http_integration_test.go) |
 
 <!-- testing-metrics:start -->
 Coverage 94.9% · mutation score 90.06% · 9 fuzz targets, 2323625 executions.
@@ -221,6 +216,8 @@ All detectors scan sensitive text at 4.76 MB/s; masking a clean slog event takes
 <!-- benchmarks:end -->
 
 [Machine, method, profiles and full results](doc/benchmarks.md).
+
+Same slog events through masq v0.2.3: 52–78% less time on four of five events, no significant difference on the map event, fewer allocations on all five. [Comparison](doc/comparison.md) · [benchstat](doc/comparison.benchstat.txt)
 
 ## Contributing
 
