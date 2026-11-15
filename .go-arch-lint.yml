@@ -9,6 +9,8 @@ exclude:
 excludeFiles:
 - ^.*_test\.go$
 components:
+  output:
+    in: internal/output
   recorder:
     in: embargotest
   runtime:
@@ -18,6 +20,9 @@ components:
   ascii:
     in: internal/ascii
 deps:
+  output:
+    mayDependOn:
+    - runtime
   recorder:
     mayDependOn:
     - runtime

@@ -44,7 +44,7 @@ func TestProductionPackageInventory(t *testing.T) {
 	}
 	got := strings.Fields(string(output))
 	slices.Sort(got)
-	want := []string{"github.com/nao1215/embargo", "github.com/nao1215/embargo/embargotest", "github.com/nao1215/embargo/internal/ascii", "github.com/nao1215/embargo/internal/detect"}
+	want := []string{"github.com/nao1215/embargo", "github.com/nao1215/embargo/embargotest", "github.com/nao1215/embargo/internal/ascii", "github.com/nao1215/embargo/internal/detect", "github.com/nao1215/embargo/internal/output"}
 	if !slices.Equal(got, want) {
 		t.Fatalf("review the API and architecture for new packages: %v", got)
 	}

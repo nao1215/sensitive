@@ -95,6 +95,7 @@ linters:
           - '!**/embargotest/**'
           - '!**/tests/**'
           - '!**/adapters/**'
+          - '!**/internal/output/**'
           allow:
           - $gostd
           - github.com/nao1215/embargo/internal/
@@ -103,6 +104,13 @@ linters:
             desc: Runtime packages must not depend on testing.
           - pkg: testing/
             desc: Runtime packages must not depend on testing helpers.
+        logger-output:
+          list-mode: strict
+          files:
+          - '**/internal/output/*.go'
+          allow:
+          - $gostd
+          - github.com/nao1215/embargo$
         detectors:
           list-mode: strict
           files:
