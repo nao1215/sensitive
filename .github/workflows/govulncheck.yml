@@ -49,8 +49,9 @@ jobs:
           - go: "stable"
             stdlib: fail
             module: .
-          - go: "1.23"
-            stdlib: warn
+          # Scan the latest security patch of the test module's minimum Go line.
+          - go: "1.26"
+            stdlib: fail
             module: tests
           - go: "stable"
             stdlib: fail

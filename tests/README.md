@@ -1,6 +1,6 @@
 # Test-only tools
 
-The root library remains dependency-free on Go 1.22. This separate module uses rapid v1.3.0 (Go 1.23+) for generation and automatic shrinking; `golang.org/x/crypto/sha3` supplies an independent Keccak oracle for EIP-55. Its version is the last release supporting Go 1.23; only its SHA-3 package is used. Neither dependency enters the root module.
+The root library remains dependency-free on Go 1.22. This separate module requires Go 1.26.0 because `golang.org/x/crypto` v0.59.0 requires it. It uses rapid v1.3.0 for generation and automatic shrinking; `golang.org/x/crypto/sha3` supplies an independent Keccak oracle for EIP-55. Only its SHA-3 package is used. Neither dependency enters the root module.
 
 Run `go test ./... -rapid.checks=100` here, or increase `-rapid.checks` for exploration. On failure rapid prints a replay seed and stores a minimized case under `testdata/rapid/`; promote useful failures to named regression tests in the root. The local sanity check deliberately asserted that every integer in [0,100000] was below 7 and shrank to 7; that failing test is not committed.
 
