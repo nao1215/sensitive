@@ -11,7 +11,7 @@
 
 <img src="doc/images/logo-small.png" alt="embargo" width="320">
 
-embargo detects and masks personal data, payment data and secrets in text, logs and test output: a cross-platform Go library with zero dependencies.
+embargo detects and masks sensitive text in Go programs, logs and test output.
 
 - Mask card numbers and emails before logs leave your service.
 - Check in tests that an HTTP handler or child process never writes a secret.
