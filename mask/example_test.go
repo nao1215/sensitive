@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/nao1215/embargo"
-	"github.com/nao1215/embargo/detector"
+	detector "github.com/nao1215/embargo/internal/detect"
 	"github.com/nao1215/embargo/mask"
 )
 

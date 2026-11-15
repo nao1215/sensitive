@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/nao1215/embargo"
-	"github.com/nao1215/embargo/detector"
+	detector "github.com/nao1215/embargo/internal/detect"
 )
 
 func Example() {

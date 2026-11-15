@@ -82,7 +82,7 @@ The table summarizes validation; each [detector type](https://pkg.go.dev/github.
 
 ## Installation and requirements
 
-In an existing Go module, run `go get github.com/nao1215/embargo`. The library requires Go 1.22 or later and is tested on Linux, macOS, and Windows.
+In an existing Go module, run `go get github.com/nao1215/embargo`. The library requires Go 1.26.11 or later and is tested on Linux, macOS, and Windows.
 
 ## Scan bytes, strings, or streams
 

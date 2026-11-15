@@ -102,7 +102,7 @@ func canonicalExample(t *testing.T, fset *token.FileSet, node ast.Node) string {
 
 func TestExamplesAppearInGodoc(t *testing.T) {
 	t.Parallel()
-	for _, dir := range []string{".", "detector", "mask"} {
+	for _, dir := range []string{".", "internal/detect", "mask"} {
 		t.Run(dir, func(t *testing.T) {
 			t.Parallel()
 			fset := token.NewFileSet()

@@ -3,7 +3,7 @@ run:
   # The language version go.mod declares. The linter assumes this when it
   # decides what the code may use, so a higher number here would let a construct
   # that does not compile on the supported floor through the gate.
-  go: "1.22"
+  go: "1.26"
 linters:
   enable:
     - asciicheck
