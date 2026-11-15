@@ -5,7 +5,12 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+
   golangci-lint:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     name: golangci-lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -46,6 +51,8 @@ jobs:
           locale: "US"
 
   actionlint:
+    needs: changes
+    if: needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # The github-pr-review reporter posts review comments on the pull request.

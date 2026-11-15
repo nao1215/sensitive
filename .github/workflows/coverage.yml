@@ -11,7 +11,12 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+
   unit_test:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     name: Unit test (linux)
 
     strategy:
