@@ -2,34 +2,34 @@ goos: linux
 goarch: amd64
 pkg: github.com/nao1215/embargo/tests
 cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-                                │ ../evidence9/single-base9.txt │    ../evidence9/single-round9.txt    │
-                                │            sec/op             │    sec/op     vs base                │
-PublishedScanner/email/clean                        60.22n ± 5%   103.95n ± 2%  +72.60% (p=0.000 n=10)
-PublishedScanner/ipaddr/clean                       106.5n ± 4%    148.6n ± 2%  +39.55% (p=0.000 n=10)
-PublishedScanner/phone_jp/clean                     110.8n ± 2%    151.9n ± 1%  +37.05% (p=0.000 n=10)
-geomean                                             89.23n         132.9n       +48.90%
+                                │ ../evidence9/verified-single-base9.txt │ ../evidence9/verified-single-round9.txt │
+                                │                 sec/op                 │     sec/op       vs base                │
+PublishedScanner/email/clean                                 59.56n ± 1%      106.65n ± 7%  +79.05% (p=0.000 n=10)
+PublishedScanner/ipaddr/clean                                105.2n ± 0%       150.2n ± 2%  +42.73% (p=0.000 n=10)
+PublishedScanner/phone_jp/clean                              110.2n ± 3%       161.3n ± 3%  +46.30% (p=0.000 n=10)
+geomean                                                      88.40n            137.2n       +55.21%
 
-                                │ ../evidence9/single-base9.txt │    ../evidence9/single-round9.txt    │
-                                │              B/s              │     B/s       vs base                │
-PublishedScanner/email/clean                       42.56Gi ± 4%   24.66Gi ± 2%  -42.06% (p=0.000 n=10)
-PublishedScanner/ipaddr/clean                      24.07Gi ± 4%   17.25Gi ± 2%  -28.33% (p=0.000 n=10)
-PublishedScanner/phone_jp/clean                    23.14Gi ± 2%   16.88Gi ± 1%  -27.05% (p=0.000 n=10)
-geomean                                            28.73Gi        19.29Gi       -32.84%
+                                │ ../evidence9/verified-single-base9.txt │ ../evidence9/verified-single-round9.txt │
+                                │                  B/s                   │       B/s        vs base                │
+PublishedScanner/email/clean                                43.03Gi ± 1%      24.02Gi ± 7%  -44.17% (p=0.000 n=10)
+PublishedScanner/ipaddr/clean                               24.37Gi ± 0%      17.08Gi ± 2%  -29.92% (p=0.000 n=10)
+PublishedScanner/phone_jp/clean                             23.26Gi ± 3%      15.89Gi ± 3%  -31.66% (p=0.000 n=10)
+geomean                                                     29.00Gi           18.68Gi       -35.58%
 
-                                │ ../evidence9/single-base9.txt │   ../evidence9/single-round9.txt    │
-                                │             B/op              │    B/op     vs base                 │
-PublishedScanner/email/clean                       0.000 ± 0%     0.000 ± 0%       ~ (p=1.000 n=10) ¹
-PublishedScanner/ipaddr/clean                      0.000 ± 0%     0.000 ± 0%       ~ (p=1.000 n=10) ¹
-PublishedScanner/phone_jp/clean                    0.000 ± 0%     0.000 ± 0%       ~ (p=1.000 n=10) ¹
-geomean                                                       ²               +0.00%                ²
+                                │ ../evidence9/verified-single-base9.txt │ ../evidence9/verified-single-round9.txt │
+                                │                  B/op                  │      B/op       vs base                 │
+PublishedScanner/email/clean                                0.000 ± 0%         0.000 ± 0%       ~ (p=1.000 n=10) ¹
+PublishedScanner/ipaddr/clean                               0.000 ± 0%         0.000 ± 0%       ~ (p=1.000 n=10) ¹
+PublishedScanner/phone_jp/clean                             0.000 ± 0%         0.000 ± 0%       ~ (p=1.000 n=10) ¹
+geomean                                                                ²                   +0.00%                ²
 ¹ all samples are equal
 ² summaries must be >0 to compute geomean
 
-                                │ ../evidence9/single-base9.txt │   ../evidence9/single-round9.txt    │
-                                │           allocs/op           │ allocs/op   vs base                 │
-PublishedScanner/email/clean                       0.000 ± 0%     0.000 ± 0%       ~ (p=1.000 n=10) ¹
-PublishedScanner/ipaddr/clean                      0.000 ± 0%     0.000 ± 0%       ~ (p=1.000 n=10) ¹
-PublishedScanner/phone_jp/clean                    0.000 ± 0%     0.000 ± 0%       ~ (p=1.000 n=10) ¹
-geomean                                                       ²               +0.00%                ²
+                                │ ../evidence9/verified-single-base9.txt │ ../evidence9/verified-single-round9.txt │
+                                │               allocs/op                │   allocs/op     vs base                 │
+PublishedScanner/email/clean                                0.000 ± 0%         0.000 ± 0%       ~ (p=1.000 n=10) ¹
+PublishedScanner/ipaddr/clean                               0.000 ± 0%         0.000 ± 0%       ~ (p=1.000 n=10) ¹
+PublishedScanner/phone_jp/clean                             0.000 ± 0%         0.000 ± 0%       ~ (p=1.000 n=10) ¹
+geomean                                                                ²                   +0.00%                ²
 ¹ all samples are equal
 ² summaries must be >0 to compute geomean

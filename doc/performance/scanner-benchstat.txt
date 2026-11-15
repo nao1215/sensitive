@@ -2,48 +2,48 @@ goos: linux
 goarch: amd64
 pkg: github.com/nao1215/embargo/tests
 cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-                           │ ../evidence9/final-base9.txt │    ../evidence9/final-round9.txt     │
-                           │            sec/op            │    sec/op     vs base                │
-PublishedScanner/all/clean                   94.75µ ±  2%   47.89µ ±  2%  -49.46% (p=0.000 n=10)
-PublishedScanner/all/dirty                   6.277m ± 43%   6.018m ±  5%        ~ (p=0.063 n=10)
-PublishedRecorder/checked                    81.06µ ± 24%   76.19µ ±  9%        ~ (p=0.218 n=10)
-PublishedSlog/plain-clean                    899.2n ±  7%   878.5n ±  4%        ~ (p=0.066 n=10)
-PublishedSlog/masked-clean                   4.969µ ±  3%   2.226µ ±  6%  -55.21% (p=0.000 n=10)
-PublishedSlog/plain-dirty                    883.7n ± 40%   842.7n ± 40%   -4.64% (p=0.035 n=10)
-PublishedSlog/masked-dirty                   5.676µ ± 39%   3.076µ ± 43%  -45.82% (p=0.000 n=10)
-geomean                                      19.52µ         14.11µ        -27.73%
+                           │ ../evidence9/verified-base9.txt │   ../evidence9/verified-round9.txt   │
+                           │             sec/op              │    sec/op     vs base                │
+PublishedScanner/all/clean                      69.24µ ± 40%   33.21µ ± 50%  -52.04% (p=0.000 n=10)
+PublishedScanner/all/dirty                      5.578m ± 39%   3.504m ± 74%        ~ (p=0.052 n=10)
+PublishedRecorder/checked                       82.73µ ± 45%   62.56µ ± 28%        ~ (p=0.123 n=10)
+PublishedSlog/plain-clean                       865.1n ± 41%   787.2n ± 38%        ~ (p=0.853 n=10)
+PublishedSlog/masked-clean                      4.049µ ± 31%   2.025µ ± 34%  -50.00% (p=0.000 n=10)
+PublishedSlog/plain-dirty                       786.6n ± 36%   672.0n ± 35%        ~ (p=0.579 n=10)
+PublishedSlog/masked-dirty                      5.706µ ± 45%   2.889µ ± 41%  -49.36% (p=0.003 n=10)
+geomean                                         17.50µ         11.23µ        -35.82%
 
-                           │ ../evidence9/final-base9.txt │    ../evidence9/final-round9.txt     │
-                           │             B/s              │     B/s       vs base                │
-PublishedScanner/all/clean                  27.70Mi ±  2%   54.81Mi ± 2%  +97.83% (p=0.000 n=10)
-PublishedScanner/all/dirty                  5.031Mi ± 74%   5.245Mi ± 5%        ~ (p=0.072 n=10)
-PublishedRecorder/checked                   6.399Mi ± 31%   6.809Mi ± 8%        ~ (p=0.197 n=10)
-geomean                                     9.626Mi         12.51Mi       +29.96%
+                           │ ../evidence9/verified-base9.txt │    ../evidence9/verified-round9.txt    │
+                           │               B/s               │      B/s       vs base                 │
+PublishedScanner/all/clean                     37.98Mi ± 38%   79.03Mi ± 33%  +108.07% (p=0.000 n=10)
+PublishedScanner/all/dirty                     5.717Mi ± 62%   9.012Mi ± 42%         ~ (p=0.052 n=10)
+PublishedRecorder/checked                      6.270Mi ± 81%   8.512Mi ± 35%         ~ (p=0.123 n=10)
+geomean                                        11.08Mi         18.23Mi         +64.51%
 
-                           │ ../evidence9/final-base9.txt │       ../evidence9/final-round9.txt       │
-                           │             B/op             │     B/op      vs base                     │
-PublishedScanner/all/clean                   51.25Ki ± 0%    0.00Ki ± 0%  -100.00% (p=0.000 n=10)
-PublishedScanner/all/dirty                  2340.8Ki ± 0%   972.8Ki ± 0%   -58.44% (p=0.000 n=10)
-PublishedRecorder/checked                    34.80Ki ± 0%   36.46Ki ± 0%    +4.75% (p=0.000 n=10)
-PublishedSlog/plain-clean                      16.00 ± 0%     16.00 ± 0%         ~ (p=1.000 n=10) ¹
-PublishedSlog/masked-clean                    864.00 ± 0%     80.00 ± 0%   -90.74% (p=0.000 n=10)
-PublishedSlog/plain-dirty                      16.00 ± 0%     16.00 ± 0%         ~ (p=1.000 n=10) ¹
-PublishedSlog/masked-dirty                    1144.0 ± 0%     352.0 ± 0%   -69.23% (p=0.000 n=10)
-geomean                                      2.667Ki                      ?                       ² ³
+                           │ ../evidence9/verified-base9.txt │     ../evidence9/verified-round9.txt      │
+                           │              B/op               │     B/op      vs base                     │
+PublishedScanner/all/clean                      51.25Ki ± 0%    0.00Ki ± 0%  -100.00% (p=0.000 n=10)
+PublishedScanner/all/dirty                     2340.8Ki ± 0%   972.8Ki ± 0%   -58.44% (p=0.000 n=10)
+PublishedRecorder/checked                       34.80Ki ± 0%   36.46Ki ± 0%    +4.76% (p=0.000 n=10)
+PublishedSlog/plain-clean                         16.00 ± 0%     16.00 ± 0%         ~ (p=1.000 n=10) ¹
+PublishedSlog/masked-clean                       864.00 ± 0%     80.00 ± 0%   -90.74% (p=0.000 n=10)
+PublishedSlog/plain-dirty                         16.00 ± 0%     16.00 ± 0%         ~ (p=1.000 n=10) ¹
+PublishedSlog/masked-dirty                       1144.0 ± 0%     352.0 ± 0%   -69.23% (p=0.000 n=10)
+geomean                                         2.667Ki                      ?                       ² ³
 ¹ all samples are equal
 ² summaries must be >0 to compute geomean
 ³ ratios must be >0 to compute geomean
 
-                           │ ../evidence9/final-base9.txt │      ../evidence9/final-round9.txt       │
-                           │          allocs/op           │  allocs/op   vs base                     │
-PublishedScanner/all/clean                     131.0 ± 0%      0.0 ± 0%  -100.00% (p=0.000 n=10)
-PublishedScanner/all/dirty                    13.19k ± 0%   12.48k ± 0%    -5.38% (p=0.000 n=10)
-PublishedRecorder/checked                      509.0 ± 0%    547.0 ± 0%    +7.47% (p=0.000 n=10)
-PublishedSlog/plain-clean                      1.000 ± 0%    1.000 ± 0%         ~ (p=1.000 n=10) ¹
-PublishedSlog/masked-clean                    17.000 ± 0%    5.000 ± 0%   -70.59% (p=0.000 n=10)
-PublishedSlog/plain-dirty                      1.000 ± 0%    1.000 ± 0%         ~ (p=1.000 n=10) ¹
-PublishedSlog/masked-dirty                     24.00 ± 0%    13.00 ± 0%   -45.83% (p=0.000 n=10)
-geomean                                        44.74                     ?                       ² ³
+                           │ ../evidence9/verified-base9.txt │     ../evidence9/verified-round9.txt     │
+                           │            allocs/op            │  allocs/op   vs base                     │
+PublishedScanner/all/clean                        131.0 ± 0%      0.0 ± 0%  -100.00% (p=0.000 n=10)
+PublishedScanner/all/dirty                       13.19k ± 0%   12.48k ± 0%    -5.38% (p=0.000 n=10)
+PublishedRecorder/checked                         509.0 ± 0%    547.0 ± 0%    +7.47% (p=0.000 n=10)
+PublishedSlog/plain-clean                         1.000 ± 0%    1.000 ± 0%         ~ (p=1.000 n=10) ¹
+PublishedSlog/masked-clean                       17.000 ± 0%    5.000 ± 0%   -70.59% (p=0.000 n=10)
+PublishedSlog/plain-dirty                         1.000 ± 0%    1.000 ± 0%         ~ (p=1.000 n=10) ¹
+PublishedSlog/masked-dirty                        24.00 ± 0%    13.00 ± 0%   -45.83% (p=0.000 n=10)
+geomean                                           44.74                     ?                       ² ³
 ¹ all samples are equal
 ² summaries must be >0 to compute geomean
 ³ ratios must be >0 to compute geomean

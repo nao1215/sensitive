@@ -43,8 +43,8 @@
        LIVED ARITHMETIC_BASE at internal/detect/card_expiry.go:85:6
        LIVED CONDITIONALS_BOUNDARY at internal/detect/card_expiry.go:114:20
        LIVED INVERT_NEGATIVES at internal/detect/card_expiry.go:146:17
-       LIVED ARITHMETIC_BASE at internal/detect/card_expiry.go:146:17
        LIVED ARITHMETIC_BASE at internal/detect/card_expiry.go:156:36
+       LIVED ARITHMETIC_BASE at internal/detect/card_expiry.go:146:17
        LIVED CONDITIONALS_BOUNDARY at internal/detect/card_expiry.go:156:43
        LIVED CONDITIONALS_BOUNDARY at internal/detect/card_expiry.go:157:32
        LIVED CONDITIONALS_BOUNDARY at internal/detect/context.go:176:28
@@ -132,8 +132,8 @@
        LIVED CONDITIONALS_BOUNDARY at internal/output/json.go:58:11
        LIVED CONDITIONALS_BOUNDARY at internal/output/json.go:129:18
        LIVED CONDITIONALS_BOUNDARY at internal/output/json.go:152:17
-       LIVED INVERT_NEGATIVES at internal/output/json.go:152:58
        LIVED ARITHMETIC_BASE at internal/output/json.go:152:58
+       LIVED INVERT_NEGATIVES at internal/output/json.go:152:58
        LIVED CONDITIONALS_BOUNDARY at internal/output/json.go:163:18
        LIVED CONDITIONALS_BOUNDARY at internal/output/writer.go:62:10
        LIVED INVERT_NEGATIVES at internal/output/writer.go:65:28
@@ -145,7 +145,6 @@
        LIVED CONDITIONALS_BOUNDARY at mask.go:64:17
        LIVED CONDITIONALS_NEGATION at mask.go:64:17
        LIVED CONDITIONALS_BOUNDARY at option.go:67:74
-       LIVED ARITHMETIC_BASE at percent.go:24:40
        LIVED CONDITIONALS_BOUNDARY at scanner.go:51:22
        LIVED CONDITIONALS_BOUNDARY at scanner_dispatch.go:17:27
        LIVED INVERT_NEGATIVES at scanner_dispatch.go:48:37

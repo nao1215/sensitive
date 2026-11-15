@@ -2,89 +2,89 @@ goos: linux
 goarch: amd64
 pkg: github.com/nao1215/embargo/tests
 cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-BenchmarkPublishedScanner/email/clean         	 5900658	        60.12 ns/op	45774.39 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/ipaddr/clean        	 3409129	       107.6 ns/op	25570.53 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/phone_jp/clean      	 3302557	       112.5 ns/op	24452.20 MB/s	       0 B/op	       0 allocs/op
-PASS
-ok  	github.com/nao1215/embargo/tests	1.105s
-goos: linux
-goarch: amd64
-pkg: github.com/nao1215/embargo/tests
-cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-BenchmarkPublishedScanner/email/clean         	 5599104	        63.04 ns/op	43657.50 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/ipaddr/clean        	 3421690	       105.5 ns/op	26073.73 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/phone_jp/clean      	 3254152	       109.9 ns/op	25035.59 MB/s	       0 B/op	       0 allocs/op
-PASS
-ok  	github.com/nao1215/embargo/tests	1.083s
-goos: linux
-goarch: amd64
-pkg: github.com/nao1215/embargo/tests
-cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-BenchmarkPublishedScanner/email/clean         	 5783532	        60.05 ns/op	45831.43 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/ipaddr/clean        	 3260280	       106.7 ns/op	25784.92 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/phone_jp/clean      	 3322875	       109.7 ns/op	25091.83 MB/s	       0 B/op	       0 allocs/op
-PASS
-ok  	github.com/nao1215/embargo/tests	1.069s
-goos: linux
-goarch: amd64
-pkg: github.com/nao1215/embargo/tests
-cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-BenchmarkPublishedScanner/email/clean         	 5772034	        60.33 ns/op	45617.39 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/ipaddr/clean        	 3358926	       110.4 ns/op	24937.18 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/phone_jp/clean      	 3184995	       110.7 ns/op	24870.15 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/email/clean         	 5811958	        60.74 ns/op	45307.16 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/ipaddr/clean        	 3412700	       105.1 ns/op	26179.96 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/phone_jp/clean      	 3308001	       108.9 ns/op	25259.95 MB/s	       0 B/op	       0 allocs/op
 PASS
 ok  	github.com/nao1215/embargo/tests	1.082s
 goos: linux
 goarch: amd64
 pkg: github.com/nao1215/embargo/tests
 cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-BenchmarkPublishedScanner/email/clean         	 5922086	        60.05 ns/op	45825.31 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/ipaddr/clean        	 3409876	       105.8 ns/op	26005.83 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/phone_jp/clean      	 3122413	       113.3 ns/op	24299.84 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/email/clean         	 6020868	        59.56 ns/op	46206.94 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/ipaddr/clean        	 3378099	       105.6 ns/op	26058.59 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/phone_jp/clean      	 3163948	       111.6 ns/op	24651.78 MB/s	       0 B/op	       0 allocs/op
 PASS
-ok  	github.com/nao1215/embargo/tests	1.082s
+ok  	github.com/nao1215/embargo/tests	1.079s
 goos: linux
 goarch: amd64
 pkg: github.com/nao1215/embargo/tests
 cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-BenchmarkPublishedScanner/email/clean         	 5993893	        59.66 ns/op	46127.33 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/ipaddr/clean        	 3433052	       105.8 ns/op	26001.40 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/phone_jp/clean      	 3228870	       112.5 ns/op	24459.56 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/email/clean         	 6001842	        59.50 ns/op	46255.39 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/ipaddr/clean        	 3435297	       105.3 ns/op	26144.11 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/phone_jp/clean      	 3304921	       110.5 ns/op	24913.72 MB/s	       0 B/op	       0 allocs/op
 PASS
 ok  	github.com/nao1215/embargo/tests	1.095s
 goos: linux
 goarch: amd64
 pkg: github.com/nao1215/embargo/tests
 cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-BenchmarkPublishedScanner/email/clean         	 5376267	        63.18 ns/op	43555.21 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/ipaddr/clean        	 3196520	       114.1 ns/op	24122.00 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/phone_jp/clean      	 3175875	       112.1 ns/op	24557.77 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/email/clean         	 5990959	        59.57 ns/op	46201.23 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/ipaddr/clean        	 3409596	       105.0 ns/op	26204.28 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/phone_jp/clean      	 3284968	       110.7 ns/op	24857.76 MB/s	       0 B/op	       0 allocs/op
 PASS
-ok  	github.com/nao1215/embargo/tests	1.073s
+ok  	github.com/nao1215/embargo/tests	1.089s
 goos: linux
 goarch: amd64
 pkg: github.com/nao1215/embargo/tests
 cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-BenchmarkPublishedScanner/email/clean         	 5461580	        61.42 ns/op	44805.23 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/ipaddr/clean        	 3371072	       106.7 ns/op	25791.84 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/phone_jp/clean      	 3259729	       110.3 ns/op	24942.95 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/email/clean         	 5991679	        59.61 ns/op	46164.26 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/ipaddr/clean        	 3373670	       105.5 ns/op	26072.96 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/phone_jp/clean      	 3168853	       113.7 ns/op	24210.55 MB/s	       0 B/op	       0 allocs/op
 PASS
-ok  	github.com/nao1215/embargo/tests	1.065s
+ok  	github.com/nao1215/embargo/tests	1.085s
 goos: linux
 goarch: amd64
 pkg: github.com/nao1215/embargo/tests
 cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-BenchmarkPublishedScanner/email/clean         	 5840482	        60.07 ns/op	45814.01 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/ipaddr/clean        	 3402186	       106.0 ns/op	25966.33 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/phone_jp/clean      	 3290197	       110.9 ns/op	24821.15 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/email/clean         	 6035384	        59.64 ns/op	46144.25 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/ipaddr/clean        	 3438016	       104.9 ns/op	26245.99 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/phone_jp/clean      	 3305869	       108.7 ns/op	25314.26 MB/s	       0 B/op	       0 allocs/op
 PASS
-ok  	github.com/nao1215/embargo/tests	1.087s
+ok  	github.com/nao1215/embargo/tests	1.091s
 goos: linux
 goarch: amd64
 pkg: github.com/nao1215/embargo/tests
 cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-BenchmarkPublishedScanner/email/clean         	 5517992	        60.56 ns/op	45439.79 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/ipaddr/clean        	 3361672	       106.2 ns/op	25905.32 MB/s	       0 B/op	       0 allocs/op
-BenchmarkPublishedScanner/phone_jp/clean      	 3288469	       109.8 ns/op	25064.53 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/email/clean         	 5669341	        59.94 ns/op	45910.56 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/ipaddr/clean        	 3400440	       105.4 ns/op	26114.76 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/phone_jp/clean      	 3185024	       113.3 ns/op	24283.42 MB/s	       0 B/op	       0 allocs/op
 PASS
-ok  	github.com/nao1215/embargo/tests	1.063s
+ok  	github.com/nao1215/embargo/tests	1.070s
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo/tests
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+BenchmarkPublishedScanner/email/clean         	 5994973	        59.27 ns/op	46433.05 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/ipaddr/clean        	 3447001	       104.7 ns/op	26280.05 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/phone_jp/clean      	 3268969	       109.0 ns/op	25250.59 MB/s	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/nao1215/embargo/tests	1.083s
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo/tests
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+BenchmarkPublishedScanner/email/clean         	 5971754	        59.33 ns/op	46383.80 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/ipaddr/clean        	 3446739	       104.5 ns/op	26335.24 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/phone_jp/clean      	 3284178	       108.9 ns/op	25271.27 MB/s	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/nao1215/embargo/tests	1.082s
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo/tests
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+BenchmarkPublishedScanner/email/clean         	 5993024	        59.45 ns/op	46291.24 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/ipaddr/clean        	 3388108	       105.4 ns/op	26101.89 MB/s	       0 B/op	       0 allocs/op
+BenchmarkPublishedScanner/phone_jp/clean      	 3276356	       110.0 ns/op	25026.99 MB/s	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/nao1215/embargo/tests	1.084s

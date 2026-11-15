@@ -1,19 +1,19 @@
 Starting...
 Gathering coverage... go: no module dependencies to download
-done in 1.618084709s
+done in 1.730514358s
  NOT COVERED CONDITIONALS_NEGATION at adapters/zap/adapter.go:35:34
  NOT COVERED CONDITIONALS_NEGATION at adapters/logrus/adapter.go:37:15
-      KILLED INVERT_NEGATIVES at embargotest/canary.go:25:27
       KILLED INVERT_NEGATIVES at embargotest/canary.go:32:56
-      KILLED ARITHMETIC_BASE at embargotest/canary.go:25:27
+      KILLED INVERT_NEGATIVES at embargotest/canary.go:25:27
       KILLED CONDITIONALS_NEGATION at embargotest/canary.go:18:9
+      KILLED ARITHMETIC_BASE at embargotest/canary.go:25:27
       KILLED ARITHMETIC_BASE at embargotest/canary.go:32:56
        LIVED CONDITIONALS_NEGATION at embargotest/canary.go:37:48
        LIVED INVERT_NEGATIVES at embargotest/canary.go:39:55
        LIVED ARITHMETIC_BASE at embargotest/canary.go:39:55
        LIVED CONDITIONALS_BOUNDARY at embargotest/canary.go:49:18
-      KILLED CONDITIONALS_NEGATION at embargotest/canary.go:49:18
       KILLED CONDITIONALS_NEGATION at embargotest/detector.go:15:15
+      KILLED CONDITIONALS_NEGATION at embargotest/canary.go:49:18
       KILLED ARITHMETIC_BASE at embargotest/http.go:29:31
       KILLED ARITHMETIC_BASE at embargotest/http.go:33:108
       KILLED CONDITIONALS_NEGATION at embargotest/detector.go:28:11
@@ -23,68 +23,66 @@ done in 1.618084709s
       KILLED CONDITIONALS_NEGATION at embargotest/detector.go:43:12
        LIVED ARITHMETIC_BASE at embargotest/detector.go:77:41
       KILLED CONDITIONALS_NEGATION at embargotest/http.go:34:10
-      KILLED CONDITIONALS_BOUNDARY at embargotest/http.go:34:29
       KILLED CONDITIONALS_NEGATION at embargotest/http.go:34:29
+      KILLED CONDITIONALS_BOUNDARY at embargotest/http.go:34:29
        LIVED INVERT_NEGATIVES at embargotest/http.go:34:43
+      KILLED CONDITIONALS_NEGATION at embargotest/http.go:34:81
        LIVED ARITHMETIC_BASE at embargotest/http.go:34:43
        LIVED CONDITIONALS_BOUNDARY at embargotest/http.go:34:81
-      KILLED CONDITIONALS_NEGATION at embargotest/http.go:34:81
       KILLED CONDITIONALS_BOUNDARY at embargotest/http.go:49:10
-       LIVED ARITHMETIC_BASE at embargotest/http.go:34:92
       KILLED CONDITIONALS_NEGATION at embargotest/http.go:49:10
       KILLED CONDITIONALS_BOUNDARY at embargotest/http.go:49:24
+       LIVED ARITHMETIC_BASE at embargotest/http.go:34:92
       KILLED CONDITIONALS_NEGATION at embargotest/http.go:49:24
       KILLED CONDITIONALS_NEGATION at embargotest/http.go:52:12
-      KILLED CONDITIONALS_NEGATION at embargotest/http.go:55:10
       KILLED CONDITIONALS_BOUNDARY at embargotest/http.go:55:10
-      KILLED CONDITIONALS_BOUNDARY at embargotest/http.go:55:25
-      KILLED CONDITIONALS_NEGATION at embargotest/http.go:70:44
+      KILLED CONDITIONALS_NEGATION at embargotest/http.go:55:10
       KILLED CONDITIONALS_NEGATION at embargotest/http.go:55:25
+      KILLED CONDITIONALS_BOUNDARY at embargotest/http.go:55:25
       KILLED CONDITIONALS_NEGATION at embargotest/http.go:55:39
-      KILLED CONDITIONALS_NEGATION at embargotest/http.go:86:12
+      KILLED CONDITIONALS_NEGATION at embargotest/http.go:70:44
       KILLED CONDITIONALS_NEGATION at embargotest/http.go:87:35
-       LIVED CONDITIONALS_BOUNDARY at embargotest/http.go:90:18
+      KILLED CONDITIONALS_NEGATION at embargotest/http.go:86:12
       KILLED CONDITIONALS_NEGATION at embargotest/http.go:87:78
+       LIVED CONDITIONALS_BOUNDARY at embargotest/http.go:90:18
       KILLED CONDITIONALS_NEGATION at embargotest/http.go:90:18
       KILLED CONDITIONALS_NEGATION at embargotest/http.go:105:12
       KILLED CONDITIONALS_NEGATION at embargotest/http.go:122:13
-      KILLED INVERT_NEGATIVES at embargotest/http.go:148:23
       KILLED CONDITIONALS_NEGATION at embargotest/http.go:109:79
-      KILLED ARITHMETIC_BASE at embargotest/http.go:154:29
+      KILLED INVERT_NEGATIVES at embargotest/http.go:148:23
       KILLED ARITHMETIC_BASE at embargotest/http.go:148:23
-      KILLED CONDITIONALS_NEGATION at embargotest/http.go:155:13
+      KILLED ARITHMETIC_BASE at embargotest/http.go:154:29
        LIVED CONDITIONALS_BOUNDARY at embargotest/http.go:155:13
+      KILLED CONDITIONALS_NEGATION at embargotest/http.go:155:13
       KILLED ARITHMETIC_BASE at embargotest/http.go:163:32
-      KILLED CONDITIONALS_NEGATION at embargotest/http.go:164:14
        LIVED CONDITIONALS_BOUNDARY at embargotest/http.go:164:14
+      KILLED CONDITIONALS_NEGATION at embargotest/http.go:164:14
       KILLED CONDITIONALS_NEGATION at embargotest/http.go:178:9
       KILLED CONDITIONALS_NEGATION at embargotest/http.go:182:56
       KILLED CONDITIONALS_BOUNDARY at embargotest/json.go:21:12
-      KILLED CONDITIONALS_NEGATION at embargotest/json.go:21:30
       KILLED CONDITIONALS_NEGATION at embargotest/json.go:21:12
+      KILLED CONDITIONALS_NEGATION at embargotest/json.go:21:30
       KILLED CONDITIONALS_NEGATION at embargotest/json.go:31:44
+      KILLED INCREMENT_DECREMENT at embargotest/json.go:48:12
       KILLED CONDITIONALS_NEGATION at embargotest/json.go:36:11
       KILLED CONDITIONALS_NEGATION at embargotest/json.go:51:18
-      KILLED INCREMENT_DECREMENT at embargotest/json.go:48:12
-      KILLED CONDITIONALS_BOUNDARY at embargotest/json.go:70:11
       KILLED CONDITIONALS_NEGATION at embargotest/json.go:57:50
+      KILLED CONDITIONALS_BOUNDARY at embargotest/json.go:70:11
       KILLED CONDITIONALS_NEGATION at embargotest/json.go:70:11
       KILLED CONDITIONALS_NEGATION at embargotest/json.go:86:11
       KILLED ARITHMETIC_BASE at embargotest/json.go:96:42
       KILLED CONDITIONALS_NEGATION at embargotest/json.go:97:11
-      KILLED ARITHMETIC_BASE at embargotest/json.go:108:41
       KILLED CONDITIONALS_NEGATION at embargotest/json.go:102:37
+      KILLED ARITHMETIC_BASE at embargotest/json.go:108:41
  NOT COVERED ARITHMETIC_BASE at embargotest/recorder.go:15:28
  NOT COVERED ARITHMETIC_BASE at embargotest/recorder.go:18:30
       KILLED CONDITIONALS_NEGATION at embargotest/json.go:108:50
-      KILLED CONDITIONALS_NEGATION at embargotest/json.go:112:37
       KILLED CONDITIONALS_BOUNDARY at embargotest/recorder.go:73:12
+      KILLED CONDITIONALS_NEGATION at embargotest/json.go:112:37
       KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:73:12
       KILLED CONDITIONALS_BOUNDARY at embargotest/recorder.go:73:27
-      KILLED CONDITIONALS_BOUNDARY at embargotest/recorder.go:85:16
       KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:73:27
-      KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:85:16
-      KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:85:33
+      KILLED CONDITIONALS_BOUNDARY at embargotest/recorder.go:85:16
       KILLED CONDITIONALS_BOUNDARY at embargotest/recorder.go:85:33
       KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:99:8
       KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:114:50
@@ -92,7 +90,9 @@ done in 1.618084709s
       KILLED CONDITIONALS_BOUNDARY at embargotest/recorder.go:141:42
       KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:141:42
       KILLED CONDITIONALS_BOUNDARY at embargotest/recorder.go:148:18
+      KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:85:16
       KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:148:18
+      KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:85:33
       KILLED INVERT_NEGATIVES at embargotest/recorder.go:174:26
       KILLED ARITHMETIC_BASE at embargotest/recorder.go:174:26
       KILLED CONDITIONALS_BOUNDARY at embargotest/recorder.go:176:17
@@ -109,10 +109,10 @@ done in 1.618084709s
        LIVED CONDITIONALS_BOUNDARY at embargotest/recorder.go:233:31
       KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:233:31
        LIVED CONDITIONALS_BOUNDARY at embargotest/recorder.go:233:58
-      KILLED CONDITIONALS_BOUNDARY at embargotest/recorder.go:246:18
-      KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:246:18
       KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:233:58
+      KILLED CONDITIONALS_BOUNDARY at embargotest/recorder.go:246:18
       KILLED ARITHMETIC_BASE at embargotest/recorder.go:256:30
+      KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:246:18
       KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:250:28
       KILLED CONDITIONALS_NEGATION at embargotest/recorder.go:263:16
       KILLED CONDITIONALS_NEGATION at embargotest/run.go:22:9
@@ -120,12 +120,12 @@ done in 1.618084709s
       KILLED CONDITIONALS_BOUNDARY at embargotest/run.go:29:52
       KILLED CONDITIONALS_NEGATION at embargotest/run.go:29:52
       KILLED CONDITIONALS_NEGATION at embargotest/run.go:29:68
-      KILLED CONDITIONALS_NEGATION at embargotest/run.go:29:109
       KILLED CONDITIONALS_BOUNDARY at embargotest/run.go:29:68
+      KILLED CONDITIONALS_NEGATION at embargotest/run.go:29:109
       KILLED CONDITIONALS_NEGATION at embargotest/run.go:33:28
       KILLED ARITHMETIC_BASE at embargotest/run.go:46:88
-      KILLED ARITHMETIC_BASE at embargotest/run.go:46:63
       KILLED INCREMENT_DECREMENT at embargotest/run.go:38:11
+      KILLED ARITHMETIC_BASE at embargotest/run.go:46:63
       KILLED INCREMENT_DECREMENT at embargotest/run.go:42:39
       KILLED ARITHMETIC_BASE at embargotest/run.go:47:43
  NOT COVERED ARITHMETIC_BASE at embargotest/run.go:49:42
@@ -133,54 +133,54 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at embargotest/run.go:52:37
       KILLED ARITHMETIC_BASE at embargotest/run.go:52:53
       KILLED ARITHMETIC_BASE at embargotest/run.go:52:70
+   TIMED OUT CONDITIONALS_NEGATION at embargotest/json.go:74:9
+      KILLED CONDITIONALS_NEGATION at embargotest/run.go:58:20
       KILLED CONDITIONALS_NEGATION at embargotest/run.go:57:29
        LIVED CONDITIONALS_NEGATION at embargotest/run.go:48:55
-      KILLED CONDITIONALS_NEGATION at embargotest/run.go:58:20
       KILLED ARITHMETIC_BASE at embargotest/run.go:76:75
       KILLED ARITHMETIC_BASE at embargotest/run.go:76:68
       KILLED CONDITIONALS_NEGATION at embargotest/run.go:65:19
-   TIMED OUT CONDITIONALS_NEGATION at embargotest/json.go:74:9
       KILLED CONDITIONALS_NEGATION at embargotest/run.go:72:14
       KILLED CONDITIONALS_NEGATION at embargotest/run.go:78:45
-      KILLED CONDITIONALS_NEGATION at embargotest/run.go:100:8
        LIVED CONDITIONALS_BOUNDARY at embargotest/run.go:100:8
-      KILLED CONDITIONALS_NEGATION at embargotest/run.go:103:12
+      KILLED CONDITIONALS_NEGATION at embargotest/run.go:100:8
       KILLED ARITHMETIC_BASE at embargotest/run.go:97:24
+      KILLED CONDITIONALS_NEGATION at embargotest/run.go:103:12
       KILLED CONDITIONALS_NEGATION at embargotest/run.go:111:10
       KILLED CONDITIONALS_NEGATION at embargotest/run.go:118:51
       KILLED CONDITIONALS_BOUNDARY at embargotest/run.go:118:51
-      KILLED CONDITIONALS_NEGATION at embargotest/run.go:118:69
       KILLED CONDITIONALS_BOUNDARY at embargotest/run.go:118:69
+      KILLED CONDITIONALS_NEGATION at embargotest/run.go:118:69
       KILLED CONDITIONALS_BOUNDARY at embargotest/run.go:122:10
       KILLED CONDITIONALS_NEGATION at embargotest/run.go:122:10
-      KILLED CONDITIONALS_NEGATION at embargotest/run.go:122:22
       KILLED CONDITIONALS_BOUNDARY at embargotest/run.go:122:22
-      KILLED CONDITIONALS_NEGATION at embargotest/run.go:122:36
+      KILLED CONDITIONALS_NEGATION at embargotest/run.go:122:22
       KILLED CONDITIONALS_BOUNDARY at embargotest/run.go:122:36
+      KILLED CONDITIONALS_NEGATION at embargotest/run.go:122:36
       KILLED CONDITIONALS_NEGATION at embargotest/run.go:122:48
       KILLED CONDITIONALS_BOUNDARY at embargotest/run.go:122:48
       KILLED CONDITIONALS_BOUNDARY at embargotest/run.go:122:62
       KILLED CONDITIONALS_NEGATION at embargotest/run.go:122:62
-      KILLED CONDITIONALS_NEGATION at embargotest/run.go:122:74
       KILLED CONDITIONALS_BOUNDARY at embargotest/run.go:122:74
+      KILLED CONDITIONALS_NEGATION at embargotest/run.go:122:74
       KILLED CONDITIONALS_NEGATION at embargotest/run.go:122:87
       KILLED CONDITIONALS_NEGATION at input.go:26:7
-      KILLED CONDITIONALS_NEGATION at input.go:31:45
       KILLED CONDITIONALS_NEGATION at input.go:31:60
+      KILLED CONDITIONALS_NEGATION at input.go:31:45
       KILLED CONDITIONALS_NEGATION at input.go:31:76
       KILLED CONDITIONALS_NEGATION at input.go:36:33
       KILLED CONDITIONALS_NEGATION at input.go:38:10
+      KILLED CONDITIONALS_NEGATION at input.go:49:7
       KILLED CONDITIONALS_BOUNDARY at internal/ascii/ascii.go:6:9
       KILLED CONDITIONALS_NEGATION at internal/ascii/ascii.go:6:9
-      KILLED CONDITIONALS_NEGATION at input.go:49:7
        LIVED CONDITIONALS_BOUNDARY at internal/ascii/ascii.go:6:21
       KILLED CONDITIONALS_NEGATION at internal/ascii/ascii.go:6:21
        LIVED CONDITIONALS_BOUNDARY at internal/ascii/ascii.go:6:35
       KILLED CONDITIONALS_NEGATION at internal/ascii/ascii.go:6:35
-      KILLED CONDITIONALS_NEGATION at input.go:53:18
        LIVED CONDITIONALS_BOUNDARY at internal/ascii/ascii.go:6:47
       KILLED CONDITIONALS_NEGATION at internal/ascii/ascii.go:6:47
       KILLED CONDITIONALS_BOUNDARY at internal/ascii/ascii.go:26:7
+      KILLED CONDITIONALS_NEGATION at input.go:53:18
       KILLED CONDITIONALS_NEGATION at internal/ascii/ascii.go:26:7
       KILLED CONDITIONALS_BOUNDARY at internal/ascii/ascii.go:26:19
       KILLED CONDITIONALS_NEGATION at internal/ascii/ascii.go:26:19
@@ -189,85 +189,85 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/ascii/ascii.go:27:19
       KILLED CONDITIONALS_BOUNDARY at internal/detect/aba.go:42:16
       KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:42:16
-      KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:45:14
       KILLED INCREMENT_DECREMENT at internal/detect/aba.go:42:30
+      KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:45:14
        LIVED CONDITIONALS_BOUNDARY at internal/detect/aba.go:45:28
        LIVED ARITHMETIC_BASE at internal/detect/aba.go:45:25
       KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:45:28
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:45:99
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/aba.go:54:8
       KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:54:8
       KILLED INVERT_NEGATIVES at internal/detect/aba.go:54:32
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/aba.go:54:8
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:54:32
       KILLED CONDITIONALS_BOUNDARY at internal/detect/aba.go:60:11
       KILLED INCREMENT_DECREMENT at internal/detect/aba.go:61:7
       KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:64:12
-      KILLED INVERT_NEGATIVES at internal/detect/aba.go:64:9
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:64:9
       KILLED INVERT_NEGATIVES at internal/detect/aba.go:65:12
+      KILLED INVERT_NEGATIVES at internal/detect/aba.go:64:9
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:65:12
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/aba.go:71:8
       KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:71:8
-      KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:71:26
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/aba.go:71:8
       KILLED INVERT_NEGATIVES at internal/detect/aba.go:71:22
+      KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:71:26
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:71:22
       KILLED INVERT_NEGATIVES at internal/detect/aba.go:71:50
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:71:50
        LIVED CONDITIONALS_BOUNDARY at internal/detect/aba.go:71:64
-      KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:71:64
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:71:61
       KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:71:89
+      KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:71:64
        LIVED ARITHMETIC_BASE at internal/detect/aba.go:71:115
        LIVED ARITHMETIC_BASE at internal/detect/aba.go:72:12
        LIVED INVERT_NEGATIVES at internal/detect/aba.go:72:12
-      KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:80:15
        LIVED INVERT_NEGATIVES at internal/detect/aba.go:81:12
+      KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:80:15
        LIVED ARITHMETIC_BASE at internal/detect/aba.go:81:12
  NOT COVERED INVERT_NEGATIVES at internal/detect/aba.go:87:12
  NOT COVERED ARITHMETIC_BASE at internal/detect/aba.go:87:12
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/aba.go:86:10
       KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:86:10
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/aba.go:86:10
        LIVED INVERT_NEGATIVES at internal/detect/aba.go:95:12
-       LIVED ARITHMETIC_BASE at internal/detect/aba.go:95:12
       KILLED INVERT_NEGATIVES at internal/detect/aba.go:111:11
+       LIVED ARITHMETIC_BASE at internal/detect/aba.go:95:12
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:111:11
       KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:122:17
-      KILLED ARITHMETIC_BASE at internal/detect/aba.go:126:70
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:127:64
+      KILLED ARITHMETIC_BASE at internal/detect/aba.go:126:70
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:126:10
-      KILLED ARITHMETIC_BASE at internal/detect/aba.go:126:49
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:126:30
+      KILLED ARITHMETIC_BASE at internal/detect/aba.go:126:49
       KILLED INVERT_NEGATIVES at internal/detect/aba.go:126:25
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:126:25
       KILLED INVERT_NEGATIVES at internal/detect/aba.go:126:44
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:126:44
       KILLED INVERT_NEGATIVES at internal/detect/aba.go:126:63
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:126:63
-      KILLED ARITHMETIC_BASE at internal/detect/aba.go:127:4
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:127:43
+      KILLED ARITHMETIC_BASE at internal/detect/aba.go:127:4
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:127:24
       KILLED INVERT_NEGATIVES at internal/detect/aba.go:127:19
-      KILLED ARITHMETIC_BASE at internal/detect/aba.go:127:19
       KILLED INVERT_NEGATIVES at internal/detect/aba.go:127:38
+      KILLED ARITHMETIC_BASE at internal/detect/aba.go:127:19
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:127:38
       KILLED INVERT_NEGATIVES at internal/detect/aba.go:127:57
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:127:57
-      KILLED ARITHMETIC_BASE at internal/detect/aba.go:128:44
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:128:23
+      KILLED ARITHMETIC_BASE at internal/detect/aba.go:128:44
       KILLED INVERT_NEGATIVES at internal/detect/aba.go:128:17
-   TIMED OUT CONDITIONALS_NEGATION at internal/detect/aba.go:60:11
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:128:17
-      KILLED INVERT_NEGATIVES at internal/detect/aba.go:128:38
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:128:38
+      KILLED INVERT_NEGATIVES at internal/detect/aba.go:128:38
       KILLED INVERT_NEGATIVES at internal/detect/aba.go:128:59
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:128:59
-      KILLED ARITHMETIC_BASE at internal/detect/aba.go:130:12
       KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:130:16
-       LIVED CONDITIONALS_BOUNDARY at internal/detect/aba.go:138:17
+      KILLED ARITHMETIC_BASE at internal/detect/aba.go:130:12
       KILLED CONDITIONALS_NEGATION at internal/detect/aba.go:138:17
+       LIVED CONDITIONALS_BOUNDARY at internal/detect/aba.go:138:17
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:142:34
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:142:30
       KILLED INVERT_NEGATIVES at internal/detect/aba.go:142:25
+   TIMED OUT CONDITIONALS_NEGATION at internal/detect/aba.go:60:11
  NOT COVERED CONDITIONALS_BOUNDARY at internal/detect/aba.go:145:14
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/aba.go:145:14
  NOT COVERED CONDITIONALS_BOUNDARY at internal/detect/aba.go:145:29
@@ -282,19 +282,19 @@ done in 1.618084709s
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/aba.go:150:14
  NOT COVERED CONDITIONALS_BOUNDARY at internal/detect/aba.go:150:30
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/aba.go:150:30
-      KILLED ARITHMETIC_BASE at internal/detect/aba.go:142:49
       KILLED INVERT_NEGATIVES at internal/detect/aba.go:149:33
+      KILLED ARITHMETIC_BASE at internal/detect/aba.go:142:49
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/aba.go:154:14
-      KILLED INVERT_NEGATIVES at internal/detect/aba.go:152:33
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:149:33
+      KILLED INVERT_NEGATIVES at internal/detect/aba.go:152:33
       KILLED ARITHMETIC_BASE at internal/detect/aba.go:152:33
       KILLED CONDITIONALS_NEGATION at internal/detect/ach.go:41:18
-      KILLED CONDITIONALS_NEGATION at internal/detect/ach.go:57:17
       KILLED CONDITIONALS_BOUNDARY at internal/detect/ach.go:57:17
+      KILLED CONDITIONALS_NEGATION at internal/detect/ach.go:57:17
        LIVED CONDITIONALS_BOUNDARY at internal/detect/ach.go:57:36
       KILLED CONDITIONALS_NEGATION at internal/detect/ach.go:57:36
-       LIVED CONDITIONALS_BOUNDARY at internal/detect/awskey.go:48:16
       KILLED CONDITIONALS_NEGATION at internal/detect/ach.go:65:45
+       LIVED CONDITIONALS_BOUNDARY at internal/detect/awskey.go:48:16
       KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:48:16
       KILLED INVERT_NEGATIVES at internal/detect/awskey.go:48:27
       KILLED ARITHMETIC_BASE at internal/detect/awskey.go:48:27
@@ -302,59 +302,59 @@ done in 1.618084709s
       KILLED CONDITIONALS_BOUNDARY at internal/detect/awskey.go:55:8
       KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:55:8
       KILLED INVERT_NEGATIVES at internal/detect/awskey.go:55:32
-      KILLED ARITHMETIC_BASE at internal/detect/awskey.go:60:33
       KILLED ARITHMETIC_BASE at internal/detect/awskey.go:55:32
+      KILLED ARITHMETIC_BASE at internal/detect/awskey.go:60:33
       KILLED CONDITIONALS_BOUNDARY at internal/detect/awskey.go:65:11
       KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:65:11
-      KILLED ARITHMETIC_BASE at internal/detect/awskey.go:65:43
       KILLED ARITHMETIC_BASE at internal/detect/awskey.go:65:7
+      KILLED ARITHMETIC_BASE at internal/detect/awskey.go:65:43
       KILLED ARITHMETIC_BASE at internal/detect/awskey.go:73:11
-      KILLED ARITHMETIC_BASE at internal/detect/awskey.go:76:33
       KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:88:13
+      KILLED ARITHMETIC_BASE at internal/detect/awskey.go:76:33
       KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:91:15
       KILLED ARITHMETIC_BASE at internal/detect/awskey.go:91:11
-      KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:91:35
       KILLED ARITHMETIC_BASE at internal/detect/awskey.go:91:31
+      KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:91:35
       KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:91:55
       KILLED ARITHMETIC_BASE at internal/detect/awskey.go:91:51
       KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:94:15
       KILLED ARITHMETIC_BASE at internal/detect/awskey.go:94:11
       KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:94:35
       KILLED ARITHMETIC_BASE at internal/detect/awskey.go:94:31
-      KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:94:55
       KILLED ARITHMETIC_BASE at internal/detect/awskey.go:94:51
+      KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:94:55
       KILLED CONDITIONALS_BOUNDARY at internal/detect/awskey.go:103:14
       KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:103:14
-       LIVED ARITHMETIC_BASE at internal/detect/awskey.go:103:10
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/awskey.go:106:20
       KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:106:20
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/awskey.go:106:20
+       LIVED ARITHMETIC_BASE at internal/detect/awskey.go:103:10
       KILLED ARITHMETIC_BASE at internal/detect/awskey.go:106:27
-      KILLED INCREMENT_DECREMENT at internal/detect/awskey.go:106:33
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/awskey.go:116:12
       KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:116:12
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/awskey.go:116:12
+      KILLED INCREMENT_DECREMENT at internal/detect/awskey.go:106:33
       KILLED CONDITIONALS_BOUNDARY at internal/detect/awskey.go:116:24
-      KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:116:24
       KILLED CONDITIONALS_BOUNDARY at internal/detect/awskey.go:116:38
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/awskey.go:116:50
+      KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:116:24
       KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:116:38
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/awskey.go:116:50
+       LIVED CONDITIONALS_BOUNDARY at internal/detect/bank_account.go:95:17
       KILLED CONDITIONALS_NEGATION at internal/detect/awskey.go:116:50
       KILLED CONDITIONALS_NEGATION at internal/detect/bank_account.go:73:18
-       LIVED CONDITIONALS_BOUNDARY at internal/detect/bank_account.go:95:17
       KILLED CONDITIONALS_NEGATION at internal/detect/bank_account.go:95:17
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/bank_account.go:131:13
        LIVED CONDITIONALS_BOUNDARY at internal/detect/bank_account.go:95:36
       KILLED CONDITIONALS_NEGATION at internal/detect/bank_account.go:95:36
       KILLED CONDITIONALS_NEGATION at internal/detect/bank_account.go:131:13
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/bank_account.go:131:13
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/bank_account.go:131:26
       KILLED CONDITIONALS_NEGATION at internal/detect/bank_account.go:131:26
-      KILLED ARITHMETIC_BASE at internal/detect/bank_account.go:151:26
       KILLED INVERT_NEGATIVES at internal/detect/bank_account.go:151:26
-      KILLED ARITHMETIC_BASE at internal/detect/bank_account.go:152:22
-      KILLED CONDITIONALS_NEGATION at internal/detect/bank_account.go:165:14
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/bank_account.go:131:26
+      KILLED ARITHMETIC_BASE at internal/detect/bank_account.go:151:26
       KILLED CONDITIONALS_BOUNDARY at internal/detect/bank_account.go:168:14
+      KILLED CONDITIONALS_NEGATION at internal/detect/bank_account.go:165:14
+      KILLED ARITHMETIC_BASE at internal/detect/bank_account.go:152:22
       KILLED CONDITIONALS_NEGATION at internal/detect/bank_account.go:168:14
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/bank_account.go:171:16
       KILLED CONDITIONALS_NEGATION at internal/detect/bank_account.go:171:16
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/bank_account.go:171:16
       KILLED INVERT_NEGATIVES at internal/detect/bank_account.go:171:28
       KILLED ARITHMETIC_BASE at internal/detect/bank_account.go:171:28
       KILLED INCREMENT_DECREMENT at internal/detect/bank_account.go:171:40
@@ -362,12 +362,12 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/bank_account.go:174:13
       KILLED CONDITIONALS_BOUNDARY at internal/detect/boundary.go:7:11
       KILLED CONDITIONALS_NEGATION at internal/detect/boundary.go:7:11
-      KILLED CONDITIONALS_NEGATION at internal/detect/boundary.go:7:32
       KILLED INVERT_NEGATIVES at internal/detect/boundary.go:7:28
+      KILLED CONDITIONALS_NEGATION at internal/detect/boundary.go:7:32
       KILLED ARITHMETIC_BASE at internal/detect/boundary.go:7:28
+      KILLED INVERT_NEGATIVES at internal/detect/boundary.go:14:34
       KILLED INVERT_NEGATIVES at internal/detect/boundary.go:10:34
       KILLED ARITHMETIC_BASE at internal/detect/boundary.go:10:34
-      KILLED INVERT_NEGATIVES at internal/detect/boundary.go:14:34
  NOT COVERED CONDITIONALS_BOUNDARY at internal/detect/boundary.go:29:9
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/boundary.go:29:9
  NOT COVERED CONDITIONALS_BOUNDARY at internal/detect/boundary.go:29:21
@@ -385,48 +385,48 @@ done in 1.618084709s
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/boundary.go:34:9
  NOT COVERED CONDITIONALS_BOUNDARY at internal/detect/boundary.go:34:21
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/boundary.go:34:21
-      KILLED ARITHMETIC_BASE at internal/detect/boundary.go:33:18
       KILLED INVERT_NEGATIVES at internal/detect/boundary.go:33:12
-      KILLED ARITHMETIC_BASE at internal/detect/boundary.go:36:18
+      KILLED ARITHMETIC_BASE at internal/detect/boundary.go:33:18
       KILLED ARITHMETIC_BASE at internal/detect/boundary.go:33:12
-      KILLED INVERT_NEGATIVES at internal/detect/boundary.go:36:12
+      KILLED ARITHMETIC_BASE at internal/detect/boundary.go:36:18
       KILLED ARITHMETIC_BASE at internal/detect/boundary.go:36:12
+      KILLED INVERT_NEGATIVES at internal/detect/boundary.go:36:12
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:54:16
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:54:16
-      KILLED INVERT_NEGATIVES at internal/detect/btc.go:59:13
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:59:13
+      KILLED INVERT_NEGATIVES at internal/detect/btc.go:59:13
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:65:14
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:65:32
       KILLED INVERT_NEGATIVES at internal/detect/btc.go:68:13
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:68:13
        LIVED CONDITIONALS_BOUNDARY at internal/detect/btc.go:80:9
-      KILLED ARITHMETIC_BASE at internal/detect/btc.go:80:6
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:80:9
+      KILLED ARITHMETIC_BASE at internal/detect/btc.go:80:6
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:83:18
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:84:14
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:83:36
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:84:14
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:84:34
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:84:10
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:84:30
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:84:34
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:85:13
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:85:9
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:85:13
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:92:7
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:92:7
       KILLED INVERT_NEGATIVES at internal/detect/btc.go:92:32
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:92:32
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:92:50
       KILLED INVERT_NEGATIVES at internal/detect/btc.go:92:46
-      KILLED ARITHMETIC_BASE at internal/detect/btc.go:92:46
        LIVED CONDITIONALS_NEGATION at internal/detect/btc.go:97:21
+      KILLED ARITHMETIC_BASE at internal/detect/btc.go:92:46
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:101:9
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:102:8
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:102:8
       KILLED INCREMENT_DECREMENT at internal/detect/btc.go:103:4
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:102:8
       KILLED INVERT_NEGATIVES at internal/detect/btc.go:106:15
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:106:15
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:109:13
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:109:30
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:114:7
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:109:30
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/btc.go:148:22
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/btc.go:148:44
  NOT COVERED CONDITIONALS_BOUNDARY at internal/detect/btc.go:150:22
@@ -435,83 +435,83 @@ done in 1.618084709s
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/btc.go:150:45
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/btc.go:150:68
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:114:7
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:114:54
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:176:7
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:176:7
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:176:7
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:114:54
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:176:50
       KILLED INVERT_NEGATIVES at internal/detect/btc.go:176:32
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:176:32
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:176:50
       KILLED INVERT_NEGATIVES at internal/detect/btc.go:176:46
-   TIMED OUT INCREMENT_DECREMENT at internal/detect/btc.go:54:30
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:182:8
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:176:46
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:182:8
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:182:8
-      KILLED INCREMENT_DECREMENT at internal/detect/btc.go:183:4
       KILLED INVERT_NEGATIVES at internal/detect/btc.go:186:14
+      KILLED INCREMENT_DECREMENT at internal/detect/btc.go:183:4
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:186:14
        LIVED CONDITIONALS_BOUNDARY at internal/detect/btc.go:188:12
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:188:12
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:188:27
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:188:27
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:188:27
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:193:7
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:201:25
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:193:7
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:193:54
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:201:25
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:237:12
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:237:12
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:237:24
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:237:12
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:237:12
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:237:24
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:238:6
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:238:6
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:238:18
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:238:18
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:238:18
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:239:6
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:239:6
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:239:18
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:239:18
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:240:6
+   TIMED OUT INCREMENT_DECREMENT at internal/detect/btc.go:54:30
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:240:6
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:240:6
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:240:18
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:240:18
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:241:6
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:241:6
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:241:18
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:241:6
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:241:6
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:241:18
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:242:6
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:242:6
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:242:18
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:242:18
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:247:12
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:247:24
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:242:6
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:247:12
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:247:24
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:242:18
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:247:24
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:247:12
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:248:6
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:247:24
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:248:18
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:248:6
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:248:18
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:249:6
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:249:18
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:249:6
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:249:18
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:249:18
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:258:8
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:258:8
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:258:20
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:258:8
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:258:20
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:261:8
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:261:8
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:261:20
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:261:20
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:272:8
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:261:8
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:258:20
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:272:8
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:272:8
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:261:20
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:272:20
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:272:20
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:294:10
       KILLED INVERT_NEGATIVES at internal/detect/btc.go:273:13
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:273:13
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:294:10
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:294:10
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:301:28
-       LIVED CONDITIONALS_BOUNDARY at internal/detect/btc.go:315:16
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:294:10
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:315:16
+       LIVED CONDITIONALS_BOUNDARY at internal/detect/btc.go:315:16
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:315:33
       KILLED INCREMENT_DECREMENT at internal/detect/btc.go:315:42
       KILLED INCREMENT_DECREMENT at internal/detect/btc.go:316:18
@@ -526,8 +526,8 @@ done in 1.618084709s
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/btc.go:334:9
  NOT COVERED CONDITIONALS_BOUNDARY at internal/detect/btc.go:334:21
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/btc.go:334:21
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:306:13
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:323:67
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:306:13
  NOT COVERED CONDITIONALS_BOUNDARY at internal/detect/btc.go:336:9
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/btc.go:336:9
  NOT COVERED CONDITIONALS_BOUNDARY at internal/detect/btc.go:336:21
@@ -555,38 +555,38 @@ done in 1.618084709s
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/btc.go:345:21
       KILLED INVERT_NEGATIVES at internal/detect/btc.go:344:15
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:344:15
-      KILLED ARITHMETIC_BASE at internal/detect/btc.go:347:21
+      KILLED INVERT_NEGATIVES at internal/detect/btc.go:347:15
  NOT COVERED CONDITIONALS_BOUNDARY at internal/detect/btc.go:348:9
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/btc.go:348:9
  NOT COVERED CONDITIONALS_BOUNDARY at internal/detect/btc.go:348:21
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/btc.go:348:21
-      KILLED INVERT_NEGATIVES at internal/detect/btc.go:347:15
+      KILLED ARITHMETIC_BASE at internal/detect/btc.go:347:21
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:347:15
-      KILLED ARITHMETIC_BASE at internal/detect/btc.go:350:21
       KILLED INVERT_NEGATIVES at internal/detect/btc.go:350:15
+      KILLED ARITHMETIC_BASE at internal/detect/btc.go:350:21
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:350:15
-      KILLED INVERT_NEGATIVES at internal/detect/btc.go:352:10
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:306:13
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:352:10
+      KILLED INVERT_NEGATIVES at internal/detect/btc.go:352:10
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:306:13
        LIVED CONDITIONALS_BOUNDARY at internal/detect/btc.go:361:18
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:361:18
       KILLED INVERT_NEGATIVES at internal/detect/btc.go:364:34
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:361:18
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:364:34
-      KILLED INVERT_NEGATIVES at internal/detect/btc.go:365:34
-      KILLED ARITHMETIC_BASE at internal/detect/btc.go:365:34
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:370:15
+      KILLED ARITHMETIC_BASE at internal/detect/btc.go:365:34
+      KILLED INVERT_NEGATIVES at internal/detect/btc.go:365:34
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:371:9
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:372:9
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:373:9
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:372:9
       KILLED CONDITIONALS_BOUNDARY at internal/detect/btc.go:398:10
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:398:10
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:410:9
-      KILLED INVERT_NEGATIVES at internal/detect/btc.go:414:9
       KILLED ARITHMETIC_BASE at internal/detect/btc.go:414:9
+      KILLED INVERT_NEGATIVES at internal/detect/btc.go:414:9
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:426:22
+      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:458:13
        LIVED ARITHMETIC_BASE at internal/detect/btc.go:437:34
        LIVED ARITHMETIC_BASE at internal/detect/btc.go:437:32
-      KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:458:13
       KILLED CONDITIONALS_NEGATION at internal/detect/btc.go:461:13
       KILLED CONDITIONALS_NEGATION at internal/detect/card_expiry.go:43:18
       KILLED INVERT_NEGATIVES at internal/detect/card_expiry.go:58:29
@@ -601,8 +601,8 @@ done in 1.618084709s
        LIVED ARITHMETIC_BASE at internal/detect/card_expiry.go:85:6
       KILLED ARITHMETIC_BASE at internal/detect/card_expiry.go:88:20
       KILLED ARITHMETIC_BASE at internal/detect/card_expiry.go:88:43
-      KILLED ARITHMETIC_BASE at internal/detect/card_expiry.go:93:15
       KILLED CONDITIONALS_BOUNDARY at internal/detect/card_expiry.go:94:9
+      KILLED ARITHMETIC_BASE at internal/detect/card_expiry.go:93:15
       KILLED CONDITIONALS_NEGATION at internal/detect/card_expiry.go:94:9
       KILLED ARITHMETIC_BASE at internal/detect/card_expiry.go:94:6
       KILLED ARITHMETIC_BASE at internal/detect/card_expiry.go:94:39
@@ -612,19 +612,19 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/card_expiry.go:100:27
       KILLED INVERT_NEGATIVES at internal/detect/card_expiry.go:100:22
       KILLED ARITHMETIC_BASE at internal/detect/card_expiry.go:100:22
-      KILLED INVERT_NEGATIVES at internal/detect/card_expiry.go:100:46
       KILLED ARITHMETIC_BASE at internal/detect/card_expiry.go:100:46
+      KILLED INVERT_NEGATIVES at internal/detect/card_expiry.go:100:46
       KILLED ARITHMETIC_BASE at internal/detect/card_expiry.go:100:43
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/card_expiry.go:101:11
       KILLED CONDITIONALS_NEGATION at internal/detect/card_expiry.go:101:11
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/card_expiry.go:101:11
       KILLED CONDITIONALS_BOUNDARY at internal/detect/card_expiry.go:101:24
       KILLED CONDITIONALS_NEGATION at internal/detect/card_expiry.go:101:24
        LIVED CONDITIONALS_BOUNDARY at internal/detect/card_expiry.go:114:20
       KILLED CONDITIONALS_NEGATION at internal/detect/card_expiry.go:114:20
       KILLED INVERT_NEGATIVES at internal/detect/card_expiry.go:114:25
       KILLED ARITHMETIC_BASE at internal/detect/card_expiry.go:114:25
-      KILLED INCREMENT_DECREMENT at internal/detect/card_expiry.go:114:30
       KILLED CONDITIONALS_BOUNDARY at internal/detect/card_expiry.go:121:8
+      KILLED INCREMENT_DECREMENT at internal/detect/card_expiry.go:114:30
       KILLED CONDITIONALS_NEGATION at internal/detect/card_expiry.go:121:8
       KILLED INVERT_NEGATIVES at internal/detect/card_expiry.go:121:29
       KILLED ARITHMETIC_BASE at internal/detect/card_expiry.go:121:29
@@ -633,15 +633,15 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/card_expiry.go:141:29
       KILLED ARITHMETIC_BASE at internal/detect/card_expiry.go:142:25
        LIVED INVERT_NEGATIVES at internal/detect/card_expiry.go:146:17
-       LIVED ARITHMETIC_BASE at internal/detect/card_expiry.go:146:17
        LIVED ARITHMETIC_BASE at internal/detect/card_expiry.go:156:36
+       LIVED ARITHMETIC_BASE at internal/detect/card_expiry.go:146:17
       KILLED INVERT_NEGATIVES at internal/detect/card_expiry.go:156:23
       KILLED ARITHMETIC_BASE at internal/detect/card_expiry.go:156:23
-       LIVED CONDITIONALS_BOUNDARY at internal/detect/card_expiry.go:156:43
       KILLED CONDITIONALS_NEGATION at internal/detect/card_expiry.go:156:43
+       LIVED CONDITIONALS_BOUNDARY at internal/detect/card_expiry.go:156:43
        LIVED CONDITIONALS_BOUNDARY at internal/detect/card_expiry.go:157:32
-      KILLED CONDITIONALS_NEGATION at internal/detect/context.go:49:14
       KILLED CONDITIONALS_NEGATION at internal/detect/card_expiry.go:157:32
+      KILLED CONDITIONALS_NEGATION at internal/detect/context.go:49:14
       KILLED CONDITIONALS_BOUNDARY at internal/detect/context.go:98:11
       KILLED ARITHMETIC_BASE at internal/detect/context.go:101:18
       KILLED ARITHMETIC_BASE at internal/detect/context.go:102:15
@@ -672,13 +672,13 @@ done in 1.618084709s
       KILLED CONDITIONALS_BOUNDARY at internal/detect/context.go:174:8
       KILLED CONDITIONALS_NEGATION at internal/detect/context.go:176:14
        LIVED CONDITIONALS_BOUNDARY at internal/detect/context.go:176:28
-   TIMED OUT INCREMENT_DECREMENT at internal/detect/card_expiry.go:156:51
       KILLED CONDITIONALS_NEGATION at internal/detect/context.go:176:28
        LIVED ARITHMETIC_BASE at internal/detect/context.go:176:25
-   TIMED OUT CONDITIONALS_NEGATION at internal/detect/context.go:98:11
+   TIMED OUT INCREMENT_DECREMENT at internal/detect/card_expiry.go:156:51
       KILLED ARITHMETIC_BASE at internal/detect/context.go:176:74
-      KILLED INCREMENT_DECREMENT at internal/detect/context.go:181:5
+   TIMED OUT CONDITIONALS_NEGATION at internal/detect/context.go:98:11
       KILLED CONDITIONALS_BOUNDARY at internal/detect/context.go:187:9
+      KILLED INCREMENT_DECREMENT at internal/detect/context.go:181:5
       KILLED INCREMENT_DECREMENT at internal/detect/context.go:188:5
       KILLED CONDITIONALS_NEGATION at internal/detect/context.go:198:15
       KILLED CONDITIONALS_BOUNDARY at internal/detect/context.go:198:45
@@ -717,13 +717,13 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/credential_common.go:15:12
       KILLED CONDITIONALS_BOUNDARY at internal/detect/credential_common.go:43:11
       KILLED CONDITIONALS_NEGATION at internal/detect/credential_common.go:43:11
-   TIMED OUT CONDITIONALS_NEGATION at internal/detect/context.go:174:8
       KILLED INVERT_NEGATIVES at internal/detect/credential_common.go:43:40
       KILLED ARITHMETIC_BASE at internal/detect/credential_common.go:43:40
       KILLED CONDITIONALS_BOUNDARY at internal/detect/credential_common.go:46:9
       KILLED CONDITIONALS_NEGATION at internal/detect/credential_common.go:46:9
       KILLED CONDITIONALS_BOUNDARY at internal/detect/credential_common.go:56:8
       KILLED CONDITIONALS_NEGATION at internal/detect/credential_common.go:56:8
+   TIMED OUT CONDITIONALS_NEGATION at internal/detect/context.go:174:8
       KILLED INCREMENT_DECREMENT at internal/detect/credential_common.go:57:4
       KILLED INVERT_NEGATIVES at internal/detect/credential_common.go:59:14
       KILLED ARITHMETIC_BASE at internal/detect/credential_common.go:59:14
@@ -736,22 +736,22 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/cvv.go:69:26
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:156:24
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:160:55
-   TIMED OUT CONDITIONALS_NEGATION at internal/detect/context.go:187:9
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:163:57
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:166:59
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:169:60
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:172:55
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:175:58
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:178:56
+   TIMED OUT CONDITIONALS_NEGATION at internal/detect/context.go:187:9
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:181:58
-      KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:184:60
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:187:62
+      KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:184:60
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:190:62
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:193:55
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:196:62
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:199:64
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:202:63
-      KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:208:62
+      KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:205:60
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/detector.go:217:63
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/detector.go:220:62
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/detector.go:223:64
@@ -760,25 +760,25 @@ done in 1.618084709s
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/detector.go:370:20
  NOT COVERED CONDITIONALS_BOUNDARY at internal/detect/detector.go:373:20
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/detector.go:373:20
-      KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:205:60
-      KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:214:55
+      KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:208:62
       KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:211:55
+      KILLED CONDITIONALS_NEGATION at internal/detect/detector.go:214:55
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:42:14
       KILLED CONDITIONALS_BOUNDARY at internal/detect/email.go:92:17
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:92:17
       KILLED INVERT_NEGATIVES at internal/detect/email.go:92:55
-      KILLED INCREMENT_DECREMENT at internal/detect/email.go:93:13
       KILLED ARITHMETIC_BASE at internal/detect/email.go:92:55
-      KILLED CONDITIONALS_NEGATION at internal/detect/email.go:97:18
+      KILLED INCREMENT_DECREMENT at internal/detect/email.go:93:13
        LIVED CONDITIONALS_BOUNDARY at internal/detect/email.go:97:18
+      KILLED CONDITIONALS_NEGATION at internal/detect/email.go:97:18
        LIVED ARITHMETIC_BASE at internal/detect/email.go:97:15
       KILLED ARITHMETIC_BASE at internal/detect/email.go:97:69
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:101:16
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:104:22
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:104:46
       KILLED INVERT_NEGATIVES at internal/detect/email.go:104:42
-      KILLED ARITHMETIC_BASE at internal/detect/email.go:118:21
       KILLED ARITHMETIC_BASE at internal/detect/email.go:104:42
+      KILLED ARITHMETIC_BASE at internal/detect/email.go:118:21
       KILLED CONDITIONALS_BOUNDARY at internal/detect/email.go:119:16
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:119:16
       KILLED INCREMENT_DECREMENT at internal/detect/email.go:120:12
@@ -793,26 +793,26 @@ done in 1.618084709s
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:127:16
        LIVED ARITHMETIC_BASE at internal/detect/email.go:127:23
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:127:47
-      KILLED ARITHMETIC_BASE at internal/detect/email.go:127:43
       KILLED INVERT_NEGATIVES at internal/detect/email.go:127:43
-      KILLED ARITHMETIC_BASE at internal/detect/email.go:131:21
+      KILLED ARITHMETIC_BASE at internal/detect/email.go:127:43
       KILLED INCREMENT_DECREMENT at internal/detect/email.go:128:12
+      KILLED ARITHMETIC_BASE at internal/detect/email.go:131:21
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:132:17
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:146:15
-      KILLED ARITHMETIC_BASE at internal/detect/email.go:150:12
       KILLED INVERT_NEGATIVES at internal/detect/email.go:150:12
-       LIVED CONDITIONALS_BOUNDARY at internal/detect/email.go:157:12
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:152:8
+      KILLED ARITHMETIC_BASE at internal/detect/email.go:150:12
+       LIVED CONDITIONALS_BOUNDARY at internal/detect/email.go:157:12
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:157:12
       KILLED ARITHMETIC_BASE at internal/detect/email.go:162:21
       KILLED CONDITIONALS_BOUNDARY at internal/detect/email.go:164:14
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:164:14
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:183:28
-      KILLED CONDITIONALS_NEGATION at internal/detect/email.go:183:40
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:183:52
+      KILLED CONDITIONALS_NEGATION at internal/detect/email.go:183:40
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:183:64
-      KILLED CONDITIONALS_NEGATION at internal/detect/email.go:189:40
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:189:28
+      KILLED CONDITIONALS_NEGATION at internal/detect/email.go:189:40
       KILLED CONDITIONALS_BOUNDARY at internal/detect/email.go:194:12
       KILLED CONDITIONALS_BOUNDARY at internal/detect/email.go:194:24
       KILLED CONDITIONALS_BOUNDARY at internal/detect/email.go:194:38
@@ -820,20 +820,20 @@ done in 1.618084709s
       KILLED CONDITIONALS_BOUNDARY at internal/detect/email.go:194:50
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:194:50
       KILLED CONDITIONALS_BOUNDARY at internal/detect/email.go:204:16
-      KILLED CONDITIONALS_NEGATION at internal/detect/email.go:204:16
       KILLED INCREMENT_DECREMENT at internal/detect/email.go:204:30
-      KILLED CONDITIONALS_NEGATION at internal/detect/email.go:205:14
+      KILLED CONDITIONALS_NEGATION at internal/detect/email.go:204:16
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:205:34
+      KILLED CONDITIONALS_NEGATION at internal/detect/email.go:205:14
       KILLED INVERT_NEGATIVES at internal/detect/email.go:205:30
       KILLED ARITHMETIC_BASE at internal/detect/email.go:205:30
-      KILLED CONDITIONALS_NEGATION at internal/detect/email.go:229:17
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:233:15
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/email.go:236:16
+      KILLED CONDITIONALS_NEGATION at internal/detect/email.go:229:17
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:236:16
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/email.go:236:16
       KILLED INCREMENT_DECREMENT at internal/detect/email.go:236:32
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:238:16
-      KILLED CONDITIONALS_NEGATION at internal/detect/email.go:238:38
       KILLED INVERT_NEGATIVES at internal/detect/email.go:238:34
+      KILLED CONDITIONALS_NEGATION at internal/detect/email.go:238:38
       KILLED ARITHMETIC_BASE at internal/detect/email.go:238:34
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:242:16
       KILLED CONDITIONALS_NEGATION at internal/detect/email.go:242:38
@@ -853,19 +853,19 @@ done in 1.618084709s
       KILLED INCREMENT_DECREMENT at internal/detect/eth.go:43:33
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:44:14
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:44:35
-   TIMED OUT CONDITIONALS_NEGATION at internal/detect/email.go:194:12
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:44:31
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:44:55
-   TIMED OUT CONDITIONALS_NEGATION at internal/detect/email.go:194:24
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:44:51
       KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:49:8
+   TIMED OUT CONDITIONALS_NEGATION at internal/detect/email.go:194:12
+   TIMED OUT CONDITIONALS_NEGATION at internal/detect/email.go:194:24
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:49:8
-      KILLED INVERT_NEGATIVES at internal/detect/eth.go:49:33
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:49:33
+      KILLED INVERT_NEGATIVES at internal/detect/eth.go:49:33
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:49:51
       KILLED INVERT_NEGATIVES at internal/detect/eth.go:49:47
-      KILLED ARITHMETIC_BASE at internal/detect/eth.go:49:47
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:54:21
+      KILLED ARITHMETIC_BASE at internal/detect/eth.go:49:47
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:54:27
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:59:12
       KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:62:10
@@ -880,8 +880,8 @@ done in 1.618084709s
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:127:12
       KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:127:24
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:127:24
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:127:38
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:127:38
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:127:38
       KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:127:50
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:127:50
       KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:127:64
@@ -891,8 +891,8 @@ done in 1.618084709s
       KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:135:11
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:135:11
       KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:135:26
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:138:11
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:135:26
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:138:11
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:138:11
       KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:138:26
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:138:26
@@ -900,8 +900,8 @@ done in 1.618084709s
       KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:168:8
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:168:8
       KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:168:20
-      KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:168:20
       KILLED INVERT_NEGATIVES at internal/detect/eth.go:169:13
+      KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:168:20
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:169:13
        LIVED CONDITIONALS_BOUNDARY at internal/detect/eth.go:179:8
        LIVED CONDITIONALS_NEGATION at internal/detect/eth.go:179:8
@@ -926,12 +926,12 @@ done in 1.618084709s
  NOT COVERED ARITHMETIC_BASE at internal/detect/eth.go:233:71
  NOT COVERED ARITHMETIC_BASE at internal/detect/eth.go:233:67
  NOT COVERED ARITHMETIC_BASE at internal/detect/eth.go:233:69
-       LIVED CONDITIONALS_BOUNDARY at internal/detect/eth.go:231:18
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:231:18
+       LIVED CONDITIONALS_BOUNDARY at internal/detect/eth.go:231:18
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:231:12
-       LIVED INVERT_NEGATIVES at internal/detect/eth.go:241:25
       KILLED INVERT_NEGATIVES at internal/detect/eth.go:244:16
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:244:16
+       LIVED INVERT_NEGATIVES at internal/detect/eth.go:241:25
        LIVED ARITHMETIC_BASE at internal/detect/eth.go:241:25
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:242:39
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:246:22
@@ -946,25 +946,25 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:272:17
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:272:14
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:272:49
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:273:18
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:272:46
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:273:18
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:273:18
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:274:12
       KILLED CONDITIONALS_BOUNDARY at internal/detect/eth.go:288:17
       KILLED CONDITIONALS_NEGATION at internal/detect/eth.go:288:17
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:290:26
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:293:12
-      KILLED ARITHMETIC_BASE at internal/detect/eth.go:293:38
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:293:35
-      KILLED ARITHMETIC_BASE at internal/detect/eth.go:293:53
       KILLED ARITHMETIC_BASE at internal/detect/eth.go:293:50
-       LIVED CONDITIONALS_BOUNDARY at internal/detect/fullwidth.go:17:8
+      KILLED ARITHMETIC_BASE at internal/detect/eth.go:293:53
+      KILLED ARITHMETIC_BASE at internal/detect/eth.go:293:38
+      KILLED CONDITIONALS_NEGATION at internal/detect/fullwidth.go:34:8
  NOT COVERED CONDITIONALS_BOUNDARY at internal/detect/fullwidth.go:37:10
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/fullwidth.go:37:10
  NOT COVERED CONDITIONALS_BOUNDARY at internal/detect/fullwidth.go:37:25
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/fullwidth.go:37:25
+       LIVED CONDITIONALS_BOUNDARY at internal/detect/fullwidth.go:17:8
       KILLED CONDITIONALS_NEGATION at internal/detect/fullwidth.go:17:8
-      KILLED CONDITIONALS_NEGATION at internal/detect/fullwidth.go:34:8
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/fullwidth.go:42:10
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/fullwidth.go:42:25
  NOT COVERED CONDITIONALS_NEGATION at internal/detect/fullwidth.go:42:40
@@ -974,19 +974,19 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/fullwidth.go:50:43
       KILLED CONDITIONALS_NEGATION at internal/detect/fullwidth.go:66:12
        LIVED ARITHMETIC_BASE at internal/detect/fullwidth.go:70:26
+       LIVED CONDITIONALS_BOUNDARY at internal/detect/fullwidth.go:71:9
       KILLED ARITHMETIC_BASE at internal/detect/fullwidth.go:70:22
       KILLED INVERT_NEGATIVES at internal/detect/fullwidth.go:70:22
-       LIVED CONDITIONALS_BOUNDARY at internal/detect/fullwidth.go:71:9
-      KILLED CONDITIONALS_NEGATION at internal/detect/fullwidth.go:71:9
        LIVED CONDITIONALS_BOUNDARY at internal/detect/fullwidth.go:80:12
+      KILLED CONDITIONALS_NEGATION at internal/detect/fullwidth.go:71:9
        LIVED ARITHMETIC_BASE at internal/detect/fullwidth.go:79:38
       KILLED CONDITIONALS_NEGATION at internal/detect/fullwidth.go:80:12
        LIVED ARITHMETIC_BASE at internal/detect/fullwidth.go:80:37
-      KILLED ARITHMETIC_BASE at internal/detect/fullwidth.go:80:25
        LIVED INVERT_NEGATIVES at internal/detect/fullwidth.go:80:37
+      KILLED ARITHMETIC_BASE at internal/detect/fullwidth.go:80:25
       KILLED ARITHMETIC_BASE at internal/detect/fullwidth.go:83:16
-      KILLED CONDITIONALS_NEGATION at internal/detect/fullwidth.go:89:8
        LIVED CONDITIONALS_BOUNDARY at internal/detect/fullwidth.go:89:8
+      KILLED CONDITIONALS_NEGATION at internal/detect/fullwidth.go:89:8
       KILLED CONDITIONALS_NEGATION at internal/detect/fullwidth.go:97:15
        LIVED CONDITIONALS_BOUNDARY at internal/detect/github_token.go:66:16
       KILLED ARITHMETIC_BASE at internal/detect/github_token.go:88:31
@@ -995,7 +995,6 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/github_token.go:101:32
       KILLED CONDITIONALS_NEGATION at internal/detect/github_token.go:102:8
       KILLED CONDITIONALS_BOUNDARY at internal/detect/github_token.go:124:12
-   TIMED OUT CONDITIONALS_BOUNDARY at internal/detect/fullwidth.go:34:8
       KILLED CONDITIONALS_NEGATION at internal/detect/github_token.go:124:12
       KILLED CONDITIONALS_BOUNDARY at internal/detect/github_token.go:124:24
       KILLED CONDITIONALS_NEGATION at internal/detect/github_token.go:124:24
@@ -1006,18 +1005,19 @@ done in 1.618084709s
       KILLED CONDITIONALS_BOUNDARY at internal/detect/github_token.go:124:64
       KILLED CONDITIONALS_NEGATION at internal/detect/github_token.go:124:64
       KILLED CONDITIONALS_BOUNDARY at internal/detect/github_token.go:124:76
+   TIMED OUT CONDITIONALS_BOUNDARY at internal/detect/fullwidth.go:34:8
       KILLED CONDITIONALS_NEGATION at internal/detect/github_token.go:124:76
       KILLED CONDITIONALS_NEGATION at internal/detect/github_token.go:129:26
       KILLED CONDITIONALS_BOUNDARY at internal/detect/google_apikey.go:35:46
       KILLED CONDITIONALS_NEGATION at internal/detect/google_apikey.go:35:46
       KILLED ARITHMETIC_BASE at internal/detect/google_apikey.go:35:25
-   TIMED OUT CONDITIONALS_NEGATION at internal/detect/github_token.go:66:16
        LIVED ARITHMETIC_BASE at internal/detect/google_apikey.go:35:15
       KILLED ARITHMETIC_BASE at internal/detect/google_apikey.go:40:24
       KILLED ARITHMETIC_BASE at internal/detect/google_apikey.go:40:12
-   TIMED OUT INCREMENT_DECREMENT at internal/detect/github_token.go:77:4
       KILLED ARITHMETIC_BASE at internal/detect/google_apikey.go:41:23
+   TIMED OUT CONDITIONALS_NEGATION at internal/detect/github_token.go:66:16
       KILLED CONDITIONALS_BOUNDARY at internal/detect/google_apikey.go:61:20
+   TIMED OUT INCREMENT_DECREMENT at internal/detect/github_token.go:77:4
       KILLED CONDITIONALS_NEGATION at internal/detect/google_apikey.go:61:20
       KILLED INCREMENT_DECREMENT at internal/detect/google_apikey.go:61:28
       KILLED CONDITIONALS_NEGATION at internal/detect/google_apikey.go:71:26
@@ -1057,39 +1057,39 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/iban.go:114:26
       KILLED ARITHMETIC_BASE at internal/detect/iban.go:117:39
       KILLED ARITHMETIC_BASE at internal/detect/iban.go:117:33
-      KILLED ARITHMETIC_BASE at internal/detect/iban.go:117:15
       KILLED ARITHMETIC_BASE at internal/detect/iban.go:117:20
+      KILLED ARITHMETIC_BASE at internal/detect/iban.go:117:15
       KILLED INVERT_NEGATIVES at internal/detect/iban.go:117:27
       KILLED ARITHMETIC_BASE at internal/detect/iban.go:117:27
-   TIMED OUT INCREMENT_DECREMENT at internal/detect/google_apikey.go:37:5
       KILLED CONDITIONALS_NEGATION at internal/detect/iban.go:123:13
       KILLED CONDITIONALS_BOUNDARY at internal/detect/iban.go:133:8
       KILLED CONDITIONALS_NEGATION at internal/detect/iban.go:133:8
       KILLED CONDITIONALS_BOUNDARY at internal/detect/iban.go:133:38
+   TIMED OUT INCREMENT_DECREMENT at internal/detect/google_apikey.go:37:5
       KILLED CONDITIONALS_NEGATION at internal/detect/iban.go:133:38
-   TIMED OUT INCREMENT_DECREMENT at internal/detect/google_apikey.go:42:5
       KILLED CONDITIONALS_NEGATION at internal/detect/iban.go:133:87
       KILLED INCREMENT_DECREMENT at internal/detect/iban.go:137:4
        LIVED CONDITIONALS_BOUNDARY at internal/detect/iban.go:140:10
        LIVED CONDITIONALS_NEGATION at internal/detect/iban.go:140:10
- NOT COVERED INCREMENT_DECREMENT at internal/detect/iban.go:141:6
       KILLED CONDITIONALS_NEGATION at internal/detect/iban.go:140:33
+ NOT COVERED INCREMENT_DECREMENT at internal/detect/iban.go:141:6
       KILLED INVERT_NEGATIVES at internal/detect/iban.go:140:29
       KILLED ARITHMETIC_BASE at internal/detect/iban.go:140:29
       KILLED CONDITIONALS_BOUNDARY at internal/detect/iban.go:149:7
       KILLED CONDITIONALS_NEGATION at internal/detect/iban.go:149:7
+   TIMED OUT INCREMENT_DECREMENT at internal/detect/google_apikey.go:42:5
       KILLED CONDITIONALS_BOUNDARY at internal/detect/iban.go:149:19
       KILLED CONDITIONALS_NEGATION at internal/detect/iban.go:149:19
       KILLED ARITHMETIC_BASE at internal/detect/iban.go:150:18
       KILLED INVERT_NEGATIVES at internal/detect/iban.go:150:12
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/ipaddr.go:44:8
       KILLED ARITHMETIC_BASE at internal/detect/iban.go:150:12
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/ipaddr.go:44:8
       KILLED CONDITIONALS_NEGATION at internal/detect/ipaddr.go:44:8
       KILLED CONDITIONALS_NEGATION at internal/detect/ipaddr.go:46:14
-      KILLED CONDITIONALS_NEGATION at internal/detect/ipaddr.go:46:28
        LIVED CONDITIONALS_BOUNDARY at internal/detect/ipaddr.go:46:28
-      KILLED ARITHMETIC_BASE at internal/detect/ipaddr.go:46:74
+      KILLED CONDITIONALS_NEGATION at internal/detect/ipaddr.go:46:28
        LIVED ARITHMETIC_BASE at internal/detect/ipaddr.go:46:25
+      KILLED ARITHMETIC_BASE at internal/detect/ipaddr.go:46:74
       KILLED INCREMENT_DECREMENT at internal/detect/ipaddr.go:71:4
       KILLED CONDITIONALS_BOUNDARY at internal/detect/ipaddr.go:81:7
       KILLED CONDITIONALS_NEGATION at internal/detect/ipaddr.go:81:7
@@ -1133,13 +1133,13 @@ done in 1.618084709s
       KILLED CONDITIONALS_NEGATION at internal/detect/ipaddr.go:170:26
       KILLED CONDITIONALS_BOUNDARY at internal/detect/ipaddr.go:170:38
    TIMED OUT ARITHMETIC_BASE at internal/detect/ipaddr.go:126:23
-   TIMED OUT CONDITIONALS_NEGATION at internal/detect/ipaddr.go:131:8
       KILLED CONDITIONALS_NEGATION at internal/detect/ipaddr.go:170:38
+   TIMED OUT CONDITIONALS_NEGATION at internal/detect/ipaddr.go:131:8
       KILLED CONDITIONALS_BOUNDARY at internal/detect/ipaddr.go:170:52
    TIMED OUT CONDITIONALS_NEGATION at internal/detect/ipaddr.go:131:55
       KILLED CONDITIONALS_NEGATION at internal/detect/ipaddr.go:170:52
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/ipaddr.go:170:64
       KILLED CONDITIONALS_NEGATION at internal/detect/ipaddr.go:170:64
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/ipaddr.go:170:64
       KILLED CONDITIONALS_NEGATION at internal/detect/jwt.go:12:9
       KILLED CONDITIONALS_NEGATION at internal/detect/jwt.go:16:41
        LIVED CONDITIONALS_BOUNDARY at internal/detect/jwt.go:67:8
@@ -1182,8 +1182,8 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/jwt.go:154:14
       KILLED INVERT_NEGATIVES at internal/detect/label.go:8:29
       KILLED ARITHMETIC_BASE at internal/detect/label.go:8:29
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/label.go:9:54
-      KILLED CONDITIONALS_NEGATION at internal/detect/label.go:9:54
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/label.go:9:56
+      KILLED CONDITIONALS_NEGATION at internal/detect/label.go:9:56
       KILLED ARITHMETIC_BASE at internal/detect/label.go:10:20
       KILLED CONDITIONALS_BOUNDARY at internal/detect/label.go:18:10
       KILLED CONDITIONALS_NEGATION at internal/detect/label.go:18:10
@@ -1198,8 +1198,8 @@ done in 1.618084709s
        LIVED CONDITIONALS_BOUNDARY at internal/detect/label.go:50:18
       KILLED CONDITIONALS_NEGATION at internal/detect/label.go:50:18
        LIVED CONDITIONALS_BOUNDARY at internal/detect/merchant_id.go:66:17
-       LIVED CONDITIONALS_BOUNDARY at internal/detect/merchant_id.go:66:36
       KILLED CONDITIONALS_NEGATION at internal/detect/merchant_id.go:66:17
+       LIVED CONDITIONALS_BOUNDARY at internal/detect/merchant_id.go:66:36
       KILLED CONDITIONALS_NEGATION at internal/detect/merchant_id.go:66:36
       KILLED CONDITIONALS_BOUNDARY at internal/detect/merchant_id.go:91:17
    TIMED OUT ARITHMETIC_BASE at internal/detect/jwt.go:113:12
@@ -1212,19 +1212,19 @@ done in 1.618084709s
        LIVED CONDITIONALS_BOUNDARY at internal/detect/merchant_id.go:115:27
       KILLED CONDITIONALS_NEGATION at internal/detect/merchant_id.go:115:27
       KILLED CONDITIONALS_BOUNDARY at internal/detect/mynumber.go:46:8
-      KILLED CONDITIONALS_NEGATION at internal/detect/mynumber.go:48:14
       KILLED CONDITIONALS_NEGATION at internal/detect/mynumber.go:46:8
+      KILLED CONDITIONALS_NEGATION at internal/detect/mynumber.go:48:14
        LIVED CONDITIONALS_BOUNDARY at internal/detect/mynumber.go:48:28
       KILLED CONDITIONALS_NEGATION at internal/detect/mynumber.go:48:28
-      KILLED ARITHMETIC_BASE at internal/detect/mynumber.go:48:99
        LIVED ARITHMETIC_BASE at internal/detect/mynumber.go:48:25
       KILLED INCREMENT_DECREMENT at internal/detect/mynumber.go:53:5
+      KILLED ARITHMETIC_BASE at internal/detect/mynumber.go:48:99
       KILLED CONDITIONALS_BOUNDARY at internal/detect/mynumber.go:58:8
       KILLED CONDITIONALS_NEGATION at internal/detect/mynumber.go:58:8
       KILLED INVERT_NEGATIVES at internal/detect/mynumber.go:58:37
       KILLED ARITHMETIC_BASE at internal/detect/mynumber.go:58:37
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/mynumber.go:73:10
       KILLED CONDITIONALS_NEGATION at internal/detect/mynumber.go:69:18
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/mynumber.go:73:10
       KILLED CONDITIONALS_NEGATION at internal/detect/mynumber.go:73:10
       KILLED CONDITIONALS_BOUNDARY at internal/detect/mynumber.go:102:8
       KILLED CONDITIONALS_NEGATION at internal/detect/mynumber.go:102:52
@@ -1262,13 +1262,13 @@ done in 1.618084709s
       KILLED INCREMENT_DECREMENT at internal/detect/pan.go:101:5
       KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:109:9
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:109:53
-   TIMED OUT INCREMENT_DECREMENT at internal/detect/mynumber.go:59:5
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:109:71
+   TIMED OUT INCREMENT_DECREMENT at internal/detect/mynumber.go:59:5
       KILLED INCREMENT_DECREMENT at internal/detect/pan.go:113:5
-   TIMED OUT CONDITIONALS_NEGATION at internal/detect/mynumber.go:102:8
        LIVED CONDITIONALS_BOUNDARY at internal/detect/pan.go:118:11
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:118:11
       KILLED INVERT_NEGATIVES at internal/detect/pan.go:118:39
+   TIMED OUT CONDITIONALS_NEGATION at internal/detect/mynumber.go:102:8
       KILLED ARITHMETIC_BASE at internal/detect/pan.go:118:39
       KILLED INCREMENT_DECREMENT at internal/detect/pan.go:119:7
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:124:28
@@ -1282,8 +1282,8 @@ done in 1.618084709s
       KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:141:14
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:141:14
       KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:141:31
-      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:141:31
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:148:11
+      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:141:31
       KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:168:16
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:168:16
       KILLED INVERT_NEGATIVES at internal/detect/pan.go:175:43
@@ -1311,27 +1311,27 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/pan.go:249:53
       KILLED INVERT_NEGATIVES at internal/detect/pan.go:249:48
       KILLED ARITHMETIC_BASE at internal/detect/pan.go:249:48
-      KILLED INVERT_NEGATIVES at internal/detect/pan.go:249:73
       KILLED ARITHMETIC_BASE at internal/detect/pan.go:249:78
       KILLED ARITHMETIC_BASE at internal/detect/pan.go:249:73
-      KILLED ARITHMETIC_BASE at internal/detect/pan.go:249:97
+      KILLED INVERT_NEGATIVES at internal/detect/pan.go:249:73
       KILLED INVERT_NEGATIVES at internal/detect/pan.go:249:97
       KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:250:9
+      KILLED ARITHMETIC_BASE at internal/detect/pan.go:249:97
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:250:9
       KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:250:22
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:250:22
-   TIMED OUT CONDITIONALS_NEGATION at internal/detect/pan.go:109:9
        LIVED CONDITIONALS_BOUNDARY at internal/detect/pan.go:274:18
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:274:18
+   TIMED OUT CONDITIONALS_NEGATION at internal/detect/pan.go:109:9
       KILLED ARITHMETIC_BASE at internal/detect/pan.go:276:28
       KILLED ARITHMETIC_BASE at internal/detect/pan.go:276:24
+      KILLED INVERT_NEGATIVES at internal/detect/pan.go:276:41
       KILLED INVERT_NEGATIVES at internal/detect/pan.go:276:19
       KILLED ARITHMETIC_BASE at internal/detect/pan.go:276:19
-      KILLED INVERT_NEGATIVES at internal/detect/pan.go:276:41
-      KILLED ARITHMETIC_BASE at internal/detect/pan.go:276:41
-      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:277:9
       KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:277:9
+      KILLED ARITHMETIC_BASE at internal/detect/pan.go:276:41
       KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:277:20
+      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:277:9
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:277:20
        LIVED CONDITIONALS_BOUNDARY at internal/detect/pan.go:283:18
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:283:18
@@ -1340,29 +1340,29 @@ done in 1.618084709s
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:283:56
       KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:283:56
        LIVED CONDITIONALS_BOUNDARY at internal/detect/pan.go:299:18
-      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:299:18
-      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:299:36
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:299:56
+      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:299:18
        LIVED CONDITIONALS_BOUNDARY at internal/detect/pan.go:304:18
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:304:36
+      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:299:36
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:304:18
-      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:304:36
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:304:36
       KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:304:56
-      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:304:56
+      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:304:36
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:320:17
+      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:304:56
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:320:33
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:323:17
+      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:332:17
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:329:17
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:326:17
-      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:332:17
       KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:334:17
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:334:17
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:334:33
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:334:33
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:334:33
       KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:336:17
+      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:336:33
       KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:336:17
       KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:336:33
-      KILLED CONDITIONALS_NEGATION at internal/detect/pan.go:336:33
       KILLED CONDITIONALS_BOUNDARY at internal/detect/pan.go:343:23
        LIVED CONDITIONALS_BOUNDARY at internal/detect/payment_token.go:54:16
       KILLED CONDITIONALS_NEGATION at internal/detect/payment_token.go:54:16
@@ -1381,10 +1381,7 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/payment_token.go:69:14
       KILLED ARITHMETIC_BASE at internal/detect/payment_token.go:79:13
       KILLED CONDITIONALS_BOUNDARY at internal/detect/payment_token.go:80:12
-   TIMED OUT CONDITIONALS_BOUNDARY at internal/detect/pan.go:343:11
       KILLED CONDITIONALS_NEGATION at internal/detect/payment_token.go:80:12
-   TIMED OUT CONDITIONALS_NEGATION at internal/detect/pan.go:343:11
-   TIMED OUT CONDITIONALS_NEGATION at internal/detect/pan.go:343:23
       KILLED INCREMENT_DECREMENT at internal/detect/payment_token.go:81:8
       KILLED INVERT_NEGATIVES at internal/detect/payment_token.go:84:24
       KILLED ARITHMETIC_BASE at internal/detect/payment_token.go:84:24
@@ -1392,18 +1389,21 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/payment_token.go:84:20
       KILLED CONDITIONALS_BOUNDARY at internal/detect/payment_token.go:85:16
       KILLED CONDITIONALS_NEGATION at internal/detect/payment_token.go:85:16
+   TIMED OUT CONDITIONALS_BOUNDARY at internal/detect/pan.go:343:11
       KILLED INVERT_NEGATIVES at internal/detect/payment_token.go:102:12
+   TIMED OUT CONDITIONALS_NEGATION at internal/detect/pan.go:343:11
+   TIMED OUT CONDITIONALS_NEGATION at internal/detect/pan.go:343:23
       KILLED ARITHMETIC_BASE at internal/detect/payment_token.go:102:12
       KILLED CONDITIONALS_NEGATION at internal/detect/payment_token.go:113:28
-      KILLED CONDITIONALS_NEGATION at internal/detect/payment_token.go:113:40
       KILLED CONDITIONALS_BOUNDARY at internal/detect/phone_jp.go:98:8
+      KILLED CONDITIONALS_NEGATION at internal/detect/payment_token.go:113:40
       KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:98:8
       KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:101:14
        LIVED CONDITIONALS_BOUNDARY at internal/detect/phone_jp.go:101:28
-      KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:101:28
        LIVED ARITHMETIC_BASE at internal/detect/phone_jp.go:101:25
-      KILLED ARITHMETIC_BASE at internal/detect/phone_jp.go:101:99
+      KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:101:28
       KILLED INCREMENT_DECREMENT at internal/detect/phone_jp.go:106:5
+      KILLED ARITHMETIC_BASE at internal/detect/phone_jp.go:101:99
       KILLED CONDITIONALS_BOUNDARY at internal/detect/phone_jp.go:113:8
       KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:113:8
       KILLED INVERT_NEGATIVES at internal/detect/phone_jp.go:113:37
@@ -1425,43 +1425,43 @@ done in 1.618084709s
       KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:156:16
       KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:179:25
       KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:179:37
-   TIMED OUT CONDITIONALS_NEGATION at internal/detect/phone_jp.go:105:14
       KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:179:49
       KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:179:61
       KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:186:28
        LIVED CONDITIONALS_BOUNDARY at internal/detect/phone_jp.go:193:17
       KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:193:17
-   TIMED OUT INCREMENT_DECREMENT at internal/detect/phone_jp.go:114:5
+   TIMED OUT CONDITIONALS_NEGATION at internal/detect/phone_jp.go:105:14
       KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:199:15
-   TIMED OUT CONDITIONALS_NEGATION at internal/detect/phone_jp.go:122:9
        LIVED CONDITIONALS_BOUNDARY at internal/detect/phone_jp.go:199:47
       KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:199:47
-      KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:200:44
+   TIMED OUT INCREMENT_DECREMENT at internal/detect/phone_jp.go:114:5
+   TIMED OUT CONDITIONALS_NEGATION at internal/detect/phone_jp.go:122:9
        LIVED ARITHMETIC_BASE at internal/detect/phone_jp.go:199:51
-      KILLED ARITHMETIC_BASE at internal/detect/phone_jp.go:200:24
+      KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:200:44
       KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:207:14
+      KILLED ARITHMETIC_BASE at internal/detect/phone_jp.go:200:24
        LIVED CONDITIONALS_BOUNDARY at internal/detect/phone_jp.go:207:33
       KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:207:33
-      KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:207:53
        LIVED CONDITIONALS_BOUNDARY at internal/detect/phone_jp.go:207:53
+      KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:207:53
        LIVED CONDITIONALS_BOUNDARY at internal/detect/phone_jp.go:226:17
       KILLED CONDITIONALS_NEGATION at internal/detect/phone_jp.go:226:17
-       LIVED CONDITIONALS_BOUNDARY at internal/detect/private_key_pem.go:39:28
       KILLED CONDITIONALS_NEGATION at internal/detect/private_key_pem.go:39:28
+       LIVED CONDITIONALS_BOUNDARY at internal/detect/private_key_pem.go:39:28
        LIVED ARITHMETIC_BASE at internal/detect/private_key_pem.go:39:15
-      KILLED ARITHMETIC_BASE at internal/detect/private_key_pem.go:44:21
        LIVED CONDITIONALS_BOUNDARY at internal/detect/private_key_pem.go:46:10
+      KILLED ARITHMETIC_BASE at internal/detect/private_key_pem.go:44:21
       KILLED CONDITIONALS_NEGATION at internal/detect/private_key_pem.go:46:10
-      KILLED ARITHMETIC_BASE at internal/detect/private_key_pem.go:55:14
       KILLED CONDITIONALS_BOUNDARY at internal/detect/private_key_pem.go:75:29
+      KILLED ARITHMETIC_BASE at internal/detect/private_key_pem.go:55:14
       KILLED CONDITIONALS_NEGATION at internal/detect/private_key_pem.go:75:29
-       LIVED ARITHMETIC_BASE at internal/detect/private_key_pem.go:75:19
       KILLED INCREMENT_DECREMENT at internal/detect/private_key_pem.go:75:44
-      KILLED INVERT_NEGATIVES at internal/detect/private_key_pem.go:77:11
+       LIVED ARITHMETIC_BASE at internal/detect/private_key_pem.go:75:19
+      KILLED CONDITIONALS_NEGATION at internal/detect/private_key_pem.go:76:14
  NOT COVERED INVERT_NEGATIVES at internal/detect/private_key_pem.go:83:9
  NOT COVERED ARITHMETIC_BASE at internal/detect/private_key_pem.go:83:9
-      KILLED CONDITIONALS_NEGATION at internal/detect/private_key_pem.go:76:14
       KILLED ARITHMETIC_BASE at internal/detect/private_key_pem.go:77:11
+      KILLED INVERT_NEGATIVES at internal/detect/private_key_pem.go:77:11
       KILLED CONDITIONALS_NEGATION at internal/detect/regex.go:18:13
        LIVED CONDITIONALS_BOUNDARY at internal/detect/regex.go:31:7
       KILLED CONDITIONALS_NEGATION at internal/detect/regex.go:31:7
@@ -1493,23 +1493,23 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:53:20
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:53:43
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:56:15
-      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:59:20
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:56:11
+      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:59:20
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:59:43
       KILLED CONDITIONALS_BOUNDARY at internal/detect/sortcode.go:72:7
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:72:7
       KILLED INVERT_NEGATIVES at internal/detect/sortcode.go:72:31
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/sortcode.go:77:7
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:72:31
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/sortcode.go:77:7
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:77:7
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:77:25
       KILLED INVERT_NEGATIVES at internal/detect/sortcode.go:77:21
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:77:21
-      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:77:49
       KILLED INVERT_NEGATIVES at internal/detect/sortcode.go:77:49
+      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:77:49
        LIVED INVERT_NEGATIVES at internal/detect/sortcode.go:77:71
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/sortcode.go:83:9
        LIVED ARITHMETIC_BASE at internal/detect/sortcode.go:77:71
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/sortcode.go:83:9
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:83:9
       KILLED CONDITIONALS_BOUNDARY at internal/detect/sortcode.go:91:9
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:91:9
@@ -1517,43 +1517,43 @@ done in 1.618084709s
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:92:8
       KILLED CONDITIONALS_BOUNDARY at internal/detect/sortcode.go:92:24
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:92:24
-      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:92:55
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:92:21
+      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:92:55
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:103:17
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:103:37
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:103:33
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:104:13
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:104:9
-   TIMED OUT INCREMENT_DECREMENT at internal/detect/slack_token.go:71:5
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:104:33
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:104:29
-      KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:105:33
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:105:13
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:105:9
+      KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:105:33
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:105:29
-      KILLED INVERT_NEGATIVES at internal/detect/sortcode.go:112:27
        LIVED CONDITIONALS_BOUNDARY at internal/detect/sortcode.go:112:16
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:112:16
+      KILLED INVERT_NEGATIVES at internal/detect/sortcode.go:112:27
+   TIMED OUT INCREMENT_DECREMENT at internal/detect/slack_token.go:71:5
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:112:27
       KILLED INCREMENT_DECREMENT at internal/detect/sortcode.go:112:32
-      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:135:40
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:119:12
+      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:135:40
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:135:51
-      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:135:73
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:135:62
+      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:135:73
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:135:84
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:144:19
-      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:145:21
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:145:10
+      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:145:21
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:146:10
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:146:21
-      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:171:28
       KILLED INVERT_NEGATIVES at internal/detect/sortcode.go:158:11
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:158:11
+      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:171:28
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:171:24
       KILLED INVERT_NEGATIVES at internal/detect/sortcode.go:171:19
-      KILLED INVERT_NEGATIVES at internal/detect/sortcode.go:171:37
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:171:19
+      KILLED INVERT_NEGATIVES at internal/detect/sortcode.go:171:37
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:171:37
       KILLED CONDITIONALS_BOUNDARY at internal/detect/sortcode.go:172:12
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:172:12
@@ -1563,51 +1563,51 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:177:23
       KILLED INVERT_NEGATIVES at internal/detect/sortcode.go:177:18
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:177:18
-      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:177:36
       KILLED INVERT_NEGATIVES at internal/detect/sortcode.go:177:36
-      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:179:26
+      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:177:36
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:179:22
+      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:179:26
       KILLED INVERT_NEGATIVES at internal/detect/sortcode.go:179:17
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:179:17
-      KILLED INVERT_NEGATIVES at internal/detect/sortcode.go:179:35
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:179:35
-      KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:182:10
+      KILLED INVERT_NEGATIVES at internal/detect/sortcode.go:179:35
       KILLED CONDITIONALS_BOUNDARY at internal/detect/sortcode.go:182:10
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/sortcode.go:182:23
-      KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:186:11
+      KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:182:10
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:182:23
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/sortcode.go:182:23
       KILLED CONDITIONALS_BOUNDARY at internal/detect/sortcode.go:186:11
+      KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:186:11
       KILLED CONDITIONALS_BOUNDARY at internal/detect/sortcode.go:186:25
-      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:197:26
       KILLED CONDITIONALS_NEGATION at internal/detect/sortcode.go:186:25
       KILLED INVERT_NEGATIVES at internal/detect/sortcode.go:197:26
+      KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:197:26
       KILLED ARITHMETIC_BASE at internal/detect/sortcode.go:199:22
-      KILLED CONDITIONALS_NEGATION at internal/detect/swiftbic.go:44:16
       KILLED CONDITIONALS_BOUNDARY at internal/detect/swiftbic.go:44:16
+      KILLED CONDITIONALS_NEGATION at internal/detect/swiftbic.go:44:16
       KILLED INVERT_NEGATIVES at internal/detect/swiftbic.go:44:27
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:44:27
       KILLED INCREMENT_DECREMENT at internal/detect/swiftbic.go:44:32
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:57:30
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:63:22
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:64:22
-      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:68:22
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:65:22
-      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:69:22
+      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:68:22
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:81:51
-      KILLED INVERT_NEGATIVES at internal/detect/swiftbic.go:87:11
+      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:69:22
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:81:75
+      KILLED INVERT_NEGATIVES at internal/detect/swiftbic.go:87:11
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:87:11
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:97:41
-      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:97:87
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:97:64
+      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:97:87
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:100:20
+      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:103:23
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:100:43
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:103:49
-      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:103:23
       KILLED CONDITIONALS_BOUNDARY at internal/detect/swiftbic.go:106:7
+      KILLED INVERT_NEGATIVES at internal/detect/swiftbic.go:106:31
       KILLED CONDITIONALS_NEGATION at internal/detect/swiftbic.go:106:7
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:106:31
-      KILLED INVERT_NEGATIVES at internal/detect/swiftbic.go:106:31
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:109:34
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:109:58
       KILLED CONDITIONALS_BOUNDARY at internal/detect/swiftbic.go:117:10
@@ -1615,59 +1615,59 @@ done in 1.618084709s
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:117:6
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:117:43
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:117:68
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/swiftbic.go:118:11
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:117:93
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/swiftbic.go:118:11
       KILLED CONDITIONALS_NEGATION at internal/detect/swiftbic.go:118:11
-      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:122:22
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:118:7
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:118:43
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:123:22
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:124:22
+      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:122:22
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:127:12
-      KILLED CONDITIONALS_BOUNDARY at internal/detect/swiftbic.go:129:9
-      KILLED CONDITIONALS_NEGATION at internal/detect/swiftbic.go:129:9
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:129:6
+      KILLED CONDITIONALS_NEGATION at internal/detect/swiftbic.go:129:9
+      KILLED CONDITIONALS_BOUNDARY at internal/detect/swiftbic.go:129:9
       KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:129:41
-      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:133:11
       KILLED CONDITIONALS_BOUNDARY at internal/detect/swiftbic.go:138:20
       KILLED CONDITIONALS_NEGATION at internal/detect/swiftbic.go:138:20
+      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:133:11
       KILLED INCREMENT_DECREMENT at internal/detect/swiftbic.go:138:28
  NOT COVERED ARITHMETIC_BASE at internal/output/json.go:15:20
+      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:154:22
+      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:152:26
       KILLED INVERT_NEGATIVES at internal/detect/swiftbic.go:152:26
       KILLED CONDITIONALS_BOUNDARY at internal/output/json.go:39:15
-      KILLED CONDITIONALS_NEGATION at internal/output/json.go:39:15
-      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:152:26
-      KILLED CONDITIONALS_NEGATION at internal/output/json.go:43:13
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:43:33
-      KILLED ARITHMETIC_BASE at internal/detect/swiftbic.go:154:22
+      KILLED CONDITIONALS_NEGATION at internal/output/json.go:43:13
+      KILLED CONDITIONALS_NEGATION at internal/output/json.go:39:15
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:43:49
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:49:9
       KILLED CONDITIONALS_BOUNDARY at internal/output/json.go:49:31
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:49:31
        LIVED CONDITIONALS_BOUNDARY at internal/output/json.go:58:11
-      KILLED CONDITIONALS_NEGATION at internal/output/json.go:58:11
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:62:9
+      KILLED CONDITIONALS_NEGATION at internal/output/json.go:58:11
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:70:10
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:77:10
-      KILLED CONDITIONALS_NEGATION at internal/output/json.go:80:13
-      KILLED CONDITIONALS_NEGATION at internal/output/json.go:104:11
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:102:11
+      KILLED CONDITIONALS_NEGATION at internal/output/json.go:104:11
+      KILLED CONDITIONALS_NEGATION at internal/output/json.go:80:13
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:113:11
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:118:11
       KILLED ARITHMETIC_BASE at internal/output/json.go:124:50
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:125:10
-       LIVED CONDITIONALS_BOUNDARY at internal/output/json.go:129:18
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:129:18
+       LIVED CONDITIONALS_BOUNDARY at internal/output/json.go:129:18
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:134:9
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:149:13
+      KILLED CONDITIONALS_NEGATION at internal/output/json.go:152:17
       KILLED ARITHMETIC_BASE at internal/output/json.go:150:30
        LIVED CONDITIONALS_BOUNDARY at internal/output/json.go:152:17
-      KILLED CONDITIONALS_NEGATION at internal/output/json.go:152:17
       KILLED CONDITIONALS_BOUNDARY at internal/output/json.go:152:45
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:152:45
+       LIVED ARITHMETIC_BASE at internal/output/json.go:152:58
        LIVED INVERT_NEGATIVES at internal/output/json.go:152:58
       KILLED ARITHMETIC_BASE at internal/output/json.go:159:20
-       LIVED ARITHMETIC_BASE at internal/output/json.go:152:58
       KILLED ARITHMETIC_BASE at internal/output/json.go:160:42
       KILLED ARITHMETIC_BASE at internal/output/json.go:155:29
       KILLED CONDITIONALS_NEGATION at internal/output/json.go:156:17
@@ -1723,39 +1723,31 @@ done in 1.618084709s
       KILLED CONDITIONALS_BOUNDARY at option.go:67:88
       KILLED CONDITIONALS_NEGATION at option.go:67:88
    TIMED OUT CONDITIONALS_BOUNDARY at internal/output/writer.go:59:16
+   TIMED OUT CONDITIONALS_NEGATION at internal/output/writer.go:62:10
       KILLED CONDITIONALS_BOUNDARY at percent.go:9:11
       KILLED CONDITIONALS_NEGATION at percent.go:9:11
-   TIMED OUT CONDITIONALS_NEGATION at internal/output/writer.go:62:10
       KILLED CONDITIONALS_BOUNDARY at percent.go:12:22
       KILLED CONDITIONALS_NEGATION at percent.go:12:22
       KILLED ARITHMETIC_BASE at percent.go:12:19
       KILLED INCREMENT_DECREMENT at percent.go:12:36
-      KILLED ARITHMETIC_BASE at percent.go:16:30
       KILLED CONDITIONALS_NEGATION at percent.go:13:14
+      KILLED ARITHMETIC_BASE at percent.go:16:30
       KILLED ARITHMETIC_BASE at percent.go:17:31
       KILLED CONDITIONALS_NEGATION at percent.go:21:14
-      KILLED CONDITIONALS_BOUNDARY at percent.go:32:9
-       LIVED ARITHMETIC_BASE at percent.go:24:40
-      KILLED CONDITIONALS_NEGATION at percent.go:32:9
-      KILLED CONDITIONALS_NEGATION at percent.go:33:15
-      KILLED CONDITIONALS_BOUNDARY at percent.go:33:29
-      KILLED CONDITIONALS_NEGATION at percent.go:33:29
-      KILLED ARITHMETIC_BASE at percent.go:33:26
-      KILLED ARITHMETIC_BASE at percent.go:34:30
-      KILLED ARITHMETIC_BASE at percent.go:35:31
- NOT COVERED CONDITIONALS_BOUNDARY at percent.go:56:9
- NOT COVERED CONDITIONALS_NEGATION at percent.go:56:9
- NOT COVERED CONDITIONALS_BOUNDARY at percent.go:56:21
- NOT COVERED CONDITIONALS_NEGATION at percent.go:56:21
-      KILLED INCREMENT_DECREMENT at percent.go:44:4
-      KILLED CONDITIONALS_NEGATION at percent.go:46:13
+      KILLED CONDITIONALS_BOUNDARY at percent.go:34:9
+      KILLED CONDITIONALS_NEGATION at percent.go:34:9
+      KILLED CONDITIONALS_NEGATION at percent.go:35:15
+      KILLED CONDITIONALS_BOUNDARY at percent.go:35:29
+      KILLED CONDITIONALS_NEGATION at percent.go:35:29
+      KILLED ARITHMETIC_BASE at percent.go:35:26
+      KILLED ARITHMETIC_BASE at percent.go:36:30
+      KILLED ARITHMETIC_BASE at percent.go:37:31
  NOT COVERED CONDITIONALS_BOUNDARY at percent.go:58:9
  NOT COVERED CONDITIONALS_NEGATION at percent.go:58:9
  NOT COVERED CONDITIONALS_BOUNDARY at percent.go:58:21
  NOT COVERED CONDITIONALS_NEGATION at percent.go:58:21
-      KILLED INVERT_NEGATIVES at percent.go:57:12
-      KILLED ARITHMETIC_BASE at percent.go:57:12
-      KILLED ARITHMETIC_BASE at percent.go:59:18
+      KILLED INCREMENT_DECREMENT at percent.go:46:4
+      KILLED CONDITIONALS_NEGATION at percent.go:48:13
  NOT COVERED CONDITIONALS_BOUNDARY at percent.go:60:9
  NOT COVERED CONDITIONALS_NEGATION at percent.go:60:9
  NOT COVERED CONDITIONALS_BOUNDARY at percent.go:60:21
@@ -1763,36 +1755,45 @@ done in 1.618084709s
       KILLED INVERT_NEGATIVES at percent.go:59:12
       KILLED ARITHMETIC_BASE at percent.go:59:12
       KILLED ARITHMETIC_BASE at percent.go:61:18
+ NOT COVERED CONDITIONALS_BOUNDARY at percent.go:62:9
+ NOT COVERED CONDITIONALS_NEGATION at percent.go:62:9
+ NOT COVERED CONDITIONALS_BOUNDARY at percent.go:62:21
+ NOT COVERED CONDITIONALS_NEGATION at percent.go:62:21
       KILLED INVERT_NEGATIVES at percent.go:61:12
       KILLED ARITHMETIC_BASE at percent.go:61:12
-      KILLED CONDITIONALS_NEGATION at scanner.go:41:10
+      KILLED ARITHMETIC_BASE at percent.go:63:18
+      KILLED INVERT_NEGATIVES at percent.go:63:12
+      KILLED ARITHMETIC_BASE at percent.go:63:12
       KILLED CONDITIONALS_NEGATION at scanner.go:46:14
+      KILLED CONDITIONALS_NEGATION at scanner.go:41:10
        LIVED CONDITIONALS_BOUNDARY at scanner.go:51:22
       KILLED CONDITIONALS_NEGATION at scanner.go:51:22
-      KILLED CONDITIONALS_NEGATION at scanner.go:85:15
       KILLED CONDITIONALS_NEGATION at scanner.go:63:17
-      KILLED CONDITIONALS_NEGATION at scanner.go:95:22
-      KILLED CONDITIONALS_NEGATION at scanner.go:99:17
-      KILLED CONDITIONALS_NEGATION at scanner.go:110:13
-      KILLED CONDITIONALS_BOUNDARY at scanner.go:110:30
-      KILLED CONDITIONALS_NEGATION at scanner.go:110:30
-      KILLED CONDITIONALS_BOUNDARY at scanner.go:110:43
-      KILLED CONDITIONALS_NEGATION at scanner.go:110:43
-      KILLED CONDITIONALS_BOUNDARY at scanner.go:110:63
-      KILLED CONDITIONALS_NEGATION at scanner.go:110:63
-      KILLED CONDITIONALS_BOUNDARY at scanner.go:113:19
-      KILLED CONDITIONALS_NEGATION at scanner.go:113:19
-      KILLED CONDITIONALS_NEGATION at scanner.go:125:43
-      KILLED CONDITIONALS_NEGATION at scanner.go:128:39
-      KILLED CONDITIONALS_NEGATION at scanner.go:131:41
-      KILLED CONDITIONALS_NEGATION at scanner.go:140:18
-      KILLED INCREMENT_DECREMENT at percent.go:42:5
+      KILLED CONDITIONALS_NEGATION at scanner.go:85:15
+      KILLED CONDITIONALS_BOUNDARY at scanner.go:94:22
+      KILLED CONDITIONALS_NEGATION at scanner.go:94:22
+      KILLED CONDITIONALS_NEGATION at scanner.go:100:22
+      KILLED CONDITIONALS_NEGATION at scanner.go:104:17
+      KILLED CONDITIONALS_NEGATION at scanner.go:115:13
+      KILLED CONDITIONALS_BOUNDARY at scanner.go:115:30
+      KILLED CONDITIONALS_NEGATION at scanner.go:115:30
+      KILLED CONDITIONALS_BOUNDARY at scanner.go:115:43
+      KILLED CONDITIONALS_NEGATION at scanner.go:115:43
+      KILLED CONDITIONALS_BOUNDARY at scanner.go:115:63
+      KILLED CONDITIONALS_NEGATION at scanner.go:115:63
+      KILLED CONDITIONALS_BOUNDARY at scanner.go:118:19
+      KILLED INCREMENT_DECREMENT at percent.go:44:5
+      KILLED CONDITIONALS_NEGATION at scanner.go:118:19
+      KILLED CONDITIONALS_NEGATION at scanner.go:130:43
+      KILLED CONDITIONALS_NEGATION at scanner.go:133:39
+      KILLED CONDITIONALS_NEGATION at scanner.go:136:41
+      KILLED CONDITIONALS_NEGATION at scanner.go:145:18
       KILLED CONDITIONALS_NEGATION at scanner_dispatch.go:14:19
        LIVED CONDITIONALS_BOUNDARY at scanner_dispatch.go:17:27
       KILLED CONDITIONALS_NEGATION at scanner_dispatch.go:17:27
       KILLED INCREMENT_DECREMENT at scanner_dispatch.go:17:36
-      KILLED CONDITIONALS_NEGATION at scanner_dispatch.go:26:26
       KILLED CONDITIONALS_NEGATION at scanner_dispatch.go:39:22
+      KILLED CONDITIONALS_NEGATION at scanner_dispatch.go:26:26
        LIVED INVERT_NEGATIVES at scanner_dispatch.go:48:37
        LIVED ARITHMETIC_BASE at scanner_dispatch.go:48:37
       KILLED CONDITIONALS_NEGATION at scanner_dispatch.go:51:27
@@ -1810,8 +1811,8 @@ done in 1.618084709s
       KILLED CONDITIONALS_NEGATION at slog_handler.go:34:13
       KILLED CONDITIONALS_NEGATION at slog_handler.go:56:9
       KILLED CONDITIONALS_NEGATION at slog_handler.go:64:21
-      KILLED CONDITIONALS_NEGATION at slog_handler.go:71:10
       KILLED CONDITIONALS_NEGATION at slog_handler.go:75:21
+      KILLED CONDITIONALS_NEGATION at slog_handler.go:71:10
       KILLED CONDITIONALS_NEGATION at slog_handler.go:96:10
       KILLED CONDITIONALS_NEGATION at slog_handler.go:118:10
        LIVED CONDITIONALS_BOUNDARY at slog_handler.go:131:11
@@ -1826,8 +1827,8 @@ done in 1.618084709s
       KILLED CONDITIONALS_NEGATION at slog_handler.go:175:11
       KILLED CONDITIONALS_NEGATION at slog_handler.go:173:19
       KILLED CONDITIONALS_NEGATION at slog_handler.go:178:49
-      KILLED CONDITIONALS_NEGATION at slog_handler.go:200:10
       KILLED CONDITIONALS_NEGATION at slog_handler.go:182:37
+      KILLED CONDITIONALS_NEGATION at slog_handler.go:200:10
        LIVED ARITHMETIC_BASE at stream.go:17:30
       KILLED INCREMENT_DECREMENT at stream.go:20:10
       KILLED ARITHMETIC_BASE at stream.go:17:42
@@ -1835,8 +1836,8 @@ done in 1.618084709s
       KILLED CONDITIONALS_NEGATION at stream.go:23:20
    TIMED OUT INCREMENT_DECREMENT at slog_handler.go:137:59
 
-Mutation testing completed in 8 minutes 35 seconds
-Killed: 1515, Lived: 157, Not covered: 124
+Mutation testing completed in 8 minutes 19 seconds
+Killed: 1517, Lived: 156, Not covered: 124
 Timed out: 37, Not viable: 0, Skipped: 0
-Test efficacy: 90.61%
+Test efficacy: 90.68%
 Mutator coverage: 93.10%

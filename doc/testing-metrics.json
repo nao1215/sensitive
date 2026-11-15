@@ -1,60 +1,60 @@
 {
   "date": "2026-11-15",
-  "commit": "3a28f60c650c7e1cb7d29d0dc9987804965db6da",
-  "covered_statements": 2449,
-  "total_statements": 2529,
+  "commit": "7d54404faaecbc271d95f8ad6751fc063e64b65a",
+  "covered_statements": 2453,
+  "total_statements": 2533,
   "mutation": {
-    "killed": 1515,
-    "lived": 157,
+    "killed": 1517,
+    "lived": 156,
     "uncovered": 124,
     "timed_out": 37,
     "not_viable": 0,
     "skipped": 0
   },
-  "efficacy": 90.61,
+  "efficacy": 90.68,
   "mutation_timeout_coefficient": 10,
   "mutation_workers": 4,
   "mutator_coverage": 93.1,
   "fuzz": [
     {
       "target": "FuzzScanner",
-      "executions": 241685,
+      "executions": 193988,
       "seconds_requested": 10
     },
     {
       "target": "FuzzScanLines",
-      "executions": 94219,
+      "executions": 155656,
       "seconds_requested": 10
     },
     {
       "target": "FuzzMask",
-      "executions": 604217,
+      "executions": 534192,
       "seconds_requested": 10
     },
     {
       "target": "FuzzInput",
-      "executions": 608398,
+      "executions": 418575,
       "seconds_requested": 10
     },
     {
       "target": "FuzzCanary",
-      "executions": 12102,
+      "executions": 63239,
       "seconds_requested": 10
     },
     {
       "target": "FuzzJSONStream",
-      "executions": 40348,
+      "executions": 164044,
       "seconds_requested": 10
     },
     {
       "target": "FuzzOutputJSON",
-      "executions": 1096603,
+      "executions": 1419537,
       "seconds_requested": 10
     }
   ],
   "source_sha256": {
-    "coverage": "226a33fdde9969b2e78eb9bfafa2646590e468902c41471e89ec6433d72b705a",
-    "mutation": "0bbd48e2b9836eb2d2a67248c3506699f1b387bf723fcebf2a40d35745727363",
-    "fuzz": "e61abe9144a2276b727f4cbe9ca00cca85fa7590c1bcd6b1e4e6615884ade29e"
+    "coverage": "4cb54150a8f6b5b9f30291172c59126b11e011a590adf58141d05c0fafd5ba9b",
+    "mutation": "0746206fe89b06af8b8fd08b93e62e76ff6bbea1c1ad469dc2c4dc074ead0000",
+    "fuzz": "f343290d994782bcb91eae945ad8899d9b55435e7544dd86afbb8ad9aa7a5a90"
   }
 }

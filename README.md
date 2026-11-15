@@ -188,7 +188,7 @@ This chart shows the held-out synthetic set at the default minimum confidence of
 | Real output tests | Leaks after encoding or buffering | [Loggers](tests/compatibility_integration_test.go), [HTTP](tests/http_integration_test.go) |
 
 <!-- testing-metrics:start -->
-Coverage 96.8% · mutation score 90.61% · 7 fuzz targets, 2697572 executions.
+Coverage 96.8% · mutation score 90.68% · 7 fuzz targets, 2949231 executions.
 <!-- testing-metrics:end -->
 
 [Commands, measurement scope and conditions](doc/testing.md).
@@ -198,7 +198,7 @@ Coverage 96.8% · mutation score 90.61% · 7 fuzz targets, 2697572 executions.
 <!-- benchmarks:start -->
 ![Scanner throughput and slog time](doc/images/benchmarks.svg)
 
-All detectors scan sensitive text at 5.48 MB/s; masking a clean slog event takes 1.24 µs, 1.9× the plain handler.
+All detectors scan sensitive text at 9.89 MB/s; masking a clean slog event takes 2.26 µs, 2.7× the plain handler.
 <!-- benchmarks:end -->
 
 [Machine, method, profiles and full results](doc/benchmarks.md).
