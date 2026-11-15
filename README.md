@@ -8,10 +8,8 @@ embargo detects and masks personal data, payment data and secrets in text, logs 
 [![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/embargo.svg)](https://pkg.go.dev/github.com/nao1215/embargo)
 [![MultiPlatformUnitTest](https://github.com/nao1215/embargo/actions/workflows/unit_test.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/unit_test.yml)
 [![reviewdog](https://github.com/nao1215/embargo/actions/workflows/reviewdog.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/reviewdog.yml)
-[![govulncheck](https://github.com/nao1215/embargo/actions/workflows/govulncheck.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/govulncheck.yml)
-[![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/embargo/coverage.svg)](https://github.com/nao1215/embargo/actions/workflows/coverage.yml)
-[![OpenSSF Scorecard](https://github.com/nao1215/embargo/actions/workflows/scorecard.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/scorecard.yml)
-[![License](https://img.shields.io/github/license/nao1215/embargo)](LICENSE)
+![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/embargo/coverage.svg)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nao1215/embargo/badge)](https://scorecard.dev/viewer/?uri=github.com/nao1215/embargo)
 
 <img src="doc/images/logo-small.png" alt="embargo" width="320">
 
