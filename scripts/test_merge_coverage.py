@@ -15,6 +15,12 @@ class MergeCoverageTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 merge([a, b])
 
+    def test_package_scope_excludes_nested_modules_not_internal_code(self):
+        with tempfile.TemporaryDirectory() as directory:
+            profile = Path(directory)/'coverage.out'
+            profile.write_text('mode: set\nexample/lib/scanner.go:1.1,2.1 2 1\nexample/lib/internal/parser.go:1.1,2.1 2 0\nexample/lib/tests/cmd/tool.go:1.1,2.1 100 0\n')
+            self.assertEqual(merge([profile], packages={'example/lib','example/lib/internal'}), 'mode: set\nexample/lib/internal/parser.go:1.1,2.1 2 0\nexample/lib/scanner.go:1.1,2.1 2 1\n')
+
 
 if __name__ == "__main__":
     unittest.main()

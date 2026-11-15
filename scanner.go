@@ -9,7 +9,7 @@ import (
 	"github.com/nao1215/embargo/internal/detect"
 )
 
-// Scanner holds immutable scan policy. Its zero value selects all built-in detectors.
+// Scanner holds immutable scan policy. Its zero value uses the same selection as NewScanner.
 // Concurrent use requires custom detectors to support concurrent Scan calls.
 type Scanner struct {
 	sensitiveKeys map[string]struct{}
@@ -21,6 +21,7 @@ type Scanner struct {
 	minConfidence float64
 	unconditional uint32
 	initialized   bool
+	allKinds      bool
 }
 
 // hintEntry caches a detector's hint in pre-lowered form to avoid
@@ -33,9 +34,12 @@ type hintEntry struct {
 	needFold bool
 }
 
-// NewScanner selects all built-ins by default, including IP addresses and context-based
-// detectors. The default minimum confidence is 0, including ambiguous candidates.
-// Use WithKinds to narrow selection. Options apply in order; nil options are ignored.
+// NewScanner starts with every built-in except KindHighEntropy; WithAll opts into that heuristic.
+// Minimum confidence defaults to 0, so ambiguous numeric and contextual candidates remain.
+// Choose WithKinds for faster scans and fewer false positives from irrelevant kinds.
+// Published 1/3/8-kind medians were 0.097/14.70/17.40 µs clean and 0.038/0.598/2.791 ms dirty;
+// WithAll took 60.27 µs and 6.487 ms on those inputs (doc/benchmarks.md).
+// Options apply in order; nil options are ignored.
 func NewScanner(opts ...ScannerOption) *Scanner {
 	s := &Scanner{initialized: true}
 	for _, opt := range opts {
@@ -44,7 +48,7 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 		}
 	}
 	for _, d := range builtins() {
-		if s.kinds == nil || s.kinds[Kind(d.Name())] {
+		if (s.kinds == nil && (s.allKinds || Kind(d.Name()) != KindHighEntropy)) || s.kinds[Kind(d.Name())] {
 			if credential, ok := d.(*detect.Credential); ok && s.sensitiveKeys != nil {
 				credential.MatchKey = s.sensitiveKey
 			}

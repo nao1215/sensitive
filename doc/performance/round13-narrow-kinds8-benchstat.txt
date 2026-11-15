@@ -1,0 +1,31 @@
+goos: linux
+goarch: amd64
+pkg: github.com/nao1215/embargo
+cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
+                │ /home/nao/.cache/embargo-evidence13/narrow-all.txt │ /home/nao/.cache/embargo-evidence13/narrow-kinds8.txt │
+                │                       sec/op                       │            sec/op              vs base                │
+Narrowing/clean                                        60.27µ ± 101%                    17.40µ ± 49%  -71.13% (p=0.000 n=10)
+Narrowing/dirty                                        6.487m ±  38%                    2.791m ± 46%  -56.98% (p=0.002 n=10)
+geomean                                                625.3µ                           220.4µ        -64.76%
+
+                │ /home/nao/.cache/embargo-evidence13/narrow-all.txt │ /home/nao/.cache/embargo-evidence13/narrow-kinds8.txt │
+                │                        B/s                         │             B/s               vs base                 │
+Narrowing/clean                                        44.11Mi ± 73%                 150.84Mi ± 96%  +241.98% (p=0.000 n=10)
+Narrowing/dirty                                        5.984Mi ± 56%                 13.514Mi ± 84%  +125.82% (p=0.002 n=10)
+geomean                                                16.25Mi                        45.15Mi        +177.89%
+
+                │ /home/nao/.cache/embargo-evidence13/narrow-all.txt │ /home/nao/.cache/embargo-evidence13/narrow-kinds8.txt │
+                │                        B/op                        │            B/op              vs base                  │
+Narrowing/clean                                         0.000 ± 0%                      0.000 ± 0%        ~ (p=1.000 n=10) ¹
+Narrowing/dirty                                      1159.3Ki ± 0%                    345.8Ki ± 0%  -70.17% (p=0.000 n=10)
+geomean                                                            ²                                -45.38%                ²
+¹ all samples are equal
+² summaries must be >0 to compute geomean
+
+                │ /home/nao/.cache/embargo-evidence13/narrow-all.txt │ /home/nao/.cache/embargo-evidence13/narrow-kinds8.txt │
+                │                     allocs/op                      │          allocs/op           vs base                  │
+Narrowing/clean                                         0.000 ± 0%                      0.000 ± 0%        ~ (p=1.000 n=10) ¹
+Narrowing/dirty                                       14.113k ± 0%                     7.566k ± 0%  -46.39% (p=0.000 n=10)
+geomean                                                            ²                                -26.78%                ²
+¹ all samples are equal
+² summaries must be >0 to compute geomean

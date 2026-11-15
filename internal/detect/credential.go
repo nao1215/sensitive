@@ -113,7 +113,7 @@ func (d *Credential) Scan(data []byte) []Finding {
 			continue
 		}
 		start, end := assignmentValue(data, i+1, NormalizeCredentialKey(string(key)))
-		if end > start && string(data[start:end]) != "[REDACTED]" {
+		if end > start && string(data[start:end]) != "[REDACTED]" && (NormalizeCredentialKey(string(key)) != credentialTokenKey || !objectReference(data, start, end)) {
 			out = append(out, credentialFinding(data, start, end))
 			i = end - 1
 		}
@@ -221,7 +221,12 @@ func credentialFinding(data []byte, start, end int) Finding {
 	return Finding{DetectorName: "credential", Start: start, End: end, Confidence: 0.95, RawValue: string(data[start:end])}
 }
 
+//nolint:dupl // Keep the pre-optimization parser as an independent differential oracle.
 func urlPasswords(data []byte) []Finding {
+	// Both URI userinfo and the Go MySQL DSN require an at-sign.
+	if !bytes.ContainsRune(data, '@') {
+		return nil
+	}
 	var out []Finding
 	for start := 0; start < len(data); {
 		if urlDelimiter(data[start]) {
@@ -258,7 +263,14 @@ func urlPasswords(data []byte) []Finding {
 	}
 	return out
 }
-func urlDelimiter(b byte) bool { return strings.ContainsRune(" \t\r\n\"'<>", rune(b)) }
+
+func urlDelimiter(b byte) bool {
+	switch b {
+	case ' ', '\t', '\r', '\n', '"', '\'', '<', '>':
+		return true
+	}
+	return false
+}
 
 // awsSecretPair recognizes a 40-byte base64 secret within 128 bytes of an AWS
 // access key ID. It does not infer ownership or validate credentials remotely.

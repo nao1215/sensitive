@@ -75,7 +75,7 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			continue
 		}
 
-		if isValidMyNumber(digits) {
+		if isValidMyNumber(digits) && !numericLogFragment(data, start, end) {
 			origStart, origEnd := mapOriginalRange(posMap, start, end)
 
 			findings = append(findings, Finding{

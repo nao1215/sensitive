@@ -19,11 +19,11 @@ func referenceScan(s *Scanner, data []byte) []Finding {
 			continue
 		}
 		input := data
-		if d.Name() == "credential" {
+		if Kind(d.Name()) == KindCredential {
 			input = original
 		}
 		for _, f := range d.Scan(input) {
-			if positions != nil && d.Name() != "credential" {
+			if positions != nil && Kind(d.Name()) != KindCredential {
 				f.Start, f.End = positions[f.Start], positions[f.End]
 			}
 			if f.Confidence >= s.minConfidence {

@@ -16,7 +16,7 @@ import (
 
 func TestDomainValueContract(t *testing.T) {
 	t.Parallel()
-	embargotest.CheckValue(t, func(s string) any { return domain.Password(s) })
+	embargotest.CheckValue(t, func(s string) any { return domain.NewPassword(s) })
 	for _, jsonOutput := range []bool{false, true} {
 		var out bytes.Buffer
 		var next slog.Handler = slog.NewTextHandler(&out, nil)
@@ -24,9 +24,9 @@ func TestDomainValueContract(t *testing.T) {
 			next = slog.NewJSONHandler(&out, nil)
 		}
 		logger := slog.New(embargo.NewSlogHandler(next, embargo.NewScanner(embargo.WithKinds())))
-		logger.Info("domain", slog.Any("value", domain.Password("unrecognizable-opaque-value")), slog.Any("nested", struct {
+		logger.Info("domain", slog.Any("value", domain.NewPassword("unrecognizable-opaque-value")), slog.Any("nested", struct {
 			Value domain.Password `json:"value"`
-		}{Value: "unrecognizable-opaque-value"}))
+		}{Value: domain.NewPassword("unrecognizable-opaque-value")}))
 		if bytes.Contains(out.Bytes(), []byte("unrecognizable")) || !bytes.Contains(out.Bytes(), []byte("[REDACTED]")) {
 			t.Fatal("domain output methods were bypassed")
 		}

@@ -9,32 +9,35 @@ import (
 	"log/slog"
 )
 
-// Password is an application-owned credential with explicit output behavior.
-type Password string
+// Password keeps credential storage behind an unexported pointer.
+type Password struct{ value *string }
 
-// String protects ordinary string formatting and templates.
+// NewPassword keeps fmt from expanding the raw string inside an unexported field.
+func NewPassword(value string) Password { return Password{value: &value} }
+
+// String supplies the display marker to fmt and templates.
 func (Password) String() string { return "[REDACTED]" }
 
-// GoString protects Go-syntax formatting.
+// GoString also hides the value in Go-syntax output.
 func (Password) GoString() string { return "[REDACTED]" }
 
-// Format protects every fmt verb, including quotes and hexadecimal.
+// Format ignores the requested representation and writes the marker.
 func (Password) Format(state fmt.State, _ rune) {
 	if _, err := io.WriteString(state, "[REDACTED]"); err != nil {
 		return
 	}
 }
 
-// LogValue protects a direct slog attribute.
+// LogValue gives slog a plain redacted string.
 func (Password) LogValue() slog.Value { return slog.StringValue("[REDACTED]") }
 
-// MarshalJSON protects JSON leaves, including nested structured logger values.
+// MarshalJSON stores a JSON marker string; this encoding cannot restore the password.
 func (Password) MarshalJSON() ([]byte, error) { return json.Marshal("[REDACTED]") }
 
-// MarshalText protects text encoding; JSON bypasses it for string-typed map keys.
+// MarshalText writes the marker in text encoders and JSON map keys.
 func (Password) MarshalText() ([]byte, error) { return []byte("[REDACTED]"), nil }
 
-// MarshalXML protects XML element content.
+// MarshalXML emits a marker inside the requested XML element.
 func (Password) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return e.EncodeElement("[REDACTED]", start)
 }

@@ -1,9 +1,11 @@
 """Merge Go set/count/atomic coverage by source block, without double counting statements."""
+import argparse
+import subprocess
 import sys
 from pathlib import Path
 
 
-def merge(paths):
+def merge(paths, packages=None):
     mode = None
     blocks = {}
     for path in paths:
@@ -18,6 +20,8 @@ def merge(paths):
         mode = current
         for line in lines[1:]:
             location, statements, count = line.split()
+            if packages is not None and location.split(":",1)[0].rsplit("/",1)[0] not in packages:
+                continue
             statements, count = int(statements), int(count)
             old_statements, old_count = blocks.get(location, (statements, 0))
             if statements != old_statements:
@@ -29,4 +33,9 @@ def merge(paths):
 
 
 if __name__ == "__main__":
-    sys.stdout.write(merge(sys.argv[1:]))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root-module", action="store_true", help="retain packages from go list ./... in the current root module")
+    parser.add_argument("profiles", nargs="+")
+    args = parser.parse_args()
+    packages = set(subprocess.check_output(["go", "list", "-f", "{{.ImportPath}}", "./..."], text=True).splitlines()) if args.root_module else None
+    sys.stdout.write(merge(args.profiles, packages=packages))

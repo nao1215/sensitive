@@ -4,7 +4,7 @@
 //
 // # Scanning
 //
-// NewScanner and a zero-value Scanner enable every built-in detector.
+// NewScanner and a zero-value Scanner omit unlabelled entropy tokens; [WithAll] includes them.
 // [WithKinds] narrows that selection; [WithDetector] adds an application pattern.
 // Findings contain original byte positions and retain overlaps. [MaskFunc]
 // supports custom replacements, such as keeping a card's last four digits.

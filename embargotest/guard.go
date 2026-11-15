@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"slices"
@@ -29,8 +30,8 @@ import (
 // Independently redirected subprocess output and output before TestMain are
 // outside this boundary. Fixtures must use the configured public fake canary.
 // Explicit -test.v=false suppresses passing t.Log output; test2json framing is
-// preserved. The default scanner includes low-confidence random-token findings;
-// use WithScanner and WithMinConfidence or allowances for intentional public IDs.
+// preserved. The default scanner omits unlabelled entropy tokens; supply a scanner
+// with WithAll to include them. Allowances can exempt intentional public values.
 // The internal supervisor environment variable is reserved and must not be set.
 func Guard(m *testing.M, opts ...Option) int {
 	const childEnv = "EMBARGO_PACKAGE_GUARD"
@@ -53,6 +54,12 @@ func Guard(m *testing.M, opts ...Option) int {
 	// #nosec G204 G702 -- Re-exec this test binary with its own arguments, never a shell.
 	cmd := exec.CommandContext(ctx, executable, args...)
 	cmd.Env = append(os.Environ(), childEnv+"=child")
+	return guardCommand(ctx, cmd, policy, os.Stdout, os.Stderr)
+}
+
+// guardCommand owns capture and replay; tests exercise it with real child pipes
+// while keeping the test runner's process globals unchanged.
+func guardCommand(ctx context.Context, cmd *exec.Cmd, policy *Recorder, stdout, stderr io.Writer) int {
 	capture := &guardCapture{maxBytes: policy.maxBytes}
 	cmd.Stdout = &guardStream{capture: capture, index: 0}
 	cmd.Stderr = &guardStream{capture: capture, index: 1}
@@ -76,11 +83,11 @@ func Guard(m *testing.M, opts ...Option) int {
 			code = 1
 			continue
 		}
-		writer := os.Stdout
+		writer := stdout
 		if i == 1 {
-			writer = os.Stderr
+			writer = stderr
 		}
-		if _, err = writer.Write(data); err != nil {
+		if _, err := writer.Write(data); err != nil {
 			code = 1
 		}
 	}

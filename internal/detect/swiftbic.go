@@ -47,7 +47,7 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 		}
 
 		end, branchCode, ok := determineSWIFTLength(data, i)
-		if !ok {
+		if !ok || (entropyLocation(data, i, end) && !swiftSlashList(data, i, end)) {
 			continue
 		}
 
@@ -88,6 +88,36 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 	}
 
 	return findings
+}
+
+// A contextual slash-separated list can contain several bank identifiers.
+// Requiring an adjacent complete code keeps ordinary source paths excluded.
+func swiftSlashList(data []byte, start, end int) bool {
+	if !hasSWIFTContext(data, start, end) {
+		return false
+	}
+	codeEnd := func(at int) int {
+		const shortCodeLength = 8
+		if len(data)-at < shortCodeLength || !validateSWIFTStructure(data, at) {
+			return -1
+		}
+		last, _, valid := determineSWIFTLength(data, at)
+		if !valid {
+			return -1
+		}
+		return last
+	}
+	if end < len(data) && data[end] == '/' && codeEnd(end+1) > 0 {
+		return true
+	}
+	if start == 0 || data[start-1] != '/' {
+		return false
+	}
+	previous := start - 1
+	for previous > 0 && isAlphaNum(data[previous-1]) {
+		previous--
+	}
+	return codeEnd(previous) == start-1
 }
 
 // validateSWIFTStructure checks the first 8 characters at data[i] for valid

@@ -65,10 +65,10 @@ func (i Input[T]) Secret() Secret[T] { return i.secret }
 func (i Input[T]) String() string { return i.secret.String() }
 
 // GoString returns the fixed redaction marker.
-func (i Input[T]) GoString() string { return i.secret.GoString() }
+func (i Input[T]) GoString() string { return redactionMarker }
 
 // Format writes the marker without examining the input.
-func (i Input[T]) Format(state fmt.State, verb rune) { i.secret.Format(state, verb) }
+func (i Input[T]) Format(state fmt.State, _ rune) { i.secret.Format(state, 's') }
 
 // LogValue returns the marker as a slog string.
 func (i Input[T]) LogValue() slog.Value { return i.secret.LogValue() }

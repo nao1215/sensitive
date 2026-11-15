@@ -18,11 +18,36 @@ DOC = ROOT / "doc"
 COMMAND = ["go", "-C", "tests", "test", "-run", "^$", "-bench", "^Benchmark(Comparison|StructuredPath)", "-benchmem", "-benchtime=200ms", "-count=10", "."]
 
 
-def source_hash():
+def full_source_hash():
     paths = sorted(list(ROOT.glob("*.go")) + list((ROOT / "internal").rglob("*.go")) + list((ROOT / "tests").glob("comparison*_test.go")) + [ROOT / "go.mod", ROOT / "tests/go.mod", ROOT / "tests/go.sum"])
     digest = hashlib.sha256()
     for path in paths:
         digest.update(path.relative_to(ROOT).as_posix().encode() + b"\0" + path.read_text(encoding="utf-8").encode())
+    return digest.hexdigest()
+
+
+# Modules reached by go list -deps on the four compared libraries. A version
+# change here invalidates timings; unrelated SDK/test dependencies do not.
+MEASURED_MODULES = (
+    "github.com/bytedance/godlp", "github.com/m-mizutani/masq",
+    "github.com/samber/lo", "github.com/samber/slog-common",
+    "github.com/samber/slog-formatter", "github.com/samber/slog-multi",
+    "github.com/showa-93/go-mask", "golang.org/x/text", "gopkg.in/yaml.v2",
+)
+
+
+def source_hash():
+    paths = sorted([p for p in ROOT.glob("*.go") if not p.name.endswith("_test.go")]
+                   + [p for p in (ROOT / "internal").rglob("*.go") if not p.name.endswith("_test.go")]
+                   + list((ROOT / "tests").glob("comparison*_test.go")) + [ROOT / "go.mod"])
+    digest = hashlib.sha256()
+    for path in paths:
+        digest.update(path.relative_to(ROOT).as_posix().encode() + b"\0" + path.read_bytes())
+    for name in ("go.mod", "go.sum"):
+        for line in (ROOT / "tests" / name).read_text(encoding="utf-8").splitlines():
+            words = line.split()
+            if any(module in words for module in MEASURED_MODULES) or (words and words[0] in ("go", "toolchain")):
+                digest.update(name.encode() + b"\0" + " ".join(words).encode() + b"\n")
     return digest.hexdigest()
 
 
@@ -66,6 +91,8 @@ def measure():
         "go": subprocess.check_output(["go", "version"], env=env, text=True).strip(),
         "base_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "source_sha256": source_hash(),
+        "full_source_sha256": full_source_hash(),
+        "measured_modules": list(MEASURED_MODULES),
         "raw_sha256": hashlib.sha256(raw.encode()).hexdigest(),
         "benchstat_sha256": hashlib.sha256(stats.encode()).hexdigest(),
         "cpu": re.search(r"^cpu: (.+)$", raw, re.M)[1].strip(),

@@ -9,6 +9,7 @@ import (
 	htmltemplate "html/template"
 	"log/slog"
 	"slices"
+	"strings"
 	"testing"
 	texttemplate "text/template"
 )
@@ -18,14 +19,11 @@ const (
 	valueSlogJSON = "slog/json"
 )
 
-// CheckValue constructs a value with a public fake canary and checks its output
-// through fmt (%v, %+v, %#v, %s, %q, %x), JSON, XML, TextMarshaler, text/template,
-// html/template, both slog handlers and wrapped errors. It reports the exact
-// leaking path without printing the value. Missing TextMarshaler, serializer
-// errors and panics fail: an unsupported path is not evidence of safe output.
-// Diagnostic output containing %! or !ERROR: and slog groups deeper than 64
-// fail conservatively. Constructors must terminate. This verifies formatting, not Reveal or memory
-// secrecy. Use it for domain-owned password types, Secret and initialized Input.
+// CheckValue exercises a constructed canary value through fmt, JSON, XML, TextMarshaler, templates, slog and wrapped errors. Reports identify the leaking path without printing the value.
+//
+// Direct fmt checks use %v, %+v, %#v, %s, %q and %x; an unexported-field check uses the three v forms, where fmt bypasses output methods. Missing TextMarshaler, serializer errors and panics fail because an unsupported path provides no evidence of safe output.
+//
+// Diagnostic output containing %! or !ERROR: and slog groups deeper than 64 fail conservatively. Constructors must terminate. Use this for an application-owned password type, Secret or initialized Input; it checks formatting, not Reveal or memory secrecy.
 func CheckValue(tb testing.TB, construct func(canary string) any) (safe bool) {
 	tb.Helper()
 	safe = true
@@ -40,7 +38,7 @@ func CheckValue(tb testing.TB, construct func(canary string) any) (safe bool) {
 	value := construct(defaultCanary)
 	completed = true
 	needles := representations([]byte(defaultCanary))
-	for _, path := range []string{"fmt/%v", "fmt/%+v", "fmt/%#v", "fmt/%s", "fmt/%q", "fmt/%x", "json", "xml", "text", "text/template", "html/template", valueSlogText, valueSlogJSON, "error/%v", "error/%w"} {
+	for _, path := range []string{"fmt/%v", "fmt/%+v", "fmt/%#v", "fmt/%s", "fmt/%q", "fmt/%x", "fmt/unexported/%v", "fmt/unexported/%+v", "fmt/unexported/%#v", "json", "xml", "text", "text/template", "html/template", valueSlogText, valueSlogJSON, "error/%v", "error/%w"} {
 		data, ok := formatValue(path, value)
 		if !ok {
 			tb.Error("embargotest: unsupported or failed value path: " + path)
@@ -67,6 +65,10 @@ func formatValue(path string, value any) (data []byte, ok bool) {
 			return nil, false
 		}
 		value = resolved
+	}
+	if format, nested := strings.CutPrefix(path, "fmt/unexported/"); nested {
+		data = []byte(fmt.Sprintf(format, struct{ value any }{value: value}))
+		return data, !bytes.Contains(data, []byte("%!"))
 	}
 	var buf bytes.Buffer
 	var err error

@@ -35,4 +35,33 @@ These are equivalence arguments for the public Scanner outputs, not exclusions f
 
 Other survivors include defensive bounds already constrained by callers, cursor optimizations that need more adversarial sequencing, and internal details that the public Finding does not expose. Their raw locations remain visible; this review does not claim that every lived mutant is equivalent or that mutation testing proves detector accuracy.
 
+## Round 13 log-context boundaries
+
+The round 12 source and root tests at da95fde are unchanged at the round 13 baseline b8290bc; the completed [round 12 log](performance/round12-mutation.txt) is the baseline below. The [pre-review log](performance/round13-mutation-pre-review.txt) uses 54bd3c7, gremlins v0.6.0, four workers, GOMAXPROCS=4 and timeout coefficient 10. It precedes the review follow-ups. The default per-package mode can miss assertions in Scanner tests that call internal detectors from another package; nested-module sources also contribute uncovered mutations.
+
+| Snapshot | Killed | Lived | Uncovered | Timed out | Efficacy | Mutator coverage |
+|---|---:|---:|---:|---:|---:|---:|
+| Round 12 / baseline | 1676 | 185 | 316 | 36 | 90.06% | 85.48% |
+| Round 13 full, 54bd3c7 | 1794 | 287 | 220 | 42 | 86.21% | 90.44% |
+| Final production, a7dd142 | 1864 | 248 | 220 | 39 | 88.26% | 90.57% |
+
+At the pre-review snapshot, efficacy decreased by 3.85 percentage points while exercised mutations increased by 4.96 points. These are different mutation populations; neither the higher killed count nor the statement coverage improvement establishes stronger assertions everywhere. All three full runs had zero nonviable and zero skipped mutations, and timeouts remain separate.
+
+The [final full run](performance/round13-mutation.txt) repeats the same command on a7dd142 after the production review fixes. Its efficacy changed by -1.80 percentage points and mutator coverage by +5.09 points from the round 12 baseline; 39 timeouts are not counted as killed. Coverage checks, the focused mutation follow-up and fuzzing overlapped parts of this run; timing and timeout differences are not performance evidence. The later one-line trailing-context SWIFT assertion is included only in the focused follow-up below.
+
+A second run used `--integration --diff b8290bc4371aa4f2fb5674e1d3c120670219c3ab` to execute all root tests for mutations on changed lines. At ac3a9bb it killed 81 and left 22 alive, with 37 uncovered, zero timeouts and 2,203 skipped. Its efficacy was 78.64%. Adding punctuation, hostname, quoted-token, hexadecimal-length and A/Z boundary assertions killed 17 of those survivors: 98 killed, 5 lived, the same uncovered/skipped counts and 95.15% efficacy. These focused results do not replace the full result above. [Initial focused log](performance/round13-mutation-changes.txt) and [first boundary follow-up](performance/round13-mutation-boundaries.txt) retain every mutation.
+
+The remaining digit-predecessor mutations read inside the number instead of before the dot. An abbreviation such as `No.111111111118` distinguishes the two; the final tests include that case. Three other survivors have caller-specific equivalence arguments: starting the hostname loop at `end-2` visits the already-validated last two digits, hyphen and first letter before reaching the original search position; allowing `objectReference` start zero has no effect because a parsed key and delimiter always precede its argument; accepting split zero still fails the later requirement for an uppercase class-name letter. They remain counted as lived, and the arguments do not apply to arbitrary direct calls with invalid spans.
+
+The final focused follow-up, using the a7dd142 production code plus the trailing-context SWIFT assertion, killed 127 mutations and left four alive: 96.95% efficacy, 77.98% mutator coverage, 37 uncovered, zero timeouts, zero nonviable and 2,203 skipped. The extra SWIFT test places `swift` after a list starting at byte zero; it catches a loop-boundary mutation that otherwise indexes before the input. [Final focused log](performance/round13-mutation-final-changes.txt).
+
+| Remaining changed-line survivor | Review |
+|---|---|
+| `numericLogFragment`: `end+2` becomes `end-2` | The valid candidate ends in digits; the extra iterations visit only those digits, the already-checked hyphen and first hostname letter. The first later dot and the stopping delimiter are unchanged. |
+| `objectReference`: `start > 0` becomes `start >= 0` | The sole caller supplies a value after a parsed key and delimiter, so start cannot be zero. |
+| `objectReference`: `split <= 0` becomes `split < 0` | An empty class name still fails the uppercase-letter requirement. |
+| `swiftSlashList`: `codeEnd(...) > 0` becomes `>= 0` | codeEnd yields -1 or the end of a valid code of at least eight bytes; it cannot yield zero. |
+
+The 37 uncovered mutations comprise 34 in the cached-log command and three in ABA log-context operations. The combined root statement profile exercises those ABA operations through Scanner tests, but gremlins still marks them uncovered in this run; they are retained in the denominator. These arguments cover the four listed survivors only, not every survivor in the full mutation log.
+
 [Support maintenance](https://github.com/sponsors/nao1215).

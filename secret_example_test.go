@@ -108,7 +108,7 @@ func ExampleSecret_GoString() {
 
 	fmt.Println(value.GoString())
 
-	// Output: [REDACTED]
+	// Output: embargo.Secret[string]([REDACTED])
 }
 
 func ExampleSecret_Format() {
@@ -116,7 +116,7 @@ func ExampleSecret_Format() {
 
 	fmt.Printf("%+#v\n", value)
 
-	// Output: [REDACTED]
+	// Output: embargo.Secret[string]([REDACTED])
 }
 
 func ExampleSecret_LogValue() {

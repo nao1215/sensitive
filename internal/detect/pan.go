@@ -123,7 +123,7 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		digitLen := len(digits)
 		leadingBoundary := start == 0 || (!isAlphaNum(data[start-1]) && data[start-1] != '_') || encodedSeparatorBefore(orig, originalPosition(posMap, start))
 		trailingBoundary := end == len(data) || (!isAlphaNum(data[end]) && data[end] != '_')
-		if f, ok := d.evaluateCandidate(orig, posMap, digits, digitLen, start, end); ok && leadingBoundary && trailingBoundary {
+		if f, ok := d.evaluateCandidate(orig, posMap, digits, digitLen, start, end); ok && leadingBoundary && trailingBoundary && !numericLogFragment(data, start, end) {
 			findings = append(findings, f)
 		}
 

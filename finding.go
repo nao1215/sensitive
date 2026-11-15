@@ -18,7 +18,7 @@ type Finding struct {
 const (
 	// KindServiceToken selects documented service prefixes and Slack webhook secrets.
 	KindServiceToken Kind = "service_token"
-	// KindHighEntropy selects unlabeled random-looking tokens at confidence 0.3.
+	// KindHighEntropy enables the opt-in heuristic for unlabelled random-looking tokens, scored at 0.3.
 	KindHighEntropy Kind = "high_entropy"
 	// KindCredential selects secret assignments, Authorization values and URL/DSN passwords.
 	KindCredential Kind = "credential"
