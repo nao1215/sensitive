@@ -125,6 +125,26 @@ func main() {
 
 In application tests pass `t` to `embargotest.New`; this standalone example uses a test benchmark to obtain a testing handle.
 
+## Tested outputs
+
+<!-- tested-outputs:start -->
+| Output | How the test writes the secret | Checked result |
+|---|---|---|
+| fmt | `fmt.Fprintf(w, "%+#v", secret)` | `[REDACTED]` written, canary absent |
+| slog TextHandler | `With("token", secret)` and a grouped attribute | `[REDACTED]` written, canary absent |
+| slog JSONHandler | `With("token", secret)` and a grouped attribute | `[REDACTED]` written, canary absent |
+| encoding/json | `json.NewEncoder(w).Encode(secret)` | `[REDACTED]` written, canary absent |
+| encoding/xml | a struct field with an `xml` tag | `[REDACTED]` written, canary absent |
+| text/template | `{{.}}` with the secret as data | `[REDACTED]` written, canary absent |
+| zap JSON core | `zap.Any("token", secret)` | `[REDACTED]` written, canary absent |
+| zerolog JSON | `Interface("token", secret)` | `[REDACTED]` written, canary absent |
+| logrus JSON | `WithField("token", secret)` | `[REDACTED]` written, canary absent |
+| OTel SDK | an exported span event and raw RecordError | expected attributes exported; raw canary and missing flush fail |
+| Sentry | Secret in scope context, CaptureException and Recover | redacted event sent; raw canary and missing flush fail |
+| HTTP | a real handler writing status, headers, body and trailers | expected response and marker; canary absent |
+| Child panic | panic(secret) in a real test subprocess | panic marker and stack on stderr; canary absent |
+<!-- tested-outputs:end -->
+
 ## Testing
 
 The library has zero dependencies; test-only tools live in the separate [tests/](tests/) module (Go 1.26.11+). Run `go test ./...` in both directories; this executes the Go examples and checks README snippets against them. See [testing](doc/testing.md) for lint, vet, fuzzing, golden updates, coverage, and mutation checks.

@@ -40,7 +40,7 @@ type PANDetail struct {
 
 // PAN detects payment card numbers, including checksum failures at reduced confidence.
 //
-//  1. Extract 13–19 digits, allowing spaces and hyphens, and require a known [CardBrand] BIN prefix.
+//  1. Extract 13–19 digits at identifier boundaries, allowing spaces and hyphens, and require a known [CardBrand] BIN prefix.
 //  2. Score the length as 0.3 and the known prefix as another 0.3; unknown brands are rejected.
 //  3. Add 0.4 for a valid Luhn checksum and the brand's expected length. A Luhn-valid candidate with the wrong brand length scores 0.4 and is rejected; a failed checksum remains at 0.6.
 type PAN struct{}
@@ -118,7 +118,9 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 
 		// Check digit count: valid PANs are 13-19 digits.
 		digitLen := len(digits)
-		if f, ok := d.evaluateCandidate(orig, posMap, digits, digitLen, start, end); ok {
+		leadingBoundary := start == 0 || (!isAlphaNum(data[start-1]) && data[start-1] != '_') || encodedSeparatorBefore(orig, posMap[start])
+		trailingBoundary := end == len(data) || (!isAlphaNum(data[end]) && data[end] != '_')
+		if f, ok := d.evaluateCandidate(orig, posMap, digits, digitLen, start, end); ok && leadingBoundary && trailingBoundary {
 			findings = append(findings, f)
 		}
 
