@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.2] - 2026-11-15
+
+### Deprecated
+
+- The module is deprecated: development continues as github.com/nao1215/embargo, and this is the last release under github.com/nao1215/sensitive. The `go.mod` deprecation comment makes `go get` and `go list -m -u` point to the new path ([PR #53](https://github.com/nao1215/sensitive/pull/53)).
 
 ### Changed
 
@@ -149,7 +153,7 @@ Initial release of the `sensitive` library.
 - Full-width digit normalization: Transparent handling of Japanese full-width digits (U+FF10--U+FF19) for PAN, phone, and My Number detection.
 - Deterministic output: Findings are sorted by confidence (descending), then by byte offset and detector name for fully reproducible results.
 
-[Unreleased]: https://github.com/nao1215/sensitive/compare/v0.2.1...HEAD
+[0.2.2]: https://github.com/nao1215/sensitive/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/nao1215/sensitive/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/nao1215/sensitive/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/nao1215/sensitive/compare/v0.1.1...v0.1.2
