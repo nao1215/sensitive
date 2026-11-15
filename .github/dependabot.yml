@@ -33,3 +33,30 @@ updates:
         applies-to: version-updates
         patterns:
           - "*"
+  - package-ecosystem: gomod
+    directory: "/adapters/zap"
+    schedule:
+      interval: monthly
+    groups:
+      zap:
+        applies-to: version-updates
+        patterns:
+          - "*"
+  - package-ecosystem: gomod
+    directory: "/adapters/zerolog"
+    schedule:
+      interval: monthly
+    groups:
+      zerolog:
+        applies-to: version-updates
+        patterns:
+          - "*"
+  - package-ecosystem: gomod
+    directory: "/adapters/logrus"
+    schedule:
+      interval: monthly
+    groups:
+      logrus:
+        applies-to: version-updates
+        patterns:
+          - "*"

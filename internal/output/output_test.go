@@ -55,7 +55,7 @@ func TestWriterBuffersAndRejectsIncompleteOutput(t *testing.T) {
 
 func TestJSONRejectsMalformedOversizedAndDeepInput(t *testing.T) {
 	t.Parallel()
-	for _, input := range []string{`{"x":`, `[]`, `{"x":1} {"y":2}`, "{\"x\":\"" + strings.Repeat("a", 1<<20) + "\"}", `{"x":` + strings.Repeat("[", 65) + "0" + strings.Repeat("]", 65) + "}"} {
+	for _, input := range []string{`{"x":`, `[]`, strings.Repeat(" ", 1<<20) + "{}", `{"x":1} {"y":2}`, "{\"x\":\"" + strings.Repeat("a", 1<<20) + "\"}", `{"x":` + strings.Repeat("[", 65) + "0" + strings.Repeat("]", 65) + "}"} {
 		if got, err := JSON([]byte(input), embargo.NewScanner()); err == nil || got != nil {
 			t.Fatal("invalid event escaped")
 		}
@@ -74,5 +74,26 @@ func TestWriterPreservesSinkErrors(t *testing.T) {
 	}
 	if err := w.Flush(); !errors.Is(err, io.ErrClosedPipe) {
 		t.Fatal("failure not sticky")
+	}
+}
+
+func TestJSONUsesFieldNamesForContextDetectors(t *testing.T) {
+	t.Parallel()
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindCVV, embargo.KindCardExpiry, embargo.KindBankAccount))
+	got, err := JSON([]byte(`{"cvv":123,"expiry":"12/28","bank account":"12345678","nested":{"cvv":["456",789]}}`), scanner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "{\"cvv\":\"[REDACTED]\",\"expiry\":\"[REDACTED]\",\"bank account\":\"[REDACTED]\",\"nested\":{\"cvv\":[\"[REDACTED]\",\"[REDACTED]\"]}}\n" {
+		t.Fatal("field context was lost")
+	}
+}
+
+func TestJSONOutputLimitIncludesTerminatingNewline(t *testing.T) {
+	t.Parallel()
+	// A custom formatter need not terminate its object; JSON adds that byte.
+	input := []byte(`{"x":"` + strings.Repeat("a", maxEventBytes-len(`{"x":""}`)) + `"}`)
+	if data, err := JSON(input, embargo.NewScanner(embargo.WithKinds())); err == nil || data != nil {
+		t.Fatal("output exceeded the complete event byte limit")
 	}
 }

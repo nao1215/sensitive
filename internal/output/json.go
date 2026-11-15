@@ -29,14 +29,17 @@ func JSON(data []byte, scanner *embargo.Scanner) (masked []byte, err error) {
 			err = failure()
 		}
 	}()
+	if len(data) > maxEventBytes {
+		return nil, failure()
+	}
 	data = bytes.TrimSpace(data)
-	if scanner == nil || len(data) > maxEventBytes || len(data) == 0 || data[0] != '{' || !json.Valid(data) {
+	if scanner == nil || len(data) == 0 || data[0] != '{' || !json.Valid(data) {
 		return nil, failure()
 	}
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.UseNumber()
-	masked, err = readValue(decoder, scanner, 0)
-	if err != nil || len(masked) > maxEventBytes {
+	masked, err = readValue(decoder, scanner, 0, "")
+	if err != nil || len(masked) >= maxEventBytes {
 		return nil, failure()
 	}
 	masked = append(masked, '\n')
@@ -44,7 +47,7 @@ func JSON(data []byte, scanner *embargo.Scanner) (masked []byte, err error) {
 	return masked, nil
 }
 
-func readValue(decoder *json.Decoder, scanner *embargo.Scanner, depth int) ([]byte, error) {
+func readValue(decoder *json.Decoder, scanner *embargo.Scanner, depth int, context string) ([]byte, error) {
 	if depth > maxDepth {
 		return nil, failure()
 	}
@@ -54,12 +57,12 @@ func readValue(decoder *json.Decoder, scanner *embargo.Scanner, depth int) ([]by
 	}
 	switch value := token.(type) {
 	case json.Delim:
-		return readContainer(decoder, scanner, depth, value)
+		return readContainer(decoder, scanner, depth, value, context)
 	case string:
-		return json.Marshal(embargo.Mask(value, scanner.ScanString(value)))
+		return json.Marshal(maskScalar(scanner, value, context))
 	case json.Number:
 		text := value.String()
-		masked := embargo.Mask(text, scanner.ScanString(text))
+		masked := maskScalar(scanner, text, context)
 		if masked != text {
 			return json.Marshal(masked)
 		}
@@ -73,7 +76,7 @@ func readValue(decoder *json.Decoder, scanner *embargo.Scanner, depth int) ([]by
 	}
 }
 
-func readContainer(decoder *json.Decoder, scanner *embargo.Scanner, depth int, open json.Delim) ([]byte, error) {
+func readContainer(decoder *json.Decoder, scanner *embargo.Scanner, depth int, open json.Delim, context string) ([]byte, error) {
 	result := []byte(open.String())
 	first := true
 	for decoder.More() {
@@ -81,15 +84,26 @@ func readContainer(decoder *json.Decoder, scanner *embargo.Scanner, depth int, o
 			result = append(result, ',')
 		}
 		first = false
+		fieldContext := context
 		if open == '{' {
-			key, err := readValue(decoder, scanner, depth+1)
+			token, err := decoder.Token()
 			if err != nil {
-				return nil, err
+				return nil, failure()
 			}
-			result = append(result, key...)
+			key, ok := token.(string)
+			if !ok {
+				return nil, failure()
+			}
+			fieldContext = key
+			//nolint:errchkjson // Keep the explicit error check required by strict errcheck.
+			maskedKey, err := json.Marshal(embargo.Mask(key, scanner.ScanString(key)))
+			if err != nil {
+				return nil, failure()
+			}
+			result = append(result, maskedKey...)
 			result = append(result, ':')
 		}
-		value, err := readValue(decoder, scanner, depth+1)
+		value, err := readValue(decoder, scanner, depth+1, fieldContext)
 		if err != nil {
 			return nil, err
 		}
@@ -107,4 +121,24 @@ func readContainer(decoder *json.Decoder, scanner *embargo.Scanner, depth int, o
 		return nil, failure()
 	}
 	return append(result, closeDelimiter.String()...), nil
+}
+
+// Include the field name so context-based detectors can recognize, for example,
+// {"cvv":123}. Translate findings back to value bytes before replacing them.
+func maskScalar(scanner *embargo.Scanner, value, context string) string {
+	prefix := ""
+	if context != "" {
+		prefix = context + ": "
+	}
+	findings := scanner.ScanString(prefix + value)
+	spans := make([]embargo.Finding, 0, len(findings))
+	for _, finding := range findings {
+		if finding.End <= len(prefix) {
+			continue
+		}
+		finding.Start = max(0, finding.Start-len(prefix))
+		finding.End -= len(prefix)
+		spans = append(spans, finding)
+	}
+	return embargo.Mask(value, spans)
 }

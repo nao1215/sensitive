@@ -36,6 +36,14 @@ jobs:
       - name: Run tests with coverage report output
         run: go test -cover -coverpkg=./... -coverprofile=coverage.out ./...
 
+      - name: Test optional logger modules
+        shell: bash
+        run: |
+          for module in zap zerolog logrus; do
+            go -C adapters/$module mod tidy -diff
+            go -C adapters/$module test -race ./...
+          done
+
   cross_build:
     name: Cross build (${{ matrix.goos }})
 

@@ -145,6 +145,19 @@ linters:
           - github.com/nao1215/embargo$
           - github.com/nao1215/embargo/internal/
           - github.com/nao1215/embargo/embargotest$
+        logger-adapters:
+          list-mode: strict
+          files:
+          - '**/adapters/**/*.go'
+          allow:
+          - $gostd
+          - github.com/nao1215/embargo$
+          - github.com/nao1215/embargo/internal/output$
+          - github.com/nao1215/embargo/embargotest$
+          - github.com/nao1215/embargo/adapters/
+          - go.uber.org/zap
+          - github.com/rs/zerolog$
+          - github.com/sirupsen/logrus$
         sdk-tests:
           list-mode: strict
           files:
@@ -268,7 +281,16 @@ linters:
   exclusions:
     generated: disable
     presets: []
-    rules: []
+    # Output assertions exercise demonstration printing. Only fmt output calls in
+    # Example functions may ignore errors; tests/contracts/example_print_test.go
+    # enforces the function boundary inside these files (including closures).
+    rules:
+    - path: '(^|/)([a-z_]+_)?example(_[a-z_]+)?_test\.go$'
+      linters: [errcheck]
+      text: 'Error return value of .fmt\.(Print|Fprint)(f|ln)?. is not checked'
+    - path: '(^|/)([a-z_]+_)?example(_[a-z_]+)?_test\.go$'
+      linters: [forbidigo]
+      text: 'use of `fmt\.Print(f|ln)?`'
     paths: []
 issues:
   max-issues-per-linter: 0

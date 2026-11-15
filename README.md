@@ -150,6 +150,17 @@ func main() {
 }
 ```
 
+## Logger adapters
+
+| Logger | Adapter | Runnable example |
+|---|---|---|
+| zap | `embargozap.NewWriteSyncer` | [JSON output](adapters/zap/example_test.go) |
+| zerolog | `embargozerolog.NewWriter` | [JSON output](adapters/zerolog/example_test.go) |
+| logrus | `embargologrus.NewFormatter` | [JSON output](adapters/logrus/example_test.go) |
+
+Each optional module masks the logger's encoded JSON, including nested values.
+[Installation, APIs and encoded-binary limits](doc/adapters.md).
+
 ## Check test output
 
 Use embargotest to capture a writer, an HTTP response, or a test child process. Check requires output and a content expectation, then checks every capture for a known fake secret and detector findings. Narrow the scanner or allow exact fixture values when needed; canary checks remain active.
