@@ -50,4 +50,15 @@ A second run used `--integration --diff b8290bc4371aa4f2fb5674e1d3c120670219c3ab
 
 The remaining digit-predecessor mutations read inside the number instead of before the dot. An abbreviation such as `No.111111111118` distinguishes the two; the final tests include that case. Three other survivors have caller-specific equivalence arguments: starting the hostname loop at `end-2` visits the already-validated last two digits, hyphen and first letter before reaching the original search position; allowing `objectReference` start zero has no effect because a parsed key and delimiter always precede its argument; accepting split zero still fails the later requirement for an uppercase class-name letter. They remain counted as lived, and the arguments do not apply to arbitrary direct calls with invalid spans.
 
+The final focused follow-up, using the a7dd142 production code plus the trailing-context SWIFT assertion, killed 127 mutations and left four alive: 96.95% efficacy, 77.98% mutator coverage, 37 uncovered, zero timeouts, zero nonviable and 2,203 skipped. The extra SWIFT test places `swift` after a list starting at byte zero; it catches a loop-boundary mutation that otherwise indexes before the input. [Final focused log](performance/round13-mutation-final-changes.txt).
+
+| Remaining changed-line survivor | Review |
+|---|---|
+| `numericLogFragment`: `end+2` becomes `end-2` | The valid candidate ends in digits; the extra iterations visit only those digits, the already-checked hyphen and first hostname letter. The first later dot and the stopping delimiter are unchanged. |
+| `objectReference`: `start > 0` becomes `start >= 0` | The sole caller supplies a value after a parsed key and delimiter, so start cannot be zero. |
+| `objectReference`: `split <= 0` becomes `split < 0` | An empty class name still fails the uppercase-letter requirement. |
+| `swiftSlashList`: `codeEnd(...) > 0` becomes `>= 0` | codeEnd yields -1 or the end of a valid code of at least eight bytes; it cannot yield zero. |
+
+The 37 uncovered mutations comprise 34 in the cached-log command and three in ABA log-context operations. The combined root statement profile exercises those ABA operations through Scanner tests, but gremlins still marks them uncovered in this run; they are retained in the denominator. These arguments cover the four listed survivors only, not every survivor in the full mutation log.
+
 [Support maintenance](https://github.com/sponsors/nao1215).

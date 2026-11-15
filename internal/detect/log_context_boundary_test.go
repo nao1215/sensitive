@@ -32,6 +32,7 @@ func TestSWIFTSlashListAndSourcePath(t *testing.T) {
 		want int
 	}{
 		{"swift=DEUTDEFF/COBADEFF", 2},
+		{"DEUTDEFF/COBADEFF swift", 2},
 		{"BIC: DEUTDEFF/COBADEFF/CHASUS33", 3},
 		{"swift source=/tmp/COBADEFF", 0},
 		{"swift source=DEUTDEFF.log", 0},
