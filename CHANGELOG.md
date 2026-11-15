@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- NewSlogHandler masks messages, keys, groups and values with an explicit scanner, freezes WithAttrs values, preserves metadata and clean scalar types, and converts opaque Any/error values to scanned strings. Normalization or detector panics, including panic(nil) compatibility mode, suppress output with a fixed error.
+- NewSlogHandler masks messages, keys, groups and values with an explicit scanner, freezes WithAttrs values, preserves metadata and clean scalar types, and converts opaque Any/error values to scanned strings. Normalization or detector panics, including panic(nil) compatibility mode, suppress output with a fixed error ([PR #61](https://github.com/nao1215/embargo/pull/61), [8d439b0](https://github.com/nao1215/embargo/commit/8d439b0)).
 
 - Exercise Secret/Input with real fmt, slog, JSON/XML, templates, zap, zerolog, logrus, OTel, Sentry, HTTP and child panic outputs. Generate the README Tested outputs table from the executed acceptance cases; external SDKs remain in tests/go.mod ([PR #60](https://github.com/nao1215/embargo/pull/60), [fa73d0b](https://github.com/nao1215/embargo/commit/fa73d0b)).
 
@@ -30,6 +30,8 @@ Implementation: [PR #56](https://github.com/nao1215/embargo/pull/56), [89eb73c](
 - Go 1.26.11 is the minimum in both modules, keeping the previous supported Go series and the net/http fix for GO-2026-6859 required by the upcoming HTTP test recorder. The root module still has no requirements.
 
 ### Fixed
+
+- Check normalization-map capacity before sentinel addition and backing-size arithmetic. CodeQL found the two potentially overflowing allocation expressions; a boundary regression checks the arithmetic without allocating oversized input.
 
 - PAN no longer reports numeric fragments embedded in alphanumeric or underscore-delimited identifiers. Compatibility repetition exposed a Sentry event ID false positive; boundary regressions include full-width digits and preserve URL-encoded separators.
 
