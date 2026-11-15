@@ -24,10 +24,10 @@ embargo finds secrets and personal data in the output of Go programs, masks them
 
 ## Quick start
 
-These examples use the unreleased API on main (Go 1.26.11 or later).
+Requires Go 1.26.11 or later.
 
 ```sh
-go get github.com/nao1215/embargo@main
+go get github.com/nao1215/embargo@latest
 ```
 
 <!-- example: example_test.go:Example -->
@@ -77,11 +77,11 @@ fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
 
 | Group | What is detected |
 |---|---|
-| Credentials | URL and DSN passwords, `password=` and header assignments, Bearer and Basic, provider tokens (OpenAI, Anthropic, Stripe, GitHub, GitLab, Slack, npm, PyPI, AWS, Google), JWT, PEM private keys, high-entropy strings |
+| Credentials | URL and DSN passwords, `password=` and auth headers, provider tokens, JWT, PEM keys |
 | Payment | Card numbers (Luhn), CVV, expiry, IBAN, SWIFT/BIC, ABA routing, UK sort code, bank account, ACH trace, merchant ID, payment tokens, Bitcoin and Ethereum addresses |
 | Personal | Email, IP address, Japanese phone numbers and My Number, including full-width digits |
 
-[Every detector and how it validates](doc/detectors.md) · [Credential formats](doc/credentials.md)
+[Every detector and how it validates](doc/detectors.md) · [Provider token formats](doc/credentials.md)
 
 Select only the kinds you need. On the same 2.7 KB of clean text, `WithKinds(KindEmail)` takes 0.11 µs and `WithAll()` takes 85 µs, and fewer kinds also mean fewer false positives. [Per-detector benchmarks](doc/benchmarks.md)
 

@@ -7,9 +7,9 @@ These optional modules mask at the final JSON boundary, after the real logger ha
 Until the owner publishes adapter releases, select the required module from main:
 
 ```sh
-go get github.com/nao1215/embargo/adapters/zap@main
-go get github.com/nao1215/embargo/adapters/zerolog@main
-go get github.com/nao1215/embargo/adapters/logrus@main
+go get github.com/nao1215/embargo/adapters/zap@latest
+go get github.com/nao1215/embargo/adapters/zerolog@latest
+go get github.com/nao1215/embargo/adapters/logrus@latest
 ```
 
 Use only the module for your logger. The [zap](../adapters/zap/example_test.go), [zerolog](../adapters/zerolog/example_test.go) and [logrus](../adapters/logrus/example_test.go) Examples show complete setup and their actual JSON output.
@@ -39,11 +39,9 @@ The stream writer serializes calls and retains the first parse/write failure. Wh
 
 The public Examples run real loggers with Output comments. Tests inspect message, key, string, numeric, Secret, pre-bound and nested output through embargotest. Shared boundary tests cover split writes, bounds, malformed/deep JSON, duplicate keys, short writes, concurrency and panic(nil). All three modules run on Linux, macOS and Windows at the minimum and stable Go versions, with strict lint and vulnerability checks.
 
-## Release notes plan
+## Versions
 
-No release is made by this change. The owner first chooses and publishes a root version containing internal/output, then replaces the adapters' development pseudo-version requirement with that release, removes local replace directives for release validation, runs the full module test/lint/race/vulnerability matrix, and publishes distinct tags adapters/zap/vX.Y.Z, adapters/zerolog/vX.Y.Z and adapters/logrus/vX.Y.Z. Each tag is independent of the root tag. The current pseudo-version resolves to a public commit containing the shared boundary; local replace directives are used only by repository development and CI and are ignored by downstream consumers.
-
-Release notes should list the three constructors, JSON-only framing and size/depth limits, scalar type changes on redaction, encoded-binary limits, separate sink scope, and per-module dependency versions. Keep the README unreleased-main note until the root and relevant adapter versions are actually published. The owner also uploads the OGP independently.
+Each adapter is its own module with its own tag (adapters/zap/vX.Y.Z, adapters/zerolog/vX.Y.Z, adapters/logrus/vX.Y.Z) and requires the matching root release. The local replace directives are used only for development and CI; downstream builds ignore them.
 
 ## Shared JSON policy
 
