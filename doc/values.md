@@ -18,11 +18,9 @@ Decode into a fresh object: absent fields and invalid outer JSON can prevent Inp
 
 [Decoding contracts and regressions](../input_test.go), [Input Examples](../secret_example_test.go).
 
-[Support maintenance](https://github.com/sponsors/nao1215).
-
 ## Database and configuration inputs
 
-`Input` already implements `encoding.TextUnmarshaler` for environment/configuration loaders that support that interface. `Input.Scan` implements `sql.Scanner` for database string and byte columns, including named string/slice types. It copies the driver's bytes before they can be reused; SQL NULL clears the value; unsupported source types and redaction markers clear it and return a fixed error. Use `rows.Scan(&input)` during initialization and publish `input.Secret()` afterwards. Concurrent mutation and observation of an Input are unsupported. A failed outer query or scan of another column can leave earlier columns assigned; discard the whole DTO on failure.
+`Input` already implements `encoding.TextUnmarshaler` for environment/configuration loaders that support that interface. `Input.Scan` implements `sql.Scanner` for database string and byte columns; the Input destination may use a named string or byte-slice type. Driver source values must be ordinary string or []byte values, or nil. It copies the driver's bytes before they can be reused; SQL NULL clears the value; unsupported source types and redaction markers clear it and return a fixed error. Use `rows.Scan(&input)` during initialization and publish `input.Secret()` afterwards. Concurrent mutation and observation of an Input are unsupported. A failed outer query or scan of another column can leave earlier columns assigned; discard the whole DTO on failure.
 
 `Secret` stays an immutable snapshot and does not implement scanning or text unmarshaling. Neither wrapper implements `driver.Valuer`: implicitly returning its raw value would create an output path that bypasses the wrapper's display contract, while returning the marker could silently corrupt stored credentials. Write deliberately with `db.ExecContext(ctx, query, secret.Reveal())`. Use string/byte Input fields for secrets; arbitrary numeric or driver-specific SQL types need explicit conversion by the application. See the [runnable database Example](../structured_example_test.go) and [copy, NULL and failure tests](../input_sql_test.go).
 
@@ -55,3 +53,5 @@ credentials := Credentials{Recovery: embargo.NewSecret("synthetic-recovery-code"
 ```
 
 A database/config DTO can instead declare `Recovery embargo.Input[string]` and copy its Secret into the application's immutable Credentials after loading. Both wrappers mask themselves through fmt, encoding/json and their other supported formatting interfaces. This is not memory erasure or protection after an explicit Reveal, a custom formatter that ignores the interfaces, or a process memory dump. [Runnable Secret Examples](../secret_example_test.go) and [cross-encoder tests](../tests/compatibility_integration_test.go) define the supported paths.
+
+[Support maintenance](https://github.com/sponsors/nao1215).
