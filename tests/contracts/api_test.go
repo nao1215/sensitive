@@ -16,11 +16,11 @@ import (
 
 func TestPublicAPI(t *testing.T) {
 	t.Parallel()
-	loaded, err := packages.Load(&packages.Config{Mode: packages.NeedName | packages.NeedTypes | packages.NeedImports | packages.NeedDeps}, "github.com/nao1215/embargo")
+	loaded, err := packages.Load(&packages.Config{Mode: packages.NeedName | packages.NeedTypes | packages.NeedImports | packages.NeedDeps}, "github.com/nao1215/embargo", "github.com/nao1215/embargo/embargotest")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(loaded) != 1 {
+	if len(loaded) != 2 {
 		t.Fatal("all public packages must load")
 	}
 	sort.Slice(loaded, func(i, j int) bool { return loaded[i].PkgPath < loaded[j].PkgPath })

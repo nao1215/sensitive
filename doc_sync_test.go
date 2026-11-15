@@ -104,6 +104,7 @@ func canonicalExample(t *testing.T, fset *token.FileSet, node ast.Node) string {
 func TestExamplesAppearInGodoc(t *testing.T) {
 	t.Parallel()
 	checkPackageExamples(t, ".")
+	checkPackageExamples(t, "embargotest")
 }
 
 //nolint:gocognit // Walk the complete declaration or example structure so missing public contracts cannot be skipped.

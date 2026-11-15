@@ -35,17 +35,17 @@ func changedDigit(raw string, i int) string {
 
 // Separators exclude token alphabet characters and line breaks. ScanLines has
 // line-relative offsets; equivalence is intentionally asserted on one line.
-func context(t *rapid.T) string {
+func surroundingText(t *rapid.T) string {
 	return chars(t, " ;,:=\t\"()[]{}", rapid.IntRange(0, 80).Draw(t, "context length"))
 }
 
 func check(t *rapid.T, d embargo.Detector, raw, label string) {
-	prefix := context(t)
+	prefix := surroundingText(t)
 	if rapid.Bool().Draw(t, "encoded separator") {
 		prefix += "v%" + rapid.SampledFrom([]string{"20", "09", "3D", "3d", "3A", "26", "22", "28", "29", "5B", "5D", "7B", "7D", "2C", "3B", "3F"}).Draw(t, "escape")
 	}
 	prefix += label
-	suffix := context(t)
+	suffix := surroundingText(t)
 	text := prefix + raw + suffix
 	s := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(d))
 	want := s.ScanString(text)
