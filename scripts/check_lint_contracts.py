@@ -77,11 +77,17 @@ with tempfile.TemporaryDirectory(prefix="embargo-lint-") as directory:
         finally:
             fixture.unlink()
     fixture = repo / "lint_example_test.go"
-    fixture.write_text('package embargo\nimport ("fmt"; "io")\nfunc printHelper() { fmt.Fprint(io.Discard, "output") }\n')
-    try:
-        reject(repo / "tests", ["go", "test", "./contracts", "-run", "^TestUncheckedPrintingIsOnlyInExamples$"], "only Example functions")
-    finally:
-        fixture.unlink()
+    for body in [
+        'func printHelper() { fmt.Fprint(io.Discard, "output") }',
+        'func printHelper() { defer fmt.Fprint(io.Discard, "output") }',
+        'func printHelper() { go fmt.Fprint(io.Discard, "output") }',
+        'var n, _ = fmt.Fprint(io.Discard, "output")',
+    ]:
+        fixture.write_text('package embargo\nimport ("fmt"; "io")\n' + body + '\n')
+        try:
+            reject(repo / "tests", ["go", "test", "./contracts", "-run", "^TestUncheckedPrintingIsOnlyInExamples$"], "only Example functions")
+        finally:
+            fixture.unlink()
     fixture.write_text('package embargo\nimport "os"\nfunc Example_lintContract() { os.Stdout.WriteString("output") }\n')
     try:
         reject(repo, ["golangci-lint", "run", "--enable-only", "errcheck"], "errcheck")
