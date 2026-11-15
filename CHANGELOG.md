@@ -31,6 +31,8 @@ Implementation: [PR #56](https://github.com/nao1215/embargo/pull/56), [89eb73c](
 
 ### Fixed
 
+- Check normalization-map capacity before sentinel addition and backing-size arithmetic. CodeQL found the two potentially overflowing allocation expressions; a boundary regression checks the arithmetic without allocating oversized input.
+
 - PAN no longer reports numeric fragments embedded in alphanumeric or underscore-delimited identifiers. Compatibility repetition exposed a Sentry event ID false positive; boundary regressions include full-width digits and preserve URL-encoded separators.
 
 - Do not classify decimal components or RFC3339 fractional seconds as ABA routing numbers, even if their digits satisfy the routing checksum. A regression test reproduces the timestamp false positive discovered through real slog output.
