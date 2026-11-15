@@ -16,7 +16,7 @@ def reject(cwd, command, needle):
 
 with tempfile.TemporaryDirectory(prefix="embargo-lint-") as directory:
     repo = pathlib.Path(directory) / "repo"
-    shutil.copytree(ROOT, repo, ignore=shutil.ignore_patterns(".git", "cover.*", "coverage*", ".gremlins", "tests"))
+    shutil.copytree(ROOT, repo, ignore=shutil.ignore_patterns(".git", "cover.*", "coverage*", ".gremlins"))
     # go-arch-lint parses imports without asking the compiler to resolve cycles.
     edges = [
         (".", "embargo", "github.com/nao1215/embargo/embargotest"),
@@ -62,6 +62,29 @@ with tempfile.TemporaryDirectory(prefix="embargo-lint-") as directory:
     fixture.write_text('package embargo\ntype receiverContract struct{}\nfunc (receiverContract) Read() {}\nfunc (*receiverContract) Write() {}\n')
     try:
         reject(repo, ["golangci-lint", "run", "--enable-only", "recvcheck"], "recvcheck")
+    finally:
+        fixture.unlink()
+    # A printing exception must never turn into a package-wide errcheck bypass.
+    for name, body in [
+        ("lint_print_fixture.go", 'func lintPrint() { fmt.Fprint(io.Discard, "output") }'),
+        ("lint_print_test.go", 'func TestLintPrint(t *testing.T) { fmt.Fprint(io.Discard, "output") }'),
+    ]:
+        fixture = repo / name
+        imports = '"fmt"; "io"' + ('; "testing"' if name.endswith("_test.go") else '')
+        fixture.write_text(f'package embargo\nimport ({imports})\n{body}\n')
+        try:
+            reject(repo, ["golangci-lint", "run", "--enable-only", "errcheck"], "errcheck")
+        finally:
+            fixture.unlink()
+    fixture = repo / "lint_example_test.go"
+    fixture.write_text('package embargo\nimport ("fmt"; "io")\nfunc printHelper() { fmt.Fprint(io.Discard, "output") }\n')
+    try:
+        reject(repo / "tests", ["go", "test", "./contracts", "-run", "^TestUncheckedPrintingIsOnlyInExamples$"], "only Example functions")
+    finally:
+        fixture.unlink()
+    fixture.write_text('package embargo\nimport "os"\nfunc Example_lintContract() { os.Stdout.WriteString("output") }\n')
+    try:
+        reject(repo, ["golangci-lint", "run", "--enable-only", "errcheck"], "errcheck")
     finally:
         fixture.unlink()
 print("lint dependency, constructor and receiver negative fixtures passed")

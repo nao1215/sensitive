@@ -260,7 +260,16 @@ linters:
   exclusions:
     generated: disable
     presets: []
-    rules: []
+    # Output assertions exercise demonstration printing. Only fmt output calls in
+    # Example functions may ignore errors; tests/contracts/example_print_test.go
+    # enforces the function boundary inside these files (including closures).
+    rules:
+    - path: '(^|/)([a-z_]+_)?example(_[a-z_]+)?_test\.go$'
+      linters: [errcheck]
+      text: 'Error return value of .fmt\.(Print|Fprint)(f|ln)?. is not checked'
+    - path: '(^|/)([a-z_]+_)?example(_[a-z_]+)?_test\.go$'
+      linters: [forbidigo]
+      text: 'use of `fmt\.Print(f|ln)?`'
     paths: []
 issues:
   max-issues-per-linter: 0

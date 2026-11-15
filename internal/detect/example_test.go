@@ -12,9 +12,11 @@ func ExampleNewPAN() {
 
 	for _, f := range findings {
 		detail, _ := f.PANDetail()
-		examplePrintf("brand=%s bin=%s last4=%s luhn=%t confidence=%.2f\n",
+
+		fmt.Printf("brand=%s bin=%s last4=%s luhn=%t confidence=%.2f\n",
 			detail.Brand, detail.BIN, detail.Last4, detail.Luhn, f.Confidence)
 	}
+
 	// Output:
 	// brand=Visa bin=453201 last4=0366 luhn=true confidence=1.00
 }
@@ -33,9 +35,11 @@ func ExamplePAN_Scan() {
 		findings := d.Scan([]byte(input))
 		if len(findings) > 0 {
 			detail, _ := findings[0].PANDetail()
-			examplePrintf("input=%q brand=%s\n", input, detail.Brand)
+
+			fmt.Printf("input=%q brand=%s\n", input, detail.Brand)
 		}
 	}
+
 	// Output:
 	// input="4532015112830366" brand=Visa
 	// input="4532-0151-1283-0366" brand=Visa
@@ -48,8 +52,10 @@ func ExampleNewEmail() {
 
 	for _, f := range findings {
 		detail, _ := f.EmailDetail()
-		examplePrintf("local=%s domain=%s\n", detail.Local, detail.Domain)
+
+		fmt.Printf("local=%s domain=%s\n", detail.Local, detail.Domain)
 	}
+
 	// Output:
 	// local=tanaka domain=example.com
 }
@@ -60,8 +66,10 @@ func ExampleNewJPPhone() {
 
 	for _, f := range findings {
 		detail, _ := f.JPPhoneDetail()
-		examplePrintf("phone=%s type=%s\n", f.RawValue, detail.PhoneType)
+
+		fmt.Printf("phone=%s type=%s\n", f.RawValue, detail.PhoneType)
 	}
+
 	// Output:
 	// phone=090-1234-5678 type=mobile
 }
@@ -72,8 +80,9 @@ func ExampleNewMyNumber() {
 	findings := d.Scan([]byte("mynumber: 123456789018"))
 
 	for _, f := range findings {
-		examplePrintf("mynumber=%s confidence=%.2f\n", f.RawValue, f.Confidence)
+		fmt.Printf("mynumber=%s confidence=%.2f\n", f.RawValue, f.Confidence)
 	}
+
 	// Output:
 	// mynumber=123456789018 confidence=0.95
 }
@@ -87,8 +96,10 @@ func ExampleNewJWT() {
 
 	for _, f := range findings {
 		detail, _ := f.JWTDetail()
-		examplePrintf("algorithm=%s confidence=%.1f\n", detail.Algorithm, f.Confidence)
+
+		fmt.Printf("algorithm=%s confidence=%.1f\n", detail.Algorithm, f.Confidence)
 	}
+
 	// Output:
 	// algorithm=HS256 confidence=1.0
 }
@@ -99,8 +110,10 @@ func ExampleNewAWSKey() {
 
 	for _, f := range findings {
 		detail, _ := f.AWSKeyDetail()
-		examplePrintf("awskey=%s type=%s\n", f.RawValue, detail.KeyType)
+
+		fmt.Printf("awskey=%s type=%s\n", f.RawValue, detail.KeyType)
 	}
+
 	// Output:
 	// awskey=AKIAIOSFODNN7EXAMPLE type=long_term
 }
@@ -111,8 +124,10 @@ func ExampleNewIBAN() {
 
 	for _, f := range findings {
 		detail, _ := f.IBANDetail()
-		examplePrintf("iban=%s country=%s\n", f.RawValue, detail.CountryCode)
+
+		fmt.Printf("iban=%s country=%s\n", f.RawValue, detail.CountryCode)
 	}
+
 	// Output:
 	// iban=DE89370400440532013000 country=DE
 }
@@ -123,8 +138,10 @@ func ExampleNewIPAddr() {
 
 	for _, f := range findings {
 		detail, _ := f.IPAddrDetail()
-		examplePrintf("ip=%s version=%d\n", f.RawValue, detail.Version)
+
+		fmt.Printf("ip=%s version=%d\n", f.RawValue, detail.Version)
 	}
+
 	// Output:
 	// ip=192.168.1.1 version=4
 }
@@ -132,10 +149,12 @@ func ExampleNewIPAddr() {
 func ExampleFinding_PANDetail() {
 	finding := detect.NewPAN().Scan([]byte("4532015112830366"))[0]
 	if detail, ok := finding.PANDetail(); ok {
-		examplePrintf("brand=%s last4=%s\n", detail.Brand, detail.Last4)
+		fmt.Printf("brand=%s last4=%s\n", detail.Brand, detail.Last4)
 	}
 	_, ok := finding.EmailDetail()
-	examplePrintln("email detail:", ok)
+
+	fmt.Println("email detail:", ok)
+
 	// Output:
 	// brand=Visa last4=0366
 	// email detail: false
@@ -146,8 +165,9 @@ func ExampleFinding_IsPAN() {
 	findings := d.Scan([]byte("card: 4532015112830366"))
 
 	for _, f := range findings {
-		examplePrintf("IsPAN=%t IsEmail=%t\n", f.IsPAN(), f.IsEmail())
+		fmt.Printf("IsPAN=%t IsEmail=%t\n", f.IsPAN(), f.IsEmail())
 	}
+
 	// Output:
 	// IsPAN=true IsEmail=false
 }
@@ -157,8 +177,9 @@ func ExampleFinding_Is() {
 	findings := d.Scan([]byte("user@example.com"))
 
 	for _, f := range findings {
-		examplePrintf("Is(email)=%t Is(pan)=%t\n", f.Is(detect.NameEmail), f.Is(detect.NamePAN))
+		fmt.Printf("Is(email)=%t Is(pan)=%t\n", f.Is(detect.NameEmail), f.Is(detect.NamePAN))
 	}
+
 	// Output:
 	// Is(email)=true Is(pan)=false
 }
@@ -168,16 +189,20 @@ func ExampleFinding_Level() {
 	findings := d.Scan([]byte("4532015112830366"))
 
 	for _, f := range findings {
-		examplePrintf("level=%s confidence=%.2f\n", f.Level(), f.Confidence)
+		fmt.Printf("level=%s confidence=%.2f\n", f.Level(), f.Confidence)
 	}
+
 	// Output:
 	// level=high confidence=1.00
 }
 
 func ExampleConfidenceLevel_String() {
-	examplePrintln(detect.ConfidenceHigh)
-	examplePrintln(detect.ConfidenceMedium)
-	examplePrintln(detect.ConfidenceLow)
+	fmt.Println(detect.ConfidenceHigh)
+
+	fmt.Println(detect.ConfidenceMedium)
+
+	fmt.Println(detect.ConfidenceLow)
+
 	// Output:
 	// high
 	// medium
@@ -188,7 +213,8 @@ func ExampleNormalizeFullWidthDigits() {
 	input := []byte("０９０－１２３４－５６７８")
 	normalized, _ := detect.NormalizeFullWidthDigits(input)
 
-	examplePrintln(string(normalized))
+	fmt.Println(string(normalized))
+
 	// Output:
 	// 090-1234-5678
 }
@@ -196,25 +222,13 @@ func ExampleNormalizeFullWidthDigits() {
 func ExampleFinding_Kind() {
 	for _, name := range []detect.DetectorName{detect.NamePAN, detect.NameEmail, detect.NameAWSKey, "custom"} {
 		finding := detect.Finding{DetectorName: name}
-		examplePrintf("%s: %q\n", name, finding.Kind())
+
+		fmt.Printf("%s: %q\n", name, finding.Kind())
 	}
+
 	// Output:
 	// pan: "financial"
 	// email: "pii"
 	// awskey: "credential"
 	// custom: ""
-}
-
-func examplePrintf(format string, args ...any) {
-	//nolint:forbidigo // Examples intentionally write stdout for the Go Output contract.
-	if _, err := fmt.Printf(format, args...); err != nil {
-		panic(err)
-	}
-}
-
-func examplePrintln(args ...any) {
-	//nolint:forbidigo // Examples intentionally write stdout for the Go Output contract.
-	if _, err := fmt.Println(args...); err != nil {
-		panic(err)
-	}
 }

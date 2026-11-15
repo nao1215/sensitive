@@ -9,27 +9,24 @@ import (
 
 func ExampleNewSecret() {
 	key := embargo.NewSecret("fake-key")
-	if _, err := fmt.Println(key); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(key)
 
 	// Output: [REDACTED]
 }
 
 func ExampleSecret() {
 	var empty embargo.Secret[string]
-	if _, err := fmt.Println(empty, empty.Reveal() == ""); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(empty, empty.Reveal() == "")
 
 	// Output: [REDACTED] true
 }
 
 func ExampleSecret_Reveal() {
 	key := embargo.NewSecret("fake-key")
-	if _, err := fmt.Println(len(key.Reveal())); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(len(key.Reveal()))
 
 	// Output: 8
 }
@@ -39,9 +36,8 @@ func ExampleInput() {
 	if err := input.UnmarshalText([]byte("fake-key")); err != nil {
 		panic(err)
 	}
-	if _, err := fmt.Println(input); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(input)
 
 	// Output: [REDACTED]
 }
@@ -53,9 +49,8 @@ func ExampleInput_UnmarshalJSON() {
 	if err := json.Unmarshal([]byte(`{"token":"fake-key"}`), &config); err != nil {
 		panic(err)
 	}
-	if _, err := fmt.Println(config.Token.Secret()); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(config.Token.Secret())
 
 	// Output: [REDACTED]
 }
@@ -66,9 +61,7 @@ func ExampleInput_UnmarshalJSON_failure() {
 		Second embargo.Input[string] `json:"second"`
 	}
 	if err := json.Unmarshal([]byte(`{"first":"fake-key","second":"[REDACTED]"}`), &config); err != nil {
-		if _, printErr := fmt.Println("configuration rejected"); printErr != nil {
-			panic(printErr)
-		}
+		fmt.Println("configuration rejected")
 		return // Discard the whole partially decoded config.
 	}
 	panic("unexpected successful decode")
@@ -81,9 +74,8 @@ func ExampleInput_UnmarshalText() {
 	if err := input.UnmarshalText([]byte("fake-key")); err != nil {
 		panic(err)
 	}
-	if _, err := fmt.Println(input.Secret()); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(input.Secret())
 
 	// Output: [REDACTED]
 }
@@ -97,45 +89,40 @@ func ExampleInput_Secret() {
 	if err := input.UnmarshalText([]byte("second")); err != nil {
 		panic(err)
 	}
-	if _, err := fmt.Println(len(snapshot.Reveal())); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(len(snapshot.Reveal()))
 
 	// Output: 5
 }
 
 func ExampleSecret_String() {
 	value := embargo.NewSecret("fake-key")
-	if _, err := fmt.Println(value.String()); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(value.String())
 
 	// Output: [REDACTED]
 }
 
 func ExampleSecret_GoString() {
 	value := embargo.NewSecret("fake-key")
-	if _, err := fmt.Println(value.GoString()); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(value.GoString())
 
 	// Output: [REDACTED]
 }
 
 func ExampleSecret_Format() {
 	value := embargo.NewSecret("fake-key")
-	if _, err := fmt.Printf("%+#v\n", value); err != nil {
-		panic(err)
-	}
+
+	fmt.Printf("%+#v\n", value)
 
 	// Output: [REDACTED]
 }
 
 func ExampleSecret_LogValue() {
 	value := embargo.NewSecret("fake-key")
-	if _, err := fmt.Println(value.LogValue().String()); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(value.LogValue().String())
 
 	// Output: [REDACTED]
 }
@@ -146,9 +133,8 @@ func ExampleSecret_MarshalJSON() {
 	if err != nil {
 		panic(err)
 	}
-	if _, err := fmt.Println(string(data)); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(string(data))
 
 	// Output: "[REDACTED]"
 }
@@ -159,9 +145,8 @@ func ExampleSecret_MarshalText() {
 	if err != nil {
 		panic(err)
 	}
-	if _, err := fmt.Println(string(data)); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(string(data))
 
 	// Output: [REDACTED]
 }
@@ -171,9 +156,8 @@ func ExampleInput_String() {
 	if err := value.UnmarshalText([]byte("fake-key")); err != nil {
 		panic(err)
 	}
-	if _, err := fmt.Println(value.String()); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(value.String())
 
 	// Output: [REDACTED]
 }
@@ -183,9 +167,8 @@ func ExampleInput_GoString() {
 	if err := value.UnmarshalText([]byte("fake-key")); err != nil {
 		panic(err)
 	}
-	if _, err := fmt.Println(value.GoString()); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(value.GoString())
 
 	// Output: [REDACTED]
 }
@@ -195,9 +178,8 @@ func ExampleInput_Format() {
 	if err := value.UnmarshalText([]byte("fake-key")); err != nil {
 		panic(err)
 	}
-	if _, err := fmt.Printf("%+#v\n", value); err != nil {
-		panic(err)
-	}
+
+	fmt.Printf("%+#v\n", value)
 
 	// Output: [REDACTED]
 }
@@ -207,9 +189,8 @@ func ExampleInput_LogValue() {
 	if err := value.UnmarshalText([]byte("fake-key")); err != nil {
 		panic(err)
 	}
-	if _, err := fmt.Println(value.LogValue().String()); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(value.LogValue().String())
 
 	// Output: [REDACTED]
 }
@@ -223,9 +204,8 @@ func ExampleInput_MarshalJSON() {
 	if err != nil {
 		panic(err)
 	}
-	if _, err := fmt.Println(string(data)); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(string(data))
 
 	// Output: "[REDACTED]"
 }
@@ -239,9 +219,8 @@ func ExampleInput_MarshalText() {
 	if err != nil {
 		panic(err)
 	}
-	if _, err := fmt.Println(string(data)); err != nil {
-		panic(err)
-	}
+
+	fmt.Println(string(data))
 
 	// Output: [REDACTED]
 }
