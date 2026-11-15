@@ -103,54 +103,54 @@ CPU 31 is specific to this machine; select an available CPU on another host. The
 ## Measured results
 
 <!-- benchmarks:start -->
-Measured 2026-11-15 with go1.26.11, linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S, GOMAXPROCS=1; median of ten 200 ms samples at [9b1baf4](https://github.com/nao1215/embargo/commit/9b1baf479421d5d01736c8aeec7cf331e03579a1).
+Measured 2026-11-15 with go1.26.11, linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S, GOMAXPROCS=1; median of ten 200 ms samples at [a7dd142](https://github.com/nao1215/embargo/commit/a7dd142532cdcddf8237ba0d099827d27154bf6e).
 
 Background load: no intentional concurrent workload.
 
 | Operation | ns/op | MB/s | B/op | allocs/op |
 |---|---:|---:|---:|---:|
-| Scanner WithAll, clean | 68989.5 | 39.89 | 0 | 0 |
-| Scanner WithAll, dirty | 8074645.5 | 4.89 | 1187111 | 14113 |
-| Mask | 6298.0 | 467.47 | 13816 | 12 |
-| Writer only | 11.5 | 47141.93 | 0 | 0 |
-| Recorder + Check | 76321.0 | 7.12 | 40396 | 590 |
-| Plain slog, clean | 874.1 | — | 16 | 1 |
-| Masked slog, clean | 2571.0 | — | 80 | 5 |
-| Plain slog, dirty | 862.6 | — | 16 | 1 |
-| Masked slog, dirty | 3488.5 | — | 352 | 13 |
+| Scanner WithAll, clean | 67131.5 | 41.00 | 0 | 0 |
+| Scanner WithAll, dirty | 8091315.0 | 4.89 | 1187111 | 14113 |
+| Mask | 6306.5 | 466.82 | 13816 | 12 |
+| Writer only | 11.5 | 47214.50 | 0 | 0 |
+| Recorder + Check | 76069.5 | 7.15 | 40396 | 590 |
+| Plain slog, clean | 866.2 | — | 16 | 1 |
+| Masked slog, clean | 2477.0 | — | 80 | 5 |
+| Plain slog, dirty | 875.1 | — | 16 | 1 |
+| Masked slog, dirty | 3422.0 | — | 352 | 13 |
 
 <details>
 <summary>Per-detector Scanner throughput</summary>
 
 | Detector | Clean MB/s | Dirty MB/s |
 |---|---:|---:|
-| aba_routing | 694.10 | 57.34 |
-| ach_trace | 647.02 | 5.96 |
-| all | 39.89 | 4.89 |
-| awskey | 663.82 | 94.09 |
-| bank_account | 587.60 | 6.16 |
-| btc | 737.63 | 44.96 |
-| card_expiry | 1056.85 | 3.74 |
-| credential | 278.00 | 47.23 |
-| cvv | 371.15 | 4.88 |
-| email | 25090.67 | 58.23 |
-| eth | 1288.01 | 113.13 |
-| github_token | 1160.04 | 125.66 |
-| google_api_key | 970.67 | 175.25 |
-| high_entropy | 693.81 | 51.83 |
-| iban | 790.59 | 51.76 |
-| ipaddr | 18162.89 | 43.03 |
-| jwt | 1110.44 | 27.51 |
-| merchant_id | 338.71 | 12.32 |
-| mynumber | 444.37 | 47.18 |
-| pan | 4748.35 | 39.56 |
-| payment_token | 242.92 | 232.71 |
-| phone_jp | 17620.32 | 40.05 |
-| private_key_pem | 777.13 | 98.14 |
-| service_token | 238.88 | 202.51 |
-| slack_token | 966.84 | 71.19 |
-| swiftbic | 172.34 | 31.59 |
-| uk_sortcode | 514.99 | 37.72 |
+| aba_routing | 547.43 | 46.56 |
+| ach_trace | 699.91 | 4.88 |
+| all | 41.00 | 4.89 |
+| awskey | 731.00 | 95.30 |
+| bank_account | 569.69 | 6.16 |
+| btc | 728.13 | 45.03 |
+| card_expiry | 1007.12 | 3.72 |
+| credential | 275.76 | 47.54 |
+| cvv | 366.88 | 4.92 |
+| email | 25480.33 | 58.70 |
+| eth | 1215.56 | 144.50 |
+| github_token | 1125.67 | 125.61 |
+| google_api_key | 937.89 | 176.08 |
+| high_entropy | 685.06 | 51.61 |
+| iban | 791.74 | 51.82 |
+| ipaddr | 17847.85 | 43.54 |
+| jwt | 1065.56 | 27.58 |
+| merchant_id | 333.04 | 12.71 |
+| mynumber | 548.81 | 48.12 |
+| pan | 4717.77 | 41.24 |
+| payment_token | 276.62 | 208.34 |
+| phone_jp | 32909.97 | 40.50 |
+| private_key_pem | 753.46 | 98.44 |
+| service_token | 235.68 | 197.97 |
+| slack_token | 921.02 | 71.37 |
+| swiftbic | 188.83 | 32.41 |
+| uk_sortcode | 349.74 | 42.72 |
 
 </details>
 <!-- benchmarks:end -->
@@ -176,6 +176,8 @@ The final differential run compared exact kinds, offsets, confidence and order f
 Ten 200 ms samples per variant ran on CPU 8, GOMAXPROCS=1, Go 1.26.11, with base/head/candidate and candidate/head/base orders alternating. No intentional concurrent workload ran, but timings varied substantially. Production clean median was 68.13 µs and the prototype 92.26 µs (p=0.436); dirty was 6.323 ms and 9.082 ms (p=0.089). The prototype increased dirty allocation from 1.132 MiB to 2.833 MiB and from 14,110 to 16,030 allocations. It did not meet the speed gate and is not adopted. [Benchstat](performance/round13-candidate-benchstat.txt), [production samples](performance/round13-head-bench.txt), [prototype samples](performance/round13-candidate-bench.txt), [commands and binary hashes](performance/round13-bench-metadata.json).
 
 Before changes, the clean CPU profile attributed 31.39% cumulative time to URL-password parsing, 21.94% to detector selection and 5.28% to entropy scanning. [Clean CPU profile](performance/round13-base-clean-top.txt) and [dirty CPU profile](performance/round13-base-dirty-top.txt) record the call costs. The smaller production change skips URL parsing without an @ and uses a delimiter switch; an independent copy of the old parser agrees over 30,976 generated cases. Base-to-head timing differences were not significant (clean p=0.529, dirty p=0.436); no overall speed improvement is claimed from this run. [Before/after benchstat](performance/round13-before-after-benchstat.txt) preserves that result. Accuracy changes have separate regression tests and the [real-log evaluation](accuracy.md#public-system-logs).
+
+The interleaved samples describe the implementation committed as [9b1baf4](https://github.com/nao1215/embargo/commit/9b1baf479421d5d01736c8aeec7cf331e03579a1). Review later preserved explicit slash-separated SWIFT lists and removed repeated leading-whitespace scans from ABA context checks; the generated full matrix and library comparison were measured again afterward. A separate diagnostic input, 1 MiB of spaces followed by 10,000 ABA values, took 3.463 s before the whitespace change and 7.637 ms afterward on CPU 8. Those are single observations, not a paired statistical estimate; [before](performance/round13-aba-whitespace-before.txt) and [after](performance/round13-aba-whitespace-after.txt) retain the output. The final real-log and candidate differential runs retained the same findings and boundary failures.
 
 ## Choose the kinds the application needs
 

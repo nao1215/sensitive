@@ -35,4 +35,19 @@ These are equivalence arguments for the public Scanner outputs, not exclusions f
 
 Other survivors include defensive bounds already constrained by callers, cursor optimizations that need more adversarial sequencing, and internal details that the public Finding does not expose. Their raw locations remain visible; this review does not claim that every lived mutant is equivalent or that mutation testing proves detector accuracy.
 
+## Round 13 log-context boundaries
+
+The round 12 source and root tests at da95fde are unchanged at the round 13 baseline b8290bc; the completed [round 12 log](performance/round12-mutation.txt) is the baseline below. The [round 13 full log](performance/round13-mutation.txt) uses 54bd3c7, gremlins v0.6.0, four workers, GOMAXPROCS=4 and timeout coefficient 10. It precedes the review follow-ups. The default per-package mode can miss assertions in Scanner tests that call internal detectors from another package; nested-module sources also contribute uncovered mutations.
+
+| Snapshot | Killed | Lived | Uncovered | Timed out | Efficacy | Mutator coverage |
+|---|---:|---:|---:|---:|---:|---:|
+| Round 12 / baseline | 1676 | 185 | 316 | 36 | 90.06% | 85.48% |
+| Round 13 full, 54bd3c7 | 1794 | 287 | 220 | 42 | 86.21% | 90.44% |
+
+Efficacy decreased by 3.85 percentage points while exercised mutations increased by 4.96 points. These are different mutation populations; neither the higher killed count nor the statement coverage improvement establishes stronger assertions everywhere. Both runs had zero nonviable and zero skipped mutations, and timeouts remain separate.
+
+A second run used `--integration --diff b8290bc4371aa4f2fb5674e1d3c120670219c3ab` to execute all root tests for mutations on changed lines. At ac3a9bb it killed 81 and left 22 alive, with 37 uncovered, zero timeouts and 2,203 skipped. Its efficacy was 78.64%. Adding punctuation, hostname, quoted-token, hexadecimal-length and A/Z boundary assertions killed 17 of those survivors: 98 killed, 5 lived, the same uncovered/skipped counts and 95.15% efficacy. These focused results do not replace the full result above. [Initial focused log](performance/round13-mutation-changes.txt) and [first boundary follow-up](performance/round13-mutation-boundaries.txt) retain every mutation.
+
+The remaining digit-predecessor mutations read inside the number instead of before the dot. An abbreviation such as `No.111111111118` distinguishes the two; the final tests include that case. Three other survivors have caller-specific equivalence arguments: starting the hostname loop at `end-2` visits the already-validated last two digits, hyphen and first letter before reaching the original search position; allowing `objectReference` start zero has no effect because a parsed key and delimiter always precede its argument; accepting split zero still fails the later requirement for an uppercase class-name letter. They remain counted as lived, and the arguments do not apply to arbitrary direct calls with invalid spans.
+
 [Support maintenance](https://github.com/sponsors/nao1215).

@@ -208,7 +208,7 @@ Round 13: 8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification r
 | Real output tests | [Loggers](tests/compatibility_integration_test.go), [HTTP](tests/http_integration_test.go) |
 
 <!-- testing-metrics:start -->
-Coverage 94.9% · mutation score 90.06% · 9 fuzz targets, 2323625 executions.
+Coverage 97.0% · mutation score 86.21% · 9 fuzz targets, 2726828 executions.
 <!-- testing-metrics:end -->
 
 [Commands, measurement scope and conditions](doc/testing.md).
@@ -218,7 +218,7 @@ Coverage 94.9% · mutation score 90.06% · 9 fuzz targets, 2323625 executions.
 <!-- benchmarks:start -->
 ![Scanner throughput and slog time](doc/images/benchmarks.svg)
 
-All detectors scan sensitive text at 4.89 MB/s; masking a clean slog event takes 2.57 µs, 2.9× the plain handler.
+All detectors scan sensitive text at 4.89 MB/s; masking a clean slog event takes 2.48 µs, 2.9× the plain handler.
 <!-- benchmarks:end -->
 
 <!-- narrowing-summary:start -->

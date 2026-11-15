@@ -1,70 +1,70 @@
 {
   "date": "2026-11-15",
-  "commit": "da95fde8d01b3e3214d70a131aceb07696eedca9",
-  "covered_statements": 2893,
-  "total_statements": 3048,
+  "commit": "54bd3c719340a52e2fc062c9c060b2323f2670fb",
+  "covered_statements": 3013,
+  "total_statements": 3105,
   "mutation": {
-    "killed": 1676,
-    "lived": 185,
-    "uncovered": 316,
-    "timed_out": 36,
+    "killed": 1794,
+    "lived": 287,
+    "uncovered": 220,
+    "timed_out": 42,
     "not_viable": 0,
     "skipped": 0
   },
-  "efficacy": 90.06,
+  "efficacy": 86.21,
   "mutation_timeout_coefficient": 10,
   "mutation_workers": 4,
-  "mutator_coverage": 85.48,
+  "mutator_coverage": 90.44,
   "fuzz": [
     {
       "target": "FuzzScanner",
-      "executions": 88301,
+      "executions": 140986,
       "seconds_requested": 10
     },
     {
       "target": "FuzzScanLines",
-      "executions": 152260,
+      "executions": 122620,
       "seconds_requested": 10
     },
     {
       "target": "FuzzMask",
-      "executions": 546777,
+      "executions": 597900,
       "seconds_requested": 10
     },
     {
       "target": "FuzzMaskJSON",
-      "executions": 73008,
+      "executions": 137257,
       "seconds_requested": 10
     },
     {
       "target": "FuzzJSONShape",
-      "executions": 75011,
+      "executions": 102712,
       "seconds_requested": 10
     },
     {
       "target": "FuzzInput",
-      "executions": 289735,
+      "executions": 441099,
       "seconds_requested": 10
     },
     {
       "target": "FuzzCanary",
-      "executions": 15082,
+      "executions": 25120,
       "seconds_requested": 10
     },
     {
       "target": "FuzzJSONStream",
-      "executions": 33795,
+      "executions": 76993,
       "seconds_requested": 10
     },
     {
       "target": "FuzzOutputJSON",
-      "executions": 1049656,
+      "executions": 1082141,
       "seconds_requested": 10
     }
   ],
   "source_sha256": {
-    "coverage": "8af2883461ebe48300dcf53e9af09cfae47077f7a1b670f0bed2b2f48ffd62d2",
-    "mutation": "827546863229ff9a1b45b3ff92f0963d95f93b5b11d4b0f9b83666ee3d9ec3e0",
-    "fuzz": "3160114031979c58f5d7d82fff8e33870db6793358f0e5f933195c18632a4874"
+    "coverage": "423f907a3536970d3f3fc60095f5a833cfa70531823b488e19cfdff8eff33fc2",
+    "mutation": "9c84a9de9dd8b25c6128d3bc45a9e52ba42fbdb719202b091058cacdedbd1f16",
+    "fuzz": "adca24012abcdc0d01bf95c2e6ae266333dddadc8af1098b0c4fbdff1d5c63fb"
   }
 }

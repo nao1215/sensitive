@@ -19,7 +19,7 @@ README examples carry an `example: file:function` marker; test snippets use `tes
 
 The [detector and scanner mutation review](mutation-review.md) compares the baseline and revised suite, lists surviving mutants and separates equivalence arguments from unresolved assertions.
 
-The testing summary is a dated measurement. After completing `make mutation > mutation.log 2>&1` and `make fuzz > fuzz.log 2>&1`, combine the root and tests-module profiles with `python3 scripts/merge_coverage.py root.cover properties.cover > coverage.out` as CI does, then run:
+The testing summary is a dated measurement. After completing `make mutation > mutation.log 2>&1` and `make fuzz > fuzz.log 2>&1`, combine the root and tests-module profiles with `python3 scripts/merge_coverage.py --root-module root.cover properties.cover > coverage.out` as CI does, then run:
 
 ```sh
 make testing-doc DOC_COVERAGE=coverage.out DOC_MUTATION=mutation.log DOC_FUZZ=fuzz.log DOC_COMMIT="$(git rev-parse HEAD)"
@@ -32,20 +32,22 @@ The generator rejects incomplete mutation/fuzz runs and records source-log hashe
 ## Measured results
 
 <!-- testing-metrics:start -->
-Measured 2026-11-15 at [da95fde](https://github.com/nao1215/embargo/commit/da95fde8d01b3e3214d70a131aceb07696eedca9).
+Measured 2026-11-15 at [54bd3c7](https://github.com/nao1215/embargo/commit/54bd3c719340a52e2fc062c9c060b2323f2670fb).
 
 | Measurement | Result | Conditions |
 |---|---|---|
-| Statement coverage | 94.9% (2893/3048) | Root and integration suites combined |
-| Mutation score | 90.06% | gremlins v0.6.0, root tests, 4 workers, 10x timeout |
-| Mutations | 1676 killed, 185 lived, 316 uncovered, 36 timed out | Timeouts do not count as killed |
-| Mutation coverage | 85.48% | Mutated statements exercised by root tests |
-| Fuzzing | 9 targets, 2323625 executions | 10 seconds per target |
+| Statement coverage | 97.0% (3013/3105) | Root and integration suites combined |
+| Mutation score | 86.21% | gremlins v0.6.0, root tests, 4 workers, 10x timeout |
+| Mutations | 1794 killed, 287 lived, 220 uncovered, 42 timed out | Timeouts do not count as killed |
+| Mutation coverage | 90.44% | Mutated statements exercised by root tests |
+| Fuzzing | 9 targets, 2726828 executions | 10 seconds per target |
 <!-- testing-metrics:end -->
 
-## Round 12 measurement boundary
+## Round 13 measurement boundary
 
-The [mutation log](performance/round12-mutation.txt), [fuzz log](performance/round12-fuzz.txt) and [combined root coverage profile](performance/round12-coverage.txt) retain the completed evidence for da95fde. The root and integration profiles instrument dependencies for statement coverage; adapter and tests-module source blocks are excluded from that root total. Gremlins uses its default per-package root-test mode and walks nested source directories, so its uncovered count also includes uninstrumented child-process paths, parser paths exercised from another package, and nested-module source. Mutation coverage is therefore narrower than combined statement coverage; neither percentage proves that arbitrary secrets cannot leak.
+The [mutation log](performance/round13-mutation.txt), [fuzz log](performance/round13-fuzz.txt) and [combined root coverage profile](performance/round13-coverage.txt) retain the completed evidence for 54bd3c7. The root and integration profiles instrument dependencies for statement coverage; adapter and tests-module source blocks are excluded from that root total. Gremlins uses its default per-package root-test mode and walks nested source directories, so its uncovered count also includes uninstrumented child-process paths, parser paths exercised from another package, and nested-module source. Mutation coverage is therefore narrower than combined statement coverage; neither percentage proves that arbitrary secrets cannot leak.
+
+The full-run efficacy fell from 90.06% in round 12 to 86.21%; exercised mutations rose from 85.48% to 90.44%. More covered mutations also exposed more missing assertions. The [round 13 survivor review](mutation-review.md#round-13-log-context-boundaries) records a separate changed-lines run with all root tests and the boundary tests added afterward. Its focused score does not replace the full-run score above.
 
 The existing root mutation command uses four workers. This run explicitly used timeout coefficient 10. Timeouts remain a separate category. The nine ten-second fuzz runs completed under GOMAXPROCS=4; their execution counts are observations, not a stable throughput benchmark. The Guard fixture separately exercises real process output, timeout/overflow, parallel tests and inherited child descriptors, and the CI matrix runs its goleak lifecycle on Linux, Windows and macOS.
 
