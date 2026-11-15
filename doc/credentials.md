@@ -10,7 +10,7 @@ Provider secret fields include X-Amz-Signature, sig, AccountKey, SharedAccessSig
 
 | Family | Public format evidence | Implemented boundary |
 |---|---|---|
-| OpenAI | [API authentication](https://developers.openai.com/api/reference/overview), [project API keys](https://platform.openai.com/docs/api-reference/project-api-keys) | sk-proj- and sk-svcacct-, at least 16 token characters |
+| OpenAI | [OpenAI project-key example](https://github.com/openai/codex-action/blob/main/examples/test-sandbox-protections.yml), [public service-key format documentation](https://github.com/mongodb/kingfisher/blob/main/docs/BLAST_RADIUS.md#openai-openai) | sk-proj- and sk-svcacct-, at least 16 token characters |
 | Anthropic | [API examples](https://platform.claude.com/docs/en/manage-claude/compliance-api-access) | sk-ant-api03- and sk-ant-admin01-, at least 16 characters |
 | Stripe | [API keys](https://docs.stripe.com/keys), [webhook signatures](https://docs.stripe.com/webhooks/signature) | sk_live_, rk_live_, whsec_; public pk_live_ is excluded |
 | GitHub | [Token formats](https://github.blog/engineering/platform-security/behind-githubs-new-authentication-token-formats/) | Existing classic and github_pat_ detector retained |

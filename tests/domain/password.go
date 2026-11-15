@@ -31,7 +31,7 @@ func (Password) LogValue() slog.Value { return slog.StringValue("[REDACTED]") }
 // MarshalJSON protects JSON leaves, including nested structured logger values.
 func (Password) MarshalJSON() ([]byte, error) { return json.Marshal("[REDACTED]") }
 
-// MarshalText protects text encoding and JSON map keys.
+// MarshalText protects text encoding; JSON bypasses it for string-typed map keys.
 func (Password) MarshalText() ([]byte, error) { return []byte("[REDACTED]"), nil }
 
 // MarshalXML protects XML element content.

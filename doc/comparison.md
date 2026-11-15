@@ -34,27 +34,27 @@ The invalid-Luhn row is a deliberate negative example. embargo's default minimum
 <!-- comparison:start -->
 | Benchmark | ns/op | B/op | allocs/op |
 |---|---:|---:|---:|
-| Comparison/clean/embargo | 2,115.5 | 88 | 11 |
-| Comparison/clean/masq | 6,418.5 | 792 | 50 |
-| Comparison/flat/embargo | 3,380.5 | 624 | 21 |
-| Comparison/flat/masq | 6,950.0 | 672 | 32 |
-| Comparison/large50/embargo | 30,558.5 | 10,001 | 125 |
-| Comparison/large50/masq | 130,974.0 | 12,710 | 561 |
-| Comparison/map/embargo | 9,551.5 | 1,496 | 56 |
-| Comparison/map/masq | 12,569.5 | 1,744 | 63 |
-| Comparison/nested/embargo | 7,727.0 | 960 | 44 |
-| Comparison/nested/masq | 11,421.0 | 1,784 | 61 |
-| ComparisonFormatter/clean | 1,044.5 | 0 | 0 |
-| ComparisonFormatter/flat | 711.0 | 32 | 2 |
-| ComparisonFormatter/large50 | 7,857.5 | 7,873 | 10 |
-| ComparisonFormatter/map | 558.2 | 0 | 0 |
-| ComparisonFormatter/nested | 510.8 | 0 | 0 |
-| ComparisonStruct/embargo | 4,780.0 | 1,000 | 42 |
-| ComparisonStruct/go_mask | 1,240.0 | 328 | 7 |
-| ComparisonText/embargo | 4,460.5 | 1,640 | 42 |
-| ComparisonText/godlp | 36,716.5 | 11,714 | 59 |
-| StructuredPath/json_shape | 4,930.0 | 1,000 | 42 |
-| StructuredPath/old_string | 1,917.5 | 752 | 14 |
+| Comparison/clean/embargo | 1,893.5 | 88 | 11 |
+| Comparison/clean/masq | 5,629.5 | 792 | 50 |
+| Comparison/flat/embargo | 3,009.5 | 624 | 21 |
+| Comparison/flat/masq | 6,231.0 | 672 | 32 |
+| Comparison/large50/embargo | 26,774.5 | 10,001 | 125 |
+| Comparison/large50/masq | 117,122.5 | 12,710 | 561 |
+| Comparison/map/embargo | 8,343.5 | 1,496 | 56 |
+| Comparison/map/masq | 10,770.0 | 1,744 | 63 |
+| Comparison/nested/embargo | 6,832.5 | 960 | 44 |
+| Comparison/nested/masq | 10,091.0 | 1,784 | 61 |
+| ComparisonFormatter/clean | 1,100.5 | 0 | 0 |
+| ComparisonFormatter/flat | 1,251.5 | 32 | 2 |
+| ComparisonFormatter/large50 | 14,155.0 | 7,873 | 10 |
+| ComparisonFormatter/map | 936.8 | 0 | 0 |
+| ComparisonFormatter/nested | 940.6 | 0 | 0 |
+| ComparisonStruct/embargo | 4,418.5 | 1,000 | 42 |
+| ComparisonStruct/go_mask | 610.0 | 328 | 7 |
+| ComparisonText/embargo | 4,234.0 | 1,640 | 42 |
+| ComparisonText/godlp | 31,012.5 | 11,714 | 59 |
+| StructuredPath/json_shape | 4,361.0 | 1,000 | 42 |
+| StructuredPath/old_string | 1,552.0 | 752 | 14 |
 
 Measured 2026-11-15 with go version go1.26.11 linux/amd64, Linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S; GOMAXPROCS=1, ten 200 ms samples per case. Construction is outside the timed loop; JSON encoding and masking are included. Source and dependency fingerprints, CPU affinity and command are in [comparison.json](comparison.json).
 <!-- comparison:end -->

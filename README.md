@@ -202,7 +202,7 @@ Coverage 96.8% · mutation score 90.68% · 7 fuzz targets, 2949231 executions.
 <!-- benchmarks:start -->
 ![Scanner throughput and slog time](doc/images/benchmarks.svg)
 
-All detectors scan sensitive text at 9.89 MB/s; masking a clean slog event takes 2.26 µs, 2.7× the plain handler.
+All detectors scan sensitive text at 4.63 MB/s; masking a clean slog event takes 2.61 µs, 3.0× the plain handler.
 <!-- benchmarks:end -->
 
 [Machine, method, profiles and full results](doc/benchmarks.md).

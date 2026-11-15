@@ -103,51 +103,64 @@ CPU 31 is specific to this machine; select an available CPU on another host. The
 ## Measured results
 
 <!-- benchmarks:start -->
-Measured 2026-11-15 with go1.26.11, linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S, GOMAXPROCS=1; median of ten 200 ms samples at [7d54404](https://github.com/nao1215/embargo/commit/7d54404faaecbc271d95f8ad6751fc063e64b65a).
+Measured 2026-11-15 with go1.26.11, linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S, GOMAXPROCS=1; median of ten 200 ms samples at [85b2b44](https://github.com/nao1215/embargo/commit/85b2b44f92ddaf329746ea7be54c65b59dd93829).
 
 Background load: no intentional concurrent workload.
 
 | Operation | ns/op | MB/s | B/op | allocs/op |
 |---|---:|---:|---:|---:|
-| Scanner WithAll, clean | 29473.5 | 93.38 | 0 | 0 |
-| Scanner WithAll, dirty | 3348209.0 | 9.89 | 996181 | 12476 |
-| Mask | 3704.5 | 794.68 | 13816 | 12 |
-| Writer only | 11.2 | 48476.57 | 0 | 0 |
-| Recorder + Check | 74432.5 | 7.31 | 37331 | 547 |
-| Plain slog, clean | 837.1 | — | 16 | 1 |
-| Masked slog, clean | 2263.5 | — | 80 | 5 |
-| Plain slog, dirty | 838.9 | — | 16 | 1 |
-| Masked slog, dirty | 1771.0 | — | 352 | 13 |
+| Scanner WithAll, clean | 85460.5 | 32.20 | 0 | 0 |
+| Scanner WithAll, dirty | 8532994.5 | 4.63 | 1187111 | 14113 |
+| Mask | 6324.0 | 465.54 | 13816 | 12 |
+| Writer only | 11.6 | 46994.21 | 0 | 0 |
+| Recorder + Check | 77363.5 | 7.04 | 40398 | 590 |
+| Plain slog, clean | 878.2 | — | 16 | 1 |
+| Masked slog, clean | 2614.5 | — | 80 | 5 |
+| Plain slog, dirty | 870.2 | — | 16 | 1 |
+| Masked slog, dirty | 3568.5 | — | 352 | 13 |
 
 <details>
 <summary>Per-detector Scanner throughput</summary>
 
 | Detector | Clean MB/s | Dirty MB/s |
 |---|---:|---:|
-| aba_routing | 446.44 | 49.84 |
-| ach_trace | 651.06 | 9.16 |
-| all | 93.38 | 9.89 |
-| awskey | 1391.17 | 162.77 |
-| bank_account | 590.06 | 10.32 |
-| btc | 865.82 | 85.48 |
-| card_expiry | 1809.91 | 6.58 |
-| cvv | 742.65 | 8.57 |
-| email | 43679.31 | 73.91 |
-| eth | 2413.51 | 268.25 |
-| github_token | 2198.22 | 146.95 |
-| google_api_key | 962.98 | 134.87 |
-| iban | 689.84 | 51.30 |
-| ipaddr | 18232.08 | 45.33 |
-| jwt | 1135.42 | 29.78 |
-| merchant_id | 341.72 | 13.19 |
-| mynumber | 426.35 | 51.15 |
-| pan | 4814.55 | 41.80 |
-| payment_token | 142.49 | 131.70 |
-| phone_jp | 17637.80 | 76.35 |
-| private_key_pem | 1443.59 | 202.82 |
-| slack_token | 999.69 | 75.16 |
-| swiftbic | 179.21 | 35.26 |
-| uk_sortcode | 637.61 | 48.81 |
+| aba_routing | 442.81 | 48.38 |
+| ach_trace | 1215.10 | 4.71 |
+| all | 32.20 | 4.63 |
+| awskey | 949.77 | 93.55 |
+| bank_account | 586.50 | 5.92 |
+| btc | 796.71 | 44.97 |
+| card_expiry | 1073.70 | 3.60 |
+| credential | 90.41 | 39.59 |
+| cvv | 728.23 | 4.64 |
+| email | 25457.90 | 57.31 |
+| eth | 1261.26 | 144.32 |
+| github_token | 1164.56 | 126.62 |
+| google_api_key | 971.89 | 323.10 |
+| high_entropy | 1130.57 | 103.65 |
+| iban | 727.59 | 104.85 |
+| ipaddr | 36507.21 | 46.34 |
+| jwt | 1869.76 | 41.78 |
+| merchant_id | 361.21 | 11.83 |
+| mynumber | 807.46 | 49.31 |
+| pan | 4754.85 | 40.41 |
+| payment_token | 141.19 | 125.57 |
+| phone_jp | 17311.03 | 41.86 |
+| private_key_pem | 779.14 | 38.95 |
+| service_token | 239.06 | 201.69 |
+| slack_token | 733.08 | 70.98 |
+| swiftbic | 191.16 | 33.59 |
+| uk_sortcode | 443.36 | 42.86 |
 
 </details>
 <!-- benchmarks:end -->
+
+## Round 12 cost of discovering forgotten credentials
+
+[Paired raw results and benchstat](performance/round12-benchstat.txt) compare main 9c9d3cf with 85b2b44 on CPU 8, Go 1.26.11, GOMAXPROCS=1, ten 200 ms samples per case, alternating the baseline/head order each pair. [Metadata](performance/round12-metadata.json) records the exact command and commits. The earlier unpinned exploratory run also slowed plain slog by roughly 20%, so it was not used to attribute a code regression.
+
+Email, IP and Japanese-phone clean scans are statistically unchanged (108.8→107.0 ns, 154.9→153.8 ns, 159.0→161.2 ns). This round does not recover the 45–51 ns added by round 9's percent-decoding scan. Removing that pass would break the encoded-value detection contract; no speculative fast path was shipped.
+
+All-detector clean scans increase from 47.26 to 84.22 µs (+78.23%) because the default set now parses credential assignments and URL/DSN syntax and scans unprefixed entropy candidates. Common-key normalization uses stack storage to reduce the new parser's cost. Clean masked slog increases 2.340→2.613 µs (+11.67%) and dirty masked slog 3.338→3.517 µs (+5.35%); plain slog also changes +3.61%/+2.72%, showing residual environmental noise. The paired cases retain the same allocations. Explicit WithKinds avoids the cost of detectors the caller does not need.
+
+The published all-detector dirty corpus now includes the three new families, so its throughput is not an identical-work comparison with round 11. The paired clean comparison above keeps the input unchanged and exposes the default-policy cost. The generated table includes individual clean/dirty measurements for all 26 detectors.

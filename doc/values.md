@@ -95,7 +95,7 @@ func (Password) LogValue() slog.Value { return slog.StringValue("[REDACTED]") }
 // MarshalJSON protects JSON leaves, including nested structured logger values.
 func (Password) MarshalJSON() ([]byte, error) { return json.Marshal("[REDACTED]") }
 
-// MarshalText protects text encoding and JSON map keys.
+// MarshalText protects text encoding; JSON bypasses it for string-typed map keys.
 func (Password) MarshalText() ([]byte, error) { return []byte("[REDACTED]"), nil }
 
 // MarshalXML protects XML element content.
@@ -111,10 +111,12 @@ func (Password) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 | GoString | `%#v` | Does not protect JSON or slog |
 | Format | `%v`, `%+v`, `%#v`, `%s`, `%q`, `%x` | fmt itself handles `%T` and `%p` |
 | LogValue | Direct slog attributes, including embargo's handler | Nested JSON fields do not call LogValue |
-| MarshalJSON | JSON values, nested structs/maps and JSON-based logger paths | JSON map keys use MarshalText |
-| MarshalText | Text encoders, JSON map keys and XML fallback | A more specific marshaler takes precedence |
+| MarshalJSON | JSON values, nested structs/maps and JSON-based logger paths | String-typed JSON map keys bypass both marshaling methods |
+| MarshalText | Text encoders and XML fallback | JSON calls this for non-string map-key types; string kinds take precedence |
 | MarshalXML | XML element content | Does not protect another serialization format |
 
 The embargo handler resolves direct LogValuer values and honors encoding/json's MarshalJSON and MarshalText rules for structured values. Adapters inspect the bytes their logger actually encoded; they honor methods that logger invokes and cannot invent missing method calls. embargotest observes the resulting bytes. `CheckValue(t, func(canary string) any { return Password(canary) })` checks all supported formatter paths and names each path that leaks or cannot be exercised. It also checks Secret and Input in this repository. Homemade types often omit `%#v`, `%+v`, `%q`, MarshalText or LogValue; Secret exists to maintain that contract for users who want it.
 
 A plain string or struct remains supported: the sensitive-key rule and detectors provide the net for values that have neither a wrapper nor formatting methods. No formatter contract protects an explicit conversion such as `string(password)`, a deliberate Reveal, or a debugger memory dump.
+
+CheckValue exercises values, not map keys. In particular, encoding/json reads a defined string type used as a map key directly, even when it implements MarshalText; `map[Password]string` therefore exposes the underlying key. Keep secrets out of map keys, or use a comparable struct wrapper with MarshalText such as Secret. This is a standard-library dispatch rule that an output adapter cannot change before encoding; detectors remain a separate safeguard.
