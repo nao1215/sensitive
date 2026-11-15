@@ -21,7 +21,7 @@ def source_hash():
     paths = sorted(list(ROOT.glob("*.go")) + list((ROOT / "internal").rglob("*.go")) + list((ROOT / "tests").glob("comparison*_test.go")) + [ROOT / "go.mod", ROOT / "tests/go.mod", ROOT / "tests/go.sum"])
     digest = hashlib.sha256()
     for path in paths:
-        digest.update(str(path.relative_to(ROOT)).encode() + b"\0" + path.read_text().encode())
+        digest.update(path.relative_to(ROOT).as_posix().encode() + b"\0" + path.read_text(encoding="utf-8").encode())
     return digest.hexdigest()
 
 
@@ -41,7 +41,7 @@ def measure():
     env = dict(os.environ, GOMAXPROCS="1", GOTOOLCHAIN="go1.26.11")
     subprocess.run(["go", "-C", "tests", "test", "-run", "^TestComparison(Correctness|OtherLibraries)$", "-count=1", "."], cwd=ROOT, env=dict(env, UPDATE_DOCS="1"), check=True)
     raw = subprocess.check_output(COMMAND, cwd=ROOT, env=env, text=True)
-    (DOC / "comparison.raw.txt").write_text(raw)
+    (DOC / "comparison.raw.txt").write_text(raw, encoding="utf-8")
     with tempfile.TemporaryDirectory(prefix="embargo-benchstat-") as tmp:
         files = []
         for mode in ("masq", "embargo"):
@@ -55,10 +55,10 @@ def measure():
                 match = re.match(r"(BenchmarkComparison/[^/]+)/" + mode + r"(-\d+)?(\s.+)", line)
                 if match:
                     lines.append(match[1] + (match[2] or "") + match[3])
-            path.write_text("\n".join(lines) + "\n")
+            path.write_text("\n".join(lines) + "\n", encoding="utf-8")
             files.append(path.name)
         stats = subprocess.check_output(["benchstat", *files], cwd=tmp, text=True)
-    (DOC / "comparison.benchstat.txt").write_text(stats)
+    (DOC / "comparison.benchstat.txt").write_text(stats, encoding="utf-8")
     meta = {
         "date": datetime.datetime.now(datetime.timezone.utc).date().isoformat(),
         "command": "GOMAXPROCS=1 GOTOOLCHAIN=go1.26.11 " + " ".join(COMMAND),
@@ -72,7 +72,7 @@ def measure():
         "background_load": "no intentional concurrent workload",
         "versions": {"masq": "v0.2.3", "slog-formatter": "v1.3.0", "godlp": "v1.2.15", "go-mask": "v0.6.2"},
     }
-    (DOC / "comparison.json").write_text(json.dumps(meta, indent=2) + "\n")
+    (DOC / "comparison.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
 
 
 def rendered(raw, meta):
@@ -102,25 +102,25 @@ def main():
     args = parser.parse_args()
     if args.measure:
         measure()
-    raw = (DOC / "comparison.raw.txt").read_text()
-    meta = json.loads((DOC / "comparison.json").read_text())
+    raw = (DOC / "comparison.raw.txt").read_text(encoding="utf-8")
+    meta = json.loads((DOC / "comparison.json").read_text(encoding="utf-8"))
     if meta["source_sha256"] != source_hash():
         raise SystemExit("comparison source changed: run make comparison-doc")
     for name, field in (("comparison.raw.txt", "raw_sha256"), ("comparison.benchstat.txt", "benchstat_sha256")):
-        if hashlib.sha256((DOC / name).read_text().encode()).hexdigest() != meta[field]:
+        if hashlib.sha256((DOC / name).read_text(encoding="utf-8").encode()).hexdigest() != meta[field]:
             raise SystemExit("comparison evidence changed: " + name)
     table, svg = rendered(raw, meta)
     page = DOC / "comparison.md"
-    original = page.read_text()
+    original = page.read_text(encoding="utf-8")
     updated = re.sub(r"(?s)(<!-- comparison:start -->\n).*?(<!-- comparison:end -->)", lambda m: m[1] + table + m[2], original)
-    correctness = (DOC / "comparison-correctness.md").read_text()
+    correctness = (DOC / "comparison-correctness.md").read_text(encoding="utf-8")
     updated = re.sub(r"(?s)(<!-- correctness:start -->\n).*?(<!-- correctness:end -->)", lambda m: m[1] + correctness + m[2], updated)
     for path, content in ((page, updated), (DOC / "images/comparison.svg", svg)):
         if args.check:
-            if path.read_text() != content:
+            if path.read_text(encoding="utf-8") != content:
                 raise SystemExit("stale generated comparison: " + str(path))
         else:
-            path.write_text(content)
+            path.write_text(content, encoding="utf-8")
 
 
 if __name__ == "__main__":

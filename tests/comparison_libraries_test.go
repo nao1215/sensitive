@@ -65,7 +65,7 @@ func TestComparisonOtherLibraries(t *testing.T) {
 	}
 	writeComparisonTable(t, &table, "\n| Shared event | slog-formatter v1.3.0 PIIFormatter | go-mask v0.6.2 field rules |\n|---|---|---|\n")
 	events := comparisonEvents()
-	for _, name := range []string{"flat", "nested", comparisonMap, comparisonClean, "large50"} {
+	for _, name := range []string{comparisonFlat, comparisonNested, comparisonMap, comparisonClean, comparisonLarge} {
 		attrs := events[name]
 		var out bytes.Buffer
 		slog.New(formatterHandler(&out)).LogAttrs(t.Context(), slog.LevelInfo, "request", attrs...)
@@ -110,7 +110,9 @@ func TestComparisonOtherLibraries(t *testing.T) {
 }
 
 func BenchmarkComparisonFormatter(b *testing.B) {
-	for name, attrs := range comparisonEvents() {
+	events := comparisonEvents()
+	for _, name := range []string{comparisonFlat, comparisonNested, comparisonMap, comparisonClean, comparisonLarge} {
+		attrs := events[name]
 		b.Run(name, func(b *testing.B) {
 			logger := slog.New(formatterHandler(io.Discard))
 			ctx := context.Background()

@@ -9,9 +9,11 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/m-mizutani/masq"
 
@@ -19,6 +21,9 @@ import (
 )
 
 const (
+	comparisonFlat           = "flat"
+	comparisonNested         = "nested"
+	comparisonLarge          = "large50"
 	comparisonPasswordKey    = "password"
 	comparisonID             = "u123"
 	comparisonOpaque         = "opaque-value"
@@ -52,7 +57,7 @@ func comparisonScanner() *embargo.Scanner {
 }
 
 func comparisonMasq() func([]string, slog.Attr) slog.Attr {
-	return masq.New(masq.WithRegex(regexp.MustCompile(`[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}`)), masq.WithRegex(regexp.MustCompile(`\b(?:\d[ -]?){12,18}\d\b`)), masq.WithFieldName("Password"), masq.WithFieldName(comparisonPasswordKey), masq.WithFieldName("token"), masq.WithTag("secret"))
+	return masq.New(masq.WithAllowedType(reflect.TypeFor[time.Time](), reflect.TypeFor[slog.Level]()), masq.WithRegex(regexp.MustCompile(`[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}`)), masq.WithRegex(regexp.MustCompile(`\b(?:\d[ -]?){12,18}\d\b`)), masq.WithFieldName("Password"), masq.WithFieldName(comparisonPasswordKey), masq.WithFieldName("token"), masq.WithTag("secret"))
 }
 
 func comparisonHandler(mode string, out io.Writer) slog.Handler {
@@ -136,21 +141,23 @@ func TestComparisonCorrectness(t *testing.T) {
 
 func comparisonEvents() map[string][]slog.Attr {
 	events := map[string][]slog.Attr{
-		"flat":          {slog.String(comparisonEmailKey, comparisonEmail), slog.String("card", "4111111111111111")},
-		"nested":        {slog.Any("user", comparisonUser{comparisonID, comparisonEmail, comparisonPassword, comparisonRecovery, 17})},
-		comparisonMap:   {slog.Any("data", map[string]any{comparisonEmailKey: comparisonEmail, "card": "4111111111111111", comparisonPasswordKey: comparisonPassword, "count": 17})},
-		comparisonClean: {slog.String("status", "accepted"), slog.Int("count", 17), slog.Bool("ok", true)},
+		comparisonFlat:   {slog.String(comparisonEmailKey, comparisonEmail), slog.String("card", "4111111111111111")},
+		comparisonNested: {slog.Any("user", comparisonUser{comparisonID, comparisonEmail, comparisonPassword, comparisonRecovery, 17})},
+		comparisonMap:    {slog.Any("data", map[string]any{comparisonEmailKey: comparisonEmail, "card": "4111111111111111", comparisonPasswordKey: comparisonPassword, "count": 17})},
+		comparisonClean:  {slog.String("status", "accepted"), slog.Int("count", 17), slog.Bool("ok", true)},
 	}
 	large := make([]slog.Attr, 0, 50)
 	for i := range 48 {
 		large = append(large, slog.String(fmt.Sprintf("field%d", i), "clean application value"))
 	}
-	events["large50"] = append(large, events["flat"]...)
+	events[comparisonLarge] = append(large, events[comparisonFlat]...)
 	return events
 }
 
 func BenchmarkComparison(b *testing.B) {
-	for name, attrs := range comparisonEvents() {
+	events := comparisonEvents()
+	for _, name := range []string{comparisonFlat, comparisonNested, comparisonMap, comparisonClean, comparisonLarge} {
+		attrs := events[name]
 		b.Run(name, func(b *testing.B) {
 			for _, mode := range []string{comparisonMasqName, comparisonEmbargoName} {
 				b.Run(mode, func(b *testing.B) {

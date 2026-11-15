@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"strconv"
+	"unicode/utf8"
 )
 
 const (
@@ -18,7 +18,7 @@ type eventScanner struct {
 	remaining int
 }
 
-func jsonFailure() error { return errors.New("embargo: invalid or unmaskable JSON log event") }
+func jsonFailure() error { return errors.New("embargo: invalid or unmaskable JSON") }
 
 // MaskJSON masks one JSON document using this scanner's detectors and sensitive
 // key policy. It preserves object order, duplicate keys, arrays, nulls, booleans
@@ -41,113 +41,187 @@ func (scanner *Scanner) MaskJSON(data []byte) (masked []byte, err error) {
 	if len(data) > maxEventBytes {
 		return nil, jsonFailure()
 	}
-	data = bytes.TrimSpace(data)
 	if scanner == nil || len(data) == 0 || !json.Valid(data) {
 		return nil, jsonFailure()
 	}
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.UseNumber()
-	masked, err = readValue(decoder, &eventScanner{scanner: scanner, remaining: maxScanBytes}, 0, "")
-	if err != nil || len(masked) > maxEventBytes {
+
+	data = bytes.TrimSpace(data)
+	walker := jsonWalker{data: data, result: make([]byte, 0, len(data)), scanner: eventScanner{scanner: scanner, remaining: maxScanBytes}}
+	if err := walker.value(0, "", false); err != nil {
 		return nil, jsonFailure()
 	}
 	complete = true
-	return masked, nil
+	return walker.result, nil
 }
 
-func readValue(decoder *json.Decoder, scanner *eventScanner, depth int, context string) ([]byte, error) {
+// json.Valid establishes grammar and bounds before this allocation-light walk.
+// Original numeric lexemes are retained, equivalent to decoding with UseNumber.
+// Unlike a map tree, the walk retains every duplicate key and its value.
+type jsonWalker struct {
+	scanner eventScanner
+	data    []byte
+	result  []byte
+	pos     int
+}
+
+func (w *jsonWalker) space() {
+	for w.pos < len(w.data) {
+		switch w.data[w.pos] {
+		case ' ', '\t', '\r', '\n':
+			w.pos++
+		default:
+			return
+		}
+	}
+}
+
+func (w *jsonWalker) value(depth int, context string, hidden bool) error {
 	if depth > maxDepth {
-		return nil, jsonFailure()
+		return jsonFailure()
 	}
-	token, err := decoder.Token()
-	if err != nil {
-		return nil, jsonFailure()
+	w.space()
+	if !hidden && context != "" && w.scanner.scanner.sensitiveKey(context) {
+		w.result = append(w.result, `"`+redactionMarker+`"`...)
+		hidden = true
 	}
-	if context != "" && scanner.scanner.sensitiveKey(context) {
-		if delimiter, ok := token.(json.Delim); ok {
-			if err := skipJSONContainer(decoder, depth, delimiter); err != nil {
-				return nil, err
+	switch w.data[w.pos] {
+	case '{', '[':
+		if err := w.container(depth, context, hidden); err != nil {
+			return err
+		}
+	case '"':
+		raw := w.stringToken()
+		if !hidden {
+			if _, err := w.stringValue(raw, context); err != nil {
+				return err
 			}
 		}
-		return []byte(`"` + redactionMarker + `"`), nil
-	}
-	switch value := token.(type) {
-	case json.Delim:
-		return readContainer(decoder, scanner, depth, value, context)
-	case string:
-		masked, err := scanner.maskScalar(value, context)
-		if err != nil {
-			return nil, err
-		}
-		return json.Marshal(masked)
-	case json.Number:
-		text := value.String()
-		masked, err := scanner.maskScalar(text, context)
-		if err != nil {
-			return nil, err
-		}
-		if masked != text {
-			return json.Marshal(masked)
-		}
-		return []byte(text), nil
-	case bool:
-		return []byte(strconv.FormatBool(value)), nil
-	case nil:
-		return []byte("null"), nil
 	default:
-		return nil, jsonFailure()
+		start := w.pos
+		for w.pos < len(w.data) {
+			c := w.data[w.pos]
+			if c == ',' || c == ']' || c == '}' || c == ' ' || c == '\n' || c == '\r' || c == '\t' {
+				break
+			}
+			w.pos++
+		}
+		if !hidden {
+			if err := w.scalar(w.data[start:w.pos], context); err != nil {
+				return err
+			}
+		}
 	}
+	if len(w.result) > maxEventBytes {
+		return jsonFailure()
+	}
+	return nil
 }
 
-func readContainer(decoder *json.Decoder, scanner *eventScanner, depth int, open json.Delim, context string) ([]byte, error) {
-	result := []byte(open.String())
-	first := true
-	for decoder.More() {
-		if !first {
-			result = append(result, ',')
-		}
-		first = false
+func (w *jsonWalker) scalar(raw []byte, context string) error {
+	if raw[0] == 't' || raw[0] == 'f' || raw[0] == 'n' {
+		w.result = append(w.result, raw...)
+		return nil
+	}
+	masked, err := w.scanner.maskScalar(string(raw), context)
+	if err != nil {
+		return err
+	}
+	if masked == string(raw) {
+		w.result = append(w.result, raw...)
+	} else {
+		w.appendString(masked)
+	}
+	return nil
+}
+
+func (w *jsonWalker) container(depth int, context string, hidden bool) error {
+	open := w.data[w.pos]
+	w.pos++
+	closeByte := byte(']')
+	if open == '{' {
+		closeByte = '}'
+	}
+	if !hidden {
+		w.result = append(w.result, open)
+	}
+	w.space()
+	for w.data[w.pos] != closeByte {
 		fieldContext := context
 		if open == '{' {
-			token, err := decoder.Token()
-			if err != nil {
-				return nil, jsonFailure()
+			raw := w.stringToken()
+			if !hidden {
+				var err error
+				fieldContext, err = w.stringValue(raw, "")
+				if err != nil {
+					return err
+				}
+				w.result = append(w.result, ':')
 			}
-			key, ok := token.(string)
-			if !ok {
-				return nil, jsonFailure()
-			}
-			fieldContext = key
-			masked, err := scanner.maskScalar(key, "")
-			if err != nil {
-				return nil, err
-			}
-			//nolint:errchkjson // Keep the explicit error check required by strict errcheck.
-			maskedKey, err := json.Marshal(masked)
-			if err != nil {
-				return nil, jsonFailure()
-			}
-			result = append(result, maskedKey...)
-			result = append(result, ':')
+			w.space()
+			w.pos++ // Colon, already checked by json.Valid.
 		}
-		value, err := readValue(decoder, scanner, depth+1, fieldContext)
-		if err != nil {
-			return nil, err
+		if err := w.value(depth+1, fieldContext, hidden); err != nil {
+			return err
 		}
-		result = append(result, value...)
-		if len(result) > maxEventBytes {
-			return nil, jsonFailure()
+		w.space()
+		if w.data[w.pos] == ',' {
+			w.pos++
+			if !hidden {
+				w.result = append(w.result, ',')
+			}
+			w.space()
 		}
 	}
-	closeToken, err := decoder.Token()
+	w.pos++
+	if !hidden {
+		w.result = append(w.result, closeByte)
+	}
+	return nil
+}
+
+func (w *jsonWalker) stringToken() []byte {
+	start := w.pos
+	w.pos++
+	for w.data[w.pos] != '"' {
+		if w.data[w.pos] == '\\' {
+			w.pos++
+		}
+		w.pos++
+	}
+	w.pos++
+	return w.data[start:w.pos]
+}
+
+// Decode escaped strings using encoding/json; plain UTF-8 needs no decoder.
+func (w *jsonWalker) stringValue(raw []byte, context string) (string, error) {
+	text := string(raw[1 : len(raw)-1])
+	if bytes.IndexByte(raw, '\\') >= 0 || !utf8.ValidString(text) {
+		if err := json.Unmarshal(raw, &text); err != nil {
+			return "", jsonFailure()
+		}
+	}
+	masked, err := w.scanner.maskScalar(text, context)
 	if err != nil {
-		return nil, jsonFailure()
+		return "", err
 	}
-	closeDelimiter, ok := closeToken.(json.Delim)
-	if !ok {
-		return nil, jsonFailure()
+	// Reuse unchanged JSON lexemes. Escape changed strings with encoding/json;
+	// invalid UTF-8 is normalized by the decoder before it reaches the output.
+	if masked == text && utf8.Valid(raw) {
+		w.result = append(w.result, raw...)
+	} else {
+		w.appendString(masked)
 	}
-	return append(result, closeDelimiter.String()...), nil
+	return text, nil
+}
+
+func (w *jsonWalker) appendString(text string) {
+	// Marshaling a string cannot fail. Keep the explicit boundary for panics.
+	//nolint:errchkjson // Keep the explicit error check required by strict errcheck.
+	encoded, err := json.Marshal(text)
+	if err != nil {
+		panic("embargo: JSON string encoding failed")
+	}
+	w.result = append(w.result, encoded...)
 }
 
 // Include the field name so context-based detectors can recognize, for example,
@@ -165,46 +239,15 @@ func (s *eventScanner) maskScalar(value, context string) (string, error) {
 	if prefixBytes == 0 {
 		return Mask(value, s.scanner.ScanString(value)), nil
 	}
-	prefix := context + ": "
-	findings := s.scanner.ScanString(prefix + value)
+	findings := s.scanner.ScanString(context + ": " + value)
 	spans := make([]Finding, 0, len(findings))
 	for _, finding := range findings {
-		if finding.End <= len(prefix) {
+		if finding.End <= prefixBytes {
 			continue
 		}
-		finding.Start = max(0, finding.Start-len(prefix))
-		finding.End -= len(prefix)
+		finding.Start = max(0, finding.Start-prefixBytes)
+		finding.End -= prefixBytes
 		spans = append(spans, finding)
 	}
 	return Mask(value, spans), nil
-}
-
-// Hidden containers still obey the nesting bound, but do not invoke detectors.
-func skipJSONContainer(decoder *json.Decoder, depth int, open json.Delim) error {
-	if depth > maxDepth {
-		return jsonFailure()
-	}
-	for decoder.More() {
-		if open == '{' {
-			if _, err := decoder.Token(); err != nil {
-				return jsonFailure()
-			}
-		}
-		if depth == maxDepth {
-			return jsonFailure()
-		}
-		token, err := decoder.Token()
-		if err != nil {
-			return jsonFailure()
-		}
-		if delimiter, ok := token.(json.Delim); ok {
-			if err := skipJSONContainer(decoder, depth+1, delimiter); err != nil {
-				return err
-			}
-		}
-	}
-	if _, err := decoder.Token(); err != nil {
-		return jsonFailure()
-	}
-	return nil
 }

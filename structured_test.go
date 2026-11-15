@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -115,7 +116,7 @@ func TestSensitiveSlogGroups(t *testing.T) {
 func TestMaskJSONFailureBounds(t *testing.T) {
 	t.Parallel()
 	scanner := embargo.NewScanner()
-	for _, input := range []string{`{"x":`, `{} {}`, strings.Repeat("[", 66) + "0" + strings.Repeat("]", 66), `"` + strings.Repeat("a", 1<<20) + `"`} {
+	for _, input := range []string{"\v{}", "{}\f", "\u00a0[]", `{"x":`, `{} {}`, strings.Repeat("[", 66) + "0" + strings.Repeat("]", 66), `"` + strings.Repeat("a", 1<<20) + `"`} {
 		got, err := scanner.MaskJSON([]byte(input))
 		if err == nil || got != nil || strings.Contains(err.Error(), input) {
 			t.Fatal("invalid JSON accepted or error reflected input")
@@ -190,4 +191,55 @@ func FuzzMaskJSON(f *testing.F) {
 			t.Fatal("masking should be idempotent")
 		}
 	})
+}
+
+func FuzzJSONShape(f *testing.F) {
+	for _, seed := range []string{`{"n":9007199254740993,"x":1.0e+5}`, `{"\u0074oken":"visible","array":[true,false,null,-0]}`, `["\uD800","\uD834\uDD1E","a\"b","\\", "\n", "<>&"]`, "{\"x\":\"\xff\"}"} {
+		f.Add([]byte(seed))
+	}
+	scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithSensitiveKeys())
+	f.Fuzz(func(t *testing.T, data []byte) {
+		got, err := scanner.MaskJSON(data)
+		if err != nil {
+			return
+		}
+		decode := func(raw []byte) any {
+			decoder := json.NewDecoder(bytes.NewReader(raw))
+			decoder.UseNumber()
+			var result any
+			if err := decoder.Decode(&result); err != nil {
+				t.Fatal(err)
+			}
+			return result
+		}
+		if !reflect.DeepEqual(decode(data), decode(got)) {
+			t.Fatal("JSON semantics changed without a masking policy")
+		}
+	})
+}
+
+func TestSensitiveKeysCopyAndValidation(t *testing.T) {
+	t.Parallel()
+	names := []string{"pin"}
+	option := embargo.WithSensitiveKeys(names...)
+	names[0] = "other"
+	scanner := embargo.NewScanner(embargo.WithKinds(), option)
+	got, err := scanner.MaskJSON([]byte(`{"pin":false,"other":"public"}`))
+	if err != nil || string(got) != `{"pin":"[REDACTED]","other":"public"}` {
+		t.Fatal("option retained caller slice")
+	}
+	for _, name := range []string{"", "_- ."} {
+		func() {
+			defer func() {
+				if recover() != "embargo: empty sensitive key" {
+					t.Error("invalid key panic changed")
+				}
+			}()
+			embargo.WithSensitiveKeys(name)
+		}()
+	}
+	var scannerNil *embargo.Scanner
+	if got, err := scannerNil.MaskJSON([]byte(`{}`)); err == nil || got != nil {
+		t.Fatal("nil policy accepted")
+	}
 }

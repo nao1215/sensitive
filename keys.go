@@ -10,6 +10,7 @@ import "strings"
 // A match masks the entire value in slog attributes/groups and encoded JSON
 // objects, including the zap, zerolog and logrus adapters. Text Scan is unchanged;
 // use MaskJSON in an embargotest expectation to check structured key policy.
+// An empty or separator-only name panics with a fixed message.
 func WithSensitiveKeys(keys ...string) ScannerOption {
 	selected := make(map[string]struct{}, len(keys))
 	for _, key := range keys {

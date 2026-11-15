@@ -17,8 +17,8 @@ func JSON(data []byte, scanner *embargo.Scanner) ([]byte, error) {
 	if len(data) > maxEventBytes {
 		return nil, failure()
 	}
-	data = bytes.TrimSpace(data)
-	if len(data) == 0 || data[0] != '{' {
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) == 0 || trimmed[0] != '{' {
 		return nil, failure()
 	}
 	masked, err := scanner.MaskJSON(data)
