@@ -213,6 +213,9 @@ Go 1.26.11 or later, on Linux, macOS or Windows. [Release history and migration]
 
 [MIT License](LICENSE).
 
+The [Go gopher](https://go.dev/blog/gopher) was designed by [Renee French](https://reneefrench.blogspot.com/) and is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
+
 ## Contributors
 
 
