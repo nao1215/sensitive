@@ -156,6 +156,8 @@ func abaFederalReserveDistrict(digits []byte) string {
 }
 
 // abaDistrictName returns a Federal Reserve district name.
+//
+//nolint:mnd // District numbers are fixed Federal Reserve identifiers.
 func abaDistrictName(district int) string {
 	switch district {
 	case 1:
