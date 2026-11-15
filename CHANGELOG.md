@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+Implementation: [PR #57](https://github.com/nao1215/embargo/pull/57), [2aefa2a](https://github.com/nao1215/embargo/commit/2aefa2a).
+
 ### Breaking changes
 
 - Built-in detector implementations move to internal/detect as the first step toward a root runtime API. Continue using the embargo scanner entry points; direct detector package imports are removed. The following API migration replaces the remaining aliases and adds root masking.
