@@ -17,9 +17,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nao1215/sensitive"
-	"github.com/nao1215/sensitive/detector"
-	"github.com/nao1215/sensitive/mask"
+	"github.com/nao1215/embargo"
+	"github.com/nao1215/embargo/detector"
+	"github.com/nao1215/embargo/mask"
 	"golang.org/x/crypto/sha3"
 	"pgregory.net/rapid"
 )
@@ -40,7 +40,7 @@ func changedDigit(raw string, i int) string {
 func context(t *rapid.T) string {
 	return chars(t, " ;,:=\t\"()[]{}", rapid.IntRange(0, 80).Draw(t, "context length"))
 }
-func check(t *rapid.T, d sensitive.Detector, raw, label string) {
+func check(t *rapid.T, d embargo.Detector, raw, label string) {
 	prefix := context(t)
 	if rapid.Bool().Draw(t, "encoded separator") {
 		prefix += "v%" + rapid.SampledFrom([]string{"20", "09", "3D", "3d", "3A", "26", "22", "28", "29", "5B", "5D", "7B", "7D", "2C", "3B", "3F"}).Draw(t, "escape")
@@ -48,7 +48,7 @@ func check(t *rapid.T, d sensitive.Detector, raw, label string) {
 	prefix += label
 	suffix := context(t)
 	text := prefix + raw + suffix
-	s := sensitive.NewScanner(sensitive.WithDetector(d))
+	s := embargo.NewScanner(embargo.WithDetector(d))
 	want := s.ScanString(text)
 	if len(want) != 1 || want[0].RawValue != raw || want[0].Start != len(prefix) || want[0].End != len(prefix)+len(raw) {
 		t.Fatalf("%s rejected/mislocated %q: %+v", d.Name(), text, want)
@@ -71,8 +71,8 @@ func check(t *rapid.T, d sensitive.Detector, raw, label string) {
 	if err != nil || !reflect.DeepEqual(expected, got) {
 		t.Fatalf("ScanReader mismatch: %v", err)
 	}
-	var lines []sensitive.Finding
-	err = s.ScanLines(&chunkReader{strings.NewReader(padded), chunk}, func(n int, line []byte, f []sensitive.Finding) {
+	var lines []embargo.Finding
+	err = s.ScanLines(&chunkReader{strings.NewReader(padded), chunk}, func(n int, line []byte, f []embargo.Finding) {
 		if n != 1 || string(line) != padded {
 			t.Fatal("line changed")
 		}
@@ -104,7 +104,7 @@ func (r *chunkReader) Read(p []byte) (int, error) {
 	}
 	return r.reader.Read(p)
 }
-func rejects(t *rapid.T, d sensitive.Detector, raw string) {
+func rejects(t *rapid.T, d embargo.Detector, raw string) {
 	if got := d.Scan([]byte(raw)); len(got) != 0 {
 		t.Fatalf("%s accepted near-miss %q: %+v", d.Name(), raw, got)
 	}
@@ -259,7 +259,7 @@ func TestTokens(t *testing.T) {
 		t.Run(family, func(t *testing.T) {
 			rapid.Check(t, func(t *rapid.T) {
 				const alnum = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-				var d sensitive.Detector
+				var d embargo.Detector
 				var raw, bad, label string
 				switch family {
 				case "aws":

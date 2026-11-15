@@ -1,4 +1,4 @@
-package sensitive
+package embargo
 
 import (
 	"bufio"

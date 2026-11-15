@@ -1,10 +1,10 @@
-package sensitive
+package embargo
 
 import (
 	"bytes"
 	"sort"
 
-	"github.com/nao1215/sensitive/internal/ascii"
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 // Scanner detects sensitive data with configured [Detector] implementations. Create one with [NewScanner]; concurrent scans require each registered detector to support concurrent use.

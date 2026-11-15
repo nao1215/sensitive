@@ -1,15 +1,15 @@
-# sensitive
+# embargo
 
 sensitive detects sensitive data in text and returns its type, byte positions, and confidence, with optional masking.
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/sensitive.svg)](https://pkg.go.dev/github.com/nao1215/sensitive)
-![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/sensitive/coverage.svg)
-[![MultiPlatformUnitTest](https://github.com/nao1215/sensitive/actions/workflows/unit_test.yml/badge.svg)](https://github.com/nao1215/sensitive/actions/workflows/unit_test.yml)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nao1215/sensitive/badge)](https://scorecard.dev/viewer/?uri=github.com/nao1215/sensitive)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/embargo.svg)](https://pkg.go.dev/github.com/nao1215/embargo)
+![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/embargo/coverage.svg)
+[![MultiPlatformUnitTest](https://github.com/nao1215/embargo/actions/workflows/unit_test.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/unit_test.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nao1215/embargo/badge)](https://scorecard.dev/viewer/?uri=github.com/nao1215/embargo)
 
 ![logo](./doc/images/logo-small.png)
 
-## Try it in 30 seconds
+## Quick start
 
 Save this as `main.go` in a new directory:
 
@@ -20,11 +20,11 @@ package main
 import (
 	"fmt"
 
-	"github.com/nao1215/sensitive"
+	"github.com/nao1215/embargo"
 )
 
 func main() {
-	scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
+	scanner := embargo.NewScanner(embargo.WithPAN(), embargo.WithEmail())
 	text := "user tanaka@example.com paid with 4532015112830366"
 	for _, f := range scanner.ScanString(text) {
 		fmt.Printf("%s: %s (%.2f)\n", f.DetectorName, f.RawValue, f.Confidence)
@@ -37,15 +37,15 @@ func main() {
 
 ```sh
 go mod init example.com/scan
-go get github.com/nao1215/sensitive
+go get github.com/nao1215/embargo
 go run .
 ```
 
-This uses a test card number and an `example.com` address. Choose detectors explicitly as above; [NewScanner](https://pkg.go.dev/github.com/nao1215/sensitive#NewScanner) shows empty, selected, and all-detector configurations.
+This uses a test card number and an `example.com` address. Choose detectors explicitly as above; [NewScanner](https://pkg.go.dev/github.com/nao1215/embargo#NewScanner) shows empty, selected, and all-detector configurations.
 
-## Why sensitive?
+## Why embargo?
 
-Logs, support messages, and imported text can contain payment details, personal data, or credentials. sensitive finds their locations so your Go program can flag, classify, or mask them before forwarding the text.
+Logs, support messages, and imported text can contain payment details, personal data, or credentials. embargo finds their locations so your Go program can flag, classify, or mask them before forwarding the text.
 
 Dedicated parsers and checksum checks help distinguish candidates from ordinary text, including Japanese phone numbers and My Number. Detection results remain available when you need your own handling policy.
 
@@ -78,21 +78,21 @@ Dedicated parsers and checksum checks help distinguish candidates from ordinary 
 | `WithPrivateKeyPEM()` | PEM private key headers (RSA/EC/DSA/OpenSSH/PKCS#8) | `-----BEGIN [ALGO ]PRIVATE KEY-----` header parse |
 | `WithAll()` | All of the above | |
 
-The table summarizes validation; each [detector type](https://pkg.go.dev/github.com/nao1215/sensitive/detector) documents its exact acceptance rules and score. Detection does not establish that an account exists or that a credential authenticates. [WithAll](https://pkg.go.dev/github.com/nao1215/sensitive#WithAll) includes context-based matches; use individual options when false positives are costly.
+The table summarizes validation; each [detector type](https://pkg.go.dev/github.com/nao1215/embargo/detector) documents its exact acceptance rules and score. Detection does not establish that an account exists or that a credential authenticates. [WithAll](https://pkg.go.dev/github.com/nao1215/embargo#WithAll) includes context-based matches; use individual options when false positives are costly.
 
 ## Installation and requirements
 
-In an existing Go module, run `go get github.com/nao1215/sensitive`. The library requires Go 1.22 or later and is tested on Linux, macOS, and Windows.
+In an existing Go module, run `go get github.com/nao1215/embargo`. The library requires Go 1.22 or later and is tested on Linux, macOS, and Windows.
 
 ## Scan bytes, strings, or streams
 
-Use [Scan](https://pkg.go.dev/github.com/nao1215/sensitive#Scanner.Scan) for `[]byte`, [ScanString](https://pkg.go.dev/github.com/nao1215/sensitive#Scanner.ScanString) for strings, or [ScanReader](https://pkg.go.dev/github.com/nao1215/sensitive#Scanner.ScanReader) for a reader whose content fits in memory. For line-oriented logs, import `strings` and use [ScanLines](https://pkg.go.dev/github.com/nao1215/sensitive#Scanner.ScanLines):
+Use [Scan](https://pkg.go.dev/github.com/nao1215/embargo#Scanner.Scan) for `[]byte`, [ScanString](https://pkg.go.dev/github.com/nao1215/embargo#Scanner.ScanString) for strings, or [ScanReader](https://pkg.go.dev/github.com/nao1215/embargo#Scanner.ScanReader) for a reader whose content fits in memory. For line-oriented logs, import `strings` and use [ScanLines](https://pkg.go.dev/github.com/nao1215/embargo#Scanner.ScanLines):
 
 <!-- example: example_test.go:ExampleScanner_ScanLines -->
 ```go
-scanner := sensitive.NewScanner(sensitive.WithEmail())
+scanner := embargo.NewScanner(embargo.WithEmail())
 input := "safe line\nadmin@example.com\n"
-err := scanner.ScanLines(strings.NewReader(input), func(n int, line []byte, findings []sensitive.Finding) {
+err := scanner.ScanLines(strings.NewReader(input), func(n int, line []byte, findings []embargo.Finding) {
 	for _, f := range findings {
 		fmt.Printf("line %d [%d:%d]: %s\n", n, f.Start, f.End, line[f.Start:f.End])
 	}
@@ -104,25 +104,25 @@ if err != nil {
 // line 2 [0:17]: admin@example.com
 ```
 
-The method docs specify line limits, offsets, callback lifetime, and read errors. The [package documentation](https://pkg.go.dev/github.com/nao1215/sensitive) explains the scanning pipeline; [benchmarks](doc/benchmarks.md) record its measurements.
+The method docs specify line limits, offsets, callback lifetime, and read errors. The [package documentation](https://pkg.go.dev/github.com/nao1215/embargo) explains the scanning pipeline; [benchmarks](doc/benchmarks.md) record its measurements.
 
 ## Work with findings
 
-[Finding](https://pkg.go.dev/github.com/nao1215/sensitive/detector#Finding) exposes the matched value and detector-specific detail. Use `Is` or an `Is*` method to select a detector, `Kind` to classify financial data, PII, or credentials, and typed accessors such as `PANDetail` to read metadata without a direct type assertion.
+[Finding](https://pkg.go.dev/github.com/nao1215/embargo/detector#Finding) exposes the matched value and detector-specific detail. Use `Is` or an `Is*` method to select a detector, `Kind` to classify financial data, PII, or credentials, and typed accessors such as `PANDetail` to read metadata without a direct type assertion.
 
-The [detail example](https://pkg.go.dev/github.com/nao1215/sensitive/detector#example-Finding.PANDetail) shows brand and last-four access. [Scanner options](https://pkg.go.dev/github.com/nao1215/sensitive#example-NewScanner-Options) show how to retain overlapping matches and order findings by position. [Full-width digit support](https://pkg.go.dev/github.com/nao1215/sensitive/detector#hdr-Full_Width_Digits_and_Boundaries) lists the detectors that normalize Japanese numeric text.
+The [detail example](https://pkg.go.dev/github.com/nao1215/embargo/detector#example-Finding.PANDetail) shows brand and last-four access. [Scanner options](https://pkg.go.dev/github.com/nao1215/embargo#example-NewScanner-Options) show how to retain overlapping matches and order findings by position. [Full-width digit support](https://pkg.go.dev/github.com/nao1215/embargo/detector#hdr-Full_Width_Digits_and_Boundaries) lists the detectors that normalize Japanese numeric text.
 
 ## Filter by confidence
 
-[WithMinConfidence](https://pkg.go.dev/github.com/nao1215/sensitive#WithMinConfidence) selects the results to keep:
+[WithMinConfidence](https://pkg.go.dev/github.com/nao1215/embargo#WithMinConfidence) selects the results to keep:
 
 <!-- example: example_test.go:ExampleWithMinConfidence -->
 ```go
 text := "user tanaka@example.com bank account 12345678"
 for _, threshold := range []float64{0.4, 0.8} {
-	scanner := sensitive.NewScanner(
-		sensitive.WithEmail(), sensitive.WithBankAccount(),
-		sensitive.WithMinConfidence(threshold),
+	scanner := embargo.NewScanner(
+		embargo.WithEmail(), embargo.WithBankAccount(),
+		embargo.WithMinConfidence(threshold),
 	)
 	fmt.Printf("threshold %.1f: %d findings\n", threshold, len(scanner.ScanString(text)))
 }
@@ -131,20 +131,20 @@ for _, threshold := range []float64{0.4, 0.8} {
 // threshold 0.8: 1 findings
 ```
 
-Read the [confidence model](https://pkg.go.dev/github.com/nao1215/sensitive#hdr-Confidence) before using the score as a policy; `Finding.Level` offers named categories when an exact number is unnecessary.
+Read the [confidence model](https://pkg.go.dev/github.com/nao1215/embargo#hdr-Confidence) before using the score as a policy; `Finding.Level` offers named categories when an exact number is unnecessary.
 
 ## Mask findings
 
-Import `detector` and `mask` alongside `sensitive` to assign a strategy to each detector:
+Import `detector` and `mask` alongside `embargo` to assign a strategy to each detector:
 
 <!-- example: mask/example_test.go:ExampleMask -->
 ```go
-scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
+scanner := embargo.NewScanner(embargo.WithPAN(), embargo.WithEmail())
 text := "user tanaka@example.com paid with 4532015112830366"
 findings := scanner.ScanString(text)
 
 // Apply different masking strategies per detector.
-masked := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{
+masked := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{
 	detector.NamePAN:   mask.Last4,
 	detector.NameEmail: mask.Partial,
 })
@@ -154,11 +154,11 @@ fmt.Println(masked)
 // user t*****@example.com paid with ************0366
 ```
 
-[MaskAll](https://pkg.go.dev/github.com/nao1215/sensitive/mask#MaskAll) applies one strategy to every finding. The [strategy example](https://pkg.go.dev/github.com/nao1215/sensitive/mask#example-Mask-Strategies) compares `Redact`, `Last4`, `First1Last4`, `Partial`, and `Hash`; their docs specify what remains visible and how overlaps are handled.
+[MaskAll](https://pkg.go.dev/github.com/nao1215/embargo/mask#MaskAll) applies one strategy to every finding. The [strategy example](https://pkg.go.dev/github.com/nao1215/embargo/mask#example-Mask-Strategies) compares `Redact`, `Last4`, `First1Last4`, `Partial`, and `Hash`; their docs specify what remains visible and how overlaps are handled.
 
 ## Add a detector
 
-Use [WithDetector](https://pkg.go.dev/github.com/nao1215/sensitive#example-WithDetector) with `detector.NewRegex` for a custom pattern such as a ticket ID. For domain validation, implement [Detector](https://pkg.go.dev/github.com/nao1215/sensitive/detector#Detector). The [custom detector guide](https://pkg.go.dev/github.com/nao1215/sensitive#hdr-Custom_Detectors) explains hint selection and links the runnable example.
+Use [WithDetector](https://pkg.go.dev/github.com/nao1215/embargo#example-WithDetector) with `detector.NewRegex` for a custom pattern such as a ticket ID. For domain validation, implement [Detector](https://pkg.go.dev/github.com/nao1215/embargo/detector#Detector). The [custom detector guide](https://pkg.go.dev/github.com/nao1215/embargo#hdr-Custom_Detectors) explains hint selection and links the runnable example.
 
 ## Testing
 
@@ -166,7 +166,7 @@ The library has zero dependencies; test-only tools live in the separate [tests/]
 
 ## Contributing
 
-Bug reports, feature requests, and pull requests are welcome through [GitHub Issues](https://github.com/nao1215/sensitive/issues) and [CONTRIBUTING.md](CONTRIBUTING.md). Use synthetic data in tests and see [CLAUDE.md](CLAUDE.md) for development rules. You can also [sponsor maintenance](https://github.com/sponsors/nao1215).
+Bug reports, feature requests, and pull requests are welcome through [GitHub Issues](https://github.com/nao1215/embargo/issues) and [CONTRIBUTING.md](CONTRIBUTING.md). Use synthetic data in tests and see [CLAUDE.md](CLAUDE.md) for development rules. You can also [sponsor maintenance](https://github.com/sponsors/nao1215).
 
 ## License
 
@@ -182,7 +182,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/e
 <table>
   <tbody>
     <tr>
-      <td align="center" valign="top" width="14.28%"><a href="https://debimate.jp/"><img src="https://avatars.githubusercontent.com/u/22737008?v=4?s=75" width="75px;" alt="CHIKAMATSU Naohiro"/><br /><sub><b>CHIKAMATSU Naohiro</b></sub></a><br /><a href="https://github.com/nao1215/sensitive/commits?author=nao1215" title="Code">💻</a> <a href="https://github.com/nao1215/sensitive/commits?author=nao1215" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://debimate.jp/"><img src="https://avatars.githubusercontent.com/u/22737008?v=4?s=75" width="75px;" alt="CHIKAMATSU Naohiro"/><br /><sub><b>CHIKAMATSU Naohiro</b></sub></a><br /><a href="https://github.com/nao1215/embargo/commits?author=nao1215" title="Code">💻</a> <a href="https://github.com/nao1215/embargo/commits?author=nao1215" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

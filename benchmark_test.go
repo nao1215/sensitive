@@ -1,15 +1,15 @@
-package sensitive_test
+package embargo_test
 
 import (
 	"fmt"
 	"strings"
 	"testing"
 
-	"github.com/nao1215/sensitive"
+	"github.com/nao1215/embargo"
 )
 
 func BenchmarkScannerNoMatch(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	line := []byte(`2024-01-15T10:30:00Z INFO server started on port 8080 request_id=abc123`)
 	b.ResetTimer()
 	for range b.N {
@@ -18,7 +18,7 @@ func BenchmarkScannerNoMatch(b *testing.B) {
 }
 
 func BenchmarkScannerWithPAN(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithPAN())
+	scanner := embargo.NewScanner(embargo.WithPAN())
 	line := []byte(`payment processed for card 4532-0151-1283-0366 amount $99.99`)
 	b.ResetTimer()
 	for range b.N {
@@ -27,7 +27,7 @@ func BenchmarkScannerWithPAN(b *testing.B) {
 }
 
 func BenchmarkScannerWithEmail(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithEmail())
+	scanner := embargo.NewScanner(embargo.WithEmail())
 	line := []byte(`user tanaka@example.com logged in from 192.168.1.1`)
 	b.ResetTimer()
 	for range b.N {
@@ -36,7 +36,7 @@ func BenchmarkScannerWithEmail(b *testing.B) {
 }
 
 func BenchmarkScannerWithJPPhone(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithJPPhone())
+	scanner := embargo.NewScanner(embargo.WithJPPhone())
 	line := []byte(`call center: 090-1234-5678`)
 	b.ResetTimer()
 	for range b.N {
@@ -45,7 +45,7 @@ func BenchmarkScannerWithJPPhone(b *testing.B) {
 }
 
 func BenchmarkScannerWithMyNumber(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithMyNumber())
+	scanner := embargo.NewScanner(embargo.WithMyNumber())
 	line := []byte(`mynumber: 123456789018`)
 	b.ResetTimer()
 	for range b.N {
@@ -54,7 +54,7 @@ func BenchmarkScannerWithMyNumber(b *testing.B) {
 }
 
 func BenchmarkScannerWithJWT(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithJWT())
+	scanner := embargo.NewScanner(embargo.WithJWT())
 	line := []byte(`Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c`)
 	b.ResetTimer()
 	for range b.N {
@@ -63,7 +63,7 @@ func BenchmarkScannerWithJWT(b *testing.B) {
 }
 
 func BenchmarkScannerWithAWSKey(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithAWSKey())
+	scanner := embargo.NewScanner(embargo.WithAWSKey())
 	line := []byte(`aws_access_key_id = AKIAIOSFODNN7EXAMPLE`)
 	b.ResetTimer()
 	for range b.N {
@@ -72,7 +72,7 @@ func BenchmarkScannerWithAWSKey(b *testing.B) {
 }
 
 func BenchmarkScannerWithIBAN(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithIBAN())
+	scanner := embargo.NewScanner(embargo.WithIBAN())
 	line := []byte(`IBAN: DE89370400440532013000`)
 	b.ResetTimer()
 	for range b.N {
@@ -81,7 +81,7 @@ func BenchmarkScannerWithIBAN(b *testing.B) {
 }
 
 func BenchmarkScannerWithIPAddr(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithIPAddr())
+	scanner := embargo.NewScanner(embargo.WithIPAddr())
 	line := []byte(`client 2001:db8::1 connected`)
 	b.ResetTimer()
 	for range b.N {
@@ -90,7 +90,7 @@ func BenchmarkScannerWithIPAddr(b *testing.B) {
 }
 
 func BenchmarkScannerWithSWIFTBIC(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithSWIFTBIC())
+	scanner := embargo.NewScanner(embargo.WithSWIFTBIC())
 	line := []byte(`SWIFT: DEUTDEFF`)
 	b.ResetTimer()
 	for range b.N {
@@ -99,7 +99,7 @@ func BenchmarkScannerWithSWIFTBIC(b *testing.B) {
 }
 
 func BenchmarkScannerWithABARouting(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithABARouting())
+	scanner := embargo.NewScanner(embargo.WithABARouting())
 	line := []byte(`routing: 021000021`)
 	b.ResetTimer()
 	for range b.N {
@@ -108,7 +108,7 @@ func BenchmarkScannerWithABARouting(b *testing.B) {
 }
 
 func BenchmarkScannerWithUKSortCode(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithUKSortCode())
+	scanner := embargo.NewScanner(embargo.WithUKSortCode())
 	line := []byte(`sort code: 12-34-56`)
 	b.ResetTimer()
 	for range b.N {
@@ -117,7 +117,7 @@ func BenchmarkScannerWithUKSortCode(b *testing.B) {
 }
 
 func BenchmarkScannerWithCVV(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithCVV())
+	scanner := embargo.NewScanner(embargo.WithCVV())
 	line := []byte(`CVV 123`)
 	b.ResetTimer()
 	for range b.N {
@@ -126,7 +126,7 @@ func BenchmarkScannerWithCVV(b *testing.B) {
 }
 
 func BenchmarkScannerWithCardExpiry(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithCardExpiry())
+	scanner := embargo.NewScanner(embargo.WithCardExpiry())
 	line := []byte(`exp 12/29`)
 	b.ResetTimer()
 	for range b.N {
@@ -135,7 +135,7 @@ func BenchmarkScannerWithCardExpiry(b *testing.B) {
 }
 
 func BenchmarkScannerWithPaymentToken(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithPaymentToken())
+	scanner := embargo.NewScanner(embargo.WithPaymentToken())
 	line := []byte(`stripe key sk_live_1234567890abcdef`)
 	b.ResetTimer()
 	for range b.N {
@@ -144,7 +144,7 @@ func BenchmarkScannerWithPaymentToken(b *testing.B) {
 }
 
 func BenchmarkScannerWithBankAccount(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithBankAccount())
+	scanner := embargo.NewScanner(embargo.WithBankAccount())
 	line := []byte(`bank account 12345678`)
 	b.ResetTimer()
 	for range b.N {
@@ -153,7 +153,7 @@ func BenchmarkScannerWithBankAccount(b *testing.B) {
 }
 
 func BenchmarkScannerWithACHTrace(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithACHTrace())
+	scanner := embargo.NewScanner(embargo.WithACHTrace())
 	line := []byte(`ACH trace 021000021123456`)
 	b.ResetTimer()
 	for range b.N {
@@ -162,7 +162,7 @@ func BenchmarkScannerWithACHTrace(b *testing.B) {
 }
 
 func BenchmarkScannerWithMerchantID(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithMerchantID())
+	scanner := embargo.NewScanner(embargo.WithMerchantID())
 	line := []byte(`merchant ID ABCDE12345FGHI6`)
 	b.ResetTimer()
 	for range b.N {
@@ -171,7 +171,7 @@ func BenchmarkScannerWithMerchantID(b *testing.B) {
 }
 
 func BenchmarkScannerWithBTC(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithBTC())
+	scanner := embargo.NewScanner(embargo.WithBTC())
 	line := []byte(`btc: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa`)
 	b.ResetTimer()
 	for range b.N {
@@ -180,7 +180,7 @@ func BenchmarkScannerWithBTC(b *testing.B) {
 }
 
 func BenchmarkScannerWithETH(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithETH())
+	scanner := embargo.NewScanner(embargo.WithETH())
 	line := []byte(`eth: 0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed`)
 	b.ResetTimer()
 	for range b.N {
@@ -189,7 +189,7 @@ func BenchmarkScannerWithETH(b *testing.B) {
 }
 
 func BenchmarkScannerAllDetectors(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	line := []byte(`user tanaka@example.com paid with 4532-0151-1283-0366 from 192.168.1.1`)
 	b.ResetTimer()
 	for range b.N {
@@ -198,7 +198,7 @@ func BenchmarkScannerAllDetectors(b *testing.B) {
 }
 
 func BenchmarkScannerEmptyInput(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	b.ResetTimer()
 	for range b.N {
 		scanner.Scan(nil)
@@ -208,7 +208,7 @@ func BenchmarkScannerEmptyInput(b *testing.B) {
 // BenchmarkScannerLargeInput measures performance on a ~4KB log block
 // with no sensitive data. This exercises the hint filter path at scale.
 func BenchmarkScannerLargeInput(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	line := []byte("2024-01-15T10:30:00Z INFO server started on port 8080 request_id=abc123\n")
 	// Repeat to build ~4KB input.
 	var buf []byte
@@ -225,7 +225,7 @@ func BenchmarkScannerLargeInput(b *testing.B) {
 // hints match (triggering detector execution) but no actual sensitive
 // data is found. This exercises every detector's Scan path.
 func BenchmarkScannerHintMatchNoDetection(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	// Contains "0" (JPPhone/ABA hint), "@" (Email hint), digits (PAN hints),
 	// "ACH" (ACHTrace hint), "merchant" (MerchantID hint), etc.
 	// but no actual valid sensitive data.
@@ -239,7 +239,7 @@ func BenchmarkScannerHintMatchNoDetection(b *testing.B) {
 // BenchmarkScannerFullWidthInput measures performance on full-width
 // digit input that requires normalization.
 func BenchmarkScannerFullWidthInput(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	// Full-width: ０９０－１２３４－５６７８
 	line := []byte("\xef\xbc\x90\xef\xbc\x99\xef\xbc\x90\xef\xbc\x8d\xef\xbc\x91\xef\xbc\x92\xef\xbc\x93\xef\xbc\x94\xef\xbc\x8d\xef\xbc\x95\xef\xbc\x96\xef\xbc\x97\xef\xbc\x98")
 	b.ResetTimer()
@@ -252,7 +252,7 @@ func BenchmarkScannerFullWidthInput(b *testing.B) {
 // many sensitive values from different detectors, exercising the detection
 // and dedup paths simultaneously.
 func BenchmarkScannerHighDensity(b *testing.B) {
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	line := []byte("cards: 4532015112830366 5425233430109903 " +
 		"email: test@example.com phone: 090-1234-5678 " +
 		"key: AKIAIOSFODNN7EXAMPLE")
@@ -266,7 +266,7 @@ func BenchmarkScannerAdversarial(b *testing.B) {
 	for _, pattern := range []string{"9", "a", "@", " - ", "DE00 "} {
 		for _, size := range []int{1024, 16384, 262144} {
 			b.Run(fmt.Sprintf("%q/%d", pattern, size), func(b *testing.B) {
-				scanner := sensitive.NewScanner(sensitive.WithAll())
+				scanner := embargo.NewScanner(embargo.WithAll())
 				data := []byte(strings.Repeat(pattern, size/len(pattern)))
 				b.SetBytes(int64(len(data)))
 				b.ReportAllocs()

@@ -1,4 +1,4 @@
-package sensitive_test
+package embargo_test
 
 import (
 	"flag"
@@ -8,15 +8,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nao1215/sensitive"
-	"github.com/nao1215/sensitive/detector"
-	"github.com/nao1215/sensitive/mask"
+	"github.com/nao1215/embargo"
+	"github.com/nao1215/embargo/detector"
+	"github.com/nao1215/embargo/mask"
 )
 
 func TestScanner_Scan_emptyInput(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	findings := scanner.Scan(nil)
 	if len(findings) != 0 {
 		t.Errorf("Scan(nil) returned %d findings, want 0", len(findings))
@@ -31,7 +31,7 @@ func TestScanner_Scan_emptyInput(t *testing.T) {
 func TestScanner_Scan_noMatch(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	input := []byte("2024-01-15T10:30:00Z INFO server started on port 8080 request_id=abc123")
 	findings := scanner.Scan(input)
 
@@ -47,7 +47,7 @@ func TestScanner_Scan_noMatch(t *testing.T) {
 func TestScanner_ScanString_panDetection(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithPAN())
+	scanner := embargo.NewScanner(embargo.WithPAN())
 	findings := scanner.ScanString("card is 4532015112830366")
 
 	panFindings := filterByDetector(findings, detector.NamePAN)
@@ -66,7 +66,7 @@ func TestScanner_ScanString_panDetection(t *testing.T) {
 func TestScanner_ScanString_emailDetection(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithEmail())
+	scanner := embargo.NewScanner(embargo.WithEmail())
 	findings := scanner.ScanString("contact tanaka@example.com for info")
 
 	emailFindings := filterByDetector(findings, detector.NameEmail)
@@ -82,7 +82,7 @@ func TestScanner_ScanString_emailDetection(t *testing.T) {
 func TestScanner_ScanString_multipleDetectors(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
+	scanner := embargo.NewScanner(embargo.WithPAN(), embargo.WithEmail())
 	input := "user tanaka@example.com paid with 4532015112830366"
 	findings := scanner.ScanString(input)
 
@@ -99,7 +99,7 @@ func TestScanner_ScanString_multipleDetectors(t *testing.T) {
 func TestScanner_Scan_deduplication(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	findings := scanner.ScanString("card is 4532015112830366")
 
 	// There should be only one PAN finding, even with WithAll() enabled.
@@ -112,7 +112,7 @@ func TestScanner_Scan_deduplication(t *testing.T) {
 func TestNewScanner_noDetectors(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner()
+	scanner := embargo.NewScanner()
 	findings := scanner.ScanString("4532015112830366 tanaka@example.com")
 	if len(findings) != 0 {
 		t.Errorf("scanner with no detectors returned %d findings, want 0", len(findings))
@@ -122,7 +122,7 @@ func TestNewScanner_noDetectors(t *testing.T) {
 func TestScanner_WithJPPhone(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithJPPhone())
+	scanner := embargo.NewScanner(embargo.WithJPPhone())
 	findings := scanner.ScanString("TEL: 090-1234-5678")
 	jpFindings := filterByDetector(findings, detector.NameJPPhone)
 	if len(jpFindings) != 1 {
@@ -133,7 +133,7 @@ func TestScanner_WithJPPhone(t *testing.T) {
 func TestScanner_WithMyNumber(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithMyNumber())
+	scanner := embargo.NewScanner(embargo.WithMyNumber())
 	findings := scanner.ScanString("mynumber: 123456789018")
 	myFindings := filterByDetector(findings, detector.NameMyNumber)
 	if len(myFindings) != 1 {
@@ -144,7 +144,7 @@ func TestScanner_WithMyNumber(t *testing.T) {
 func TestScanner_WithJWT(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithJWT())
+	scanner := embargo.NewScanner(embargo.WithJWT())
 	// #nosec G101 -- test token for JWT detection
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 	findings := scanner.ScanString("token: " + token)
@@ -157,7 +157,7 @@ func TestScanner_WithJWT(t *testing.T) {
 func TestScanner_WithAWSKey(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithAWSKey())
+	scanner := embargo.NewScanner(embargo.WithAWSKey())
 	findings := scanner.ScanString("key: AKIAIOSFODNN7EXAMPLE")
 	awsFindings := filterByDetector(findings, detector.NameAWSKey)
 	if len(awsFindings) != 1 {
@@ -168,7 +168,7 @@ func TestScanner_WithAWSKey(t *testing.T) {
 func TestScanner_WithIBAN(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithIBAN())
+	scanner := embargo.NewScanner(embargo.WithIBAN())
 	findings := scanner.ScanString("IBAN: DE89370400440532013000")
 	ibanFindings := filterByDetector(findings, detector.NameIBAN)
 	if len(ibanFindings) != 1 {
@@ -179,7 +179,7 @@ func TestScanner_WithIBAN(t *testing.T) {
 func TestScanner_WithIPAddr(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithIPAddr())
+	scanner := embargo.NewScanner(embargo.WithIPAddr())
 	findings := scanner.ScanString("host: 192.168.1.1")
 	ipFindings := filterByDetector(findings, detector.NameIPAddr)
 	if len(ipFindings) != 1 {
@@ -193,7 +193,7 @@ func TestScanner_WithDetector(t *testing.T) {
 	// WithDetector with a custom regex detector.
 	re := regexp.MustCompile(`CUSTOM-\d+`)
 	d := detector.NewRegex("custom", re, [][]byte{[]byte("CUSTOM-")}, 0.8)
-	scanner := sensitive.NewScanner(sensitive.WithDetector(d))
+	scanner := embargo.NewScanner(embargo.WithDetector(d))
 	findings := scanner.ScanString("CUSTOM-12345")
 	if len(findings) != 1 {
 		t.Fatalf("want 1 custom finding, got %d", len(findings))
@@ -204,7 +204,7 @@ func TestScanner_HintFilterSkipsDetector(t *testing.T) {
 	t.Parallel()
 
 	// WithEmail on input without '@' should not trigger email detector.
-	scanner := sensitive.NewScanner(sensitive.WithEmail())
+	scanner := embargo.NewScanner(embargo.WithEmail())
 	findings := scanner.ScanString("no email here")
 	if len(findings) != 0 {
 		t.Errorf("expected 0 findings when hint doesn't match, got %d", len(findings))
@@ -214,7 +214,7 @@ func TestScanner_HintFilterSkipsDetector(t *testing.T) {
 func TestScanner_HintFilter_CaseInsensitive(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithACHTrace())
+	scanner := embargo.NewScanner(embargo.WithACHTrace())
 	findings := scanner.ScanString("TrAcE Number: 021000021123456")
 	achFindings := filterByDetector(findings, detector.NameACHTrace)
 	if len(achFindings) != 1 {
@@ -233,9 +233,9 @@ func TestScanner_DedupOverlapping(t *testing.T) {
 	reB := regexp.MustCompile(`CDEFGH`)
 	dA := detector.NewRegex("detA", reA, nil, 0.5)
 	dB := detector.NewRegex("detB", reB, nil, 0.9)
-	scanner := sensitive.NewScanner(
-		sensitive.WithDetector(dA),
-		sensitive.WithDetector(dB),
+	scanner := embargo.NewScanner(
+		embargo.WithDetector(dA),
+		embargo.WithDetector(dB),
 	)
 	findings := scanner.ScanString("ABCDEFGH")
 	// The two findings overlap [0:6] and [2:8]. dedup should keep only one.
@@ -259,10 +259,10 @@ func TestScanner_DedupBridgingOverlap(t *testing.T) {
 	dA := detector.NewRegex("detA", reA, nil, 0.9)
 	dB := detector.NewRegex("detB", reB, nil, 0.5)
 	dC := detector.NewRegex("detC", reC, nil, 0.8)
-	scanner := sensitive.NewScanner(
-		sensitive.WithDetector(dA),
-		sensitive.WithDetector(dB),
-		sensitive.WithDetector(dC),
+	scanner := embargo.NewScanner(
+		embargo.WithDetector(dA),
+		embargo.WithDetector(dB),
+		embargo.WithDetector(dC),
 	)
 	findings := scanner.ScanString("ABCDEFGHIJKLMN")
 	if len(findings) != 2 {
@@ -291,9 +291,9 @@ func TestScanner_DedupSameStart(t *testing.T) {
 	reB := regexp.MustCompile(`ABCDEF`)
 	dA := detector.NewRegex("detA", reA, nil, 0.3)
 	dB := detector.NewRegex("detB", reB, nil, 0.8)
-	scanner := sensitive.NewScanner(
-		sensitive.WithDetector(dA),
-		sensitive.WithDetector(dB),
+	scanner := embargo.NewScanner(
+		embargo.WithDetector(dA),
+		embargo.WithDetector(dB),
 	)
 	findings := scanner.ScanString("ABCDEF")
 	if len(findings) != 1 {
@@ -312,10 +312,10 @@ func TestScanner_WithoutDedup(t *testing.T) {
 	reB := regexp.MustCompile(`ABCDEF`)
 	dA := detector.NewRegex("detA", reA, nil, 0.3)
 	dB := detector.NewRegex("detB", reB, nil, 0.8)
-	scanner := sensitive.NewScanner(
-		sensitive.WithDetector(dA),
-		sensitive.WithDetector(dB),
-		sensitive.WithoutDedup(),
+	scanner := embargo.NewScanner(
+		embargo.WithDetector(dA),
+		embargo.WithDetector(dB),
+		embargo.WithoutDedup(),
 	)
 	findings := scanner.ScanString("ABCDEF")
 	if len(findings) != 2 {
@@ -326,7 +326,7 @@ func TestScanner_WithoutDedup(t *testing.T) {
 func TestScanner_ResultsSortedByConfidence(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	findings := scanner.ScanString("card 4532015112830366 email tanaka@example.com")
 	for i := 1; i < len(findings); i++ {
 		if findings[i].Confidence > findings[i-1].Confidence {
@@ -345,10 +345,10 @@ func TestScanner_DeterministicSortOrder(t *testing.T) {
 	reB := regexp.MustCompile(`BBB`)
 	dA := detector.NewRegex("detA", reA, nil, 0.7)
 	dB := detector.NewRegex("detB", reB, nil, 0.7)
-	scanner := sensitive.NewScanner(
-		sensitive.WithDetector(dA),
-		sensitive.WithDetector(dB),
-		sensitive.WithoutDedup(),
+	scanner := embargo.NewScanner(
+		embargo.WithDetector(dA),
+		embargo.WithDetector(dB),
+		embargo.WithoutDedup(),
 	)
 
 	// Run multiple times to verify determinism.
@@ -370,9 +370,9 @@ func TestScanner_DeterministicSortOrder(t *testing.T) {
 func TestScanner_WithSortByPosition(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(
-		sensitive.WithPAN(), sensitive.WithEmail(),
-		sensitive.WithSortByPosition(),
+	scanner := embargo.NewScanner(
+		embargo.WithPAN(), embargo.WithEmail(),
+		embargo.WithSortByPosition(),
 	)
 	input := "card 4532015112830366 email tanaka@example.com"
 	findings := scanner.ScanString(input)
@@ -397,7 +397,7 @@ func TestScanner_IBANPreviouslyMissedCountry(t *testing.T) {
 
 	// Albania (AL) was not in the old Hints() list.
 	// Verify the Scanner (with hint filtering) detects it.
-	scanner := sensitive.NewScanner(sensitive.WithIBAN())
+	scanner := embargo.NewScanner(embargo.WithIBAN())
 	findings := scanner.ScanString("AL42000000000000000000000000")
 	ibanFindings := filterByDetector(findings, detector.NameIBAN)
 	if len(ibanFindings) != 1 {
@@ -408,11 +408,11 @@ func TestScanner_IBANPreviouslyMissedCountry(t *testing.T) {
 func TestScanner_ScanAndMask_Integration(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail(), sensitive.WithJPPhone())
+	scanner := embargo.NewScanner(embargo.WithPAN(), embargo.WithEmail(), embargo.WithJPPhone())
 	input := "card 4532015112830366 email tanaka@example.com phone 090-1234-5678"
 	findings := scanner.ScanString(input)
 
-	strategyMap := map[sensitive.DetectorName]mask.Strategy{
+	strategyMap := map[embargo.DetectorName]mask.Strategy{
 		detector.NamePAN:     mask.Last4,
 		detector.NameEmail:   mask.Partial,
 		detector.NameJPPhone: mask.Redact,
@@ -436,7 +436,7 @@ func TestScanner_ScanAndMask_Integration(t *testing.T) {
 func TestScanner_ScanAndMaskAll_Integration(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	// #nosec G101 -- test key for detection behavior
 	input := "key: AKIAIOSFODNN7EXAMPLE iban: DE89370400440532013000"
 	findings := scanner.ScanString(input)
@@ -453,11 +453,11 @@ func TestScanner_ScanAndMaskAll_Integration(t *testing.T) {
 func TestScanner_Integration_AllDetectorTypes(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	tests := []struct {
 		name     string
 		input    string
-		wantName sensitive.DetectorName
+		wantName embargo.DetectorName
 		wantMin  int
 	}{
 		// PAN variants
@@ -512,7 +512,7 @@ func TestScanner_Integration_AllDetectorTypes(t *testing.T) {
 func TestScanner_Integration_FalsePositives(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	tests := []struct {
 		name  string
 		input string
@@ -544,7 +544,7 @@ func TestScanner_Integration_FalsePositives(t *testing.T) {
 func TestScanner_Integration_MaskAllStrategies(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithPAN())
+	scanner := embargo.NewScanner(embargo.WithPAN())
 	input := "card: 4532015112830366"
 	findings := scanner.ScanString(input)
 	if len(findings) == 0 {
@@ -565,7 +565,7 @@ func TestScanner_Integration_MaskAllStrategies(t *testing.T) {
 
 // assertScannerDetail scans input and verifies that at least one finding
 // passes the given check function.
-func assertScannerDetail(t *testing.T, scanner *sensitive.Scanner, input string, check func(sensitive.Finding) bool) {
+func assertScannerDetail(t *testing.T, scanner *embargo.Scanner, input string, check func(embargo.Finding) bool) {
 	t.Helper()
 	findings := scanner.ScanString(input)
 	for _, f := range findings {
@@ -579,28 +579,28 @@ func assertScannerDetail(t *testing.T, scanner *sensitive.Scanner, input string,
 func TestScanner_Integration_FindingDetail(t *testing.T) {
 	t.Parallel()
 
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 
-	assertScannerDetail(t, scanner, "4532015112830366", func(f sensitive.Finding) bool {
+	assertScannerDetail(t, scanner, "4532015112830366", func(f embargo.Finding) bool {
 		detail, ok := f.PANDetail()
 		return ok && detail.Brand == detector.BrandVisa
 	})
-	assertScannerDetail(t, scanner, "090-1234-5678", func(f sensitive.Finding) bool {
+	assertScannerDetail(t, scanner, "090-1234-5678", func(f embargo.Finding) bool {
 		detail, ok := f.JPPhoneDetail()
 		return ok && detail.PhoneType == "mobile"
 	})
-	assertScannerDetail(t, scanner, "123456789018", func(f sensitive.Finding) bool {
+	assertScannerDetail(t, scanner, "123456789018", func(f embargo.Finding) bool {
 		if f.DetectorName != detector.NameMyNumber {
 			return false
 		}
 		detail, ok := f.MyNumberDetail()
 		return ok && detail.CheckDigitValid
 	})
-	assertScannerDetail(t, scanner, "DE89370400440532013000", func(f sensitive.Finding) bool {
+	assertScannerDetail(t, scanner, "DE89370400440532013000", func(f embargo.Finding) bool {
 		detail, ok := f.IBANDetail()
 		return ok && detail.CountryCode == "DE"
 	})
-	assertScannerDetail(t, scanner, "192.168.1.1", func(f sensitive.Finding) bool {
+	assertScannerDetail(t, scanner, "192.168.1.1", func(f embargo.Finding) bool {
 		detail, ok := f.IPAddrDetail()
 		return ok && detail.Version == 4
 	})
@@ -612,7 +612,7 @@ func TestScanner_RawValueMatchesInputSlice(t *testing.T) {
 	// For every finding returned by every detector, the invariant
 	// RawValue == input[Start:End] must hold. If it doesn't, the mask
 	// package will produce corrupted output.
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 
 	inputs := []string{
 		"card 4532015112830366 email tanaka@example.com",
@@ -656,7 +656,7 @@ func TestScanner_UKSortCode_SpaceSeparatedDetectedViaHint(t *testing.T) {
 	// Regression: space-separated sort codes were silently missed because
 	// the hint filter only contained "-". The Scanner must detect "12 34 56"
 	// even though it contains no hyphen.
-	scanner := sensitive.NewScanner(sensitive.WithUKSortCode())
+	scanner := embargo.NewScanner(embargo.WithUKSortCode())
 	findings := scanner.ScanString("sort code: 12 34 56")
 	matched := filterByDetector(findings, detector.NameUKSortCode)
 	if len(matched) != 1 {
@@ -673,7 +673,7 @@ func TestScanner_BankAccount_AcctNoDetectedViaHint(t *testing.T) {
 	// Regression: "Acct No" and "Account No" (title case) were missing from
 	// the hint list, causing Scanner to skip the bank account detector when
 	// only those keyword variants appeared.
-	scanner := sensitive.NewScanner(sensitive.WithBankAccount())
+	scanner := embargo.NewScanner(embargo.WithBankAccount())
 
 	tests := []struct {
 		name  string
@@ -702,7 +702,7 @@ func TestScanner_PAN_FullWidthDetectedViaHint(t *testing.T) {
 	// Regression: full-width-only PANs were silently missed because
 	// the hint filter only contained ASCII digits. The Scanner must detect
 	// full-width PANs via the full-width digit hints.
-	scanner := sensitive.NewScanner(sensitive.WithPAN())
+	scanner := embargo.NewScanner(embargo.WithPAN())
 
 	// Full-width Visa test number: ４５３２０１５１１２８３０３６６
 	findings := scanner.ScanString("card is \xef\xbc\x94\xef\xbc\x95\xef\xbc\x93\xef\xbc\x92\xef\xbc\x90\xef\xbc\x91\xef\xbc\x95\xef\xbc\x91\xef\xbc\x91\xef\xbc\x92\xef\xbc\x98\xef\xbc\x93\xef\xbc\x90\xef\xbc\x93\xef\xbc\x96\xef\xbc\x96")
@@ -718,7 +718,7 @@ func TestScanner_JPPhone_FullWidthDetectedViaHint(t *testing.T) {
 	// Regression: full-width-only phone numbers were silently missed because
 	// the hint filter only contained ASCII "0". The Scanner must detect
 	// full-width phone numbers via the full-width zero hint (U+FF10).
-	scanner := sensitive.NewScanner(sensitive.WithJPPhone())
+	scanner := embargo.NewScanner(embargo.WithJPPhone())
 
 	// Full-width: ０９０－１２３４－５６７８
 	findings := scanner.ScanString("\xef\xbc\x90\xef\xbc\x99\xef\xbc\x90\xef\xbc\x8d\xef\xbc\x91\xef\xbc\x92\xef\xbc\x93\xef\xbc\x94\xef\xbc\x8d\xef\xbc\x95\xef\xbc\x96\xef\xbc\x97\xef\xbc\x98")
@@ -734,10 +734,10 @@ func TestScanner_DedupDeterministic(t *testing.T) {
 	// Regression: dedup sort had insufficient tiebreakers, making
 	// the result non-deterministic when confidence and start matched.
 	// This test runs multiple iterations to verify stability.
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	input := "card 4532015112830366 email tanaka@example.com"
 
-	var prev []sensitive.Finding
+	var prev []embargo.Finding
 	for range 20 {
 		findings := scanner.ScanString(input)
 		if prev != nil {
@@ -763,11 +763,11 @@ func TestNewScanner_WithAllPlusIndividualDeduplicatesDetectors(t *testing.T) {
 	// Combining WithAll() and individual With*() options should not
 	// register the same detector twice. Without dedup, duplicate
 	// detectors would produce duplicate findings.
-	scanner := sensitive.NewScanner(
-		sensitive.WithAll(),
-		sensitive.WithPAN(),
-		sensitive.WithEmail(),
-		sensitive.WithoutDedup(),
+	scanner := embargo.NewScanner(
+		embargo.WithAll(),
+		embargo.WithPAN(),
+		embargo.WithEmail(),
+		embargo.WithoutDedup(),
 	)
 	findings := scanner.ScanString("card 4532015112830366 email tanaka@example.com")
 
@@ -789,7 +789,7 @@ func TestScanner_CVV_SecurityCodeAllCaps(t *testing.T) {
 	// Hints(). The hint filter's case-insensitive matching covers it via the
 	// lowercase "security code" hint. This test ensures the full Scanner
 	// pipeline detects CVVs with all-caps "SECURITY CODE".
-	scanner := sensitive.NewScanner(sensitive.WithCVV())
+	scanner := embargo.NewScanner(embargo.WithCVV())
 	findings := scanner.ScanString("SECURITY CODE: 789")
 	matched := filterByDetector(findings, detector.NameCVV)
 	if len(matched) != 1 {
@@ -805,7 +805,7 @@ func TestScanner_IPv6_TrailingAlphaRejected(t *testing.T) {
 
 	// IPv6 addresses followed by non-hex alphanumeric characters should not
 	// be detected because the candidate is part of a longer token.
-	scanner := sensitive.NewScanner(sensitive.WithIPAddr())
+	scanner := embargo.NewScanner(embargo.WithIPAddr())
 
 	tests := []struct {
 		name  string
@@ -838,7 +838,7 @@ func TestScanner_WithMinConfidence(t *testing.T) {
 
 	t.Run("threshold 0 returns all findings", func(t *testing.T) {
 		t.Parallel()
-		scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithBankAccount())
+		scanner := embargo.NewScanner(embargo.WithPAN(), embargo.WithBankAccount())
 		findings := scanner.ScanString(input)
 		if len(findings) == 0 {
 			t.Fatal("expected findings, got none")
@@ -847,9 +847,9 @@ func TestScanner_WithMinConfidence(t *testing.T) {
 
 	t.Run("threshold 0.8 filters low-confidence findings", func(t *testing.T) {
 		t.Parallel()
-		scanner := sensitive.NewScanner(
-			sensitive.WithPAN(), sensitive.WithBankAccount(),
-			sensitive.WithMinConfidence(0.8),
+		scanner := embargo.NewScanner(
+			embargo.WithPAN(), embargo.WithBankAccount(),
+			embargo.WithMinConfidence(0.8),
 		)
 		findings := scanner.ScanString(input)
 		for _, f := range findings {
@@ -867,9 +867,9 @@ func TestScanner_WithMinConfidence(t *testing.T) {
 
 	t.Run("threshold 1.0 filters low-confidence findings", func(t *testing.T) {
 		t.Parallel()
-		scanner := sensitive.NewScanner(
-			sensitive.WithPAN(), sensitive.WithBankAccount(),
-			sensitive.WithMinConfidence(1.0),
+		scanner := embargo.NewScanner(
+			embargo.WithPAN(), embargo.WithBankAccount(),
+			embargo.WithMinConfidence(1.0),
 		)
 		findings := scanner.ScanString(input)
 		for _, f := range findings {
@@ -889,9 +889,9 @@ func TestScanner_WithMinConfidence(t *testing.T) {
 		t.Parallel()
 		// Regex detector with confidence exactly 0.6.
 		d := detector.NewRegex("exact", regexp.MustCompile(`EXACT`), nil, 0.6)
-		scanner := sensitive.NewScanner(
-			sensitive.WithDetector(d),
-			sensitive.WithMinConfidence(0.6),
+		scanner := embargo.NewScanner(
+			embargo.WithDetector(d),
+			embargo.WithMinConfidence(0.6),
 		)
 		findings := scanner.ScanString("EXACT")
 		if len(findings) != 1 {
@@ -902,9 +902,9 @@ func TestScanner_WithMinConfidence(t *testing.T) {
 	t.Run("threshold just above confidence excludes the finding", func(t *testing.T) {
 		t.Parallel()
 		d := detector.NewRegex("exact", regexp.MustCompile(`EXACT`), nil, 0.6)
-		scanner := sensitive.NewScanner(
-			sensitive.WithDetector(d),
-			sensitive.WithMinConfidence(0.61),
+		scanner := embargo.NewScanner(
+			embargo.WithDetector(d),
+			embargo.WithMinConfidence(0.61),
 		)
 		findings := scanner.ScanString("EXACT")
 		if len(findings) != 0 {
@@ -915,9 +915,9 @@ func TestScanner_WithMinConfidence(t *testing.T) {
 	t.Run("value above 1 is clamped to 1", func(t *testing.T) {
 		t.Parallel()
 		// 1.01 is clamped to 1.0, so PAN (confidence 1.0) should still pass.
-		scanner := sensitive.NewScanner(
-			sensitive.WithPAN(),
-			sensitive.WithMinConfidence(1.01),
+		scanner := embargo.NewScanner(
+			embargo.WithPAN(),
+			embargo.WithMinConfidence(1.01),
 		)
 		findings := scanner.ScanString("4532015112830366")
 		panFindings := filterByDetector(findings, detector.NamePAN)
@@ -927,8 +927,8 @@ func TestScanner_WithMinConfidence(t *testing.T) {
 	})
 }
 
-func filterByDetector(findings []sensitive.Finding, name sensitive.DetectorName) []sensitive.Finding {
-	var filtered []sensitive.Finding
+func filterByDetector(findings []embargo.Finding, name embargo.DetectorName) []embargo.Finding {
+	var filtered []embargo.Finding
 	for _, f := range findings {
 		if f.DetectorName == name {
 			filtered = append(filtered, f)
@@ -944,8 +944,8 @@ func TestScannerContextInvariance(t *testing.T) {
 	t.Parallel()
 	contexts := [][2]string{{"", ""}, {"x ", " y"}, {"x\t", "\ty"}, {"x\n", "\ny"}, {`{"v":"`, `"}`}, {"key=", "&next=1"}, {"https://example.invalid/?v=", "&next=yes"}, {"v%3D", "%26next=yes"}, {"\"", "\""}, {"(", ")"}, {"[", "]"}, {":", ","}, {"番号", "です"}, {"「", "」、"}}
 	for _, d := range builtinDetectors() {
-		one := sensitive.NewScanner(sensitive.WithDetector(d))
-		all := sensitive.NewScanner(sensitive.WithAll(), sensitive.WithoutDedup())
+		one := embargo.NewScanner(embargo.WithDetector(d))
+		all := embargo.NewScanner(embargo.WithAll(), embargo.WithoutDedup())
 		for _, seed := range fuzzSeeds() {
 			original := one.ScanString(seed)
 			if len(original) == 0 {
@@ -985,7 +985,7 @@ func TestNegativeCorpus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := sensitive.NewScanner(sensitive.WithAll()).Scan(data); len(got) != 0 {
+	if got := embargo.NewScanner(embargo.WithAll()).Scan(data); len(got) != 0 {
 		t.Fatalf("non-secret corpus: %v", got)
 	}
 }
@@ -1002,7 +1002,7 @@ func TestMixedLogGolden(t *testing.T) {
 		t.Fatal(err)
 	}
 	var lines strings.Builder
-	for _, f := range sensitive.NewScanner(sensitive.WithAll(), sensitive.WithSortByPosition()).Scan(data) {
+	for _, f := range embargo.NewScanner(embargo.WithAll(), embargo.WithSortByPosition()).Scan(data) {
 		fmt.Fprintf(&lines, "%s %d:%d %.2f %q\n", f.DetectorName, f.Start, f.End, f.Confidence, f.RawValue)
 	}
 	path := "testdata/mixed.golden"
@@ -1022,7 +1022,7 @@ func TestMixedLogGolden(t *testing.T) {
 
 func TestAdversarialAllocationBudget(t *testing.T) {
 	// AllocsPerRun changes GOMAXPROCS and must run serially.
-	scanner := sensitive.NewScanner(sensitive.WithAll())
+	scanner := embargo.NewScanner(embargo.WithAll())
 	for _, pattern := range []string{"9", "a", "@", " - ", "DE00 "} {
 		for _, size := range []int{4096, 16384, 65536} {
 			data := []byte(strings.Repeat(pattern, size/len(pattern)))

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Thank you for considering contributing to the sensitive project! This document explains how to contribute to the project. We welcome all forms of contributions, including code contributions, documentation improvements, bug reports, and feature suggestions.
+Thank you for considering contributing to the embargo project! This document explains how to contribute to the project. We welcome all forms of contributions, including code contributions, documentation improvements, bug reports, and feature suggestions.
 
 ## Setting Up Development Environment
 
@@ -20,8 +20,8 @@ go version
 ### Cloning the Project
 
 ```bash
-git clone https://github.com/nao1215/sensitive.git
-cd sensitive
+git clone https://github.com/nao1215/embargo.git
+cd embargo
 ```
 
 ### Installing Development Tools
@@ -156,7 +156,7 @@ When you find a bug, please create an issue with the following information:
 1. **Environment Information**
    - OS (Linux/macOS/Windows) and version
    - Go version
-   - sensitive version
+   - embargo version
 
 2. **Reproduction Steps**
    - Minimal code example to reproduce the bug

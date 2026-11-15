@@ -1,6 +1,6 @@
-package sensitive
+package embargo
 
-import "github.com/nao1215/sensitive/detector"
+import "github.com/nao1215/embargo/detector"
 
 // Detector aliases [detector.Detector], the contract for custom detectors.
 type Detector = detector.Detector

@@ -1,4 +1,4 @@
-# sensitive
+# embargo
 
 sensitive is a Go library for detecting sensitive data in text. It detects credit card numbers (PAN), email addresses, phone numbers, My Number (Japanese national ID), and other confidential information, returning the position, type, and confidence level of each finding. Masking is optional — the library focuses on detection, allowing users to implement their own masking logic using the detection results.
 
@@ -19,7 +19,7 @@ sensitive is a Go library for detecting sensitive data in text. It detects credi
 - Custom detectors: Users can register their own detectors via the Detector interface
 
 ### Architecture
-- `sensitive.go`: Core definitions (Scanner, Finding, Detector interfaces)
+- `embargo.go`: Core definitions (Scanner, Finding, Detector interfaces)
 - `scanner.go`: Scanner implementation with multi-stage filtering
 - `finding.go`: Finding struct and related types
 - `detector/`: Individual detector implementations (PAN, email, phone, etc.)
@@ -45,8 +45,8 @@ sensitive is a Go library for detecting sensitive data in text. It detects credi
 - Zero external dependencies: This library must have zero external dependencies. Use only the Go standard library.
 - Performance first: Minimize scan cost. Use hint-based pre-filtering (bytes.Contains) before expensive operations. Avoid regular expressions unless absolutely necessary — prefer dedicated parsers and domain rule validation.
 - CHANGELOG.md maintenance: When updating CHANGELOG.md, always include references to the relevant PR numbers and commit hashes with clickable GitHub links. Format examples:
-  - **Feature description ([abc1234](https://github.com/nao1215/sensitive/commit/abc1234))**: Detailed explanation of the change
-  - **Feature description (PR #123, [abc1234](https://github.com/nao1215/sensitive/commit/abc1234))**: When both PR and commit are relevant
+  - **Feature description ([abc1234](https://github.com/nao1215/embargo/commit/abc1234))**: Detailed explanation of the change
+  - **Feature description (PR #123, [abc1234](https://github.com/nao1215/embargo/commit/abc1234))**: When both PR and commit are relevant
 
 ## Testing
 - [Readable Test Code](https://logmi.jp/main/technology/327449): Avoid excessive optimization (DRY) and aim for a state where it's easy to understand what tests exist.

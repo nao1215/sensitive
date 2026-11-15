@@ -8,7 +8,7 @@ Measurement conditions:
 - Go version: 1.24 (linux/amd64)
 - GOMAXPROCS: 16
 - CPU: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S
-- Commit: [b7e0cdc](https://github.com/nao1215/sensitive/commit/b7e0cdc)
+- Commit: [b7e0cdc](https://github.com/nao1215/embargo/commit/b7e0cdc)
 
 To reproduce, run the command above. Use `-count 5` and take the median for stable results.
 Benchmark numbers are environment-sensitive. Expect variation across Go versions, CPUs, and background load, and refresh results periodically if you publish them for compliance or audit purposes.

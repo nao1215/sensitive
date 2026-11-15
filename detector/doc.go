@@ -1,4 +1,4 @@
-// Package detector provides built-in sensitive-data detectors and the [Detector] extension interface. Each detector type documents its validation steps and confidence score; the root sensitive package composes detectors into a scanner.
+// Package detector provides built-in sensitive-data detectors and the [Detector] extension interface. Each detector type documents its validation steps and confidence score; the root embargo package composes detectors into a scanner.
 //
 // # Full-Width Digits and Boundaries
 //

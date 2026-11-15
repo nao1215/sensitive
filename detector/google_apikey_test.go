@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nao1215/sensitive/detector"
+	"github.com/nao1215/embargo/detector"
 )
 
 func TestGoogleAPIKeyDetector_Scan(t *testing.T) {

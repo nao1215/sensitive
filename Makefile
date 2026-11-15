@@ -1,6 +1,6 @@
 .PHONY: test clean lint benchmark tools help
 
-APP         = sensitive
+APP         = embargo
 GO          = go
 GO_BUILD    = $(GO) build
 GO_FORMAT   = $(GO) fmt

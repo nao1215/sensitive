@@ -1,16 +1,16 @@
-package sensitive_test
+package embargo_test
 
 import (
 	"fmt"
 	"regexp"
 	"strings"
 
-	"github.com/nao1215/sensitive"
-	"github.com/nao1215/sensitive/detector"
+	"github.com/nao1215/embargo"
+	"github.com/nao1215/embargo/detector"
 )
 
 func Example() {
-	scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
+	scanner := embargo.NewScanner(embargo.WithPAN(), embargo.WithEmail())
 	text := "user tanaka@example.com paid with 4532015112830366"
 	for _, f := range scanner.ScanString(text) {
 		fmt.Printf("%s: %s (%.2f)\n", f.DetectorName, f.RawValue, f.Confidence)
@@ -24,13 +24,13 @@ func ExampleNewScanner() {
 	text := "tanaka@example.com 4532015112830366 from 192.0.2.1"
 	for _, config := range []struct {
 		name string
-		opts []sensitive.Option
+		opts []embargo.Option
 	}{
 		{"no options", nil},
-		{"selected", []sensitive.Option{sensitive.WithPAN(), sensitive.WithEmail()}},
-		{"all built-ins", []sensitive.Option{sensitive.WithAll()}},
+		{"selected", []embargo.Option{embargo.WithPAN(), embargo.WithEmail()}},
+		{"all built-ins", []embargo.Option{embargo.WithAll()}},
 	} {
-		scanner := sensitive.NewScanner(config.opts...)
+		scanner := embargo.NewScanner(config.opts...)
 		fmt.Printf("%s: %d findings\n", config.name, len(scanner.ScanString(text)))
 	}
 	// Output:
@@ -42,11 +42,11 @@ func ExampleNewScanner() {
 func ExampleNewScanner_options() {
 	// Keep overlapping candidates and process them in input order.
 	custom := detector.NewRegex("reference", regexp.MustCompile(`REF-\d{4}`), nil, 0.5)
-	scanner := sensitive.NewScanner(
-		sensitive.WithEmail(),
-		sensitive.WithDetector(custom),
-		sensitive.WithoutDedup(),
-		sensitive.WithSortByPosition(),
+	scanner := embargo.NewScanner(
+		embargo.WithEmail(),
+		embargo.WithDetector(custom),
+		embargo.WithoutDedup(),
+		embargo.WithSortByPosition(),
 	)
 	for _, f := range scanner.ScanString("REF-1234@example.com then admin@example.com") {
 		fmt.Printf("%s [%d:%d] %.1f\n", f.DetectorName, f.Start, f.End, f.Confidence)
@@ -58,7 +58,7 @@ func ExampleNewScanner_options() {
 }
 
 func ExampleScanner_Scan() {
-	scanner := sensitive.NewScanner(sensitive.WithPAN())
+	scanner := embargo.NewScanner(embargo.WithPAN())
 	data := []byte("カード: 4532-0151-1283-0366")
 	for _, f := range scanner.Scan(data) {
 		fmt.Printf("%s [%d:%d]: %s\n", f.DetectorName, f.Start, f.End, data[f.Start:f.End])
@@ -68,7 +68,7 @@ func ExampleScanner_Scan() {
 }
 
 func ExampleScanner_ScanString() {
-	scanner := sensitive.NewScanner(sensitive.WithEmail())
+	scanner := embargo.NewScanner(embargo.WithEmail())
 	findings := scanner.ScanString("contact admin@example.com for support")
 	fmt.Printf("found %d email(s)\n", len(findings))
 	for _, f := range findings {
@@ -80,7 +80,7 @@ func ExampleScanner_ScanString() {
 }
 
 func ExampleScanner_ScanReader() {
-	scanner := sensitive.NewScanner(sensitive.WithEmail())
+	scanner := embargo.NewScanner(embargo.WithEmail())
 	reader := strings.NewReader("safe line\nadmin@example.com\n")
 	findings, err := scanner.ScanReader(reader)
 	if err != nil {
@@ -95,9 +95,9 @@ func ExampleScanner_ScanReader() {
 }
 
 func ExampleScanner_ScanLines() {
-	scanner := sensitive.NewScanner(sensitive.WithEmail())
+	scanner := embargo.NewScanner(embargo.WithEmail())
 	input := "safe line\nadmin@example.com\n"
-	err := scanner.ScanLines(strings.NewReader(input), func(n int, line []byte, findings []sensitive.Finding) {
+	err := scanner.ScanLines(strings.NewReader(input), func(n int, line []byte, findings []embargo.Finding) {
 		for _, f := range findings {
 			fmt.Printf("line %d [%d:%d]: %s\n", n, f.Start, f.End, line[f.Start:f.End])
 		}
@@ -112,9 +112,9 @@ func ExampleScanner_ScanLines() {
 func ExampleWithMinConfidence() {
 	text := "user tanaka@example.com bank account 12345678"
 	for _, threshold := range []float64{0.4, 0.8} {
-		scanner := sensitive.NewScanner(
-			sensitive.WithEmail(), sensitive.WithBankAccount(),
-			sensitive.WithMinConfidence(threshold),
+		scanner := embargo.NewScanner(
+			embargo.WithEmail(), embargo.WithBankAccount(),
+			embargo.WithMinConfidence(threshold),
 		)
 		fmt.Printf("threshold %.1f: %d findings\n", threshold, len(scanner.ScanString(text)))
 	}
@@ -128,7 +128,7 @@ func ExampleWithDetector() {
 		"ticket_id", regexp.MustCompile(`TICKET-\d{4}`),
 		[][]byte{[]byte("TICKET-")}, 0.9,
 	)
-	scanner := sensitive.NewScanner(sensitive.WithDetector(ticket))
+	scanner := embargo.NewScanner(embargo.WithDetector(ticket))
 	for _, f := range scanner.ScanString("see TICKET-4321 for details") {
 		fmt.Printf("%s: %s (%.1f)\n", f.DetectorName, f.RawValue, f.Confidence)
 	}

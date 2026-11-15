@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/nao1215/sensitive/detector"
+	"github.com/nao1215/embargo/detector"
 )
 
 func TestNewRegex_nilPatternPanics(t *testing.T) {

@@ -5,8 +5,8 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/nao1215/sensitive"
-	"github.com/nao1215/sensitive/mask"
+	"github.com/nao1215/embargo"
+	"github.com/nao1215/embargo/mask"
 )
 
 // maskFuzzSeeds returns inputs that reach a range of detectors, including
@@ -45,7 +45,7 @@ func FuzzMaskAllRedact(f *testing.F) {
 	for _, s := range maskFuzzSeeds() {
 		f.Add(s)
 	}
-	scanner := sensitive.NewScanner(sensitive.WithAll(), sensitive.WithSortByPosition())
+	scanner := embargo.NewScanner(embargo.WithAll(), embargo.WithSortByPosition())
 
 	f.Fuzz(func(t *testing.T, text string) {
 		checkEmbeddedRedaction(t, text)
@@ -107,16 +107,16 @@ func FuzzMask(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, text string, start, end, strategy int) {
 		checkEmbeddedRedaction(t, text)
-		const name = sensitive.DetectorName("fuzz")
+		const name = embargo.DetectorName("fuzz")
 		st := mask.Strategy(strategy)
 		inRange := start >= 0 && end <= len(text) && start < end
 		raw := ""
 		if inRange {
 			raw = text[start:end]
 		}
-		finding := sensitive.Finding{DetectorName: name, Start: start, End: end, RawValue: raw}
+		finding := embargo.Finding{DetectorName: name, Start: start, End: end, RawValue: raw}
 
-		got := mask.Mask(text, []sensitive.Finding{finding}, map[sensitive.DetectorName]mask.Strategy{name: st})
+		got := mask.Mask(text, []embargo.Finding{finding}, map[embargo.DetectorName]mask.Strategy{name: st})
 		if !inRange {
 			if got != text {
 				t.Fatalf("out-of-range finding [%d:%d] changed %q to %q", start, end, text, got)
@@ -152,7 +152,7 @@ func checkEmbeddedRedaction(t *testing.T, context string) {
 	t.Helper()
 	raw := "oracle@example.com"
 	text := context + "\n[" + raw + "]\n" + context
-	s := sensitive.NewScanner(sensitive.WithEmail())
+	s := embargo.NewScanner(embargo.WithEmail())
 	findings := s.ScanString(text)
 	found := false
 	for _, f := range findings {

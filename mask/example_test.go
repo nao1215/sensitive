@@ -3,18 +3,18 @@ package mask_test
 import (
 	"fmt"
 
-	"github.com/nao1215/sensitive"
-	"github.com/nao1215/sensitive/detector"
-	"github.com/nao1215/sensitive/mask"
+	"github.com/nao1215/embargo"
+	"github.com/nao1215/embargo/detector"
+	"github.com/nao1215/embargo/mask"
 )
 
 func ExampleMask() {
-	scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
+	scanner := embargo.NewScanner(embargo.WithPAN(), embargo.WithEmail())
 	text := "user tanaka@example.com paid with 4532015112830366"
 	findings := scanner.ScanString(text)
 
 	// Apply different masking strategies per detector.
-	masked := mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{
+	masked := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{
 		detector.NamePAN:   mask.Last4,
 		detector.NameEmail: mask.Partial,
 	})
@@ -26,9 +26,9 @@ func ExampleMask() {
 
 func ExampleMask_strategies() {
 	text := "4532015112830366"
-	findings := sensitive.NewScanner(sensitive.WithPAN()).ScanString(text)
+	findings := embargo.NewScanner(embargo.WithPAN()).ScanString(text)
 	for _, strategy := range []mask.Strategy{mask.Redact, mask.Last4, mask.First1Last4, mask.Partial, mask.Hash} {
-		fmt.Println(mask.Mask(text, findings, map[sensitive.DetectorName]mask.Strategy{
+		fmt.Println(mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{
 			detector.NamePAN: strategy,
 		}))
 	}
@@ -41,7 +41,7 @@ func ExampleMask_strategies() {
 }
 
 func ExampleMaskAll() {
-	scanner := sensitive.NewScanner(sensitive.WithPAN(), sensitive.WithEmail())
+	scanner := embargo.NewScanner(embargo.WithPAN(), embargo.WithEmail())
 	text := "user tanaka@example.com paid with 4532015112830366"
 	findings := scanner.ScanString(text)
 

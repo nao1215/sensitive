@@ -1,6 +1,6 @@
-package sensitive
+package embargo
 
-import "github.com/nao1215/sensitive/detector"
+import "github.com/nao1215/embargo/detector"
 
 // Option configures a [Scanner] through [NewScanner].
 type Option func(*Scanner)

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/nao1215/sensitive"
-	"github.com/nao1215/sensitive/detector"
+	"github.com/nao1215/embargo"
+	"github.com/nao1215/embargo/detector"
 )
 
 // markerDetector finds an application's exact internal classification marker.
@@ -43,7 +43,7 @@ func (d markerDetector) Scan(data []byte) []detector.Finding {
 
 func ExampleDetector() {
 	custom := markerDetector{marker: []byte("INTERNAL-ONLY")}
-	scanner := sensitive.NewScanner(sensitive.WithDetector(custom))
+	scanner := embargo.NewScanner(embargo.WithDetector(custom))
 	for _, f := range scanner.ScanString("scope: INTERNAL-ONLY") {
 		fmt.Printf("%s [%d:%d]: %s\n", f.DetectorName, f.Start, f.End, f.RawValue)
 	}

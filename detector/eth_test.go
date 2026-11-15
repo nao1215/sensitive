@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nao1215/sensitive/detector"
+	"github.com/nao1215/embargo/detector"
 )
 
 func TestETHDetector_Scan(t *testing.T) {
