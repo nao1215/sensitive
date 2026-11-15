@@ -29,8 +29,14 @@ for block in args.fuzz.read_text().split("go test ")[1:]:
     if name is None or not executions or "\nPASS\n" not in block:
         raise ValueError("fuzz run must be complete")
     fuzz_runs.append({"target": name[1], "executions": int(executions[-1]), "seconds_requested": 10})
-if len(fuzz_runs) != 6 or len({run["target"] for run in fuzz_runs}) != 6:
-    raise ValueError("expected all six distinct fuzz targets")
+expected_fuzz = set()
+for source in root.rglob("*_test.go"):
+    relative = source.relative_to(root)
+    if relative.parts[0] in {"tests", "adapters"}:
+        continue
+    expected_fuzz.update(re.findall(r"^func (Fuzz\w+)\(f \*testing.F\)", source.read_text(encoding="utf-8"), re.M))
+if len(fuzz_runs) != len(expected_fuzz) or {run["target"] for run in fuzz_runs} != expected_fuzz:
+    raise ValueError("expected every distinct root-module fuzz target")
 snapshot = {
     "date": datetime.datetime.now(datetime.timezone.utc).date().isoformat(),
     "commit": args.commit,

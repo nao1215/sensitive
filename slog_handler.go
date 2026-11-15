@@ -10,11 +10,16 @@ import (
 	"time"
 )
 
-// NewSlogHandler masks messages, keys, groups and values before forwarding to next.
-// Both arguments must be non-nil. Any and error values become scanned strings;
-// clean scalar types and record metadata are preserved. WithAttrs freezes values.
-// Normalization or detector failures suppress the record and return a fixed error.
-// Detection covers forwarded values, not data added by next or its ReplaceAttr.
+// NewSlogHandler scans messages, keys, groups and values before forwarding to next.
+// Both arguments must be non-nil; invalid dependencies panic.
+// Any and error values become scanned strings, while clean scalars and record
+// metadata keep their types; WithAttrs freezes sanitized values.
+//
+// Scanner or normalization failures drop the record and return a fixed error.
+// Values added by downstream handlers need their own output check.
+// See the [logging guide] for value handling and error observation.
+//
+// [logging guide]: https://github.com/nao1215/embargo/blob/main/doc/logging.md
 func NewSlogHandler(next slog.Handler, scanner *Scanner) slog.Handler {
 	if next == nil {
 		panic("embargo: nil slog handler")

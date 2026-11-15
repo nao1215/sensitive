@@ -1,0 +1,34 @@
+# Scanning and masking
+
+`Scan` accepts bytes, `ScanString` accepts text, and `ScanLines` handles independent lines. Findings contain the kind, confidence, and start/end byte positions in the original input. `WithKinds` selects detectors; omitting options enables every built-in.
+
+## Overlapping matches
+
+Two detectors can describe overlapping parts of one value. `Mask` replaces their combined range once, so the end of either match cannot escape redaction.
+
+<!-- overlap:start -->
+```mermaid
+flowchart LR
+  input["token=abcdef"] --> first["Match: abcd"]
+  input --> second["Match: cdef"]
+  first --> union["Merge overlapping spans"]
+  second --> union
+  union --> output["token=[REDACTED]"]
+```
+<!-- overlap:end -->
+
+The diagram comes from the [runnable overlap Example](../masking_example_test.go). `make masking-doc` regenerates it and the README before/after table; ordinary tests reject differences.
+
+`MaskFunc` receives the original text of each merged range and chooses its replacement. The highest-confidence finding supplies the kind; ties sort by kind, start, then descending end. Adjacent ranges remain separate; invalid ranges redact the entire input without calling the callback.
+
+See [Mask and MaskFunc Examples](../example_test.go), [overlap tests](../tests/mask_test.go), and [custom detector contracts](../scanner_test.go).
+
+## Custom detection
+
+Implement `Detector.Scan` and pass it to `WithDetector` for an application-specific pattern. Return nonempty ranges within the input and finite confidence values between zero and one. The scanner checks these contracts; custom detectors must leave input unchanged and support concurrent calls when shared.
+
+## Choosing a policy
+
+Confidence is a format heuristic, not a probability that a value is sensitive. For example, a card-shaped number failing Luhn is still a lower-confidence candidate. Review the [synthetic accuracy cases](accuracy.md) before selecting a threshold or allowing fixture values.
+
+[Support maintenance](https://github.com/sponsors/nao1215).

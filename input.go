@@ -20,7 +20,7 @@ func (inputError) Error() string { return "embargo: invalid input" }
 
 // UnmarshalJSON accepts only JSON strings; byte slices use base64 decoding.
 // Named types use their underlying representation, never their own decoders.
-// Failure, including the redaction redactionMarker, clears this Input and returns a
+// Failure, including the redaction marker, clears this Input and returns a
 // fixed error. A nil receiver returns the same error.
 func (i *Input[T]) UnmarshalJSON(data []byte) error {
 	if i == nil {
@@ -44,7 +44,7 @@ func (i *Input[T]) UnmarshalJSON(data []byte) error {
 }
 
 // UnmarshalText copies raw text without trimming or guessing an encoding.
-// The redaction redactionMarker is rejected with the same fixed error as JSON failures.
+// The redaction marker is rejected with the same fixed error as JSON failures.
 func (i *Input[T]) UnmarshalText(data []byte) error {
 	if i == nil {
 		return inputError{}

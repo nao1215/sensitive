@@ -1,0 +1,80 @@
+package embargozap_test
+
+import (
+	"bytes"
+	"errors"
+	"io"
+	"testing"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
+	"github.com/nao1215/embargo"
+	embargozap "github.com/nao1215/embargo/adapters/zap"
+	"github.com/nao1215/embargo/embargotest"
+)
+
+type literal struct{ value []byte }
+
+func (d literal) Scan(data []byte) []embargo.Finding {
+	var findings []embargo.Finding
+	for start := 0; start < len(data); {
+		i := bytes.Index(data[start:], d.value)
+		if i < 0 {
+			break
+		}
+		start += i
+		findings = append(findings, embargo.Finding{Kind: "canary", Start: start, End: start + len(d.value), Confidence: 1})
+		start += len(d.value)
+	}
+	return findings
+}
+
+func TestRealLoggerMasksOutput(t *testing.T) {
+	t.Parallel()
+	canary := "public-fake-canary-0123456789"
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN), embargo.WithDetector(literal{value: []byte(canary)}))
+	r := embargotest.New(t, embargotest.WithCanary([]byte(canary)), embargotest.WithScanner(scanner))
+	emit(t, r.Writer("logs"), scanner, canary)
+	//nolint:goconst // Spell out each field expectation as an independent output contract.
+	r.ExpectJSON("logs", nil, map[string]string{"msg": "[REDACTED]", "pre": "[REDACTED]", "card": "[REDACTED]", "secret": "[REDACTED]"}, 1)
+	if !r.Check() {
+		t.Fatal("real logger output failed inspection")
+	}
+}
+
+func emit(t *testing.T, out io.Writer, scanner *embargo.Scanner, canary string) {
+	t.Helper()
+	sink := embargozap.NewWriteSyncer(zapcore.AddSync(out), scanner)
+	logger := zap.New(zapcore.NewCore(zapcore.NewJSONEncoder(zapcore.EncoderConfig{MessageKey: "msg"}), sink, zap.DebugLevel))
+	logger = logger.With(zap.String("pre", canary)).Named("alice@example.com")
+	logger.Info(canary, zap.String(canary, "alice@example.com"), zap.Int64("card", 4111111111111111), zap.Any("secret", embargo.NewSecret(canary)), zap.Any("nested", map[string]any{"email": "alice@example.com", "values": []string{canary}}), zap.Error(errors.New(canary)))
+	if err := logger.Sync(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+type failedObservation struct {
+	testing.TB
+
+	failed bool
+}
+
+func (o *failedObservation) Error(...any) { o.failed = true }
+
+func TestEncodedBinaryIsADocumentedLimit(t *testing.T) {
+	t.Parallel()
+	observation := &failedObservation{TB: t}
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
+	r := embargotest.New(observation, embargotest.WithScanner(scanner))
+	sink := embargozap.NewWriteSyncer(zapcore.AddSync(r.Writer("logs")), scanner)
+	logger := zap.New(zapcore.NewCore(zapcore.NewJSONEncoder(zapcore.EncoderConfig{MessageKey: "msg"}), sink, zap.DebugLevel))
+	logger.Info("encoded", zap.Binary("binary", r.Canary()))
+	if err := logger.Sync(); err != nil {
+		t.Fatal(err)
+	}
+	r.Expect("logs", func(data []byte) bool { return bytes.Contains(data, []byte("encoded")) })
+	if r.Check() || !observation.failed {
+		t.Fatal("encoded canary must expose the documented runtime detection limit")
+	}
+}

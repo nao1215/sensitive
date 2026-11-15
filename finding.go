@@ -3,7 +3,7 @@ package embargo
 // Kind identifies a built-in or application-defined detection family.
 type Kind string
 
-// Finding locates sensitive data in the original input without retaining its value.
+// Finding locates a sensitive-data candidate in the original input without retaining its value.
 type Finding struct {
 	// Kind identifies the detection family.
 	Kind Kind
@@ -16,50 +16,50 @@ type Finding struct {
 }
 
 const (
-	// KindPAN selects pan detection.
+	// KindPAN selects payment card candidates, including lower-confidence checksum failures.
 	KindPAN Kind = "pan"
-	// KindEmail selects email detection.
+	// KindEmail selects email addresses.
 	KindEmail Kind = "email"
-	// KindJPPhone selects phone_jp detection.
+	// KindJPPhone selects Japanese telephone numbers.
 	KindJPPhone Kind = "phone_jp"
-	// KindMyNumber selects mynumber detection.
+	// KindMyNumber selects Japanese My Number identifiers.
 	KindMyNumber Kind = "mynumber"
-	// KindJWT selects jwt detection.
+	// KindJWT selects JSON Web Token candidates.
 	KindJWT Kind = "jwt"
-	// KindAWSKey selects awskey detection.
+	// KindAWSKey selects AWS access key IDs.
 	KindAWSKey Kind = "awskey"
-	// KindIBAN selects iban detection.
+	// KindIBAN selects international bank account numbers.
 	KindIBAN Kind = "iban"
-	// KindIPAddr selects ipaddr detection.
+	// KindIPAddr selects IPv4 and IPv6 addresses.
 	KindIPAddr Kind = "ipaddr"
-	// KindSWIFTBIC selects swiftbic detection.
+	// KindSWIFTBIC selects SWIFT/BIC candidates.
 	KindSWIFTBIC Kind = "swiftbic"
-	// KindABARouting selects aba_routing detection.
+	// KindABARouting selects US ABA routing numbers.
 	KindABARouting Kind = "aba_routing"
-	// KindUKSortCode selects uk_sortcode detection.
+	// KindUKSortCode selects UK bank sort codes.
 	KindUKSortCode Kind = "uk_sortcode"
-	// KindCVV selects cvv detection.
+	// KindCVV selects card verification codes near context keywords.
 	KindCVV Kind = "cvv"
-	// KindCardExpiry selects card_expiry detection.
+	// KindCardExpiry selects card expiry dates near context keywords.
 	KindCardExpiry Kind = "card_expiry"
-	// KindPaymentToken selects payment_token detection.
+	// KindPaymentToken selects payment-provider token candidates.
 	KindPaymentToken Kind = "payment_token"
-	// KindBankAccount selects bank_account detection.
+	// KindBankAccount selects bank account numbers near context keywords.
 	KindBankAccount Kind = "bank_account"
-	// KindACHTrace selects ach_trace detection.
+	// KindACHTrace selects ACH trace numbers near context keywords.
 	KindACHTrace Kind = "ach_trace"
-	// KindMerchantID selects merchant_id detection.
+	// KindMerchantID selects merchant IDs near context keywords.
 	KindMerchantID Kind = "merchant_id"
-	// KindBTC selects btc detection.
+	// KindBTC selects Bitcoin addresses.
 	KindBTC Kind = "btc"
-	// KindETH selects eth detection.
+	// KindETH selects Ethereum addresses.
 	KindETH Kind = "eth"
-	// KindGitHubToken selects github_token detection.
+	// KindGitHubToken selects GitHub token candidates.
 	KindGitHubToken Kind = "github_token"
-	// KindSlackToken selects slack_token detection.
+	// KindSlackToken selects Slack token candidates.
 	KindSlackToken Kind = "slack_token"
-	// KindGoogleAPIKey selects google_api_key detection.
+	// KindGoogleAPIKey selects Google API key candidates.
 	KindGoogleAPIKey Kind = "google_api_key"
-	// KindPrivateKeyPEM selects private_key_pem detection.
+	// KindPrivateKeyPEM selects PEM private-key headers, not their full key bodies.
 	KindPrivateKeyPEM Kind = "private_key_pem"
 )
