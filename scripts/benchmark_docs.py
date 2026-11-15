@@ -9,7 +9,7 @@ import statistics
 import subprocess
 
 root = pathlib.Path(__file__).resolve().parents[1]
-command = ["go", "-C", "tests", "test", "-run", "^$", "-bench", "^BenchmarkPublished", "-benchmem", "-benchtime=200ms", "-count=5", "."]
+command = ["go", "-C", "tests", "test", "-run", "^$", "-bench", "^BenchmarkPublished", "-benchmem", "-benchtime=200ms", "-count=10", "."]
 environment = dict(os.environ, GOMAXPROCS="1", GOTOOLCHAIN="go1.26.11")
 result = subprocess.run(command, cwd=root, env=environment, text=True, stdout=subprocess.PIPE, check=True)
 (root / "doc/benchmarks.raw.txt").write_text(result.stdout)
@@ -20,8 +20,8 @@ for line in result.stdout.splitlines():
         continue
     values = {unit: float(value) for value, unit in re.findall(r"([\d.]+)\s+(ns/op|MB/s|B/op|allocs/op)", match[2])}
     rows.setdefault(match[1], []).append(values)
-if not rows or any(len(values) != 5 for values in rows.values()):
-    raise RuntimeError("each benchmark must have five samples")
+if not rows or any(len(values) != 10 for values in rows.values()):
+    raise RuntimeError("each benchmark must have ten samples")
 snapshot = {
     "date": datetime.datetime.now(datetime.timezone.utc).date().isoformat(),
     "go_version": subprocess.check_output(["go", "env", "GOVERSION"], env=environment, text=True).strip(),
@@ -30,7 +30,7 @@ snapshot = {
     "cpu": re.search(r"^cpu: (.+)$", result.stdout, re.M)[1].strip(),
     "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
     "command": "GOMAXPROCS=1 GOTOOLCHAIN=go1.26.11 " + " ".join(command),
-    "samples": 5,
+    "samples": 10,
     "cpu_affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
     "background_load": os.environ.get("EMBARGO_BENCH_LOAD", "no intentional concurrent workload"),
     "benchmarks": {name: {unit: statistics.median(item[unit] for item in values) for unit in values[0]} for name, values in sorted(rows.items())},

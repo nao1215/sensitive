@@ -1,0 +1,120 @@
+File: tests.test
+Build ID: 4b794207fd72fdfc2840a9662da7910998edfc34
+Type: cpu
+Time: 2026-11-15 19:39:16 JST
+Duration: 4.92s, Total samples = 4.92s (99.90%)
+Showing nodes accounting for 4.50s, 91.46% of 4.92s total
+Dropped 97 nodes (cum <= 0.02s)
+      flat  flat%   sum%        cum   cum%
+     0.56s 11.38% 11.38%      0.85s 17.28%  github.com/nao1215/embargo/internal/detect.(*GitHubToken).Scan
+     0.52s 10.57% 21.95%      0.62s 12.60%  github.com/nao1215/embargo/internal/detect.extractNear
+     0.25s  5.08% 27.03%      0.25s  5.08%  github.com/nao1215/embargo/internal/detect.hasASCIIPrefix (inline)
+     0.21s  4.27% 31.30%      0.26s  5.28%  github.com/nao1215/embargo/internal/detect.(*PaymentToken).Scan
+     0.21s  4.27% 35.57%      0.21s  4.27%  indexbytebody
+     0.20s  4.07% 39.63%      0.20s  4.07%  indexbody
+     0.12s  2.44% 42.07%      0.12s  2.44%  internal/bytealg.IndexByte
+     0.11s  2.24% 44.31%      0.11s  2.24%  github.com/nao1215/embargo/internal/ascii.ToLower (inline)
+     0.11s  2.24% 46.54%      0.27s  5.49%  github.com/nao1215/embargo/internal/detect.(*GitHubToken).matchClassic
+     0.10s  2.03% 48.58%      0.10s  2.03%  github.com/nao1215/embargo/internal/detect.isAlpha (inline)
+     0.10s  2.03% 50.61%      0.22s  4.47%  slices.swapRangeCmpFunc[go.shape.struct { Kind github.com/nao1215/embargo.Kind; Start int; End int; Confidence float64 }] (inline)
+     0.09s  1.83% 52.44%      0.71s 14.43%  bytes.Index
+     0.09s  1.83% 54.27%      0.09s  1.83%  github.com/nao1215/embargo/internal/detect.(*ABARouting).scanNormalized
+     0.09s  1.83% 56.10%      0.21s  4.27%  github.com/nao1215/embargo/internal/detect.(*IPAddr).Scan
+     0.09s  1.83% 57.93%      0.09s  1.83%  github.com/nao1215/embargo/internal/detect.isDigit (partial-inline)
+     0.08s  1.63% 59.55%      0.08s  1.63%  github.com/nao1215/embargo/internal/detect.normalizeDigits
+     0.07s  1.42% 60.98%      0.13s  2.64%  github.com/nao1215/embargo/internal/detect.(*JPPhone).scanNormalized
+     0.07s  1.42% 62.40%      0.07s  1.42%  github.com/nao1215/embargo/internal/detect.containsBytes (inline)
+     0.06s  1.22% 63.62%      0.09s  1.83%  github.com/nao1215/embargo/internal/detect.(*PAN).scanNormalized
+     0.06s  1.22% 64.84%      0.17s  3.46%  github.com/nao1215/embargo/internal/detect.(*SlackToken).Scan
+     0.06s  1.22% 66.06%      0.06s  1.22%  github.com/nao1215/embargo/internal/detect.encodedSeparatorBefore
+     0.06s  1.22% 67.28%      0.21s  4.27%  runtime.bulkBarrierPreWrite
+     0.06s  1.22% 68.50%      0.38s  7.72%  slices.symMergeCmpFunc[go.shape.struct { Kind github.com/nao1215/embargo.Kind; Start int; End int; Confidence float64 }]
+     0.05s  1.02% 69.51%      0.05s  1.02%  github.com/nao1215/embargo/internal/detect.(*GitHubToken).classicPrefixes (inline)
+     0.05s  1.02% 70.53%      0.16s  3.25%  github.com/nao1215/embargo/internal/detect.(*JWT).Scan
+     0.05s  1.02% 71.54%      0.08s  1.63%  github.com/nao1215/embargo/internal/detect.(*MyNumber).scanNormalized
+     0.05s  1.02% 72.56%      0.07s  1.42%  github.com/nao1215/embargo/internal/detect.extractJWTToken
+     0.05s  1.02% 73.58%      0.09s  1.83%  runtime.tryDeferToSpanScan
+     0.04s  0.81% 74.39%      0.34s  6.91%  runtime.mallocgc
+     0.04s  0.81% 75.20%      0.06s  1.22%  runtime.mallocgcTiny
+     0.04s  0.81% 76.02%      0.05s  1.02%  runtime.spanOf (inline)
+     0.03s  0.61% 76.63%      0.36s  7.32%  bytes.IndexByte (inline)
+     0.03s  0.61% 77.24%      0.03s  0.61%  github.com/nao1215/embargo.compareFindings
+     0.03s  0.61% 77.85%      0.08s  1.63%  github.com/nao1215/embargo/internal/detect.(*BTC).Scan
+     0.03s  0.61% 78.46%      0.07s  1.42%  github.com/nao1215/embargo/internal/detect.(*IBAN).Scan
+     0.03s  0.61% 79.07%      0.05s  1.02%  github.com/nao1215/embargo/internal/detect.isSortCodePattern
+     0.03s  0.61% 79.67%      0.03s  0.61%  github.com/nao1215/embargo/internal/detect.matchAWSPrefix (inline)
+     0.03s  0.61% 80.28%      0.03s  0.61%  github.com/nao1215/embargo/internal/detect.matchBech32Prefix (inline)
+     0.03s  0.61% 80.89%      0.08s  1.63%  github.com/nao1215/embargo/internal/detect.validateSWIFTStructure
+     0.03s  0.61% 81.50%      0.03s  0.61%  internal/bytealg.Cutover (inline)
+     0.03s  0.61% 82.11%      0.03s  0.61%  memeqbody
+     0.03s  0.61% 82.72%      0.03s  0.61%  runtime.heapArenaOf (inline)
+     0.03s  0.61% 83.33%      0.03s  0.61%  runtime.memhash64
+     0.03s  0.61% 83.94%      0.06s  1.22%  runtime.scanObject
+     0.03s  0.61% 84.55%      0.04s  0.81%  runtime.typePointers.next
+     0.03s  0.61% 85.16%      0.24s  4.88%  runtime.wbMove
+     0.03s  0.61% 85.77%      0.06s  1.22%  slices.insertionSortCmpFunc[go.shape.struct { Kind github.com/nao1215/embargo.Kind; Start int; End int; Confidence float64 }] (inline)
+     0.03s  0.61% 86.38%      0.25s  5.08%  slices.rotateCmpFunc[go.shape.struct { Kind github.com/nao1215/embargo.Kind; Start int; End int; Confidence float64 }]
+     0.02s  0.41% 86.79%      0.06s  1.22%  github.com/nao1215/embargo/internal/detect.(*AWSKey).Scan
+     0.02s  0.41% 87.20%      0.04s  0.81%  github.com/nao1215/embargo/internal/detect.(*ETH).Scan
+     0.02s  0.41% 87.60%      0.10s  2.03%  github.com/nao1215/embargo/internal/detect.(*UKSortCode).Scan
+     0.02s  0.41% 88.01%      0.06s  1.22%  net/netip.ParseAddr
+     0.02s  0.41% 88.41%      0.13s  2.64%  runtime.growslice
+     0.02s  0.41% 88.82%      0.11s  2.24%  runtime.wbBufFlush1
+     0.01s   0.2% 89.02%      4.87s 98.98%  github.com/nao1215/embargo.(*Scanner).Scan
+     0.01s   0.2% 89.23%      0.14s  2.85%  github.com/nao1215/embargo/internal/ascii.LowerCopy (inline)
+     0.01s   0.2% 89.43%      0.04s  0.81%  github.com/nao1215/embargo/internal/detect.(*GoogleAPIKey).Scan
+     0.01s   0.2% 89.63%      0.10s  2.03%  github.com/nao1215/embargo/internal/detect.(*SWIFTBIC).Scan
+     0.01s   0.2% 89.84%      0.87s 17.68%  github.com/nao1215/embargo/internal/detect.(*keywordSet).findPositions
+     0.01s   0.2% 90.04%      0.11s  2.24%  github.com/nao1215/embargo/internal/detect.slackTokenType
+     0.01s   0.2% 90.24%      0.10s  2.03%  runtime.deductAssistCredit
+     0.01s   0.2% 90.45%      0.04s  0.81%  runtime.findObject
+     0.01s   0.2% 90.65%      0.05s  1.02%  runtime.mallocgcSmallNoscan
+     0.01s   0.2% 90.85%      0.06s  1.22%  runtime.mallocgcSmallScanNoHeader
+     0.01s   0.2% 91.06%      0.04s  0.81%  runtime.moveSliceNoCapNoScan
+     0.01s   0.2% 91.26%      0.04s  0.81%  runtime.newobject
+     0.01s   0.2% 91.46%      0.13s  2.64%  runtime.slicebytetostring
+         0     0% 91.46%      0.03s  0.61%  bytes.Equal (inline)
+         0     0% 91.46%      0.09s  1.83%  github.com/nao1215/embargo/internal/detect.(*ABARouting).Scan
+         0     0% 91.46%      0.52s 10.57%  github.com/nao1215/embargo/internal/detect.(*ACHTrace).Scan
+         0     0% 91.46%      0.48s  9.76%  github.com/nao1215/embargo/internal/detect.(*BankAccount).Scan
+         0     0% 91.46%      0.46s  9.35%  github.com/nao1215/embargo/internal/detect.(*BankAccount).scanNormalized
+         0     0% 91.46%      0.25s  5.08%  github.com/nao1215/embargo/internal/detect.(*CVV).Scan
+         0     0% 91.46%      0.34s  6.91%  github.com/nao1215/embargo/internal/detect.(*CardExpiry).Scan
+         0     0% 91.46%      0.05s  1.02%  github.com/nao1215/embargo/internal/detect.(*CardExpiry).searchRange
+         0     0% 91.46%      0.09s  1.83%  github.com/nao1215/embargo/internal/detect.(*IPAddr).tryIPv4
+         0     0% 91.46%      0.16s  3.25%  github.com/nao1215/embargo/internal/detect.(*JPPhone).Scan
+         0     0% 91.46%      0.17s  3.46%  github.com/nao1215/embargo/internal/detect.(*MerchantID).Scan
+         0     0% 91.46%      0.10s  2.03%  github.com/nao1215/embargo/internal/detect.(*MyNumber).Scan
+         0     0% 91.46%      0.10s  2.03%  github.com/nao1215/embargo/internal/detect.(*PAN).Scan
+         0     0% 91.46%      0.04s  0.81%  github.com/nao1215/embargo/internal/detect.(*PrivateKeyPEM).Scan
+         0     0% 91.46%      0.07s  1.42%  github.com/nao1215/embargo/internal/detect.containsAnyNear
+         0     0% 91.46%      0.04s  0.81%  github.com/nao1215/embargo/internal/detect.decodeJWTHeader
+         0     0% 91.46%      0.07s  1.42%  github.com/nao1215/embargo/internal/detect.extractAlphaNumNear (inline)
+         0     0% 91.46%      0.55s 11.18%  github.com/nao1215/embargo/internal/detect.extractDigitsNear (inline)
+         0     0% 91.46%      0.04s  0.81%  github.com/nao1215/embargo/internal/detect.isAlphaNum (partial-inline)
+         0     0% 91.46%      4.87s 98.98%  github.com/nao1215/embargo/tests.BenchmarkPublishedScanner.func1
+         0     0% 91.46%      0.06s  1.22%  net.ParseIP (inline)
+         0     0% 91.46%      0.06s  1.22%  net.parseIP
+         0     0% 91.46%      0.03s  0.61%  runtime.(*mcache).nextFree
+         0     0% 91.46%      0.03s  0.61%  runtime.(*mcache).refill
+         0     0% 91.46%      0.03s  0.61%  runtime.(*mcentral).cacheSpan
+         0     0% 91.46%      0.11s  2.24%  runtime.(*wbBuf).get2 (inline)
+         0     0% 91.46%      0.04s  0.81%  runtime.convT
+         0     0% 91.46%      0.09s  1.83%  runtime.gcAssistAlloc
+         0     0% 91.46%      0.09s  1.83%  runtime.gcAssistAlloc.func2
+         0     0% 91.46%      0.09s  1.83%  runtime.gcAssistAlloc1
+         0     0% 91.46%      0.04s  0.81%  runtime.gcBgMarkWorker
+         0     0% 91.46%      0.04s  0.81%  runtime.gcBgMarkWorker.func2
+         0     0% 91.46%      0.04s  0.81%  runtime.gcDrain
+         0     0% 91.46%      0.04s  0.81%  runtime.gcDrainMarkWorkerFractional (inline)
+         0     0% 91.46%      0.09s  1.83%  runtime.gcDrainN
+         0     0% 91.46%      0.03s  0.61%  runtime.mapaccess2_fast64
+         0     0% 91.46%      0.04s  0.81%  runtime.markroot
+         0     0% 91.46%      0.03s  0.61%  runtime.scanSpan
+         0     0% 91.46%      0.26s  5.28%  runtime.systemstack
+         0     0% 91.46%      0.11s  2.24%  runtime.wbBufFlush
+         0     0% 91.46%      0.11s  2.24%  runtime.wbBufFlush.func1
+         0     0% 91.46%      0.44s  8.94%  slices.SortStableFunc[go.shape.[]github.com/nao1215/embargo.Finding,go.shape.struct { Kind github.com/nao1215/embargo.Kind; Start int; End int; Confidence float64 }] (inline)
+         0     0% 91.46%      0.44s  8.94%  slices.stableCmpFunc[go.shape.struct { Kind github.com/nao1215/embargo.Kind; Start int; End int; Confidence float64 }]
+         0     0% 91.46%      4.87s 98.98%  testing.(*B).run1.func1
+         0     0% 91.46%      4.87s 98.98%  testing.(*B).runN

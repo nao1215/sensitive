@@ -1,0 +1,128 @@
+File: tests.test
+Build ID: 38355acd1060b04bc2d24cf7bf5066257c415950
+Type: cpu
+Time: 2026-11-15 18:49:53 JST
+Duration: 3.59s, Total samples = 3.59s (99.95%)
+Showing nodes accounting for 3.34s, 93.04% of 3.59s total
+Dropped 41 nodes (cum <= 0.02s)
+      flat  flat%   sum%        cum   cum%
+     0.49s 13.65% 13.65%      0.49s 13.65%  indexbody
+     0.45s 12.53% 26.18%      1.32s 36.77%  bytes.Index
+     0.26s  7.24% 33.43%      0.26s  7.24%  internal/bytealg.Index
+     0.24s  6.69% 40.11%      1.61s 44.85%  github.com/nao1215/embargo.matchesAnyHint
+     0.18s  5.01% 45.13%      2.65s 73.82%  github.com/nao1215/embargo.(*Scanner).Scan
+     0.07s  1.95% 47.08%      0.07s  1.95%  github.com/nao1215/embargo/internal/detect.isAlpha (inline)
+     0.07s  1.95% 49.03%      0.07s  1.95%  time.runtimeNow
+     0.06s  1.67% 50.70%      0.06s  1.67%  github.com/nao1215/embargo/internal/detect.(*MyNumber).scanNormalized
+     0.06s  1.67% 52.37%      0.28s  7.80%  github.com/nao1215/embargo/internal/detect.NormalizeFullWidthDigits
+     0.06s  1.67% 54.04%      0.08s  2.23%  log/slog.(*commonHandler).newHandleState
+     0.06s  1.67% 55.71%      0.36s 10.03%  runtime.mallocgc
+     0.05s  1.39% 57.10%      1.37s 38.16%  bytes.Contains (inline)
+     0.05s  1.39% 58.50%      0.32s  8.91%  github.com/nao1215/embargo/internal/detect.(*SWIFTBIC).Scan
+     0.05s  1.39% 59.89%      0.18s  5.01%  github.com/nao1215/embargo/internal/detect.validateSWIFTStructure
+     0.05s  1.39% 61.28%      0.06s  1.67%  runtime.pcvalue
+     0.04s  1.11% 62.40%      0.11s  3.06%  bytes.IndexByte (inline)
+     0.04s  1.11% 63.51%      0.08s  2.23%  github.com/nao1215/embargo/internal/detect.(*BTC).Scan
+     0.04s  1.11% 64.62%      0.04s  1.11%  github.com/nao1215/embargo/internal/detect.matchBech32Prefix (inline)
+     0.04s  1.11% 65.74%      0.04s  1.11%  indexbytebody
+     0.04s  1.11% 66.85%      0.09s  2.51%  log/slog.(*Record).Add
+     0.04s  1.11% 67.97%      0.06s  1.67%  runtime.(*unwinder).resolveInternal
+     0.04s  1.11% 69.08%      0.08s  2.23%  runtime.slicebytetostring
+     0.04s  1.11% 70.19%      0.04s  1.11%  time.appendInt
+     0.03s  0.84% 71.03%      0.03s  0.84%  github.com/nao1215/embargo/internal/detect.(*ABARouting).scanNormalized
+     0.03s  0.84% 71.87%      0.07s  1.95%  github.com/nao1215/embargo/internal/detect.(*IBAN).Scan
+     0.03s  0.84% 72.70%      0.03s  0.84%  internal/bytealg.IndexByte
+     0.03s  0.84% 73.54%      0.03s  0.84%  log/slog.Value.Kind (inline)
+     0.03s  0.84% 74.37%      0.03s  0.84%  log/slog.appendEscapedJSONString
+     0.03s  0.84% 75.21%      0.03s  0.84%  log/slog.argsToAttr
+     0.03s  0.84% 76.04%      0.24s  6.69%  runtime.mallocgcSmallNoscan
+     0.03s  0.84% 76.88%      0.03s  0.84%  runtime.nextFreeFast (inline)
+     0.03s  0.84% 77.72%      0.09s  2.51%  runtime.wbBufFlush1
+     0.03s  0.84% 78.55%      0.03s  0.84%  time.absSeconds.clock (inline)
+     0.02s  0.56% 79.11%      0.06s  1.67%  bytes.ToLower
+     0.02s  0.56% 79.67%      0.11s  3.06%  gcWriteBarrier
+     0.02s  0.56% 80.22%      2.76s 76.88%  github.com/nao1215/embargo.(*slogHandler).sanitizeRecord
+     0.02s  0.56% 80.78%      0.02s  0.56%  github.com/nao1215/embargo/internal/detect.(*UKSortCode).Scan
+     0.02s  0.56% 81.34%      0.02s  0.56%  github.com/nao1215/embargo/internal/detect.isSWIFTCountry
+     0.02s  0.56% 81.89%      0.47s 13.09%  log/slog.(*commonHandler).handle
+     0.02s  0.56% 82.45%      0.02s  0.56%  log/slog/internal/buffer.(*Buffer).WriteByte (inline)
+     0.02s  0.56% 83.01%      0.07s  1.95%  log/slog/internal/buffer.(*Buffer).WriteString (inline)
+     0.02s  0.56% 83.57%      0.02s  0.56%  runtime.(*mspan).base (inline)
+     0.02s  0.56% 84.12%      0.03s  0.84%  runtime.(*mspan).markBitsForIndex (inline)
+     0.02s  0.56% 84.68%      0.03s  0.84%  runtime.findfunc
+     0.02s  0.56% 85.24%      0.05s  1.39%  runtime.gcmarknewobject
+     0.02s  0.56% 85.79%      0.02s  0.56%  runtime.releasem (inline)
+     0.02s  0.56% 86.35%      0.07s  1.95%  runtime.stringtoslicebyte
+     0.02s  0.56% 86.91%      0.03s  0.84%  runtime.tryDeferToSpanScan
+     0.02s  0.56% 87.47%      0.03s  0.84%  time.absDays.split (inline)
+     0.01s  0.28% 87.74%      2.73s 76.04%  github.com/nao1215/embargo.(*slogHandler).mask
+     0.01s  0.28% 88.02%      1.73s 48.19%  github.com/nao1215/embargo.(*slogHandler).sanitizeRecord.func2 (inline)
+     0.01s  0.28% 88.30%      0.48s 13.37%  log/slog.(*JSONHandler).Handle
+     0.01s  0.28% 88.58%      0.05s  1.39%  log/slog.(*handleState).appendAttr
+     0.01s  0.28% 88.86%      0.16s  4.46%  log/slog.(*handleState).appendKey
+     0.01s  0.28% 89.14%      1.79s 49.86%  log/slog.Record.Attrs (inline)
+     0.01s  0.28% 89.42%      0.12s  3.34%  log/slog.appendJSONTime
+     0.01s  0.28% 89.69%      0.02s  0.56%  runtime.(*inlineUnwinder).next
+     0.01s  0.28% 89.97%      0.02s  0.56%  runtime.(*mheap).freeSpanLocked
+     0.01s  0.28% 90.25%      0.02s  0.56%  runtime.(*spanSet).push
+     0.01s  0.28% 90.53%      0.04s  1.11%  runtime.(*sweepLocked).sweep
+     0.01s  0.28% 90.81%      0.04s  1.11%  runtime.(*unwinder).initAt
+     0.01s  0.28% 91.09%      0.02s  0.56%  runtime.findObject
+     0.01s  0.28% 91.36%      0.02s  0.56%  runtime.mallocgcTiny
+     0.01s  0.28% 91.64%      0.05s  1.39%  runtime.pcdatavalue1
+     0.01s  0.28% 91.92%      0.02s  0.56%  runtime.scanObject
+     0.01s  0.28% 92.20%      0.15s  4.18%  runtime.tracebackPCs
+     0.01s  0.28% 92.48%      0.02s  0.56%  sync.(*Pool).Put
+     0.01s  0.28% 92.76%      0.02s  0.56%  sync.(*Pool).pin
+     0.01s  0.28% 93.04%      0.10s  2.79%  time.Time.appendFormatRFC3339
+         0     0% 93.04%      2.72s 75.77%  github.com/nao1215/embargo.(*Scanner).ScanString (inline)
+         0     0% 93.04%      3.24s 90.25%  github.com/nao1215/embargo.(*slogHandler).Handle
+         0     0% 93.04%      1.72s 47.91%  github.com/nao1215/embargo.(*slogHandler).sanitizeAttr
+         0     0% 93.04%      0.03s  0.84%  github.com/nao1215/embargo/internal/ascii.LowerCopy (inline)
+         0     0% 93.04%      0.15s  4.18%  github.com/nao1215/embargo/internal/detect.(*ABARouting).Scan
+         0     0% 93.04%      0.22s  6.13%  github.com/nao1215/embargo/internal/detect.(*MyNumber).Scan
+         0     0% 93.04%      0.09s  2.51%  github.com/nao1215/embargo/internal/detect.hasSWIFTContext
+         0     0% 93.04%      3.59s   100%  github.com/nao1215/embargo/tests.BenchmarkPublishedSlog.func1
+         0     0% 93.04%      3.59s   100%  log/slog.(*Logger).Info (inline)
+         0     0% 93.04%      3.59s   100%  log/slog.(*Logger).log
+         0     0% 93.04%      0.06s  1.67%  log/slog.(*handleState).appendNonBuiltIns
+         0     0% 93.04%      0.05s  1.39%  log/slog.(*handleState).appendNonBuiltIns.func1 (inline)
+         0     0% 93.04%      0.08s  2.23%  log/slog.(*handleState).appendString
+         0     0% 93.04%      0.12s  3.34%  log/slog.(*handleState).appendTime
+         0     0% 93.04%      0.02s  0.56%  log/slog.(*handleState).free
+         0     0% 93.04%      0.02s  0.56%  log/slog.Value.isEmptyGroup (inline)
+         0     0% 93.04%      0.02s  0.56%  log/slog/internal/buffer.(*Buffer).Free (inline)
+         0     0% 93.04%      0.03s  0.84%  log/slog/internal/buffer.New (inline)
+         0     0% 93.04%      0.05s  1.39%  runtime.(*inlineUnwinder).resolveInternal (inline)
+         0     0% 93.04%      0.08s  2.23%  runtime.(*mcache).nextFree
+         0     0% 93.04%      0.08s  2.23%  runtime.(*mcache).refill
+         0     0% 93.04%      0.06s  1.67%  runtime.(*mcentral).cacheSpan
+         0     0% 93.04%      0.02s  0.56%  runtime.(*mcentral).uncacheSpan
+         0     0% 93.04%      0.02s  0.56%  runtime.(*mheap).freeSpan (inline)
+         0     0% 93.04%      0.02s  0.56%  runtime.(*sweepLocked).sweep.(*mheap).freeSpan.func2
+         0     0% 93.04%      0.06s  1.67%  runtime.(*unwinder).next
+         0     0% 93.04%      0.18s  5.01%  runtime.Callers (inline)
+         0     0% 93.04%      0.19s  5.29%  runtime.callers
+         0     0% 93.04%      0.19s  5.29%  runtime.callers.func1
+         0     0% 93.04%      0.04s  1.11%  runtime.deductAssistCredit
+         0     0% 93.04%      0.05s  1.39%  runtime.deductSweepCredit
+         0     0% 93.04%      0.02s  0.56%  runtime.funcspdelta (inline)
+         0     0% 93.04%      0.04s  1.11%  runtime.gcAssistAlloc
+         0     0% 93.04%      0.04s  1.11%  runtime.gcAssistAlloc.func2
+         0     0% 93.04%      0.04s  1.11%  runtime.gcAssistAlloc1
+         0     0% 93.04%      0.04s  1.11%  runtime.gcDrainN
+         0     0% 93.04%      0.03s  0.84%  runtime.growslice
+         0     0% 93.04%      0.25s  6.96%  runtime.makeslice
+         0     0% 93.04%      0.04s  1.11%  runtime.newInlineUnwinder
+         0     0% 93.04%      0.04s  1.11%  runtime.rawbyteslice
+         0     0% 93.04%      0.05s  1.39%  runtime.sweepone
+         0     0% 93.04%      0.34s  9.47%  runtime.systemstack
+         0     0% 93.04%      0.09s  2.51%  runtime.wbBufFlush
+         0     0% 93.04%      0.09s  2.51%  runtime.wbBufFlush.func1
+         0     0% 93.04%      0.03s  0.84%  sync.(*Pool).Get
+         0     0% 93.04%      3.59s   100%  testing.(*B).run1.func1
+         0     0% 93.04%      3.59s   100%  testing.(*B).runN
+         0     0% 93.04%      0.07s  1.95%  time.Now
+         0     0% 93.04%      0.10s  2.79%  time.Time.AppendFormat
+         0     0% 93.04%      0.02s  0.56%  time.absDays.date
+         0     0% 93.04%      0.02s  0.56%  time.appendNano

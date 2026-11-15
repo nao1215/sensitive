@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="803" viewBox="0 0 960 803" role="img">
-<title>Precision and recall on synthetic samples</title>
+<title>Precision and recall on held-out synthetic samples</title>
 <desc>Blue bars show precision; orange bars show recall. Counts are positive and negative inputs per detector.</desc>
 <rect width="100%" height="100%" fill="white"/>
 <g font-family="Arial, sans-serif" font-size="14" fill="#172033">
-<text x="20" y="28" font-size="21">Precision and recall · synthetic corpus</text>
+<text x="20" y="28" font-size="21">Precision and recall · held-out synthetic corpus</text>
 <text x="20" y="54" font-size="14">Precision: how many reported matches were correct. Recall: how many expected matches were found.</text>
 <text x="20" y="81" font-size="14">Detector</text>
 <text x="205" y="81" font-size="15">Precision</text>
@@ -16,7 +16,7 @@
 <rect x="435" y="96" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="96" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="109" font-size="14">100.0%</text>
-<text x="730" y="110" font-size="14">146 / 434</text>
+<text x="730" y="110" font-size="14">144 / 416</text>
 <text x="20" y="140" font-size="14">ach_trace</text>
 <rect x="205" y="126" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="126" width="150.00" height="14" fill="#1877b8"/>
@@ -24,7 +24,7 @@
 <rect x="435" y="126" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="126" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="139" font-size="14">100.0%</text>
-<text x="730" y="140" font-size="14">146 / 434</text>
+<text x="730" y="140" font-size="14">144 / 416</text>
 <text x="20" y="170" font-size="14">awskey</text>
 <rect x="205" y="156" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="156" width="150.00" height="14" fill="#1877b8"/>
@@ -32,15 +32,15 @@
 <rect x="435" y="156" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="156" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="169" font-size="14">100.0%</text>
-<text x="730" y="170" font-size="14">146 / 434</text>
+<text x="730" y="170" font-size="14">144 / 416</text>
 <text x="20" y="200" font-size="14">bank_account</text>
 <rect x="205" y="186" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="186" width="150.00" height="14" fill="#1877b8"/>
 <text x="363" y="199" font-size="14">100.0%</text>
 <rect x="435" y="186" width="150" height="14" fill="#edf0f4"/>
-<rect x="435" y="186" width="125.40" height="14" fill="#b34b19"/>
-<text x="593" y="199" font-size="14">83.6%</text>
-<text x="730" y="200" font-size="14">146 / 434</text>
+<rect x="435" y="186" width="150.00" height="14" fill="#b34b19"/>
+<text x="593" y="199" font-size="14">100.0%</text>
+<text x="730" y="200" font-size="14">144 / 416</text>
 <text x="20" y="230" font-size="14">btc</text>
 <rect x="205" y="216" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="216" width="150.00" height="14" fill="#1877b8"/>
@@ -48,15 +48,15 @@
 <rect x="435" y="216" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="216" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="229" font-size="14">100.0%</text>
-<text x="730" y="230" font-size="14">146 / 434</text>
+<text x="730" y="230" font-size="14">144 / 416</text>
 <text x="20" y="260" font-size="14">card_expiry</text>
 <rect x="205" y="246" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="246" width="150.00" height="14" fill="#1877b8"/>
 <text x="363" y="259" font-size="14">100.0%</text>
 <rect x="435" y="246" width="150" height="14" fill="#edf0f4"/>
-<rect x="435" y="246" width="125.40" height="14" fill="#b34b19"/>
-<text x="593" y="259" font-size="14">83.6%</text>
-<text x="730" y="260" font-size="14">146 / 434</text>
+<rect x="435" y="246" width="150.00" height="14" fill="#b34b19"/>
+<text x="593" y="259" font-size="14">100.0%</text>
+<text x="730" y="260" font-size="14">144 / 416</text>
 <text x="20" y="290" font-size="14">cvv</text>
 <rect x="205" y="276" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="276" width="150.00" height="14" fill="#1877b8"/>
@@ -64,15 +64,15 @@
 <rect x="435" y="276" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="276" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="289" font-size="14">100.0%</text>
-<text x="730" y="290" font-size="14">146 / 434</text>
+<text x="730" y="290" font-size="14">144 / 416</text>
 <text x="20" y="320" font-size="14">email</text>
 <rect x="205" y="306" width="150" height="14" fill="#edf0f4"/>
-<rect x="205" y="306" width="125.40" height="14" fill="#1877b8"/>
-<text x="363" y="319" font-size="14">83.6%</text>
+<rect x="205" y="306" width="150.00" height="14" fill="#1877b8"/>
+<text x="363" y="319" font-size="14">100.0%</text>
 <rect x="435" y="306" width="150" height="14" fill="#edf0f4"/>
-<rect x="435" y="306" width="125.40" height="14" fill="#b34b19"/>
-<text x="593" y="319" font-size="14">83.6%</text>
-<text x="730" y="320" font-size="14">146 / 434</text>
+<rect x="435" y="306" width="150.00" height="14" fill="#b34b19"/>
+<text x="593" y="319" font-size="14">100.0%</text>
+<text x="730" y="320" font-size="14">144 / 416</text>
 <text x="20" y="350" font-size="14">eth</text>
 <rect x="205" y="336" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="336" width="150.00" height="14" fill="#1877b8"/>
@@ -80,7 +80,7 @@
 <rect x="435" y="336" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="336" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="349" font-size="14">100.0%</text>
-<text x="730" y="350" font-size="14">146 / 434</text>
+<text x="730" y="350" font-size="14">144 / 416</text>
 <text x="20" y="380" font-size="14">github_token</text>
 <rect x="205" y="366" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="366" width="150.00" height="14" fill="#1877b8"/>
@@ -88,7 +88,7 @@
 <rect x="435" y="366" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="366" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="379" font-size="14">100.0%</text>
-<text x="730" y="380" font-size="14">146 / 434</text>
+<text x="730" y="380" font-size="14">144 / 416</text>
 <text x="20" y="410" font-size="14">google_api_key</text>
 <rect x="205" y="396" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="396" width="150.00" height="14" fill="#1877b8"/>
@@ -96,15 +96,15 @@
 <rect x="435" y="396" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="396" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="409" font-size="14">100.0%</text>
-<text x="730" y="410" font-size="14">146 / 434</text>
+<text x="730" y="410" font-size="14">144 / 416</text>
 <text x="20" y="440" font-size="14">iban</text>
 <rect x="205" y="426" width="150" height="14" fill="#edf0f4"/>
-<rect x="205" y="426" width="150.00" height="14" fill="#1877b8"/>
-<text x="363" y="439" font-size="14">100.0%</text>
+<rect x="205" y="426" width="145.95" height="14" fill="#1877b8"/>
+<text x="363" y="439" font-size="14">97.3%</text>
 <rect x="435" y="426" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="426" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="439" font-size="14">100.0%</text>
-<text x="730" y="440" font-size="14">146 / 434</text>
+<text x="730" y="440" font-size="14">144 / 416</text>
 <text x="20" y="470" font-size="14">ipaddr</text>
 <rect x="205" y="456" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="456" width="150.00" height="14" fill="#1877b8"/>
@@ -112,7 +112,7 @@
 <rect x="435" y="456" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="456" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="469" font-size="14">100.0%</text>
-<text x="730" y="470" font-size="14">146 / 434</text>
+<text x="730" y="470" font-size="14">144 / 416</text>
 <text x="20" y="500" font-size="14">jwt</text>
 <rect x="205" y="486" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="486" width="150.00" height="14" fill="#1877b8"/>
@@ -120,31 +120,31 @@
 <rect x="435" y="486" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="486" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="499" font-size="14">100.0%</text>
-<text x="730" y="500" font-size="14">146 / 434</text>
+<text x="730" y="500" font-size="14">144 / 416</text>
 <text x="20" y="530" font-size="14">merchant_id</text>
 <rect x="205" y="516" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="516" width="150.00" height="14" fill="#1877b8"/>
 <text x="363" y="529" font-size="14">100.0%</text>
 <rect x="435" y="516" width="150" height="14" fill="#edf0f4"/>
-<rect x="435" y="516" width="125.40" height="14" fill="#b34b19"/>
-<text x="593" y="529" font-size="14">83.6%</text>
-<text x="730" y="530" font-size="14">146 / 434</text>
+<rect x="435" y="516" width="150.00" height="14" fill="#b34b19"/>
+<text x="593" y="529" font-size="14">100.0%</text>
+<text x="730" y="530" font-size="14">144 / 416</text>
 <text x="20" y="560" font-size="14">mynumber</text>
 <rect x="205" y="546" width="150" height="14" fill="#edf0f4"/>
-<rect x="205" y="546" width="121.05" height="14" fill="#1877b8"/>
-<text x="363" y="559" font-size="14">80.7%</text>
+<rect x="205" y="546" width="122.70" height="14" fill="#1877b8"/>
+<text x="363" y="559" font-size="14">81.8%</text>
 <rect x="435" y="546" width="150" height="14" fill="#edf0f4"/>
-<rect x="435" y="546" width="141.75" height="14" fill="#b34b19"/>
-<text x="593" y="559" font-size="14">94.5%</text>
-<text x="730" y="560" font-size="14">146 / 434</text>
+<rect x="435" y="546" width="150.00" height="14" fill="#b34b19"/>
+<text x="593" y="559" font-size="14">100.0%</text>
+<text x="730" y="560" font-size="14">144 / 416</text>
 <text x="20" y="590" font-size="14">pan</text>
 <rect x="205" y="576" width="150" height="14" fill="#edf0f4"/>
-<rect x="205" y="576" width="88.05" height="14" fill="#1877b8"/>
-<text x="363" y="589" font-size="14">58.7%</text>
+<rect x="205" y="576" width="90.00" height="14" fill="#1877b8"/>
+<text x="363" y="589" font-size="14">60.0%</text>
 <rect x="435" y="576" width="150" height="14" fill="#edf0f4"/>
-<rect x="435" y="576" width="141.75" height="14" fill="#b34b19"/>
-<text x="593" y="589" font-size="14">94.5%</text>
-<text x="730" y="590" font-size="14">146 / 434</text>
+<rect x="435" y="576" width="150.00" height="14" fill="#b34b19"/>
+<text x="593" y="589" font-size="14">100.0%</text>
+<text x="730" y="590" font-size="14">144 / 416</text>
 <text x="20" y="620" font-size="14">payment_token</text>
 <rect x="205" y="606" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="606" width="150.00" height="14" fill="#1877b8"/>
@@ -152,23 +152,23 @@
 <rect x="435" y="606" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="606" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="619" font-size="14">100.0%</text>
-<text x="730" y="620" font-size="14">146 / 434</text>
+<text x="730" y="620" font-size="14">144 / 416</text>
 <text x="20" y="650" font-size="14">phone_jp</text>
 <rect x="205" y="636" width="150" height="14" fill="#edf0f4"/>
-<rect x="205" y="636" width="121.80" height="14" fill="#1877b8"/>
-<text x="363" y="649" font-size="14">81.2%</text>
+<rect x="205" y="636" width="122.70" height="14" fill="#1877b8"/>
+<text x="363" y="649" font-size="14">81.8%</text>
 <rect x="435" y="636" width="150" height="14" fill="#edf0f4"/>
-<rect x="435" y="636" width="141.75" height="14" fill="#b34b19"/>
-<text x="593" y="649" font-size="14">94.5%</text>
-<text x="730" y="650" font-size="14">146 / 434</text>
+<rect x="435" y="636" width="150.00" height="14" fill="#b34b19"/>
+<text x="593" y="649" font-size="14">100.0%</text>
+<text x="730" y="650" font-size="14">144 / 416</text>
 <text x="20" y="680" font-size="14">private_key_pem</text>
 <rect x="205" y="666" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="666" width="150.00" height="14" fill="#1877b8"/>
 <text x="363" y="679" font-size="14">100.0%</text>
 <rect x="435" y="666" width="150" height="14" fill="#edf0f4"/>
-<rect x="435" y="666" width="125.40" height="14" fill="#b34b19"/>
-<text x="593" y="679" font-size="14">83.6%</text>
-<text x="730" y="680" font-size="14">146 / 434</text>
+<rect x="435" y="666" width="150.00" height="14" fill="#b34b19"/>
+<text x="593" y="679" font-size="14">100.0%</text>
+<text x="730" y="680" font-size="14">144 / 416</text>
 <text x="20" y="710" font-size="14">slack_token</text>
 <rect x="205" y="696" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="696" width="150.00" height="14" fill="#1877b8"/>
@@ -176,21 +176,21 @@
 <rect x="435" y="696" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="696" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="709" font-size="14">100.0%</text>
-<text x="730" y="710" font-size="14">146 / 434</text>
+<text x="730" y="710" font-size="14">144 / 416</text>
 <text x="20" y="740" font-size="14">swiftbic</text>
 <rect x="205" y="726" width="150" height="14" fill="#edf0f4"/>
-<rect x="205" y="726" width="82.35" height="14" fill="#1877b8"/>
-<text x="363" y="739" font-size="14">54.9%</text>
+<rect x="205" y="726" width="150.00" height="14" fill="#1877b8"/>
+<text x="363" y="739" font-size="14">100.0%</text>
 <rect x="435" y="726" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="726" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="739" font-size="14">100.0%</text>
-<text x="730" y="740" font-size="14">146 / 434</text>
+<text x="730" y="740" font-size="14">144 / 416</text>
 <text x="20" y="770" font-size="14">uk_sortcode</text>
 <rect x="205" y="756" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="756" width="150.00" height="14" fill="#1877b8"/>
 <text x="363" y="769" font-size="14">100.0%</text>
 <rect x="435" y="756" width="150" height="14" fill="#edf0f4"/>
-<rect x="435" y="756" width="148.95" height="14" fill="#b34b19"/>
-<text x="593" y="769" font-size="14">99.3%</text>
-<text x="730" y="770" font-size="14">146 / 434</text>
+<rect x="435" y="756" width="150.00" height="14" fill="#b34b19"/>
+<text x="593" y="769" font-size="14">100.0%</text>
+<text x="730" y="770" font-size="14">144 / 416</text>
 </g></svg>

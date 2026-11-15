@@ -5,5 +5,7 @@ reviews:
   path_filters:
     - "!tests/testdata/accuracy_generated.jsonl"
     - "!tests/testdata/accuracy_generated_controls.jsonl"
+    - "!tests/testdata/accuracy_held_generated.jsonl"
+    - "!tests/testdata/accuracy_held_generated_controls.jsonl"
     - "!doc/benchmarks.raw.txt"
     - "!doc/performance/*.txt"

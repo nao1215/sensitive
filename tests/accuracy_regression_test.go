@@ -24,7 +24,7 @@ type accuracyControl struct {
 	Text   string `json:"text"`
 }
 
-func allAccuracyControls(t *testing.T) []accuracyControl {
+func allAccuracyControls(t *testing.T, set string) []accuracyControl {
 	t.Helper()
 	data, err := os.ReadFile("testdata/accuracy_controls.json")
 	if err != nil {
@@ -35,13 +35,16 @@ func allAccuracyControls(t *testing.T) []accuracyControl {
 	if err := json.Unmarshal(data, &controls); err != nil {
 		t.Fatal(err)
 	}
+	if set == heldAccuracySet {
+		controls = nil
+	}
 	for i := range controls {
 		controls[i].ID = fmt.Sprintf("hand-control/%x", sha256.Sum256([]byte(controls[i].Source+"\x00"+controls[i].Text)))
 	}
-	return append(controls, readGeneratedAccuracy[accuracyControl](t, "testdata/accuracy_generated_controls.jsonl")...)
+	return append(controls, readGeneratedAccuracy[accuracyControl](t, accuracyFixture(set, "testdata/accuracy_generated_controls.jsonl"))...)
 }
 
-func allAccuracySamples(t *testing.T) []labeledAccuracySample {
+func allAccuracySamples(t *testing.T, set string) []labeledAccuracySample {
 	t.Helper()
 	data, err := os.ReadFile("testdata/accuracy.json")
 	if err != nil {
@@ -57,8 +60,11 @@ func allAccuracySamples(t *testing.T) []labeledAccuracySample {
 		rows[i].ID = fmt.Sprintf("hand/%d", i)
 		kinds[rows[i].Kind] = true
 	}
-	rows = append(rows, readGeneratedAccuracy[labeledAccuracySample](t, "testdata/accuracy_generated.jsonl")...)
-	controls := allAccuracyControls(t)
+	if set == heldAccuracySet {
+		rows = nil
+	}
+	rows = append(rows, readGeneratedAccuracy[labeledAccuracySample](t, accuracyFixture(set, "testdata/accuracy_generated.jsonl"))...)
+	controls := allAccuracyControls(t, set)
 	for kind := range kinds {
 		for _, c := range controls {
 			rows = append(rows, labeledAccuracySample{ID: string(kind) + "/" + c.ID, Kind: kind, Text: c.Text})
@@ -81,7 +87,17 @@ func allAccuracySamples(t *testing.T) []labeledAccuracySample {
 
 func TestGeneratedAccuracyRegressions(t *testing.T) {
 	t.Parallel()
-	limits := readGeneratedAccuracy[accuracyLimit](t, "testdata/accuracy_limits.jsonl")
+	for _, set := range []string{"development", heldAccuracySet} {
+		if selected := os.Getenv("ACCURACY_SET"); selected != "" && selected != set {
+			continue
+		}
+		t.Run(set, func(t *testing.T) { t.Parallel(); checkAccuracyRegressions(t, set) })
+	}
+}
+
+func checkAccuracyRegressions(t *testing.T, set string) {
+	t.Helper()
+	limits := readGeneratedAccuracy[accuracyLimit](t, accuracyFixture(set, "testdata/accuracy_limits.jsonl"))
 	known := map[string]accuracyLimit{}
 	for _, limit := range limits {
 		if limit.Reason == "" {
@@ -93,7 +109,7 @@ func TestGeneratedAccuracyRegressions(t *testing.T) {
 		known[limit.ID] = limit
 	}
 	seen := map[string]bool{}
-	for _, sample := range allAccuracySamples(t) {
+	for _, sample := range allAccuracySamples(t, set) {
 		seen[sample.ID] = true
 		findings := embargo.NewScanner(embargo.WithKinds(sample.Kind)).ScanString(sample.Text)
 		got := scoreAccuracy(sample.Kind, findings, sample.Expected)
@@ -117,4 +133,11 @@ func TestGeneratedAccuracyRegressions(t *testing.T) {
 			t.Errorf("orphan limit %s", id)
 		}
 	}
+}
+
+func accuracyFixture(set, path string) string {
+	if set == heldAccuracySet {
+		return strings.Replace(path, "accuracy_", "accuracy_held_", 1)
+	}
+	return path
 }

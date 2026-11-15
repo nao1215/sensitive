@@ -17,6 +17,8 @@ README examples carry an `example: file:function` marker; test snippets use `tes
 
 `make accuracy-doc` regenerates exact-span precision and recall from the labeled fixtures. `make compatibility-doc` regenerates the tested-output table by executing the real integrations. `make benchmark-doc` runs the published benchmark matrix and records its raw samples and environment. Ordinary Go tests reject stale snapshots and text. Python tests compare generated SVG bytes with the same measured data.
 
+The [detector and scanner mutation review](mutation-review.md) compares the baseline and revised suite, lists surviving mutants and separates equivalence arguments from unresolved assertions.
+
 The testing summary is a dated measurement. After completing `make mutation > mutation.log 2>&1` and `make fuzz > fuzz.log 2>&1`, combine the root and tests-module profiles with `python3 scripts/merge_coverage.py root.cover properties.cover > coverage.out` as CI does, then run:
 
 ```sh
@@ -30,13 +32,13 @@ The generator rejects incomplete mutation/fuzz runs and records source-log hashe
 ## Measured results
 
 <!-- testing-metrics:start -->
-Measured 2026-11-15 at [87191b9](https://github.com/nao1215/embargo/commit/87191b97decbdee972eb94e8bad7fe9eb135f55a).
+Measured 2026-11-15 at [3a28f60](https://github.com/nao1215/embargo/commit/3a28f60c650c7e1cb7d29d0dc9987804965db6da).
 
 | Measurement | Result | Conditions |
 |---|---|---|
-| Statement coverage | 96.6% (2333/2416) | Root and integration suites combined |
-| Mutation score | 87.31% | gremlins v0.6.0, root tests, 4 workers, 10x timeout |
-| Mutations | 1397 killed, 203 lived, 113 uncovered, 36 timed out | Timeouts do not count as killed |
-| Mutation coverage | 93.40% | Mutated statements exercised by root tests |
-| Fuzzing | 7 targets, 3379574 executions | 10 seconds per target |
+| Statement coverage | 96.8% (2449/2529) | Root and integration suites combined |
+| Mutation score | 90.61% | gremlins v0.6.0, root tests, 4 workers, 10x timeout |
+| Mutations | 1515 killed, 157 lived, 124 uncovered, 37 timed out | Timeouts do not count as killed |
+| Mutation coverage | 93.10% | Mutated statements exercised by root tests |
+| Fuzzing | 7 targets, 2697572 executions | 10 seconds per target |
 <!-- testing-metrics:end -->

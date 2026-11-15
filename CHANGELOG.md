@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Accuracy and scanning
+
+- Decode one layer of percent escapes with original byte offsets, lower confidence for business-labeled numeric candidates, reject embedded My Number fragments, and share hint dispatch across selected detectors while removing unnecessary ASCII position maps ([implementation](https://github.com/nao1215/embargo/commit/29ce283)). Public API signatures and the default threshold of 0 are unchanged; see the [behavior migration note](doc/migration.md).
+
+- Separate development and held-out synthetic evaluation, publish both default and 0.7 confidence policies, retain reviewed limits, and extend differential, offset and mutation assertions ([assertions](https://github.com/nao1215/embargo/commit/789318d)). The stricter SWIFT context experiment was rejected after held-out recall regressed.
+
 ### Follow-up review
 
 - Add optional zap, zerolog and logrus modules with JSON output masking, runnable Examples, real-output tests, all-platform CI and a nested-module release plan ([PR #70](https://github.com/nao1215/embargo/pull/70), [implementation](https://github.com/nao1215/embargo/commit/586448a)).

@@ -38,7 +38,7 @@ func TestBenchmarkTable(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	printLine("Measured %s with %s, %s/%s, %s, GOMAXPROCS=1; median of five 200 ms samples at [%s](https://github.com/nao1215/embargo/commit/%s).\n\n", snapshot.Date, snapshot.GoVersion, snapshot.OS, snapshot.Arch, snapshot.CPU, snapshot.Commit[:7], snapshot.Commit)
+	printLine("Measured %s with %s, %s/%s, %s, GOMAXPROCS=1; median of ten 200 ms samples at [%s](https://github.com/nao1215/embargo/commit/%s).\n\n", snapshot.Date, snapshot.GoVersion, snapshot.OS, snapshot.Arch, snapshot.CPU, snapshot.Commit[:7], snapshot.Commit)
 	printLine("Background load: %s.\n\n", snapshot.BackgroundLoad)
 	printLine("| Operation | ns/op | MB/s | B/op | allocs/op |\n|---|---:|---:|---:|---:|\n")
 	for _, row := range []struct{ label, name string }{
@@ -120,11 +120,12 @@ func checkBenchmarkSamples(t *testing.T, medians map[string]map[string]float64) 
 			t.Fatal("benchmark metric count differs from raw output")
 		}
 		for unit, values := range metrics {
-			if len(values) != 5 { // Publication requires five independent timing samples.
+			if len(values) != 10 { // Publication requires ten independent timing samples.
 				t.Fatal("benchmark sample count differs from publication protocol")
 			}
 			slices.Sort(values)
-			if value, ok := medians[name][unit]; !ok || value != values[len(values)/2] {
+			median := (values[len(values)/2-1] + values[len(values)/2]) / 2
+			if value, ok := medians[name][unit]; !ok || value != median {
 				t.Fatal("benchmark median differs from raw output")
 			}
 		}

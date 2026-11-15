@@ -61,7 +61,7 @@ func NormalizeFullWidthDigits(data []byte) (normalizedData []byte, positions []i
 
 // mapOriginalRange converts a normalized byte range [start, end) back to the
 // corresponding byte range in the original (pre-normalization) data using the
-// position map returned by NormalizeFullWidthDigits.
+// position map returned by NormalizeFullWidthDigits; nil denotes identity.
 func mapOriginalRange(posMap []int, start, end int) (origStart, origEnd int) {
 	if posMap == nil {
 		return start, end

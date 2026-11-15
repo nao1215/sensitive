@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Build labeled synthetic fixtures without importing or invoking embargo.
 
-Fixed seed 20261115, 24 generated values per kind, six surroundings and 16
+Development seed 20261115 and held-out seed 20270129 use separate surroundings.
+Each set has 24 generated values per kind, six surroundings and 16
 invalid values per kind. Byte ranges come from construction, never detection.
 The generated tokens are test data and must never be used as credentials.
 """
@@ -114,6 +115,12 @@ def invalids(rng, i):
 
 
 def surround(prefix, value, mode):
+    if mode == "held_plain": return "[payload] " + prefix, value, " [/payload]"
+    if mode == "held_log": return "audit: field=(" + prefix, value, "); done"
+    if mode == "held_json": return '{"entry": {"value": "' + prefix, value, '"}}'
+    if mode == "held_url": return "https://example.invalid/a?entry=" + quote(prefix, safe=""), quote(value, safe="@:-_."), "&ok=true"
+    if mode == "held_japanese": return "入力〈" + prefix, value, "〉確認済み"
+    if mode == "held_multiline": return "audit\r\nfield: " + prefix, value, "\r\nend"
     if mode == 'plain': return prefix, value, ''
     if mode == 'log': return 'INFO checkout ' + prefix, value, '; result=accepted'
     if mode == 'json': return '{"message":"' + prefix, value, '","result":"accepted"}'
@@ -123,33 +130,33 @@ def surround(prefix, value, mode):
     raise ValueError(mode)
 
 
-def generate():
-    rng = random.Random(SEED)
+def generate(held=False):
+    rng = random.Random(20270129 if held else SEED)
     samples, controls = [], []
     for i in range(24):
         for kind, (prefix, value) in sorted(specimens(rng, i).items()):
             for mode in ['plain', 'log', 'json', 'url', 'japanese', 'multiline']:
-                before, rendered, after = surround(prefix, value, mode)
+                before, rendered, after = surround(prefix, value, ('held_' if held else '') + mode)
                 samples.append(dict(id=f'{kind}/positive/{i}/{mode}', kind=kind, text=before+rendered+after,
                                     expected=[dict(start=len(before.encode()), end=len((before+rendered).encode()))]))
     for i in range(16):
         for kind, value in sorted(invalids(rng, i).items()):
             for mode in ['plain', 'log', 'json', 'japanese']:
-                before, rendered, after = surround('', value, mode)
+                before, rendered, after = surround('', value, ('held_' if held else '') + mode)
                 samples.append(dict(id=f'{kind}/negative/{i}/{mode}', kind=kind, text=before+rendered+after, expected=[]))
     for i in range(32):
-        raw = f'public fixture {i}'.encode()
+        raw = f'{"validation" if held else "public"} fixture {i}'.encode()
         hex32 = hashlib.md5(raw, usedforsecurity=False).hexdigest()
         for source, text in [
             ('UUID', f'{hex32[:8]}-{hex32[8:12]}-{hex32[12:16]}-{hex32[16:20]}-{hex32[20:]}'),
             ('git SHA', hashlib.sha1(raw, usedforsecurity=False).hexdigest()),
             ('SHA-256', hashlib.sha256(raw).hexdigest()),
             ('timestamp', f'2026-11-{i%28+1:02}T12:34:56.{i:09}Z'),
-            ('order', 'Order ID: ' + luhn('4' + digits(rng,14))),
-            ('invoice', 'Invoice: ' + mynumber(digits(rng,11))),
+            ('order', ('order_number = ' if held else 'Order ID: ') + luhn('4' + digits(rng,14))),
+            ('invoice', ('invoice_ref = ' if held else 'Invoice: ') + mynumber(digits(rng,11))),
             ('base64', base64.b64encode(raw).decode()),
             ('version', f'release v{i+1}.26.11 build-20261115'),
-            ('phone-shaped serial', f'Serial: 090-{1000+i:04}-{2000+i:04}'),
+            ('phone-shaped serial', f'{"tracking_serial =" if held else "Serial:"} 090-{1000+i:04}-{2000+i:04}'),
             ('invalid phone prefix', f'Serial: 190-{1000+i:04}-{2000+i:04}'),
             ('base64 without JWT header', 'e30.e30.' + base64.urlsafe_b64encode(raw).decode().rstrip('=')),
         ]: controls.append(dict(id=f'control/{source}/{i}', source=source, text=text))
@@ -170,12 +177,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true')
     args = parser.parse_args()
-    for name, rows in zip(['accuracy_generated.jsonl', 'accuracy_generated_controls.jsonl'], generate()):
-        data = ''.join(json.dumps(row, ensure_ascii=False, separators=(',', ':'))+'\n' for row in rows)
-        path = ROOT / 'tests/testdata' / name
-        if args.check:
-            if path.read_text(encoding='utf-8') != data: raise SystemExit(f'{name} is stale')
-        else: path.write_text(data, encoding='utf-8', newline='\n')
+    for held in (False, True):
+        for name, rows in zip(['accuracy_generated.jsonl', 'accuracy_generated_controls.jsonl'], generate(held)):
+            if held: name = name.replace('accuracy_', 'accuracy_held_')
+            data = ''.join(json.dumps(row, ensure_ascii=False, separators=(',', ':'))+'\n' for row in rows)
+            path = ROOT / 'tests/testdata' / name
+            if args.check:
+                if path.read_text(encoding='utf-8') != data: raise SystemExit(f'{name} is stale')
+            else: path.write_text(data, encoding='utf-8', newline='\n')
 
 
 if __name__ == '__main__':

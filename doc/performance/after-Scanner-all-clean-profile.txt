@@ -1,0 +1,29 @@
+File: tests.test
+Build ID: 4b794207fd72fdfc2840a9662da7910998edfc34
+Type: cpu
+Time: 2026-11-15 19:39:11 JST
+Duration: 3.96s, Total samples = 3.96s (  100%)
+Showing nodes accounting for 3.95s, 99.75% of 3.96s total
+Dropped 3 nodes (cum <= 0.02s)
+      flat  flat%   sum%        cum   cum%
+     0.84s 21.21% 21.21%      1.57s 39.65%  github.com/nao1215/embargo.(*Scanner).selectDetectors
+     0.52s 13.13% 34.34%      0.63s 15.91%  github.com/nao1215/embargo.foldedPrefix (inline)
+     0.43s 10.86% 45.20%      0.73s 18.43%  github.com/nao1215/embargo/internal/detect.(*UKSortCode).Scan
+     0.37s  9.34% 54.55%      0.37s  9.34%  github.com/nao1215/embargo/internal/detect.isAlpha (inline)
+     0.35s  8.84% 63.38%      0.81s 20.45%  github.com/nao1215/embargo/internal/detect.validateSWIFTStructure
+     0.31s  7.83% 71.21%      1.12s 28.28%  github.com/nao1215/embargo/internal/detect.(*SWIFTBIC).Scan
+     0.30s  7.58% 78.79%      0.30s  7.58%  github.com/nao1215/embargo/internal/detect.isDigit (inline)
+     0.21s  5.30% 84.09%      0.21s  5.30%  github.com/nao1215/embargo/internal/ascii.ToLower (inline)
+     0.15s  3.79% 87.88%      0.31s  7.83%  github.com/nao1215/embargo/internal/detect.(*IBAN).Scan
+     0.12s  3.03% 90.91%      0.12s  3.03%  github.com/nao1215/embargo/internal/detect.matchBech32Prefix (inline)
+     0.10s  2.53% 93.43%      0.22s  5.56%  github.com/nao1215/embargo/internal/detect.(*BTC).Scan
+     0.07s  1.77% 95.20%      0.07s  1.77%  github.com/nao1215/embargo/internal/detect.isSWIFTCountry
+     0.06s  1.52% 96.72%      0.08s  2.02%  runtime.slicebytetostring
+     0.04s  1.01% 97.73%      0.04s  1.01%  github.com/nao1215/embargo/internal/detect.encodedSeparatorBefore
+     0.04s  1.01% 98.74%      0.30s  7.58%  github.com/nao1215/embargo/internal/detect.isSortCodePattern
+     0.02s  0.51% 99.24%      0.05s  1.26%  github.com/nao1215/embargo/internal/detect.isAlphaNum (inline)
+     0.02s  0.51% 99.75%      0.02s  0.51%  runtime.memmove
+         0     0% 99.75%      3.96s   100%  github.com/nao1215/embargo.(*Scanner).Scan
+         0     0% 99.75%      3.96s   100%  github.com/nao1215/embargo/tests.BenchmarkPublishedScanner.func1
+         0     0% 99.75%      3.96s   100%  testing.(*B).run1.func1
+         0     0% 99.75%      3.96s   100%  testing.(*B).runN

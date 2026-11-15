@@ -35,7 +35,7 @@ func TestPercentEncodedFindings(t *testing.T) {
 	}
 }
 
-// Random escaping checks exact byte ranges even when individual UTF-8 bytes are escaped.
+// Random partial escaping checks exact byte ranges after a UTF-8 prefix.
 func TestPercentRoundTripOffsets(t *testing.T) {
 	t.Parallel()
 	//nolint:gosec // Fixed seed for reproducible synthetic tests.
