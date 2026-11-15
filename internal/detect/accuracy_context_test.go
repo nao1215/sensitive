@@ -10,7 +10,7 @@ func TestBusinessIdentifiersHaveLowerConfidence(t *testing.T) {
 	}{
 		{NewPAN(), "4242424242424242"}, {NewMyNumber(), "123456789018"}, {NewJPPhone(), "090-1234-5678"},
 	} {
-		for _, label := range []string{"Order ID: ", "invoice_ref = ", "tracking_serial = ", "Version: ", "build: ", "Shipment ID: "} {
+		for _, label := range []string{"Order ID: ", "invoice_ref = ", "tracking_serial = ", "Version: ", "build: ", "Shipment ID: ", "?order=", "&invoice="} {
 			got := tc.d.Scan([]byte(label + tc.value))
 			if len(got) != 1 || got[0].Confidence >= 0.7 {
 				t.Errorf("%s %s: %+v", tc.d.Name(), label, got)

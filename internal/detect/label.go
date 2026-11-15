@@ -6,7 +6,7 @@ import "bytes"
 func labelPrefix(data []byte, start int) []byte {
 	const radius = 48
 	prefix := data[max(0, start-radius):start]
-	if i := bytes.LastIndexAny(prefix, "\r\n;,{}[]"); i >= 0 {
+	if i := bytes.LastIndexAny(prefix, "\r\n;,{}[]?&"); i >= 0 {
 		prefix = prefix[i+1:]
 	}
 	return prefix

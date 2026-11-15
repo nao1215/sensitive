@@ -138,7 +138,7 @@ Built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in t
 
 Verified by the [aba_routing format tests](../internal/detect/aba_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Independently generated routing checksums, line endings and checksum failures.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## ach trace
 
@@ -146,7 +146,7 @@ No misses or false alarms appeared in either set.
 
 Verified by the [ach_trace format tests](../internal/detect/ach_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Contextual fifteen-digit traces, line endings and short traces as negatives.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## awskey
 
@@ -154,7 +154,7 @@ No misses or false alarms appeared in either set.
 
 Verified by the [awskey format tests](../internal/detect/awskey_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). AKIA and ASIA prefixes in log, JSON and Japanese text; short tokens as negatives.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## bank account
 
@@ -162,7 +162,7 @@ No misses or false alarms appeared in either set.
 
 Verified by the [bank_account format tests](../internal/detect/bank_account_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Contextual account numbers in log, JSON and Japanese text; too-short values as negatives.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## btc
 
@@ -170,7 +170,7 @@ No misses or false alarms appeared in either set.
 
 Verified by the [btc format tests](../internal/detect/btc_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Independently generated Base58Check P2PKH addresses and invalid checksum look-alikes.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## card expiry
 
@@ -178,7 +178,7 @@ No misses or false alarms appeared in either set.
 
 Verified by the [card_expiry format tests](../internal/detect/card_expiry_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Month/year dates near expiry context in log, JSON and Japanese text; invalid months as negatives.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## cvv
 
@@ -186,7 +186,7 @@ No misses or false alarms appeared in either set.
 
 Verified by the [cvv format tests](../internal/detect/cvv_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Three-digit values near CVV context in log, JSON and Japanese text; two-digit values as negatives.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## email
 
@@ -194,7 +194,7 @@ No misses or false alarms appeared in either set.
 
 Verified by the [email format tests](../internal/detect/email_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Plus-addressing, JSON fields, Japanese boundaries and doubled-at-sign negatives.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## eth
 
@@ -202,7 +202,7 @@ No misses or false alarms appeared in either set.
 
 Verified by the [eth format tests](../internal/detect/eth_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Lowercase hexadecimal addresses and malformed non-hexadecimal look-alikes.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## github token
 
@@ -210,7 +210,7 @@ No misses or false alarms appeared in either set.
 
 Verified by the [github_token format tests](../internal/detect/github_token_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Four classic token prefixes in log, JSON and Japanese text; short tokens as negatives.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## google api key
 
@@ -218,7 +218,7 @@ No misses or false alarms appeared in either set.
 
 Verified by the [google_api_key format tests](../internal/detect/google_apikey_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). AIza-prefixed keys in log, JSON and Japanese text; short bodies as negatives.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## iban
 
@@ -236,7 +236,7 @@ Verified by the [iban format tests](../internal/detect/iban_test.go) and the [co
 
 Verified by the [ipaddr format tests](../internal/detect/ipaddr_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Documentation-range IPv4 and IPv6 addresses, Japanese boundaries and invalid octets.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## jwt
 
@@ -244,7 +244,7 @@ No misses or false alarms appeared in either set.
 
 Verified by the [jwt format tests](../internal/detect/jwt_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Base64url header, payload and signature fields; malformed payload look-alikes.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## merchant id
 
@@ -252,7 +252,7 @@ No misses or false alarms appeared in either set.
 
 Verified by the [merchant_id format tests](../internal/detect/merchant_id_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Contextual merchant IDs in log, JSON and Japanese text; short IDs as negatives.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## mynumber
 
@@ -281,7 +281,7 @@ Verified by the [pan format tests](../internal/detect/pan_test.go) and the [corp
 
 Verified by the [payment_token format tests](../internal/detect/payment_token_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Five payment-token prefixes in log, JSON and Japanese text; short bodies as negatives.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## phone jp
 
@@ -299,7 +299,7 @@ Verified by the [phone_jp format tests](../internal/detect/phone_jp_test.go) and
 
 Verified by the [private_key_pem format tests](../internal/detect/private_key_pem_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). RSA, EC, OpenSSH and PKCS#8 private-key headers; public-key and certificate headers as negatives.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## slack token
 
@@ -307,7 +307,7 @@ No misses or false alarms appeared in either set.
 
 Verified by the [slack_token format tests](../internal/detect/slack_token_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Multi-part xoxb shapes in log, JSON and Japanese text; an unsupported type letter as a negative.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## swiftbic
 
@@ -325,7 +325,7 @@ Verified by the [swiftbic format tests](../internal/detect/swiftbic_test.go) and
 
 Verified by the [uk_sortcode format tests](../internal/detect/sortcode_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Separated sort codes, context words, and overlong sequences as negatives.
 
-No misses or false alarms appeared in either set.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## Regeneration
 

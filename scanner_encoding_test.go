@@ -1,12 +1,39 @@
 package embargo
 
 import (
+	"bytes"
 	"fmt"
 	"math/rand/v2"
 	"net/url"
 	"strings"
 	"testing"
 )
+
+type rawPercentDetector struct {
+	t    *testing.T
+	want []byte
+}
+
+func (d rawPercentDetector) Scan(data []byte) []Finding {
+	d.t.Helper()
+	if !bytes.Equal(data, d.want) {
+		d.t.Fatal("custom detector did not receive the original escaped bytes")
+	}
+	return nil
+}
+
+//nolint:paralleltest // AllocsPerRun changes GOMAXPROCS while measuring.
+func TestNoBuiltinsAvoidsDecodingAllocations(t *testing.T) {
+	data := []byte(strings.Repeat("%41", 128))
+	for _, scanner := range []*Scanner{
+		NewScanner(WithKinds()),
+		NewScanner(WithKinds(), WithDetector(rawPercentDetector{t: t, want: data})),
+	} {
+		if got := testing.AllocsPerRun(100, func() { scanner.Scan(data) }); got != 0 {
+			t.Errorf("unused built-in decoding allocated %.0f times", got)
+		}
+	}
+}
 
 func TestPercentEncodedFindings(t *testing.T) {
 	t.Parallel()

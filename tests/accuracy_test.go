@@ -13,7 +13,10 @@ import (
 	"github.com/nao1215/embargo"
 )
 
-const heldAccuracySet = "held"
+const (
+	developmentAccuracySet = "development"
+	heldAccuracySet        = "held"
+)
 
 type accuracySample struct {
 	Detector string   `json:"detector"`
@@ -69,10 +72,7 @@ func accuracyRatio(numerator, denominator int) string {
 
 func TestAccuracyTable(t *testing.T) {
 	t.Parallel()
-	for _, set := range []string{"development", heldAccuracySet} {
-		if selected := os.Getenv("ACCURACY_SET"); selected != "" && selected != set {
-			continue
-		}
+	for _, set := range selectedAccuracySets(t) {
 		for _, threshold := range []float64{0, .7} {
 			t.Run(fmt.Sprintf("%s/%.1f", set, threshold), func(t *testing.T) { t.Parallel(); scoreAccuracyTable(t, set, threshold) })
 		}

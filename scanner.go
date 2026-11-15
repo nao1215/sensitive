@@ -88,9 +88,14 @@ func (s *Scanner) Scan(data []byte) []Finding {
 	if !s.initialized {
 		return NewScanner().Scan(data)
 	}
-	scanData, positions := decodePercent(data)
+	scanData := data
+	var positions []int
+	var selected uint32
+	if len(s.detectors) > 0 {
+		scanData, positions = decodePercent(data)
+		selected = s.selectDetectors(scanData)
+	}
 	var findings []Finding
-	selected := s.selectDetectors(scanData)
 	for i, d := range s.detectors {
 		if selected&(1<<i) == 0 {
 			continue

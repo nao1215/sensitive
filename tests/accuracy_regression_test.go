@@ -87,11 +87,48 @@ func allAccuracySamples(t *testing.T, set string) []labeledAccuracySample {
 
 func TestGeneratedAccuracyRegressions(t *testing.T) {
 	t.Parallel()
-	for _, set := range []string{"development", heldAccuracySet} {
-		if selected := os.Getenv("ACCURACY_SET"); selected != "" && selected != set {
-			continue
-		}
+	for _, set := range selectedAccuracySets(t) {
 		t.Run(set, func(t *testing.T) { t.Parallel(); checkAccuracyRegressions(t, set) })
+	}
+}
+
+func selectedAccuracySets(t *testing.T) []string {
+	t.Helper()
+	selected := os.Getenv("ACCURACY_SET")
+	sets, ok := accuracySets(selected)
+	if !ok {
+		t.Fatalf("unknown ACCURACY_SET %q: use development or held", selected)
+	}
+	return sets
+}
+
+func accuracySets(selected string) ([]string, bool) {
+	switch selected {
+	case "":
+		return []string{developmentAccuracySet, heldAccuracySet}, true
+	case developmentAccuracySet, heldAccuracySet:
+		return []string{selected}, true
+	default:
+		return nil, false
+	}
+}
+
+func TestAccuracySetSelection(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		selected string
+		want     []string
+	}{
+		{"", []string{developmentAccuracySet, heldAccuracySet}},
+		{developmentAccuracySet, []string{developmentAccuracySet}},
+		{heldAccuracySet, []string{heldAccuracySet}},
+		{"held-out", nil},
+		{"development,held", nil},
+	} {
+		got, valid := accuracySets(tc.selected)
+		if !slices.Equal(got, tc.want) || valid != (len(tc.want) > 0) {
+			t.Fatalf("selection %q: %v, valid %v", tc.selected, got, valid)
+		}
 	}
 }
 

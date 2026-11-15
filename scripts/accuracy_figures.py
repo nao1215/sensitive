@@ -126,7 +126,7 @@ def page(rows):
                 if limit['reason'] in seen: continue
                 seen.add(limit['reason']); selected.append((name, limit, sample))
         if not selected:
-            out += ['No misses or false alarms appeared in either set.']
+            out += ['At the default threshold, no misses or false alarms appeared in either set.']
         else:
             out += ['| Set / observed limit | Input example | Why it remains |', '|---|---|---|']
             for name, limit, sample in selected:
