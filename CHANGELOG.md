@@ -6,9 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-15
+
 ### Changed
 
-- The module path is now github.com/nao1215/embargo and the root package is `embargo`; replace `github.com/nao1215/sensitive` with `github.com/nao1215/embargo` in imports and `sensitive.` with `embargo.` in code. The API is otherwise unchanged ([PR #54](https://github.com/nao1215/embargo/pull/54)).
+- The module path is now github.com/nao1215/embargo and the root package is `embargo`; replace `github.com/nao1215/sensitive` with `github.com/nao1215/embargo` in imports and `sensitive.` with `embargo.` in code. The API is otherwise unchanged ([PR #54](https://github.com/nao1215/embargo/pull/54), [008655d](https://github.com/nao1215/embargo/commit/008655d)).
 
 ## [0.2.2] - 2026-11-15
 
