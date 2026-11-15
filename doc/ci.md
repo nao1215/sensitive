@@ -79,3 +79,83 @@ CodeRabbit is configured to review the Lean and Quint source, generators and rep
 [Run 43769588959](https://github.com/nao1215/embargo/actions/runs/43769588959) compared base 83e325c with head aee3d60 on one Intel Xeon Platinum 8573C runner using Go 1.26.11 and GOMAXPROCS=1. Each binary ran ten 100ms samples in alternating order; the [conditions](performance/round14-paired-conditions.json), [base samples](performance/round14-paired-base.txt), [head samples](performance/round14-paired-head.txt) and [benchstat output](performance/round14-paired-benchstat.txt) retain the evidence. The time geomean changed by +0.63%; the statistically distinguishable changes were all/clean -1.02%, kinds3/clean +6.63% and kinds8/clean +2.17%. Allocation counts matched in every case. These are runner observations, including regressions, without a wall-time gate or a claim about the cause of small deltas.
 
 [Support maintenance](https://github.com/sponsors/nao1215).
+
+## Round 15 PR A timings
+
+The base is main d369f0934571b30901f9a4ec4dd4c26db1f65d2a; head is PR #86 implementation 5468cb0895bc4235ab334687c88fbff846113c23. [Base timestamps](performance/round15-a-ci-base.json) and [head timestamps](performance/round15-a-ci-head.json) retain every workflow, job and step. Workflow time includes queueing. Reviewdog has no main-push baseline; its round-14 PR comparison is given separately. Scorecard runs on main rather than this pull request.
+
+| Workflow | Base seconds | Head seconds |
+|---|---:|---:|
+| CodeQL | 68 | 62 |
+| Coverage | 115 | 82 |
+| Gosec | 83 | 90 |
+| MultiPlatformUnitTest | 355 | 154 |
+| Scorecard | 65 | n/a |
+| Trivy | 46 | 30 |
+| Verification | 86 | 81 |
+| golangci-lint | 105 | 91 |
+| govulncheck | 93 | 65 |
+| reviewdog | n/a | 47 |
+
+| Job | Base seconds | Head seconds |
+|---|---:|---:|
+| CodeQL: Analyze (go) | 65 | 59 |
+| Coverage: Unit test (linux) (ubuntu-latest) | 82 | 72 |
+| Coverage: changes / changes | 5 | 5 |
+| Gosec: scan (.) | 58 | 87 |
+| Gosec: scan (adapters/logrus) | 27 | 30 |
+| Gosec: scan (adapters/zap) | 30 | 32 |
+| Gosec: scan (adapters/zerolog) | 31 | 27 |
+| Gosec: scan (tests) | 45 | 61 |
+| MultiPlatformUnitTest: Cross build (freebsd) | 23 | 28 |
+| MultiPlatformUnitTest: Cross build (netbsd) | 23 | 21 |
+| MultiPlatformUnitTest: Cross build (openbsd) | 26 | 30 |
+| MultiPlatformUnitTest: Property tests (macos-latest, Go 1.26.11) | 52 | 41 |
+| MultiPlatformUnitTest: Property tests (macos-latest, Go stable) | 103 | 115 |
+| MultiPlatformUnitTest: Property tests (ubuntu-latest, Go 1.26.11) | 30 | 25 |
+| MultiPlatformUnitTest: Property tests (ubuntu-latest, Go stable) | 95 | 78 |
+| MultiPlatformUnitTest: Property tests (windows-latest, Go 1.26.11) | 71 | 72 |
+| MultiPlatformUnitTest: Property tests (windows-latest, Go stable) | 117 | 142 |
+| MultiPlatformUnitTest: README and runnable Examples | 14 | 17 |
+| MultiPlatformUnitTest: Unit test (macos-latest, 1.26.11) | 49 | 73 |
+| MultiPlatformUnitTest: Unit test (macos-latest, stable) | 101 | 91 |
+| MultiPlatformUnitTest: Unit test (ubuntu-latest, 1.26.11) | 29 | 36 |
+| MultiPlatformUnitTest: Unit test (ubuntu-latest, stable) | 90 | 79 |
+| MultiPlatformUnitTest: Unit test (windows-latest, 1.26.11) | 92 | 86 |
+| MultiPlatformUnitTest: Unit test (windows-latest, stable) | 135 | 141 |
+| MultiPlatformUnitTest: changes / changes | 6 | 5 |
+| Scorecard: Scorecard analysis | 39 | n/a |
+| Trivy: scan | 25 | 27 |
+| Verification: benchmark | 0 | 41 |
+| Verification: changes / changes | 6 | 5 |
+| Verification: formal | 63 | 68 |
+| Verification: policies | 19 | 15 |
+| golangci-lint: changes / changes | 6 | 7 |
+| golangci-lint: golangci-lint | 72 | 77 |
+| golangci-lint: golangci-lint (adapters) | 40 | 31 |
+| golangci-lint: golangci-lint (tests module) | 18 | 22 |
+| govulncheck: changes / changes | 4 | 7 |
+| govulncheck: govulncheck (., Go 1.26.11) | 37 | 43 |
+| govulncheck: govulncheck (., Go stable) | 32 | 40 |
+| govulncheck: govulncheck (adapters/logrus, Go 1.26.11) | 33 | 52 |
+| govulncheck: govulncheck (adapters/logrus, Go stable) | 29 | 36 |
+| govulncheck: govulncheck (adapters/zap, Go 1.26.11) | 42 | 34 |
+| govulncheck: govulncheck (adapters/zap, Go stable) | 27 | 34 |
+| govulncheck: govulncheck (adapters/zerolog, Go 1.26.11) | 32 | 30 |
+| govulncheck: govulncheck (adapters/zerolog, Go stable) | 33 | 30 |
+| govulncheck: govulncheck (tests, Go 1.26) | 40 | 36 |
+| govulncheck: govulncheck (tests, Go stable) | 29 | 35 |
+| reviewdog: actionlint | n/a | 9 |
+| reviewdog: changes / changes | n/a | 6 |
+| reviewdog: golangci-lint | n/a | 35 |
+| reviewdog: misspell | n/a | 10 |
+
+The baseline unit workflow took 355 seconds, although its longest job ran for 135 seconds; queueing and dependency scheduling dominate that workflow delta. Head took 154 seconds with a 142-second Windows stable property job. Relative to the earlier round-14 observation, the unit workflow changed from 156 to 154 seconds and reviewdog from 51 to 47 seconds. These small differences do not establish a speedup on shared runners. The local property race suite, including the new severity evaluation in both measurements, changed from 36.33 to 29.81 seconds after reusing immutable per-kind scanners; each value is one run.
+
+The round-14 reviewdog log shows a cache miss under a key derived from an absent root go.sum and about 31 seconds of analysis. The new cache key includes Go/linter versions, source and configuration, with a restore prefix for previous analysis. The first head lint job took 35 seconds, including a 27-second action step; a cold cache still has to be populated. Go and golangci-lint are pinned to the same versions used by the enforced gate. No linter, OS, toolchain, race leg or security check was removed.
+
+In run 43771109571 attempt 1, macOS job 132987100957 passed setup-go and local adapter tests, then failed to verify embargo v0.4.0 because sum.golang.org hit a TLS handshake timeout. Optional-module cache keys now include adapters/*/go.sum. A separate module-download step makes at most three attempts with one- and two-second backoffs; test execution itself is never retried. Published dependency verification still removes local replacements and checks the real declared root module.
+
+The Quint release-download installer from PR #85 remains in the formal job immediately after npm ci. Its version check runs before the cached executable is accepted. Python tests exercise a mismatched expected version with an existing cached executable and check the workflow ordering; a tests/models npm bump is classified as code and must pass the formal job.
+
+[Support maintenance](https://github.com/sponsors/nao1215).

@@ -47,7 +47,7 @@ func guardTests(capture *guardCapture, stream int, leaks []embargo.Finding, poli
 	}
 	slices.Sort(positions)
 	active := map[string]bool{}
-	selected := map[string]bool{}
+	observed := map[string]bool{}
 	data := capture.data[0]
 	offset := 0
 	for _, position := range positions {
@@ -60,8 +60,14 @@ func guardTests(capture *guardCapture, stream int, leaks []embargo.Finding, poli
 			offset += end + 1
 		}
 		for name := range active {
-			selected[guardSafeName(name, policy)] = true
+			observed[name] = true
+			delete(active, name)
 		}
+	}
+	// Names already observed at a leak need no further attribution or validation.
+	selected := make(map[string]bool, len(observed))
+	for name := range observed {
+		selected[guardSafeName(name, policy)] = true
 	}
 	names := make([]string, 0, len(selected))
 	for name := range selected {
@@ -71,7 +77,14 @@ func guardTests(capture *guardCapture, stream int, leaks []embargo.Finding, poli
 	if len(names) == 0 {
 		return "[unavailable]"
 	}
-	return strings.Join(names, ", ")
+	joined := strings.Join(names, ", ")
+	if containsCanary([]byte(joined), policy.needles) {
+		return "[redacted test name]"
+	}
+	if found, failed := policy.scan([]byte(joined)); found || failed {
+		return "[redacted test name]"
+	}
+	return joined
 }
 
 func guardFrame(line string, active map[string]bool) {

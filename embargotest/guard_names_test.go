@@ -1,6 +1,7 @@
 package embargotest
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -73,5 +74,99 @@ func TestGuardStderrUsesObservedActiveNames(t *testing.T) {
 	got := guardTests(capture, 1, []embargo.Finding{{Start: 0, End: len(defaultCanary)}}, guardPolicy(nil))
 	if got != "TestDuring" {
 		t.Fatal(got)
+	}
+}
+
+func TestGuardCanaryRangesCoverRepeatedAndFinalBytes(t *testing.T) {
+	t.Parallel()
+	policy := guardPolicy([]Option{WithScanner(embargo.NewScanner(embargo.WithKinds()))})
+	policy.needles = [][]byte{[]byte("canary")}
+	findings, failed := guardLeaks([]byte("_canarycanary"), policy)
+	want := []embargo.Finding{{Start: 1, End: 7}, {Start: 7, End: 13}}
+	if failed || !slices.Equal(findings, want) {
+		t.Fatalf("got %v, failed %v", findings, failed)
+	}
+}
+
+func TestGuardBlankLinesDoNotHideLaterFrames(t *testing.T) {
+	t.Parallel()
+	data := []byte("\n=== RUN   TestAfterBlank\nleak")
+	capture := &guardCapture{data: [2][]byte{data, nil}}
+	got := guardTests(capture, 0, []embargo.Finding{{Start: len(data) - 4, End: len(data)}}, guardPolicy(nil))
+	if got != "TestAfterBlank" {
+		t.Fatal(got)
+	}
+}
+
+func TestGuardFrameEndingAtLeakIsNotYetComplete(t *testing.T) {
+	t.Parallel()
+	data := []byte("=== RUN   TestBeforeNewline\n")
+	capture := &guardCapture{data: [2][]byte{data, nil}}
+	got := guardTests(capture, 0, []embargo.Finding{{Start: len(data) - 1, End: len(data)}}, guardPolicy(nil))
+	if got != "[unavailable]" {
+		t.Fatal(got)
+	}
+}
+
+func TestGuardStderrExcludesAdjacentCleanWrites(t *testing.T) {
+	t.Parallel()
+	capture := &guardCapture{maxBytes: 4096}
+	stdout := &guardStream{capture: capture, index: 0}
+	stderr := &guardStream{capture: capture, index: 1}
+	for _, entry := range []struct {
+		stream *guardStream
+		data   string
+	}{
+		{stdout, "=== RUN   TestBefore\n"},
+		{stderr, "ping"},
+		{stdout, "--- PASS: TestBefore (0.00s)\n=== RUN   TestDuring\n"},
+		{stderr, "oops"},
+		{stdout, "--- PASS: TestDuring (0.00s)\n=== RUN   TestAfter\n"},
+		{stderr, "ping"},
+	} {
+		if _, err := entry.stream.Write([]byte(entry.data)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got := guardTests(capture, 1, []embargo.Finding{{Start: 4, End: 8}}, guardPolicy(nil))
+	if got != "TestDuring" {
+		t.Fatal(got)
+	}
+}
+
+func TestGuardJoinedNamesCannotRecreateCanary(t *testing.T) {
+	t.Parallel()
+	const canary = "TestAlpha, TestBeta"
+	data := []byte("=== RUN   TestAlpha\n=== RUN   TestBeta\n" + canary)
+	capture := &guardCapture{data: [2][]byte{data, nil}}
+	policy := guardPolicy([]Option{WithCanary([]byte(canary))})
+	got := guardTests(capture, 0, []embargo.Finding{{Start: len(data) - len(canary), End: len(data)}}, policy)
+	if got != "[redacted test name]" {
+		t.Fatalf("joined diagnostic exposed canary: %q", got)
+	}
+}
+
+type countingNameDetector struct{ calls int }
+
+func (d *countingNameDetector) Kind() embargo.Kind { return "name_counter" }
+func (d *countingNameDetector) Hints() []string    { return nil }
+func (d *countingNameDetector) Scan(_ []byte) []embargo.Finding {
+	d.calls++
+	return nil
+}
+
+func TestGuardValidatesEachDistinctNameOnce(t *testing.T) {
+	t.Parallel()
+	detector := &countingNameDetector{}
+	policy := guardPolicy([]Option{WithScanner(embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(detector)))})
+	data := []byte("=== RUN   TestOnce\n" + strings.Repeat("x", 100))
+	capture := &guardCapture{data: [2][]byte{data, nil}}
+	findings := make([]embargo.Finding, 100)
+	for i := range findings {
+		findings[i] = embargo.Finding{Start: len(data) - 100 + i, End: len(data) - 99 + i}
+	}
+	got := guardTests(capture, 0, findings, policy)
+	if got != "TestOnce" || detector.calls > 2 {
+		t.Fatalf("got %q with %d detector calls; want one name check and one joined check", got, detector.calls)
 	}
 }

@@ -1,5 +1,7 @@
 """A cached evaluator must not hide an incompatible npm update."""
 from pathlib import Path
+from unittest.mock import patch
+import sys
 import tempfile
 import unittest
 import install_quint_evaluator as evaluator
@@ -16,6 +18,12 @@ class EvaluatorTests(unittest.TestCase):
             (target/'quint_evaluator').write_text('stale binary')
             with self.assertRaisesRegex(ValueError, 'update VERSION and DIGEST'):
                 evaluator.check_version(manager)
+            with patch.object(evaluator.check_version, "__defaults__", (manager,)), \
+                    patch.object(sys, "argv", ["install_quint_evaluator.py", directory]), \
+                    patch.object(evaluator, "install") as install, \
+                    self.assertRaisesRegex(ValueError, "update VERSION and DIGEST"):
+                evaluator.main()
+            install.assert_not_called()
 
     def test_pinned_version_is_accepted(self):
         with tempfile.TemporaryDirectory() as directory:
