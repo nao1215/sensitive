@@ -28,11 +28,11 @@ def corpus(seed, held):
         prefix = rng.choice(['sk-proj-', 'sk-svcacct-', 'sk-ant-api03-', 'sk_live_', 'rk_live_', 'whsec_', 'glpat-', 'npm_', 'pypi-', 'GOCSPX-'])
         token = prefix+value
         add('service_token', 'provider', token, token)
-        add('high_entropy', 'unlabelled-secret', value, value)
+        add('high_entropy', 'unlabeled-secret', value, value)
         # Public IDs with identical distributions expose entropy's unavoidable trade-off.
         for kind in ['credential', 'service_token', 'high_entropy']:
             add(kind, 'public-random-id', f'object {value}')
-            add(kind, 'labelled-id', f'request_id={value}')
+            add(kind, 'labeled-id', f'request_id={value}')
             add(kind, 'uuid', '550e8400-e29b-41d4-a716-446655440000')
             sha = ''.join(rng.choices('0123456789abcdef', k=40))
             add(kind, 'commit-sha', 'commit '+sha)

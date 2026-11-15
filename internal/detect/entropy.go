@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// HighEntropy finds unlabelled 32..256 byte base64-like tokens with at least
+// HighEntropy finds unlabeled 32..256 byte base64-like tokens with at least
 // three character classes and Shannon entropy >=4.5 bits/byte. Confidence is
 // only 0.3: random public IDs are indistinguishable from secrets without context.
 // Hex hashes, UUIDs and tokens directly assigned to common ID labels are omitted.

@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Forgotten credentials and output contracts
 
-Implementation: [97a0585](https://github.com/nao1215/embargo/commit/97a0585).
+Implementation: [PR #77](https://github.com/nao1215/embargo/pull/77), [97a0585](https://github.com/nao1215/embargo/commit/97a0585).
 
 - Add `KindCredential`, `KindServiceToken` and `KindHighEntropy` for credential assignments, URL/DSN passwords, provider prefixes and uncertain random-looking tokens; preserve surrounding connection information, mask complete PEM bodies, and reject IBAN reserved check digits. Scanner and output paths retain the caller's confidence policy; publish separate 0, 0.5 and 0.7 results and the entropy trade-off in [accuracy](doc/accuracy.md).
 
