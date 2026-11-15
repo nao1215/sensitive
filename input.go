@@ -78,3 +78,26 @@ func (i Input[T]) MarshalJSON() ([]byte, error) { return i.secret.MarshalJSON() 
 
 // MarshalText returns the marker, never input data.
 func (i Input[T]) MarshalText() ([]byte, error) { return i.secret.MarshalText() }
+
+// Scan implements sql.Scanner for textual secrets read from a database.
+// Strings and byte slices are copied without invoking user conversion methods;
+// SQL NULL clears the Input. Other types and the redaction marker clear it and
+// return a fixed error. Scan during initialization, then publish Secret().
+// To write to a database, deliberately pass Secret().Reveal() as the argument;
+// neither Input nor Secret implements driver.Valuer or implicitly reveals data.
+func (i *Input[T]) Scan(src any) error {
+	if i == nil {
+		return inputError{}
+	}
+	*i = Input[T]{}
+	switch value := src.(type) {
+	case nil:
+		return nil
+	case string:
+		return i.UnmarshalText([]byte(value))
+	case []byte:
+		return i.UnmarshalText(value)
+	default:
+		return inputError{}
+	}
+}

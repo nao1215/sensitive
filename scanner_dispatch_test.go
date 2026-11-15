@@ -32,7 +32,7 @@ func referenceScan(s *Scanner, data []byte) []Finding {
 
 func TestDispatchDifferential(t *testing.T) {
 	t.Parallel()
-	//nolint:gosec // Fixed seed for reproducible synthetic tests.
+	// #nosec G404 -- Fixed seed for reproducible synthetic tests.
 	rng := rand.New(rand.NewPCG(72, 54))
 	parts := []string{"foo", "@", "ABC", "0123456789", " ", "\n", "銀行", "４２４２", "expiry 12/29", "CVV 123", "a+b@example.com", "SWIFT: DEUTDEFF", "%20", "bank account 12345678", "4242424242424242", "090-1234-5678", "ghp_", "\xff", "sort code 40-12-36"}
 	for _, s := range []*Scanner{NewScanner(), NewScanner(WithKinds(KindEmail)), NewScanner(WithMinConfidence(.7)), NewScanner(WithKinds())} {
@@ -42,7 +42,7 @@ func TestDispatchDifferential(t *testing.T) {
 				data = append(data, parts[rng.IntN(len(parts))]...)
 			}
 			if i%3 == 0 {
-				data = append(data, byte(rng.IntN(256))) //nolint:gosec // IntN is bounded to a byte.
+				data = append(data, byte(rng.IntN(256))) // #nosec G115 -- IntN is bounded to a byte.
 			}
 			got, want := s.Scan(data), referenceScan(s, data)
 			if !slices.Equal(got, want) {

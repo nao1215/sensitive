@@ -23,3 +23,9 @@ The default scanner enables every built-in detector. `WithScanner` narrows it, w
 [Options and limits](../embargotest/recorder.go), [allowlist tests](../embargotest/recorder_test.go).
 
 [Support maintenance](https://github.com/sponsors/nao1215).
+
+## Keep an existing masker and check the real application output
+
+embargotest does not require replacing a team's logger or masker. In [TestExistingMaskerOutputCheck](../tests/comparison_libraries_test.go), the application writes a real JSON event through either a plain slog handler or masq configured with email/card regexes and field rules. An email in an attribute key remains visible in both original paths, and the recorder's Check fails. Wrapping that same handler in NewSlogHandler makes the test pass. The test records the expected failure in a test observer, so the repository suite itself stays green while proving both outcomes.
+
+The same test uses the existing `Expect` callback to compare compact captured JSON with `scanner.MaskJSON(data)`, ensuring opaque values under sensitive keys are masked as well as detector-recognized text. For NDJSON, apply that comparison separately to each record. `WithScanner` alone checks text detectors and does not infer key rules. Teams can fix their existing masker instead of adding a wrapper and retain the same output assertions; a matching snapshot or JSON expectation should also confirm useful diagnostic fields survived.
