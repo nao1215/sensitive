@@ -49,6 +49,9 @@ jobs:
             go -C adapters/$module test -race ./...
           done
 
+      - name: Verify declared adapter dependencies without local replacements
+        run: python3 scripts/check_adapter_dependencies.py
+
   cross_build:
     needs: changes
     if: needs.changes.outputs.code == 'true'
