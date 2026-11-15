@@ -106,6 +106,16 @@ logger.Info("checkout", "email", "alice@example.com")
 
 [Full runnable example](slog_example_test.go) · [Groups, value handling and output failures](doc/logging.md).
 
+## Logger adapters
+
+| Logger | Adapter | Runnable example |
+|---|---|---|
+| zap | `embargozap.NewWriteSyncer` | [JSON output](adapters/zap/example_test.go) |
+| zerolog | `embargozerolog.NewWriter` | [JSON output](adapters/zerolog/example_test.go) |
+| logrus | `embargologrus.NewFormatter` | [JSON output](adapters/logrus/example_test.go) |
+
+Each optional module masks the logger's encoded JSON, including nested values. [Installation, APIs and encoded-binary limits](doc/adapters.md).
+
 ## Check test output
 
 A canary is a fake secret injected into the code under test. The recorder checks both that useful output exists and that canaries or detected values did not escape.

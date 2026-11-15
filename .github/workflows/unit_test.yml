@@ -41,6 +41,14 @@ jobs:
       - name: Run tests with coverage report output
         run: go test -cover -coverpkg=./... -coverprofile=coverage.out ./...
 
+      - name: Test optional logger modules
+        shell: bash
+        run: |
+          for module in zap zerolog logrus; do
+            go -C adapters/$module mod tidy -diff
+            go -C adapters/$module test -race ./...
+          done
+
   cross_build:
     needs: changes
     if: needs.changes.outputs.code == 'true'
@@ -119,6 +127,11 @@ jobs:
           cache-dependency-path: tests/go.sum
       - name: Check README snippets and run Examples
         run: go test ./... -run '^(Example|TestReadme|TestExamples|TestPublicExamples)'
+      - name: Run adapter Examples
+        run: |
+          for module in zap zerolog logrus; do
+            go -C adapters/$module test -run '^Example' ./...
+          done
       - name: Check generated documentation
         # The impossible subtest pattern checks the compatibility table itself
         # without running the SDK, HTTP or child-process compatibility suites.

@@ -40,6 +40,7 @@ arch: ## Check production package boundaries
 race: ## Run race detection in both modules
 	go test -race ./...
 	go -C tests test -race ./...
+	@for module in zap zerolog logrus; do go -C adapters/$$module test -race ./... || exit; done
 properties: ## Run property and API contract tests
 	go -C tests test ./...
 mutation: ## Mutate root module packages with gremlins
@@ -52,6 +53,7 @@ fuzz: ## Smoke test every root fuzz target
 
 	go test -run '^$$' -fuzz '^FuzzCanary$$' -fuzztime=10s ./embargotest
 	go test -run '^$$' -fuzz '^FuzzJSONStream$$' -fuzztime=10s ./embargotest
+	go test -run '^$$' -fuzz '^FuzzOutputJSON$$' -fuzztime=10s ./internal/output
 
 .PHONY: compatibility-doc
 compatibility-doc: ## Regenerate the table from real output tests
@@ -80,3 +82,7 @@ doc-figures: ## Regenerate figures from measured data
 .PHONY: masking-doc
 masking-doc: ## Regenerate masking views from runnable Examples
 	UPDATE_DOCS=1 go test . -run '^TestReadmeMaskingFigure$$' -count=1
+
+.PHONY: adapters
+adapters: ## Test all optional logger modules
+	@for module in zap zerolog logrus; do go -C adapters/$$module test ./... || exit; done
