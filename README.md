@@ -15,12 +15,12 @@
   <img src="doc/images/logo-small.png" alt="Go gopher peeking over the embargo title, with email and token values blacked out" width="320">
 </p>
 
-embargo detects and masks sensitive text in Go programs, logs and test output.
+embargo finds secrets and personal data in the output of Go programs, masks them in logs and JSON, and fails your tests when one leaks.
 
-- Mask card numbers and emails before logs leave your service.
-- Check in tests that an HTTP handler or child process never writes a secret.
-- Scan support messages and imported files for personal data.
-- Detect Japanese phone numbers and My Number, including full-width digits.
+- Mask slog, zap, zerolog and logrus output and keep its JSON structure.
+- Catch values nobody marked as secret: passwords in database URLs, API tokens, card numbers, emails, My Number.
+- Keep a value out of every formatter with `Secret[T]`, and out of API responses with `MaskJSON`.
+- Fail tests when a canary reaches stdout, stderr, logs, HTTP responses or child processes.
 
 ## Quick start
 
@@ -50,21 +50,7 @@ func main() {
 }
 ```
 
-[Scanner options and custom detectors](doc/masking.md).
-
-## Why embargo?
-
-[gitleaks](https://github.com/gitleaks/gitleaks) and [trufflehog](https://github.com/trufflesecurity/trufflehog) scan repositories and files; [Presidio](https://presidio.dataprivacystack.org/) provides Python analyzers. Secret wrappers hide marked values without detecting sensitive text. embargo runs inside Go to mask logs, hide Secret values, and check real output with canaries and detectors.
-
-| Inside your Go program | What happens |
-|---|---|
-| `NewSlogHandler` | `email=alice@example.com` → `email=[REDACTED]` |
-| `NewSecret` | `fake-key` → `[REDACTED]` |
-| `embargotest` | A canary in logs, HTTP or child output fails the test. |
-
-[How the pieces fit](doc/runtime.md).
-
-## Scanning and masking
+Mask everything a scanner finds, or keep part of a value:
 
 <!-- masking:start -->
 | Operation | Actual text |
@@ -75,22 +61,29 @@ func main() {
 | [Overlapping matches](masking_example_test.go) | `token=abcdef` with `abcd cdef` → `token=[REDACTED]` |
 <!-- masking:end -->
 
-[Scanner options, custom replacements and overlapping matches](doc/masking.md).
+[Scanner options and custom replacements](doc/masking.md)
 
-## Values that must not be displayed
+## Catch what nobody declared
 
-Wrap a value with `Secret` before passing it to a logger or encoder.
+Field rules only hide the fields someone listed. embargo also reads the text, so a password inside a connection string is masked without any rule.
 
-<!-- example: secret_example_test.go:ExampleNewSecret -->
+<!-- example: credential_example_test.go:ExampleKindCredential -->
 ```go
-key := embargo.NewSecret("fake-key")
-
-fmt.Println(key)
-
-// Output: [REDACTED]
+text := "postgres://reader:forgotten@db.example/orders"
+scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindCredential))
+fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+// Output: postgres://reader:[REDACTED]@db.example/orders
 ```
 
-[Formatting, decoding with Input, and deliberate access with Reveal](doc/values.md).
+| Group | What is detected |
+|---|---|
+| Credentials | URL and DSN passwords, `password=` and header assignments, Bearer and Basic, provider tokens (OpenAI, Anthropic, Stripe, GitHub, GitLab, Slack, npm, PyPI, AWS, Google), JWT, PEM private keys, high-entropy strings |
+| Payment | Card numbers (Luhn), CVV, expiry, IBAN, SWIFT/BIC, ABA routing, UK sort code, bank account, ACH trace, merchant ID, payment tokens, Bitcoin and Ethereum addresses |
+| Personal | Email, IP address, Japanese phone numbers and My Number, including full-width digits |
+
+[Every detector and how it validates](doc/detectors.md) · [Credential formats](doc/credentials.md)
+
+Select only the kinds you need. On the same 2.7 KB of clean text, `WithKinds(KindEmail)` takes 0.11 µs and `WithAll()` takes 85 µs, and fewer kinds also mean fewer false positives. [Per-detector benchmarks](doc/benchmarks.md)
 
 ## Mask logs
 
@@ -106,9 +99,7 @@ logger.Info("checkout", "email", "alice@example.com")
 // Output: {"level":"INFO","msg":"checkout","email":"[REDACTED]"}
 ```
 
-[Full runnable example](slog_example_test.go) · [Groups, value handling and output failures](doc/logging.md).
-
-## Logger adapters
+Structs, maps and slices stay JSON objects and arrays, and values under keys such as `password`, `token` or `authorization` are masked whole. Messages, keys and group names are scanned too. [Structured values and key rules](doc/logging.md)
 
 | Logger | Adapter example | Output excerpt |
 |---|---|---|
@@ -116,11 +107,30 @@ logger.Info("checkout", "email", "alice@example.com")
 | zerolog | [NewWriter](adapters/zerolog/example_test.go) | `"email":"[REDACTED]"` |
 | logrus | [NewFormatter](adapters/logrus/example_test.go) | `"email":"[REDACTED]"` |
 
-Each optional module masks the logger's encoded JSON, including nested values. [Installation, APIs and encoded-binary limits](doc/adapters.md).
+The adapters apply the same detectors and key rules to the encoded JSON. [Installation and limits](doc/adapters.md)
 
-## Check test output
+## Values that must never print
 
-A canary is a fake secret injected into the code under test. The recorder checks both that useful output exists and that canaries or detected values did not escape.
+<!-- example: secret_example_test.go:ExampleNewSecret -->
+```go
+key := embargo.NewSecret("fake-key")
+
+fmt.Println(key)
+
+// Output: [REDACTED]
+```
+
+`Secret` prints `[REDACTED]` through fmt, encoding/json, encoding/xml, text marshaling, templates and slog; `Reveal()` is the one way back. `Input` loads secrets from JSON, config files and SQL rows. Teams that keep their own types can follow a [standard-library-only pattern](doc/values.md) and check it with `embargotest.CheckValue`, which fails on the first output path that prints the value.
+
+## Prove nothing leaks
+
+One line guards every test in a package:
+
+`func TestMain(m *testing.M) { os.Exit(embargotest.Guard(m)) }`
+
+Guard reruns the package tests, scans their stdout, stderr, default slog output and child processes, and fails the run when a canary or a detected value appears. [ExampleGuard](embargotest/injection_example_test.go)
+
+For one test, a recorder checks both that the expected output exists and that no canary escaped:
 
 <!-- test: readme_output_test.go:TestReadmeCheckOutput -->
 ```go
@@ -136,7 +146,12 @@ func TestReadmeCheckOutput(t *testing.T) {
 }
 ```
 
-Output includes `"token":"[REDACTED]"` and the test passes. [HTTP, child processes, expectations and allowed fixtures](doc/testing-output.md).
+[HTTP, child processes, and canaries in env, files and headers](doc/testing-output.md)
+
+## Measured
+
+- In a sample service with planted leaks (a DSN, wrapped and joined errors, an Authorization header, a token in a request body), embargo's slog and zap paths masked every leak that reached a logger. A redirect URL never reaches a logger; `embargotest.HTTP` catches it. [Scenario table](doc/comparison.md#service-leak-scenarios)
+- The same slog events through masq v0.2.3 and embargo: embargo took 52–78% less time on four of five events and allocated less on all five; the map event showed no significant difference. [Comparison](doc/comparison.md) · [benchstat](doc/comparison.benchstat.txt)
 
 ## Tested outputs
 
@@ -164,7 +179,7 @@ Each link opens the test that produces and checks the shown output.
 
 ## Accuracy
 
-This chart shows the held-out synthetic set at the default minimum confidence of 0. [Generation, test cases and observed misses](doc/accuracy.md) explain the scores.
+This chart shows the held-out synthetic set at the default minimum confidence of 0. [Generation, test cases and observed misses](doc/accuracy.md) explain the scores; [credential detectors](doc/credentials-accuracy.md) are measured separately.
 
 <!-- accuracy:start -->
 ![Precision and recall on held-out synthetic samples](doc/images/accuracy.svg)
