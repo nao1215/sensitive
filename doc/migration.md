@@ -1,4 +1,4 @@
-# Scanner behavior on unreleased main
+# Scanner behavior changes in v0.4.0
 
 The public API signatures are unchanged. The API golden continues to check the exported contract. The default minimum confidence remains 0.
 
