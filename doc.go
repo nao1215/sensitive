@@ -21,7 +21,7 @@
 //
 // # Custom Detectors
 //
-// Wrap a compiled pattern with [detector.NewRegex] and pass it to [WithDetector], as its example shows. A specific hint such as TICKET- lets the scanner skip the regex when that substring is absent. For parsing or validation beyond a regex, implement [Detector]; its methods define names, exhaustive hints, and finding offsets. Use dedicated parsers when scan cost matters.
+// Implement [Detector] and pass it to [WithDetector], as its example shows. Its methods define names, exhaustive hints, and finding offsets. Use dedicated parsers when scan cost matters.
 //
 // [benchmarks]: https://github.com/nao1215/embargo/blob/main/doc/benchmarks.md
 package embargo

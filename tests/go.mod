@@ -1,6 +1,6 @@
 module github.com/nao1215/embargo/tests
 
-go 1.26.0
+go 1.26.11
 
 replace github.com/nao1215/embargo => ../
 

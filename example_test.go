@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/nao1215/embargo"
-	"github.com/nao1215/embargo/detector"
 )
 
 func Example() {
@@ -41,7 +40,7 @@ func ExampleNewScanner() {
 
 func ExampleNewScanner_options() {
 	// Keep overlapping candidates and process them in input order.
-	custom := detector.NewRegex("reference", regexp.MustCompile(`REF-\d{4}`), nil, 0.5)
+	custom := newPattern("reference", regexp.MustCompile(`REF-\d{4}`), nil, 0.5)
 	scanner := embargo.NewScanner(
 		embargo.WithEmail(),
 		embargo.WithDetector(custom),
@@ -124,7 +123,7 @@ func ExampleWithMinConfidence() {
 }
 
 func ExampleWithDetector() {
-	ticket := detector.NewRegex(
+	ticket := newPattern(
 		"ticket_id", regexp.MustCompile(`TICKET-\d{4}`),
 		[][]byte{[]byte("TICKET-")}, 0.9,
 	)
@@ -134,4 +133,26 @@ func ExampleWithDetector() {
 	}
 	// Output:
 	// ticket_id: TICKET-4321 (0.9)
+}
+
+// pattern implements the public custom-detector contract.
+type pattern struct {
+	name       embargo.DetectorName
+	expression *regexp.Regexp
+	hints      [][]byte
+	confidence float64
+}
+
+func newPattern(name embargo.DetectorName, expression *regexp.Regexp, hints [][]byte, confidence float64) *pattern {
+	return &pattern{name: name, expression: expression, hints: hints, confidence: confidence}
+}
+func (p *pattern) Name() embargo.DetectorName { return p.name }
+func (p *pattern) Hints() [][]byte            { return p.hints }
+func (p *pattern) Scan(data []byte) []embargo.Finding {
+	matches := p.expression.FindAllIndex(data, -1)
+	findings := make([]embargo.Finding, 0, len(matches))
+	for _, match := range matches {
+		findings = append(findings, embargo.Finding{DetectorName: p.name, Start: match[0], End: match[1], RawValue: string(data[match[0]:match[1]]), Confidence: p.confidence})
+	}
+	return findings
 }

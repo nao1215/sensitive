@@ -1,6 +1,6 @@
 package embargo
 
-import "github.com/nao1215/embargo/detector"
+import detector "github.com/nao1215/embargo/internal/detect"
 
 // Option configures a [Scanner] through [NewScanner].
 type Option func(*Scanner)

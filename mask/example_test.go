@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/nao1215/embargo"
-	"github.com/nao1215/embargo/detector"
 	"github.com/nao1215/embargo/mask"
 )
 
@@ -15,8 +14,8 @@ func ExampleMask() {
 
 	// Apply different masking strategies per detector.
 	masked := mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{
-		detector.NamePAN:   mask.Last4,
-		detector.NameEmail: mask.Partial,
+		"pan":   mask.Last4,
+		"email": mask.Partial,
 	})
 
 	fmt.Println(masked)
@@ -29,7 +28,7 @@ func ExampleMask_strategies() {
 	findings := embargo.NewScanner(embargo.WithPAN()).ScanString(text)
 	for _, strategy := range []mask.Strategy{mask.Redact, mask.Last4, mask.First1Last4, mask.Partial, mask.Hash} {
 		fmt.Println(mask.Mask(text, findings, map[embargo.DetectorName]mask.Strategy{
-			detector.NamePAN: strategy,
+			"pan": strategy,
 		}))
 	}
 	// Output:

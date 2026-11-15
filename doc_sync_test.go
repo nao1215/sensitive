@@ -102,7 +102,7 @@ func canonicalExample(t *testing.T, fset *token.FileSet, node ast.Node) string {
 
 func TestExamplesAppearInGodoc(t *testing.T) {
 	t.Parallel()
-	for _, dir := range []string{".", "detector", "mask"} {
+	for _, dir := range []string{".", "internal/detect", "mask"} {
 		t.Run(dir, func(t *testing.T) {
 			t.Parallel()
 			fset := token.NewFileSet()
@@ -162,5 +162,20 @@ func TestExamplesAppearInGodoc(t *testing.T) {
 				t.Errorf("Example%s is not attached to a documented symbol", name)
 			}
 		})
+	}
+}
+
+func TestPublicExamplesOnlyImportPublicPackages(t *testing.T) {
+	t.Parallel()
+	for _, name := range []string{"example_test.go", "mask/example_test.go"} {
+		f, err := parser.ParseFile(token.NewFileSet(), name, nil, parser.ImportsOnly)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, imp := range f.Imports {
+			if strings.Contains(imp.Path.Value, "/internal/") {
+				t.Errorf("%s imports a private implementation", name)
+			}
+		}
 	}
 }

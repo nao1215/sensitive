@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/nao1215/embargo"
-	"github.com/nao1215/embargo/detector"
+	detector "github.com/nao1215/embargo/internal/detect"
 	"github.com/nao1215/embargo/mask"
 	"golang.org/x/crypto/sha3"
 	"pgregory.net/rapid"
@@ -202,7 +202,7 @@ func TestNumericChecksums(t *testing.T) {
 }
 
 func TestIBAN(t *testing.T) {
-	data, err := os.ReadFile("../detector/testdata/iban-registry.json")
+	data, err := os.ReadFile("../internal/detect/testdata/iban-registry.json")
 	if err != nil {
 		t.Fatal(err)
 	}

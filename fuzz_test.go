@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/nao1215/embargo"
-	"github.com/nao1215/embargo/detector"
+	detector "github.com/nao1215/embargo/internal/detect"
 )
 
 // fuzzSeeds returns inputs that reach every built-in detector, plus a few

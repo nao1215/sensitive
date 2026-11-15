@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+Implementation: [PR #57](https://github.com/nao1215/embargo/pull/57), [2aefa2a](https://github.com/nao1215/embargo/commit/2aefa2a).
+
+### Breaking changes
+
+- Built-in detector implementations move to internal/detect as the first step toward a root runtime API. Continue using the embargo scanner entry points; direct detector package imports are removed. The following API migration replaces the remaining aliases and adds root masking.
+- Go 1.26.11 is the minimum, selecting the previous supported series with the net/http fix for GO-2026-6859 needed by the upcoming recorder. No root module requirements are added.
+
+### Changed
+
+- Cache keyword sets per detector, keep specification tables local, and share numeric/alphanumeric context-boundary parsing. Preserve detection fixtures and independent property tests while preparing for the strict lint configuration.
+
+
 ## [0.3.0] - 2026-11-15
 
 ### Changed

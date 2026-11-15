@@ -29,22 +29,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    # Every Go line this repository supports: a standard-library advisory is
-    # fixed in a specific patch of a specific minor, so an advisory fixed in the
-    # newest Go can still be live for someone building with the minimum.
-    # Keep the first entry equal to the go directive in go.mod.
-    #
-    # Go 1.22 no longer receives security releases (Go patches only the two
-    # newest minors), so standard-library advisories on that line have no fixed
-    # version and nothing in this repository can clear them. On that leg they
-    # are printed as warnings; a dependency advisory still fails it. Set
-    # stdlib to "fail" once the go directive is on a supported minor.
+    # Scan both supported Go series; reachable standard-library advisories fail.
     strategy:
       fail-fast: false
       matrix:
         include:
-          - go: "1.22"
-            stdlib: warn
+          - go: "1.26.11"
+            stdlib: fail
             module: .
           - go: "stable"
             stdlib: fail
