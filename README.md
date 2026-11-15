@@ -48,9 +48,9 @@ NewScanner() and WithAll() enable every built-in, including IP addresses and con
 
 ## Why embargo?
 
-[Gitleaks](https://github.com/gitleaks/gitleaks) and [TruffleHog](https://github.com/trufflesecurity/trufflehog) scan repositories and files for secrets; [Presidio](https://github.com/microsoft/presidio) provides detection and anonymization in Python. Secret-wrapper libraries hide values that callers explicitly wrap, but do not detect sensitive text.
+Logs, support messages, and imported text can contain payment details, personal data, or credentials. embargo finds their locations so your Go program can flag, classify, or mask them before forwarding the text.
 
-embargo runs inside a Go program: its slog handler detects and masks log content at runtime, while Secret values print as [REDACTED]. In tests, embargotest checks actual output with canaries and the detectors, including HTTP responses and child processes; the [output tests](tests/compatibility_integration_test.go) exercise these paths.
+Dedicated parsers and checksum checks help distinguish candidates from ordinary text, including Japanese phone numbers and My Number. Detection results remain available when you need your own handling policy.
 
 ## Supported detectors
 
