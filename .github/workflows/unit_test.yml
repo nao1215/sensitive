@@ -103,6 +103,7 @@ jobs:
           go-version: ${{ matrix.go }}
           cache-dependency-path: tests/go.sum
       - name: Check deterministic synthetic corpus
+        shell: bash
         run: |
           python3 scripts/generate_accuracy.py --check
           python3 scripts/generate_credentials.py --check

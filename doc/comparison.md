@@ -61,7 +61,7 @@ Measured 2026-11-15 with go version go1.26.11 linux/amd64, Linux/amd64, AMD RYZE
 
 The five head-to-head events are a flat email/card pair, a nested struct with opaque password and tagged recovery field, a map, a clean event, and 50 attributes (48 clean plus the flat pair). Both loggers use the same io.Discard sink. masq uses its documented WithAllowedType for time.Time and slog.Level, matching embargo's decision to preserve that metadata; this avoids charging masq for an unnecessary reflection traversal. Masker/scanner construction and regex compilation are excluded for both. The tests use prebuilt slog.Attr slices and LogAttrs to avoid attributing caller argument construction to either library.
 
-In these five configured events, embargo used 24–77% less time than masq and fewer bytes and allocations in every case; masq was not faster in this measured set. Some timings have substantial spread (embargo flat ±46%, masq large50 ±34%), so the raw samples and confidence intervals matter more than a single rounded speedup. This does not predict tag-only or type-only masq policies, other payloads or machines.
+The generated ratios describe these configured events. Raw samples and confidence intervals matter more than a single rounded speedup. They do not predict tag-only or type-only masq policies, other payloads or machines.
 
 [Raw ten-sample output](comparison.raw.txt), [benchstat comparison including significance, B/op and allocs/op](comparison.benchstat.txt), [benchmark source and correctness assertions](../tests/comparison_test.go).
 
@@ -71,7 +71,7 @@ Run `make comparison-doc` to rerun ten samples, benchstat and all generated comp
 
 ## Other overlapping libraries
 
-[Exact outputs for the same events and text fixtures](comparison-libraries.md) are regenerated and asserted by [comparison_libraries_test.go](../tests/comparison_libraries_test.go). The additional timing rows measure different contracts and must not be interpreted as equivalent protection. PIIFormatter and go-mask are faster on their measured tasks: they apply configured field transformations without embargo's text detection, and PIIFormatter removes the nested Any object. godlp is slower on the text fixture but supports phone families embargo does not. The new JSON path costs about 2.57 times the old string-only work in the measured struct case.
+[Exact outputs for the same events and text fixtures](comparison-libraries.md) are regenerated and asserted by [comparison_libraries_test.go](../tests/comparison_libraries_test.go). The additional timing rows measure different contracts and must not be interpreted as equivalent protection. PIIFormatter and go-mask are faster on their measured tasks: they apply configured field transformations without embargo's text detection, and PIIFormatter removes the nested Any object. godlp is slower on the text fixture but supports phone families embargo does not.
 
 | Library and version | Configuration and useful differences |
 |---|---|
@@ -85,7 +85,7 @@ Run `make comparison-doc` to rerun ten samples, benchstat and all generated comp
 
 ## Remaining use cases
 
-embargo cannot automatically identify arbitrary unregistered secrets; use Secret, a key rule or a custom detector. It does not return a typed masked struct copy, apply per-field partial display policies, preserve safe/unsafe provenance, or centrally enforce OTel pipelines. JSON response/export masking is covered by MaskJSON when the boundary accepts JSON bytes; callers that need a typed copy for further business logic still benefit from struct-copy libraries. Non-JSON formats, encoded binary data, unsupported phone/identity families, custom method side effects and data added downstream need separate handling and output tests. URL/DSN credentials, error helpers, additional detectors and new embargotest features are outside this round.
+embargo cannot automatically identify arbitrary unregistered secrets; use Secret, a key rule or a custom detector. It does not return a typed masked struct copy, apply per-field partial display policies, preserve safe/unsafe provenance, or centrally enforce OTel pipelines. JSON response/export masking is covered by MaskJSON when the boundary accepts JSON bytes; callers that need a typed copy for further business logic still benefit from struct-copy libraries. Non-JSON formats, encoded binary data, unsupported phone/identity families, custom method side effects and data added downstream need separate handling and output tests. URL/DSN credentials, additional token detectors and package-wide output checks are covered by the Round 12 scenario suite below. An error-wrapping helper is intentionally absent because preserving Unwrap also exposes the original error text.
 
 [Tag migration and database/config inputs](values.md), [shared logging semantics](logging.md), [keep an existing masker and test its real output](testing-output.md), [security scan decisions](security-scans.md).
 

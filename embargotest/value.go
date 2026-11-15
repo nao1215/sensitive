@@ -8,6 +8,7 @@ import (
 	"fmt"
 	htmltemplate "html/template"
 	"log/slog"
+	"slices"
 	"testing"
 	texttemplate "text/template"
 )
@@ -22,7 +23,8 @@ const (
 // html/template, both slog handlers and wrapped errors. It reports the exact
 // leaking path without printing the value. Missing TextMarshaler, serializer
 // errors and panics fail: an unsupported path is not evidence of safe output.
-// Constructors must terminate. This verifies formatting, not Reveal or memory
+// Diagnostic output containing %! or !ERROR: and slog groups deeper than 64
+// fail conservatively. Constructors must terminate. This verifies formatting, not Reveal or memory
 // secrecy. Use it for domain-owned password types, Secret and initialized Input.
 func CheckValue(tb testing.TB, construct func(canary string) any) (safe bool) {
 	tb.Helper()
@@ -60,11 +62,9 @@ func formatValue(path string, value any) (data []byte, ok bool) {
 		}
 	}()
 	if path == valueSlogText || path == valueSlogJSON {
-		resolved := slog.AnyValue(value).Resolve()
-		if resolved.Kind() == slog.KindAny {
-			if _, failed := resolved.Any().(error); failed {
-				return nil, false
-			}
+		resolved, valid := resolveCheckValue(slog.AnyValue(value), 0)
+		if !valid {
+			return nil, false
 		}
 		value = resolved
 	}
@@ -111,5 +111,31 @@ func formatValue(path string, value any) (data []byte, ok bool) {
 	}
 	// fmt recovers formatter panics internally and emits a diagnostic instead.
 	// Such output is not a successful implementation of the formatting contract.
-	return data, err == nil && !bytes.Contains(data, []byte("%!"))
+	return data, err == nil && !bytes.Contains(data, []byte("%!")) && !bytes.Contains(data, []byte("!ERROR:"))
+}
+
+// Freeze nested LogValuers too: handlers resolve group children themselves and
+// convert failures to output instead of returning an error to their caller.
+func resolveCheckValue(value slog.Value, depth int) (slog.Value, bool) {
+	const maxGroupDepth = 64
+	if depth >= maxGroupDepth {
+		return slog.Value{}, false
+	}
+	value = value.Resolve()
+	if value.Kind() == slog.KindAny {
+		_, failed := value.Any().(error)
+		return value, !failed
+	}
+	if value.Kind() == slog.KindGroup {
+		attrs := slices.Clone(value.Group())
+		for i := range attrs {
+			resolved, valid := resolveCheckValue(attrs[i].Value, depth+1)
+			if !valid {
+				return slog.Value{}, false
+			}
+			attrs[i].Value = resolved
+		}
+		value = slog.GroupValue(attrs...)
+	}
+	return value, true
 }

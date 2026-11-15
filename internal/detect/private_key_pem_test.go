@@ -108,3 +108,13 @@ func TestPEMHeaderVectors(t *testing.T) {
 		}
 	}
 }
+
+func TestPEMIncompleteBlockDoesNotConsumeNextKey(t *testing.T) {
+	t.Parallel()
+	first := pemHeader("")
+	second := first + "\nFAKE\n-----END PRIVATE KEY-----"
+	got := detect.NewPrivateKeyPEM().Scan([]byte(first + "\n" + second))
+	if len(got) != 2 || got[0].RawValue != first || got[1].RawValue != second {
+		t.Fatalf("wrong block bounds: %v", got)
+	}
+}

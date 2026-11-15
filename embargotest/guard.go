@@ -28,6 +28,9 @@ import (
 // raw output from parallel tests cannot be attributed to one test reliably.
 // Independently redirected subprocess output and output before TestMain are
 // outside this boundary. Fixtures must use the configured public fake canary.
+// Explicit -test.v=false suppresses passing t.Log output; test2json framing is
+// preserved. The default scanner includes low-confidence random-token findings;
+// use WithScanner and WithMinConfidence or allowances for intentional public IDs.
 // The internal supervisor environment variable is reserved and must not be set.
 func Guard(m *testing.M, opts ...Option) int {
 	const childEnv = "EMBARGO_PACKAGE_GUARD"
@@ -46,7 +49,7 @@ func Guard(m *testing.M, opts ...Option) int {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), policy.timeout)
 	defer cancel()
-	args := append(slices.Clone(os.Args[1:]), "-test.v=true")
+	args := append([]string{"-test.v=true"}, os.Args[1:]...)
 	// #nosec G204 G702 -- Re-exec this test binary with its own arguments, never a shell.
 	cmd := exec.CommandContext(ctx, executable, args...)
 	cmd.Env = append(os.Environ(), childEnv+"=child")

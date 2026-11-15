@@ -41,4 +41,27 @@ func TestPackageGuard(t *testing.T) {
 			}
 		})
 	}
+	testGuardArguments(t, binary)
+}
+
+func testGuardArguments(t *testing.T, binary string) {
+	t.Helper()
+	for _, args := range [][]string{{"positional"}, {"-test.v=test2json"}} {
+		t.Run(args[0], func(t *testing.T) {
+			t.Parallel()
+			// #nosec G204 -- Built test fixture, fixed case arguments, no shell.
+			cmd := exec.CommandContext(t.Context(), binary, args...)
+			cmd.Env = append(os.Environ(), "GUARD_CASE=safe")
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				t.Fatalf("child failed: %v %s", err, out)
+			}
+			if !bytes.Contains(out, []byte("=== RUN")) {
+				t.Error("positional argument disabled verbose capture")
+			}
+			if args[0] == "-test.v=test2json" && !bytes.Contains(out, []byte{0x16}) {
+				t.Error("test2json framing was lost")
+			}
+		})
+	}
 }

@@ -100,3 +100,22 @@ func TestCredentialAWSContextDoesNotDuplicateAssignment(t *testing.T) {
 		t.Fatalf("expected one credential span, got %v", got)
 	}
 }
+
+func TestCredentialProtocolBoundaries(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ text, secret string }{
+		{"postgres://token:short-secret@db.example/app", "short-secret"},
+		{"postgres://alice:part;two@db.example/db", "part;two"},
+		{"Authorization: Bearer  short-secret", "short-secret"},
+		{"Authorization: Basic   ZmFrZTpmaWN0aXRpb3Vz", "ZmFrZTpmaWN0aXRpb3Vz"},
+	} {
+		t.Run(tc.text, func(t *testing.T) {
+			t.Parallel()
+			scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindCredential))
+			got := embargo.Mask(tc.text, scanner.ScanString(tc.text))
+			if want := strings.Replace(tc.text, tc.secret, "[REDACTED]", 1); got != want {
+				t.Errorf("got %q want %q", got, want)
+			}
+		})
+	}
+}

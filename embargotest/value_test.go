@@ -1,6 +1,7 @@
 package embargotest_test
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -87,5 +88,52 @@ func TestCheckValueRejectsLogValuePanic(t *testing.T) {
 	}
 	if !strings.Contains(strings.Join(p.messages, "\n"), "slog/json") {
 		t.Fatal("missing exact failing slog path")
+	}
+}
+
+type nestedPanicLogValue struct{ embargo.Secret[string] }
+
+func (v nestedPanicLogValue) LogValue() slog.Value {
+	return slog.GroupValue(slog.Any("child", panickingLogValue(v)))
+}
+
+type cyclicLogValue struct{ embargo.Secret[string] }
+
+func (v cyclicLogValue) LogValue() slog.Value { return slog.GroupValue(slog.Any("cycle", v)) }
+
+type groupedLogValue struct{ embargo.Secret[string] }
+
+func (v groupedLogValue) LogValue() slog.Value {
+	return slog.GroupValue(slog.Group("nested", slog.Any("secret", v.Secret)))
+}
+
+func TestCheckValueAcceptsNestedSlogValue(t *testing.T) {
+	t.Parallel()
+	if !embargotest.CheckValue(t, func(s string) any { return groupedLogValue{embargo.NewSecret(s)} }) {
+		t.Fatal("safe nested group rejected")
+	}
+}
+
+type failedJSONValue struct{}
+
+func (failedJSONValue) MarshalJSON() ([]byte, error) { return nil, errors.New("json failed") }
+
+type failedJSONLogValue struct{ embargo.Secret[string] }
+
+func (failedJSONLogValue) LogValue() slog.Value { return slog.AnyValue(failedJSONValue{}) }
+func TestCheckValueRejectsNestedSlogFailures(t *testing.T) {
+	t.Parallel()
+	for _, build := range []func(string) any{
+		func(s string) any { return nestedPanicLogValue{embargo.NewSecret(s)} },
+		func(s string) any { return failedJSONLogValue{embargo.NewSecret(s)} },
+		func(s string) any { return cyclicLogValue{embargo.NewSecret(s)} },
+	} {
+		p := &valueProbe{TB: t}
+		if embargotest.CheckValue(p, build) {
+			t.Error("failed nested slog value was accepted")
+		}
+		if !strings.Contains(strings.Join(p.messages, "\n"), "slog/json") {
+			t.Error("missing exact failing path")
+		}
 	}
 }

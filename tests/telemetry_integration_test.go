@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -21,7 +22,7 @@ import (
 
 const otelOutputExcerpt = `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}`
 
-//nolint:gocognit,goconst // Keep the expected outputs and failure modes together in this acceptance matrix.
+//nolint:gocognit,gocyclo,goconst // Keep the expected outputs and failure modes together in this acceptance matrix.
 func checkOTelAcceptance(t *testing.T) {
 	t.Helper()
 	for _, mode := range []string{"safe", "raw-error", "missing-flush", "regressed"} {
@@ -63,6 +64,9 @@ func checkOTelAcceptance(t *testing.T) {
 				t.Fatal("export serialization failed")
 			}
 			r.Expect("sdk", func(data []byte) bool {
+				if mode == "raw-error" {
+					return json.Valid(data) && bytes.Contains(data, []byte("request:")) && bytes.Contains(data, r.Canary())
+				}
 				if !bytes.Contains(data, []byte(otelOutputExcerpt)) {
 					return false
 				}
@@ -97,6 +101,12 @@ func checkOTelAcceptance(t *testing.T) {
 			})
 			if r.Check() != (mode == "safe") {
 				t.Fatal("telemetry detector returned wrong verdict")
+			}
+			if mode == "raw-error" {
+				messages := strings.Join(probe.messages, "\n")
+				if !strings.Contains(messages, "the fake secret appeared") || strings.Contains(messages, "content expectation") {
+					t.Fatal("wrapped error must fail for a leak, not a missing export", probe.messages)
+				}
 			}
 			probe.finish()
 		})

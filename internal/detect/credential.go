@@ -93,28 +93,24 @@ func (d *Credential) secretKey(key []byte) bool {
 
 // Scan returns only secret spans, never their surrounding configuration fields.
 func (d *Credential) Scan(data []byte) []Finding {
-	var out []Finding
+	urls := urlPasswords(data)
+	out := slices.Clone(urls)
+	urlIndex := 0
 	for i := 0; i < len(data); i++ {
 		if data[i] != ':' && data[i] != '=' {
 			continue
 		}
-		key := assignmentKey(data, i)
-		if !d.secretKey(key) {
-			end := i
-			for end > 0 && (data[end-1] == ' ' || data[end-1] == '\t') {
-				end--
-			}
-			start := end - len(key)
-			if start > 0 && data[start-1] == ' ' {
-				prev := start - 1
-				for prev > 0 && isAlpha(data[prev-1]) {
-					prev--
-				}
-				key = data[prev:end]
-			}
-			if !d.secretKey(key) {
-				continue
-			}
+		for urlIndex < len(urls) && urls[urlIndex].Start <= i {
+			urlIndex++
+		}
+		// A userinfo username can itself be "token" or "password". Its
+		// colon belongs to the URL, not an assignment extending past the host.
+		if data[i] == ':' && urlIndex < len(urls) && urls[urlIndex].Start == i+1 {
+			continue
+		}
+		key := d.credentialKey(data, i)
+		if key == nil {
+			continue
 		}
 		start, end := assignmentValue(data, i+1, NormalizeCredentialKey(string(key)))
 		if end > start && string(data[start:end]) != "[REDACTED]" {
@@ -122,7 +118,6 @@ func (d *Credential) Scan(data []byte) []Finding {
 			i = end - 1
 		}
 	}
-	out = append(out, urlPasswords(data)...)
 	out = append(out, awsSecretPair(data)...)
 	// Context and assignment recognizers may identify the same credential.
 	slices.SortFunc(out, func(a, b Finding) int {
@@ -132,6 +127,28 @@ func (d *Credential) Scan(data []byte) []Finding {
 		return cmp.Compare(a.End, b.End)
 	})
 	return slices.CompactFunc(out, func(a, b Finding) bool { return a.Start == b.Start && a.End == b.End })
+}
+
+func (d *Credential) credentialKey(data []byte, end int) []byte {
+	key := assignmentKey(data, end)
+	if d.secretKey(key) {
+		return key
+	}
+	for end > 0 && (data[end-1] == ' ' || data[end-1] == '\t') {
+		end--
+	}
+	start := end - len(key)
+	if start > 0 && data[start-1] == ' ' {
+		prev := start - 1
+		for prev > 0 && isAlpha(data[prev-1]) {
+			prev--
+		}
+		key = data[prev:end]
+	}
+	if d.secretKey(key) {
+		return key
+	}
+	return nil
 }
 
 func assignmentKey(data []byte, end int) []byte {
@@ -241,7 +258,7 @@ func urlPasswords(data []byte) []Finding {
 	}
 	return out
 }
-func urlDelimiter(b byte) bool { return strings.ContainsRune(" \t\r\n\"'<>;", rune(b)) }
+func urlDelimiter(b byte) bool { return strings.ContainsRune(" \t\r\n\"'<>", rune(b)) }
 
 // awsSecretPair recognizes a 40-byte base64 secret within 128 bytes of an AWS
 // access key ID. It does not infer ownership or validate credentials remotely.
@@ -273,7 +290,11 @@ func authorizationValueStart(data []byte, start, end int, key string) int {
 	if key == authorizationKey {
 		for _, scheme := range []string{"Bearer ", "Basic "} {
 			if end-start >= len(scheme) && strings.EqualFold(string(data[start:start+len(scheme)]), scheme) {
-				return start + len(scheme)
+				start += len(scheme)
+				for start < end && data[start] == ' ' {
+					start++
+				}
+				return start
 			}
 		}
 	}
