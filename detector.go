@@ -11,6 +11,9 @@ type Detector interface {
 
 func builtins() []detect.Detector {
 	return []detect.Detector{
+		&detect.Credential{},
+		&detect.ServiceToken{},
+		&detect.HighEntropy{},
 		detect.NewPAN(),
 		detect.NewEmail(),
 		detect.NewJPPhone(),

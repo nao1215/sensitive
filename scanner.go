@@ -45,6 +45,9 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 	}
 	for _, d := range builtins() {
 		if s.kinds == nil || s.kinds[Kind(d.Name())] {
+			if credential, ok := d.(*detect.Credential); ok && s.sensitiveKeys != nil {
+				credential.MatchKey = s.sensitiveKey
+			}
 			s.detectors = append(s.detectors, d)
 		}
 	}
@@ -79,7 +82,8 @@ func buildHintCache(detectors []detect.Detector) [][]hintEntry {
 
 // Scan returns every finding, including overlaps, ordered by start, descending end,
 // kind, then descending confidence. Built-ins decode one layer of valid percent
-// escapes (%HH), preserving literal + and invalid escapes; offsets always refer
+// escapes (%HH), except KindCredential parses original URL/DSN delimiters.
+// Literal + and invalid escapes are preserved; offsets always refer
 // to original bytes. Other encodings are not decoded. Custom detectors receive
 // the original bytes. Invalid custom findings panic with a fixed message.
 func (s *Scanner) Scan(data []byte) []Finding {
@@ -101,8 +105,13 @@ func (s *Scanner) Scan(data []byte) []Finding {
 		if selected&(1<<i) == 0 {
 			continue
 		}
-		for _, f := range d.Scan(scanData) {
-			if positions != nil {
+		input := scanData
+		raw := d.Name() == "credential"
+		if raw {
+			input = data
+		}
+		for _, f := range d.Scan(input) {
+			if positions != nil && !raw {
 				f.Start, f.End = positions[f.Start], positions[f.End]
 			}
 			findings = append(findings, Finding{Kind: Kind(f.DetectorName), Start: f.Start, End: f.End, Confidence: f.Confidence})

@@ -60,7 +60,7 @@ compatibility-doc: ## Regenerate the table from real output tests
 	UPDATE_DOCS=1 go -C tests test -run '^TestCompatibilityTable$$' -count=1 .
 
 .PHONY: accuracy accuracy-doc
-accuracy accuracy-doc: ## Regenerate precision and recall from the labeled corpus
+accuracy accuracy-doc: credential-accuracy ## Regenerate precision and recall from the labeled corpus
 	python3 scripts/generate_accuracy.py
 	UPDATE_DOCS=1 go -C tests test -run '^TestAccuracyTable$$' -count=1 .
 	python3 scripts/accuracy_figures.py
@@ -90,3 +90,10 @@ adapters: ## Test all optional logger modules
 .PHONY: comparison-doc
 comparison-doc: ## Measure masking libraries and regenerate comparison tables and chart
 	python3 scripts/comparison_docs.py --measure
+
+.PHONY: leak-scenarios credential-accuracy
+leak-scenarios: ## Regenerate realistic service leak comparisons
+	UPDATE_DOCS=1 go -C tests test -run '^TestLeakScenarios$$' -count=1 .
+credential-accuracy: ## Regenerate independent credential precision and recall
+	python3 scripts/generate_credentials.py --check
+	UPDATE_DOCS=1 go -C tests test -run '^TestCredentialAccuracy$$' -count=1 .

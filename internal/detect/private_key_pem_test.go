@@ -33,7 +33,7 @@ func TestPrivateKeyPEMDetector_Scan(t *testing.T) {
 			name:     "RSA private key header",
 			input:    pemHeader("RSA") + "\nMIIEow...\n-----END RSA PRIVATE KEY-----",
 			wantLen:  1,
-			wantRaw:  pemHeader("RSA"),
+			wantRaw:  pemHeader("RSA") + "\nMIIEow...\n-----END RSA PRIVATE KEY-----",
 			wantAlgo: "RSA",
 		},
 		{

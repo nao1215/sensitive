@@ -14,7 +14,7 @@ The default minimum confidence remains 0: ambiguous candidates are included. Con
 
 ## Encoding policy
 
-Built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in the input before detection. Findings map back to original bytes, so masking covers the escaped representation. Literal `+` and malformed percent escapes remain unchanged. Custom detectors receive the original bytes. Base64, hexadecimal, HTML entities, JSON escapes and recursively percent-encoded forms are not decoded by Scanner; decode application fields explicitly when needed. The logger adapters separately decode JSON strings at their output boundary.
+The original 23 built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in the input before detection. Findings map back to original bytes, so masking covers the escaped representation. Literal `+` and malformed percent escapes remain unchanged. Custom detectors receive the original bytes. Base64, hexadecimal, HTML entities, JSON escapes and recursively percent-encoded forms are not decoded by Scanner; decode application fields explicitly when needed. The logger adapters separately decode JSON strings at their output boundary.
 
 [Round-trip and offset properties](../scanner_encoding_test.go) exercise random partial escaping and all byte values. [Regression tests](../tests/accuracy_regression_test.go) reject new mismatches and obsolete exceptions in both sets. Known limits retain reasons in [development](../tests/testdata/accuracy_limits.jsonl) and [held-out](../tests/testdata/accuracy_held_limits.jsonl) fixtures.
 
@@ -35,7 +35,7 @@ Built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in t
 | [eth](#eth) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [github_token](#github-token) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [google_api_key](#google-api-key) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [iban](#iban) | 144 / 416 | 144 / 4 / 0 | 97.3% | 100.0% |
+| [iban](#iban) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [ipaddr](#ipaddr) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [jwt](#jwt) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [merchant_id](#merchant-id) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
@@ -76,6 +76,62 @@ Built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in t
 | [swiftbic](#swiftbic) | 146 / 434 | 146 / 120 / 0 | 54.9% | 100.0% |
 | [uk_sortcode](#uk-sortcode) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
 
+## Held-out results: minimum confidence 0.5
+
+| Detector | Positive / negative inputs | TP / FP / FN spans | Precision | Recall |
+|---|---:|---:|---:|---:|
+| [aba_routing](#aba-routing) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [ach_trace](#ach-trace) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [awskey](#awskey) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [bank_account](#bank-account) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [btc](#btc) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [card_expiry](#card-expiry) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [cvv](#cvv) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [email](#email) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [eth](#eth) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [github_token](#github-token) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [google_api_key](#google-api-key) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [iban](#iban) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [ipaddr](#ipaddr) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [jwt](#jwt) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [merchant_id](#merchant-id) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [mynumber](#mynumber) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [pan](#pan) | 144 / 416 | 144 / 64 / 0 | 69.2% | 100.0% |
+| [payment_token](#payment-token) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [phone_jp](#phone-jp) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [private_key_pem](#private-key-pem) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [slack_token](#slack-token) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [swiftbic](#swiftbic) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [uk_sortcode](#uk-sortcode) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+
+## Development results: minimum confidence 0.5
+
+| Detector | Positive / negative inputs | TP / FP / FN spans | Precision | Recall |
+|---|---:|---:|---:|---:|
+| [aba_routing](#aba-routing) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [ach_trace](#ach-trace) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [awskey](#awskey) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [bank_account](#bank-account) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [btc](#btc) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [card_expiry](#card-expiry) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [cvv](#cvv) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [email](#email) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [eth](#eth) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [github_token](#github-token) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [google_api_key](#google-api-key) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [iban](#iban) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [ipaddr](#ipaddr) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [jwt](#jwt) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [merchant_id](#merchant-id) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [mynumber](#mynumber) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [pan](#pan) | 146 / 434 | 146 / 64 / 0 | 69.5% | 100.0% |
+| [payment_token](#payment-token) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [phone_jp](#phone-jp) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [private_key_pem](#private-key-pem) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [slack_token](#slack-token) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [swiftbic](#swiftbic) | 146 / 434 | 146 / 120 / 0 | 54.9% | 100.0% |
+| [uk_sortcode](#uk-sortcode) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+
 ## Held-out results: minimum confidence 0.7
 
 | Detector | Positive / negative inputs | TP / FP / FN spans | Precision | Recall |
@@ -91,7 +147,7 @@ Built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in t
 | [eth](#eth) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [github_token](#github-token) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [google_api_key](#google-api-key) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [iban](#iban) | 144 / 416 | 144 / 4 / 0 | 97.3% | 100.0% |
+| [iban](#iban) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [ipaddr](#ipaddr) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [jwt](#jwt) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [merchant_id](#merchant-id) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
@@ -226,9 +282,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 Verified by the [iban format tests](../internal/detect/iban_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Independently generated German MOD 97 check digits and surrounding JSON or log text.
 
-| Set / observed limit | Input example | Why it remains |
-|---|---|---|
-| held-out: `iban/negative/9/japanese` | `入力〈DE00278095005992016380〉確認済み` | MOD 97 alone accepts some synthetic IBANs whose check digits are 00; check-digit range validation remains a held-out discovery and was not used for tuning. |
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## ipaddr
 
@@ -336,8 +390,37 @@ python3 scripts/accuracy_figures.py --check
 go -C tests test -run "Test(Accuracy|GeneratedAccuracy)" .
 ```
 
-The 0.7 results improve PAN, My Number and phone precision on both sets without losing recall in these samples; the default retains their ambiguous business identifiers. Email and encoded-form recall improve on both sets. SWIFT word false positives remain: the rejected attachment rule improved development precision but failed held-out evaluation. A held-out IBAN with check digits 00 passed MOD 97; that discovery remains a documented limit for a future development set.
+The 0.7 results improve PAN, My Number and phone precision on both sets without losing recall in these samples; the default retains their ambiguous business identifiers. Email and encoded-form recall improve on both sets. SWIFT word false positives remain: the rejected attachment rule improved development precision but failed held-out evaluation. Round 12 adds development regressions for reserved IBAN check digits 00, 01 and 99 and rejects them before MOD 97. The four formerly held-out false positives are fixed; this historical set is now regression evidence, not unseen evaluation.
 
 PEM samples test headers, not full private keys. Generated service tokens test syntax, not authentication. Do not use synthetic identities, account or phone values for transactions or contacting people.
 
 [Support maintenance](https://github.com/sponsors/nao1215).
+
+
+## Forgotten credentials: independent synthetic corpus
+
+Development seed 120026 and fresh held-out seed 120928 use separate surrounding templates. The initial held-out seed 120927 exposed overlong assignment spans at closing punctuation (227 TP / 133 FP / 133 FN, precision and recall 63.1%). Its templates were then promoted to development; it is not counted as independent final evidence. The replacement set was frozen after that grammar repair and before scoring. The generator does not call embargo, and exact original-byte spans are scored. Each family also sees 120 negatives per category: ordinary prose/IDs, labelled IDs, UUIDs, commit SHAs, URL hashes and public random IDs. No live keys are used. These public samples are no longer unseen data after this round.
+
+<!-- credentials:start -->
+| Set | Detector | Threshold | TP | FP | FN | Precision | Recall |
+|---|---|---:|---:|---:|---:|---:|---:|
+| development | credential | 0.0 | 360 | 0 | 0 | 100.0% | 100.0% |
+| development | service_token | 0.0 | 120 | 0 | 0 | 100.0% | 100.0% |
+| development | high_entropy | 0.0 | 120 | 120 | 0 | 50.0% | 100.0% |
+| development | credential | 0.5 | 360 | 0 | 0 | 100.0% | 100.0% |
+| development | service_token | 0.5 | 120 | 0 | 0 | 100.0% | 100.0% |
+| development | high_entropy | 0.5 | 0 | 0 | 120 | n/a | 0.0% |
+| held | credential | 0.0 | 360 | 0 | 0 | 100.0% | 100.0% |
+| held | service_token | 0.0 | 120 | 0 | 0 | 100.0% | 100.0% |
+| held | high_entropy | 0.0 | 118 | 118 | 2 | 50.0% | 98.3% |
+| held | credential | 0.5 | 360 | 0 | 0 | 100.0% | 100.0% |
+| held | service_token | 0.5 | 120 | 0 | 0 | 100.0% | 100.0% |
+| held | high_entropy | 0.5 | 0 | 0 | 120 | n/a | 0.0% |
+<!-- credentials:end -->
+
+Negative controls are reported by category in the verbose test output. Public random IDs deliberately share the secret distribution. Threshold 0.5 excludes all entropy findings, including true secrets. These synthetic observations do not guarantee production precision.
+
+
+## Default policy decision
+
+Scanner, slog, adapters and embargotest keep threshold 0. Slog and adapters honor the explicit Scanner supplied by the caller, while embargotest favors finding forgotten values. Threshold 0.5 removes business-label candidates but retains PAN checksum failures and loses every unlabelled entropy finding. Threshold 0.7 additionally loses bank-account and some sort-code findings. Neither becomes a hidden default. Choose a threshold explicitly for the selected kinds; confidence is not probability. SWIFT development precision remains 54.9%; changing the global threshold does not repair ambiguous alphabetic bank codes.

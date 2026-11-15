@@ -9,6 +9,7 @@ import (
 // The pre-optimization dispatch loop remains test-only, using the same detectors
 // so that deliberate accuracy changes do not masquerade as optimization drift.
 func referenceScan(s *Scanner, data []byte) []Finding {
+	original := data
 	data, positions := decodePercent(data)
 	var out []Finding
 	var folded []byte
@@ -17,8 +18,12 @@ func referenceScan(s *Scanner, data []byte) []Finding {
 		if !matchesAnyHint(s.hintCache[i], data, &folded, &ready) {
 			continue
 		}
-		for _, f := range d.Scan(data) {
-			if positions != nil {
+		input := data
+		if d.Name() == "credential" {
+			input = original
+		}
+		for _, f := range d.Scan(input) {
+			if positions != nil && d.Name() != "credential" {
 				f.Start, f.End = positions[f.Start], positions[f.End]
 			}
 			if f.Confidence >= s.minConfidence {

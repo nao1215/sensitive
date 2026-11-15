@@ -73,7 +73,7 @@ func accuracyRatio(numerator, denominator int) string {
 func TestAccuracyTable(t *testing.T) {
 	t.Parallel()
 	for _, set := range selectedAccuracySets(t) {
-		for _, threshold := range []float64{0, .7} {
+		for _, threshold := range []float64{0, .5, .7} {
 			t.Run(fmt.Sprintf("%s/%.1f", set, threshold), func(t *testing.T) { t.Parallel(); scoreAccuracyTable(t, set, threshold) })
 		}
 	}
@@ -231,7 +231,7 @@ func syncAccuracySnapshot(t *testing.T, set string, threshold float64, rows []ac
 		path += "-held"
 	}
 	if threshold > 0 {
-		path += "-70"
+		path += fmt.Sprintf("-%02.0f", threshold*100)
 	}
 	path += ".json"
 	if os.Getenv("UPDATE_DOCS") == "1" {

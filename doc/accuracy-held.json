@@ -111,12 +111,12 @@
   },
   {
     "detector": "iban",
-    "precision": "97.3%",
+    "precision": "100.0%",
     "recall": "100.0%",
     "positive": 144,
     "negative": 416,
     "tp": 144,
-    "fp": 4,
+    "fp": 0,
     "fn": 0
   },
   {

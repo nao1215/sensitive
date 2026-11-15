@@ -16,6 +16,12 @@ type Finding struct {
 }
 
 const (
+	// KindServiceToken selects documented service prefixes and Slack webhook secrets.
+	KindServiceToken Kind = "service_token"
+	// KindHighEntropy selects unlabelled random-looking tokens at confidence 0.3.
+	KindHighEntropy Kind = "high_entropy"
+	// KindCredential selects secret assignments, Authorization values and URL/DSN passwords.
+	KindCredential Kind = "credential"
 	// KindPAN selects payment card candidates, including lower-confidence checksum failures.
 	KindPAN Kind = "pan"
 	// KindEmail selects email addresses.
@@ -60,6 +66,6 @@ const (
 	KindSlackToken Kind = "slack_token"
 	// KindGoogleAPIKey selects Google API key candidates.
 	KindGoogleAPIKey Kind = "google_api_key"
-	// KindPrivateKeyPEM selects PEM private-key headers, not their full key bodies.
+	// KindPrivateKeyPEM selects PEM private keys through their END marker, or incomplete headers.
 	KindPrivateKeyPEM Kind = "private_key_pem"
 )

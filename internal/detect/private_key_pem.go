@@ -1,6 +1,9 @@
 package detect
 
-import "strings"
+import (
+	"bytes"
+	"strings"
+)
 
 // PrivateKeyPEMDetail holds PEM private key-specific detail information.
 type PrivateKeyPEMDetail struct {
@@ -9,11 +12,11 @@ type PrivateKeyPEMDetail struct {
 	KeyType string
 }
 
-// PrivateKeyPEM detects PEM private key headers; the body is neither required nor parsed.
+// PrivateKeyPEM detects PEM private keys, including the body through a matching END marker when present; incomplete inputs still identify the header.
 //
 //  1. Find -----BEGIN and its following space.
 //  2. Read through the closing ----- on the same line and require the header content to end with PRIVATE KEY.
-//  3. Return the header with confidence 0.99 and record any preceding algorithm text (e.g., RSA, EC, DSA, OPENSSH, ENCRYPTED, or empty for bare PKCS#8).
+//  3. Include the body through a matching END marker when present, then return confidence 0.99 and the algorithm text (RSA, EC, DSA, OPENSSH, ENCRYPTED, or empty for PKCS#8).
 type PrivateKeyPEM struct{}
 
 // NewPrivateKeyPEM creates a new PEM private key detect.
@@ -53,6 +56,10 @@ func (d *PrivateKeyPEM) Scan(data []byte) []Finding {
 			continue
 		}
 		end := rel + len(closer)
+		footer := []byte("-----END " + content + "-----")
+		if tail := bytes.Index(data[end:], footer); tail >= 0 {
+			end += tail + len(footer)
+		}
 		algo := strings.TrimSpace(strings.TrimSuffix(content, "PRIVATE KEY"))
 		findings = append(findings, Finding{
 			DetectorName: d.Name(),
