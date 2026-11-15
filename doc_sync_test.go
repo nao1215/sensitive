@@ -72,7 +72,7 @@ func TestReadmeExamples(t *testing.T) {
 				gotCode, wantCode = got.Play, want.Play
 			}
 			if canonicalExample(t, fset, gotCode) != canonicalExample(t, fset, wantCode) {
-				t.Fatalf("README code differs from %s in %s; update both together", block[2], block[1])
+				t.Fatalf("README code differs from %s in %s; update both together\nGOT:\n%s\nWANT:\n%s", block[2], block[1], canonicalExample(t,fset,gotCode),canonicalExample(t,fset,wantCode))
 			}
 		})
 	}

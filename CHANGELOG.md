@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- embargotest captures writers, HTTP status/headers/body/trailers and child test processes, verifies expected content, and checks every output with the scanner and an encoded canary. Allow kinds or exact fixture values independently of the canary; empty output, cut-off output, repeated interim headers exceeding the budget, and child lifecycle failures cannot pass ([3649bed](https://github.com/nao1215/embargo/commit/3649bed)).
+
 - Secret and Input are now root runtime types. NewSecret wraps a shallow copy with unexported-pointer storage and [REDACTED] display through fmt, slog, JSON, text and XML; Reveal explicitly returns the value. Input copies decoded strings/bytes into a snapshot and rejects marker round trips, including JSON escaping and base64.
 
 

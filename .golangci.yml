@@ -158,6 +158,8 @@ linters:
           - go/types$
           - go/token$
           - go/constant$
+          - go/ast$
+          - go/parser$
     errcheck:
       check-blank: true
       check-type-assertions: true

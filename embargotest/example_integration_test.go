@@ -34,16 +34,21 @@ func show(passed bool) {
 }
 
 func ExampleNew() {
-	show(runExample(func(tb testing.TB) bool {
-		tb.Helper()
-		r := embargotest.New(tb)
-		//nolint:goconst // Independent scenarios keep their fixture and expected error literals local.
-		r.Expect("response", func(b []byte) bool { return string(b) == "accepted" })
-		if _, err := fmt.Fprint(r.Writer("response"), "accepted"); err != nil {
-			panic(err)
-		}
-		return r.Check()
-	}))
+	passed := false
+	testing.Benchmark(func(b *testing.B) {
+		b.Helper()
+		recorder := embargotest.New(b)
+		logger := slog.New(slog.NewJSONHandler(recorder.Writer("logs"), nil))
+		logger.Info("accepted", "key", embargo.NewSecret(recorder.Canary()))
+		//nolint:goconst // Self-contained examples show the actual display contract.
+		recorder.ExpectJSON("logs", nil, map[string]string{"key": "[REDACTED]"}, 1)
+		passed = recorder.Check()
+	})
+
+	if _, err := fmt.Println(passed); err != nil {
+		panic(err)
+	}
+
 	// Output: true
 }
 
@@ -67,6 +72,7 @@ func TestRecorderExample(t *testing.T) {
 	t.Parallel()
 	// begin recorder
 	r := embargotest.New(t)
+	//nolint:goconst // Self-contained examples keep their expected output local.
 	r.Expect("response", func(b []byte) bool { return string(b) == "accepted" })
 	if _, err := fmt.Fprint(r.Writer("response"), "accepted"); err != nil {
 		panic(err)
