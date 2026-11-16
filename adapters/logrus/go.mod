@@ -5,7 +5,7 @@ go 1.26.11
 replace github.com/nao1215/embargo => ../..
 
 require (
-	github.com/nao1215/embargo v0.5.1
+	github.com/nao1215/embargo v0.5.2
 	github.com/sirupsen/logrus v1.10.2
 )
 
