@@ -38,7 +38,7 @@ func maskAttributes(scanner *embargo.Scanner, attrs []attribute.KeyValue) ([]att
 			return nil, err
 		}
 		for key, value := range fields {
-			safe, err := attributeValue(value, kv.Value)
+			safe, err := attributeValue(scanner, value, kv.Value)
 			if err != nil {
 				return nil, err
 			}
@@ -48,7 +48,7 @@ func maskAttributes(scanner *embargo.Scanner, attrs []attribute.KeyValue) ([]att
 	return result, nil
 }
 
-func attributeValue(value any, original attribute.Value) (attribute.Value, error) {
+func attributeValue(scanner *embargo.Scanner, value any, original attribute.Value) (attribute.Value, error) {
 	switch v := value.(type) {
 	case nil:
 		return attribute.Value{}, nil
@@ -75,18 +75,18 @@ func attributeValue(value any, original attribute.Value) (attribute.Value, error
 		}
 		return attribute.Float64Value(number), nil
 	case []any:
-		return attributeSlice(v, original)
+		return attributeSlice(scanner, v, original)
 	case map[string]any:
 		fields := make([]attribute.KeyValue, 0, len(v))
 		for key, item := range v {
 			template := attribute.Value{}
 			for _, kv := range original.AsMap() {
-				if string(kv.Key) == key {
+				if string(kv.Key) == key || maskText(scanner, string(kv.Key)) == key {
 					template = kv.Value
 					break
 				}
 			}
-			converted, err := attributeValue(item, template)
+			converted, err := attributeValue(scanner, item, template)
 			if err != nil {
 				return attribute.Value{}, err
 			}
@@ -98,7 +98,7 @@ func attributeValue(value any, original attribute.Value) (attribute.Value, error
 	}
 }
 
-func attributeSlice(values []any, original attribute.Value) (attribute.Value, error) {
+func attributeSlice(scanner *embargo.Scanner, values []any, original attribute.Value) (attribute.Value, error) {
 	result := make([]attribute.Value, 0, len(values))
 	stringsOnly := original.Type() == attribute.STRINGSLICE
 	texts := make([]string, 0, len(values))
@@ -107,7 +107,7 @@ func attributeSlice(values []any, original attribute.Value) (attribute.Value, er
 		if items := original.AsSlice(); i < len(items) {
 			template = items[i]
 		}
-		converted, err := attributeValue(value, template)
+		converted, err := attributeValue(scanner, value, template)
 		if err != nil {
 			return attribute.Value{}, err
 		}

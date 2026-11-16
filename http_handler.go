@@ -45,11 +45,11 @@ func logHTTPExchange(logger *slog.Logger, scanner *Scanner, r *http.Request, w *
 	}
 	logger.LogAttrs(r.Context(), slog.LevelInfo, "http request",
 		slog.String("method", r.Method), slog.String("target", scanner.httpTarget(r.URL)),
-		slog.Any("request_headers", scanner.httpHeaders(r.Header)), slog.Int("status", status),
-		slog.Any("response_headers", scanner.httpHeaders(header)), slog.Bool("flush_failed", w.flushFailed))
+		slog.Any("request_headers", scanner.maskHTTPHeaders(r.Header)), slog.Int("status", status),
+		slog.Any("response_headers", scanner.maskHTTPHeaders(header)), slog.Bool("flush_failed", w.flushFailed))
 }
 
-func (s *Scanner) httpHeaders(header http.Header) http.Header {
+func (s *Scanner) maskHTTPHeaders(header http.Header) http.Header {
 	safe := header.Clone()
 	for key, values := range safe {
 		if strings.EqualFold(key, "Authorization") || strings.EqualFold(key, "Cookie") || strings.EqualFold(key, "Set-Cookie") || s.sensitiveKey(key) {

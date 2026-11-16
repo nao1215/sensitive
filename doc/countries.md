@@ -24,7 +24,7 @@ NINO excludes D, F, I, Q, U and V in both prefix positions, O in the second posi
 
 CNPJ accepts the numeric format and the alphanumeric format introduced for new registrations in July 2026. Checksum arithmetic maps each character to its ASCII code minus 48, so A contributes 17, and uses the same two MOD 11 checks. Chinese resident IDs validate the province prefix and date but do not consult historical district-assignment tables. A checksum-valid date and district combination can therefore be recognized even if no such identifier could have been issued.
 
-Korea replaced the encoded regional suffix with random digits for new or reassigned RRN from October 2020. A legacy-checksum-only recognizer would miss those values. A structurally valid RRN next to `rrn` or `주민등록번호` is therefore accepted at 0.6 even when the legacy check fails. Unlabelled modern RRN can be missed; the score does not identify when a number was issued. Foreigner registration numbers are outside this kind.
+Korea replaced the encoded regional suffix with random digits for new or reassigned RRN from October 2020. A legacy-checksum-only recognizer would miss those values. A structurally valid RRN next to `rrn` or `주민등록번호` is therefore accepted at 0.6 even when the legacy check fails. Unlabeled modern RRN can be missed; the score does not identify when a number was issued. Foreigner registration numbers are outside this kind.
 
 ## Definitions and independent checks
 
@@ -36,7 +36,7 @@ Brazil's [e-Financeira manual](https://sped.rfb.gov.br/estatico/54/B1B0F2B283ECD
 
 ## Frozen evaluation
 
-The generator uses different seeds and surrounding log templates for development and held data. Both 6,720-row files were prepared before detector implementation; [freeze metadata](../tests/testdata/countries-freeze.json) and the [manifest](../tests/testdata/countries-manifest.json) retain their hashes. Each kind has 96 generated values in bare, formatted and percent-encoded forms, plus rejected mutations, embedded identifiers, public order IDs and clean logs. RRN adds 32 labelled modern values with invalid legacy checks. Public-ID negatives deliberately share valid identity syntax, exposing the precision cost of retaining ambiguous values. No parser rule was tuned after the first held evaluation; those committed rows are regression data after this round.
+The generator uses different seeds and surrounding log templates for development and held data. Both 6,720-row files were prepared before detector implementation; [freeze metadata](../tests/testdata/countries-freeze.json) and the [manifest](../tests/testdata/countries-manifest.json) retain their hashes. Each kind has 96 generated values in bare, formatted and percent-encoded forms, plus rejected mutations, embedded identifiers, public order IDs and clean logs. RRN adds 32 labeled modern values with invalid legacy checks. Public-ID negatives deliberately share valid identity syntax, exposing the precision cost of retaining ambiguous values. No parser rule was tuned after the first held evaluation; those committed rows are regression data after this round.
 
 The measurements select each kind explicitly with WithKinds. They describe enabled detectors; the default scanner does not enable these new families.
 

@@ -89,7 +89,7 @@ const (
 	KindBrazilCNPJ Kind = "br_cnpj"
 	// KindChinaResidentID combines Chinese resident-ID date checks with the MOD 11-2 check.
 	KindChinaResidentID Kind = "cn_resident_id"
-	// KindKoreaRRN covers legacy Korean RRN checksums and explicitly labelled modern RRN structure.
+	// KindKoreaRRN covers legacy Korean RRN checksums and explicitly labeled modern RRN structure.
 	KindKoreaRRN Kind = "kr_rrn"
 	// KindCanadaSIN uses Luhn and the permitted first digits to select Canadian SIN candidates.
 	KindCanadaSIN Kind = "ca_sin"

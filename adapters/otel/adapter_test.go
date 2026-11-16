@@ -2,16 +2,20 @@ package embargootel_test
 
 import (
 	"context"
+	"errors"
 	"math"
+	"reflect"
 	"strings"
 	"testing"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	apilog "go.opentelemetry.io/otel/log"
+	"go.opentelemetry.io/otel/sdk/instrumentation"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/nao1215/embargo"
@@ -147,5 +151,110 @@ func TestSpanResourceScopeLinksAndStatusAreMasked(t *testing.T) {
 	}
 	if got.Resource().Attributes()[0].Value.AsString() != redacted || got.Links()[0].Attributes[0].Value.AsString() != redacted {
 		t.Fatal("span metadata leaked")
+	}
+}
+
+func TestLogBodyValueShapes(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		input, want attribute.Value
+		name        string
+	}{
+		{attribute.Value{}, attribute.Value{}, "null"},
+		{attribute.BoolValue(true), attribute.BoolValue(true), "bool"},
+		{attribute.Int64Value(7), attribute.Int64Value(7), "int"},
+		{attribute.Float64Value(3.25), attribute.Float64Value(3.25), "float"},
+		{attribute.Int64SliceValue([]int64{7, 8}), attribute.Int64SliceValue([]int64{7, 8}), "ints"},
+		{attribute.BoolSliceValue([]bool{true, false}), attribute.BoolSliceValue([]bool{true, false}), "bools"},
+		{attribute.Float64SliceValue([]float64{3.25, 4.5}), attribute.Float64SliceValue([]float64{3.25, 4.5}), "floats"},
+		{attribute.ByteSliceValue([]byte{0xff, 'x'}), attribute.ByteSliceValue([]byte{0xff, 'x'}), "invalid-utf8-bytes"},
+		{attribute.MapValue(attribute.KeyValue{Key: "items", Value: attribute.SliceValue(attribute.ByteSliceValue([]byte("alice@example.com")), attribute.BoolValue(true))}), attribute.MapValue(attribute.KeyValue{Key: "items", Value: attribute.SliceValue(attribute.ByteSliceValue([]byte(redacted)), attribute.BoolValue(true))}), "nested"},
+		{attribute.MapValue(attribute.KeyValue{Key: "alice@example.com", Value: attribute.ByteSliceValue([]byte("public"))}), attribute.MapValue(attribute.KeyValue{Key: redacted, Value: attribute.ByteSliceValue([]byte("public"))}), "masked-map-key"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			sink := &captureLog{}
+			exporter := embargootel.NewLogExporter(sink, embargo.NewScanner(embargo.WithKinds(embargo.KindEmail)))
+			var record sdklog.Record
+			record.SetBody(tc.input)
+			if err := exporter.Export(t.Context(), []sdklog.Record{record}); err != nil {
+				t.Fatal(err)
+			}
+			got := sink.records[0].Body()
+			if got.Type() != tc.want.Type() || !reflect.DeepEqual(got.AsInterface(), tc.want.AsInterface()) {
+				t.Fatalf("body %v, want %v", got, tc.want)
+			}
+			if !reflect.DeepEqual(record.Body().AsInterface(), tc.input.AsInterface()) {
+				t.Fatal("input body changed")
+			}
+		})
+	}
+}
+
+func TestSpanInvalidValuesSuppressWholeBatch(t *testing.T) {
+	t.Parallel()
+	bad := attribute.Float64("public", math.NaN())
+	for index, stub := range []tracetest.SpanStub{
+		{Attributes: []attribute.KeyValue{bad}},
+		{Events: []sdktrace.Event{{Attributes: []attribute.KeyValue{bad}}}},
+		{Links: []sdktrace.Link{{Attributes: []attribute.KeyValue{bad}}}},
+		{Resource: resource.NewSchemaless(bad)},
+		{InstrumentationScope: instrumentation.Scope{Name: "checkout", Attributes: attribute.NewSet(bad)}},
+	} {
+		if stub.Resource == nil {
+			stub.Resource = resource.Empty()
+		}
+		sink := &captureSpan{}
+		exporter := embargootel.NewSpanExporter(sink, embargo.NewScanner())
+		clean := tracetest.SpanStub{Name: "public", Resource: resource.Empty()}.Snapshot()
+		err := exporter.ExportSpans(t.Context(), []sdktrace.ReadOnlySpan{clean, stub.Snapshot()})
+		if err == nil || err.Error() != "embargo: span export failed" || len(sink.spans) != 0 {
+			t.Fatalf("span case %d: error=%v, forwarded=%d", index, err, len(sink.spans))
+		}
+	}
+}
+
+type failedExporter struct{ panicOnExport bool }
+
+func (e *failedExporter) failure() error {
+	if e.panicOnExport {
+		panic("private exporter panic")
+	}
+	return errors.New("private exporter error")
+}
+func (e *failedExporter) Export(context.Context, []sdklog.Record) error { return e.failure() }
+func (e *failedExporter) ExportSpans(context.Context, []sdktrace.ReadOnlySpan) error {
+	return e.failure()
+}
+func (*failedExporter) Shutdown(context.Context) error   { return nil }
+func (*failedExporter) ForceFlush(context.Context) error { return nil }
+
+func TestExporterFailuresReturnFixedErrors(t *testing.T) {
+	t.Parallel()
+	for _, panicOnExport := range []bool{false, true} {
+		next := &failedExporter{panicOnExport: panicOnExport}
+		logs := embargootel.NewLogExporter(next, embargo.NewScanner())
+		spans := embargootel.NewSpanExporter(next, embargo.NewScanner())
+		if err := logs.Export(t.Context(), nil); err == nil || err.Error() != "embargo: telemetry export failed" {
+			t.Fatal("log exporter disclosed private failure")
+		}
+		if err := spans.ExportSpans(t.Context(), nil); err == nil || err.Error() != "embargo: span export failed" {
+			t.Fatal("span exporter disclosed private failure")
+		}
+	}
+}
+
+func TestLogBodyNestingLimitSuppressesOutput(t *testing.T) {
+	t.Parallel()
+	value := attribute.StringValue("public")
+	for range 65 {
+		value = attribute.SliceValue(value)
+	}
+	sink := &captureLog{}
+	exporter := embargootel.NewLogExporter(sink, embargo.NewScanner())
+	var record sdklog.Record
+	record.SetBody(value)
+	if err := exporter.Export(t.Context(), []sdklog.Record{record}); err == nil || len(sink.records) != 0 {
+		t.Fatal("unbounded nesting was forwarded")
 	}
 }

@@ -32,6 +32,7 @@ func TestBeforeSendThroughSentryClient(t *testing.T) {
 	}
 	event := sentry.NewEvent()
 	event.Message = "alice@example.com failed"
+	event.Exception = []sentry.Exception{{Type: "checkout.Failure", Value: "password=exception-secret", Stacktrace: &sentry.Stacktrace{Frames: []sentry.Frame{{Function: "checkout", Filename: "worker.go"}}}}}
 	event.Contexts = map[string]sentry.Context{"details": {"password": sentryPassword, "count": 7}}
 	event.Request = &sentry.Request{URL: "https://example.com/login?token=synthetic-query", Headers: map[string]string{"Authorization": "Bearer synthetic-session"}}
 	event.Breadcrumbs = []*sentry.Breadcrumb{{Message: "token=synthetic-breadcrumb"}}
@@ -43,10 +44,13 @@ func TestBeforeSendThroughSentryClient(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, secret := range []string{"alice@example.com", sentryPassword, "synthetic-query", "synthetic-session", "synthetic-breadcrumb"} {
+	for _, secret := range []string{"alice@example.com", sentryPassword, "synthetic-query", "synthetic-session", "synthetic-breadcrumb", "exception-secret"} {
 		if strings.Contains(string(data), secret) {
 			t.Errorf("sent %s", secret)
 		}
+	}
+	if len(transport.events[0].Exception) != 1 || transport.events[0].Exception[0].Value != "password=[REDACTED]" || transport.events[0].Exception[0].Stacktrace.Frames[0].Function != "checkout" {
+		t.Fatal("exception or stack frame lost during reconstruction")
 	}
 	if event.Contexts["details"]["password"] != sentryPassword || !strings.Contains(string(data), `"count":7`) {
 		t.Fatal("event copy changed types or mutated input")
