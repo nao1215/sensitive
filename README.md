@@ -20,9 +20,9 @@ embargo keeps secrets and personal data out of what a Go program prints: logs, J
 | You have | embargo |
 |---|---|
 | An API key or password in a variable | [`Secret`](#values-that-must-never-print) prints `[REDACTED]` through fmt, slog, JSON, XML, templates, zap, zerolog, logrus and panics |
-| Card numbers, emails, Japanese phone numbers or DSN passwords inside free text | [26 built-in detectors](#find-and-mask-sensitive-text) find them and replace only the matched part |
+| Card numbers, emails, national IDs or DSN passwords inside free text | [37 built-in detectors](#find-and-mask-sensitive-text) find them and replace only the matched part |
 | Structs you already log or return as JSON | [Field values and key names are checked](#mask-structs-without-changing-their-types); no tags and no new field types |
-| slog, zap, zerolog or logrus | [One handler or adapter per logger](#loggers); the JSON shape stays the same |
+| slog, zap, zerolog, logrus, net/http, gRPC, OpenTelemetry or Sentry | [One handler, adapter or hook for each](#loggers-and-services); the JSON shape stays the same |
 | Tests that should catch a leak | [One line in TestMain](#fail-tests-on-leaks) fails the package when a planted fake secret reaches its output |
 | A decision to make before adopting it | [Precision, recall, false positives on public logs](#accuracy) and [benchmarks](#benchmarks) produced by tests and CI |
 
@@ -71,7 +71,7 @@ fmt.Println(key)
 
 ## Find and mask sensitive text
 
-embargo has 37 built-in detectors (25 run by default). `NewScanner()` keeps the established 25-family default; `WithKinds` selects formats and `WithAll` also enables the 11 new country kinds and entropy heuristic. The scanner reads the text itself, so no field has to be listed first.
+embargo has 37 built-in detectors (25 run by default). `NewScanner()` runs the first five groups below except the entropy heuristic. The national IDs and the heuristic are opt-in: name them in `WithKinds`, or turn on everything with `WithAll`. The scanner reads the text itself, so no field has to be listed first.
 
 <!-- example: credential_example_test.go:ExampleKindCredential -->
 ```go
@@ -143,7 +143,7 @@ fmt.Println(string(safe))
 
 Numbers and booleans keep their types. `WithSensitiveKeys` replaces the key list. [Structured values and key rules](doc/logging.md)
 
-## Loggers
+## Loggers and services
 
 | Logger | Wrap it with | Module |
 |---|---|---|
@@ -151,6 +151,10 @@ Numbers and booleans keep their types. `WithSensitiveKeys` replaces the key list
 | go.uber.org/zap | [`embargozap.NewWriteSyncer(next, scanner)`](adapters/zap/example_test.go) | `adapters/zap` |
 | github.com/rs/zerolog | [`embargozerolog.NewWriter(next, scanner)`](adapters/zerolog/example_test.go) | `adapters/zerolog` |
 | github.com/sirupsen/logrus | [`embargologrus.NewFormatter(next, scanner)`](adapters/logrus/example_test.go) | `adapters/logrus` |
+| net/http server access log | [`embargo.NewHTTPHandler(next, logger, scanner)`](http_example_test.go) | root, standard library only |
+| gRPC server, unary and stream | [`embargogrpc.NewUnaryServerInterceptor(logger, scanner)`](adapters/grpc/example_test.go) | `adapters/grpc` |
+| OpenTelemetry SDK logs and spans | [`embargootel.NewLogExporter(next, scanner)`](adapters/otel/example_test.go) | `adapters/otel` |
+| Sentry events | [`embargosentry.NewBeforeSend(scanner)`](adapters/sentry/example_test.go) | `adapters/sentry` |
 | log, fmt and anything else | `Secret` values, or `embargo.Mask` on the text before writing | root |
 
 <!-- example: slog_example_test.go:ExampleNewSlogHandler_short -->
@@ -163,7 +167,7 @@ logger.Info("checkout", "email", "alice@example.com")
 // Output: {"level":"INFO","msg":"checkout","email":"[REDACTED]"}
 ```
 
-The adapters use the same detectors and key rules as the slog handler. [Installation and limits](doc/adapters.md)
+Every adapter and hook uses the same detectors and key rules as the slog handler. The HTTP and gRPC hooks mask what they log, not the request your service receives or the response it sends. [Installation and limits](doc/adapters.md)
 
 ## Fail tests on leaks
 
