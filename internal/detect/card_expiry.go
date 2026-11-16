@@ -8,11 +8,8 @@ type CardExpiryDetail struct {
 	Year string
 }
 
-// CardExpiry detects payment card expiration dates from context, without checking whether the date is in the future.
-//
-//  1. Find exp, expir, expiry, expires, expiration, valid thru, valid through, or 有効期限 (ASCII case-insensitive).
-//  2. Search up to 50 bytes before and after the keyword for MM/YY, MM/YYYY, MM-YY, or MM-YYYY with month 01–12.
-//  3. Reject adjacent digits and previously reported overlaps; return only the date with confidence 0.85.
+// CardExpiry implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindCardExpiry.
 type CardExpiry struct {
 	expiryKeywords *keywordSet
 }

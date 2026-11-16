@@ -7,13 +7,8 @@ type MyNumberDetail struct {
 	CheckDigitValid bool
 }
 
-// MyNumber detects 12-digit Japanese individual numbers with a valid MOD 11 check digit.
-//
-//  1. Extract exactly 12 digits at ASCII identifier boundaries; the final digit is the check digit.
-//  2. For the first 11 digits, count n from the right starting at 0 and use weight n+2 for n < 6, otherwise n-4; sum digit times weight.
-//  3. Let r be the sum modulo 11; require check digit 0 when r <= 1, otherwise 11-r. Score a valid match as 0.95.
-//
-// An attached business identifier label lowers confidence to 0.4 without dropping the candidate.
+// MyNumber implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindMyNumber.
 type MyNumber struct{}
 
 // NewMyNumber validates the weighted MOD 11 check digit after digit normalization.

@@ -15,11 +15,8 @@ type SWIFTBICDetail struct {
 	BranchCode string
 }
 
-// SWIFTBIC detects 8- or 11-character bank identifiers for international wire transfers, without checking assignment to an institution.
-//
-//  1. Extract an alphanumeric candidate and uppercase letters for validation.
-//  2. Require four bank letters, a recognized two-letter ISO 3166-1 country code, two alphanumeric location characters, and optionally three alphanumeric branch characters.
-//  3. Score a match as 0.85; an absent branch denotes the head office.
+// SWIFTBIC implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindSWIFTBIC.
 type SWIFTBIC struct{}
 
 // NewSWIFTBIC validates country and code shape without checking institution assignment.

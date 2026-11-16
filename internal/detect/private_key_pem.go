@@ -12,11 +12,8 @@ type PrivateKeyPEMDetail struct {
 	KeyType string
 }
 
-// PrivateKeyPEM detects PEM private keys, including the body through a matching END marker when present; incomplete inputs still identify the header.
-//
-//  1. Find -----BEGIN and its following space.
-//  2. Read through the closing ----- on the same line and require the header content to end with PRIVATE KEY.
-//  3. Include the body through a matching END marker when present, then return confidence 0.99 and the algorithm text (RSA, EC, DSA, OPENSSH, ENCRYPTED, or empty for PKCS#8).
+// PrivateKeyPEM implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindPrivateKeyPEM.
 type PrivateKeyPEM struct{}
 
 // NewPrivateKeyPEM retains the key body through its matching END marker when present.

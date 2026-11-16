@@ -14,7 +14,7 @@ const (
 	BTCAddressP2SH BTCAddressType = "p2sh"
 	// BTCAddressBech32 identifies SegWit v0 addresses (prefix 'bc1q').
 	BTCAddressBech32 BTCAddressType = "bech32"
-	// BTCAddressBech32m identifies Taproot v1 addresses (prefix 'bc1p').
+	// BTCAddressBech32m identifies witness versions 1–16 using Bech32m.
 	BTCAddressBech32m BTCAddressType = "bech32m"
 )
 
@@ -24,12 +24,8 @@ type BTCDetail struct {
 	AddressType BTCAddressType
 }
 
-// BTC detects Bitcoin mainnet addresses with valid checksums.
-//
-//  1. Extract candidates at word boundaries beginning with 1, 3, or bc1 (case-insensitive for the prefix).
-//  2. For P2PKH (1) and P2SH (3), require 25–34 Base58Check characters and verify the double-SHA-256 checksum.
-//  3. For bc1q, require SegWit v0 and Bech32 with 42 or 62 characters; for bc1p, require Taproot v1 and Bech32m with 62 characters. Validate the witness program and polynomial checksum.
-//  4. Score a valid match as 0.95.
+// BTC implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindBTC.
 type BTC struct{}
 
 // NewBTC validates mainnet Base58Check, SegWit and Taproot address checksums.

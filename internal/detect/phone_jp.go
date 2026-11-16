@@ -56,13 +56,8 @@ func jpPhoneRules() []jpPhoneRule {
 	}
 }
 
-// JPPhone detects Japanese phone numbers by prefix and length.
-//
-//  1. Extract numbers beginning with 0, allowing hyphens, parentheses, and spaces (e.g., 03(1234)5678 or 090 1234 5678).
-//  2. Require 10 or 11 digits and a supported [JPPhoneType] prefix; reject adjacent letters, digits, or underscores.
-//  3. Score landlines as 0.8 and mobile, IP phone, toll-free, M2M/IoT, and service numbers as 0.9.
-//
-// An attached business identifier label lowers confidence to 0.4 without dropping the candidate.
+// JPPhone implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindJPPhone.
 type JPPhone struct{}
 
 // NewJPPhone combines supported Japanese prefixes with ten- or eleven-digit lengths.
@@ -220,7 +215,7 @@ func classifyJPPhone(digits []byte, digitLen int) JPPhoneType {
 //
 // Rejected prefixes:
 //   - 050, 070, 080, 090: require 11 digits (mobile/IP phone), not 10
-//   - 020, 021, 051, 057, 071, 081, 091: not assigned as area codes
+//   - 020, 021, 051, 057, 060, 071, 081, 091: excluded from the landline branch
 func isValidLandlinePrefix(digits []byte) bool {
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 	if len(digits) < 3 {

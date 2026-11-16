@@ -70,13 +70,18 @@ The inventory below translates the owner's active repository instructions into c
 | Encoding limits have one current-behavior regression per disguise | M15 | [TestAdversarialEncodingBoundary](../adversarial_test.go) | MultiPlatformUnitTest |
 | Country documentation generation uses UTF-8 independently of the host locale | M15; PR88 review | [test_country_docs_under_ascii_locale](../scripts/test_countries.py) | Verification |
 | Mutation workers and per-test CPUs stay capped at two | M15 | [test_mutation_target_limits_workers_and_test_cpus](../scripts/test_production_hooks.py) | Verification |
+| Every Kind documents matching, validation, scores and default selection | M16 | [kind-contract](../scripts/check_prose.py) | Verification |
+| README detector rows come from godoc and cannot be missing or stale | M16 | [TestReadmeFreshness](../tests/cmd/detectordocs/main_test.go) | Verification |
+| Documented detector scores agree with representative public scans | M16 | [TestKindConfidenceScores](../tests/cmd/detectordocs/scores_test.go) | Verification |
+| README detector defaults agree with NewScanner behavior | M16 | [TestReadmeDefaults](../tests/cmd/detectordocs/scores_test.go) | Verification |
+| Detector documentation checks stay wired into CI | M16 | [detector_docs](../scripts/check_policies.py) | Verification |
 <!-- policy-map:end -->
 
 ## Changing a rule
 
 Update scripts/policies.json with a concrete check and the workflow that executes it, then run `python3 scripts/check_policies.py --write`. A missing implementation, unknown workflow, absent test path or stale table fails Verification. The rule inventory is reviewed when an owner instruction changes; no parser can infer new instructions from an unstructured conversation. Checks for code and documents run in CI; merge-time checks inspect live GitHub state immediately before the authorized squash merge.
 
-Source labels R2–R14 refer to the corresponding owner round reports; M14 refers to the master checklist and round-14 request. M15 refers to the Round 15 request, including the two-PR split and serial heavy jobs. Historical release and artwork approvals are not standing permission to publish releases or change artwork. Work on other repositories and future release tags remains outside this round. Round 15 authorizes the specified country detectors and isolated production hooks. Automated checks constrain this repository and its merge command; they cannot audit unrelated commands executed outside the repository.
+Source labels R2–R14 refer to the corresponding owner round reports; M14 refers to the master checklist and round-14 request. M15 refers to the Round 15 request, including the two-PR split and serial heavy jobs. M16 requires the godoc-derived detector table, measured score contracts and one PR below 100 files; heavy local jobs remain serial with GOMAXPROCS at most 4. Historical release and artwork approvals are not standing permission to publish releases or change artwork. Work on other repositories and future release tags remains outside this round. Round 15 authorizes the specified country detectors and isolated production hooks. Automated checks constrain this repository and its merge command; they cannot audit unrelated commands executed outside the repository.
 
 The TDD rule requires a failing regression before a production fix. The round report records that evidence; CI can verify the regression remains, but cannot reconstruct the order of uncommitted edits. Test readability, useful explanations, false-positive labeling and visual table layout also retain human review alongside the executable checks.
 

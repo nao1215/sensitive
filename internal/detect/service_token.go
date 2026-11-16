@@ -5,10 +5,8 @@ import (
 	"strings"
 )
 
-// ServiceToken finds documented provider prefixes with a conservative minimum
-// body length of 16, at confidence 0.95. Prefixes are not authentication checks;
-// vendor lengths can change. SendGrid requires its two 22/43-byte URL-safe parts.
-// Slack webhooks expose only the path credential, retaining the host.
+// ServiceToken implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindServiceToken.
 type ServiceToken struct{}
 
 // Name returns the service token family.

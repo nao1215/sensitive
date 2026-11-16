@@ -10,11 +10,8 @@ type EmailDetail struct {
 	Domain string
 }
 
-// Email detects addresses heuristically, without quoted local parts, IP-literal domains, or internationalized addresses (EAI/RFC 6530).
-//
-//  1. Find @, then scan backward over alphanumerics and .+-_ for the local part and forward over alphanumerics and .- for the domain.
-//  2. Require a nonempty local part without leading/trailing dots, a domain containing a dot but not starting with one, and an alphabetic TLD of at least two characters.
-//  3. Score the structure as 0.7, add 0.2 for a known TLD (case-insensitive), and add 0.1 for a domain without consecutive dots.
+// Email implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindEmail.
 type Email struct{}
 
 // NewEmail recognizes ASCII local parts and dotted domain names.

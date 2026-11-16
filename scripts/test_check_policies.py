@@ -40,6 +40,16 @@ class PolicyTests(unittest.TestCase):
             (nested/'x_test.go').write_text('func FuzzNested(f *testing.F) {}\n')
             self.assertEqual(fuzz_targets.targets(root), [{'pkg':'.', 'name':'FuzzRoot'}])
 
+    def test_detector_documentation_commands_cannot_disappear(self):
+        commands = ['go -C tests run ./cmd/detectordocs --check',
+                    'go -C tests test ./cmd/detectordocs -count=1']
+        for retained in commands:
+            with self.subTest(retained=retained):
+                with patch.object(policies, 'read', return_value=retained):
+                    with self.assertRaisesRegex(ValueError, 'detector documentation check missing'):
+                        policies.detector_docs()
+        policies.detector_docs()
+
     def test_widened_permissions_are_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

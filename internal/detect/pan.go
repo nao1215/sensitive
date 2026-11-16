@@ -38,13 +38,8 @@ type PANDetail struct {
 	Length int
 }
 
-// PAN detects payment card numbers, including checksum failures at reduced confidence.
-//
-//  1. Extract 13–19 digits at identifier boundaries, allowing spaces and hyphens, and require a known [CardBrand] BIN prefix.
-//  2. Score the length as 0.3 and the known prefix as another 0.3; unknown brands are rejected.
-//  3. Add 0.4 for a valid Luhn checksum and the brand's expected length. A Luhn-valid candidate with the wrong brand length scores 0.4 and is rejected; a failed checksum remains at 0.6.
-//
-// An attached business identifier label lowers confidence to 0.4 without dropping the candidate.
+// PAN implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN.
 type PAN struct{}
 
 // NewPAN checks issuer prefixes, lengths and Luhn confidence.

@@ -9,11 +9,8 @@ type PaymentTokenDetail struct {
 	TokenType string
 }
 
-// PaymentToken detects Stripe, PayPal, and Square identifiers by prefix and body shape.
-//
-//  1. Find Stripe sk_live_, pk_live_, sk_test_, pk_test_, tok_, pi_, pm_, cus_, sub_, price_, or prod_; PayPal PAYID-; or Square sq0idp- or sq0csp- at a leading word boundary.
-//  2. Consume ASCII alphanumerics, underscores, or hyphens; require at least 16 body characters for keys, PayPal, and Square, or eight for the remaining Stripe identifiers.
-//  3. Score a match as 0.9 and record the provider and token type; no service authentication is attempted.
+// PaymentToken implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindPaymentToken.
 type PaymentToken struct{}
 
 // NewPaymentToken recognizes payment-provider prefixes without authenticating the tokens.

@@ -20,11 +20,8 @@ type GitHubTokenDetail struct {
 	TokenType GitHubTokenType
 }
 
-// GitHubToken detects GitHub access tokens by format, without verifying authentication.
-//
-//  1. Find github_pat_ first, or a classic prefix: ghp_, gho_, ghu_, ghs_, or ghr_.
-//  2. Require exactly 36 ASCII alphanumeric body characters for classic tokens, or at least 22 ASCII alphanumerics/underscores for fine-grained tokens.
-//  3. Enforce word boundaries and score a match as 0.95; [GitHubTokenType] identifies the family.
+// GitHubToken implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindGitHubToken.
 type GitHubToken struct{}
 
 // NewGitHubToken recognizes GitHub token prefixes and their required body lengths.

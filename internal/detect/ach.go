@@ -8,11 +8,8 @@ type ACHTraceDetail struct {
 	ODFIRoutingNumber string
 }
 
-// ACHTrace detects 15-digit ACH transaction trace identifiers from context; the first eight digits identify the originating financial institution and the last seven are its sequence number.
-//
-//  1. Find ACH or trace number (ASCII case-insensitive).
-//  2. Search within 50 bytes of the keyword end for a separate 15-digit sequence.
-//  3. Require the first two digits to fall in an ABA routing prefix range, without applying a checksum; score the match as 0.75.
+// ACHTrace implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindACHTrace.
 type ACHTrace struct {
 	achKeywords *keywordSet
 }

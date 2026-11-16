@@ -3,11 +3,8 @@ package detect
 // GoogleAPIKeyDetail marks a Google API key finding and currently has no fields.
 type GoogleAPIKeyDetail struct{}
 
-// GoogleAPIKey detects Google API keys by format, without verifying authentication.
-//
-//  1. Find the AIza prefix.
-//  2. Require exactly 35 following ASCII letters, digits, hyphens, or underscores, for 39 characters total.
-//  3. Enforce word boundaries and score a match as 0.9.
+// GoogleAPIKey implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindGoogleAPIKey.
 type GoogleAPIKey struct{}
 
 // NewGoogleAPIKey selects the AIza prefix and fixed API key length.
