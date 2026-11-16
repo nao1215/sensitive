@@ -324,11 +324,10 @@ func BenchmarkHookScaling(b *testing.B) {
 	}
 }
 
+//nolint:paralleltest // Isolate reason checks under the real 100 ms masking budget.
 func TestHTTPWithheldRecord(t *testing.T) {
-	t.Parallel()
 	for _, reason := range []string{maskingReason, sizeReason, canceledReason} {
 		t.Run(reason, func(t *testing.T) {
-			t.Parallel()
 			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
 			scanner := embargo.NewScanner()
