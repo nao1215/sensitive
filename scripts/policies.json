@@ -44,7 +44,7 @@
   {
     "rule": "Printing exceptions apply only to runnable Examples",
     "source": "R13",
-    "check": "tests/contracts/example_print_test.go#TestUncheckedPrintingIsOnlyInExamples",
+    "check": "tests/contracts/policy_test.go#TestUncheckedPrintingIsOnlyInExamples",
     "where": "MultiPlatformUnitTest"
   },
   {
@@ -122,7 +122,7 @@
   {
     "rule": "State failures clear Input and retain Secret snapshots",
     "source": "R11; M14",
-    "check": "tests/model_input_test.go#TestQuintInputReplay",
+    "check": "tests/properties_test.go#TestQuintInputReplay",
     "where": "Verification"
   },
   {
@@ -356,13 +356,13 @@
   {
     "rule": "Country checksum references are compiled and compared with Go",
     "source": "M15",
-    "check": "tests/lean_vectors_test.go#TestLeanReferenceVectors",
+    "check": "tests/oracles_test.go#TestLeanReferenceVectors",
     "where": "Verification"
   },
   {
     "rule": "Country precision and residual exposure stay exact-span scored",
     "source": "M15",
-    "check": "tests/countries_accuracy_test.go#TestCountryAccuracy",
+    "check": "tests/accuracy_test.go#TestCountryAccuracy",
     "where": "MultiPlatformUnitTest"
   },
   {
@@ -404,13 +404,13 @@
   {
     "rule": "Documented detector scores agree with representative public scans",
     "source": "M16",
-    "check": "tests/cmd/detectordocs/scores_test.go#TestKindConfidenceScores",
+    "check": "tests/cmd/detectordocs/main_test.go#TestKindConfidenceScores",
     "where": "Verification"
   },
   {
     "rule": "README detector defaults agree with NewScanner behavior",
     "source": "M16",
-    "check": "tests/cmd/detectordocs/scores_test.go#TestReadmeDefaults",
+    "check": "tests/cmd/detectordocs/main_test.go#TestReadmeDefaults",
     "where": "Verification"
   },
   {
@@ -422,7 +422,7 @@
   {
     "rule": "Logger scalar masking agrees with original-key JSON context",
     "source": "M19",
-    "check": "tests/slog_handler_test.go#TestLoggerKeyContextDifferential",
+    "check": "tests/integrations_test.go#TestLoggerKeyContextDifferential",
     "where": "MultiPlatformUnitTest"
   },
   {
@@ -440,7 +440,7 @@
   {
     "rule": "Every documented Kind score survives its inclusive threshold",
     "source": "M19",
-    "check": "tests/cmd/detectordocs/scores_test.go#checkScoreThreshold",
+    "check": "tests/cmd/detectordocs/main_test.go#checkScoreThreshold",
     "where": "Verification"
   },
   {
@@ -470,7 +470,7 @@
   {
     "rule": "Every logger handles colliding masked keys without original values",
     "source": "M19",
-    "check": "tests/slog_handler_test.go#TestLoggerMaskedKeyCollisions",
+    "check": "tests/integrations_test.go#TestLoggerMaskedKeyCollisions",
     "where": "MultiPlatformUnitTest"
   },
   {
@@ -500,7 +500,7 @@
   {
     "rule": "Adoption cases exercise real outputs and retain declared-policy controls",
     "source": "M21",
-    "check": "tests/adoption_cases_test.go#TestAdoptionDeclaredControls",
+    "check": "tests/cases_test.go#TestAdoptionDeclaredControls",
     "where": "MultiPlatformUnitTest"
   },
   {
@@ -512,7 +512,7 @@
   {
     "rule": "Output cases isolate detector decisions from canary and fragment matching",
     "source": "M21",
-    "check": "tests/check_independence_test.go#TestAdoptionCheckIndependence",
+    "check": "tests/cases_test.go#TestAdoptionCheckIndependence",
     "where": "Verification"
   },
   {
@@ -530,13 +530,13 @@
   {
     "rule": "Diagnostic-preservation recipes retain IDs and expose their recall tradeoff",
     "source": "M21",
-    "check": "tests/audit_recipes_test.go#TestAuditDiagnosticRecipe",
+    "check": "tests/cases_test.go#TestAuditDiagnosticRecipe",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Detector changes enforce frozen per-Kind accuracy and critical exposure floors",
     "source": "M21",
-    "check": "tests/quality_accuracy_test.go#TestQualityAccuracy",
+    "check": "tests/quality_gates_test.go#TestQualityAccuracy",
     "where": "Verification"
   },
   {
@@ -555,6 +555,12 @@
     "rule": "Quality jobs use the detector filter and threshold tables cannot silently drift",
     "source": "M21",
     "check": "scripts/quality_docs.py#main",
+    "where": "Verification"
+  },
+  {
+    "rule": "Tests stay beside sources or in one file per tests-module subject",
+    "source": "Repository test layout",
+    "check": "test-file-budget",
     "where": "Verification"
   }
 ]

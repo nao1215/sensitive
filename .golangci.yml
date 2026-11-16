@@ -292,7 +292,7 @@ linters:
     generated: disable
     presets: []
     # Output assertions exercise demonstration printing. Only fmt output calls in
-    # Example functions may ignore errors; tests/contracts/example_print_test.go
+    # Example functions may ignore errors; tests/contracts/policy_test.go
     # enforces the function boundary inside these files (including closures).
     rules:
     - path: '(^|/)([a-z_]+_)?example(_[a-z_]+)?_test\.go$'

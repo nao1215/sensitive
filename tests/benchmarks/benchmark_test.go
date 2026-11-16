@@ -1,4 +1,4 @@
-package embargo_test
+package benchmarks
 
 import (
 	"strings"

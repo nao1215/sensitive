@@ -3,9 +3,11 @@ package tests
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -24,10 +26,12 @@ type accuracySample struct {
 	Parts    []string `json:"parts"`
 	Positive bool     `json:"positive"`
 }
+
 type accuracySpan struct {
 	Start int `json:"start"`
 	End   int `json:"end"`
 }
+
 type labeledAccuracySample struct {
 	ID       string         `json:"id"`
 	Kind     embargo.Kind   `json:"kind"`
@@ -35,6 +39,7 @@ type labeledAccuracySample struct {
 	Parts    []string       `json:"parts"`
 	Expected []accuracySpan `json:"expected"`
 }
+
 type accuracyCount struct{ tp, fp, tn, fn int }
 
 func scoreAccuracy(kind embargo.Kind, findings []embargo.Finding, expected []accuracySpan) accuracyCount {
@@ -284,4 +289,304 @@ func accuracyScanner(scanners map[embargo.Kind]*embargo.Scanner, kind embargo.Ki
 		scanners[kind] = scanner
 	}
 	return scanner
+}
+
+type accuracyLimit struct {
+	ID     string         `json:"id"`
+	Reason string         `json:"reason"`
+	Found  []accuracySpan `json:"found"`
+}
+
+type accuracyControl struct {
+	ID     string `json:"id"`
+	Source string `json:"source"`
+	Text   string `json:"text"`
+}
+
+func allAccuracyControls(t *testing.T, set string) []accuracyControl {
+	t.Helper()
+	data, err := os.ReadFile("testdata/accuracy_controls.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	//nolint:prealloc // JSON decoding determines the initial slice length.
+	var controls []accuracyControl
+	if err := json.Unmarshal(data, &controls); err != nil {
+		t.Fatal(err)
+	}
+	if set == heldAccuracySet {
+		controls = nil
+	}
+	for i := range controls {
+		controls[i].ID = fmt.Sprintf("hand-control/%x", sha256.Sum256([]byte(controls[i].Source+"\x00"+controls[i].Text)))
+	}
+	return append(controls, readGeneratedAccuracy[accuracyControl](t, accuracyFixture(set, "testdata/accuracy_generated_controls.jsonl"))...)
+}
+
+func allAccuracySamples(t *testing.T, set string) []labeledAccuracySample {
+	t.Helper()
+	data, err := os.ReadFile("testdata/accuracy.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	//nolint:prealloc // JSON decoding determines the initial slice length.
+	var rows []labeledAccuracySample
+	if err := json.Unmarshal(data, &rows); err != nil {
+		t.Fatal(err)
+	}
+	kinds := map[embargo.Kind]bool{}
+	for i := range rows {
+		rows[i].ID = fmt.Sprintf("hand/%d", i)
+		kinds[rows[i].Kind] = true
+	}
+	if set == heldAccuracySet {
+		rows = nil
+	}
+	rows = append(rows, readGeneratedAccuracy[labeledAccuracySample](t, accuracyFixture(set, "testdata/accuracy_generated.jsonl"))...)
+	controls := allAccuracyControls(t, set)
+	for kind := range kinds {
+		for _, c := range controls {
+			rows = append(rows, labeledAccuracySample{ID: string(kind) + "/" + c.ID, Kind: kind, Text: c.Text})
+		}
+	}
+	for i := range rows {
+		rows[i].Text += strings.Join(rows[i].Parts, "")
+	}
+	slices.SortFunc(rows, func(a, b labeledAccuracySample) int {
+		if a.ID < b.ID {
+			return -1
+		}
+		if a.ID > b.ID {
+			return 1
+		}
+		return 0
+	})
+	return rows
+}
+
+func TestGeneratedAccuracyRegressions(t *testing.T) {
+	t.Parallel()
+	for _, set := range selectedAccuracySets(t) {
+		t.Run(set, func(t *testing.T) { t.Parallel(); checkAccuracyRegressions(t, set) })
+	}
+}
+
+func selectedAccuracySets(t *testing.T) []string {
+	t.Helper()
+	selected := os.Getenv("ACCURACY_SET")
+	sets, ok := accuracySets(selected)
+	if !ok {
+		t.Fatalf("unknown ACCURACY_SET %q: use development or held", selected)
+	}
+	return sets
+}
+
+func accuracySets(selected string) ([]string, bool) {
+	switch selected {
+	case "":
+		return []string{developmentAccuracySet, heldAccuracySet}, true
+	case developmentAccuracySet, heldAccuracySet:
+		return []string{selected}, true
+	default:
+		return nil, false
+	}
+}
+
+func TestAccuracySetSelection(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		selected string
+		want     []string
+	}{
+		{"", []string{developmentAccuracySet, heldAccuracySet}},
+		{developmentAccuracySet, []string{developmentAccuracySet}},
+		{heldAccuracySet, []string{heldAccuracySet}},
+		{"held-out", nil},
+		{"development,held", nil},
+	} {
+		got, valid := accuracySets(tc.selected)
+		if !slices.Equal(got, tc.want) || valid != (len(tc.want) > 0) {
+			t.Fatalf("selection %q: %v, valid %v", tc.selected, got, valid)
+		}
+	}
+}
+
+func checkAccuracyRegressions(t *testing.T, set string) {
+	t.Helper()
+	limits := readGeneratedAccuracy[accuracyLimit](t, accuracyFixture(set, "testdata/accuracy_limits.jsonl"))
+	known := map[string]accuracyLimit{}
+	for _, limit := range limits {
+		if limit.Reason == "" {
+			t.Fatal("known limits require a reason")
+		}
+		if _, ok := known[limit.ID]; ok {
+			t.Fatal("duplicate limit")
+		}
+		known[limit.ID] = limit
+	}
+	scanners := map[embargo.Kind]*embargo.Scanner{}
+	seen := map[string]bool{}
+	for _, sample := range allAccuracySamples(t, set) {
+		seen[sample.ID] = true
+		findings := accuracyScanner(scanners, sample.Kind, 0).ScanString(sample.Text)
+		got := scoreAccuracy(sample.Kind, findings, sample.Expected)
+		limit, exists := known[sample.ID]
+		if got.fp == 0 && got.fn == 0 {
+			if exists {
+				t.Errorf("%s: limit no longer applies; remove it after review", sample.ID)
+			}
+			continue
+		}
+		spans := make([]accuracySpan, 0, len(findings))
+		for _, f := range findings {
+			spans = append(spans, accuracySpan{Start: f.Start, End: f.End})
+		}
+		if !exists || !slices.Equal(spans, limit.Found) {
+			t.Errorf("%s: unreviewed FP=%d FN=%d; add a regression/fix or explain the limit", sample.ID, got.fp, got.fn)
+		}
+	}
+	for id := range known {
+		if !seen[id] {
+			t.Errorf("orphan limit %s", id)
+		}
+	}
+}
+
+func accuracyFixture(set, path string) string {
+	if set == heldAccuracySet {
+		return strings.Replace(path, "accuracy_", "accuracy_held_", 1)
+	}
+	return path
+}
+
+//nolint:gocognit // Keep exact scoring and negative category reporting in one audit.
+func TestCredentialAccuracy(t *testing.T) {
+	t.Parallel()
+	sets := []string{"development", "held"}
+	if selected := os.Getenv("CREDENTIAL_SET"); selected != "" {
+		if !slices.Contains(sets, selected) {
+			t.Fatal("invalid credential set")
+		}
+		sets = []string{selected}
+	}
+	var table strings.Builder
+	writeComparisonTable(t, &table, "| Set | Detector | Threshold | TP | FP | FN | Precision | Recall |\n|---|---|---:|---:|---:|---:|---:|---:|\n")
+	for _, set := range sets {
+		// #nosec G304 G703 -- Set is validated against development/held above.
+		data, err := os.ReadFile("testdata/credentials-" + set + ".jsonl")
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, threshold := range []float64{0, 0.5} {
+			scanners := map[embargo.Kind]*embargo.Scanner{}
+			counts := map[embargo.Kind]accuracyCount{}
+			negative := map[string][2]int{}
+			lines := bufio.NewScanner(strings.NewReader(string(data)))
+			for lines.Scan() {
+				var sample struct {
+					ID       string         `json:"id"`
+					Kind     embargo.Kind   `json:"kind"`
+					Group    string         `json:"group"`
+					Text     string         `json:"text"`
+					Expected []accuracySpan `json:"expected"`
+				}
+				if err := json.Unmarshal(lines.Bytes(), &sample); err != nil {
+					t.Fatal(err)
+				}
+				findings := accuracyScanner(scanners, sample.Kind, threshold).ScanString(sample.Text)
+				result := scoreAccuracy(sample.Kind, findings, sample.Expected)
+				count := counts[sample.Kind]
+				count.tp += result.tp
+				count.fp += result.fp
+				count.fn += result.fn
+				counts[sample.Kind] = count
+				if len(sample.Expected) == 0 {
+					key := string(sample.Kind) + "/" + sample.Group
+					c := negative[key]
+					c[0]++
+					if len(findings) > 0 {
+						c[1]++
+					}
+					negative[key] = c
+				}
+			}
+			if err := lines.Err(); err != nil {
+				t.Fatal(err)
+			}
+			for _, kind := range []embargo.Kind{embargo.KindCredential, embargo.KindServiceToken, embargo.KindHighEntropy} {
+				c := counts[kind]
+				writeComparisonTable(t, &table, "| %s | %s | %.1f | %d | %d | %d | %s | %s |\n", set, kind, threshold, c.tp, c.fp, c.fn, accuracyRatio(c.tp, c.tp+c.fp), accuracyRatio(c.tp, c.tp+c.fn))
+			}
+			keys := make([]string, 0, len(negative))
+			for key := range negative {
+				keys = append(keys, key)
+			}
+			slices.Sort(keys)
+			for _, key := range keys {
+				n := negative[key]
+				t.Logf("%s %.1f %s false positives %d/%d", set, threshold, key, n[1], n[0])
+			}
+		}
+	}
+	if len(sets) == 2 {
+		syncDocTable(t, "../doc/credentials-accuracy.md", "credentials", table.String())
+	} else {
+		t.Log(table.String())
+	}
+}
+
+type countryResult struct {
+	Set           string       `json:"set"`
+	Kind          embargo.Kind `json:"kind"`
+	Precision     string       `json:"precision"`
+	Recall        string       `json:"recall"`
+	Threshold     float64      `json:"threshold"`
+	TP            int          `json:"tp"`
+	FP            int          `json:"fp"`
+	FN            int          `json:"fn"`
+	ResidualBytes int          `json:"residual_bytes"`
+}
+
+func countrySamples(t *testing.T, set string) []labeledAccuracySample {
+	t.Helper()
+	return readGeneratedAccuracy[labeledAccuracySample](t, "testdata/countries-"+set+".jsonl")
+}
+
+func TestCountryAccuracy(t *testing.T) {
+	t.Parallel()
+	results := make([]countryResult, 0, 66)
+	for _, set := range []string{developmentAccuracySet, heldAccuracySet} {
+		samples := countrySamples(t, set)
+		for _, threshold := range []float64{0, .5, .7} {
+			scanners := map[embargo.Kind]*embargo.Scanner{}
+			counts := map[embargo.Kind]countryResult{}
+			for _, sample := range samples {
+				findings := accuracyScanner(scanners, sample.Kind, threshold).ScanString(sample.Text)
+				score := scoreAccuracy(sample.Kind, findings, sample.Expected)
+				count := counts[sample.Kind]
+				count.Set = set
+				count.Kind = sample.Kind
+				count.Threshold = threshold
+				count.TP += score.tp
+				count.FP += score.fp
+				count.FN += score.fn
+				for _, n := range residualBytes([]byte(sample.Text), findings, sample.Expected) {
+					count.ResidualBytes += n
+				}
+				counts[sample.Kind] = count
+			}
+			kinds := make([]embargo.Kind, 0, len(counts))
+			for kind := range counts {
+				kinds = append(kinds, kind)
+			}
+			slices.Sort(kinds)
+			for _, kind := range kinds {
+				count := counts[kind]
+				count.Precision = accuracyRatio(count.TP, count.TP+count.FP)
+				count.Recall = accuracyRatio(count.TP, count.TP+count.FN)
+				results = append(results, count)
+			}
+		}
+	}
+	syncSeverityJSON(t, "../doc/countries.json", results)
 }

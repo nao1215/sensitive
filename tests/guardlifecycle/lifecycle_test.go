@@ -19,4 +19,5 @@ func TestMain(m *testing.M) {
 	}
 	os.Exit(code)
 }
+
 func TestGuardParallel(t *testing.T) { t.Parallel(); t.Log("safe lifecycle output") }
