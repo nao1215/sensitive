@@ -6,10 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-16
+
+This minor release replaces silently discarded log records with safe withheld diagnostics and retains access records for canceled requests. The public API and the default minimum confidence of 0 are unchanged. Upgrade the root and every installed adapter to v0.6.0 when the adapter tags are published.
+
+### Changed
+
+- Replace failed slog records with a fixed withheld message and attribute count while preserving time and level; retain masked HTTP access records after request cancellation using a detached masking budget.
+- The v0.6.0 adapters extend withheld records to zap, zerolog, logrus, OpenTelemetry and Sentry, and retain gRPC unary and stream access records after cancellation. These adapter modules are released separately after the root.
+
 ### Fixed
 
-- Emit safe diagnostic records when slog cannot mask an event, and retain masked HTTP access logs after request cancellation.
-- Reject oversized plain byte slices before slog JSON encoding and clarify which encoder work remains unbounded.
+- Reject oversized plain byte slices before slog base64 encoding and bound JSON output growth before appending bytes.
+
+### Documentation
+
+- Explain that encoded-byte limits do not bound user-defined MarshalJSON, LogValue, String or Error methods, and recommend Secret or bounded values for these types.
+- Add generated threshold measurements and guidance for choosing a minimum confidence without changing the default.
 
 ## [0.5.2] - 2026-11-16
 
