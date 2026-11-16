@@ -496,5 +496,17 @@
     "source": "M19",
     "check": "adapters/logrus/adapter_test.go#TestEntryContextCancellation",
     "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Adoption cases exercise real outputs and retain declared-policy controls",
+    "source": "M21",
+    "check": "tests/adoption_cases_test.go#TestAdoptionDeclaredControls",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Adoption table is generated from executed cases and checked in CI",
+    "source": "M21",
+    "check": "scripts/case_docs.py#main",
+    "where": "Verification"
   }
 ]

@@ -26,6 +26,7 @@ jobs:
           go-version-file: go.mod
           cache-dependency-path: tests/go.sum
       - run: python3 -m unittest discover -s scripts -p 'test_*.py'
+      - run: python3 scripts/case_docs.py --check
       - run: go -C tests run ./cmd/detectordocs --check
       - run: go -C tests test ./cmd/detectordocs -count=1
       - run: python3 scripts/check_prose.py
