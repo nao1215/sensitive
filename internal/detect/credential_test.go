@@ -715,3 +715,37 @@ func TestCredentialBlockSpanProperty(t *testing.T) {
 		}
 	}
 }
+
+func TestQuotedAuthorizationExactSpans(t *testing.T) {
+	t.Parallel()
+	for _, scheme := range []string{"Bearer", "bEaReR", "Basic", "basic"} {
+		for _, space := range []string{" ", "   "} {
+			for _, quote := range []string{"\"", "'"} {
+				for _, secret := range []string{"x", "opaqueHeaderFixture"} {
+					before := "header=" + quote + scheme + space
+					input := before + secret + quote + " public=kept"
+					got := (&Credential{}).Scan([]byte(input))
+					if len(got) != 1 || got[0].Start != len(before) || got[0].End != len(before)+len(secret) || got[0].RawValue != secret {
+						t.Fatalf("quoted authorization boundary: %q: %+v", input, got)
+					}
+				}
+			}
+		}
+	}
+}
+
+func TestFormattedURLExactPasswordSpans(t *testing.T) {
+	t.Parallel()
+	for _, user := range []string{"", "x", "alice"} {
+		for _, secret := range []string{"x", "opaqueURLFixture", "opaque%40URLFixture", "part:tail"} {
+			for _, before := range []string{" User:", "{Scheme:https Opaque: User:"} {
+				before += user + ":"
+				input := before + secret + " Host:example.invalid Path:/public}"
+				got := (&Credential{}).Scan([]byte(input))
+				if len(got) != 1 || got[0].Start != len(before) || got[0].End != len(before)+len(secret) || got[0].RawValue != secret {
+					t.Fatalf("formatted URL boundary: %q: %+v", input, got)
+				}
+			}
+		}
+	}
+}
