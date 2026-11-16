@@ -87,7 +87,7 @@ func (d *IPAddr) tryIPv4(data []byte, i int) (Finding, int, bool) {
 
 	candidate := string(data[i:j])
 	ip := net.ParseIP(candidate)
-	if ip == nil || ip.To4() == nil || ip.IsUnspecified() || ip.IsLoopback() {
+	if ip == nil || ip.To4() == nil || ip.IsUnspecified() || ip.IsLoopback() || versionLabel(data, i) {
 		return Finding{}, j, false
 	}
 
@@ -125,7 +125,7 @@ func (d *IPAddr) tryIPv6(data []byte, i int) (Finding, int, bool) {
 
 	// Consume hex digits and colons.
 	j := i
-	for j < len(data) && (isHexDigit(data[j]) || data[j] == ':') {
+	for j < len(data) && (isHexDigit(data[j]) || data[j] == ':' || data[j] == '.') {
 		j++
 	}
 
@@ -141,7 +141,7 @@ func (d *IPAddr) tryIPv6(data []byte, i int) (Finding, int, bool) {
 
 	candidate := string(data[i:j])
 	ip := net.ParseIP(candidate)
-	if ip == nil || ip.To4() != nil || ip.IsUnspecified() || ip.IsLoopback() {
+	if ip == nil || ip.IsUnspecified() || ip.IsLoopback() {
 		return Finding{}, j, false
 	}
 
@@ -165,4 +165,9 @@ func containsColon(data []byte) bool {
 // isHexDigit reports whether b is a hexadecimal digit.
 func isHexDigit(b byte) bool {
 	return isDigit(b) || (b >= 'a' && b <= 'f') || (b >= 'A' && b <= 'F')
+}
+
+func versionLabel(data []byte, start int) bool {
+	_, word := previousLabelWord(labelPrefix(data, start))
+	return labelIs(word, "version", "v", "ver", "build", "release")
 }

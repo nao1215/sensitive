@@ -9,9 +9,12 @@ import (
 	"log/slog"
 	"math"
 	"math/bits"
+	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"unicode"
@@ -677,6 +680,104 @@ func TestScanCanceledBetweenDetectors(t *testing.T) {
 		})
 		if len(findings) != 0 || calls != checkpoint {
 			t.Fatalf("checkpoint %d returned %d findings after %d cancellation checks", checkpoint, len(findings), calls)
+		}
+	}
+}
+
+//nolint:gocognit // Keep the independent rendering cross-product and literal formats together.
+func TestCredentialRenderingProperty(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindCredential))
+	for n := range 12 {
+		secret := fmt.Sprintf("opaqueFixture%02dxYz", n)
+		for _, key := range []string{credentialFixtureKey, "token", "api_key", "Authorization", "Proxy-Authorization", "access_token", "refresh_token", "id_token", "x-api-key", "DB_PASSWORD", "Private-Token", "client_secret", "auth_token"} {
+			schemes := []string{""}
+			if strings.Contains(key, "Authorization") {
+				schemes = []string{"Bearer ", "Basic ", "bEaReR "}
+			}
+			for _, scheme := range schemes {
+				value := scheme + secret
+				forms := []string{key + "=" + value, key + "=[REDACTED]" + secret}
+				for _, verb := range []string{"%v", fmtFieldVerb, fmtGoSyntaxVerb, "%q"} {
+					forms = append(forms, fmt.Sprintf(verb, http.Header{key: {value, value}}), fmt.Sprintf(verb, url.Values{key: {value, value}}), fmt.Sprintf(verb, map[string]string{key: value}))
+				}
+				//nolint:errchkjson // Retain checked encoding failures as the fixture evolves.
+				body, err := json.Marshal(map[string]string{key: value})
+				if err != nil {
+					t.Fatal(err)
+				}
+				forms = append(forms, string(body))
+				for _, quote := range []func(string) string{strconv.Quote, func(s string) string { return fmt.Sprintf("%q", s) }, func(s string) string {
+					//nolint:errchkjson // Retain checked encoding failures as the fixture evolves.
+					b, e := json.Marshal(s)
+					if e != nil {
+						t.Fatal(e)
+					}
+					return string(b)
+				}} {
+					forms = append(forms, quote(string(body)), quote(quote(string(body))))
+					if scheme != "" {
+						forms = append(forms, quote(value), quote(quote(value)))
+					}
+				}
+				for _, input := range forms {
+					t.Run(fmt.Sprintf("%s/%d/%s", key, n, input), func(t *testing.T) {
+						t.Parallel()
+						got := Mask(input, scanner.ScanString(input))
+						// An opaque alphabet prevents unrelated detectors from hiding the failure.
+						if strings.Contains(got, secret) || !strings.Contains(got, "[REDACTED]") {
+							t.Fatalf("secret retained: %q => %q", input, got)
+						}
+					})
+				}
+			}
+		}
+	}
+}
+
+func TestEmbeddedIPv4WholeSpanProperty(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindIPAddr))
+	for n := 1; n < 255; n += 13 {
+		tail := fmt.Sprintf("203.0.113.%d", n)
+		for _, prefix := range []string{"::ffff:", "::", "64:ff9b::", "2001:db8::ffff:"} {
+			address := prefix + tail
+			for _, form := range []string{address, "[" + address + "]", "[" + address + "]:51234"} {
+				input := "remote=" + form
+				got := scanner.ScanString(input)
+				if len(got) != 1 || input[got[0].Start:got[0].End] != address {
+					t.Errorf("not one complete span: %s: %+v", input, got)
+				}
+			}
+		}
+	}
+}
+
+const (
+	credentialFixtureKey = "password"
+	fmtGoSyntaxVerb      = "%#v"
+	fmtFieldVerb         = "%+v"
+)
+
+func TestEscapedCredentialFragments(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindCredential))
+	for _, secret := range []string{"opaqueHead\"opaqueTail", `opaqueHead\opaqueTail`, "opaqueHead\nopaqueTail", "[REDACTED]opaqueTail"} {
+		// Each suffix must disappear even when the secret contains a quote or bracket.
+		input := `{"password":` + strconv.Quote(secret) + `}`
+		for range 3 {
+			got := Mask(input, scanner.ScanString(input))
+			if strings.Contains(got, "opaqueHead") || strings.Contains(got, "opaqueTail") {
+				t.Errorf("escaped secret fragment retained: %q => %q", input, got)
+			}
+			input = strconv.Quote(input)
+		}
+		for _, verb := range []string{"%v", fmtFieldVerb, fmtGoSyntaxVerb, "%q"} {
+			input = fmt.Sprintf(verb, url.Values{credentialFixtureKey: {secret, secret}})
+			got := Mask(input, scanner.ScanString(input))
+			if strings.Contains(got, "opaqueHead") || strings.Contains(got, "opaqueTail") {
+				t.Errorf("slice fragment retained: %q => %q", input, got)
+			}
 		}
 	}
 }

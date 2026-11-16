@@ -299,3 +299,15 @@ func TestIPLocalAddressesAreNotPrivateEndpoints(t *testing.T) {
 		}
 	}
 }
+
+func TestIPVersionLabels(t *testing.T) {
+	t.Parallel()
+	for _, label := range []string{"version", "v", "ver", "build", "release", "VERSION"} {
+		for _, sep := range []string{" ", "=", ": ", "\":\""} {
+			input := label + sep + "10.2.3.4"
+			if got := NewIPAddr().Scan([]byte(input)); len(got) != 0 {
+				t.Errorf("version treated as IP: %s", input)
+			}
+		}
+	}
+}

@@ -229,3 +229,31 @@ func TestSWIFTZCountryCodes(t *testing.T) {
 		}
 	}
 }
+
+func TestSWIFTBuildLanguageContexts(t *testing.T) {
+	t.Parallel()
+	for _, text := range []string{"swift package resolved", "swift package RESOLVED", "swift package Resolved", "swift dependencies resolved"} {
+		if got := NewSWIFTBIC().Scan([]byte(text)); len(got) != 0 {
+			t.Errorf("build output treated as BIC: %s", text)
+		}
+	}
+}
+
+func TestSWIFTLanguageWordShapeProperty(t *testing.T) {
+	t.Parallel()
+	for _, bank := range []string{"TEST", "RESO", "ABCD"} {
+		for _, country := range []string{"LV", "US", "GB", "JP"} {
+			for _, location := range []string{"ED", "AB", "XY"} {
+				word := bank + country + location
+				for _, phrase := range []string{"swift package ", "swift dependencies ", "swift source "} {
+					if got := NewSWIFTBIC().Scan([]byte(phrase + word)); len(got) != 0 {
+						t.Fatalf("language context admitted word shape: %s%s", phrase, word)
+					}
+				}
+				if got := NewSWIFTBIC().Scan([]byte("SWIFT: " + word)); len(got) != 1 {
+					t.Fatal("explicit bank context lost")
+				}
+			}
+		}
+	}
+}

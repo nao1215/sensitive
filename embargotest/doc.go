@@ -4,13 +4,14 @@
 // # Canary representations
 //
 // Check finds the canary as raw bytes, lower and upper case hex, padded and
-// unpadded standard and URL base64, JSON with and without HTML escaping, Go
+// unpadded standard and URL base64 at every byte alignment inside a larger blob,
+// JSON with and without HTML escaping, Go
 // quoting with and without ASCII escaping (%q and %+q), a decimal byte slice and
 // a big-endian decimal integer, also when it is split across writes.
 // WithCanaryFragments opts into raw contiguous pieces of at least 16 bytes.
-// Smaller or derived values, mixed encodings, base64 shifted inside a larger
-// blob and compressed or binary exports need their own decoding before they
-// are written to a Recorder.
+// MIME-wrapped base64 and full \u escaping are not matched; decode those
+// representations before recording. Smaller or derived values, mixed encodings
+// and compressed or binary exports also need explicit decoding.
 //
 // The Recorder does not sanitize captured data. Connect every relevant output,
 // stop producers and flush SDKs before calling Check.

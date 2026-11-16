@@ -1,5 +1,7 @@
 package detect
 
+import "bytes"
+
 // MyNumberDetail holds My Number-specific detail information.
 type MyNumberDetail struct {
 	// CheckDigitValid indicates whether the check digit (12th digit) is valid
@@ -71,7 +73,7 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			continue
 		}
 
-		if isValidMyNumber(digits) && !logContext.fragment(data, start, end) {
+		if isValidMyNumber(digits) && !logContext.fragment(data, start, end) && !arnAccount(data, start, end) {
 			origStart, origEnd := mapOriginalRange(posMap, start, end)
 
 			findings = append(findings, Finding{
@@ -145,4 +147,29 @@ func isValidMyNumber(digits []byte) bool {
 	}
 	actual := int(digits[11] - '0')
 	return actual == expected
+}
+
+// ARN has partition, service, region and account fields before its resource.
+func arnAccount(data []byte, start, end int) bool {
+	if end >= len(data) || data[end] != ':' {
+		return false
+	}
+	left := start
+	colons := 0
+	for left > 0 && !urlDelimiter(data[left-1]) && data[left-1] != '=' && data[left-1] != '[' {
+		left--
+		if data[left] == ':' {
+			colons++
+			const arnSeparators = 4
+			if colons == arnSeparators {
+				left = max(0, left-len("arn"))
+				break
+			}
+		}
+	}
+	if left > 0 && isAlphaNum(data[left-1]) {
+		return false
+	}
+	fields := bytes.Split(data[left:start], []byte(":"))
+	return len(fields) == 5 && string(fields[0]) == "arn" && len(fields[1]) > 0 && len(fields[2]) > 0 && len(fields[4]) == 0
 }

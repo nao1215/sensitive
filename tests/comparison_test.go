@@ -74,7 +74,7 @@ type comparisonUser struct {
 }
 
 func comparisonScanner() *embargo.Scanner {
-	return embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN), embargo.WithMinConfidence(0.7), embargo.WithSensitiveKeys(comparisonPasswordKey, "passwd", "secret", "token", "api_key", "authorization", "cookie", "set-cookie", "recovery"))
+	return embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN), embargo.WithSensitiveKeys(comparisonPasswordKey, "passwd", "secret", "token", "api_key", "authorization", "cookie", "set-cookie", "recovery"))
 }
 
 func comparisonMasq() func([]string, slog.Attr) slog.Attr {
@@ -123,7 +123,7 @@ func comparisonCases() []comparisonCase {
 			l.Info("request", "user", comparisonUser{ID: comparisonID, Recovery: comparisonOpaque})
 		}, `"Recovery":"[REDACTED]"`, `"Recovery":"[REDACTED]"`},
 		{"valid_card", func(l *slog.Logger) { l.Info("request", "card", "4111111111111111") }, `"card":"[REDACTED]"`, `"card":"[REDACTED]"`},
-		{"invalid_luhn", func(l *slog.Logger) { l.Info("request", "order", "4111111111111112") }, `"order":"[REDACTED]"`, `"order":"4111111111111112"`},
+		{comparisonInvalidCard, func(l *slog.Logger) { l.Info("request", "order", "4111111111111112") }, `"order":"[REDACTED]"`, `"order":"[REDACTED]"`},
 		{comparisonMap, func(l *slog.Logger) {
 			l.Info("request", "data", map[string]any{comparisonPasswordKey: comparisonOpaque, comparisonEmailKey: comparisonEmail, "count": 17})
 		}, `"data":{"count":17,"email":null,"password":null}`, `"data":{"count":17,"email":"[REDACTED]","password":"[REDACTED]"}`},
@@ -275,7 +275,7 @@ func godlpEngine(tb testing.TB) dlpheader.EngineAPI {
 func TestComparisonOtherLibraries(t *testing.T) {
 	// godlp initializes package globals; keep its setup out of parallel tests.
 	engine := godlpEngine(t)
-	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN, embargo.KindJPPhone, embargo.KindIPAddr), embargo.WithMinConfidence(0.7))
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN, embargo.KindJPPhone, embargo.KindIPAddr))
 	var table strings.Builder
 	var details strings.Builder
 	writeComparisonTable(t, &table, "| Text fixture | godlp v1.2.15 | godlp findings | embargo | embargo findings |\n|---|---|---:|---|---:|\n")
@@ -357,7 +357,7 @@ func BenchmarkComparisonFormatter(b *testing.B) {
 
 func BenchmarkComparisonText(b *testing.B) {
 	engine := godlpEngine(b)
-	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN, embargo.KindIPAddr, embargo.KindJPPhone), embargo.WithMinConfidence(0.7))
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN, embargo.KindIPAddr, embargo.KindJPPhone))
 	text := "email alice@example.com; credit card 4111111111111111; IP 192.0.2.1; phone 03-1234-5678"
 	b.Run(comparisonDLPName, func(b *testing.B) {
 		b.ReportAllocs()
@@ -657,7 +657,7 @@ func catchScenarios() []catchScenario {
 		{name: "bearer", label: "Bearer in message", needle: comparisonOpaque, emit: func(l *slog.Logger) { l.Info("Authorization: Bearer " + comparisonOpaque) }, positive: true},
 		{name: "japanese_phone", label: "Japanese phone", needle: "03-1234-5678", emit: func(l *slog.Logger) { l.Info("contact 03-1234-5678") }, positive: true},
 		{name: "us_phone", label: "US phone", needle: "202-555-0123", emit: func(l *slog.Logger) { l.Info("contact 202-555-0123") }, positive: true},
-		{name: "invalid_luhn", label: "Invalid card control", needle: "4111111111111112", emit: func(l *slog.Logger) { l.Info("order 4111111111111112") }, positive: false},
+		{name: comparisonInvalidCard, label: "Invalid card control", needle: "4111111111111112", emit: func(l *slog.Logger) { l.Info("order 4111111111111112") }, positive: false},
 		{name: "clean_reference", label: "Clean reference control", needle: "job-R7", emit: func(l *slog.Logger) { l.Info("completed job-R7") }, positive: false},
 	}
 }
@@ -681,7 +681,7 @@ func catchHandler(t *testing.T, mode string, out io.Writer, engine dlpheader.Eng
 	t.Helper()
 	switch mode {
 	case comparisonEmbargoName:
-		return embargo.NewSlogHandler(slog.NewJSONHandler(out, nil), embargo.NewScanner(embargo.WithMinConfidence(0.7)))
+		return embargo.NewSlogHandler(slog.NewJSONHandler(out, nil), embargo.NewScanner())
 	case comparisonMasqName, comparisonMaskerName:
 		return comparisonHandler(mode, out)
 	case comparisonFormatterName:
@@ -745,6 +745,9 @@ func TestComparisonScenarios(t *testing.T) {
 				t.Fatal(err)
 			}
 			row.Results[mode] = catchObservation{Output: string(data), Removed: !strings.Contains(string(data), scenario.needle)}
+			if mode == comparisonEmbargoName && scenario.name == comparisonInvalidCard && !row.Results[mode].Removed {
+				t.Fatal("comparison no longer represents default card masking")
+			}
 		}
 		report.Rows = append(report.Rows, row)
 	}
@@ -807,3 +810,5 @@ func TestComparisonTypedCopy(t *testing.T) {
 		t.Fatal("typed copy contract changed", err)
 	}
 }
+
+const comparisonInvalidCard = "invalid_luhn"

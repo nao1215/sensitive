@@ -26,7 +26,7 @@ def event_chart(measurement):
     for step in range(5):
         value = maximum*step/4
         x = left+width*step/4
-        chart.line(x, 105, x, 279)
+        chart.bar(round(x), 105, 1, 174, '#ccd2da')
         chart.text(round(x, 2), 302, f'{value:g}', 13, anchor='middle')
     labels = ('slog alone', 'slog + embargo', 'slog + masq '+measurement['versions']['masq'], 'slog + go-masker '+measurement['versions']['go-masker'])
     for i, (label, value) in enumerate(zip(labels, values)):
@@ -79,7 +79,7 @@ def scenario_chart(measurement):
             chart.bar(left+i*cell+2, y, cell-5, 23, '#d7eee8' if good else '#f0e5de')
             chart.text(left+i*cell+cell/2, y+16, label, 12, '#173d35' if good else '#62351c', 'middle')
     chart.text(24, 788, 'Masked means the original planted value disappeared; partial masks count. Kept is correct for the two controls.', 14)
-    chart.text(24, 813, 'embargo: default kinds, confidence 0.7. go-masker: default policy, Luhn cards enabled, fixed tag rule.', 13)
+    chart.text(24, 813, 'embargo: default kinds, confidence 0 (default). go-masker: default policy, Luhn cards enabled, fixed tag rule.', 13)
     chart.text(24, 837, 'masq: regex, name and tag rules. go-mask: field/tag rules. slog-formatter: PII fields. godlp: six built-in rules.', 13)
     chart.text(24, 861, 'This measures these configurations, not production accuracy. Full synthetic outputs: doc/comparison-scenarios.json.', 13)
     return chart.render()

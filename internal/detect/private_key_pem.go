@@ -54,12 +54,10 @@ func (d *PrivateKeyPEM) Scan(data []byte) []Finding {
 		}
 		end := rel + len(closer)
 		footer := []byte("-----END " + content + "-----")
-		limit := len(data)
-		if next := bytes.Index(data[end:], []byte(opener)); next >= 0 {
-			limit = end + next
-		}
-		if tail := bytes.Index(data[end:limit], footer); tail >= 0 {
+		if tail := bytes.Index(data[end:], footer); tail >= 0 {
 			end += tail + len(footer)
+		} else {
+			end = len(data)
 		}
 		algo := strings.TrimSpace(strings.TrimSuffix(content, "PRIVATE KEY"))
 		findings = append(findings, Finding{

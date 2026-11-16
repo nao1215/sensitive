@@ -1,6 +1,7 @@
 package detect
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -218,5 +219,28 @@ func TestMynumberRejectedBoundaries(t *testing.T) {
 	t.Parallel()
 	if isValidMyNumber(nil) {
 		t.Fatal("empty national ID accepted")
+	}
+}
+
+func TestARNAccountFieldProperty(t *testing.T) {
+	t.Parallel()
+	for n := range 2000 {
+		account := fmt.Sprintf("%012d", 123456780000+n)
+		for _, partition := range []string{"aws", "aws-cn", "aws-us-gov"} {
+			input := "arn:" + partition + ":iam::" + account + ":role/fixture"
+			if got := NewMyNumber().Scan([]byte(input)); len(got) != 0 {
+				t.Fatalf("ARN account treated as MyNumber: %s", input)
+			}
+		}
+	}
+}
+
+func TestARNRequiresCompletePrefix(t *testing.T) {
+	t.Parallel()
+	for _, input := range []string{"barn:aws:iam::123456789018:role/x", "notarn:aws:iam::123456789018:role/x", "arn:aws:iam::000000000001:role/123456789018"} {
+		findings := NewMyNumber().Scan([]byte(input))
+		if len(findings) != 1 || findings[0].RawValue != "123456789018" {
+			t.Fatalf("non-account ID lost: %+v", findings)
+		}
 	}
 }

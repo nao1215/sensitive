@@ -54,6 +54,10 @@ func (d *Email) Scan(data []byte) []Finding {
 			continue
 		}
 
+		if string(data[localStart:i]) == "git" && domainEnd+1 < len(data) && data[domainEnd] == ':' && !urlDelimiter(data[domainEnd+1]) {
+			continue
+		}
+
 		tld, ok := validateTLD(domain)
 		if !ok {
 			continue

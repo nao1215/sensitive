@@ -2,9 +2,9 @@
 
 ## Conditions
 
-The development set uses Python `random.Random(20261115)`; the held-out set uses `random.Random(20270129)` and six different surrounding templates. Both were fixed before detector changes. Tuning used development failures and independent code-review regressions; the held-out evaluation rejected a stricter SWIFT context rule because it reduced recall. We treated this as overfitting and reverted the rule; no held-out failure was used to tune the retained changes.
+The development set uses Python `random.Random(20261115)`; the held-out set uses `random.Random(20270129)` and six different surrounding templates. Original inputs were fixed before detector changes. Added ARN, build-language, SSH-remote and version controls are regression evidence; incomplete PEM expected spans now include the existing suffix through end of input, retaining every previously expected byte. Tuning used development failures and independent code-review regressions; the held-out evaluation rejected a stricter SWIFT context rule because it reduced recall. We treated this as overfitting and reverted the rule; no held-out failure was used to tune the retained changes.
 
-Development contains 13,340 evaluations; held-out contains 12,880. The [generator](../scripts/generate_accuracy.py) constructs values and original byte ranges without invoking embargo. Development includes hand-written controls; held-out includes only independently generated values and controls. Repeated surroundings reuse values, and deterministic format examples such as email names and date cycles occur in both sets. Counts are not independent statistical trials. This is synthetic evaluation, not evidence of production accuracy or credential validity.
+Development contains 16,284 evaluations; held-out contains 15,824. The [generator](../scripts/generate_accuracy.py) constructs values and original byte ranges without invoking embargo. Development includes hand-written controls; held-out includes only independently generated values and controls. Repeated surroundings reuse values, and deterministic format examples such as email names and date cycles occur in both sets. Counts are not independent statistical trials. This is synthetic evaluation, not evidence of production accuracy or credential validity.
 
 Surroundings include logs, JSON, URLs, line endings and Japanese text. Negative controls include hashes, UUIDs, timestamps, order/invoice/tracking identifiers, versions, invalid checksums and malformed credentials. Labels and templates are not a substitute for a real-world corpus.
 
@@ -14,7 +14,7 @@ The default minimum confidence remains 0: ambiguous candidates are included. Con
 
 ## Encoding policy
 
-The original 23 built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in the input before detection. Findings map back to original bytes, so masking covers the escaped representation. Literal `+` and malformed percent escapes remain unchanged. Custom detectors receive the original bytes. Base64, hexadecimal, HTML entities, JSON escapes and recursively percent-encoded forms are not decoded by Scanner; decode application fields explicitly when needed. The logger adapters separately decode JSON strings at their output boundary.
+The original 23 built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in the input before detection. Findings map back to original bytes, so masking covers the escaped representation. Literal `+` and malformed percent escapes remain unchanged. Custom detectors receive the original bytes. KindCredential additionally scans up to two Go/JSON quote and backslash escape layers with original byte offsets. Base64, hexadecimal, HTML entities, full Unicode escapes and recursively percent-encoded forms are not decoded by Scanner; decode application fields explicitly when needed. The logger adapters separately decode JSON strings at their output boundary.
 
 [Round-trip and offset properties](../percent_test.go) exercise random partial escaping and all byte values. [Regression tests](../tests/accuracy_test.go) reject new mismatches and obsolete exceptions in both sets. Known limits retain reasons in [development](../tests/testdata/accuracy_limits.jsonl) and [held-out](../tests/testdata/accuracy_held_limits.jsonl) fixtures.
 
@@ -24,169 +24,181 @@ The original 23 built-in detectors decode exactly one layer of valid `%HH` escap
 
 | Detector | Positive / negative inputs | TP / FP / FN spans | Precision | Recall |
 |---|---:|---:|---:|---:|
-| [aba_routing](#aba-routing) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [ach_trace](#ach-trace) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [awskey](#awskey) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [bank_account](#bank-account) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [btc](#btc) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [card_expiry](#card-expiry) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [cvv](#cvv) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [email](#email) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [eth](#eth) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [github_token](#github-token) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [google_api_key](#google-api-key) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [iban](#iban) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [ipaddr](#ipaddr) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [jwt](#jwt) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [merchant_id](#merchant-id) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [mynumber](#mynumber) | 144 / 416 | 144 / 32 / 0 | 81.8% | 100.0% |
-| [pan](#pan) | 144 / 416 | 144 / 96 / 0 | 60.0% | 100.0% |
-| [payment_token](#payment-token) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [phone_jp](#phone-jp) | 144 / 416 | 144 / 32 / 0 | 81.8% | 100.0% |
-| [private_key_pem](#private-key-pem) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [slack_token](#slack-token) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [swiftbic](#swiftbic) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [uk_sortcode](#uk-sortcode) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [aba_routing](#aba-routing) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [ach_trace](#ach-trace) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [awskey](#awskey) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [bank_account](#bank-account) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [btc](#btc) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [card_expiry](#card-expiry) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [cvv](#cvv) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [email](#email) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [eth](#eth) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [github_token](#github-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [google_api_key](#google-api-key) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [iban](#iban) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [ipaddr](#ipaddr) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [jwt](#jwt) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [merchant_id](#merchant-id) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [mynumber](#mynumber) | 144 / 544 | 144 / 32 / 0 | 81.8% | 100.0% |
+| [pan](#pan) | 144 / 544 | 144 / 96 / 0 | 60.0% | 100.0% |
+| [payment_token](#payment-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [phone_jp](#phone-jp) | 144 / 544 | 144 / 32 / 0 | 81.8% | 100.0% |
+| [private_key_pem](#private-key-pem) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [slack_token](#slack-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [swiftbic](#swiftbic) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [uk_sortcode](#uk-sortcode) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+
+PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 development, 0.0 held. See [public-log sampling and classification](real-logs.md).
 
 ## Development results: default threshold 0
 
 | Detector | Positive / negative inputs | TP / FP / FN spans | Precision | Recall |
 |---|---:|---:|---:|---:|
-| [aba_routing](#aba-routing) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [ach_trace](#ach-trace) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [awskey](#awskey) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [bank_account](#bank-account) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [btc](#btc) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [card_expiry](#card-expiry) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [cvv](#cvv) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [email](#email) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [eth](#eth) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [github_token](#github-token) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [google_api_key](#google-api-key) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [iban](#iban) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [ipaddr](#ipaddr) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [jwt](#jwt) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [merchant_id](#merchant-id) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [mynumber](#mynumber) | 146 / 434 | 146 / 33 / 0 | 81.6% | 100.0% |
-| [pan](#pan) | 146 / 434 | 146 / 97 / 0 | 60.1% | 100.0% |
-| [payment_token](#payment-token) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [phone_jp](#phone-jp) | 146 / 434 | 146 / 32 / 0 | 82.0% | 100.0% |
-| [private_key_pem](#private-key-pem) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [slack_token](#slack-token) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [swiftbic](#swiftbic) | 146 / 434 | 146 / 120 / 0 | 54.9% | 100.0% |
-| [uk_sortcode](#uk-sortcode) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [aba_routing](#aba-routing) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [ach_trace](#ach-trace) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [awskey](#awskey) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [bank_account](#bank-account) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [btc](#btc) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [card_expiry](#card-expiry) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [cvv](#cvv) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [email](#email) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [eth](#eth) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [github_token](#github-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [google_api_key](#google-api-key) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [iban](#iban) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [ipaddr](#ipaddr) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [jwt](#jwt) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [merchant_id](#merchant-id) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [mynumber](#mynumber) | 146 / 562 | 146 / 33 / 0 | 81.6% | 100.0% |
+| [pan](#pan) | 146 / 562 | 146 / 97 / 0 | 60.1% | 100.0% |
+| [payment_token](#payment-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [phone_jp](#phone-jp) | 146 / 562 | 146 / 32 / 0 | 82.0% | 100.0% |
+| [private_key_pem](#private-key-pem) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [slack_token](#slack-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [swiftbic](#swiftbic) | 146 / 562 | 146 / 120 / 0 | 54.9% | 100.0% |
+| [uk_sortcode](#uk-sortcode) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+
+PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 development, 0.0 held. See [public-log sampling and classification](real-logs.md).
 
 ## Held-out results: minimum confidence 0.5
 
 | Detector | Positive / negative inputs | TP / FP / FN spans | Precision | Recall |
 |---|---:|---:|---:|---:|
-| [aba_routing](#aba-routing) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [ach_trace](#ach-trace) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [awskey](#awskey) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [bank_account](#bank-account) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [btc](#btc) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [card_expiry](#card-expiry) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [cvv](#cvv) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [email](#email) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [eth](#eth) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [github_token](#github-token) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [google_api_key](#google-api-key) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [iban](#iban) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [ipaddr](#ipaddr) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [jwt](#jwt) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [merchant_id](#merchant-id) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [mynumber](#mynumber) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [pan](#pan) | 144 / 416 | 144 / 64 / 0 | 69.2% | 100.0% |
-| [payment_token](#payment-token) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [phone_jp](#phone-jp) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [private_key_pem](#private-key-pem) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [slack_token](#slack-token) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [swiftbic](#swiftbic) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [uk_sortcode](#uk-sortcode) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [aba_routing](#aba-routing) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [ach_trace](#ach-trace) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [awskey](#awskey) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [bank_account](#bank-account) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [btc](#btc) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [card_expiry](#card-expiry) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [cvv](#cvv) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [email](#email) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [eth](#eth) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [github_token](#github-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [google_api_key](#google-api-key) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [iban](#iban) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [ipaddr](#ipaddr) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [jwt](#jwt) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [merchant_id](#merchant-id) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [mynumber](#mynumber) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [pan](#pan) | 144 / 544 | 144 / 64 / 0 | 69.2% | 100.0% |
+| [payment_token](#payment-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [phone_jp](#phone-jp) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [private_key_pem](#private-key-pem) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [slack_token](#slack-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [swiftbic](#swiftbic) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [uk_sortcode](#uk-sortcode) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+
+PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 development, 0.0 held. See [public-log sampling and classification](real-logs.md).
 
 ## Development results: minimum confidence 0.5
 
 | Detector | Positive / negative inputs | TP / FP / FN spans | Precision | Recall |
 |---|---:|---:|---:|---:|
-| [aba_routing](#aba-routing) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [ach_trace](#ach-trace) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [awskey](#awskey) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [bank_account](#bank-account) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [btc](#btc) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [card_expiry](#card-expiry) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [cvv](#cvv) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [email](#email) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [eth](#eth) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [github_token](#github-token) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [google_api_key](#google-api-key) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [iban](#iban) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [ipaddr](#ipaddr) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [jwt](#jwt) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [merchant_id](#merchant-id) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [mynumber](#mynumber) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [pan](#pan) | 146 / 434 | 146 / 64 / 0 | 69.5% | 100.0% |
-| [payment_token](#payment-token) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [phone_jp](#phone-jp) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [private_key_pem](#private-key-pem) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [slack_token](#slack-token) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [swiftbic](#swiftbic) | 146 / 434 | 146 / 120 / 0 | 54.9% | 100.0% |
-| [uk_sortcode](#uk-sortcode) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [aba_routing](#aba-routing) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [ach_trace](#ach-trace) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [awskey](#awskey) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [bank_account](#bank-account) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [btc](#btc) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [card_expiry](#card-expiry) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [cvv](#cvv) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [email](#email) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [eth](#eth) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [github_token](#github-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [google_api_key](#google-api-key) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [iban](#iban) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [ipaddr](#ipaddr) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [jwt](#jwt) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [merchant_id](#merchant-id) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [mynumber](#mynumber) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [pan](#pan) | 146 / 562 | 146 / 64 / 0 | 69.5% | 100.0% |
+| [payment_token](#payment-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [phone_jp](#phone-jp) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [private_key_pem](#private-key-pem) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [slack_token](#slack-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [swiftbic](#swiftbic) | 146 / 562 | 146 / 120 / 0 | 54.9% | 100.0% |
+| [uk_sortcode](#uk-sortcode) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+
+PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 development, 0.0 held. See [public-log sampling and classification](real-logs.md).
 
 ## Held-out results: minimum confidence 0.7
 
 | Detector | Positive / negative inputs | TP / FP / FN spans | Precision | Recall |
 |---|---:|---:|---:|---:|
-| [aba_routing](#aba-routing) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [ach_trace](#ach-trace) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [awskey](#awskey) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [bank_account](#bank-account) | 144 / 416 | 0 / 0 / 144 | n/a | 0.0% |
-| [btc](#btc) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [card_expiry](#card-expiry) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [cvv](#cvv) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [email](#email) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [eth](#eth) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [github_token](#github-token) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [google_api_key](#google-api-key) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [iban](#iban) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [ipaddr](#ipaddr) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [jwt](#jwt) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [merchant_id](#merchant-id) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [mynumber](#mynumber) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [pan](#pan) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [payment_token](#payment-token) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [phone_jp](#phone-jp) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [private_key_pem](#private-key-pem) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [slack_token](#slack-token) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [swiftbic](#swiftbic) | 144 / 416 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [uk_sortcode](#uk-sortcode) | 144 / 416 | 138 / 0 / 6 | 100.0% | 95.8% |
+| [aba_routing](#aba-routing) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [ach_trace](#ach-trace) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [awskey](#awskey) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [bank_account](#bank-account) | 144 / 544 | 0 / 0 / 144 | n/a | 0.0% |
+| [btc](#btc) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [card_expiry](#card-expiry) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [cvv](#cvv) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [email](#email) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [eth](#eth) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [github_token](#github-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [google_api_key](#google-api-key) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [iban](#iban) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [ipaddr](#ipaddr) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [jwt](#jwt) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [merchant_id](#merchant-id) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [mynumber](#mynumber) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [pan](#pan) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [payment_token](#payment-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [phone_jp](#phone-jp) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [private_key_pem](#private-key-pem) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [slack_token](#slack-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [swiftbic](#swiftbic) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [uk_sortcode](#uk-sortcode) | 144 / 544 | 138 / 0 / 6 | 100.0% | 95.8% |
+
+PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 development, 0.0 held. See [public-log sampling and classification](real-logs.md).
 
 ## Development results: minimum confidence 0.7
 
 | Detector | Positive / negative inputs | TP / FP / FN spans | Precision | Recall |
 |---|---:|---:|---:|---:|
-| [aba_routing](#aba-routing) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [ach_trace](#ach-trace) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [awskey](#awskey) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [bank_account](#bank-account) | 146 / 434 | 0 / 0 / 146 | n/a | 0.0% |
-| [btc](#btc) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [card_expiry](#card-expiry) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [cvv](#cvv) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [email](#email) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [eth](#eth) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [github_token](#github-token) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [google_api_key](#google-api-key) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [iban](#iban) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [ipaddr](#ipaddr) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [jwt](#jwt) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [merchant_id](#merchant-id) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [mynumber](#mynumber) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [pan](#pan) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [payment_token](#payment-token) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [phone_jp](#phone-jp) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [private_key_pem](#private-key-pem) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [slack_token](#slack-token) | 146 / 434 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [swiftbic](#swiftbic) | 146 / 434 | 146 / 120 / 0 | 54.9% | 100.0% |
-| [uk_sortcode](#uk-sortcode) | 146 / 434 | 140 / 0 / 6 | 100.0% | 95.9% |
+| [aba_routing](#aba-routing) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [ach_trace](#ach-trace) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [awskey](#awskey) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [bank_account](#bank-account) | 146 / 562 | 0 / 0 / 146 | n/a | 0.0% |
+| [btc](#btc) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [card_expiry](#card-expiry) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [cvv](#cvv) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [email](#email) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [eth](#eth) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [github_token](#github-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [google_api_key](#google-api-key) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [iban](#iban) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [ipaddr](#ipaddr) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [jwt](#jwt) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [merchant_id](#merchant-id) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [mynumber](#mynumber) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [pan](#pan) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [payment_token](#payment-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [phone_jp](#phone-jp) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [private_key_pem](#private-key-pem) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [slack_token](#slack-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [swiftbic](#swiftbic) | 146 / 562 | 146 / 120 / 0 | 54.9% | 100.0% |
+| [uk_sortcode](#uk-sortcode) | 146 / 562 | 140 / 0 / 6 | 100.0% | 95.9% |
+
+PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 development, 0.0 held. See [public-log sampling and classification](real-logs.md).
 
 ## aba routing
 
@@ -442,9 +454,9 @@ The default remains 0 for all 25 default kinds. Public-log rates are sample esti
 
 | Minimum confidence | Public FP/GB | Public precision | Development precision / misses | Held precision / misses |
 |---|---:|---:|---:|---:|
-| 0.0 | 378.7 | 99.9943% | 93.16% / 0 | 95.95% / 0 |
-| 0.5 | 378.7 | 99.9943% | 95.43% / 0 | 98.34% / 0 |
-| 0.7 | 378.7 | 99.9943% | 96.85% / 152 | 100.00% / 150 |
+| 0.0 | 357.1 | 99.9947% | 93.16% / 0 | 95.95% / 0 |
+| 0.5 | 357.1 | 99.9947% | 95.43% / 0 | 98.34% / 0 |
+| 0.7 | 357.1 | 99.9947% | 96.85% / 152 | 100.00% / 150 |
 
 Choose 0 when retaining ambiguous secrets is the priority. On these synthetic sets, 0.5 removes business-label false positives without additional misses; validate it against your own mislabeled secrets before opting in. A global 0.7 loses bank-account and sort-code positives. These thresholds do not fix the remaining public-log ABA/SWIFT false positives. Select relevant kinds and sensitive keys before raising the global cutoff; confidence is not a probability. Regenerate with make accuracy-doc and make real-log-accuracy; python3 scripts/accuracy_figures.py --check verifies this table.
 
@@ -534,7 +546,7 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 | private_key_pem | 0.0 | 0.0 | 0.0 | 0.0 |
 | service_token | 0.0 | 0.0 | 0.0 | 0.0 |
 | slack_token | 0.0 | 0.0 | 0.0 | 0.0 |
-| swiftbic | 739,274.8 | 124.2 | 343.8 | 320.1 |
+| swiftbic | 739,274.8 | 124.2 | 343.8 | 296.4 |
 | uk_nhs | 0.0 | 0.0 | 0.0 | 2,287.9 |
 | uk_nino | 0.0 | 0.0 | 0.0 | 0.0 |
 | uk_sortcode | 0.0 | 0.0 | 0.0 | 0.0 |
@@ -543,8 +555,8 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 
 | Configuration | Development before / GB | Development after / GB | Held before / GB | Held after / GB |
 |---|---:|---:|---:|---:|
-| WithAll | 827,818.9 | 22,477.5 | 145,650.6 | 3,177.0 |
-| Default slog handler | 827,818.9 | 124.2 | 145,650.6 | 403.0 |
+| WithAll | 827,818.9 | 22,477.5 | 145,650.6 | 3,153.3 |
+| Default slog handler | 827,818.9 | 124.2 | 145,650.6 | 379.3 |
 | kinds1 | 0.0 | 0.0 | 0.0 | 0.0 |
 | kinds3 | 44,955.1 | 0.0 | 0.0 | 0.0 |
 | kinds8 | 47,563.0 | 0.0 | 144,062.1 | 0.0 |

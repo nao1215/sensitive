@@ -4,6 +4,7 @@ import os
 import subprocess
 import sys
 import unittest
+import xml.etree.ElementTree as ET
 
 import readme_charts as charts
 
@@ -18,6 +19,10 @@ class ChartTests(unittest.TestCase):
         svg = charts.event_chart(source)
         for label in ('1.00 µs', '2.00 µs', '3.00 µs', '4.00 µs', 'linear scale'):
             self.assertIn(label, svg)
+        grids = [r for r in ET.fromstring(svg).findall('.//{http://www.w3.org/2000/svg}rect') if r.attrib.get('width') == '1.00']
+        self.assertEqual(len(grids), 5)
+        self.assertEqual({g.attrib['fill'] for g in grids}, {'#ccd2da'})
+        self.assertTrue(all(float(g.attrib['x']).is_integer() for g in grids))
         source['benchmarks']['BenchmarkComparison/flat/plain']['ns/op'] = 0
         with self.assertRaises(ValueError):
             charts.event_chart(source)

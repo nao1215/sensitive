@@ -40,6 +40,18 @@ func representations(canary []byte) [][]byte {
 	}
 	for _, encoding := range []*base64.Encoding{base64.StdEncoding, base64.RawStdEncoding, base64.URLEncoding, base64.RawURLEncoding} {
 		needles = append(needles, []byte(encoding.EncodeToString(canary)))
+		// Drop symbols sharing bits with the unknown prefix or suffix. The retained
+		// interior includes only canary bits and works at every three-byte alignment.
+		const inputBits, symbolBits, alignments = 8, 6, 3
+		for shift := range alignments {
+			padded := append(make([]byte, shift), canary...)
+			encoded := encoding.EncodeToString(padded)
+			first := (shift*inputBits + symbolBits - 1) / symbolBits
+			last := len(padded) * inputBits / symbolBits
+			if last > first {
+				needles = append(needles, []byte(encoded[first:last]))
+			}
+		}
 	}
 	return needles
 }

@@ -375,3 +375,18 @@ func TestDetectorByteAlphabets(t *testing.T) {
 		}
 	}
 }
+
+func TestGitRemoteContexts(t *testing.T) {
+	t.Parallel()
+	for _, host := range []string{"github.com", "gitlab.com", "code.example.org"} {
+		for _, path := range []string{"org/repo.git", "repo", "/srv/project.git"} {
+			input := "git clone git@" + host + ":" + path
+			if got := NewEmail().Scan([]byte(input)); len(got) != 0 {
+				t.Errorf("SSH remote treated as email: %s", input)
+			}
+		}
+		if got := NewEmail().Scan([]byte("contact git@" + host)); len(got) != 1 {
+			t.Error("ordinary mailbox lost")
+		}
+	}
+}

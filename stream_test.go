@@ -171,3 +171,85 @@ func TestScannerPathsAtBufferBoundaries(t *testing.T) {
 		}
 	}
 }
+
+func TestPEMTruncationProperty(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindPrivateKeyPEM))
+	for _, label := range []string{"PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY", "DSA PRIVATE KEY", "OPENSSH PRIVATE KEY", "ENCRYPTED PRIVATE KEY", "ANY PRIVATE KEY"} {
+		for _, newline := range []string{"\n", "\r\n"} {
+			lines := []string{"-----BEGIN " + label + "-----", "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=", "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=", "-----END " + label + "-----"}
+			for cut := 1; cut <= len(lines); cut++ {
+				input := strings.Join(lines[:cut], newline)
+				if got := Mask(input, scanner.ScanString(input)); got != redactionMarker {
+					t.Errorf("whole PEM %s/%d: %q", label, cut, got)
+				}
+				seen := 0
+				if err := scanner.ScanLines(strings.NewReader(input), func(n int, line []byte, findings []Finding) {
+					seen++
+					if n != seen || Mask(string(line), findings) != redactionMarker {
+						t.Errorf("line %d of %s retained", n, label)
+					}
+				}); err != nil {
+					t.Fatal(err)
+				}
+				if seen != cut {
+					t.Errorf("only %d/%d lines reported for %s", seen, cut, label)
+				}
+			}
+		}
+	}
+}
+
+func TestPEMStreamTransitions(t *testing.T) {
+	t.Parallel()
+	begin := "-----BEGIN " + "PRIVATE KEY-----"
+	end := "-----END PRIVATE KEY-----"
+	for _, body := range []string{begin + "\nfirst\n" + begin + "\nsecond\n" + end + " trailing\nvisible", begin + "\n\nfirst\n" + end + "\nvisible"} {
+		scanner := NewScanner(WithKinds(KindPrivateKeyPEM))
+		if err := scanner.ScanLines(strings.NewReader(body), func(_ int, line []byte, f []Finding) {
+			got := Mask(string(line), f)
+			if strings.Contains(got, "first") || strings.Contains(got, "second") || string(line) == "visible" {
+				t.Fatalf("wrong PEM state: %q", got)
+			}
+		}); err != nil {
+			t.Fatal(err)
+		}
+		// State must not survive a ScanLines call, nor enable a disabled detector.
+		for _, s := range []*Scanner{scanner, NewScanner(WithKinds()), NewScanner(WithMinConfidence(1))} {
+			if err := s.ScanLines(strings.NewReader("first\nsecond"), func(int, []byte, []Finding) { t.Error("state crossed calls or policy") }); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+}
+
+func TestTruncatedPEMDoesNotTrustNestedHeaders(t *testing.T) {
+	t.Parallel()
+	input := "-----BEGIN " + "PRIVATE KEY-----\nYWJjZGVm\n-----BEGIN PUBLIC KEY-----\nQUJDREVG"
+	scanner := NewScanner(WithKinds(KindPrivateKeyPEM))
+	if got := Mask(input, scanner.ScanString(input)); got != redactionMarker {
+		t.Errorf("incomplete private key retained text: %q", got)
+	}
+	lines := 0
+	if err := scanner.ScanLines(strings.NewReader(input), func(_ int, line []byte, f []Finding) {
+		lines++
+		if Mask(string(line), f) != redactionMarker {
+			t.Error("PEM continuation visible")
+		}
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if lines != 4 {
+		t.Fatalf("only %d key lines reported", lines)
+	}
+}
+
+func TestPEMLineStateRejectsUnrelatedCustomFinding(t *testing.T) {
+	t.Parallel()
+	// A custom finding with the PEM kind is not proof of a BEGIN header.
+	raw := []byte("unrelated text")
+	finding := Finding{Kind: KindPrivateKeyPEM, Start: 0, End: len(raw), Confidence: 1}
+	if footer := pemLineFooter(raw, []Finding{finding}, 0); footer != nil {
+		t.Fatal("custom finding entered PEM state")
+	}
+}
