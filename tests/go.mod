@@ -34,11 +34,11 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/nao1215/embargo/adapters/logrus v0.8.1
-	github.com/nao1215/embargo/adapters/otel v0.8.1
-	github.com/nao1215/embargo/adapters/sentry v0.8.1
-	github.com/nao1215/embargo/adapters/zap v0.8.1
-	github.com/nao1215/embargo/adapters/zerolog v0.8.1
+	github.com/nao1215/embargo/adapters/logrus v0.9.0
+	github.com/nao1215/embargo/adapters/otel v0.9.0
+	github.com/nao1215/embargo/adapters/sentry v0.9.0
+	github.com/nao1215/embargo/adapters/zap v0.9.0
+	github.com/nao1215/embargo/adapters/zerolog v0.9.0
 	github.com/samber/lo v1.53.0 // indirect
 	github.com/samber/slog-common v0.21.0 // indirect
 	github.com/samber/slog-multi v1.8.0 // indirect
