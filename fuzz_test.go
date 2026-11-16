@@ -1,14 +1,18 @@
-package embargo_test
+package embargo
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
+	"log/slog"
 	"net/url"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/nao1215/embargo"
 	"github.com/nao1215/embargo/internal/detect"
 )
 
@@ -63,17 +67,15 @@ func fuzzSeeds() []string {
 	}
 }
 
-func builtinDetectors() []detect.Detector {
-	return []detect.Detector{&detect.Credential{}, &detect.ServiceToken{}, &detect.HighEntropy{}, detect.NewPAN(), detect.NewEmail(), detect.NewJPPhone(), detect.NewMyNumber(), detect.NewJWT(), detect.NewAWSKey(), detect.NewIBAN(), detect.NewIPAddr(), detect.NewSWIFTBIC(), detect.NewABARouting(), detect.NewUKSortCode(), detect.NewCVV(), detect.NewCardExpiry(), detect.NewPaymentToken(), detect.NewBankAccount(), detect.NewACHTrace(), detect.NewMerchantID(), detect.NewBTC(), detect.NewETH(), detect.NewGitHubToken(), detect.NewSlackToken(), detect.NewGoogleAPIKey(), detect.NewPrivateKeyPEM(), detect.NewCountry("us_ssn"), detect.NewCountry("us_itin"), detect.NewCountry("uk_nino"), detect.NewCountry("uk_nhs"), detect.NewCountry("in_aadhaar"), detect.NewCountry("in_pan"), detect.NewCountry("br_cpf"), detect.NewCountry("br_cnpj"), detect.NewCountry("cn_resident_id"), detect.NewCountry("kr_rrn"), detect.NewCountry("ca_sin")}
-}
+func builtinDetectors() []detect.Detector { return builtins() }
 
 type findingKey struct {
-	name       embargo.Kind
+	name       Kind
 	start, end int
 	confidence float64
 }
 
-func keysOf(findings []embargo.Finding) map[findingKey]int {
+func keysOf(findings []Finding) map[findingKey]int {
 	m := make(map[findingKey]int, len(findings))
 	for _, f := range findings {
 		m[findingKey{f.Kind, f.Start, f.End, f.Confidence}]++
@@ -87,7 +89,7 @@ func FuzzScanner(f *testing.F) {
 	for _, seed := range fuzzSeeds() {
 		f.Add(seed)
 	}
-	scanner := embargo.NewScanner(embargo.WithAll())
+	scanner := NewScanner(WithAll())
 	detectors := builtinDetectors()
 	f.Fuzz(func(t *testing.T, text string) {
 		checkEmbeddedSecret(t, text)
@@ -106,10 +108,10 @@ func FuzzScanner(f *testing.F) {
 			}
 			for _, v := range d.Scan(input) {
 				if d.Name() == "credential" {
-					want[findingKey{embargo.Kind(v.DetectorName), v.Start, v.End, v.Confidence}]++
+					want[findingKey{Kind(v.DetectorName), v.Start, v.End, v.Confidence}]++
 					continue
 				}
-				want[findingKey{embargo.Kind(v.DetectorName), positions[v.Start], positions[v.End], v.Confidence}]++
+				want[findingKey{Kind(v.DetectorName), positions[v.Start], positions[v.End], v.Confidence}]++
 			}
 		}
 		if !sameKeys(keysOf(got), want) {
@@ -131,14 +133,14 @@ func TestAllBuiltinsHaveSeeds(t *testing.T) {
 	if got := len(builtinDetectors()); got != 37 {
 		t.Fatalf("reference recognizers: got %d, want 37", got)
 	}
-	seen := map[embargo.Kind]bool{}
+	seen := map[Kind]bool{}
 	for _, s := range fuzzSeeds() {
-		for _, f := range embargo.NewScanner(embargo.WithAll()).ScanString(s) {
+		for _, f := range NewScanner(WithAll()).ScanString(s) {
 			seen[f.Kind] = true
 		}
 	}
 	for _, d := range builtinDetectors() {
-		if !seen[embargo.Kind(d.Name())] {
+		if !seen[Kind(d.Name())] {
 			t.Errorf("uncovered builtin %s", d.Name())
 		}
 	}
@@ -154,7 +156,7 @@ func FuzzScanLines(f *testing.F) {
 		f.Add(s)
 	}
 	f.Add("a@example.com\n\n4532015112830366\r\nlast line without newline 192.168.0.1")
-	scanner := embargo.NewScanner(embargo.WithAll())
+	scanner := NewScanner(WithAll())
 
 	f.Fuzz(func(t *testing.T, text string) {
 		checkEmbeddedSecret(t, text)
@@ -163,7 +165,7 @@ func FuzzScanLines(f *testing.F) {
 			line     string
 		}
 		got := make(map[int]lineResult)
-		err := scanner.ScanLines(strings.NewReader(text), func(lineNum int, line []byte, findings []embargo.Finding) {
+		err := scanner.ScanLines(strings.NewReader(text), func(lineNum int, line []byte, findings []Finding) {
 			if _, dup := got[lineNum]; dup {
 				t.Fatalf("line %d reported twice", lineNum)
 			}
@@ -224,14 +226,14 @@ func sameKeys(a, b map[findingKey]int) bool {
 
 // checkEmbeddedSecret lets fuzzing vary arbitrary surrounding log bytes while
 // bracket/newline separators preserve the generated email's lexical boundaries.
-func checkEmbeddedSecret(t *testing.T, context string) {
+func checkEmbeddedSecret(t *testing.T, surrounding string) {
 	t.Helper()
-	raw := "user" + strconv.Itoa(len(context)) + "@example.com"
-	text := context + "\n[" + raw + "]\n" + context
-	s := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
+	raw := "user" + strconv.Itoa(len(surrounding)) + "@example.com"
+	text := surrounding + "\n[" + raw + "]\n" + surrounding
+	s := NewScanner(WithKinds(KindEmail))
 	found := false
 	for _, f := range s.ScanString(text) {
-		if text[f.Start:f.End] == raw && f.Start == len(context)+2 {
+		if text[f.Start:f.End] == raw && f.Start == len(surrounding)+2 {
 			found = true
 		}
 	}
@@ -256,4 +258,161 @@ func percentOracle(text string) (data []byte, positions []int) {
 		i++
 	}
 	return data, append(positions, len(text))
+}
+
+func FuzzMask(f *testing.F) {
+	f.Add("abcdef", 1, 4, 3, 5)
+	f.Add("日本語", 0, 3, 3, 6)
+	f.Fuzz(func(t *testing.T, text string, a, b, c, d int) {
+		spans := []Finding{{Kind: "a", Start: a, End: b, Confidence: 1}, {Kind: "b", Start: c, End: d, Confidence: 1}}
+		calls := 0
+		got := MaskFunc(text, spans, func(_ Kind, v string) string { calls++; return strings.Repeat("*", len(v)) })
+		invalid := a < 0 || b <= a || b > len(text) || c < 0 || d <= c || d > len(text)
+		if invalid {
+			//nolint:goconst // Assert the literal public redaction contract.
+			if got != "[REDACTED]" || calls != 0 {
+				t.Fatal("invalid spans passed")
+			}
+			return
+		}
+		want := []byte(text)
+		for i := range want {
+			if (i >= a && i < b) || (i >= c && i < d) {
+				want[i] = '*'
+			}
+		}
+		if got != string(want) {
+			t.Fatal("union missed a byte")
+		}
+	})
+}
+
+//nolint:gocognit // One generated tree is checked through construction, masking and descent.
+func FuzzJSONPaths(f *testing.F) {
+	for _, seed := range []string{"ordinary", `quote" slash\`, "listener 0.0.0.0", "token=Class@deadbeef", "123456789012.example.invalid"} {
+		f.Add(seed, uint8(3), true)
+	}
+	f.Fuzz(func(t *testing.T, value string, depth uint8, object bool) {
+		if len(value) > 4096 {
+			t.Skip()
+		}
+		var tree any = map[string]any{"password": value, "public": true}
+		for range int(depth) % 70 {
+			if object {
+				tree = map[string]any{"child": tree}
+			} else {
+				tree = []any{tree}
+			}
+		}
+		input, err := json.Marshal(tree)
+		if err != nil {
+			t.Fatal(err)
+		}
+		output, err := NewScanner(WithKinds()).MaskJSON(input)
+		if int(depth)%70 >= 64 {
+			if err == nil || output != nil {
+				t.Fatal("depth limit bypass")
+			}
+			return
+		}
+		if err != nil || !json.Valid(output) {
+			t.Fatal("structured path broke JSON")
+		}
+		var got any
+		if err := json.Unmarshal(output, &got); err != nil {
+			t.Fatal(err)
+		}
+		for range int(depth) % 70 {
+			if object {
+				node, ok := got.(map[string]any)
+				if !ok {
+					t.Fatal("object shape changed")
+				}
+				got = node["child"]
+			} else {
+				node, ok := got.([]any)
+				if !ok || len(node) != 1 {
+					t.Fatal("array shape changed")
+				}
+				got = node[0]
+			}
+		}
+		leaf, ok := got.(map[string]any)
+		if !ok {
+			t.Fatal("leaf shape changed")
+		}
+		if leaf["password"] != redactionMarker || leaf["public"] != true {
+			t.Fatal("nested sensitive path lost or clean field changed")
+		}
+	})
+}
+
+// Budget checks run in the fuzz worker, where inputs are evaluated serially.
+// The seed path also runs without t.Parallel so allocation counters are isolated.
+func FuzzAdversarialBudgets(f *testing.F) {
+	for _, seed := range []string{digitSeparatorRun, credentialPrefixRun, nestedPercentPrefix, ibanPrefixRun, "listener 0.0.0.0", "\"\\\n"} {
+		f.Add(seed, uint8(8))
+	}
+	f.Fuzz(func(t *testing.T, pattern string, repeat uint8) {
+		if len(pattern) > 256 {
+			t.Skip()
+		}
+		text := strings.Repeat(pattern, int(repeat)+1)
+		document, err := json.Marshal(map[string]string{"public": text})
+		if err != nil {
+			t.Fatal(err)
+		}
+		scanner := NewScanner(WithAll())
+		var buffer bytes.Buffer
+		handler := NewSlogHandler(slog.NewJSONHandler(&buffer, nil), scanner)
+		var before, after runtime.MemStats
+		runtime.ReadMemStats(&before)
+		started := time.Now()
+		Mask(text, scanner.ScanString(text))
+		output, err := scanner.MaskJSON(document)
+		if err != nil || !json.Valid(output) {
+			t.Fatal("bounded JSON input failed")
+		}
+		if err := handler.Handle(context.Background(), slog.Record{Message: text}); err != nil {
+			t.Fatal("bounded log event failed")
+		}
+		runtime.ReadMemStats(&after)
+		if elapsed := time.Since(started); elapsed > 5*time.Second {
+			t.Fatal("bounded input exceeded five-second processing budget")
+		}
+		if after.TotalAlloc-before.TotalAlloc > uint64(len(document))*512+8<<20 {
+			t.Fatal("bounded input exceeded allocation amplification budget")
+		}
+		if bytes.Count(buffer.Bytes(), []byte{'\n'}) != 1 || !json.Valid(buffer.Bytes()) {
+			t.Fatal("hostile message broke log framing")
+		}
+	})
+}
+
+func FuzzCredentialGrammar(f *testing.F) {
+	for _, value := range []string{"synthetic", `quote" slash\`, "Class@deadbeef", "long-path/component", redactionMarker} {
+		f.Add(value, uint8(0))
+	}
+	f.Fuzz(func(t *testing.T, value string, form uint8) {
+		if len(value) > 4096 {
+			t.Skip()
+		}
+		// JSON quoting preserves a valid assignment while fuzz changes its payload.
+		raw, err := json.Marshal(value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		key := []string{"password", "secret", "api_key"}[int(form)%3]
+		document := []byte(`{"` + key + `":` + string(raw) + `,"ok":true}`)
+		scanner := NewScanner(WithKinds(KindCredential))
+		output, err := scanner.MaskJSON(document)
+		if err != nil || !json.Valid(output) || !bytes.Contains(output, []byte(`"ok":true`)) {
+			t.Fatal("credential grammar broke JSON")
+		}
+		text := key + "=" + string(raw)
+		masked := Mask(text, scanner.ScanString(text))
+		if value != "" && value != redactionMarker && !strings.Contains(masked, redactionMarker) {
+			t.Fatal("quoted credential escaped masking")
+		}
+	})
 }

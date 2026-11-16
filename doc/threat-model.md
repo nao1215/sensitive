@@ -4,10 +4,10 @@ Embargo inspects bytes at an output boundary. The application chooses kinds, sen
 
 | Actor and controlled bytes | Undesirable result | Executable boundary |
 |---|---|---|
-| User: text, keys, JSON strings | Unmasked recognized value or destroyed audit context | Encoding and scoping cases in adversarial_test.go |
-| Dependency: formatter and LogValuer results | Panic text echoed, invalid JSON or partial record | slog_handler_test.go and structured_test.go |
+| User: text, keys, JSON strings | Unmasked recognized value or destroyed audit context | Encoding and scoping cases in json_test.go |
+| Dependency: formatter and LogValuer results | Panic text echoed, invalid JSON or partial record | slog_handler_test.go and json_test.go |
 | Child: stdout, stderr, test-start frames | Secret replay, forged test name in diagnostics, unbounded retention | Guard model, guard_adversarial_test.go and guard_fuzz_test.go |
-| Application: detector, limits, policy | Silent scanner failure or unexpected cross-policy findings | runtime_contract_test.go, model replay and metamorphic tests |
+| Application: detector, limits, policy | Silent scanner failure or unexpected cross-policy findings | scanner_test.go, model replay and metamorphic tests |
 | User: very large or nested input | Superlinear work, stack exhaustion or memory amplification | Adversarial budget tests and scheduled scaling matrix |
 
 ## Resource boundaries

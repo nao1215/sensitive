@@ -4,7 +4,7 @@
     "bug": "Incorrect fixed outputs and public usage contracts",
     "paths": [
       "example_test.go",
-      "doc_sync_test.go"
+      "doc_test.go"
     ],
     "ci": "unit_test:unit_test",
     "commands": [
@@ -19,7 +19,7 @@
     "paths": [
       "tests/properties_test.go",
       "tests/mask_test.go",
-      "mask_oracle_test.go"
+      "mask_test.go"
     ],
     "ci": "unit_test:property_tests",
     "commands": [
@@ -78,7 +78,7 @@
     "name": "Intentional snapshots",
     "bug": "Unreviewed output shape changes despite correct redaction",
     "paths": [
-      "snapshot_test.go",
+      "secret_test.go",
       "adapters/zap/snapshot_test.go",
       "embargotest/guard_test.go"
     ],
@@ -109,7 +109,7 @@
     "name": "Structure-aware fuzzing",
     "bug": "Malformed nested paths, quoted credentials and split stream frames",
     "paths": [
-      "structure_fuzz_test.go",
+      "fuzz_test.go",
       "embargotest/guard_fuzz_test.go"
     ],
     "ci": "fuzz:fuzz",
@@ -195,7 +195,7 @@
     "name": "Adversarial budgets",
     "bug": "Resource amplification, framing spoofing and ambiguous encodings",
     "paths": [
-      "adversarial_test.go",
+      "json_test.go",
       "embargotest/guard_adversarial_test.go"
     ],
     "ci": "heavy:scaling",

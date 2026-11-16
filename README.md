@@ -58,7 +58,7 @@ func main() {
 
 Wrap the value once; every formatter then sees the marker.
 
-<!-- example: secret_example_test.go:ExampleNewSecret -->
+<!-- example: example_test.go:ExampleNewSecret -->
 ```go
 key := embargo.NewSecret("fake-key")
 
@@ -73,7 +73,7 @@ fmt.Println(key)
 
 embargo has 37 built-in detectors (25 run by default). `NewScanner()` runs the first five groups below except the entropy heuristic. The national IDs and the heuristic are opt-in: name them in `WithKinds`, or turn on everything with `WithAll`. The scanner reads the text itself, so no field has to be listed first.
 
-<!-- example: credential_example_test.go:ExampleKindCredential -->
+<!-- example: example_test.go:ExampleKindCredential -->
 ```go
 text := "postgres://reader:forgotten@db.example/orders"
 scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindCredential))
@@ -147,9 +147,9 @@ Mask everything a scanner finds, or keep part of a value:
 | Operation | Actual text |
 |---|---|
 | Input | `INFO checkout email=alice@example.com card=4111111111111111` |
-| [Mask](masking_example_test.go) | `INFO checkout email=[REDACTED] card=[REDACTED]` |
-| [MaskFunc: keep last four](masking_example_test.go) | `INFO checkout email=[REDACTED] card=[REDACTED]1111` |
-| [Overlapping matches](masking_example_test.go) | `token=abcdef` with `abcd cdef` → `token=[REDACTED]` |
+| [Mask](example_test.go) | `INFO checkout email=[REDACTED] card=[REDACTED]` |
+| [MaskFunc: keep last four](example_test.go) | `INFO checkout email=[REDACTED] card=[REDACTED]1111` |
+| [Overlapping matches](example_test.go) | `token=abcdef` with `abcd cdef` → `token=[REDACTED]` |
 <!-- masking:end -->
 
 `Scanner.ScanLines` reads files and streams line by line. [Scanner options and custom replacements](doc/masking.md)
@@ -160,7 +160,7 @@ Pick the kinds you need: on 2.7 KB of log lines with no secret, `WithKinds(KindE
 
 Log the struct you already have. The handler encodes it as `slog.JSONHandler` would, masks detected values, and hides whole values under keys such as `password`, `token` or `authorization`.
 
-<!-- example: slog_example_test.go:ExampleNewSlogHandler_struct -->
+<!-- example: example_test.go:ExampleNewSlogHandler_struct -->
 ```go
 // An existing type: no tags, no embargo field types.
 type User struct {
@@ -177,7 +177,7 @@ logger.Info("signup", "user", User{Name: "carol", Email: "carol@example.com", Pa
 
 `next` is the handler your logger already uses. The same rules apply to JSON that never reaches a logger, such as an API response or an audit export:
 
-<!-- example: structured_example_test.go:ExampleScanner_MaskJSON -->
+<!-- example: example_test.go:ExampleScanner_MaskJSON -->
 ```go
 scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
 // Sanitize an audit export before uploading it to a support system.
@@ -200,13 +200,13 @@ Numbers and booleans keep their types. `WithSensitiveKeys` replaces the key list
 | go.uber.org/zap | [`embargozap.NewWriteSyncer(next, scanner)`](adapters/zap/example_test.go) | `adapters/zap` |
 | github.com/rs/zerolog | [`embargozerolog.NewWriter(next, scanner)`](adapters/zerolog/example_test.go) | `adapters/zerolog` |
 | github.com/sirupsen/logrus | [`embargologrus.NewFormatter(next, scanner)`](adapters/logrus/example_test.go) | `adapters/logrus` |
-| net/http server access log | [`embargo.NewHTTPHandler(next, logger, scanner)`](http_example_test.go) | root, standard library only |
+| net/http server access log | [`embargo.NewHTTPHandler(next, logger, scanner)`](example_test.go) | root, standard library only |
 | gRPC server, unary and stream | [`embargogrpc.NewUnaryServerInterceptor(logger, scanner)`](adapters/grpc/example_test.go) | `adapters/grpc` |
 | OpenTelemetry SDK logs and spans | [`embargootel.NewLogExporter(next, scanner)`](adapters/otel/example_test.go) | `adapters/otel` |
 | Sentry events | [`embargosentry.NewBeforeSend(scanner)`](adapters/sentry/example_test.go) | `adapters/sentry` |
 | log, fmt and anything else | `Secret` values, or `embargo.Mask` on the text before writing | root |
 
-<!-- example: slog_example_test.go:ExampleNewSlogHandler_short -->
+<!-- example: example_test.go:ExampleNewSlogHandler_short -->
 ```go
 scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
 logger := slog.New(embargo.NewSlogHandler(next, scanner))
@@ -228,7 +228,7 @@ Guard reruns the package tests and fails when a canary (a fake secret) or a dete
 
 For one test, a recorder checks both that the expected output exists and that no canary escaped:
 
-<!-- test: readme_output_test.go:TestReadmeCheckOutput -->
+<!-- test: doc_test.go:TestReadmeCheckOutput -->
 ```go
 func TestReadmeCheckOutput(t *testing.T) {
     t.Parallel()

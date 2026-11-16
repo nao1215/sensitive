@@ -3,6 +3,7 @@ package embargo
 import (
 	"bytes"
 	"math/rand/v2"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -73,4 +74,24 @@ func TestMaskByteCoverageOracle(t *testing.T) {
 			slices.Reverse(before)
 		}
 	}
+}
+
+func TestMaskUnion(t *testing.T) {
+	t.Parallel()
+	input := []Finding{{Kind: "a", Start: 1, End: 4, Confidence: .5}, {Kind: "b", Start: 3, End: 6, Confidence: 1}, {Kind: "c", Start: 6, End: 7, Confidence: 1}}
+	before := slices.Clone(input)
+	if got := Mask("012345678", input); got != "0[REDACTED][REDACTED]78" {
+		t.Fatal(got)
+	}
+	if got := MaskFunc("012345678", input, func(k Kind, v string) string { return string(k) + ":" + v }); got != "0b:12345c:678" {
+		t.Fatal(got)
+	}
+	if !reflect.DeepEqual(input, before) {
+		t.Fatal("mutated findings")
+	}
+	//nolint:goconst // Assert the literal public redaction contract.
+	if got := Mask("safe", []Finding{{Start: -1, End: 1}}); got != "[REDACTED]" {
+		t.Fatal(got)
+	}
+	mustPanic(t, func() { MaskFunc("", nil, nil) })
 }

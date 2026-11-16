@@ -56,19 +56,19 @@
   {
     "rule": "Runtime public API has runnable godoc Examples",
     "source": "CLAUDE; R3; R6",
-    "check": "doc_sync_test.go#TestExamplesAppearInGodoc",
+    "check": "doc_test.go#TestExamplesAppearInGodoc",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "README Go blocks equal runnable public Examples",
     "source": "R3; R6",
-    "check": "doc_sync_test.go#TestReadmeExamples",
+    "check": "doc_test.go#TestReadmeExamples",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Examples avoid private imports",
     "source": "R6",
-    "check": "doc_sync_test.go#TestPublicExamplesOnlyImportPublicPackages",
+    "check": "doc_test.go#TestPublicExamplesOnlyImportPublicPackages",
     "where": "MultiPlatformUnitTest"
   },
   {
@@ -152,7 +152,7 @@
   {
     "rule": "Structured masking preserves shape and bounds its work",
     "source": "R11",
-    "check": "structured_test.go#TestMaskJSONFailureBounds",
+    "check": "json_test.go#TestMaskJSONFailureBounds",
     "where": "MultiPlatformUnitTest"
   },
   {
@@ -374,7 +374,7 @@
   {
     "rule": "Encoding limits have one current-behavior regression per disguise",
     "source": "M15",
-    "check": "adversarial_test.go#TestAdversarialEncodingBoundary",
+    "check": "json_test.go#TestAdversarialEncodingBoundary",
     "where": "MultiPlatformUnitTest"
   },
   {
@@ -464,7 +464,7 @@
   {
     "rule": "Context cancellation stops subsequent detectors and output",
     "source": "M19",
-    "check": "structured_test.go#TestMaskJSONContextStopsBetweenDetectors",
+    "check": "json_test.go#TestMaskJSONContextStopsBetweenDetectors",
     "where": "MultiPlatformUnitTest"
   },
   {
@@ -476,19 +476,19 @@
   {
     "rule": "README-linked examples run alone without private helper files",
     "source": "M19",
-    "check": "doc_sync_test.go#TestReadmeLinkedExamplesStandalone",
+    "check": "doc_test.go#TestReadmeLinkedExamplesStandalone",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Documentation distinguishes default kinds and raw credential keys",
     "source": "M19",
-    "check": "doc_sync_test.go#TestDefaultPolicyDocumentation",
+    "check": "doc_test.go#TestDefaultPolicyDocumentation",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Standalone-example checks reject missing helper definitions",
     "source": "M19",
-    "check": "doc_sync_test.go#TestStandaloneExamplesRejectMissingHelpers",
+    "check": "doc_test.go#TestStandaloneExamplesRejectMissingHelpers",
     "where": "MultiPlatformUnitTest"
   },
   {

@@ -151,7 +151,7 @@ func TestEncodedBuiltinAndRawCustomOffsets(t *testing.T) {
 	if len(got) != 2 || got[0].Kind != KindEmail || got[0].Start != 0 || got[0].End != len(text) || got[1].Start != 1 || got[1].End != 4 {
 		t.Fatalf("mixed offsets: %+v", got)
 	}
-	if masked := Mask(text, got); masked != "[REDACTED]" {
+	if masked := Mask(text, got); masked != redactionMarker {
 		t.Fatalf("escaped masking: %q", masked)
 	}
 }

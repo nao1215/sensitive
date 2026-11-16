@@ -1,9 +1,13 @@
 package embargo
 
 import (
+	"bytes"
+	"database/sql"
+	"encoding"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -12,8 +16,15 @@ type (
 	namedBytes  []byte
 )
 
+const (
+	jsonNull               = "null"
+	encodedRedactionOutput = `"[REDACTED]"`
+	invalidInputMessage    = "embargo: invalid input"
+)
+
 func (*namedString) UnmarshalJSON([]byte) error { panic("custom decoder called") }
-func (*namedBytes) UnmarshalText([]byte) error  { panic("custom decoder called") }
+
+func (*namedBytes) UnmarshalText([]byte) error { panic("custom decoder called") }
 
 func TestInputSnapshot(t *testing.T) {
 	t.Parallel()
@@ -44,32 +55,30 @@ func TestInputSnapshot(t *testing.T) {
 
 func TestInputFailures(t *testing.T) {
 	t.Parallel()
-	//nolint:goconst // Keep expected marker and error strings independent of production constants.
-	for _, raw := range []string{"null", "true", "123", "{}", "[]", `"unterminated`, `"[REDACTED]"`} {
+	for _, raw := range []string{jsonNull, "true", "123", "{}", "[]", `"unterminated`, encodedRedactionOutput} {
 		var input Input[string]
 		if err := input.UnmarshalText([]byte("previous")); err != nil {
 			t.Fatal(err)
 		}
 		err := input.UnmarshalJSON([]byte(raw))
-		//nolint:goconst // Keep expected marker and error strings independent of production constants.
-		if err == nil || err.Error() != "embargo: invalid input" || input.Secret().Reveal() != "" {
+		if err == nil || err.Error() != invalidInputMessage || input.Secret().Reveal() != "" {
 			t.Fatal("failure contract changed")
 		}
 	}
 	// A byte Input that held a value is cleared by every kind of failure.
-	for _, raw := range []string{`"bad base64!"`, `"W1JFREFDVEVEXQ=="`, "null", "123"} {
+	for _, raw := range []string{`"bad base64!"`, `"W1JFREFDVEVEXQ=="`, jsonNull, "123"} {
 		var input Input[[]byte]
 		if err := input.UnmarshalText([]byte("previous")); err != nil {
 			t.Fatal(err)
 		}
 		err := input.UnmarshalJSON([]byte(raw))
-		if err == nil || err.Error() != "embargo: invalid input" || input.Secret().Reveal() != nil {
+		if err == nil || err.Error() != invalidInputMessage || input.Secret().Reveal() != nil {
 			t.Fatalf("byte failure contract changed for %s", raw)
 		}
 	}
 	var nilInput *Input[string]
 	for _, err := range []error{nilInput.UnmarshalJSON([]byte(`"secret"`)), nilInput.UnmarshalText([]byte("secret"))} {
-		if err == nil || err.Error() != "embargo: invalid input" {
+		if err == nil || err.Error() != invalidInputMessage {
 			t.Fatal("nil receiver contract")
 		}
 	}
@@ -88,7 +97,7 @@ func TestInputMarkerRoundTrip(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if err := dst.UnmarshalJSON(data); err == nil || err.Error() != "embargo: invalid input" {
+			if err := dst.UnmarshalJSON(data); err == nil || err.Error() != invalidInputMessage {
 				t.Fatal("redacted JSON round trip succeeded")
 			}
 		}
@@ -118,4 +127,86 @@ func TestInputDisplay(t *testing.T) {
 	if err != nil || string(data) != redactionMarker {
 		t.Fatal("input text changed")
 	}
+}
+
+//nolint:goconst // Explicit invalid fixtures document the decoder contract.
+func TestInputScanCopiesAndClears(t *testing.T) {
+	t.Parallel()
+	var input Input[[]byte]
+	var scanner sql.Scanner = &input
+	raw := []byte("database-secret")
+	if err := scanner.Scan(raw); err != nil {
+		t.Fatal(err)
+	}
+	snapshot := input.Secret()
+	raw[0] = 'X'
+	if string(snapshot.Reveal()) != "database-secret" {
+		t.Fatal("driver buffer retained")
+	}
+	if err := scanner.Scan("next"); err != nil {
+		t.Fatal(err)
+	}
+	if string(snapshot.Reveal()) != "database-secret" {
+		t.Fatal("snapshot changed")
+	}
+	for _, invalid := range []any{42, true, []byte("[REDACTED]"), "[REDACTED]"} {
+		err := scanner.Scan(invalid)
+		if err == nil || strings.Contains(err.Error(), "REDACTED") || len(input.Secret().Reveal()) != 0 {
+			t.Fatal("failed scan must clear with fixed error")
+		}
+	}
+	if err := scanner.Scan(nil); err != nil || input.Secret().Reveal() != nil {
+		t.Fatal("NULL must clear")
+	}
+	var missing *Input[string]
+	if missing.Scan("x") == nil {
+		t.Fatal("nil receiver accepted")
+	}
+	var named Input[secretText]
+	if err := named.Scan([]byte("raw")); err != nil || named.Secret().Reveal() != "raw" {
+		t.Fatal("named string failed")
+	}
+	var text encoding.TextUnmarshaler = &named
+	if err := text.UnmarshalText([]byte("config-secret")); err != nil || named.Secret().Reveal() != "config-secret" {
+		t.Fatal("text input failed")
+	}
+}
+
+type secretText string
+
+func FuzzInput(f *testing.F) {
+	for _, seed := range []string{`"hello"`, `null`, encodedRedactionOutput, `"W1JFREFDVEVEXQ=="`, `"bad base64!"`, "\xff"} {
+		f.Add([]byte(seed))
+	}
+	f.Fuzz(func(t *testing.T, data []byte) {
+		var text Input[string]
+		var binary Input[[]byte]
+		errText := text.UnmarshalJSON(data)
+		errBytes := binary.UnmarshalJSON(data)
+		var raw *string
+		err := json.Unmarshal(data, &raw)
+		valid := err == nil && raw != nil && *raw != redactionMarker
+		if (errText == nil) != valid {
+			t.Fatal("string decoder disagrees with JSON")
+		}
+		if valid && text.Secret().Reveal() != *raw {
+			t.Fatal("decoded string differs")
+		}
+		if !valid && text.Secret().Reveal() != "" {
+			t.Fatal("failure retained input")
+		}
+		if valid {
+			decoded, err := base64.StdEncoding.DecodeString(*raw)
+			valid = err == nil && string(decoded) != redactionMarker
+			if valid && !bytes.Equal(binary.Secret().Reveal(), decoded) {
+				t.Fatal("decoded bytes differ")
+			}
+		}
+		if (errBytes == nil) != valid {
+			t.Fatal("byte decoder disagrees with base64")
+		}
+		if err := text.UnmarshalText(data); (err == nil) != (string(data) != redactionMarker) {
+			t.Fatal("text redactionMarker boundary changed")
+		}
+	})
 }

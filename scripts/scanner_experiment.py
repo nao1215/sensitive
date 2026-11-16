@@ -27,7 +27,7 @@ def measure(base, cpu):
         tmp = pathlib.Path(tmp)
         baseline = tmp/'base'
         run(['git', 'clone', '--quiet', '--shared', str(base.resolve()), str(baseline)])
-        for name in ('scanner_candidate_experiment_test.go', 'narrowing_benchmark_test.go'):
+        for name in ('scanner_dispatch_test.go', 'scanner_dispatch_test.go'):
             shutil.copy2(ROOT/name, baseline/name)
         for name, where in (('base',baseline), ('head',ROOT)):
             run(['go', 'test', '-c', '-o', str(tmp/(name+'.test')), '.'], where)
