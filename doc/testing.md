@@ -54,7 +54,7 @@ Context, kind selection, encoding or formatting changes findings. Tests: [metamo
 
 ### Quint and model replay
 
-Invalid operation sequences, sticky failures and unsafe replay. Tests: [guard](../tests/models/guard.qnt), [model_replay_test](../embargotest/model_replay_test.go), [model_input_test](../tests/model_input_test.go). CI: `verification:formal`.
+Invalid operation sequences, sticky failures and unsafe replay. Tests: [guard](../tests/models/guard.qnt), [guard_test](../embargotest/guard_test.go), [model_input_test](../tests/model_input_test.go). CI: `verification:formal`.
 
 <a id="lean-reference-proofs"></a>
 
@@ -66,7 +66,7 @@ Arithmetic and interval errors beyond a finite random sample. Tests: [Reference]
 
 ### Intentional snapshots
 
-Unreviewed output shape changes despite correct redaction. Tests: [secret_test](../secret_test.go), [snapshot_test](../adapters/zap/snapshot_test.go), [guard_test](../embargotest/guard_test.go). CI: `unit_test:unit_test`.
+Unreviewed output shape changes despite correct redaction. Tests: [secret_test](../secret_test.go), [adapter_test](../adapters/zap/adapter_test.go), [guard_test](../embargotest/guard_test.go). CI: `unit_test:unit_test`.
 
 <a id="independent-differential-oracles"></a>
 
@@ -78,7 +78,7 @@ A shared implementation mistake in locally written expected values. Tests: [exte
 
 ### Structure-aware fuzzing
 
-Malformed nested paths, quoted credentials and split stream frames. Tests: [fuzz_test](../fuzz_test.go), [guard_fuzz_test](../embargotest/guard_fuzz_test.go). CI: `fuzz:fuzz`.
+Malformed nested paths, quoted credentials and split stream frames. Tests: [fuzz_test](../fuzz_test.go), [fuzz_test](../embargotest/fuzz_test.go). CI: `fuzz:fuzz`.
 
 <a id="mutation-testing"></a>
 
@@ -114,7 +114,7 @@ Stale documentation and unimplemented repository rules. Tests: [check_prose](../
 
 ### Adversarial budgets
 
-Resource amplification, framing spoofing and ambiguous encodings. Tests: [json_test](../json_test.go), [guard_adversarial_test](../embargotest/guard_adversarial_test.go). CI: `heavy:scaling`.
+Resource amplification, framing spoofing and ambiguous encodings. Tests: [json_test](../json_test.go), [guard_test](../embargotest/guard_test.go). CI: `heavy:scaling`.
 
 <!-- techniques:end -->
 

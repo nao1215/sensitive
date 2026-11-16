@@ -48,7 +48,7 @@
     "bug": "Invalid operation sequences, sticky failures and unsafe replay",
     "paths": [
       "tests/models/guard.qnt",
-      "embargotest/model_replay_test.go",
+      "embargotest/guard_test.go",
       "tests/model_input_test.go"
     ],
     "ci": "verification:formal",
@@ -79,7 +79,7 @@
     "bug": "Unreviewed output shape changes despite correct redaction",
     "paths": [
       "secret_test.go",
-      "adapters/zap/snapshot_test.go",
+      "adapters/zap/adapter_test.go",
       "embargotest/guard_test.go"
     ],
     "ci": "unit_test:unit_test",
@@ -110,7 +110,7 @@
     "bug": "Malformed nested paths, quoted credentials and split stream frames",
     "paths": [
       "fuzz_test.go",
-      "embargotest/guard_fuzz_test.go"
+      "embargotest/fuzz_test.go"
     ],
     "ci": "fuzz:fuzz",
     "commands": [
@@ -196,7 +196,7 @@
     "bug": "Resource amplification, framing spoofing and ambiguous encodings",
     "paths": [
       "json_test.go",
-      "embargotest/guard_adversarial_test.go"
+      "embargotest/guard_test.go"
     ],
     "ci": "heavy:scaling",
     "commands": [

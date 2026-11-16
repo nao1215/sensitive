@@ -25,7 +25,7 @@ class HookPolicyTests(unittest.TestCase):
         self.assertIn('BenchmarkHookScaling',text)
         self.assertIn('grpc otel sentry',text)
         for module in ('grpc','otel','sentry'):
-            source=(ROOT/'adapters'/module/'scaling_test.go').read_text()
+            source='\n'.join(path.read_text() for path in (ROOT/'adapters'/module).glob('*_test.go'))
             self.assertIn('TestHookAllocationBudget',source)
             self.assertIn('BenchmarkHookScaling',source)
 

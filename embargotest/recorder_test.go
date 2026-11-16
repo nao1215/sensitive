@@ -2,13 +2,20 @@ package embargotest
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/nao1215/embargo"
 )
 
 type probeTB struct {
@@ -305,4 +312,88 @@ func TestRecorderCleanupReportsLateChange(t *testing.T) {
 	if len(p.messages) != 1 || p.messages[0] != "embargotest: output or registration changed after Check" {
 		t.Fatalf("messages = %q", p.messages)
 	}
+}
+
+func TestQuintRecorderReplay(t *testing.T) {
+	t.Parallel()
+	for _, trace := range modelTraces[recorderState](t, "recorder") {
+		probe := &probeTB{TB: t}
+		recorder := New(probe, WithLimits(4, time.Second), WithScanner(embargo.NewScanner(embargo.WithKinds())))
+		for _, state := range trace {
+			switch state.Op {
+			case "init":
+			case "write":
+				if _, err := io.WriteString(recorder.Writer(strconv.Itoa(state.Which)), "x"); err != nil {
+					t.Fatal(err)
+				}
+			case "expect":
+				recorder.Expect(strconv.Itoa(state.Which), func([]byte) bool { return true })
+			case "check":
+				if recorder.Check() == state.Failed {
+					t.Fatal("Check disagrees with model")
+				}
+			case "cleanup":
+				probe.finish()
+			default:
+				t.Fatal("unknown model operation")
+			}
+			if recorder.retained != int64(state.Size) || recorder.checked != state.Checked || recorder.failed != state.Failed || recorder.reported != state.Reported || (probe.errors > 0) != (state.Errors > 0) {
+				t.Fatalf("state mismatch after %s: model=%+v", state.Op, state)
+			}
+			for _, w := range []int{0, 1} {
+				_, got := recorder.sinks[strconv.Itoa(w)]
+				if got != slices.Contains(state.Writers, w) {
+					t.Fatal("writer registration changed")
+				}
+			}
+		}
+	}
+}
+
+//nolint:tagliatelle // Quint trace field names are the external schema.
+type guardState struct {
+	Op            string `json:"op"`
+	Sizes         []int  `json:"sizes"`
+	Leaks         []int  `json:"leaks"`
+	Replay        []int  `json:"replay"`
+	Phase         int    `json:"phase"`
+	Overflow      bool   `json:"overflow"`
+	Timeout       bool   `json:"timeout"`
+	ScannerFailed bool   `json:"scannerFailed"`
+	ExitFailed    bool   `json:"exitFailed"`
+	Code          int    `json:"code"`
+	Which         int    `json:"which"`
+}
+
+// Child mode uses real OS pipes but exits before the testing runner prints its
+// own framing, so one modeled chunk corresponds to exactly 32 captured bytes.
+//
+
+func TestPanicGoldenHelper(t *testing.T) {
+	t.Parallel()
+	if os.Getenv("EMBARGO_TEST_CHILD") != "TestPanicGoldenHelper" {
+		return
+	}
+	panic(embargo.NewSecret([32]byte{65, 66, 67}))
+}
+
+func TestPanicGolden(t *testing.T) {
+	t.Parallel()
+	version := strings.Split(strings.TrimPrefix(runtime.Version(), "go"), ".")
+	if len(version) < 2 {
+		t.Fatal("unknown Go version")
+	}
+	golden, err := os.ReadFile(filepath.Join("testdata", "panic-go"+version[0]+"."+version[1]+".golden"))
+	if err != nil {
+		t.Fatal("panic golden missing for this Go line")
+	}
+	r := New(t)
+	r.Expect("stderr", func(data []byte) bool {
+		header, _, ok := bytes.Cut(data, []byte("\n\n"))
+		return ok && bytes.Equal(append(header, '\n'), golden) && bytes.Contains(data, []byte("goroutine "))
+	})
+	if err := r.Run(context.Background(), "TestPanicGoldenHelper", 2); err != nil {
+		t.Fatal("panic helper incomplete")
+	}
+	r.Check()
 }

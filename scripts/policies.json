@@ -128,13 +128,13 @@
   {
     "rule": "Recorder requires observed bytes and checked expectations",
     "source": "R6; M14",
-    "check": "embargotest/model_replay_test.go#TestQuintRecorderReplay",
+    "check": "embargotest/recorder_test.go#TestQuintRecorderReplay",
     "where": "Verification"
   },
   {
     "rule": "Guard shares limits and replays only safe complete streams",
     "source": "R12; M14",
-    "check": "embargotest/model_replay_test.go#TestQuintGuardReplay",
+    "check": "embargotest/guard_test.go#TestQuintGuardReplay",
     "where": "Verification"
   },
   {
@@ -518,7 +518,7 @@
   {
     "rule": "Canary fragments retain minimum-length and option-order boundaries",
     "source": "M21",
-    "check": "embargotest/canary_fragment_test.go#TestCanaryFragmentBoundsAndOrder",
+    "check": "embargotest/canary_test.go#TestCanaryFragmentBoundsAndOrder",
     "where": "MultiPlatformUnitTest"
   },
   {

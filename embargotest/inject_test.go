@@ -1,4 +1,4 @@
-package embargotest_test
+package embargotest
 
 import (
 	"bytes"
@@ -7,16 +7,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/nao1215/embargo"
-	"github.com/nao1215/embargo/embargotest"
 )
 
-//nolint:goconst // Each output expectation states the public marker explicitly.
 func TestCanaryHTTPInputs(t *testing.T) {
 	t.Parallel()
-	r := embargotest.New(t)
+	r := New(t)
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "http://example.com/", r.Reader())
 	request.Header = r.Header("Authorization")
 	body, err := io.ReadAll(request.Body)
@@ -37,7 +36,7 @@ func TestCanaryHTTPInputs(t *testing.T) {
 
 func TestCanaryFileInput(t *testing.T) {
 	t.Parallel()
-	r := embargotest.New(t)
+	r := New(t)
 	path := r.File("password")
 	// #nosec G304 -- Private temporary canary file returned by File.
 	data, err := os.ReadFile(path)
@@ -52,4 +51,32 @@ func TestCanaryFileInput(t *testing.T) {
 	}
 	r.Expect("logs", func(data []byte) bool { return len(data) > 0 })
 	r.Check()
+}
+
+type missingFixtureDirectory struct {
+	*probeTB
+
+	directory string
+}
+
+func (p *missingFixtureDirectory) TempDir() string { return p.directory }
+
+func TestCanaryFileRejectsPaths(t *testing.T) {
+	t.Parallel()
+	for _, name := range []string{"", ".", "..", "../password", "dir/password", `dir\password`} {
+		p := &probeTB{TB: t}
+		recorder := New(p)
+		if path := recorder.File(name); path != "" || p.errors != 1 || p.messages[0] != "embargotest: invalid canary filename" {
+			t.Fatalf("invalid name accepted or diagnostic exposed input: %q", name)
+		}
+	}
+}
+
+func TestCanaryFileCreationFailure(t *testing.T) {
+	t.Parallel()
+	p := &missingFixtureDirectory{probeTB: &probeTB{TB: t}, directory: filepath.Join(t.TempDir(), "missing")}
+	recorder := New(p)
+	if path := recorder.File("password"); path != "" || p.errors != 1 || p.messages[0] != "embargotest: canary file creation failed" {
+		t.Fatal("failed fixture write did not return a fixed diagnostic and empty path")
+	}
 }

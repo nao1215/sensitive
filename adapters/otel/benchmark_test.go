@@ -20,13 +20,16 @@ import (
 type discardLog struct{}
 
 func (*discardLog) Export(context.Context, []sdklog.Record) error { return nil }
-func (*discardLog) Shutdown(context.Context) error                { return nil }
-func (*discardLog) ForceFlush(context.Context) error              { return nil }
+
+func (*discardLog) Shutdown(context.Context) error { return nil }
+
+func (*discardLog) ForceFlush(context.Context) error { return nil }
 
 type discardSpan struct{}
 
 func (*discardSpan) ExportSpans(context.Context, []sdktrace.ReadOnlySpan) error { return nil }
-func (*discardSpan) Shutdown(context.Context) error                             { return nil }
+
+func (*discardSpan) Shutdown(context.Context) error { return nil }
 
 func otelScalingCall(tb testing.TB, size int) func() {
 	tb.Helper()
