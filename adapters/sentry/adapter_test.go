@@ -3,6 +3,7 @@ package embargosentry_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -14,7 +15,10 @@ import (
 	embargosentry "github.com/nao1215/embargo/adapters/sentry"
 )
 
-const sentryPassword = "synthetic-password"
+const (
+	sentryPassword = "synthetic-password"
+	sentryMarker   = "[REDACTED]"
+)
 
 type eventTransport struct{ events []*sentry.Event }
 
@@ -88,7 +92,7 @@ func TestOversizedEventIsDropped(t *testing.T) {
 
 func TestClientPreservesAndMasksDynamicSamplingContext(t *testing.T) {
 	t.Parallel()
-	for _, tc := range []struct{ value, want string }{{"cart", "cart"}, {"alice@example.com", "[REDACTED]"}} {
+	for _, tc := range []struct{ value, want string }{{"cart", "cart"}, {"alice@example.com", sentryMarker}} {
 		t.Run(tc.value, func(t *testing.T) {
 			t.Parallel()
 			transport := &eventTransport{}
@@ -120,5 +124,28 @@ func TestClientPreservesAndMasksDynamicSamplingContext(t *testing.T) {
 				t.Fatal("event masking changed attachment or copy behavior")
 			}
 		})
+	}
+}
+
+func TestContextAndTagOriginalKeyContext(t *testing.T) {
+	t.Parallel()
+	event := sentry.NewEvent()
+	event.Timestamp = time.Time{}
+	event.Contexts["extra"] = sentry.Context{}
+	for _, fixture := range []struct {
+		value any
+		key   string
+	}{{731, "cvv"}, {"opaque-client-value", "client_secret"}, {"12/29", "expiry"}} {
+		event.Contexts["extra"][fixture.key] = fixture.value
+		event.Tags[fixture.key] = fmt.Sprint(fixture.value)
+	}
+	safe := embargosentry.NewBeforeSend(embargo.NewScanner())(event, nil)
+	if safe == nil {
+		t.Fatal("missing event")
+	}
+	for key := range event.Tags {
+		if safe.Tags[key] != sentryMarker || safe.Contexts["extra"][key] != sentryMarker {
+			t.Errorf("field %s was not masked", key)
+		}
 	}
 }

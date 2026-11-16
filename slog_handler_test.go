@@ -243,3 +243,142 @@ func TestSlogNilPanicCompatibility(t *testing.T) {
 		}
 	}
 }
+
+// TestSlogOriginalKeyContext ports R18-01 and the review's five binding variants.
+func TestSlogOriginalKeyContext(t *testing.T) {
+	t.Parallel()
+	for _, fixture := range []struct {
+		value any
+		key   string
+	}{{731, "cvv"}, {"opaque-client-value", "client_secret"}, {12345678, "bank account"}, {"12/29", "expiry"}} {
+		for _, mode := range []string{"direct", "WithAttrs", "group", "LogValuer", "error", "any scalar"} {
+			t.Run(fixture.key+"/"+mode, func(t *testing.T) {
+				t.Parallel()
+				var out bytes.Buffer
+				logger := slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: omitRecordTime}), embargo.NewScanner()))
+				value := fmt.Sprint(fixture.value)
+				switch mode {
+				case "direct":
+					logger.Info("event", fixture.key, fixture.value)
+				case "WithAttrs":
+					logger.With(fixture.key, fixture.value).Info("event")
+				case "group":
+					logger.Info("event", slog.Group("request", fixture.key, fixture.value))
+				case "LogValuer":
+					logger.Info("event", fixture.key, secretLogValue(value))
+				case "error":
+					logger.Info("event", fixture.key, errors.New(value))
+				case "any scalar":
+					logger.Info("event", fixture.key, json.RawMessage(strconv.Quote(value)))
+				}
+				if out.Len() == 0 || strings.Contains(out.String(), value) || !strings.Contains(out.String(), "[REDACTED]") {
+					t.Fatalf("context lost: %s", out.String())
+				}
+			})
+		}
+	}
+}
+
+// Both standard handlers must be safe even when only the other rendering matches.
+func TestSlogEncodedRepresentations(t *testing.T) {
+	t.Parallel()
+	instant := time.Date(2026, time.November, 16, 12, 34, 56, 123456789, time.FixedZone("fixture", 3600))
+	for _, fixture := range []struct {
+		name  string
+		value slog.Value
+		text  string
+	}{
+		{"duration integer", slog.DurationValue(time.Duration(4111111111111111)), "4111111111111111"},
+		{"duration text", slog.DurationValue(time.Second), "1s"},
+		{"float decimal", slog.Float64Value(4111111111111111), "4111111111111111"},
+		{"float exponent", slog.Float64Value(4111111111111111), "4.111111111111111e+15"},
+		{"time JSON", slog.TimeValue(instant), "2026-11-16T12:34:56.123456789+01:00"},
+		{"time text", slog.TimeValue(instant), "2026-11-16T12:34:56.123+01:00"},
+		{"int", slog.Int64Value(731), "731"},
+		{"uint", slog.Uint64Value(731), "731"},
+		{"bool", slog.BoolValue(true), "true"},
+		{"string", slog.StringValue("fixture-value"), "fixture-value"},
+	} {
+		for _, jsonOutput := range []bool{false, true} {
+			t.Run(fixture.name+"/"+strconv.FormatBool(jsonOutput), func(t *testing.T) {
+				t.Parallel()
+				var out bytes.Buffer
+				var next slog.Handler = slog.NewTextHandler(&out, nil)
+				if jsonOutput {
+					next = slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: omitRecordTime})
+				}
+				scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(canaryDetector(fixture.text)))
+				h := embargo.NewSlogHandler(next, scanner)
+				r := slog.NewRecord(time.Time{}, slog.LevelInfo, "event", 0)
+				r.AddAttrs(slog.Attr{Key: "value", Value: fixture.value})
+				if err := h.Handle(t.Context(), r); err != nil {
+					t.Fatal(err)
+				}
+				if strings.Contains(out.String(), fixture.text) || !strings.Contains(out.String(), "[REDACTED]") {
+					t.Fatalf("unsafe representation: %s", out.String())
+				}
+			})
+		}
+	}
+}
+
+func TestSlogWithGroupDepth(t *testing.T) {
+	t.Parallel()
+	for _, fixture := range []struct {
+		groups, explicit int
+		rejected         bool
+	}{{64, 0, false}, {65, 0, true}, {63, 1, false}, {64, 1, true}} {
+		t.Run(fmt.Sprintf("%d/%d", fixture.groups, fixture.explicit), func(t *testing.T) {
+			t.Parallel()
+			var out bytes.Buffer
+			h := embargo.NewSlogHandler(slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: omitRecordTime}), embargo.NewScanner())
+			for range fixture.groups {
+				h = h.WithGroup("g")
+			}
+			attr := slog.String("value", "ok")
+			for range fixture.explicit {
+				attr = slog.Group("g", attr)
+			}
+			r := slog.NewRecord(time.Time{}, slog.LevelInfo, "event", 0)
+			r.AddAttrs(attr)
+			err := h.Handle(t.Context(), r)
+			if (err != nil) != fixture.rejected || (fixture.rejected && out.Len() != 0) {
+				t.Fatalf("err=%v output=%s", err, out.String())
+			}
+			bound := h.WithAttrs([]slog.Attr{attr})
+			out.Reset()
+			err = bound.Handle(t.Context(), slog.NewRecord(time.Time{}, slog.LevelInfo, "event", 0))
+			if (err != nil) != fixture.rejected || (fixture.rejected && out.Len() != 0) {
+				t.Fatalf("bound err=%v output=%s", err, out.String())
+			}
+		})
+	}
+}
+
+func TestSlogMasksWithOriginalKeyAfterKeyRedaction(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	scanner := embargo.NewScanner(embargo.WithDetector(canaryDetector("cvv")))
+	slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: omitRecordTime}), scanner)).Info("event", "cvv", 731)
+	if strings.Contains(out.String(), "731") || strings.Count(out.String(), "[REDACTED]") != 2 {
+		t.Fatal(out.String())
+	}
+}
+
+func TestSlogScalarScanBudget(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	h := embargo.NewSlogHandler(slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: omitRecordTime}), embargo.NewScanner())
+	r := slog.NewRecord(time.Time{}, slog.LevelInfo, "event", 0)
+	r.AddAttrs(slog.String("large", strings.Repeat("x", 4<<20)))
+	if err := h.Handle(t.Context(), r); err == nil || out.Len() != 0 {
+		t.Fatal("oversized scalar was forwarded")
+	}
+}
+
+func omitRecordTime(_ []string, attr slog.Attr) slog.Attr {
+	if attr.Key == slog.TimeKey {
+		return slog.Attr{}
+	}
+	return attr
+}

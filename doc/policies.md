@@ -75,6 +75,9 @@ The inventory below translates the owner's active repository instructions into c
 | Documented detector scores agree with representative public scans | M16 | [TestKindConfidenceScores](../tests/cmd/detectordocs/scores_test.go) | Verification |
 | README detector defaults agree with NewScanner behavior | M16 | [TestReadmeDefaults](../tests/cmd/detectordocs/scores_test.go) | Verification |
 | Detector documentation checks stay wired into CI | M16 | [detector_docs](../scripts/check_policies.py) | Verification |
+| Logger scalar masking agrees with original-key JSON context | M19 | [TestLoggerKeyContextDifferential](../tests/slog_handler_test.go) | MultiPlatformUnitTest |
+| Slog scans both standard handler representations | M19 | [TestSlogEncodedRepresentations](../slog_handler_test.go) | MultiPlatformUnitTest |
+| Slog explicit groups and WithGroup share a depth bound | M19 | [TestSlogWithGroupDepth](../slog_handler_test.go) | MultiPlatformUnitTest |
 <!-- policy-map:end -->
 
 ## Changing a rule

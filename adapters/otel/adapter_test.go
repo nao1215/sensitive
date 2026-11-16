@@ -295,3 +295,24 @@ func TestSpanContextsOmitTraceStateWithoutChangingIdentity(t *testing.T) {
 		t.Fatal("source span mutated")
 	}
 }
+
+func TestAttributeOriginalKeyContext(t *testing.T) {
+	t.Parallel()
+	sink := &captureLog{}
+	provider := sdklog.NewLoggerProvider(sdklog.WithProcessor(sdklog.NewSimpleProcessor(embargootel.NewLogExporter(sink, embargo.NewScanner()))))
+	var record apilog.Record
+	record.AddAttributes(attribute.Int64("cvv", 731), attribute.String("client_secret", "opaque-client-value"), attribute.String("expiry", "12/29"))
+	provider.Logger("checkout").Emit(t.Context(), record)
+	if err := provider.Shutdown(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if len(sink.records) != 1 || sink.records[0].AttributesLen() != 3 {
+		t.Fatal("missing attributes")
+	}
+	sink.records[0].WalkAttributes(func(kv attribute.KeyValue) bool {
+		if kv.Value.AsString() != redacted {
+			t.Errorf("unmasked: %v", kv)
+		}
+		return true
+	})
+}

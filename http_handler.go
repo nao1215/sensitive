@@ -77,12 +77,17 @@ func (s *Scanner) httpTarget(target *url.URL) string {
 	if err != nil {
 		return redactionMarker
 	}
+	scan := eventScanner{scanner: s, remaining: maxScanBytes}
 	for key, values := range query {
 		for i, value := range values {
 			if s.sensitiveKey(key) {
 				values[i] = redactionMarker
 			} else {
-				values[i] = Mask(value, s.ScanString(value))
+				masked, scanErr := scan.maskScalar(value, key)
+				if scanErr != nil {
+					return redactionMarker
+				}
+				values[i] = masked
 			}
 		}
 	}

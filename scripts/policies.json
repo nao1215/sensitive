@@ -418,5 +418,23 @@
     "source": "M16",
     "check": "scripts/check_policies.py#detector_docs",
     "where": "Verification"
+  },
+  {
+    "rule": "Logger scalar masking agrees with original-key JSON context",
+    "source": "M19",
+    "check": "tests/slog_handler_test.go#TestLoggerKeyContextDifferential",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Slog scans both standard handler representations",
+    "source": "M19",
+    "check": "slog_handler_test.go#TestSlogEncodedRepresentations",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Slog explicit groups and WithGroup share a depth bound",
+    "source": "M19",
+    "check": "slog_handler_test.go#TestSlogWithGroupDepth",
+    "where": "MultiPlatformUnitTest"
   }
 ]
