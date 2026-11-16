@@ -4,21 +4,57 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0] - 2026-11-16
 
-Round 14 implementation: [PR #83](https://github.com/nao1215/embargo/pull/83), [c7685ad](https://github.com/nao1215/embargo/commit/c7685adc40edbbad3ef87f28b813f68023db9fa8).
+This release adds service and telemetry hooks, opt-in national ID detectors and explicit matching contracts. Users upgrading from v0.4.0 should review the default detector and IP behavior changes in [doc/migration.md](doc/migration.md).
 
-- Exclude unspecified and loopback addresses from ipaddr findings while retaining other private endpoints. Guard diagnostics count untrusted test-start frames without echoing child-controlled names.
-- Add metamorphic relations, Quint lifecycle replay, compiled Lean reference vectors, offline validation oracles, semantic snapshots and structured adversarial fuzzing. Document encoding and resource limits, including My Number's single-digit collision.
-- Check owner policies and prose in CI, verify the Actions lockfile while retaining SHA pins, compare base/head benchmarks on one runner and schedule mutation and scaling separately from pull requests.
+### Service and telemetry hooks
 
+Implementation: [PR #88](https://github.com/nao1215/embargo/pull/88), [76c1692](https://github.com/nao1215/embargo/commit/76c169240e874e100ff007d8c547043af01878ec).
 
-Implementation: [PR #81](https://github.com/nao1215/embargo/pull/81), [9b1baf4](https://github.com/nao1215/embargo/commit/9b1baf479421d5d01736c8aeec7cf331e03579a1).
+- Add `NewHTTPHandler` in the dependency-free root module for net/http access logs, plus separate `github.com/nao1215/embargo/adapters/grpc`, `github.com/nao1215/embargo/adapters/otel` and `github.com/nao1215/embargo/adapters/sentry` modules. They provide unary/stream server interceptors, log/span exporter wrappers and an error-event `BeforeSend` helper. Existing zap, zerolog and logrus adapters remain separate modules; [adapter Examples and contracts](doc/adapters.md) show each integration.
+- HTTP and gRPC mask access records while preserving service requests, responses and errors. OpenTelemetry masks copied telemetry, rejects log batches requiring changes to immutable resource/scope fields and omits span TraceState. Sentry masks a reconstructed event and its sampling context, omits attachments and drops events on masking failure; separate transaction/log/metric callbacks are outside this hook.
 
-- Reject entropy candidates in paths and dotted names, numeric log fragments, operational counters and Java object references under unquoted token keys. Make the Sentry fixture use a fixed long source path. Publish measurements from licensed, checksum-pinned public logs, manual classification rules and FP/GB estimates without redistributing the datasets.
-- Make unlabelled entropy detection opt-in through WithAll or WithKinds. Keep its confidence at 0.3 and the scanner threshold at zero; describe the recall trade-off in the migration notes. Retain all twelve consumer-facing identifiers from rounds 11 and 12 after reviewing their callers.
-- Include the instantiated Secret type in `%#v`, and have CheckValue inspect unexported fmt fields. Explain marker-only persistence, Reveal call-site audits and Go memory-lifetime limits; keep Input's existing marker output.
-- Publish interleaved ten-sample WithKinds measurements and the rejected candidate-lexer experiment. Narrow comparison staleness to measured source and dependency versions while retaining the full source/dependency fingerprint for audit.
+### Opt-in national identifiers
+
+Implementation: [PR #88](https://github.com/nao1215/embargo/pull/88), [76c1692](https://github.com/nao1215/embargo/commit/76c169240e874e100ff007d8c547043af01878ec).
+
+- Add 11 kinds: `KindUSSSN`, `KindUSITIN`, `KindUKNINO`, `KindUKNHS`, `KindIndiaAadhaar`, `KindIndiaPAN`, `KindBrazilCPF`, `KindBrazilCNPJ`, `KindChinaResidentID`, `KindKoreaRRN` and `KindCanadaSIN`. Select only the required kinds with `NewScanner(WithKinds(KindUSSSN, KindCanadaSIN))`, or select all 37 built-ins, including entropy and national IDs, with `NewScanner(WithAll())`. `WithKinds` replaces the built-in selection; `NewScanner()` and a zero Scanner keep the 25 default kinds.
+- Publish checksum/format validation, confidence policies, exact-span synthetic results and sampled real-log false positives in [country detection](doc/countries.md). These kinds remain opt-in because threshold-zero false positives do not meet the default-selection criteria. Modern Korean RRN detection requires an attached label when the legacy checksum does not apply.
+
+### Detector contracts and adoption guide
+
+Implementation: [PR #87](https://github.com/nao1215/embargo/pull/87), [bde782f](https://github.com/nao1215/embargo/commit/bde782fdde887b75882ed2ac8c1a8f73df479b37); [PR #89](https://github.com/nao1215/embargo/pull/89), [f1f5d80](https://github.com/nao1215/embargo/commit/f1f5d80b6c76cf696ec3202bf8d01b28ce659afd); [PR #90](https://github.com/nao1215/embargo/pull/90), [fb9825a](https://github.com/nao1215/embargo/commit/fb9825a82487ecb8849037594b058c2a0f3f0d18).
+
+- Document matching rules, validation, confidence scores and default selection for every Kind in godoc. Generate the README's 37-kind table from those comments, and check the documented scores and defaults against public scanner behavior. Keep interpretation limits and false-positive guidance in the linked detector guides.
+- Reorganize the README around supported outputs, runnable examples and measured evidence, including the new HTTP, gRPC, OpenTelemetry and Sentry boundaries.
+
+### Guard diagnostics and value checks
+
+Implementation: [PR #81](https://github.com/nao1215/embargo/pull/81), [afe881d](https://github.com/nao1215/embargo/commit/afe881d48d3343249becc12f22a7eb42c61c73a3); [PR #83](https://github.com/nao1215/embargo/pull/83), [0839eee](https://github.com/nao1215/embargo/commit/0839eee7502c1b2bd55b5f39e410aba4f71379a1); [PR #86](https://github.com/nao1215/embargo/pull/86), [780b634](https://github.com/nao1215/embargo/commit/780b634915d21ff1782ecd5cde6e1956fb10f949).
+
+- Restore candidate leaking test names in `embargotest.Guard` diagnostics by tracking active, paused and completed tests near observed output. Validate names and their joined representation against canaries, the scanner, character rules and length limits before displaying them; parallel tests and separate stdout/stderr pipes still limit attribution.
+- Include the instantiated `Secret` type in `%#v` and `GoString` output while preserving the redaction marker. Make `CheckValue` inspect unexported fmt fields, exposing domain types whose formatters are bypassed there; [migration notes](doc/migration.md) describe assertion and representation changes.
+
+### Default detection and log false positives
+
+Implementation: [PR #81](https://github.com/nao1215/embargo/pull/81), [afe881d](https://github.com/nao1215/embargo/commit/afe881d48d3343249becc12f22a7eb42c61c73a3); [PR #83](https://github.com/nao1215/embargo/pull/83), [0839eee](https://github.com/nao1215/embargo/commit/0839eee7502c1b2bd55b5f39e410aba4f71379a1).
+
+- Make `KindHighEntropy` opt-in through `WithKinds` or `WithAll`; default scanners, Recorder and Guard no longer report unlabeled entropy candidates. Its confidence remains 0.3 and the default minimum confidence remains zero. Credential assignments and provider prefixes stay enabled by default.
+- Exclude unspecified and loopback IPv4/IPv6 addresses from `KindIPAddr` while retaining other private endpoints. Reject additional path/hostname fragments, numeric log tails, operational counters and unquoted Java object references in the affected detectors; see [behavior migration](doc/migration.md) for the recall trade-offs.
+
+### Severity gates and measured evidence
+
+Implementation: [PR #81](https://github.com/nao1215/embargo/pull/81), [afe881d](https://github.com/nao1215/embargo/commit/afe881d48d3343249becc12f22a7eb42c61c73a3); [PR #82](https://github.com/nao1215/embargo/pull/82), [83e325c](https://github.com/nao1215/embargo/commit/83e325c17805df1ab35f53d115776978bec1b829); [PR #86](https://github.com/nao1215/embargo/pull/86), [780b634](https://github.com/nao1215/embargo/commit/780b634915d21ff1782ecd5cde6e1956fb10f949); [PR #88](https://github.com/nao1215/embargo/pull/88), [76c1692](https://github.com/nao1215/embargo/commit/76c169240e874e100ff007d8c547043af01878ec).
+
+- Add exact-span residual-exposure measurements and a critical-tier gate requiring 100% recall and zero unmasked expected bytes in the committed corpora. Keep severity classification in the test suite and the default threshold at zero; a higher global threshold can drop genuine findings. [Accuracy results](doc/accuracy.md) retain known misses and per-tier trade-offs.
+- Publish sampled false-positive estimates from eight checksum-pinned public log datasets (92.4 MB, 819,576 lines), with licenses and classification rules, plus interleaved kind-selection benchmarks and refreshed library comparisons. Preserve raw evidence and source/dependency fingerprints; sampled log estimates and fixture timings are not deployment-wide guarantees, and previously inspected held data is identified as regression data.
+
+### Testing and CI
+
+Implementation: [PR #83](https://github.com/nao1215/embargo/pull/83), [0839eee](https://github.com/nao1215/embargo/commit/0839eee7502c1b2bd55b5f39e410aba4f71379a1); [PR #85](https://github.com/nao1215/embargo/pull/85), [da42803](https://github.com/nao1215/embargo/commit/da42803e6fd74fa4da85917ba12ad731c4d13122); [PR #86](https://github.com/nao1215/embargo/pull/86), [780b634](https://github.com/nao1215/embargo/commit/780b634915d21ff1782ecd5cde6e1956fb10f949); [PR #88](https://github.com/nao1215/embargo/pull/88), [76c1692](https://github.com/nao1215/embargo/commit/76c169240e874e100ff007d8c547043af01878ec); [PR #89](https://github.com/nao1215/embargo/pull/89), [f1f5d80](https://github.com/nao1215/embargo/commit/f1f5d80b6c76cf696ec3202bf8d01b28ce659afd).
+
+- Add metamorphic checks, Quint lifecycle replay, compiled Lean reference vectors, offline oracles, adversarial fuzz seeds and allocation/scaling budgets. Verify prose, policies and the Actions lockfile in CI, pin the Quint release evaluator, check all adapter dependencies without local replacements, retry module downloads and improve caches. Keep heavier mutation/scaling jobs scheduled; CodeRabbit review is best effort, with green CI and resolved review threads required for merging.
 
 ## [0.4.0] - 2026-11-15
 
@@ -264,6 +300,7 @@ Initial release of the `sensitive` library.
 - Full-width digit normalization: Transparent handling of Japanese full-width digits (U+FF10--U+FF19) for PAN, phone, and My Number detection.
 - Deterministic output: Findings are sorted by confidence (descending), then by byte offset and detector name for fully reproducible results.
 
+[0.5.0]: https://github.com/nao1215/embargo/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/nao1215/embargo/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/nao1215/embargo/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/nao1215/embargo/compare/v0.2.1...v0.2.2
