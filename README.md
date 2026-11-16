@@ -17,7 +17,7 @@
 
 embargo finds secrets and personal data in what a Go program logs, replaces them with `[REDACTED]`, and fails your tests when a fake secret reaches the output.
 
-Masking libraries such as masq hide what you configure: the fields and keys you list, or values that match patterns you write. embargo ships [37 built-in detectors](#find-and-mask-sensitive-text) that check the values themselves, so a card number in a field nobody listed, or a token inside an error message, is masked without writing a rule. The root module has no dependencies.
+Masking libraries such as masq hide the fields and keys you list in advance. embargo checks the values themselves with [37 built-in detectors](#find-and-mask-sensitive-text), so a card number in a field nobody listed, or a token inside an error message, is masked too. The root module has no dependencies.
 
 - [Mask a string](#quick-start): `card=4111111111111111` becomes `card=[REDACTED]`
 - [Wrap slog, zap, zerolog or logrus](#loggers-and-services) without changing the structs you log
