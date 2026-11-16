@@ -87,6 +87,14 @@ func isValidSortCodeBoundary(data []byte, i, end int, sep byte) bool {
 	// another numeric group follows.
 	if end < len(data) && data[end] == sep &&
 		(sep != ' ' || end+1 < len(data) && isDigit(data[end+1])) {
+		// A complete hyphenated code following a space is an independent
+		// token, not another pair in the space-separated candidate.
+		if sep == ' ' && end+8 < len(data) {
+			next, ok := isSortCodePattern(data, end+1)
+			if ok && next == '-' {
+				return true
+			}
+		}
 		return false
 	}
 

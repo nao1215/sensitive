@@ -82,6 +82,13 @@ func (d *MerchantID) Scan(data []byte) []Finding {
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 		seqs := extractDigitsNear(data, m.end, 30, 8, 8)
 		for _, seq := range seqs {
+			// Do not expose a keyword by masking only the numeric portion of
+			// an alphanumeric token; terminal identifiers are whole tokens.
+			if seq.start > 0 && isAlphaNum(data[seq.start-1]) && !encodedSeparatorBefore(data, seq.start) ||
+				seq.end < len(data) && isAlphaNum(data[seq.end]) {
+				continue
+			}
+
 			if overlapsFinding(findings, seq.start, seq.end) {
 				continue
 			}

@@ -34,13 +34,17 @@ func (d *Email) Hints() [][]byte {
 // Scan returns matches in data using the rules documented on [Email].
 func (d *Email) Scan(data []byte) []Finding {
 	var findings []Finding
+	boundary := 0
 
 	for i := range data {
 		if data[i] != '@' {
 			continue
 		}
 
-		localStart, ok := findLocalPartStart(data, i)
+		// An accepted domain is a boundary for the next local part. Walking
+		// through it can reject an adjacent address or create overlapping spans.
+		localStart, ok := findLocalPartStart(data[boundary:], i-boundary)
+		localStart += boundary
 		if !ok {
 			continue
 		}
@@ -78,6 +82,7 @@ func (d *Email) Scan(data []byte) []Finding {
 				Domain: string(domain),
 			},
 		})
+		boundary = domainEnd
 	}
 
 	return findings

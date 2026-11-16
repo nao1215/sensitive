@@ -275,3 +275,12 @@ func TestUKSortCodeTrailingSpace(t *testing.T) {
 		}
 	}
 }
+
+func TestSortCodeAdjacentFormats(t *testing.T) {
+	t.Parallel()
+	input := "sort code: 01 00 00 12-34-56"
+	got := detect.NewUKSortCode().Scan([]byte(input))
+	if len(got) != 2 || got[0].RawValue != "01 00 00" || got[1].RawValue != "12-34-56" {
+		t.Fatalf("adjacent formats: %+v", got)
+	}
+}

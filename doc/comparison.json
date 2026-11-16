@@ -2,9 +2,8 @@
   "date": "2026-11-16",
   "command": "GOMAXPROCS=1 GOTOOLCHAIN=go1.26.11 go -C tests test -run '^$' -bench '^Benchmark(Comparison|StructuredPath)' -benchmem -benchtime=200ms -count=10 .",
   "go": "go version go1.26.11 linux/amd64",
-  "base_commit": "655c366d8a3df64ffda844eeba5656ecb0416f39",
-  "source_sha256": "1f0f22c36b42b1c22708fb9c999e569c0e6d76c9c195cd045d650fb83c069aff",
-  "full_source_sha256": "927c20e240defbff35cf57c1ebdaccb8e0bd5a09356236506449d73a881b4615",
+  "source_sha256": "bfd332a2584c27649f460ad1f4398e77e0b943680b47eba4ebf7ce7758e28c66",
+  "full_source_sha256": "0dc5e1e2046268945092f9b1f5fb0dda2c2de77db92d3c3a705e9ec46a0a8d67",
   "measured_modules": [
     "github.com/bytedance/godlp",
     "github.com/m-mizutani/masq",
@@ -16,8 +15,8 @@
     "golang.org/x/text",
     "gopkg.in/yaml.v2"
   ],
-  "raw_sha256": "3500475d904e7748291757aa89318334546ac94482c639db94b2566a058b7b10",
-  "benchstat_sha256": "b2655646b0d01ee390ea9f2a7c2a952070214fbac301714d01a229567eff17d7",
+  "raw_sha256": "88074de81f70d360e404033847986b76a72fd2db7b14df7e100d0f9d8f9186ed",
+  "benchstat_sha256": "2552f30cbae63853bb5cb2d227a1d79eebddddab84f30822ed8945a8d36bdd0d",
   "cpu": "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S",
   "affinity": [
     0,

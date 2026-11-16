@@ -43,6 +43,11 @@ func TestMerchantIDDetector_Scan(t *testing.T) {
 			wantIDType: detect.MerchantIDTypeMerchant,
 		},
 		{
+			name:    "terminal digits inside an alphanumeric token",
+			input:   "TID 12345678merchant ID ABCDE12345FGHI6",
+			wantLen: 0,
+		},
+		{
 			name:    "no keyword",
 			input:   "ABCDE12345FGHI6",
 			wantLen: 0,

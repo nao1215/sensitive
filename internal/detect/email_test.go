@@ -319,3 +319,23 @@ func TestEmailExactDocumentedScores(t *testing.T) {
 		})
 	}
 }
+
+func TestEmailAdjacentMatches(t *testing.T) {
+	t.Parallel()
+	for _, input := range []string{"0@0..AA+@0.AA", "a@b..com+c@d.com", "a@b.com+c@d.com+e@f.com"} {
+		t.Run(input, func(t *testing.T) {
+			t.Parallel()
+			findings := detect.NewEmail().Scan([]byte(input))
+			end := 0
+			for _, finding := range findings {
+				if finding.Start != end {
+					t.Fatalf("gap or overlap: start=%d, previous end=%d", finding.Start, end)
+				}
+				end = finding.End
+			}
+			if end != len(input) {
+				t.Fatalf("unmasked suffix at %d of %d", end, len(input))
+			}
+		})
+	}
+}

@@ -168,7 +168,7 @@ func TestStructuredFailuresNeverForward(t *testing.T) {
 }
 
 func FuzzMaskJSON(f *testing.F) {
-	for _, seed := range []string{`{"password":"opaque","x":["alice@example.com",12]}`, `[1,true,null]`, `"alice@example.com"`, `{"a":1,"a":2}`} {
+	for _, seed := range []string{`{"password":"opaque","x":["alice@example.com",12]}`, `[1,true,null]`, `"alice@example.com"`, `{"a":1,"a":2}`, `"0@0..AA+@0.AA"`} {
 		f.Add([]byte(seed))
 	}
 	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
