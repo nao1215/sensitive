@@ -32,8 +32,8 @@ class RealLogEvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'invalid classification'):
             real_logs.validate_strata([row], {'pending': {'classification': 'unclassified'}})
 
-    def test_unset_benchmark_baseline_does_not_measure(self):
-        with patch('sys.argv', ['scanner_experiment.py', '--measure', '--base', '']), patch.object(scanner_experiment, 'measure') as measure:
+    def test_invalid_cpu_does_not_measure(self):
+        with patch('sys.argv', ['scanner_experiment.py', '--measure', '--cpu', '-1']), patch.object(scanner_experiment, 'measure') as measure:
             with self.assertRaises(SystemExit):
                 scanner_experiment.main()
             measure.assert_not_called()

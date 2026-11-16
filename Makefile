@@ -69,7 +69,7 @@ DOC_MUTATION_TIMEOUT ?= 10
 
 .PHONY: testing-doc
 testing-doc: ## Publish completed measurement logs (DOC_COVERAGE, DOC_MUTATION, DOC_FUZZ, DOC_COMMIT)
-	python3 scripts/testing_docs.py --coverage "$(DOC_COVERAGE)" --mutation "$(DOC_MUTATION)" --fuzz "$(DOC_FUZZ)" --commit "$(DOC_COMMIT)" --mutation-timeout-coefficient "$(DOC_MUTATION_TIMEOUT)"
+	python3 scripts/testing_docs.py --coverage "$(DOC_COVERAGE)" --mutation "$(DOC_MUTATION)" --fuzz "$(DOC_FUZZ)" --mutation-timeout-coefficient "$(DOC_MUTATION_TIMEOUT)"
 
 .PHONY: doc-figures
 doc-figures: ## Regenerate figures from measured data
@@ -103,4 +103,4 @@ CPU ?= 0
 .PHONY: scanner-experiment
 scanner-experiment: ## Repeat the rejected lexer and kind-selection benchmarks (BASE clone, CPU)
 	@test -n "$(strip $(BASE))" || { echo 'BASE must name a baseline clone' >&2; exit 1; }
-	python3 scripts/scanner_experiment.py --measure --base "$(BASE)" --cpu "$(CPU)"
+	python3 scripts/scanner_experiment.py --measure --cpu "$(CPU)"

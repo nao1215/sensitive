@@ -4,7 +4,6 @@
   "os": "linux",
   "arch": "amd64",
   "cpu": "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S",
-  "commit": "a7dd142532cdcddf8237ba0d099827d27154bf6e",
   "command": "GOMAXPROCS=1 GOTOOLCHAIN=go1.26.11 go -C tests test -run ^$ -bench ^BenchmarkPublished -benchmem -benchtime=200ms -count=10 .",
   "samples": 10,
   "cpu_affinity": [

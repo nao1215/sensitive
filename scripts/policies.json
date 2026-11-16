@@ -1,565 +1,565 @@
 [
   {
     "rule": "Root has no requirements; tools use separate modules",
-    "source": "CLAUDE; R6; M14",
+    "source": "CLAUDE.md",
     "check": "root-module",
     "where": "Verification"
   },
   {
     "rule": "Architecture and package inventory remain explicit",
-    "source": "CLAUDE; R6",
+    "source": "CLAUDE.md",
     "check": "tests/contracts/policy_test.go#TestProductionPackageInventory",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Runtime cannot import test helpers or detector internals",
-    "source": "R6; doc/design.md",
+    "source": "Repository maintenance policy",
     "check": "scripts/check_lint_contracts.py#edges",
     "where": "golangci-lint"
   },
   {
     "rule": "Secrets have no runtime dependencies or implicit SQL output",
-    "source": "R6; R11",
+    "source": "Repository maintenance policy",
     "check": "tests/contracts/policy_test.go#TestSecretFilesHaveNoRuntimeDependencies",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "No struct-tag masking API; Reveal stays explicit",
-    "source": "R11; doc/api-review.md",
+    "source": "Repository maintenance policy",
     "check": "api-boundary",
     "where": "Verification"
   },
   {
     "rule": "No globals; check errors; use typed error comparisons",
-    "source": "CLAUDE",
+    "source": "CLAUDE.md",
     "check": "lint-config",
     "where": "Verification"
   },
   {
     "rule": "Constructor fields and receiver exceptions stay narrow",
-    "source": "R11; R13",
+    "source": "Repository maintenance policy",
     "check": "scripts/check_lint_contracts.py#addedContractField",
     "where": "golangci-lint"
   },
   {
     "rule": "Printing exceptions apply only to runnable Examples",
-    "source": "R13",
+    "source": "Repository maintenance policy",
     "check": "tests/contracts/policy_test.go#TestUncheckedPrintingIsOnlyInExamples",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Exported declarations and fields have useful English godoc",
-    "source": "CLAUDE; M14",
+    "source": "CLAUDE.md",
     "check": "scripts/check_prose.py#godoc",
     "where": "Verification"
   },
   {
     "rule": "Runtime public API has runnable godoc Examples",
-    "source": "CLAUDE; R3; R6",
+    "source": "CLAUDE.md",
     "check": "doc_test.go#TestExamplesAppearInGodoc",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "README Go blocks equal runnable public Examples",
-    "source": "R3; R6",
+    "source": "Repository maintenance policy",
     "check": "doc_test.go#TestReadmeExamples",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Examples avoid private imports",
-    "source": "R6",
+    "source": "Repository maintenance policy",
     "check": "doc_test.go#TestPublicExamplesOnlyImportPublicPackages",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "API signatures and constant values require review",
-    "source": "R6; R13",
+    "source": "Repository maintenance policy",
     "check": "tests/contracts/api_test.go#TestAPIGoldenIncludesConstantValues",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Prose avoids filler, bold, emoji and wrapped paragraphs",
-    "source": "R3; R8; M14",
+    "source": "Repository maintenance policy",
     "check": "scripts/check_prose.py#markdown",
     "where": "Verification"
   },
   {
     "rule": "Godoc varies its openings and avoids repeated benchmark claims",
-    "source": "M14; R13",
+    "source": "Repository maintenance policy",
     "check": "scripts/check_prose.py#repeated-sentence",
     "where": "Verification"
   },
   {
     "rule": "Tables fit a 120-character cell budget with reasoned exceptions",
-    "source": "M14",
+    "source": "Repository maintenance policy",
     "check": "scripts/check_prose.py#table",
     "where": "Verification"
   },
   {
     "rule": "Badge set, order, centered logo and sponsor link stay intact",
-    "source": "CLAUDE; R8; R11",
+    "source": "CLAUDE.md",
     "check": "branding",
     "where": "Verification"
   },
   {
     "rule": "Root coverage is at least 97%; child modules are excluded",
-    "source": "R13",
+    "source": "Repository maintenance policy",
     "check": ".octocov.yml#acceptable: 97%",
     "where": "Coverage"
   },
   {
     "rule": "Tests run on three OSes and minimum/stable Go",
-    "source": "CLAUDE; R6",
+    "source": "CLAUDE.md",
     "check": ".github/workflows/unit_test.yml#macos-latest",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "BSD builds remain; unknown paths run full CI",
-    "source": "R7",
+    "source": "Repository maintenance policy",
     "check": "scripts/test_ci_changes.py#class",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "State failures clear Input and retain Secret snapshots",
-    "source": "R11; M14",
+    "source": "Repository maintenance policy",
     "check": "tests/properties_test.go#TestQuintInputReplay",
     "where": "Verification"
   },
   {
     "rule": "Recorder requires observed bytes and checked expectations",
-    "source": "R6; M14",
+    "source": "Repository maintenance policy",
     "check": "embargotest/recorder_test.go#TestQuintRecorderReplay",
     "where": "Verification"
   },
   {
     "rule": "Guard shares limits and replays only safe complete streams",
-    "source": "R12; M14",
+    "source": "Repository maintenance policy",
     "check": "embargotest/guard_test.go#TestQuintGuardReplay",
     "where": "Verification"
   },
   {
     "rule": "Recorder cannot start detached goroutines",
-    "source": "R6",
+    "source": "Repository maintenance policy",
     "check": "tests/contracts/policy_test.go#TestRecorderDoesNotStartDetachedGoroutines",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Slog failures suppress output and emit fixed errors",
-    "source": "R6; R11",
+    "source": "Repository maintenance policy",
     "check": "slog_handler_test.go#TestSlogSuppressesNormalizationFailures",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Structured masking preserves shape and bounds its work",
-    "source": "R11",
+    "source": "Repository maintenance policy",
     "check": "json_test.go#TestMaskJSONFailureBounds",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "HTTP interim responses share the retention budget",
-    "source": "R6",
+    "source": "Repository maintenance policy",
     "check": "embargotest/detector_test.go#TestInformationalHeadersConsumeTotalBudget",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Hint dispatch agrees with exhaustive scanning",
-    "source": "CLAUDE; R9",
+    "source": "CLAUDE.md",
     "check": "scanner_dispatch_test.go#TestDispatchDifferential",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Clean scanning retains deterministic allocation gates",
-    "source": "CLAUDE; R9",
+    "source": "CLAUDE.md",
     "check": "scanner_dispatch_test.go#TestCleanScanAllocationBudget",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Full-width numeric positions map to original bytes",
-    "source": "CLAUDE; R9",
+    "source": "CLAUDE.md",
     "check": "internal/detect/fullwidth_test.go#TestNormalizationIdentityDifferential",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Confidence is a score; business labels keep lower-confidence findings",
-    "source": "R9",
+    "source": "Repository maintenance policy",
     "check": "internal/detect/label_test.go#TestBusinessLabelsAtFieldBoundaries",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "IP unspecified and loopback addresses are excluded",
-    "source": "M14",
+    "source": "Repository maintenance policy",
     "check": "internal/detect/ipaddr_test.go#Test",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Adapters stay isolated and work without local replace directives",
-    "source": "R7; R11",
+    "source": "Repository maintenance policy",
     "check": "scripts/check_adapter_dependencies.py#replace",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Generated documents have semantic and staleness checks",
-    "source": "R3; R9; M14",
+    "source": "Repository maintenance policy",
     "check": "scripts/test_doc_figures.py#class",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Synthetic corpus is deterministic and exact-span scored",
-    "source": "R9; R12",
+    "source": "Repository maintenance policy",
     "check": "tests/accuracy_test.go#TestAccuracyRequiresExactUnusedSpans",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Real logs are checksum-pinned and raw bytes stay out of Git",
-    "source": "R13",
+    "source": "Repository maintenance policy",
     "check": "scripts/test_real_logs.py#class",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Held data seen during fixes is disclosed",
-    "source": "M14",
+    "source": "Repository maintenance policy",
     "check": "scripts/check_policies.py#held-split",
     "where": "Verification"
   },
   {
     "rule": "Every listed technique has tests and a CI job",
-    "source": "M14",
+    "source": "Repository maintenance policy",
     "check": "technique-links",
     "where": "Verification"
   },
   {
     "rule": "Every rule has an implementation and a CI mapping",
-    "source": "M14",
+    "source": "Repository maintenance policy",
     "check": "scripts/check_policies.py#mapping",
     "where": "Verification"
   },
   {
     "rule": "Fuzz search and mutation are scheduled; PRs run seeds",
-    "source": "R7; M14",
+    "source": "Repository maintenance policy",
     "check": "schedules",
     "where": "Verification"
   },
   {
     "rule": "Quint traces and Lean vectors cannot silently drift",
-    "source": "M14",
+    "source": "Repository maintenance policy",
     "check": "scripts/check_lean.py#lake",
     "where": "Verification"
   },
   {
     "rule": "External oracles use a pinned offline distribution",
-    "source": "M14",
+    "source": "Repository maintenance policy",
     "check": "tests/oracles/validate.py#sha256",
     "where": "Verification"
   },
   {
     "rule": "Benchmarks alternate base and head on one runner",
-    "source": "R6; M14",
+    "source": "Repository maintenance policy",
     "check": "scripts/ci_benchmark.py#order",
     "where": "Verification"
   },
   {
-    "rule": "Every round records workflow and job timings",
-    "source": "M14",
+    "rule": "Every PR records workflow and job timings in its body",
+    "source": "Repository maintenance policy",
     "check": "scripts/check_policies.py#ci-timing",
     "where": "Verification"
   },
   {
     "rule": "Actions use full SHA pins and explicit least privileges",
-    "source": "R11; M14",
+    "source": "Repository maintenance policy",
     "check": "workflow-security",
     "where": "Verification"
   },
   {
     "rule": "Lockfile freshness and remote action provenance are checked",
-    "source": "M14",
+    "source": "Repository maintenance policy",
     "check": ".github/workflows/verification.yml#gh actions-lock --verify",
     "where": "Verification"
   },
   {
     "rule": "Lockfile keys match the full-SHA workflow references exactly",
-    "source": "M14",
+    "source": "Repository maintenance policy",
     "check": "scripts/lock_actions.py#check_exact_refs",
     "where": "Verification"
   },
   {
     "rule": "Vulnerability scans and CodeQL retain scheduled/PR coverage",
-    "source": "R7; R11",
+    "source": "Repository maintenance policy",
     "check": "scripts/check_policies.py#security-scans",
     "where": "Verification"
   },
   {
     "rule": "PR titles are English Conventional Commits without agent trailers",
-    "source": "R6; M14",
+    "source": "Repository maintenance policy",
     "check": "pr-metadata",
     "where": "Verification"
   },
   {
     "rule": "Squash only the owned PR after green CI and resolved review",
-    "source": "R6; M14",
+    "source": "Repository maintenance policy",
     "check": "scripts/check_merge.py#check_merge",
     "where": "Pre-merge audit"
   },
   {
-    "rule": "No force push, release or third-party mutations in this workflow",
-    "source": "M14",
+    "rule": "No force push or third-party mutations; release only when requested",
+    "source": "Repository maintenance policy",
     "check": "scripts/check_merge.py#owned_repository",
     "where": "Pre-merge audit"
   },
   {
     "rule": "Production fixes retain failing-first evidence",
-    "source": "CLAUDE; M14",
+    "source": "CLAUDE.md",
     "check": "scripts/check_policies.py#regression-evidence",
     "where": "Verification"
   },
   {
     "rule": "Guard diagnostics validate names and track active tests",
-    "source": "M15",
+    "source": "Repository maintenance policy",
     "check": "embargotest/guard_names_test.go#TestGuardNamesAtLeak",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Critical recall cannot drop or retain unmasked expected bytes",
-    "source": "M15",
+    "source": "Repository maintenance policy",
     "check": "tests/severity_test.go#TestSeverityAccuracy",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "README techniques link bug classes to individual sections",
-    "source": "M15",
+    "source": "Repository maintenance policy",
     "check": "scripts/test_testing_techniques.py#test_readme_links_each_bug_to_its_section",
     "where": "Verification"
   },
   {
     "rule": "Module downloads retry without retrying failed tests",
-    "source": "M15",
+    "source": "Repository maintenance policy",
     "check": "scripts/test_download_modules.py#test_persistent_failure_is_not_swallowed",
     "where": "Verification"
   },
   {
     "rule": "Quint npm bumps must match the pinned release evaluator",
-    "source": "M15",
+    "source": "Repository maintenance policy",
     "check": "scripts/test_install_quint_evaluator.py#test_changed_expected_version_fails_before_cached_install",
     "where": "Verification"
   },
   {
     "rule": "Production SDK hooks retain real-library integration tests",
-    "source": "M15",
+    "source": "Repository maintenance policy",
     "check": "scripts/test_production_hooks.py#test_sdk_modules_keep_unit_lint_security_and_dependency_checks",
     "where": "Verification"
   },
   {
     "rule": "Country corpora are frozen before implementation and remain reproducible",
-    "source": "M15",
+    "source": "Repository maintenance policy",
     "check": "scripts/test_countries.py#test_frozen_corpus_still_matches_definition",
     "where": "Verification"
   },
   {
     "rule": "Country checksum references are compiled and compared with Go",
-    "source": "M15",
+    "source": "Repository maintenance policy",
     "check": "tests/oracles_test.go#TestLeanReferenceVectors",
     "where": "Verification"
   },
   {
     "rule": "Country precision and residual exposure stay exact-span scored",
-    "source": "M15",
+    "source": "Repository maintenance policy",
     "check": "tests/accuracy_test.go#TestCountryAccuracy",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "New hooks keep allocation budgets and scheduled scaling measurements",
-    "source": "M15",
+    "source": "Repository maintenance policy",
     "check": "scripts/test_production_hooks.py#test_hook_scaling_is_scheduled_for_each_new_module",
     "where": "Verification"
   },
   {
     "rule": "Encoding limits have one current-behavior regression per disguise",
-    "source": "M15",
+    "source": "Repository maintenance policy",
     "check": "json_test.go#TestAdversarialEncodingBoundary",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Country documentation generation uses UTF-8 independently of the host locale",
-    "source": "M15; PR88 review",
+    "source": "Repository maintenance policy",
     "check": "scripts/test_countries.py#test_country_docs_under_ascii_locale",
     "where": "Verification"
   },
   {
     "rule": "Mutation workers and per-test CPUs stay capped at two",
-    "source": "M15",
+    "source": "Repository maintenance policy",
     "check": "scripts/test_production_hooks.py#test_mutation_target_limits_workers_and_test_cpus",
     "where": "Verification"
   },
   {
     "rule": "Every Kind documents matching, validation, scores and default selection",
-    "source": "M16",
+    "source": "Repository maintenance policy",
     "check": "scripts/check_prose.py#kind-contract",
     "where": "Verification"
   },
   {
     "rule": "README detector rows come from godoc and cannot be missing or stale",
-    "source": "M16",
+    "source": "Repository maintenance policy",
     "check": "tests/cmd/detectordocs/main_test.go#TestReadmeFreshness",
     "where": "Verification"
   },
   {
     "rule": "Documented detector scores agree with representative public scans",
-    "source": "M16",
+    "source": "Repository maintenance policy",
     "check": "tests/cmd/detectordocs/main_test.go#TestKindConfidenceScores",
     "where": "Verification"
   },
   {
     "rule": "README detector defaults agree with NewScanner behavior",
-    "source": "M16",
+    "source": "Repository maintenance policy",
     "check": "tests/cmd/detectordocs/main_test.go#TestReadmeDefaults",
     "where": "Verification"
   },
   {
     "rule": "Detector documentation checks stay wired into CI",
-    "source": "M16",
+    "source": "Repository maintenance policy",
     "check": "scripts/check_policies.py#detector_docs",
     "where": "Verification"
   },
   {
     "rule": "Logger scalar masking agrees with original-key JSON context",
-    "source": "M19",
+    "source": "Repository maintenance policy",
     "check": "tests/integrations_test.go#TestLoggerKeyContextDifferential",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Slog scans both standard handler representations",
-    "source": "M19",
+    "source": "Repository maintenance policy",
     "check": "slog_handler_test.go#TestSlogEncodedRepresentations",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Slog explicit groups and WithGroup share a depth bound",
-    "source": "M19",
+    "source": "Repository maintenance policy",
     "check": "slog_handler_test.go#TestSlogWithGroupDepth",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Every documented Kind score survives its inclusive threshold",
-    "source": "M19",
+    "source": "Repository maintenance policy",
     "check": "tests/cmd/detectordocs/main_test.go#checkScoreThreshold",
     "where": "Verification"
   },
   {
     "rule": "Masked-key collisions never restore original telemetry values",
-    "source": "M19",
+    "source": "Repository maintenance policy",
     "check": "adapters/otel/values_test.go#TestMaskedKeyCollisionNeverRestoresOriginal",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Log masking retains dropped counts and metadata",
-    "source": "M19",
+    "source": "Repository maintenance policy",
     "check": "adapters/otel/log_test.go#TestLogPreservesDroppedAttributesAndMetadata",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Span masking retains all telemetry counters",
-    "source": "M19",
+    "source": "Repository maintenance policy",
     "check": "adapters/otel/span_test.go#TestSpanPreservesTelemetryCounters",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Context cancellation stops subsequent detectors and output",
-    "source": "M19",
+    "source": "Repository maintenance policy",
     "check": "json_test.go#TestMaskJSONContextStopsBetweenDetectors",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Every logger handles colliding masked keys without original values",
-    "source": "M19",
+    "source": "Repository maintenance policy",
     "check": "tests/integrations_test.go#TestLoggerMaskedKeyCollisions",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "README-linked examples run alone without private helper files",
-    "source": "M19",
+    "source": "Repository maintenance policy",
     "check": "doc_test.go#TestReadmeLinkedExamplesStandalone",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Documentation distinguishes default kinds and raw credential keys",
-    "source": "M19",
+    "source": "Repository maintenance policy",
     "check": "doc_test.go#TestDefaultPolicyDocumentation",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Standalone-example checks reject missing helper definitions",
-    "source": "M19",
+    "source": "Repository maintenance policy",
     "check": "doc_test.go#TestStandaloneExamplesRejectMissingHelpers",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Logrus Entry.Context cancels formatting and subsequent detector work",
-    "source": "M19",
+    "source": "Repository maintenance policy",
     "check": "adapters/logrus/adapter_test.go#TestEntryContextCancellation",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Adoption cases exercise real outputs and retain declared-policy controls",
-    "source": "M21",
+    "source": "Repository maintenance policy",
     "check": "tests/cases_test.go#TestAdoptionDeclaredControls",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Adoption table is generated from executed cases and checked in CI",
-    "source": "M21",
+    "source": "Repository maintenance policy",
     "check": "scripts/case_docs.py#main",
     "where": "Verification"
   },
   {
     "rule": "Output cases isolate detector decisions from canary and fragment matching",
-    "source": "M21",
+    "source": "Repository maintenance policy",
     "check": "tests/cases_test.go#TestAdoptionCheckIndependence",
     "where": "Verification"
   },
   {
     "rule": "Canary fragments retain minimum-length and option-order boundaries",
-    "source": "M21",
+    "source": "Repository maintenance policy",
     "check": "embargotest/canary_test.go#TestCanaryFragmentBoundsAndOrder",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Local log audits count actual findings without echoing source values",
-    "source": "M21",
+    "source": "Repository maintenance policy",
     "check": "tests/cmd/embargo-audit/main_test.go#TestAuditCountsOffsetsAndNeverEchoesInput",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Diagnostic-preservation recipes retain IDs and expose their recall tradeoff",
-    "source": "M21",
+    "source": "Repository maintenance policy",
     "check": "tests/cases_test.go#TestAuditDiagnosticRecipe",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Detector changes enforce frozen per-Kind accuracy and critical exposure floors",
-    "source": "M21",
+    "source": "Repository maintenance policy",
     "check": "tests/quality_gates_test.go#TestQualityAccuracy",
     "where": "Verification"
   },
   {
     "rule": "Real-log gates compare exact sampled FP rates with explicit per-Kind ceilings",
-    "source": "M21",
+    "source": "Repository maintenance policy",
     "check": "scripts/quality_gate.py#compare_rates",
     "where": "Verification"
   },
   {
     "rule": "Default-scanner medians fail above twenty percent regression on paired samples",
-    "source": "M21",
+    "source": "Repository maintenance policy",
     "check": "scripts/ci_benchmark.py#default_gate",
     "where": "Verification"
   },
   {
     "rule": "Quality jobs use the detector filter and threshold tables cannot silently drift",
-    "source": "M21",
+    "source": "Repository maintenance policy",
     "check": "scripts/quality_docs.py#main",
     "where": "Verification"
   },
   {
     "rule": "Tests stay beside sources or in one file per tests-module subject",
-    "source": "Repository test layout",
+    "source": "Repository maintenance policy",
     "check": "test-file-budget",
     "where": "Verification"
   }

@@ -1,4 +1,4 @@
-"""Replay selected round-13 survivors against each newly added technique."""
+"""Probe selected expressions against independent assertion techniques."""
 import argparse
 import json
 import os
@@ -9,15 +9,14 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# IDs refer to the retained round-13 log, before comment-only line shifts.
 CASES = [
-    ('mask-range', 'CONDITIONALS_BOUNDARY at mask.go:28:27', 'mask.go', 'f.End <= f.Start', 'f.End < f.Start'),
-    ('json-depth', 'CONDITIONALS_BOUNDARY at json.go:79:11', 'json.go', 'depth > maxDepth', 'depth >= maxDepth'),
-    ('json-space', 'CONDITIONALS_NEGATION at json.go:68:12', 'json.go', 'for w.pos < len(w.data) {', 'for w.pos >= len(w.data) {'),
-    ('json-scalar', 'CONDITIONALS_NEGATION at json.go:121:12', 'json.go', "raw[0] == 't'", "raw[0] != 't'"),
-    ('json-escaped', 'CONDITIONALS_NEGATION at json.go:198:32', 'json.go', "bytes.IndexByte(raw, '\\\\') >= 0", "bytes.IndexByte(raw, '\\\\') < 0"),
-    ('json-unmarshal', 'CONDITIONALS_NEGATION at json.go:199:45', 'json.go', 'if err := json.Unmarshal(raw, &text); err != nil {', 'if err := json.Unmarshal(raw, &text); err == nil {'),
-    ('recorder-empty', 'CONDITIONALS_BOUNDARY at embargotest/recorder.go:233:31', 'embargotest/recorder.go', 'len(r.sinks) > 0 && len(r.expectations) > 0', 'len(r.sinks) >= 0 && len(r.expectations) > 0'),
+    ('mask-range', 'mask.go', 'f.End <= f.Start', 'f.End < f.Start'),
+    ('json-depth', 'json.go', 'depth > maxDepth', 'depth >= maxDepth'),
+    ('json-space', 'json.go', 'for w.pos < len(w.data) {', 'for w.pos >= len(w.data) {'),
+    ('json-scalar', 'json.go', "raw[0] == 't'", "raw[0] != 't'"),
+    ('json-escaped', 'json.go', "bytes.IndexByte(raw, '\\\\') >= 0", "bytes.IndexByte(raw, '\\\\') < 0"),
+    ('json-unmarshal', 'json.go', 'if err := json.Unmarshal(raw, &text); err != nil {', 'if err := json.Unmarshal(raw, &text); err == nil {'),
+    ('recorder-empty', 'embargotest/recorder.go', 'len(r.sinks) > 0 && len(r.expectations) > 0', 'len(r.sinks) >= 0 && len(r.expectations) > 0'),
 ]
 GROUPS = {
     'bitmap oracle': ['go', 'test', '.', '-run', '^TestMaskByteCoverageOracle$', '-count=1'],
@@ -49,7 +48,6 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--case', action='append', choices=[row[0] for row in CASES])
     args = parser.parse_args()
-    baseline = (ROOT/'doc/performance/round13-mutation.txt').read_text()
     results = []
     with tempfile.TemporaryDirectory(prefix='embargo-attribution-') as temporary:
         copy = Path(temporary)/'repo'
@@ -58,18 +56,16 @@ def main():
             status, _ = execute(command, copy)
             if status != 'survived':
                 raise RuntimeError('unmutated technique failed: '+name)
-        for name, identity, filename, original, changed in CASES:
+        for name, filename, original, changed in CASES:
             if args.case and name not in args.case:
                 continue
-            if 'LIVED '+identity not in baseline:
-                raise ValueError('not a baseline survivor: '+identity)
             path = copy/filename
             source = path.read_text()
-            if original not in source:
+            if source.count(original) != 1:
                 raise ValueError('mutation site changed: '+name)
             path.write_text(source.replace(original, changed, 1))
             try:
-                row = {'mutant': identity, 'results': {}}
+                row = {'probe': name, 'source': filename, 'original': original, 'replacement': changed, 'results': {}}
                 for technique, command in GROUPS.items():
                     status, output = execute(command, copy)
                     row['results'][technique] = status

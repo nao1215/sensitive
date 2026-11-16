@@ -13,7 +13,6 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--coverage", type=pathlib.Path, required=True)
 parser.add_argument("--mutation", type=pathlib.Path, required=True)
 parser.add_argument("--fuzz", type=pathlib.Path, required=True)
-parser.add_argument("--commit", required=True)
 parser.add_argument("--mutation-timeout-coefficient", type=int, default=10)
 parser.add_argument("--mutation-workers", type=int, default=2)
 args = parser.parse_args()
@@ -40,7 +39,6 @@ if len(fuzz_runs) != len(expected_fuzz) or {run["target"] for run in fuzz_runs} 
     raise ValueError("expected every distinct root-module fuzz target")
 snapshot = {
     "date": datetime.datetime.now(datetime.timezone.utc).date().isoformat(),
-    "commit": args.commit,
     "covered_statements": sum(int(fields[1]) for fields in coverage if int(fields[2]) > 0),
     "total_statements": sum(int(fields[1]) for fields in coverage),
     "mutation": dict(zip(["killed", "lived", "uncovered", "timed_out", "not_viable", "skipped"], map(int, summary.groups()[:6]))),

@@ -144,8 +144,8 @@ def linked_tests():
 def evidence():
     # held-split: the owner has inspected the previous held partition.
     require('held split has been seen' in read('doc/testing.md'), 'disclose held data reuse')
-    # ci-timing: values are observations tied to commits, never guessed durations.
-    require('Workflow | Base' in read('doc/ci.md') and 'Job | Base' in read('doc/ci.md'), 'missing round CI timing tables')
+    # ci-timing: measurements stay in review metadata.
+    require('timing tables in PR bodies only' in read('doc/ci.md'), 'CI timing placement policy missing')
     # regression-evidence: CI checks retention; the report records red-before-green order.
     for path in ['internal/detect/ipaddr_test.go','embargotest/guard_test.go']:
         require((ROOT/path).is_file(), 'regression removed: '+path)

@@ -1,6 +1,5 @@
 {
   "date": "2026-11-15",
-  "commit": "c7685adc40edbbad3ef87f28b813f68023db9fa8",
   "covered_statements": 3026,
   "total_statements": 3115,
   "mutation": {
