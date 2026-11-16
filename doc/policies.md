@@ -87,6 +87,7 @@ The inventory below translates the owner's active repository instructions into c
 | README-linked examples run alone without private helper files | M19 | [TestReadmeLinkedExamplesStandalone](../doc_sync_test.go) | MultiPlatformUnitTest |
 | Documentation distinguishes default kinds and raw credential keys | M19 | [TestDefaultPolicyDocumentation](../doc_sync_test.go) | MultiPlatformUnitTest |
 | Standalone-example checks reject missing helper definitions | M19 | [TestStandaloneExamplesRejectMissingHelpers](../doc_sync_test.go) | MultiPlatformUnitTest |
+| Logrus Entry.Context cancels formatting and subsequent detector work | M19 | [TestEntryContextCancellation](../adapters/logrus/adapter_test.go) | MultiPlatformUnitTest |
 <!-- policy-map:end -->
 
 ## Changing a rule

@@ -1,6 +1,7 @@
 package embargologrus
 
 import (
+	"context"
 	"errors"
 
 	"github.com/sirupsen/logrus"
@@ -34,11 +35,18 @@ func (f *formatter) Format(entry *logrus.Entry) (data []byte, err error) {
 			err = errors.New("embargo: logrus formatting failed")
 		}
 	}()
+	ctx := context.Background()
+	if entry != nil && entry.Context != nil {
+		ctx = entry.Context
+	}
+	if ctx.Err() != nil {
+		return nil, errors.New("embargo: logrus formatting failed")
+	}
 	raw, formatErr := f.next.Format(entry)
 	if formatErr != nil {
 		return nil, errors.New("embargo: logrus formatting failed")
 	}
-	data, err = output.JSON(raw, f.scanner)
+	data, err = output.JSONContext(ctx, raw, f.scanner)
 	complete = true
 	return data, err
 }

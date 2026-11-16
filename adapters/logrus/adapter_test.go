@@ -2,8 +2,10 @@ package embargologrus_test
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
+	"strconv"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -86,5 +88,46 @@ func TestSensitiveKeyPolicy(t *testing.T) {
 		if !bytes.Contains(out.Bytes(), []byte(want)) {
 			t.Fatalf("output %s lacks %s", out.Bytes(), want)
 		}
+	}
+}
+
+type cancelingDetector struct {
+	cancel context.CancelFunc
+	calls  int
+}
+
+func (d *cancelingDetector) Scan([]byte) []embargo.Finding { d.calls++; d.cancel(); return nil }
+
+type countingFormatter struct{ calls int }
+
+func (f *countingFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+	f.calls++
+	return (&logrus.JSONFormatter{DisableTimestamp: true}).Format(entry)
+}
+
+func TestEntryContextCancellation(t *testing.T) {
+	t.Parallel()
+	for _, before := range []bool{false, true} {
+		t.Run(strconv.FormatBool(before), func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			if before {
+				cancel()
+			}
+			first := &cancelingDetector{cancel: cancel}
+			second := &cancelingDetector{cancel: cancel}
+			scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(first), embargo.WithDetector(second))
+			next := &countingFormatter{}
+			entry := logrus.NewEntry(logrus.New()).WithContext(ctx).WithField("field", "public")
+			data, err := embargologrus.NewFormatter(next, scanner).Format(entry)
+			want := 1
+			if before {
+				want = 0
+			}
+			if err == nil || len(data) != 0 || first.calls != want || second.calls != 0 || next.calls != want {
+				t.Fatalf("err=%v bytes=%d scans=%d/%d formats=%d want=%d", err, len(data), first.calls, second.calls, next.calls, want)
+			}
+		})
 	}
 }
