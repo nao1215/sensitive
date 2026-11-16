@@ -2,6 +2,7 @@ package embargo
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"unicode/utf8"
@@ -30,10 +31,18 @@ func jsonFailure() error { return errors.New("embargo: invalid or unmaskable JSO
 // fixed error without input data. It does not modify the source document.
 // Use it before sending JSON API responses, exports or audit records.
 func (scanner *Scanner) MaskJSON(data []byte) (masked []byte, err error) {
-	return scanner.maskJSON(data, "")
+	return scanner.MaskJSONContext(context.Background(), data)
 }
 
-func (scanner *Scanner) maskJSON(data []byte, key string) (masked []byte, err error) {
+// MaskJSONContext applies MaskJSON's policy while checking ctx before and between
+// scalar scans. A canceled or nil context returns no bytes and a fixed error.
+// An already running detector cannot be interrupted.
+// Use it for request-scoped or telemetry work that should stop after cancellation.
+func (scanner *Scanner) MaskJSONContext(ctx context.Context, data []byte) ([]byte, error) {
+	return scanner.maskJSON(ctx, data, "")
+}
+
+func (scanner *Scanner) maskJSON(ctx context.Context, data []byte, key string) (masked []byte, err error) {
 	complete := false
 	defer func() {
 		_ = recover() //nolint:errcheck // Discard panic values, including panic(nil) compatibility mode.
@@ -42,7 +51,7 @@ func (scanner *Scanner) maskJSON(data []byte, key string) (masked []byte, err er
 			err = jsonFailure()
 		}
 	}()
-	if len(data) > maxEventBytes {
+	if ctx == nil || ctx.Err() != nil || len(data) > maxEventBytes {
 		return nil, jsonFailure()
 	}
 	if scanner == nil || len(data) == 0 || !json.Valid(data) {
@@ -51,7 +60,7 @@ func (scanner *Scanner) maskJSON(data []byte, key string) (masked []byte, err er
 
 	data = bytes.TrimSpace(data)
 	walker := jsonWalker{data: data, result: make([]byte, 0, len(data)), scanner: eventScanner{scanner: scanner, remaining: maxScanBytes}}
-	if err := walker.value(0, key, false); err != nil {
+	if err := walker.value(ctx, 0, key, false); err != nil {
 		return nil, jsonFailure()
 	}
 	complete = true
@@ -79,24 +88,24 @@ func (w *jsonWalker) space() {
 	}
 }
 
-func (w *jsonWalker) value(depth int, context string, hidden bool) error {
-	if depth > maxDepth {
+func (w *jsonWalker) value(ctx context.Context, depth int, key string, hidden bool) error {
+	if ctx.Err() != nil || depth > maxDepth {
 		return jsonFailure()
 	}
 	w.space()
-	if !hidden && context != "" && w.scanner.scanner.sensitiveKey(context) {
+	if !hidden && key != "" && w.scanner.scanner.sensitiveKey(key) {
 		w.result = append(w.result, `"`+redactionMarker+`"`...)
 		hidden = true
 	}
 	switch w.data[w.pos] {
 	case '{', '[':
-		if err := w.container(depth, context, hidden); err != nil {
+		if err := w.container(ctx, depth, key, hidden); err != nil {
 			return err
 		}
 	case '"':
 		raw := w.stringToken()
 		if !hidden {
-			if _, err := w.stringValue(raw, context); err != nil {
+			if _, err := w.stringValue(ctx, raw, key); err != nil {
 				return err
 			}
 		}
@@ -110,7 +119,7 @@ func (w *jsonWalker) value(depth int, context string, hidden bool) error {
 			w.pos++
 		}
 		if !hidden {
-			if err := w.scalar(w.data[start:w.pos], context); err != nil {
+			if err := w.scalar(ctx, w.data[start:w.pos], key); err != nil {
 				return err
 			}
 		}
@@ -121,8 +130,8 @@ func (w *jsonWalker) value(depth int, context string, hidden bool) error {
 	return nil
 }
 
-func (w *jsonWalker) scalar(raw []byte, context string) error {
-	masked, err := w.scanner.maskScalar(string(raw), context)
+func (w *jsonWalker) scalar(ctx context.Context, raw []byte, key string) error {
+	masked, err := w.scanner.maskScalar(ctx, string(raw), key)
 	if err != nil {
 		return err
 	}
@@ -134,7 +143,7 @@ func (w *jsonWalker) scalar(raw []byte, context string) error {
 	return nil
 }
 
-func (w *jsonWalker) container(depth int, context string, hidden bool) error {
+func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidden bool) error {
 	open := w.data[w.pos]
 	w.pos++
 	closeByte := byte(']')
@@ -146,12 +155,12 @@ func (w *jsonWalker) container(depth int, context string, hidden bool) error {
 	}
 	w.space()
 	for w.data[w.pos] != closeByte {
-		fieldContext := context
+		fieldContext := key
 		if open == '{' {
 			raw := w.stringToken()
 			if !hidden {
 				var err error
-				fieldContext, err = w.stringValue(raw, "")
+				fieldContext, err = w.stringValue(ctx, raw, "")
 				if err != nil {
 					return err
 				}
@@ -160,7 +169,7 @@ func (w *jsonWalker) container(depth int, context string, hidden bool) error {
 			w.space()
 			w.pos++ // Colon, already checked by json.Valid.
 		}
-		if err := w.value(depth+1, fieldContext, hidden); err != nil {
+		if err := w.value(ctx, depth+1, fieldContext, hidden); err != nil {
 			return err
 		}
 		w.space()
@@ -193,14 +202,14 @@ func (w *jsonWalker) stringToken() []byte {
 }
 
 // Decode escaped strings using encoding/json; plain UTF-8 needs no decoder.
-func (w *jsonWalker) stringValue(raw []byte, context string) (string, error) {
+func (w *jsonWalker) stringValue(ctx context.Context, raw []byte, key string) (string, error) {
 	text := string(raw[1 : len(raw)-1])
 	if bytes.IndexByte(raw, '\\') >= 0 || !utf8.ValidString(text) {
 		if err := json.Unmarshal(raw, &text); err != nil {
 			return "", jsonFailure()
 		}
 	}
-	masked, err := w.scanner.maskScalar(text, context)
+	masked, err := w.scanner.maskScalar(ctx, text, key)
 	if err != nil {
 		return "", err
 	}
@@ -226,20 +235,30 @@ func (w *jsonWalker) appendString(text string) {
 
 // Include the field name so context-based detectors can recognize, for example,
 // {"cvv":123}. Translate findings back to value bytes before replacing them.
-func (s *eventScanner) maskScalar(value, context string) (string, error) {
+func (s *eventScanner) maskScalar(ctx context.Context, value, key string) (string, error) {
+	if ctx.Err() != nil {
+		return "", jsonFailure()
+	}
 	// Charge before allocating the prefix or invoking any detector.
 	prefixBytes := 0
-	if context != "" {
-		prefixBytes = len(context) + len(": ")
+	if key != "" {
+		prefixBytes = len(key) + len(": ")
 	}
 	if prefixBytes > s.remaining || len(value) > s.remaining-prefixBytes {
 		return "", jsonFailure()
 	}
 	s.remaining -= prefixBytes + len(value)
 	if prefixBytes == 0 {
-		return Mask(value, s.scanner.ScanString(value)), nil
+		findings := s.scanner.scan([]byte(value), ctx.Err)
+		if ctx.Err() != nil {
+			return "", jsonFailure()
+		}
+		return Mask(value, findings), nil
 	}
-	findings := s.scanner.ScanString(context + ": " + value)
+	findings := s.scanner.scan([]byte(key+": "+value), ctx.Err)
+	if ctx.Err() != nil {
+		return "", jsonFailure()
+	}
 	spans := make([]Finding, 0, len(findings))
 	for _, finding := range findings {
 		if finding.End <= prefixBytes {

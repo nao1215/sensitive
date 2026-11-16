@@ -2,6 +2,7 @@ package embargo
 
 import (
 	"bufio"
+	"context"
 	"log/slog"
 	"net"
 	"net/http"
@@ -35,6 +36,9 @@ func logHTTPExchange(logger *slog.Logger, scanner *Scanner, r *http.Request, w *
 	defer func() {
 		_ = recover() //nolint:errcheck // Suppress panic values at the logging boundary.
 	}()
+	if r.Context().Err() != nil {
+		return
+	}
 	status := w.status
 	if status == 0 {
 		status = http.StatusOK
@@ -44,14 +48,20 @@ func logHTTPExchange(logger *slog.Logger, scanner *Scanner, r *http.Request, w *
 		header = w.Header()
 	}
 	logger.LogAttrs(r.Context(), slog.LevelInfo, "http request",
-		slog.String("method", r.Method), slog.String("target", scanner.httpTarget(r.URL)),
-		slog.Any("request_headers", scanner.maskHTTPHeaders(r.Header)), slog.Int("status", status),
-		slog.Any("response_headers", scanner.maskHTTPHeaders(header)), slog.Bool("flush_failed", w.flushFailed))
+		slog.String("method", r.Method), slog.String("target", scanner.httpTarget(r.Context(), r.URL)),
+		slog.Any("request_headers", scanner.maskHTTPHeaders(r.Context(), r.Header)), slog.Int("status", status),
+		slog.Any("response_headers", scanner.maskHTTPHeaders(r.Context(), header)), slog.Bool("flush_failed", w.flushFailed))
 }
 
-func (s *Scanner) maskHTTPHeaders(header http.Header) http.Header {
+func (s *Scanner) maskHTTPHeaders(ctx context.Context, header http.Header) http.Header {
+	if ctx.Err() != nil {
+		return nil
+	}
 	safe := header.Clone()
 	for key, values := range safe {
+		if ctx.Err() != nil {
+			return nil
+		}
 		if strings.EqualFold(key, "Authorization") || strings.EqualFold(key, "Cookie") || strings.EqualFold(key, "Set-Cookie") || s.sensitiveKey(key) {
 			safe[key] = []string{redactionMarker}
 		} else if strings.EqualFold(key, "Location") {
@@ -60,7 +70,7 @@ func (s *Scanner) maskHTTPHeaders(header http.Header) http.Header {
 				if err != nil {
 					values[i] = redactionMarker
 				} else {
-					values[i] = s.httpTarget(target)
+					values[i] = s.httpTarget(ctx, target)
 				}
 			}
 		}
@@ -68,7 +78,10 @@ func (s *Scanner) maskHTTPHeaders(header http.Header) http.Header {
 	return safe
 }
 
-func (s *Scanner) httpTarget(target *url.URL) string {
+func (s *Scanner) httpTarget(ctx context.Context, target *url.URL) string {
+	if ctx.Err() != nil {
+		return redactionMarker
+	}
 	copyURL := *target
 	if copyURL.User != nil {
 		copyURL.User = url.User(redactionMarker)
@@ -79,11 +92,14 @@ func (s *Scanner) httpTarget(target *url.URL) string {
 	}
 	scan := eventScanner{scanner: s, remaining: maxScanBytes}
 	for key, values := range query {
+		if ctx.Err() != nil {
+			return redactionMarker
+		}
 		for i, value := range values {
 			if s.sensitiveKey(key) {
 				values[i] = redactionMarker
 			} else {
-				masked, scanErr := scan.maskScalar(value, key)
+				masked, scanErr := scan.maskScalar(ctx, value, key)
 				if scanErr != nil {
 					return redactionMarker
 				}
@@ -92,7 +108,11 @@ func (s *Scanner) httpTarget(target *url.URL) string {
 		}
 	}
 	copyURL.RawQuery = query.Encode()
-	return Mask(copyURL.String(), s.ScanString(copyURL.String()))
+	masked, err := scan.maskScalar(ctx, copyURL.String(), "")
+	if err != nil {
+		return redactionMarker
+	}
+	return masked
 }
 
 type httpLogWriter struct {

@@ -40,13 +40,22 @@ func (e *spanExporter) ExportSpans(ctx context.Context, spans []sdktrace.ReadOnl
 			err = errors.New("embargo: span export failed")
 		}
 	}()
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 	safe := make([]sdktrace.ReadOnlySpan, len(spans))
 	for i, span := range spans {
-		masked, err := maskSpan(e.scanner, span)
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		masked, err := maskSpan(ctx, e.scanner, span)
 		if err != nil {
 			return errors.New("embargo: span export failed")
 		}
 		safe[i] = masked
+	}
+	if ctx.Err() != nil {
+		return ctx.Err()
 	}
 	if err := e.SpanExporter.ExportSpans(ctx, safe); err != nil {
 		return errors.New("embargo: span export failed")
@@ -99,37 +108,39 @@ func (s *spanView) InstrumentationLibrary() instrumentation.Scope { return s.sco
 // Resource returns a resource rebuilt from sanitized attributes.
 func (s *spanView) Resource() *resource.Resource { return s.resource }
 
-func maskSpan(scanner *embargo.Scanner, original sdktrace.ReadOnlySpan) (sdktrace.ReadOnlySpan, error) {
-	view := &spanView{ReadOnlySpan: original, context: original.SpanContext().WithTraceState(trace.TraceState{}), parent: original.Parent().WithTraceState(trace.TraceState{}), name: maskText(scanner, original.Name()), events: slices.Clone(original.Events()), links: slices.Clone(original.Links()), status: original.Status(), scope: original.InstrumentationScope()}
+func maskSpan(ctx context.Context, scanner *embargo.Scanner, original sdktrace.ReadOnlySpan) (sdktrace.ReadOnlySpan, error) {
+	view := &spanView{ReadOnlySpan: original, context: original.SpanContext().WithTraceState(trace.TraceState{}), parent: original.Parent().WithTraceState(trace.TraceState{}), name: original.Name(), events: slices.Clone(original.Events()), links: slices.Clone(original.Links()), status: original.Status(), scope: original.InstrumentationScope()}
 	var err error
-	if view.attrs, err = maskAttributes(scanner, original.Attributes()); err != nil {
+	if view.attrs, err = maskAttributes(ctx, scanner, original.Attributes()); err != nil {
 		return nil, err
 	}
 	for i := range view.events {
-		view.events[i].Name = maskText(scanner, view.events[i].Name)
-		if view.events[i].Attributes, err = maskAttributes(scanner, view.events[i].Attributes); err != nil {
+		if maskErr := maskTextFields(ctx, scanner, &view.events[i].Name); maskErr != nil {
+			return nil, maskErr
+		}
+		if view.events[i].Attributes, err = maskAttributes(ctx, scanner, view.events[i].Attributes); err != nil {
 			return nil, err
 		}
 	}
 	for i := range view.links {
 		view.links[i].SpanContext = view.links[i].SpanContext.WithTraceState(trace.TraceState{})
-		if view.links[i].Attributes, err = maskAttributes(scanner, view.links[i].Attributes); err != nil {
+		if view.links[i].Attributes, err = maskAttributes(ctx, scanner, view.links[i].Attributes); err != nil {
 			return nil, err
 		}
 	}
-	view.status.Description = maskText(scanner, view.status.Description)
-	attrs, err := maskAttributes(scanner, original.Resource().Attributes())
+	schema := original.Resource().SchemaURL()
+	if maskErr := maskTextFields(ctx, scanner, &view.name, &view.status.Description, &schema, &view.scope.Name, &view.scope.Version, &view.scope.SchemaURL); maskErr != nil {
+		return nil, maskErr
+	}
+	attrs, err := maskAttributes(ctx, scanner, original.Resource().Attributes())
 	if err != nil {
 		return nil, err
 	}
-	view.resource = resource.NewWithAttributes(maskText(scanner, original.Resource().SchemaURL()), attrs...)
-	attrs, err = maskAttributes(scanner, view.scope.Attributes.ToSlice())
+	view.resource = resource.NewWithAttributes(schema, attrs...)
+	attrs, err = maskAttributes(ctx, scanner, view.scope.Attributes.ToSlice())
 	if err != nil {
 		return nil, err
 	}
 	view.scope.Attributes = attribute.NewSet(attrs...)
-	view.scope.Name = maskText(scanner, view.scope.Name)
-	view.scope.Version = maskText(scanner, view.scope.Version)
-	view.scope.SchemaURL = maskText(scanner, view.scope.SchemaURL)
 	return view, nil
 }

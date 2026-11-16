@@ -2,6 +2,7 @@ package embargo_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -254,5 +255,36 @@ func TestMaskJSONBooleanAndNullContext(t *testing.T) {
 	want := `{"client_secret":"[REDACTED]","client_secret":"[REDACTED]","clean":true,"empty":null}`
 	if string(got) != want {
 		t.Fatalf("got %s want %s", got, want)
+	}
+}
+
+func TestMaskJSONContextStopsBetweenDetectors(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	first := &cancelingScan{cancel: cancel}
+	second := &cancelingScan{cancel: cancel}
+	scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(first), embargo.WithDetector(second))
+	safe, err := scanner.MaskJSONContext(ctx, []byte(`{"first":"public","second":"public"}`))
+	if err == nil || len(safe) != 0 || first.calls != 1 || second.calls != 0 {
+		t.Fatalf("err=%v bytes=%d calls=%d,%d", err, len(safe), first.calls, second.calls)
+	}
+	safe, err = scanner.MaskJSONContext(ctx, []byte(`"again"`))
+	if err == nil || len(safe) != 0 || first.calls != 1 {
+		t.Fatal("canceled context started another scan")
+	}
+}
+
+func TestMaskJSONContextValidationAndZeroValue(t *testing.T) {
+	t.Parallel()
+	var scanner embargo.Scanner
+	safe, err := scanner.MaskJSONContext(t.Context(), []byte(`{"email":"alice@example.com"}`))
+	if err != nil || string(safe) != `{"email":"[REDACTED]"}` {
+		t.Fatalf("safe=%s err=%v", safe, err)
+	}
+	var missing context.Context
+	safe, err = scanner.MaskJSONContext(missing, []byte(`"public"`))
+	if err == nil || len(safe) != 0 {
+		t.Fatal("nil context accepted")
 	}
 }

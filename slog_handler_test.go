@@ -382,3 +382,38 @@ func omitRecordTime(_ []string, attr slog.Attr) slog.Attr {
 	}
 	return attr
 }
+
+type cancelingScan struct {
+	cancel context.CancelFunc
+	calls  int
+}
+
+func (d *cancelingScan) Scan([]byte) []embargo.Finding { d.calls++; d.cancel(); return nil }
+
+func TestSlogContextCancellation(t *testing.T) {
+	t.Parallel()
+	for _, alreadyCanceled := range []bool{true, false} {
+		t.Run(strconv.FormatBool(alreadyCanceled), func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			if alreadyCanceled {
+				cancel()
+			}
+			detector := &cancelingScan{cancel: cancel}
+			scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(detector))
+			var out bytes.Buffer
+			h := embargo.NewSlogHandler(slog.NewJSONHandler(&out, nil), scanner)
+			r := slog.NewRecord(time.Time{}, slog.LevelInfo, "event", 0)
+			r.AddAttrs(slog.Any("data", map[string]any{"first": "public", "second": "public"}))
+			err := h.Handle(ctx, r)
+			want := 1
+			if alreadyCanceled {
+				want = 0
+			}
+			if err == nil || out.Len() != 0 || detector.calls != want {
+				t.Fatalf("err=%v bytes=%d scans=%d want=%d", err, out.Len(), detector.calls, want)
+			}
+		})
+	}
+}

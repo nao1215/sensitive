@@ -2,6 +2,7 @@ package embargootel
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"strconv"
@@ -12,14 +13,43 @@ import (
 	"github.com/nao1215/embargo"
 )
 
-func maskText(scanner *embargo.Scanner, text string) string {
-	return embargo.Mask(text, scanner.ScanString(text))
+func maskText(ctx context.Context, scanner *embargo.Scanner, text string) (string, error) {
+	var encoded bytes.Buffer
+	if err := json.NewEncoder(&encoded).Encode(text); err != nil {
+		return "", err
+	}
+	masked, err := scanner.MaskJSONContext(ctx, encoded.Bytes())
+	if err != nil {
+		return "", err
+	}
+	var safe string
+	if err := json.Unmarshal(masked, &safe); err != nil {
+		return "", err
+	}
+	return safe, nil
 }
 
-func maskAttributes(scanner *embargo.Scanner, attrs []attribute.KeyValue) ([]attribute.KeyValue, error) {
+func maskTextFields(ctx context.Context, scanner *embargo.Scanner, fields ...*string) error {
+	for _, field := range fields {
+		safe, err := maskText(ctx, scanner, *field)
+		if err != nil {
+			return err
+		}
+		*field = safe
+	}
+	return nil
+}
+
+func maskAttributes(ctx context.Context, scanner *embargo.Scanner, attrs []attribute.KeyValue) ([]attribute.KeyValue, error) {
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
 	result := make([]attribute.KeyValue, 0, len(attrs))
 	for _, kv := range attrs {
-		input, err := attributeInput(kv.Value, 0)
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		input, err := attributeInput(ctx, kv.Value, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -27,7 +57,7 @@ func maskAttributes(scanner *embargo.Scanner, attrs []attribute.KeyValue) ([]att
 		if err != nil {
 			return nil, err
 		}
-		masked, err := scanner.MaskJSON(raw)
+		masked, err := scanner.MaskJSONContext(ctx, raw)
 		if err != nil {
 			return nil, err
 		}
@@ -38,7 +68,7 @@ func maskAttributes(scanner *embargo.Scanner, attrs []attribute.KeyValue) ([]att
 			return nil, err
 		}
 		for key, value := range fields {
-			safe, err := attributeValue(scanner, value, kv.Value)
+			safe, err := attributeValue(ctx, scanner, value, kv.Value)
 			if err != nil {
 				return nil, err
 			}
@@ -48,7 +78,10 @@ func maskAttributes(scanner *embargo.Scanner, attrs []attribute.KeyValue) ([]att
 	return result, nil
 }
 
-func attributeValue(scanner *embargo.Scanner, value any, original attribute.Value) (attribute.Value, error) {
+func attributeValue(ctx context.Context, scanner *embargo.Scanner, value any, original attribute.Value) (attribute.Value, error) {
+	if ctx.Err() != nil {
+		return attribute.Value{}, ctx.Err()
+	}
 	switch v := value.(type) {
 	case nil:
 		return attribute.Value{}, nil
@@ -64,7 +97,8 @@ func attributeValue(scanner *embargo.Scanner, value any, original attribute.Valu
 		return attribute.BoolValue(v), nil
 	case json.Number:
 		if original.Type() == attribute.FLOAT64 {
-			return original, nil
+			number, err := v.Float64()
+			return attribute.Float64Value(number), err
 		}
 		if number, err := v.Int64(); err == nil {
 			return attribute.Int64Value(number), nil
@@ -75,31 +109,39 @@ func attributeValue(scanner *embargo.Scanner, value any, original attribute.Valu
 		}
 		return attribute.Float64Value(number), nil
 	case []any:
-		return attributeSlice(scanner, v, original)
+		return attributeSlice(ctx, scanner, v, original)
 	case map[string]any:
-		templates := make(map[string]attribute.Value)
-		for _, kv := range original.AsMap() {
-			for _, key := range []string{string(kv.Key), maskText(scanner, string(kv.Key))} {
-				if _, exists := templates[key]; !exists {
-					templates[key] = kv.Value
-				}
-			}
-		}
-		fields := make([]attribute.KeyValue, 0, len(v))
-		for key, item := range v {
-			converted, err := attributeValue(scanner, item, templates[key])
-			if err != nil {
-				return attribute.Value{}, err
-			}
-			fields = append(fields, attribute.KeyValue{Key: attribute.Key(key), Value: converted})
-		}
-		return attribute.MapValue(fields...), nil
+		return attributeMap(ctx, scanner, v, original)
 	default:
 		return attribute.Value{}, errors.New("embargo: unsupported telemetry value")
 	}
 }
 
-func attributeSlice(scanner *embargo.Scanner, values []any, original attribute.Value) (attribute.Value, error) {
+func attributeMap(ctx context.Context, scanner *embargo.Scanner, values map[string]any, original attribute.Value) (attribute.Value, error) {
+	templates := make(map[string]attribute.Value)
+	for _, kv := range original.AsMap() {
+		maskedKey, err := maskText(ctx, scanner, string(kv.Key))
+		if err != nil {
+			return attribute.Value{}, err
+		}
+		for _, key := range []string{string(kv.Key), maskedKey} {
+			if _, exists := templates[key]; !exists {
+				templates[key] = kv.Value
+			}
+		}
+	}
+	fields := make([]attribute.KeyValue, 0, len(values))
+	for key, item := range values {
+		converted, err := attributeValue(ctx, scanner, item, templates[key])
+		if err != nil {
+			return attribute.Value{}, err
+		}
+		fields = append(fields, attribute.KeyValue{Key: attribute.Key(key), Value: converted})
+	}
+	return attribute.MapValue(fields...), nil
+}
+
+func attributeSlice(ctx context.Context, scanner *embargo.Scanner, values []any, original attribute.Value) (attribute.Value, error) {
 	result := make([]attribute.Value, 0, len(values))
 	stringsOnly := original.Type() == attribute.STRINGSLICE
 	texts := make([]string, 0, len(values))
@@ -109,7 +151,7 @@ func attributeSlice(scanner *embargo.Scanner, values []any, original attribute.V
 		if i < len(items) {
 			template = items[i]
 		}
-		converted, err := attributeValue(scanner, value, template)
+		converted, err := attributeValue(ctx, scanner, value, template)
 		if err != nil {
 			return attribute.Value{}, err
 		}
@@ -123,15 +165,30 @@ func attributeSlice(scanner *embargo.Scanner, values []any, original attribute.V
 	if stringsOnly {
 		return attribute.StringSliceValue(texts), nil
 	}
-	// Unchanged typed scalar slices retain their SDK type; masking may create mixed slices.
+	// Rebuild typed slices only from sanitized values; colliding keys can select another template.
 	if original.Type() == attribute.INT64SLICE && allType(result, attribute.INT64) {
-		return original, nil
+		numbers := make([]int64, len(result))
+		for i, item := range result {
+			numbers[i] = item.AsInt64()
+		}
+		return attribute.Int64SliceValue(numbers), nil
 	}
 	if original.Type() == attribute.BOOLSLICE && allType(result, attribute.BOOL) {
-		return original, nil
+		flags := make([]bool, len(result))
+		for i, item := range result {
+			flags[i] = item.AsBool()
+		}
+		return attribute.BoolSliceValue(flags), nil
 	}
 	if original.Type() == attribute.FLOAT64SLICE && allNumbers(result) {
-		return original, nil
+		numbers := make([]float64, len(result))
+		for i, item := range result {
+			numbers[i] = item.AsFloat64()
+			if item.Type() == attribute.INT64 {
+				numbers[i] = float64(item.AsInt64())
+			}
+		}
+		return attribute.Float64SliceValue(numbers), nil
 	}
 	return attribute.SliceValue(result...), nil
 }
@@ -154,9 +211,9 @@ func allNumbers(values []attribute.Value) bool {
 	return true
 }
 
-func attributeInput(value attribute.Value, depth int) (any, error) {
+func attributeInput(ctx context.Context, value attribute.Value, depth int) (any, error) {
 	const maxDepth = 64
-	if depth >= maxDepth {
+	if ctx.Err() != nil || depth >= maxDepth {
 		return nil, errors.New("embargo: telemetry nesting limit")
 	}
 	switch value.Type() { //nolint:exhaustive // Scalars already have a JSON-compatible representation.
@@ -165,7 +222,7 @@ func attributeInput(value attribute.Value, depth int) (any, error) {
 	case attribute.MAP:
 		result := make(map[string]any)
 		for _, kv := range value.AsMap() {
-			item, err := attributeInput(kv.Value, depth+1)
+			item, err := attributeInput(ctx, kv.Value, depth+1)
 			if err != nil {
 				return nil, err
 			}
@@ -176,7 +233,7 @@ func attributeInput(value attribute.Value, depth int) (any, error) {
 		values := value.AsSlice()
 		result := make([]any, len(values))
 		for i, item := range values {
-			converted, err := attributeInput(item, depth+1)
+			converted, err := attributeInput(ctx, item, depth+1)
 			if err != nil {
 				return nil, err
 			}

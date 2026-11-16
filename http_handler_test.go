@@ -2,12 +2,14 @@ package embargo_test
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -251,6 +253,34 @@ func TestHTTPOriginalKeyContext(t *testing.T) {
 			embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: omitRecordTime})), embargo.NewScanner()).ServeHTTP(httptest.NewRecorder(), request)
 			if out.Len() == 0 || strings.Contains(out.String(), fixture.value) || strings.Contains(out.String(), url.QueryEscape(fixture.value)) {
 				t.Fatalf("context lost: %s", out.String())
+			}
+		})
+	}
+}
+
+func TestHTTPContextCancellation(t *testing.T) {
+	t.Parallel()
+	for _, alreadyCanceled := range []bool{true, false} {
+		t.Run(strconv.FormatBool(alreadyCanceled), func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			if alreadyCanceled {
+				cancel()
+			}
+			detector := &cancelingScan{cancel: cancel}
+			scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(detector))
+			var out bytes.Buffer
+			next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusAccepted) })
+			handler := embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, nil)), scanner)
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, httptest.NewRequestWithContext(ctx, http.MethodGet, "/pay?first=public&second=public", http.NoBody))
+			want := 1
+			if alreadyCanceled {
+				want = 0
+			}
+			if response.Code != http.StatusAccepted || out.Len() != 0 || detector.calls != want {
+				t.Fatalf("status=%d bytes=%d scans=%d want=%d", response.Code, out.Len(), detector.calls, want)
 			}
 		})
 	}

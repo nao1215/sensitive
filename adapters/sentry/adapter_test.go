@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http/httptest"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -147,5 +149,62 @@ func TestContextAndTagOriginalKeyContext(t *testing.T) {
 		if safe.Tags[key] != sentryMarker || safe.Contexts["extra"][key] != sentryMarker {
 			t.Errorf("field %s was not masked", key)
 		}
+	}
+}
+
+type cancelingScan struct {
+	cancel context.CancelFunc
+	calls  int
+}
+
+func (d *cancelingScan) Scan([]byte) []embargo.Finding { d.calls++; d.cancel(); return nil }
+
+func TestSentryContextCancellation(t *testing.T) {
+	t.Parallel()
+	for _, alreadyCanceled := range []bool{true, false} {
+		t.Run(strconv.FormatBool(alreadyCanceled), func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			if alreadyCanceled {
+				cancel()
+			}
+			detector := &cancelingScan{cancel: cancel}
+			scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(detector))
+			event := sentry.NewEvent()
+			event.Message = "public"
+			got := embargosentry.NewBeforeSend(scanner)(event, &sentry.EventHint{Context: ctx})
+			want := 1
+			if alreadyCanceled {
+				want = 0
+			}
+			if got != nil || detector.calls != want {
+				t.Fatalf("forwarded=%t scans=%d want=%d", got != nil, detector.calls, want)
+			}
+		})
+	}
+}
+
+func TestBeforeSendRequestCancellation(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	detector := &cancelingScan{cancel: cancel}
+	event := sentry.NewEvent()
+	hint := &sentry.EventHint{Request: httptest.NewRequestWithContext(ctx, "GET", "/", nil)}
+	if embargosentry.NewBeforeSend(embargo.NewScanner(embargo.WithDetector(detector)))(event, hint) != nil || detector.calls != 0 {
+		t.Fatal("canceled request scanned or sent")
+	}
+}
+
+func TestBeforeSendMaskedKeyCollision(t *testing.T) {
+	t.Parallel()
+	event := sentry.NewEvent()
+	event.Contexts["extra"] = sentry.Context{"a@example.com": float64(4111111111111111), "z@example.com": 7}
+	event.Tags["a@example.com"] = "4111111111111111"
+	event.Tags["z@example.com"] = "retained"
+	safe := embargosentry.NewBeforeSend(embargo.NewScanner())(event, nil)
+	if safe == nil || safe.Contexts["extra"][sentryMarker] != json.Number("7") || safe.Tags[sentryMarker] != "retained" {
+		t.Fatalf("collision changed safe values: %v", safe)
 	}
 }

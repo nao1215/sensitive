@@ -50,19 +50,22 @@ type slogHandler struct {
 
 // Enabled asks the downstream handler whether this level is enabled.
 func (h *slogHandler) Enabled(ctx context.Context, level slog.Level) bool {
-	return h.next.Enabled(ctx, level)
+	return ctx.Err() == nil && h.next.Enabled(ctx, level)
 }
 
 // Handle masks a copied record before passing it to the downstream handler.
 //
 //nolint:gocritic // slog.Handler requires the record by value.
 func (h *slogHandler) Handle(ctx context.Context, record slog.Record) error {
-	if h.failed {
+	if ctx.Err() != nil || h.failed {
 		return slogSanitizationError()
 	}
-	safe, err := h.sanitizeRecord(&record)
+	safe, err := h.sanitizeRecord(ctx, &record)
 	if err != nil {
 		return err
+	}
+	if ctx.Err() != nil {
+		return slogSanitizationError()
 	}
 	return h.next.Handle(ctx, safe)
 }
@@ -96,7 +99,7 @@ func (h *slogHandler) WithGroup(name string) slog.Handler {
 
 func slogSanitizationError() error { return errors.New("embargo: slog record could not be sanitized") }
 
-func (h *slogHandler) sanitizeRecord(record *slog.Record) (safe slog.Record, err error) {
+func (h *slogHandler) sanitizeRecord(ctx context.Context, record *slog.Record) (safe slog.Record, err error) {
 	completed := false
 	defer func() {
 		if !completed {
@@ -105,14 +108,14 @@ func (h *slogHandler) sanitizeRecord(record *slog.Record) (safe slog.Record, err
 			err = slogSanitizationError()
 		}
 	}()
-	safe = slog.NewRecord(record.Time, record.Level, h.mask(record.Message), record.PC)
+	safe = slog.NewRecord(record.Time, record.Level, h.mask(ctx, record.Message), record.PC)
 	if h.hidden {
 		completed = true
 		return safe, nil
 	}
 	record.Attrs(func(attr slog.Attr) bool {
 		var clean slog.Attr
-		clean, err = h.sanitizeAttr(attr, h.depth)
+		clean, err = h.sanitizeAttr(ctx, attr, h.depth)
 		if err != nil {
 			return false
 		}
@@ -134,7 +137,7 @@ func (h *slogHandler) sanitizeAttrs(attrs []slog.Attr) (safe []slog.Attr, err er
 	}()
 	safe = make([]slog.Attr, 0, len(attrs))
 	for _, attr := range attrs {
-		clean, err := h.sanitizeAttr(attr, h.depth)
+		clean, err := h.sanitizeAttr(context.Background(), attr, h.depth)
 		if err != nil {
 			return nil, err
 		}
@@ -143,15 +146,21 @@ func (h *slogHandler) sanitizeAttrs(attrs []slog.Attr) (safe []slog.Attr, err er
 	completed = true
 	return safe, nil
 }
-func (h *slogHandler) mask(text string) string { return Mask(text, h.scanner.ScanString(text)) }
 
-func (h *slogHandler) sanitizeAttr(attr slog.Attr, depth int) (slog.Attr, error) {
+func (h *slogHandler) mask(ctx context.Context, text string) string {
+	return Mask(text, h.scanner.scan([]byte(text), ctx.Err))
+}
+
+func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth int) (slog.Attr, error) {
 	const maxDepth = 64
 	const maxLogValues = 100
-	if depth > maxDepth {
+	if ctx.Err() != nil || depth > maxDepth {
 		return slog.Attr{}, slogSanitizationError()
 	}
-	key := h.mask(attr.Key)
+	key := h.mask(ctx, attr.Key)
+	if ctx.Err() != nil {
+		return slog.Attr{}, slogSanitizationError()
+	}
 	if h.scanner.sensitiveKey(attr.Key) {
 		return slog.String(key, redactionMarker), nil
 	}
@@ -159,7 +168,7 @@ func (h *slogHandler) sanitizeAttr(attr slog.Attr, depth int) (slog.Attr, error)
 	// Calling LogValue directly lets the outer boundary discard panic values.
 	// Value.Resolve converts panic contents to an error, which could reveal them.
 	for count := 0; value.Kind() == slog.KindLogValuer; count++ {
-		if count == maxLogValues {
+		if ctx.Err() != nil || count == maxLogValues {
 			return slog.Attr{}, slogSanitizationError()
 		}
 		value = value.LogValuer().LogValue()
@@ -169,7 +178,7 @@ func (h *slogHandler) sanitizeAttr(attr slog.Attr, depth int) (slog.Attr, error)
 		attrs := value.Group()
 		safe := make([]slog.Attr, 0, len(attrs))
 		for _, child := range attrs {
-			clean, err := h.sanitizeAttr(child, depth+1)
+			clean, err := h.sanitizeAttr(ctx, child, depth+1)
 			if err != nil {
 				return slog.Attr{}, err
 			}
@@ -177,9 +186,9 @@ func (h *slogHandler) sanitizeAttr(attr slog.Attr, depth int) (slog.Attr, error)
 		}
 		return slog.Attr{Key: key, Value: slog.GroupValue(safe...)}, nil
 	case slog.KindAny:
-		return h.sanitizeAny(key, attr.Key, value.Any())
+		return h.sanitizeAny(ctx, key, attr.Key, value.Any())
 	case slog.KindString, slog.KindBool, slog.KindDuration, slog.KindFloat64, slog.KindInt64, slog.KindTime, slog.KindUint64:
-		return h.sanitizeScalar(key, attr.Key, value)
+		return h.sanitizeScalar(ctx, key, attr.Key, value)
 
 	case slog.KindLogValuer:
 		return slog.Attr{}, slogSanitizationError()
@@ -197,15 +206,15 @@ func (v maskedJSON) MarshalJSON() ([]byte, error) { return v, nil }
 // String passes a previously masked error message to the logger.
 func (v maskedJSON) String() string { return string(v) }
 
-func (h *slogHandler) sanitizeAny(key, originalKey string, value any) (slog.Attr, error) {
+func (h *slogHandler) sanitizeAny(ctx context.Context, key, originalKey string, value any) (slog.Attr, error) {
 	if errValue, ok := value.(error); ok {
-		return h.sanitizeScalar(key, originalKey, slog.StringValue(errValue.Error()))
+		return h.sanitizeScalar(ctx, key, originalKey, slog.StringValue(errValue.Error()))
 	}
 	encoded, err := json.Marshal(value)
 	if err != nil {
 		return slog.Attr{}, slogSanitizationError()
 	}
-	safe, err := h.scanner.maskJSON(encoded, originalKey)
+	safe, err := h.scanner.maskJSON(ctx, encoded, originalKey)
 	if err != nil {
 		return slog.Attr{}, slogSanitizationError()
 	}
@@ -215,7 +224,7 @@ func (h *slogHandler) sanitizeAny(key, originalKey string, value any) (slog.Attr
 // Inspect both standard handlers' scalar representations before retaining a typed value.
 // Any values are frozen as masked JSON, so their original TextMarshaler and String
 // methods cannot introduce another representation after this boundary.
-func (h *slogHandler) sanitizeScalar(key, originalKey string, value slog.Value) (slog.Attr, error) {
+func (h *slogHandler) sanitizeScalar(ctx context.Context, key, originalKey string, value slog.Value) (slog.Attr, error) {
 	representations := []string{value.String()}
 	switch value.Kind() { //nolint:exhaustive // Only these kinds have additional standard-handler encodings.
 	case slog.KindTime:
@@ -231,7 +240,7 @@ func (h *slogHandler) sanitizeScalar(key, originalKey string, value slog.Value) 
 	}
 	scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
 	for _, text := range representations {
-		masked, err := scan.maskScalar(text, originalKey)
+		masked, err := scan.maskScalar(ctx, text, originalKey)
 		if err != nil {
 			return slog.Attr{}, slogSanitizationError()
 		}
