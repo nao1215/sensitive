@@ -349,6 +349,34 @@ Round 13 scanner medians (ten interleaved samples):
 
 Same slog events through masq v0.2.3: 7–67% less time and fewer allocations on all five events. [Comparison](doc/comparison.md) · [benchstat](doc/comparison.benchstat.txt)
 
+## Compared with other Go libraries
+
+masq, slog-formatter and go-mask hide what you configure: types, struct tags, field names, log keys or your own regular expressions. godlp has built-in rules for strings, maps and JSON, but no logger integration, and its repository has been archived since 2023. None of them documents a way to fail tests when a secret reaches the output.
+
+| | embargo | [masq](https://github.com/m-mizutani/masq) v0.2.3 | [slog-formatter](https://github.com/samber/slog-formatter) v1.3.0 | [go-mask](https://github.com/showa-93/go-mask) v0.6.2 | [godlp](https://github.com/bytedance/godlp) v1.2.15 |
+|---|---|---|---|---|---|
+| Decides what to hide by | 37 detectors that read the values, plus key rules | types, tags, field names, your regexes | formatters you attach to keys or types | fields you register | its built-in rules |
+| Works with | slog, zap, zerolog, logrus, net/http, gRPC, OpenTelemetry, Sentry | slog | slog | Go values | strings, maps, JSON |
+| Secret inside a log message | masked; the rest of the message stays | masked with your regex; the whole message is replaced | not masked | not masked | partly masked |
+| Test that fails on a leak | `embargotest.Guard` | none | none | none | none |
+| Direct dependencies | 0 | 1 | 2 | 2 | 1 |
+
+The same service logs a planted password and token through each library, configured as its documentation describes. caught means the value is absent from every log line, response body and header:
+
+<!-- leak-scenarios:start -->
+| Service output | embargo slog | embargo zap | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 |
+|---|---|---|---|---|---|
+| Password under the key `password` | caught | caught | caught | caught | caught |
+| Config struct holding a database DSN | caught | caught | caught | leaked | leaked |
+| DSN inside a wrapped error | caught | caught | caught | leaked | leaked |
+| DSN and token in errors.Join | caught | caught | leaked | leaked | leaked |
+| Bearer token in a log message | caught | caught | leaked | leaked | leaked |
+| API token in a log message | caught | caught | leaked | leaked | leaked |
+| Token in a redirect URL, never logged | leaked | leaked | leaked | leaked | leaked |
+<!-- leak-scenarios:end -->
+
+The redirect row leaks for every library because the token never passes a logger; `embargotest.HTTP` catches it in tests. On the same slog events embargo is also faster than masq ([Benchmarks](#benchmarks)). Configurations, exact outputs, [twelve more leak cases](doc/cases.md) and where the other libraries fit better are in [doc/comparison.md](doc/comparison.md).
+
 ## Contributing
 
 [Report a bug](https://github.com/nao1215/embargo/issues) → [add a synthetic regression](CONTRIBUTING.md) → open a pull request. You can also [sponsor maintenance](https://github.com/sponsors/nao1215).
