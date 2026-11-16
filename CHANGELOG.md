@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Docs
 
+- Correct v0.5 default-selection and raw credential-key guidance (R18-08), and make every README-linked example file runnable in an isolated consumer module (R18-09). Include OTel exporters and Guard fixtures in their own examples; reject missing helpers in doc sync checks. [c8a1cfc](https://github.com/nao1215/embargo/commit/c8a1cfc1dbe74c2a0da7f9da6c2a0737a03fc96e).
+
 - Document cancellation boundaries and OTel counter-preserving rejection, and enforce collision and telemetry invariants through repository policies. [5b9b76c](https://github.com/nao1215/embargo/commit/5b9b76c91cd7d5684c853e5e1763c263e9fc765b).
 
 - Describe original-key scanning and scalar representations; retain differential logger and other-hook context checks in the policy inventory. Refresh measured comparison and real-log evidence after their source checks fail. [PR #94](https://github.com/nao1215/embargo/pull/94), [9e0e6f0](https://github.com/nao1215/embargo/commit/9e0e6f049fda9a82747a8fbec4cecae32d9723de).
