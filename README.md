@@ -15,19 +15,25 @@
   <img src="doc/images/logo-small.png" alt="Go gopher peeking over the embargo title, with email and token values blacked out" width="320">
 </p>
 
-A checkout struct gains a card field after its password masking tag was written. The password stays hidden; the new card reaches the log. embargo scans the values at the output boundary and masks that card without changing the struct. [Run this case and eleven others](doc/cases.md), including encoded tokens caught only by the output test and partial values that both checks miss.
+embargo finds secrets and personal data in the text and values a Go program logs, and replaces them with `[REDACTED]`. A test helper in the same module fails your tests when a fake secret reaches that output.
 
-embargo provides sensitive-text detection, masking and output tests for Go applications.
+Masking packages for Go, such as masq, go-mask and the PII formatter in slog-formatter, act on names you declare in advance: a struct tag, a field name, a log key. A value under a name nobody declared is written as it is, for example a card number in a field added after the rules were written, a password inside a database DSN, or an access token in an error returned by an HTTP client. embargo inspects the values instead. Its [37 built-in detectors](#find-and-mask-sensitive-text) cover payment cards, bank account formats, cloud and SaaS credentials, JWTs, email addresses, phone numbers and national ID numbers. Each match is validated with the format's checksum or structure, and only the matched characters are replaced, so the rest of the log line stays readable.
 
-| You have | embargo |
-|---|---|
-| An API key or password in a variable | [`Secret`](#values-that-must-never-print) prints `[REDACTED]` through fmt, slog, JSON, XML, templates, zap, zerolog, logrus and panics |
-| Card numbers, emails, national IDs or DSN passwords inside free text | [37 built-in detectors](#find-and-mask-sensitive-text) find them and replace only the matched part |
-| Structs you already log or return as JSON | [Field values and key names are checked](#mask-structs-without-changing-their-types); no tags and no new field types |
-| slog, zap, zerolog, logrus, net/http, gRPC, OpenTelemetry or Sentry | [One handler, adapter or hook for each](#loggers-and-services); clean JSON fields keep their shape; sensitive-key subtrees become markers |
-| Tests that should catch a leak | [One line in TestMain](#fail-tests-on-leaks) fails the package when a planted fake secret reaches its output |
-| Meaning of a passing output test | [Canary bytes are independent of detectors; output rescans repeat their judgment](doc/testing-output.md#what-a-pass-proves) |
-| A decision to make before adopting it | [Precision, recall, false positives on public logs](#accuracy) and [benchmarks](#benchmarks) produced by tests and CI |
+The test helper is `embargotest.Guard`, installed with one line in `TestMain`. It reruns the package tests in a child process and fails the package when its fake secret, which your fixtures use in place of real credentials, appears in stdout, stderr, slog output, t.Log, a panic or a process the tests start. The fake secret is matched byte for byte and in its hex, base64 and JSON-escaped forms, so this check does not rely on the detectors. Guard also runs the detectors over the same output and fails on what they find.
+
+The root module depends only on the standard library and is tested on Linux, macOS and Windows. Adapters for zap, zerolog, logrus, gRPC, OpenTelemetry and Sentry are separate modules, so you only download the SDK you use.
+
+Values cut down to their last four digits, or split across two log lines, are not detected. [Twelve leak cases](doc/cases.md) show what embargo, masq tags, a hand-written redact function and a key denylist each catch and miss.
+
+## What you can do with it
+
+- [Mask a string](#quick-start): `card=4111111111111111` becomes `card=[REDACTED]`.
+- [Wrap a slog handler](#mask-structs-without-changing-their-types), or a [zap, zerolog or logrus writer](#loggers-and-services), without changing the structs you log.
+- [Mask JSON](#mask-structs-without-changing-their-types) that does not go through a logger, such as an API response; numbers and booleans keep their types.
+- Keep API keys and passwords in a [`Secret`](#values-that-must-never-print), which prints `[REDACTED]` through fmt, encoding/json, encoding/xml, templates and the supported loggers.
+- [Mask the logs](#loggers-and-services) of net/http and gRPC servers, OpenTelemetry log records and spans, and Sentry events.
+- [Fail a package's tests](#fail-tests-on-leaks) when a fake secret reaches its output.
+- Check [precision and recall per detector](#accuracy), false positives measured on public system logs, and [benchmarks](#benchmarks).
 
 ## Quick start
 
