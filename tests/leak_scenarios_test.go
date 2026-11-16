@@ -114,8 +114,18 @@ func TestLeakScenarios(t *testing.T) {
 	modes := []string{scenarioSlog, scenarioZap, "masq", "slog-formatter", "go-mask"}
 	var table strings.Builder
 	writeComparisonTable(t, &table, "| Service output | embargo slog | embargo zap | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 |\n|---|---|---|---|---|---|\n")
-	for _, path := range []string{"declared", "config", scenarioErrorKey, "joined", "request", scenarioTokenKey, scenarioRedirect} {
-		writeComparisonTable(t, &table, "| %s |", path)
+	rows := []struct{ path, label string }{
+		{"declared", "Password under the key `password`"},
+		{"config", "Config struct holding a database DSN"},
+		{scenarioErrorKey, "DSN inside a wrapped error"},
+		{"joined", "DSN and an API key joined with errors.Join"},
+		{"request", "Bearer header value in a log message"},
+		{scenarioTokenKey, "Third-party API key in a log message"},
+		{scenarioRedirect, "Redirect URL query, never logged"},
+	}
+	for _, row := range rows {
+		path := row.path
+		writeComparisonTable(t, &table, "| %s |", row.label)
 		for _, mode := range modes {
 			var logs bytes.Buffer
 			password := "pretend-database-password"
@@ -145,6 +155,7 @@ func TestLeakScenarios(t *testing.T) {
 		writeComparisonTable(t, &table, "\n")
 	}
 	syncDocTable(t, "../doc/comparison.md", "leak-scenarios", table.String())
+	syncDocTable(t, "../README.md", "leak-scenarios", table.String())
 }
 
 func TestLeakScenarioGuard(t *testing.T) {

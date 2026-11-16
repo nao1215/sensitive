@@ -100,13 +100,13 @@ The runnable `scenarioService` handles HTTP requests using a database DSN, an op
 <!-- leak-scenarios:start -->
 | Service output | embargo slog | embargo zap | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 |
 |---|---|---|---|---|---|
-| declared | caught | caught | caught | caught | caught |
-| config | caught | caught | caught | leaked | leaked |
-| error | caught | caught | caught | leaked | leaked |
-| joined | caught | caught | leaked | leaked | leaked |
-| request | caught | caught | leaked | leaked | leaked |
-| token | caught | caught | leaked | leaked | leaked |
-| redirect | leaked | leaked | leaked | leaked | leaked |
+| Password under the key `password` | caught | caught | caught | caught | caught |
+| Config struct holding a database DSN | caught | caught | caught | leaked | leaked |
+| DSN inside a wrapped error | caught | caught | caught | leaked | leaked |
+| DSN and an API key joined with errors.Join | caught | caught | leaked | leaked | leaked |
+| Bearer header value in a log message | caught | caught | leaked | leaked | leaked |
+| Third-party API key in a log message | caught | caught | leaked | leaked | leaked |
+| Redirect URL query, never logged | leaked | leaked | leaked | leaked | leaked |
 <!-- leak-scenarios:end -->
 
 Run `make leak-scenarios` to regenerate this table. `TestLeakScenarios` checks it for staleness, and `TestLeakScenarioGuard` verifies that a real recorder rejects the planted logs and accepts the masked slog and zap variants. Caught means the entire planted value disappeared from the observed output; it does not imply arbitrary secrets are detected. SDK serialization and unrelated output paths require their own checks.
