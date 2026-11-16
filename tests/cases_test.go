@@ -212,3 +212,64 @@ func TestAdoptionDeclaredControls(t *testing.T) {
 		})
 	}
 }
+
+func TestAdoptionCheckIndependence(t *testing.T) {
+	t.Parallel()
+	var table strings.Builder
+	writeComparisonTable(t, &table, "| Output after embargo masking | Detector only | Whole canary only | Canary with 16-byte fragments |\n|---|---|---|---|\n")
+	for _, tc := range adoptionCases() {
+		output := adoptionOutput(t, tc, comparisonEmbargoName)
+		writeComparisonTable(t, &table, "| %s |", tc.name)
+		for mode := range 3 {
+			probe := &observationTB{TB: t}
+			options := []embargotest.Option{embargotest.WithCanary([]byte(tc.canary))}
+			want := tc.name == "unwrapped logger"
+			if mode == 0 {
+				options = []embargotest.Option{embargotest.WithCanary([]byte("unrelated-fixture-XYZ-987654321"))}
+			} else {
+				options = append(options, embargotest.WithScanner(embargo.NewScanner(embargo.WithKinds())))
+				want = want || tc.name == "base64 token" || tc.name == "hex token"
+			}
+			if mode == 2 {
+				options = append(options, embargotest.WithCanaryFragments(16))
+				want = want || tc.name == "split token lines"
+			}
+			recorder := embargotest.New(probe, options...)
+			if _, err := recorder.Writer("logs").Write(output); err != nil {
+				t.Fatal(err)
+			}
+			recorder.Expect("logs", func(b []byte) bool { return bytes.Contains(b, []byte(caseOrder)) })
+			detected := !recorder.Check()
+			probe.finish()
+			if detected != want {
+				t.Fatalf("%s mode %d: detected=%t, want %t", tc.name, mode, detected, want)
+			}
+			result := "clear"
+			if detected {
+				result = "detected"
+			}
+			writeComparisonTable(t, &table, " %s |", result)
+		}
+		writeComparisonTable(t, &table, "\n")
+	}
+	syncDocTable(t, "../doc/testing-output.md", "check-independence", table.String())
+}
+
+func TestAuditDiagnosticRecipe(t *testing.T) {
+	t.Parallel()
+	const input = `{"order_id":"4111111111111111","request_id":"DEUTDEFF","card":"4242424242424242","authorization":"Bearer pretend-client-value"}`
+	const want = `{"order_id":"4111111111111111","request_id":"DEUTDEFF","card":"[REDACTED]","authorization":"[REDACTED]"}`
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindPAN, embargo.KindCredential), embargo.WithMinConfidence(.7))
+	output, err := scanner.MaskJSON([]byte(input))
+	if err != nil || string(output) != want {
+		t.Fatalf("recipe lost diagnostics or retained secrets: %s, %v", output, err)
+	}
+	// A business label lowers confidence even when its contents really are a card.
+	if len(scanner.ScanString("order_id=4111111111111111")) != 0 {
+		t.Fatal("documented mislabeled-card tradeoff changed")
+	}
+	baseline, err := embargo.NewScanner().MaskJSON([]byte(input))
+	if err != nil || !strings.Contains(string(baseline), "DEUTDEFF") || strings.Contains(string(baseline), "4111111111111111") {
+		t.Fatalf("default ID policy changed: %s", baseline)
+	}
+}

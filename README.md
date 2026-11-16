@@ -253,19 +253,19 @@ Each link opens the test that produces and checks the shown output.
 <!-- tested-outputs:start -->
 | Output | Actual output (excerpt for SDKs) |
 |---|---|
-| [fmt](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L38-L38) | `embargo.Secret[string]([REDACTED])` |
-| [slog TextHandler](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L39-L42) | `level=INFO msg=event token=[REDACTED] nested.again=[REDACTED]` |
-| [slog JSONHandler](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L43-L46) | `{"level":"INFO","msg":"event","token":"[REDACTED]","nested":{"again":"[REDACTED]"}}` |
-| [encoding/json](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L47-L47) | `"[REDACTED]"` |
-| [encoding/xml](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L48-L53) | `<record><token>[REDACTED]</token></record>` |
-| [text/template](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L54-L60) | `[REDACTED]` |
-| [zap JSON core](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L61-L67) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
-| [zerolog JSON](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L68-L72) | `{"level":"info","token":"[REDACTED]","message":"event"}` |
-| [logrus JSON](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L73-L79) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
-| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/telemetry_integration_test.go#L26-L114) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
-| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/sentry_integration_test.go#L74-L157) | `"signing":{"key":"[REDACTED]"}` |
-| [HTTP](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L120-L142) | `[REDACTED]` |
-| [Child panic](https://github.com/nao1215/embargo/blob/main/tests/compatibility_integration_test.go#L144-L154) | `panic: [REDACTED]` |
+| [fmt](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L139-L139) | `embargo.Secret[string]([REDACTED])` |
+| [slog TextHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L140-L143) | `level=INFO msg=event token=[REDACTED] nested.again=[REDACTED]` |
+| [slog JSONHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L144-L147) | `{"level":"INFO","msg":"event","token":"[REDACTED]","nested":{"again":"[REDACTED]"}}` |
+| [encoding/json](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L148-L148) | `"[REDACTED]"` |
+| [encoding/xml](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L149-L154) | `<record><token>[REDACTED]</token></record>` |
+| [text/template](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L155-L161) | `[REDACTED]` |
+| [zap JSON core](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L162-L168) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
+| [zerolog JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L169-L173) | `{"level":"info","token":"[REDACTED]","message":"event"}` |
+| [logrus JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L174-L180) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
+| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L971-L1059) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
+| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L641-L724) | `"signing":{"key":"[REDACTED]"}` |
+| [HTTP](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L221-L243) | `[REDACTED]` |
+| [Child panic](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L245-L255) | `panic: [REDACTED]` |
 <!-- tested-outputs:end -->
 
 [Complete integration checks](tests/README.md).

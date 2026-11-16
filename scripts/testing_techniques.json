@@ -18,7 +18,7 @@
     "bug": "Combinations absent from handwritten checksum fixtures",
     "paths": [
       "tests/properties_test.go",
-      "tests/mask_test.go",
+      "tests/properties_test.go",
       "mask_test.go"
     ],
     "ci": "unit_test:property_tests",
@@ -33,7 +33,7 @@
     "name": "Metamorphic relations",
     "bug": "Context, kind selection, encoding or formatting changes findings",
     "paths": [
-      "tests/metamorphic_test.go"
+      "tests/properties_test.go"
     ],
     "ci": "unit_test:property_tests",
     "commands": [
@@ -49,7 +49,7 @@
     "paths": [
       "tests/models/guard.qnt",
       "embargotest/guard_test.go",
-      "tests/model_input_test.go"
+      "tests/properties_test.go"
     ],
     "ci": "verification:formal",
     "commands": [
@@ -65,7 +65,7 @@
     "bug": "Arithmetic and interval errors beyond a finite random sample",
     "paths": [
       "tests/lean/Reference.lean",
-      "tests/lean_vectors_test.go"
+      "tests/oracles_test.go"
     ],
     "ci": "verification:formal",
     "commands": [
@@ -94,7 +94,7 @@
     "name": "Independent differential oracles",
     "bug": "A shared implementation mistake in locally written expected values",
     "paths": [
-      "tests/external_oracles_test.go",
+      "tests/oracles_test.go",
       "scanner_dispatch_test.go"
     ],
     "ci": "verification:policies",
@@ -137,8 +137,8 @@
     "name": "Real logger and SDK output",
     "bug": "Serializer or adapter behavior outside the scanner model",
     "paths": [
-      "tests/compatibility_integration_test.go",
-      "tests/telemetry_logs_test.go"
+      "tests/integrations_test.go",
+      "tests/integrations_test.go"
     ],
     "ci": "unit_test:property_tests",
     "commands": [
@@ -153,7 +153,7 @@
     "bug": "Shared-state races, pipe hangs and detached goroutines",
     "paths": [
       "tests/lifecycle_test.go",
-      "tests/guardlifecycle/main_test.go"
+      "tests/guardlifecycle/lifecycle_test.go"
     ],
     "ci": "unit_test:property_tests",
     "commands": [

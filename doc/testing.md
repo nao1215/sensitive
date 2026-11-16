@@ -42,25 +42,25 @@ Incorrect fixed outputs and public usage contracts. Tests: [example_test](../exa
 
 ### Generated properties
 
-Combinations absent from handwritten checksum fixtures. Tests: [properties_test](../tests/properties_test.go), [mask_test](../tests/mask_test.go), [mask_test](../mask_test.go). CI: `unit_test:property_tests`.
+Combinations absent from handwritten checksum fixtures. Tests: [properties_test](../tests/properties_test.go), [properties_test](../tests/properties_test.go), [mask_test](../mask_test.go). CI: `unit_test:property_tests`.
 
 <a id="metamorphic-relations"></a>
 
 ### Metamorphic relations
 
-Context, kind selection, encoding or formatting changes findings. Tests: [metamorphic_test](../tests/metamorphic_test.go). CI: `unit_test:property_tests`.
+Context, kind selection, encoding or formatting changes findings. Tests: [properties_test](../tests/properties_test.go). CI: `unit_test:property_tests`.
 
 <a id="quint-and-model-replay"></a>
 
 ### Quint and model replay
 
-Invalid operation sequences, sticky failures and unsafe replay. Tests: [guard](../tests/models/guard.qnt), [guard_test](../embargotest/guard_test.go), [model_input_test](../tests/model_input_test.go). CI: `verification:formal`.
+Invalid operation sequences, sticky failures and unsafe replay. Tests: [guard](../tests/models/guard.qnt), [guard_test](../embargotest/guard_test.go), [properties_test](../tests/properties_test.go). CI: `verification:formal`.
 
 <a id="lean-reference-proofs"></a>
 
 ### Lean reference proofs
 
-Arithmetic and interval errors beyond a finite random sample. Tests: [Reference](../tests/lean/Reference.lean), [lean_vectors_test](../tests/lean_vectors_test.go). CI: `verification:formal`.
+Arithmetic and interval errors beyond a finite random sample. Tests: [Reference](../tests/lean/Reference.lean), [oracles_test](../tests/oracles_test.go). CI: `verification:formal`.
 
 <a id="intentional-snapshots"></a>
 
@@ -72,7 +72,7 @@ Unreviewed output shape changes despite correct redaction. Tests: [secret_test](
 
 ### Independent differential oracles
 
-A shared implementation mistake in locally written expected values. Tests: [external_oracles_test](../tests/external_oracles_test.go), [scanner_dispatch_test](../scanner_dispatch_test.go). CI: `verification:policies`.
+A shared implementation mistake in locally written expected values. Tests: [oracles_test](../tests/oracles_test.go), [scanner_dispatch_test](../scanner_dispatch_test.go). CI: `verification:policies`.
 
 <a id="structure-aware-fuzzing"></a>
 
@@ -90,13 +90,13 @@ Assertions that execute changed logic without detecting it. Tests: [mutation_att
 
 ### Real logger and SDK output
 
-Serializer or adapter behavior outside the scanner model. Tests: [compatibility_integration_test](../tests/compatibility_integration_test.go), [telemetry_logs_test](../tests/telemetry_logs_test.go). CI: `unit_test:property_tests`.
+Serializer or adapter behavior outside the scanner model. Tests: [integrations_test](../tests/integrations_test.go), [integrations_test](../tests/integrations_test.go). CI: `unit_test:property_tests`.
 
 <a id="race-and-lifecycle-tests"></a>
 
 ### Race and lifecycle tests
 
-Shared-state races, pipe hangs and detached goroutines. Tests: [lifecycle_test](../tests/lifecycle_test.go), [main_test](../tests/guardlifecycle/main_test.go). CI: `unit_test:property_tests`.
+Shared-state races, pipe hangs and detached goroutines. Tests: [lifecycle_test](../tests/lifecycle_test.go), [lifecycle_test](../tests/guardlifecycle/lifecycle_test.go). CI: `unit_test:property_tests`.
 
 <a id="paired-ci-benchmarks"></a>
 

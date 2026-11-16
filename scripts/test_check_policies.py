@@ -10,6 +10,24 @@ import fuzz_targets
 
 
 class PolicyTests(unittest.TestCase):
+    def test_test_file_budget_rejects_extra_files(self):
+        for extra in ('scan_contract_test.go', 'scan_linux_test.go',
+                      'adapters/logger/snapshot_test.go', 'tests/accuracy_extra_test.go',
+                      'tests/cmd/tool/scores_test.go'):
+            with self.subTest(extra=extra):
+                files = ['scan.go', 'scan_test.go', 'adapters/logger/adapter.go',
+                         'tests/doc.go', 'tests/cmd/tool/main.go', extra]
+                with self.assertRaisesRegex(ValueError, 'test file budget'):
+                    policies.test_file_budget(files)
+
+    def test_test_file_budget_accepts_source_files_and_subjects(self):
+        policies.test_file_budget(['scan.go', 'scan_test.go', 'doc.go', 'doc_test.go',
+                                  'example_test.go', 'fuzz_test.go', 'benchmark_test.go',
+                                  'adapters/logger/adapter.go', 'adapters/logger/adapter_test.go',
+                                  'tests/doc.go', 'tests/accuracy_test.go', 'tests/quality_gates_test.go',
+                                  'tests/contracts/policy_test.go', 'tests/cmd/tool/main.go',
+                                  'tests/cmd/tool/main_test.go'])
+
     def test_root_dependencies(self):
         for manifest in ({'Require':[{'Path':'example.com/runtime'}]}, {'Tool':['example.com/tool']}):
             with patch.object(policies.subprocess, 'check_output', return_value=json.dumps(manifest)):

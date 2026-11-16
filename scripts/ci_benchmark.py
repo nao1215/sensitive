@@ -41,7 +41,7 @@ def main():
     results=ROOT/'benchmark-results';results.mkdir(exist_ok=True)
     env=dict(os.environ,GOMAXPROCS='1')
     revisions={label:run(['git','rev-parse','--verify',revision+'^{commit}'],cwd=ROOT).strip() for label,revision in [('base',args.base),('head',args.head)]}
-    harness=subprocess.check_output(['git','show',revisions['head']+':tests/benchmarks/default_test.go'],cwd=ROOT)
+    harness=subprocess.check_output(['git','show',revisions['head']+':tests/benchmarks/benchmark_test.go'],cwd=ROOT)
     with tempfile.TemporaryDirectory(prefix='embargo-benchmark-') as tmp:
         binaries={}
         for label,sha in revisions.items():

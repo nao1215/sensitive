@@ -18,6 +18,28 @@ def require(condition, message):
         raise ValueError(message)
 
 
+def test_file_budget(files=None):
+    """Use source counterparts, or one canonical subject in the tests module."""
+    if files is None:
+        files = subprocess.check_output(['git', 'ls-files'], cwd=ROOT, text=True).splitlines()
+    paths = set(files)
+    subjects = {'accuracy', 'real_logs', 'comparison', 'cases', 'docs', 'severity',
+                'integrations', 'quality_gates', 'properties', 'lifecycle', 'oracles',
+                'api', 'policy'}
+    extras = {'example_test.go', 'fuzz_test.go', 'benchmark_test.go'}
+    violations = []
+    for name in sorted(paths):
+        path = Path(name)
+        if not name.endswith('_test.go') or path.name in extras:
+            continue
+        source = path.with_name(path.name.removesuffix('_test.go') + '.go').as_posix()
+        subject = (path.parts[0] == 'tests' and 'cmd' not in path.parts and
+                   path.name.removesuffix('_test.go') in subjects)
+        if source not in paths and not subject:
+            violations.append(name)
+    require(not violations, 'test file budget: ' + ', '.join(violations))
+
+
 def root_module():
     module = json.loads(subprocess.check_output(['go', 'mod', 'edit', '-json'], cwd=ROOT))
     require(not module.get('Require'), 'root go.mod must have no require directives')
@@ -134,7 +156,7 @@ def evidence():
 
 def mapping():
     rows=json.loads(read('scripts/policies.json'))
-    checks={'root-module':root_module,'workflow-security':workflows,'branding':branding,'lint-config':lint_rules,'api-boundary':api_boundaries,'schedules':schedules,'pr-metadata':pr_metadata,'technique-links':linked_tests, 'evidence':evidence, 'detector-docs':detector_docs}
+    checks={'test-file-budget':test_file_budget,'root-module':root_module,'workflow-security':workflows,'branding':branding,'lint-config':lint_rules,'api-boundary':api_boundaries,'schedules':schedules,'pr-metadata':pr_metadata,'technique-links':linked_tests, 'evidence':evidence, 'detector-docs':detector_docs}
     for row in rows:
         require(row['source'] and row['rule'] and row['where'], 'policy mapping is incomplete')
         if row['check'] in checks:
