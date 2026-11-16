@@ -4,18 +4,18 @@ These optional modules mask at the final JSON boundary, after the real logger ha
 
 ## Installation
 
-The six adapter modules are published at v0.5.2 and require root v0.5.2. Upgrade the root and every installed adapter to receive the adjacent-match masking fixes in [v0.5.2](../CHANGELOG.md#052---2026-11-16). Install the module for the logger or SDK the application uses:
+The six adapter modules are published at v0.6.0 and require root v0.6.0. Upgrade the root and every installed adapter to receive withheld diagnostics and canceled-request access logging in [v0.6.0](../CHANGELOG.md#060---2026-11-16). Install the module for the logger or SDK the application uses:
 
 ```sh
-go get github.com/nao1215/embargo/adapters/zap@v0.5.2
-go get github.com/nao1215/embargo/adapters/zerolog@v0.5.2
-go get github.com/nao1215/embargo/adapters/logrus@v0.5.2
-go get github.com/nao1215/embargo/adapters/grpc@v0.5.2
-go get github.com/nao1215/embargo/adapters/otel@v0.5.2
-go get github.com/nao1215/embargo/adapters/sentry@v0.5.2
+go get github.com/nao1215/embargo/adapters/zap@v0.6.0
+go get github.com/nao1215/embargo/adapters/zerolog@v0.6.0
+go get github.com/nao1215/embargo/adapters/logrus@v0.6.0
+go get github.com/nao1215/embargo/adapters/grpc@v0.6.0
+go get github.com/nao1215/embargo/adapters/otel@v0.6.0
+go get github.com/nao1215/embargo/adapters/sentry@v0.6.0
 ```
 
-For `NewHTTPHandler`, install the root module with `go get github.com/nao1215/embargo@v0.5.2`; no adapter module is needed.
+For `NewHTTPHandler`, install the root module with `go get github.com/nao1215/embargo@v0.6.0`; no adapter module is needed.
 
 Use only the module for your integration. The [zap](../adapters/zap/example_test.go), [zerolog](../adapters/zerolog/example_test.go) and [logrus](../adapters/logrus/example_test.go) Examples show complete setup and their actual JSON output.
 

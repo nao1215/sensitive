@@ -31,7 +31,7 @@ Masking libraries such as masq hide the fields and keys you list in advance. emb
 Requires Go 1.26.11 or later.
 
 ```sh
-go get github.com/nao1215/embargo@latest
+go get github.com/nao1215/embargo@v0.6.0
 ```
 
 <!-- example: example_test.go:Example -->
