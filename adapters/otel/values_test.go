@@ -151,7 +151,7 @@ func TestLogExportFailureDoesNotForwardPartialBatch(t *testing.T) {
 		clean.SetBody(attribute.StringValue(publicText))
 		invalid.SetBody(attribute.Float64Value(math.NaN()))
 		err := exporter.Export(t.Context(), []sdklog.Record{clean, invalid})
-		if err == nil || err.Error() != "embargo: telemetry export failed" || len(sink.records) != 0 {
+		if err != nil || len(sink.records) != 2 || sink.records[1].Body().AsString() != withheldMasking {
 			t.Fatal("partial batch or private failure forwarded")
 		}
 	}
@@ -167,7 +167,7 @@ func TestSensitiveResourceSuppressesLogBatch(t *testing.T) {
 	if err := provider.Shutdown(t.Context()); err != nil {
 		t.Fatal(err)
 	}
-	if len(sink.records) != 0 {
+	if len(sink.records) != 1 || sink.records[0].Body().AsString() != withheldMasking || len(sink.records[0].Resource().Attributes()) != 0 {
 		t.Fatal("immutable resource leaked")
 	}
 }
@@ -245,7 +245,7 @@ func TestSpanInvalidValuesSuppressWholeBatch(t *testing.T) {
 		exporter := embargootel.NewSpanExporter(sink, embargo.NewScanner())
 		clean := tracetest.SpanStub{Name: publicText, Resource: resource.Empty()}.Snapshot()
 		err := exporter.ExportSpans(t.Context(), []sdktrace.ReadOnlySpan{clean, stub.Snapshot()})
-		if err == nil || err.Error() != "embargo: span export failed" || len(sink.spans) != 0 {
+		if err != nil || len(sink.spans) != 2 || sink.spans[0].Name() != publicText || sink.spans[1].Name() != withheldMasking {
 			t.Fatalf("span case %d: error=%v, forwarded=%d", index, err, len(sink.spans))
 		}
 	}
@@ -295,7 +295,7 @@ func TestLogBodyNestingLimitSuppressesOutput(t *testing.T) {
 	exporter := embargootel.NewLogExporter(sink, embargo.NewScanner())
 	var record sdklog.Record
 	record.SetBody(value)
-	if err := exporter.Export(t.Context(), []sdklog.Record{record}); err == nil || len(sink.records) != 0 {
+	if err := exporter.Export(t.Context(), []sdklog.Record{record}); err != nil || len(sink.records) != 1 || sink.records[0].Body().AsString() != "embargo: record withheld (size limit)" {
 		t.Fatal("unbounded nesting was forwarded")
 	}
 }
@@ -306,7 +306,7 @@ func TestOversizedLogBodyIsNotExported(t *testing.T) {
 	exporter := embargootel.NewLogExporter(sink, embargo.NewScanner())
 	var record sdklog.Record
 	record.SetBody(attribute.StringValue(strings.Repeat("x", 1<<20)))
-	if err := exporter.Export(t.Context(), []sdklog.Record{record}); err == nil || len(sink.records) != 0 {
+	if err := exporter.Export(t.Context(), []sdklog.Record{record}); err != nil || len(sink.records) != 1 || sink.records[0].Body().AsString() != "embargo: record withheld (size limit)" {
 		t.Fatal("oversized log body was exported")
 	}
 }

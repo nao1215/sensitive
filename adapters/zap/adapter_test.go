@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -249,7 +250,7 @@ type syncSink struct {
 
 func (s *syncSink) Sync() error { s.syncs++; return io.ErrClosedPipe }
 
-func TestSyncChecksCompletenessBeforeDelegating(t *testing.T) {
+func TestSyncFlushesIncompleteDiagnosticAndPreservesBothErrors(t *testing.T) {
 	t.Parallel()
 	sink := &syncSink{}
 	writer := embargozap.NewWriteSyncer(sink, embargo.NewScanner())
@@ -259,17 +260,56 @@ func TestSyncChecksCompletenessBeforeDelegating(t *testing.T) {
 	if _, err := writer.Write([]byte(`{"partial":`)); err != nil {
 		t.Fatal(err)
 	}
-	if err := writer.Sync(); err == nil || sink.syncs != 1 {
-		t.Fatal("incomplete record lost its framing error or changed synchronization")
+	if err := writer.Sync(); !errors.Is(err, io.ErrClosedPipe) || !strings.Contains(err.Error(), "invalid or unmaskable JSON log event") || sink.syncs != 2 || !strings.Contains(sink.String(), "record withheld (masking error)") || strings.Contains(sink.String(), "partial") {
+		t.Fatal("incomplete record was not withheld")
 	}
-	// The root writer may suppress invalid input or emit a fixed diagnostic.
-	if sink.Len() != 0 {
-		var record map[string]any
-		if err := json.Unmarshal(sink.Bytes(), &record); err != nil {
-			t.Fatal(err)
-		}
-		if len(record) != 2 || record["msg"] != "embargo: record withheld (masking error)" || record["withheld_attributes"] != float64(1) {
-			t.Fatal("partial content reached sink")
-		}
+	var record map[string]any
+	if err := json.Unmarshal(sink.Bytes(), &record); err != nil {
+		t.Fatal(err)
+	}
+	if len(record) != 2 || record["msg"] != "embargo: record withheld (masking error)" || record["withheld_attributes"] != float64(1) {
+		t.Fatal("partial content reached sink")
+	}
+}
+
+type auditPanicDetector struct{}
+
+func (auditPanicDetector) Scan([]byte) []embargo.Finding { panic("planted-panic") }
+func TestWithheldRecord(t *testing.T) {
+	t.Parallel()
+	for _, reason := range []string{"masking error", "size limit"} {
+		t.Run(reason, func(t *testing.T) {
+			t.Parallel()
+			scanner := embargo.NewScanner(embargo.WithKinds())
+			value := "planted-value"
+			if reason == "masking error" {
+				scanner = embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(auditPanicDetector{}))
+			} else {
+				value += strings.Repeat("x", 1<<20)
+			}
+			var out bytes.Buffer
+			sink := embargozap.NewWriteSyncer(zapcore.AddSync(&out), scanner)
+			encoder := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+			logger := zap.New(zapcore.NewCore(encoder, sink, zap.DebugLevel))
+			entry := zapcore.Entry{Time: time.Unix(7, 0).UTC(), Level: zapcore.WarnLevel, Message: "planted-message"}
+			if checked := logger.Check(entry.Level, entry.Message); checked != nil {
+				checked.Time = entry.Time
+				checked.Write(zap.String("planted-key", value))
+			}
+			var got map[string]any
+			if err := json.Unmarshal(out.Bytes(), &got); err != nil {
+				t.Fatalf("missing fallback: %v", err)
+			}
+			message := got["msg"]
+			if message == nil {
+				message = got["message"]
+			}
+			if message != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(1) || got["level"] != "warn" || strings.Contains(out.String(), "planted") {
+				t.Fatal(out.String())
+			}
+			if got["ts"] != float64(7) && got["time"] != "1970-01-01T00:00:07Z" {
+				t.Fatal("timestamp lost", got)
+			}
+		})
 	}
 }

@@ -27,7 +27,10 @@ import (
 	embargogrpc "github.com/nao1215/embargo/adapters/grpc"
 )
 
-const grpcResponse = "response"
+const (
+	grpcResponse   = "response"
+	canceledReason = "canceled"
+)
 
 type healthServer struct {
 	grpc_health_v1.UnimplementedHealthServer
@@ -106,17 +109,20 @@ func TestLogFormattingFailurePreservesRPCResult(t *testing.T) {
 	original := &failingRPCError{}
 	unary := embargogrpc.NewUnaryServerInterceptor(logger, embargo.NewScanner())
 	result, err := unary(t.Context(), nil, &grpc.UnaryServerInfo{FullMethod: "/failure/Unary"}, func(context.Context, any) (any, error) { return grpcResponse, original })
-	if result != grpcResponse || !errors.Is(err, original) || output.Len() != 0 {
+	if result != grpcResponse || !errors.Is(err, original) || !strings.Contains(output.String(), "record withheld") {
 		t.Fatal("failed log changed the unary response")
 	}
+	requireDiagnostic(t, output.Bytes(), "masking error")
+	output.Reset()
 	stream := embargogrpc.NewStreamServerInterceptor(logger, embargo.NewScanner())
-	if err := stream(nil, &exampleStream{}, &grpc.StreamServerInfo{FullMethod: "/failure/Stream"}, func(any, grpc.ServerStream) error { return original }); !errors.Is(err, original) || output.Len() != 0 {
+	if err := stream(nil, &exampleStream{}, &grpc.StreamServerInfo{FullMethod: "/failure/Stream"}, func(any, grpc.ServerStream) error { return original }); !errors.Is(err, original) || !strings.Contains(output.String(), "record withheld") {
 		t.Fatal("failed log changed the stream result")
 	}
+	requireDiagnostic(t, output.Bytes(), "masking error")
 }
 
-func TestOversizedMetadataSuppressesAccessRecord(t *testing.T) {
-	t.Parallel()
+//nolint:paralleltest // Isolate reason checks under the real 100 ms masking budget.
+func TestOversizedMetadataEmitsDiagnostic(t *testing.T) {
 	var output bytes.Buffer
 	logger := slog.New(slog.NewJSONHandler(&output, nil))
 	interceptor := embargogrpc.NewUnaryServerInterceptor(logger, embargo.NewScanner())
@@ -125,7 +131,7 @@ func TestOversizedMetadataSuppressesAccessRecord(t *testing.T) {
 	if err != nil {
 		t.Fatal("logging changed the RPC result")
 	}
-	requireSuppressedOrDiagnostic(t, output.Bytes(), "size limit")
+	requireDiagnostic(t, output.Bytes(), "size limit")
 }
 
 func TestContextErrorsUseWireStatusInAccessRecords(t *testing.T) {
@@ -210,17 +216,9 @@ func TestGRPCContextCancellation(t *testing.T) {
 					hook := embargogrpc.NewUnaryServerInterceptor(logger, scanner)
 					response, err = hook(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/test/Method"}, func(context.Context, any) (any, error) { return grpcResponse, nil })
 				}
-				want := 1
-				if alreadyCanceled {
-					want = 0
+				if response != grpcResponse || err != nil || !strings.Contains(out.String(), "grpc request") || detector.calls == 0 {
+					t.Fatalf("err=%v output=%s scans=%d", err, out.String(), detector.calls)
 				}
-				if response != grpcResponse || err != nil || detector.calls != want {
-					t.Fatalf("err=%v bytes=%d scans=%d want=%d", err, out.Len(), detector.calls, want)
-				}
-				if alreadyCanceled && out.Len() != 0 {
-					t.Fatal("already canceled request reached logger")
-				}
-				requireSuppressedOrDiagnostic(t, out.Bytes(), "canceled")
 			})
 		}
 	}
@@ -260,7 +258,7 @@ func grpcScalingCall(tb testing.TB, size int) func() {
 		if err := streamInterceptor(nil, stream, &grpc.StreamServerInfo{FullMethod: "/scaling/Stream"}, func(any, grpc.ServerStream) error { return nil }); err != nil {
 			tb.Fatal(err)
 		}
-		if _, err := interceptor(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/scaling/Call"}, func(context.Context, any) (any, error) { return nil, nil }); err != nil {
+		if _, err := interceptor(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/scaling/Call"}, func(context.Context, any) (any, error) { return grpcResponse, nil }); err != nil {
 			tb.Fatal(err)
 		}
 	}
@@ -304,12 +302,108 @@ func (s *scalingStream) Context() context.Context {
 	return metadata.NewIncomingContext(context.Background(), s.values)
 }
 
-// Root handler versions differ in failure reporting; neither may forward input.
-func requireSuppressedOrDiagnostic(t *testing.T, data []byte, reason string) {
-	t.Helper()
-	if len(data) == 0 {
-		return
+type auditPanicDetector struct{}
+
+func (auditPanicDetector) Scan([]byte) []embargo.Finding { panic("planted-panic") }
+
+//nolint:paralleltest // Isolate reason checks under the real 100 ms masking budget.
+func TestWithheldRecord(t *testing.T) {
+	for _, streaming := range []bool{false, true} {
+		for _, reason := range []string{"masking error", "size limit", canceledReason} {
+			t.Run(fmt.Sprintf("stream=%v/%s", streaming, reason), func(t *testing.T) {
+				testWithheldRPC(t, streaming, reason)
+			})
+		}
 	}
+}
+
+type budgetDetector struct{ calls int }
+
+func (d *budgetDetector) Scan([]byte) []embargo.Finding {
+	d.calls++
+	if d.calls == 1 {
+		timer := time.NewTimer(150 * time.Millisecond)
+		defer timer.Stop()
+		<-timer.C
+	}
+	return nil
+}
+
+func TestMaskingBudgetEmitsFallback(t *testing.T) {
+	t.Parallel()
+	for _, streaming := range []bool{false, true} {
+		t.Run(strconv.FormatBool(streaming), func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithCancel(t.Context())
+			cancel()
+			detector := &budgetDetector{}
+			scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(detector))
+			var out bytes.Buffer
+			logger := slog.New(slog.NewJSONHandler(&out, nil))
+			var err error
+			if streaming {
+				err = embargogrpc.NewStreamServerInterceptor(logger, scanner)(nil, &contextStream{getContext: func() context.Context { return ctx }}, &grpc.StreamServerInfo{FullMethod: "planted-method"}, func(any, grpc.ServerStream) error { return nil })
+			} else {
+				_, err = embargogrpc.NewUnaryServerInterceptor(logger, scanner)(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "planted-method"}, func(context.Context, any) (any, error) { return grpcResponse, nil })
+			}
+			if err != nil || detector.calls != 1 {
+				t.Fatalf("err=%v scans=%d", err, detector.calls)
+			}
+			requireDiagnostic(t, out.Bytes(), canceledReason)
+			if !strings.Contains(out.String(), "record withheld (canceled)") || !strings.Contains(out.String(), `"withheld_attributes":4`) || strings.Contains(out.String(), "planted") {
+				t.Fatal(out.String())
+			}
+		})
+	}
+}
+
+func testWithheldRPC(t *testing.T, streaming bool, reason string) {
+	t.Helper()
+
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	scanner := embargo.NewScanner()
+	value := "planted-value"
+	if reason == "masking error" {
+		scanner = embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(auditPanicDetector{}))
+	}
+	if reason == "size limit" {
+		value += strings.Repeat("x", 1<<20)
+	}
+	if reason == canceledReason {
+		cancel()
+	}
+	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", "planted-secret", "public", value))
+	var out bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&out, nil))
+	var err error
+	if streaming {
+		err = embargogrpc.NewStreamServerInterceptor(logger, scanner)(nil, &contextStream{getContext: func() context.Context { return ctx }}, &grpc.StreamServerInfo{FullMethod: "/audit/Stream"}, func(any, grpc.ServerStream) error { return nil })
+	} else {
+		_, err = embargogrpc.NewUnaryServerInterceptor(logger, scanner)(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/audit/Unary"}, func(context.Context, any) (any, error) { return grpcResponse, nil })
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(out.Bytes(), &got); err != nil {
+		t.Fatalf("missing access record: %v", err)
+	}
+	if reason != canceledReason {
+		requireDiagnostic(t, out.Bytes(), reason)
+	}
+	if reason == canceledReason {
+		if got["msg"] != "grpc request" || strings.Contains(out.String(), "planted-secret") {
+			t.Fatal(out.String())
+		}
+	} else if got["msg"] != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(4) || strings.Contains(out.String(), "planted") {
+		t.Fatal(out.String())
+	}
+}
+
+// Diagnostic records contain no original fields or values.
+func requireDiagnostic(t *testing.T, data []byte, reason string) {
+	t.Helper()
 	var record map[string]any
 	if err := json.Unmarshal(data, &record); err != nil {
 		t.Fatal(err)

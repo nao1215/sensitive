@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -129,7 +130,7 @@ func TestEntryContextCancellation(t *testing.T) {
 			if before {
 				want = 0
 			}
-			if err == nil || len(data) != 0 || first.calls != want || second.calls != 0 || next.calls != want {
+			if err != nil || !bytes.Contains(data, []byte("record withheld (canceled)")) || first.calls != want || second.calls != 0 || next.calls != want {
 				t.Fatalf("err=%v bytes=%d scans=%d/%d formats=%d want=%d", err, len(data), first.calls, second.calls, next.calls, want)
 			}
 		})
@@ -180,7 +181,7 @@ func TestFormatterErrorsAndUnsupportedTextFailClosed(t *testing.T) {
 		formatter := embargologrus.NewFormatter(next, embargo.NewScanner())
 		entry := &logrus.Entry{Message: "public-fake-canary", Level: logrus.InfoLevel}
 		data, err := formatter.Format(entry)
-		if data != nil || err == nil || strings.Contains(err.Error(), "canary") {
+		if err != nil || !bytes.Contains(data, []byte("record withheld (masking error)")) || bytes.Contains(data, []byte("canary")) {
 			t.Fatal("unsafe formatting failure")
 		}
 		if entry.Message != "public-fake-canary" {
@@ -257,5 +258,42 @@ func TestLoggerSnapshot(t *testing.T) {
 	}
 	if !bytes.Equal(want, output.Bytes()) {
 		t.Fatal("logger snapshot changed; review field structure and ordering")
+	}
+}
+
+type auditPanicDetector struct{}
+
+func (auditPanicDetector) Scan([]byte) []embargo.Finding { panic("planted-panic") }
+func TestWithheldRecord(t *testing.T) {
+	t.Parallel()
+	for _, reason := range []string{"masking error", "size limit", "canceled"} {
+		t.Run(reason, func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			scanner := embargo.NewScanner(embargo.WithKinds())
+			value := "planted-value"
+			if reason == "masking error" {
+				scanner = embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(auditPanicDetector{}))
+			}
+			if reason == "size limit" {
+				value += strings.Repeat("x", 1<<20)
+			}
+			if reason == "canceled" {
+				cancel()
+			}
+			var out bytes.Buffer
+			logger := logrus.New()
+			logger.SetOutput(&out)
+			logger.SetFormatter(embargologrus.NewFormatter(&logrus.JSONFormatter{}, scanner))
+			logger.WithContext(ctx).WithTime(time.Unix(7, 0).UTC()).WithField("planted-key", value).Warn("planted-message")
+			var got map[string]any
+			if err := json.Unmarshal(out.Bytes(), &got); err != nil {
+				t.Fatalf("missing fallback: %v", err)
+			}
+			if got["msg"] != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(1) || got["time"] != "1970-01-01T00:00:07Z" || got["level"] != "warning" || strings.Contains(out.String(), "planted") {
+				t.Fatal(out.String())
+			}
+		})
 	}
 }
