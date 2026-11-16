@@ -240,7 +240,9 @@ func TestDetectorAuthorizationSchemeProperty(t *testing.T) {
 func checkAuthorizationInputs(t *testing.T, scanner *Credential, secret string, inputs []string) {
 	t.Helper()
 	for _, input := range inputs {
-		got := maskCredentialFindings(input, scanner.Scan([]byte(input)))
+		findings := scanner.Scan([]byte(input))
+		checkCredentialByteCoverage(t, input, secret, findings)
+		got := maskCredentialFindings(input, findings)
 		if strings.Contains(got, secret) {
 			t.Fatalf("credential visible: %q => %q", input, got)
 		}
@@ -296,8 +298,12 @@ func TestDetectorCredentialGoRenderingProperty(t *testing.T) {
 					if !strings.Contains(strings.ToLower(input), passwordKeyFixture) && !strings.Contains(input, authorizationHeaderFixture) {
 						continue
 					}
-					got := maskCredentialFindings(input, scanner.Scan([]byte(input)))
+					findings := scanner.Scan([]byte(input))
+					got := maskCredentialFindings(input, findings)
 					hexBytes := fmt.Sprintf("%#v", []byte(secret))
+					checkCredentialByteCoverage(t, input, secret, findings)
+					checkCredentialByteCoverage(t, input, hexBytes[strings.IndexByte(hexBytes, '{')+1:len(hexBytes)-1], findings)
+					checkCredentialByteCoverage(t, input, strings.Trim(fmt.Sprintf("%v", []byte(secret)), "[]"), findings)
 					if strings.Contains(got, secret) || strings.Contains(got, hexBytes[strings.IndexByte(hexBytes, '{')+1:len(hexBytes)-1]) || strings.Contains(got, strings.Trim(fmt.Sprintf("%v", []byte(secret)), "[]")) {
 						t.Errorf("Go value visible: %q => %q", input, got)
 					}
@@ -850,5 +856,32 @@ func TestAuthorizationMixedSchemeLists(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+// Every original credential byte must belong to a finding, even when removing
+// only a prefix would already make a whole-string leak check pass.
+func checkCredentialByteCoverage(t *testing.T, input, needle string, findings []Finding) {
+	t.Helper()
+	for offset := 0; offset < len(input); {
+		at := strings.Index(input[offset:], needle)
+		if at < 0 {
+			return
+		}
+		start := offset + at
+		end := start + len(needle)
+		for i := start; i < end; i++ {
+			covered := false
+			for _, finding := range findings {
+				if finding.Start <= i && i < finding.End {
+					covered = true
+					break
+				}
+			}
+			if !covered {
+				t.Fatalf("credential byte %d is not covered: %q %+v", i, input, findings)
+			}
+		}
+		offset = end
 	}
 }
