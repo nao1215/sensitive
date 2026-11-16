@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"runtime"
 	"strconv"
@@ -516,5 +517,22 @@ func BenchmarkSlogOversizedPlainValue(b *testing.B) {
 				}
 			}
 		})
+	}
+}
+
+func TestSlogDiagnosticSinkErrorRemainsObservable(t *testing.T) {
+	t.Parallel()
+	next := &inspectingHandler{enabled: true, err: io.ErrClosedPipe}
+	handler := embargo.NewSlogHandler(next, embargo.NewScanner())
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	record := slog.NewRecord(time.Unix(7, 0).UTC(), slog.LevelWarn, "planted-message", 123)
+	record.AddAttrs(slog.String("planted-key", "planted-value"))
+	err := handler.Handle(ctx, record)
+	if !errors.Is(err, io.ErrClosedPipe) || !strings.Contains(err.Error(), "embargo: slog record could not be sanitized") {
+		t.Fatal("diagnostic delivery lost one of its errors")
+	}
+	if next.handled != 1 || next.record.Message != "embargo: record withheld (canceled)" || next.record.NumAttrs() != 1 || next.record.PC != 0 {
+		t.Fatal("diagnostic attempt retained original fields")
 	}
 }

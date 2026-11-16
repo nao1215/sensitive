@@ -381,3 +381,44 @@ func TestHTTPMaskingBudgetEmitsFallback(t *testing.T) {
 		t.Fatal("budget did not stop subsequent scans or changed response")
 	}
 }
+
+func TestHTTPMalformedHeaderTargetWithholdsWholeRecord(t *testing.T) {
+	t.Parallel()
+	for _, location := range []string{"://planted-secret", "/?bad;planted-secret"} {
+		for _, responseHeader := range []bool{false, true} {
+			t.Run(location+strconv.FormatBool(responseHeader), func(t *testing.T) {
+				t.Parallel()
+				var out bytes.Buffer
+				next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					if responseHeader {
+						w.Header().Set("Location", location)
+					}
+					w.WriteHeader(http.StatusAccepted)
+				})
+				handler := embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, nil)), embargo.NewScanner())
+				request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", http.NoBody)
+				if !responseHeader {
+					request.Header.Set("Location", location)
+				}
+				response := httptest.NewRecorder()
+				handler.ServeHTTP(response, request)
+				assertWithheldJSON(t, out.Bytes(), maskingReason, 6)
+				if response.Code != http.StatusAccepted {
+					t.Fatal("diagnosing a header changed the service response")
+				}
+			})
+		}
+	}
+}
+
+func TestHTTPDiagnosticSinkFailurePreservesResponse(t *testing.T) {
+	t.Parallel()
+	sink := &inspectingHandler{enabled: true, err: io.ErrClosedPipe}
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusAccepted) })
+	handler := embargo.NewHTTPHandler(next, slog.New(sink), embargo.NewScanner())
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?bad;planted-secret", http.NoBody))
+	if response.Code != http.StatusAccepted || sink.handled != 1 || sink.record.Message != "embargo: record withheld (masking error)" {
+		t.Fatal("sink failure changed the response or prevented the diagnostic attempt")
+	}
+}
