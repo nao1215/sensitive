@@ -2,11 +2,14 @@
 package embargotest_test
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/nao1215/embargo"
 	"github.com/nao1215/embargo/embargotest"
@@ -72,15 +75,48 @@ func ExampleRecorder_Reader() {
 }
 
 func ExampleGuard() {
-	// testdata/guard/main_test.go contains the one-line package setup:
-	// func TestMain(m *testing.M) { os.Exit(embargotest.Guard(m)) }
-	// Run that real test package; it also exercises ordinary parallel tests.
-	passed := runExample(func(tb testing.TB) bool {
-		tb.Helper()
-		cmd := exec.CommandContext(tb.Context(), "go", "test", "./testdata/guard")
-		cmd.Env = append(os.Environ(), "GUARD_CASE=safe")
-		return cmd.Run() == nil
-	})
-	fmt.Println(passed)
+	// Create a complete test file, so this example needs no repository fixtures.
+	dir, err := os.MkdirTemp(".", ".embargo-guard-example-")
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err := os.RemoveAll(dir); err != nil {
+			panic(err)
+		}
+	}()
+	path := filepath.Join(dir, "main_test.go")
+	source := `package guarded_test
+import (
+ "os"
+ "testing"
+ "github.com/nao1215/embargo"
+ "github.com/nao1215/embargo/embargotest"
+)
+func TestMain(m *testing.M) { os.Exit(embargotest.Guard(m)) }
+func TestOutput(t *testing.T) {
+ t.Parallel()
+ t.Log(embargo.NewSecret("opaque-example-value"))
+}
+`
+	if err := os.WriteFile(path, []byte(source), 0o600); err != nil {
+		panic(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	command := exec.CommandContext(ctx, "go", "test", "main_test.go")
+	command.Dir = dir
+	if output, err := command.CombinedOutput(); err != nil {
+		panic(string(output))
+	}
+	fmt.Println(true)
 	// Output: true
+}
+
+// runExample obtains a real testing.TB for executable godoc examples.
+// Application tests simply pass their *testing.T to New.
+func runExample(f func(testing.TB) bool) bool {
+	passed := false
+	testing.Benchmark(func(b *testing.B) { b.Helper(); passed = f(b) })
+	return passed
 }

@@ -17,14 +17,6 @@ import (
 	"github.com/nao1215/embargo/embargotest"
 )
 
-// runExample obtains a real testing.TB for executable godoc examples.
-// Application tests simply pass their *testing.T to New.
-func runExample(f func(testing.TB) bool) bool {
-	passed := false
-	testing.Benchmark(func(b *testing.B) { b.Helper(); passed = f(b) })
-	return passed
-}
-
 func ExampleNew() {
 	passed := false
 	testing.Benchmark(func(b *testing.B) {

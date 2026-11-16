@@ -22,7 +22,7 @@ embargo keeps secrets and personal data out of what a Go program prints: logs, J
 | An API key or password in a variable | [`Secret`](#values-that-must-never-print) prints `[REDACTED]` through fmt, slog, JSON, XML, templates, zap, zerolog, logrus and panics |
 | Card numbers, emails, national IDs or DSN passwords inside free text | [37 built-in detectors](#find-and-mask-sensitive-text) find them and replace only the matched part |
 | Structs you already log or return as JSON | [Field values and key names are checked](#mask-structs-without-changing-their-types); no tags and no new field types |
-| slog, zap, zerolog, logrus, net/http, gRPC, OpenTelemetry or Sentry | [One handler, adapter or hook for each](#loggers-and-services); the JSON shape stays the same |
+| slog, zap, zerolog, logrus, net/http, gRPC, OpenTelemetry or Sentry | [One handler, adapter or hook for each](#loggers-and-services); clean JSON fields keep their shape; sensitive-key subtrees become markers |
 | Tests that should catch a leak | [One line in TestMain](#fail-tests-on-leaks) fails the package when a planted fake secret reaches its output |
 | A decision to make before adopting it | [Precision, recall, false positives on public logs](#accuracy) and [benchmarks](#benchmarks) produced by tests and CI |
 

@@ -1,6 +1,6 @@
 # Scanning and masking
 
-`Scan` accepts bytes, `ScanString` accepts text, and `ScanLines` handles independent lines. Findings contain the kind, confidence, and start/end byte positions in the original input. `WithKinds` selects detectors; omitting options enables every built-in at minimum confidence 0, including ambiguous candidates. Built-ins decode one layer of valid percent escapes and map findings back to the original bytes; custom detectors receive the original input. Literal plus signs, malformed escapes and other encodings remain unchanged.
+`Scan` accepts bytes, `ScanString` accepts text, and `ScanLines` handles independent lines. Findings contain the kind, confidence, and start/end byte positions in the original input. `WithKinds` selects detectors; omitting options enables 25 built-ins at minimum confidence 0, including ambiguous candidates. The 11 national ID kinds and KindHighEntropy are opt-in; `WithAll` selects all 37 built-ins. Built-ins decode one layer of valid percent escapes and map findings back to the original bytes; custom detectors receive the original input. Literal plus signs, malformed escapes and other encodings remain unchanged.
 
 ## Overlapping matches
 

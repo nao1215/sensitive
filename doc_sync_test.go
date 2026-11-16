@@ -9,10 +9,13 @@ import (
 	"go/scanner"
 	"go/token"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -305,4 +308,181 @@ func readmeExcerpt(t *testing.T, file *ast.File, code ast.Node) ast.Node {
 		t.Fatal("empty README excerpt")
 	}
 	return &ast.BlockStmt{Lbrace: body.Lbrace, List: statements, Rbrace: body.Rbrace}
+}
+
+func readmeExampleFiles(t *testing.T) []string {
+	t.Helper()
+	readme, err := os.ReadFile("README.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	paths := map[string]bool{}
+	for _, pattern := range []string{`<!-- example: ([^:]+):`, `\]\(([^)]+example[^)]*\.go)\)`} {
+		for _, match := range regexp.MustCompile(pattern).FindAllSubmatch(readme, -1) {
+			paths[string(match[1])] = true
+		}
+	}
+	result := make([]string, 0, len(paths))
+	for path := range paths {
+		result = append(result, path)
+	}
+	sort.Strings(result)
+	if len(result) == 0 {
+		t.Fatal("README has no linked examples")
+	}
+	return result
+}
+
+func TestReadmeLinkedExamplesStandalone(t *testing.T) {
+	t.Parallel()
+	var compiler sync.Mutex
+	// Compile one linked file at a time, without package peers or private helpers.
+	for _, path := range readmeExampleFiles(t) {
+		t.Run(path, func(t *testing.T) {
+			t.Parallel()
+			compiler.Lock()
+			defer compiler.Unlock()
+			checkStandaloneExampleFile(t, path)
+		})
+	}
+}
+
+func checkStandaloneExampleFile(t *testing.T, path string) {
+	t.Helper()
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	examples := doc.Examples(file)
+	if len(examples) == 0 {
+		t.Fatal("linked file has no runnable examples")
+	}
+	for _, example := range examples {
+		if example.Play == nil || example.Output == "" || example.Unordered {
+			t.Errorf("Example%s needs standalone code and ordered output in %s", example.Name, path)
+		}
+	}
+	for _, imp := range file.Imports {
+		if strings.Contains(imp.Path.Value, "/internal/") {
+			t.Error("example imports private code")
+		}
+	}
+	if t.Failed() {
+		return
+	}
+	// A file-only package has no original API identifiers for go vet to resolve.
+	// Generic example names preserve every body and Output assertion under vet.
+	index := 0
+	for _, decl := range file.Decls {
+		if function, ok := decl.(*ast.FuncDecl); ok && strings.HasPrefix(function.Name.Name, "Example") {
+			function.Name.Name = "Example_standalone" + strconv.Itoa(index)
+			index++
+		}
+	}
+	var source bytes.Buffer
+	if err := format.Node(&source, fset, file); err != nil {
+		t.Fatal(err)
+	}
+	target := filepath.Join(t.TempDir(), "example_test.go")
+	if err := os.WriteFile(target, source.Bytes(), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	writeStandaloneModule(t, filepath.Dir(target), path)
+	command := exec.CommandContext(t.Context(), "go", "test", "-mod=mod", "-count=1", ".")
+	command.Dir = filepath.Dir(target)
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("standalone %s: %v\n%s", path, err, output)
+	}
+	t.Logf("%d standalone examples passed", len(examples))
+}
+
+func TestStandaloneExamplesRejectMissingHelpers(t *testing.T) {
+	t.Parallel()
+	source := `package fixture_test
+import "fmt"
+func Example() {
+ fmt.Println(privateValue())
+ // Output: retained
+}
+`
+	for _, helper := range []string{"", `func privateValue() string {return "retained"}`} {
+		file, err := parser.ParseFile(token.NewFileSet(), "example_test.go", source+helper, parser.ParseComments)
+		if err != nil {
+			t.Fatal(err)
+		}
+		examples := doc.Examples(file)
+		if len(examples) != 1 || (examples[0].Play != nil) != (helper != "") {
+			t.Fatal("standalone check accepted a missing helper or rejected a local helper")
+		}
+	}
+}
+
+func TestDefaultPolicyDocumentation(t *testing.T) {
+	t.Parallel()
+	root := openExampleRoot(t, ".")
+	for _, path := range []string{"doc/masking.md", "doc/testing-output.md", "embargotest/detector.go"} {
+		text, err := root.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, required := range []string{"25 built-ins", "37", "WithAll", "opt-in"} {
+			if !strings.Contains(string(text), required) {
+				t.Errorf("%s omits the v0.5 default contract %q", path, required)
+			}
+		}
+		for _, stale := range []string{"enables every built-in", "default all-built-in policy", "reports some public random identifiers as high-entropy candidates", "WithMinConfidence(0.5)"} {
+			if strings.Contains(string(text), stale) {
+				t.Errorf("%s retains obsolete default claim %q", path, stale)
+			}
+		}
+	}
+	text, err := os.ReadFile("doc/logging.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(text), "Key rules apply to structured output, not arbitrary text") || !strings.Contains(string(text), "Credential assignments") {
+		t.Error("raw Scan credential-key effects are not documented")
+	}
+}
+
+func writeStandaloneModule(t *testing.T, directory, source string) {
+	t.Helper()
+	root, err := filepath.Abs(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	original, err := os.ReadFile("go.mod")
+	if err != nil {
+		t.Fatal(err)
+	}
+	directive := regexp.MustCompile(`(?m)^go \S+`).Find(original)
+	if len(directive) == 0 {
+		t.Fatal("missing Go version")
+	}
+	const module = "github.com/nao1215/embargo"
+	text := "module example.com/embargo-readme\n" + string(directive) + "\nrequire " + module + " v0.0.0\nreplace " + module + " => " + strconv.Quote(root) + "\n"
+	parts := strings.Split(filepath.ToSlash(source), "/")
+	if len(parts) > 2 && parts[0] == "adapters" {
+		adapter := module + "/adapters/" + parts[1]
+		text += "require " + adapter + " v0.0.0\nreplace " + adapter + " => " + strconv.Quote(filepath.Join(root, "adapters", parts[1])) + "\n"
+	}
+	rootDir := openExampleRoot(t, directory)
+	if err := rootDir.WriteFile("go.mod", []byte(text), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func openExampleRoot(t *testing.T, directory string) *os.Root {
+	t.Helper()
+	root, err := os.OpenRoot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := root.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	return root
 }

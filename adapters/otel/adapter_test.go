@@ -24,25 +24,6 @@ import (
 
 const redacted = "[REDACTED]"
 
-type captureLog struct{ records []sdklog.Record }
-
-func (e *captureLog) Export(_ context.Context, records []sdklog.Record) error {
-	for i := range records {
-		e.records = append(e.records, records[i].Clone())
-	}
-	return nil
-}
-func (*captureLog) ForceFlush(context.Context) error { return nil }
-func (*captureLog) Shutdown(context.Context) error   { return nil }
-
-type captureSpan struct{ spans []sdktrace.ReadOnlySpan }
-
-func (e *captureSpan) ExportSpans(_ context.Context, spans []sdktrace.ReadOnlySpan) error {
-	e.spans = append(e.spans, spans...)
-	return nil
-}
-func (*captureSpan) Shutdown(context.Context) error { return nil }
-
 func TestExportersThroughRealProviders(t *testing.T) {
 	t.Parallel()
 	scanner := embargo.NewScanner()

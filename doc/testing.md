@@ -193,4 +193,6 @@ Same-runner benchmarks build base and head once and alternate ten measurements i
 
 A golden diff is reviewed as an output contract change. Updating a golden cannot suppress its semantic assertions. Generated tables remain dated measurements; equality checks prevent accidental drift and property checks validate the measurement pipeline, not the truth of an unreviewed label.
 
+README-linked example files are parsed on their own and compiled in temporary consumer modules, with only public module imports and local replacements to the tested checkout. The check retains every example body and Output assertion, renames API-specific example names only for file-only vet, and serializes child Go commands. Missing private helpers or repository fixtures fail the check. Default-policy checks also reject stale all-detector and entropy claims.
+
 [Support maintenance](https://github.com/sponsors/nao1215).
