@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-17
+
+This minor release closes IP punctuation, authorization-list, encoded private-key and Go-value masking gaps, refines measured SWIFT/ABA log contexts, and improves safe input diagnostics. The public API and default minimum confidence of 0 are unchanged, and the root module remains dependency-free. Upgrade every installed adapter to v0.10.0 after the adapter tags are published.
+
 ### Detection changes
 
 - IP sentence punctuation now remains outside the masked address, including IPv4 tails in IPv6 and hyphenated IP ranges; addresses followed by digits or identifier text still remain excluded and may be missed there.
