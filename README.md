@@ -387,6 +387,8 @@ The redirect row leaks for every library because the token never passes a logger
 
 The [Go gopher](https://go.dev/blog/gopher) was designed by [Renee French](https://reneefrench.blogspot.com/) and is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
+Artwork details and license terms are in [image attribution](doc/images/ATTRIBUTION.md).
+
 ## Contributors
 
 Thanks to our contributors:
