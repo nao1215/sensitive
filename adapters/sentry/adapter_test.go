@@ -25,8 +25,6 @@ const (
 
 type eventTransport struct{ events []*sentry.Event }
 
-const testDSN = "https://public@example.com/1"
-
 func (*eventTransport) Configure(sentry.ClientOptions) {}
 
 func (t *eventTransport) SendEvent(event *sentry.Event) { t.events = append(t.events, event) }
@@ -40,7 +38,7 @@ func (*eventTransport) FlushWithContext(context.Context) bool { return true }
 func TestBeforeSendThroughSentryClient(t *testing.T) {
 	t.Parallel()
 	transport := &eventTransport{}
-	client, err := sentry.NewClient(sentry.ClientOptions{Dsn: testDSN, Transport: transport, BeforeSend: embargosentry.NewBeforeSend(embargo.NewScanner())})
+	client, err := sentry.NewClient(sentry.ClientOptions{Dsn: "https://public@example.com/1", Transport: transport, BeforeSend: embargosentry.NewBeforeSend(embargo.NewScanner())})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +82,7 @@ func TestBeforeSendSuppressesInvalidEvents(t *testing.T) {
 	for _, value := range []any{make(chan int), &failingEventValue{}} {
 		event := sentry.NewEvent()
 		event.Contexts = map[string]sentry.Context{"details": {"value": value}}
-		if safe := hook(event, nil); safe == nil || safe.Message != "embargo: record withheld (masking error)" {
+		if hook(event, nil) != nil {
 			t.Fatal("invalid event reached transport")
 		}
 	}
@@ -94,8 +92,8 @@ func TestOversizedEventIsDropped(t *testing.T) {
 	t.Parallel()
 	event := sentry.NewEvent()
 	event.Message = strings.Repeat("x", 1<<20)
-	if safe := embargosentry.NewBeforeSend(embargo.NewScanner())(event, nil); safe == nil || safe.Message != "embargo: record withheld (size limit)" {
-		t.Fatal("oversized event was not withheld")
+	if safe := embargosentry.NewBeforeSend(embargo.NewScanner())(event, nil); safe != nil {
+		t.Fatal("oversized event reached transport")
 	}
 }
 
@@ -107,7 +105,7 @@ func TestClientPreservesAndMasksDynamicSamplingContext(t *testing.T) {
 			transport := &eventTransport{}
 			hook := embargosentry.NewBeforeSend(embargo.NewScanner())
 			var before map[string]string
-			client, err := sentry.NewClient(sentry.ClientOptions{Dsn: testDSN, Transport: transport, BeforeSend: func(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
+			client, err := sentry.NewClient(sentry.ClientOptions{Dsn: "https://public@example.com/1", Transport: transport, BeforeSend: func(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
 				before = event.GetDynamicSamplingContext()
 				return hook(event, hint)
 			}})
@@ -185,7 +183,7 @@ func TestSentryContextCancellation(t *testing.T) {
 			if alreadyCanceled {
 				want = 0
 			}
-			if got == nil || got.Message != "embargo: record withheld (canceled)" || detector.calls != want {
+			if got != nil || detector.calls != want {
 				t.Fatalf("forwarded=%t scans=%d want=%d", got != nil, detector.calls, want)
 			}
 		})
@@ -199,7 +197,7 @@ func TestBeforeSendRequestCancellation(t *testing.T) {
 	detector := &cancelingScan{cancel: cancel}
 	event := sentry.NewEvent()
 	hint := &sentry.EventHint{Request: httptest.NewRequestWithContext(ctx, "GET", "/", nil)}
-	if got := embargosentry.NewBeforeSend(embargo.NewScanner(embargo.WithDetector(detector)))(event, hint); got == nil || got.Message != "embargo: record withheld (canceled)" || detector.calls != 0 {
+	if embargosentry.NewBeforeSend(embargo.NewScanner(embargo.WithDetector(detector)))(event, hint) != nil || detector.calls != 0 {
 		t.Fatal("canceled request scanned or sent")
 	}
 }
@@ -248,73 +246,5 @@ func BenchmarkHookScaling(b *testing.B) {
 				call()
 			}
 		})
-	}
-}
-
-type auditPanicDetector struct{}
-
-func (auditPanicDetector) Scan([]byte) []embargo.Finding { panic("planted-panic") }
-func TestWithheldRecord(t *testing.T) {
-	t.Parallel()
-	for _, reason := range []string{"masking error", "size limit", "canceled"} {
-		t.Run(reason, func(t *testing.T) {
-			t.Parallel()
-			ctx, cancel := context.WithCancel(t.Context())
-			defer cancel()
-			scanner := embargo.NewScanner()
-			value := "planted-value"
-			if reason == "masking error" {
-				scanner = embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(auditPanicDetector{}))
-			}
-			if reason == "size limit" {
-				value += strings.Repeat("x", 1<<20)
-			}
-			if reason == "canceled" {
-				cancel()
-			}
-			event := sentry.NewEvent()
-			event.Timestamp = time.Unix(7, 0)
-			event.Level = sentry.LevelWarning
-			event.Message = "planted-message"
-			event.Tags = map[string]string{"planted-key": value}
-			after := embargosentry.NewBeforeSend(scanner)(event, &sentry.EventHint{Context: ctx})
-			if after == nil {
-				t.Fatal("missing fallback")
-			}
-			if after.Timestamp != event.Timestamp || after.Level != event.Level || after.Message != "embargo: record withheld ("+reason+")" {
-				t.Fatal("wrong fallback metadata")
-			}
-			raw, err := json.Marshal(after)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if strings.Contains(string(raw), "planted") || after.Contexts["embargo"]["withheld_attributes"] != 1 {
-				t.Fatal(string(raw))
-			}
-		})
-	}
-}
-
-func TestWithheldRecordThroughClient(t *testing.T) {
-	t.Parallel()
-	transport := &eventTransport{}
-	client, err := sentry.NewClient(sentry.ClientOptions{Dsn: testDSN, Transport: transport, BeforeSend: embargosentry.NewBeforeSend(embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(auditPanicDetector{})))})
-	if err != nil {
-		t.Fatal(err)
-	}
-	event := sentry.NewEvent()
-	event.EventID = "planted-id"
-	event.Message = "planted-message"
-	event.Tags["planted-key"] = "planted-value"
-	id := client.CaptureEvent(event, nil, sentry.NewScope())
-	if id == nil || len(*id) != 32 || *id == event.EventID || len(transport.events) != 1 {
-		t.Fatalf("diagnostic lacks a usable event ID: %v", id)
-	}
-	raw, err := json.Marshal(transport.events[0])
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(string(raw), "planted") {
-		t.Fatal("diagnostic retained original data")
 	}
 }

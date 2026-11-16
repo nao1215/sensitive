@@ -1,7 +1,6 @@
 package embargozap
 
 import (
-	"errors"
 	"sync"
 
 	"go.uber.org/zap/zapcore"
@@ -12,10 +11,8 @@ import (
 
 // NewWriteSyncer masks complete JSON events from a zap JSON encoder.
 // Both dependencies are required; nil dependencies panic.
-// Write and Sync serialize access to next. Sync emits diagnostics for incomplete
-// events and synchronizes the sink even when framing failed. Masking failures emit a diagnostic retaining
-// recognized time/level metadata, a fixed reason and withheld_attributes. No
-// original fields survive; subsequent complete events remain usable. See package limits.
+// Write and Sync serialize access to next, and Sync rejects incomplete events
+// before delegating synchronization. See the package documentation for limits.
 func NewWriteSyncer(next zapcore.WriteSyncer, scanner *embargo.Scanner) zapcore.WriteSyncer {
 	return &writeSyncer{writer: output.NewWriter(next, scanner), next: next}
 }
@@ -33,9 +30,12 @@ func (w *writeSyncer) Write(data []byte) (int, error) {
 	return w.writer.Write(data)
 }
 
-// Sync forwards pending diagnostics, synchronizes the sink and joins both errors.
+// Sync rejects an incomplete event before flushing the downstream sink.
 func (w *writeSyncer) Sync() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	return errors.Join(w.writer.Flush(), w.next.Sync())
+	if err := w.writer.Flush(); err != nil {
+		return err
+	}
+	return w.next.Sync()
 }

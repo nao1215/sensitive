@@ -11,7 +11,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/nao1215/embargo"
-	"github.com/nao1215/embargo/internal/saferecord"
 )
 
 func maskText(ctx context.Context, scanner *embargo.Scanner, text string) (string, error) {
@@ -214,11 +213,8 @@ func allNumbers(values []attribute.Value) bool {
 
 func attributeInput(ctx context.Context, value attribute.Value, depth int) (any, error) {
 	const maxDepth = 64
-	if ctx.Err() != nil {
-		return nil, saferecord.ErrCanceled
-	}
-	if depth >= maxDepth {
-		return nil, saferecord.ErrSizeLimit
+	if ctx.Err() != nil || depth >= maxDepth {
+		return nil, errors.New("embargo: telemetry nesting limit")
 	}
 	switch value.Type() { //nolint:exhaustive // Scalars already have a JSON-compatible representation.
 	case attribute.BYTESLICE:

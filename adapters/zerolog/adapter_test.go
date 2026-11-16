@@ -9,7 +9,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/rs/zerolog"
 
@@ -205,42 +204,5 @@ func TestLoggerSnapshot(t *testing.T) {
 	}
 	if !bytes.Equal(want, output.Bytes()) {
 		t.Fatal("logger snapshot changed; review field structure and ordering")
-	}
-}
-
-type auditPanicDetector struct{}
-
-func (auditPanicDetector) Scan([]byte) []embargo.Finding { panic("planted-panic") }
-func TestWithheldRecord(t *testing.T) {
-	t.Parallel()
-	for _, reason := range []string{"masking error", "size limit"} {
-		t.Run(reason, func(t *testing.T) {
-			t.Parallel()
-			scanner := embargo.NewScanner(embargo.WithKinds())
-			value := "planted-value"
-			if reason == "masking error" {
-				scanner = embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(auditPanicDetector{}))
-			} else {
-				value += strings.Repeat("x", 1<<20)
-			}
-			var out bytes.Buffer
-			sink := embargozerolog.NewWriter(&out, scanner)
-			logger := zerolog.New(sink)
-			logger.Warn().Time("time", time.Unix(7, 0).UTC()).Str("planted-key", value).Msg("planted-message")
-			var got map[string]any
-			if err := json.Unmarshal(out.Bytes(), &got); err != nil {
-				t.Fatalf("missing fallback: %v", err)
-			}
-			message := got["msg"]
-			if message == nil {
-				message = got["message"]
-			}
-			if message != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(1) || got["level"] != "warn" || strings.Contains(out.String(), "planted") {
-				t.Fatal(out.String())
-			}
-			if got["ts"] != float64(7) && got["time"] != "1970-01-01T00:00:07Z" {
-				t.Fatal("timestamp lost", got)
-			}
-		})
 	}
 }

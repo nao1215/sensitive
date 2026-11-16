@@ -6,7 +6,7 @@
 // NewWriter masks newline-delimited JSON after zerolog has encoded every field,
 // including fields set on a Context. Both dependencies are required. It buffers
 // split events, limits each to 1 MiB and 64 nesting levels, and never forwards
-// original malformed, oversized or incomplete JSON. Close checks completeness and seals
+// malformed, oversized or incomplete JSON. Close checks completeness and seals
 // the adapter without closing the caller-owned sink; always check its error.
 //
 // Cumulative scanner input, including repeated field names, is limited to 4 MiB
@@ -16,11 +16,4 @@
 // adapter are unsupported and fail closed. Hex and other application encodings
 // are not decoded; wrap values in embargo.Secret before encoding. Hooks cannot
 // reliably rewrite already encoded fields, which is why this is a writer.
-//
-// Failed masking emits time/level, a fixed withheld message and an attribute
-// count, without original fields. See the logging guide for count definitions,
-// byte-writer metadata limitations and cooperative cancellation budgets:
-// https://github.com/nao1215/embargo/blob/main/doc/logging.md.
-// MarshalJSON, LogValue, String and Error can run before byte limits apply; their
-// time and memory are not bounded. Prefer Secret or a bounded LogValuer.
 package embargozerolog

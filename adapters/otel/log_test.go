@@ -2,7 +2,6 @@ package embargootel_test
 
 import (
 	"context"
-	"strings"
 	"testing"
 	"time"
 
@@ -16,13 +15,8 @@ import (
 )
 
 const (
-	withheldMasking  = "embargo: record withheld (masking error)"
-	withheldCanceled = "embargo: record withheld (canceled)"
-	canceledReason   = "canceled"
-	maskingReason    = "masking error"
-	sizeReason       = "size limit"
-	publicText       = "public"
-	exampleEmail     = "alice@example.com"
+	publicText   = "public"
+	exampleEmail = "alice@example.com"
 )
 
 func reviewRecord(t *testing.T, limit int, attrs ...attribute.KeyValue) sdklog.Record {
@@ -114,7 +108,7 @@ func testExportCancellation(t *testing.T, export func(*testing.T, context.Contex
 			if preCanceled {
 				want = 0
 			}
-			if err != nil || detector.calls != want {
+			if err == nil || detector.calls != want {
 				t.Fatalf("err=%v scans=%d want=%d", err, detector.calls, want)
 			}
 		})
@@ -128,8 +122,8 @@ func TestLogExportCancellation(t *testing.T) {
 		t.Helper()
 		sink := &captureLog{}
 		err := embargootel.NewLogExporter(sink, scanner).Export(ctx, []sdklog.Record{record, record})
-		if len(sink.records) != 2 || sink.records[0].Body().AsString() != withheldCanceled || sink.records[1].Body().AsString() != withheldCanceled {
-			t.Error("canceled batch did not emit fallback records")
+		if len(sink.records) != 0 {
+			t.Error("canceled batch reached sink")
 		}
 		return err
 	})
@@ -149,10 +143,10 @@ func TestLogRejectsCounterLosingKeyRename(t *testing.T) {
 	t.Parallel()
 	before := reviewRecord(t, 1, attribute.String(exampleEmail, "retained"), attribute.String("second", publicText))
 	sink := &captureLog{}
-	if err := embargootel.NewLogExporter(sink, embargo.NewScanner()).Export(t.Context(), []sdklog.Record{before}); err != nil {
-		t.Fatal(err)
+	if err := embargootel.NewLogExporter(sink, embargo.NewScanner()).Export(t.Context(), []sdklog.Record{before}); err == nil {
+		t.Fatal("unrepresentable rename accepted")
 	}
-	if len(sink.records) != 1 || sink.records[0].Body().AsString() != withheldMasking || before.DroppedAttributes() != 1 {
+	if len(sink.records) != 0 || before.DroppedAttributes() != 1 {
 		t.Fatal("batch forwarded or source changed")
 	}
 	before.WalkAttributes(func(kv attribute.KeyValue) bool {
@@ -178,10 +172,10 @@ func TestLogDuplicateModePreservesCountersOrRejects(t *testing.T) {
 		t.Fatal("fixture did not drop an attribute")
 	}
 	sink := &captureLog{}
-	if err := embargootel.NewLogExporter(sink, embargo.NewScanner()).Export(t.Context(), []sdklog.Record{before}); err != nil {
-		t.Fatal(err)
+	if err := embargootel.NewLogExporter(sink, embargo.NewScanner()).Export(t.Context(), []sdklog.Record{before}); err == nil {
+		t.Fatal("duplicate mode silently changed counters")
 	}
-	if len(sink.records) != 1 || sink.records[0].Body().AsString() != withheldMasking || before.DroppedAttributes() != 1 {
+	if len(sink.records) != 0 || before.DroppedAttributes() != 1 {
 		t.Fatal("source changed or batch forwarded")
 	}
 	before.WalkAttributes(func(kv attribute.KeyValue) bool {
@@ -190,62 +184,4 @@ func TestLogDuplicateModePreservesCountersOrRejects(t *testing.T) {
 		}
 		return true
 	})
-}
-
-type auditPanicDetector struct{}
-
-func (auditPanicDetector) Scan([]byte) []embargo.Finding { panic("planted-panic") }
-func TestLogWithheldRecord(t *testing.T) {
-	t.Parallel()
-	for _, reason := range []string{maskingReason, sizeReason, canceledReason} {
-		t.Run(reason, func(t *testing.T) {
-			t.Parallel()
-			testLogWithheld(t, reason)
-		})
-	}
-}
-
-func testLogWithheld(t *testing.T, reason string) {
-	t.Helper()
-
-	ctx, cancel := context.WithCancel(t.Context())
-	defer cancel()
-	scanner := embargo.NewScanner()
-	value := "planted-value"
-	if reason == maskingReason {
-		scanner = embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(auditPanicDetector{}))
-	}
-	if reason == sizeReason {
-		value += strings.Repeat("x", 1<<20)
-	}
-	if reason == canceledReason {
-		cancel()
-	}
-	before := reviewRecord(t, -1, attribute.String("planted-key", value))
-	before.SetBody(attribute.StringValue("planted-body"))
-	before.SetSeverity(apilog.SeverityWarn)
-	before.SetTimestamp(time.Unix(7, 0))
-	sink := &captureLog{}
-	if err := embargootel.NewLogExporter(sink, scanner).Export(ctx, []sdklog.Record{before}); err != nil {
-		t.Fatal(err)
-	}
-	if len(sink.records) != 1 {
-		t.Fatal("missing fallback")
-	}
-	after := sink.records[0]
-	if after.Body().AsString() != "embargo: record withheld ("+reason+")" || after.Timestamp() != before.Timestamp() || after.Severity() != before.Severity() {
-		t.Fatal("wrong fallback metadata")
-	}
-	if after.AttributesLen() != 1 {
-		t.Fatal("original attributes retained")
-	}
-	after.WalkAttributes(func(kv attribute.KeyValue) bool {
-		if string(kv.Key) != "withheld_attributes" || kv.Value.AsInt64() != int64(before.AttributesLen()+len(before.Resource().Attributes())) {
-			t.Error("wrong withheld count")
-		}
-		return true
-	})
-	if len(after.Resource().Attributes()) != 0 || after.InstrumentationScope().Name != "embargo" {
-		t.Fatal("original resource or scope retained")
-	}
 }

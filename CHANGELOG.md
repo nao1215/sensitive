@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
-- Emit safe diagnostic records when logging cannot mask an event, and retain masked HTTP/gRPC access logs after request cancellation.
+- Emit safe diagnostic records when slog cannot mask an event, and retain masked HTTP access logs after request cancellation.
 - Reject oversized plain byte slices before slog JSON encoding and clarify which encoder work remains unbounded.
 
 ## [0.5.2] - 2026-11-16
