@@ -1,0 +1,984 @@
+{
+  "baseline": "5c4d15f1c0648def18c4f489cc29651e74bf2db6",
+  "sources": {
+    "accuracy.json": "ff26e5fd1834dd2f735ffe8e5eb5be0eeedca02462d2c6106e4bd563edf8571c",
+    "accuracy-held.json": "cfd8eaf6a9720bce25521063bee46a5f8c4e8f2a78d9641fca99bc60a44abb5d",
+    "countries.json": "0ff30e3ad410a0434bd4d7aa3366f541c1756fc4a3e80e60a838e1ddd4fbbbee",
+    "credentials-accuracy.md": "fad1de5a9c96501297aa60392a4d251c996fe5ec63a807ccb651e8674f31aedf",
+    "severity.json": "08716245afb77f4b02f167aec113eff3a14367f0af522111c6b906b43f919f4f",
+    "real-logs-summary.json": "261205db03ae4ebe34b4b8e91bff2717d6054205d444f3ebe73b64fca56c5b83",
+    "real-logs-manifest.json": "1edd580861a43bde10bfc7f2ea09c523de68e4fd11961abd62c8bee84fa4eab4",
+    "real-logs-labels.json": "21e87d655f30f50ac425e1d7f5a08dc4596a2fa10a8833d734b88cb0e547881f"
+  },
+  "accuracy": [
+    {
+      "set": "development",
+      "kind": "aba_routing",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "ach_trace",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "awskey",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "bank_account",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "br_cnpj",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "br_cpf",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "btc",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "ca_sin",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "card_expiry",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "cn_resident_id",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "credential",
+      "tp": 360,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "cvv",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "email",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "eth",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "github_token",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "google_api_key",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "high_entropy",
+      "tp": 120,
+      "fp": 120,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "iban",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "in_aadhaar",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "in_pan",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "ipaddr",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "jwt",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "kr_rrn",
+      "tp": 320,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "merchant_id",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "mynumber",
+      "tp": 146,
+      "fp": 33,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "pan",
+      "tp": 146,
+      "fp": 97,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "payment_token",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "phone_jp",
+      "tp": 146,
+      "fp": 32,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "private_key_pem",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "service_token",
+      "tp": 120,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "slack_token",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "swiftbic",
+      "tp": 146,
+      "fp": 120,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "uk_nhs",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "uk_nino",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "uk_sortcode",
+      "tp": 146,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "us_itin",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "development",
+      "kind": "us_ssn",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "aba_routing",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "ach_trace",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "awskey",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "bank_account",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "br_cnpj",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "br_cpf",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "btc",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "ca_sin",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "card_expiry",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "cn_resident_id",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "credential",
+      "tp": 360,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "cvv",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "email",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "eth",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "github_token",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "google_api_key",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "high_entropy",
+      "tp": 118,
+      "fp": 118,
+      "fn": 2
+    },
+    {
+      "set": "held",
+      "kind": "iban",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "in_aadhaar",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "in_pan",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "ipaddr",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "jwt",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "kr_rrn",
+      "tp": 320,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "merchant_id",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "mynumber",
+      "tp": 144,
+      "fp": 32,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "pan",
+      "tp": 144,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "payment_token",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "phone_jp",
+      "tp": 144,
+      "fp": 32,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "private_key_pem",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "service_token",
+      "tp": 120,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "slack_token",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "swiftbic",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "uk_nhs",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "uk_nino",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "uk_sortcode",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "us_itin",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    },
+    {
+      "set": "held",
+      "kind": "us_ssn",
+      "tp": 288,
+      "fp": 96,
+      "fn": 0
+    }
+  ],
+  "critical_residual_bytes": 0,
+  "false_positives": [
+    {
+      "set": "development",
+      "kind": "aba_routing",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "ach_trace",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "awskey",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "bank_account",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "br_cnpj",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "br_cpf",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "btc",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "ca_sin",
+      "numerator": 2500000000,
+      "denominator": 1342081
+    },
+    {
+      "set": "development",
+      "kind": "card_expiry",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "cn_resident_id",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "credential",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "cvv",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "email",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "eth",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "github_token",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "google_api_key",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "high_entropy",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "iban",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "in_aadhaar",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "in_pan",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "ipaddr",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "jwt",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "kr_rrn",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "merchant_id",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "mynumber",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "pan",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "payment_token",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "phone_jp",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "private_key_pem",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "service_token",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "slack_token",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "swiftbic",
+      "numerator": 500000000,
+      "denominator": 4026243
+    },
+    {
+      "set": "development",
+      "kind": "uk_nhs",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "uk_nino",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "uk_sortcode",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "us_itin",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
+      "kind": "us_ssn",
+      "numerator": 27500000000,
+      "denominator": 1342081
+    },
+    {
+      "set": "held",
+      "kind": "aba_routing",
+      "numerator": 3500000000,
+      "denominator": 42178681
+    },
+    {
+      "set": "held",
+      "kind": "ach_trace",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "awskey",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "bank_account",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "br_cnpj",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "br_cpf",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "btc",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "ca_sin",
+      "numerator": 4500000000,
+      "denominator": 42178681
+    },
+    {
+      "set": "held",
+      "kind": "card_expiry",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "cn_resident_id",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "credential",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "cvv",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "email",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "eth",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "github_token",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "google_api_key",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "high_entropy",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "iban",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "in_aadhaar",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "in_pan",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "ipaddr",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "jwt",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "kr_rrn",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "merchant_id",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "mynumber",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "pan",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "payment_token",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "phone_jp",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "private_key_pem",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "service_token",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "slack_token",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "swiftbic",
+      "numerator": 13500000000,
+      "denominator": 42178681
+    },
+    {
+      "set": "held",
+      "kind": "uk_nhs",
+      "numerator": 96500000000,
+      "denominator": 42178681
+    },
+    {
+      "set": "held",
+      "kind": "uk_nino",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "uk_sortcode",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "us_itin",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "us_ssn",
+      "numerator": 16000000000,
+      "denominator": 42178681
+    }
+  ],
+  "speed": {
+    "maximum_ratio": 1.2,
+    "samples": 10
+  }
+}

@@ -1,0 +1,27 @@
+import unittest
+from ci_benchmark import default_gate
+
+
+def samples(clean=100, dirty=200, count=10):
+    return ''.join(f'BenchmarkCIDefault/clean 100 {clean} ns/op 0 B/op 0 allocs/op\nBenchmarkCIDefault/dirty 100 {dirty} ns/op 128 B/op 1 allocs/op\n' for _ in range(count))
+
+
+class DefaultGateTest(unittest.TestCase):
+    def test_twenty_percent_boundary_and_loss(self):
+        self.assertTrue(default_gate(samples(), samples(120, 240))['passed'])
+        self.assertFalse(default_gate(samples(), samples(121, 200))['passed'])
+        self.assertFalse(default_gate(samples(), samples(100, 241))['passed'])
+
+    def test_median_not_single_outlier(self):
+        noisy = samples(count=9)+samples(100000, 200000, count=1)
+        self.assertTrue(default_gate(samples(), noisy)['passed'])
+
+    def test_missing_extra_and_invalid_samples_fail_closed(self):
+        for text in [samples(count=9), samples(count=11), samples(0), samples(-1), samples('NaN'), samples('inf'), '']:
+            with self.subTest(text=text[:80]):
+                with self.assertRaises(ValueError):
+                    default_gate(samples(), text)
+
+
+if __name__ == '__main__':
+    unittest.main()

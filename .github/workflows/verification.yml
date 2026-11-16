@@ -5,6 +5,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      benchmark_base:
+        description: Base commit for a manual paired comparison
+        required: false
+        default: origin/main
 env:
   GOMAXPROCS: '4'
   LEAN_NUM_THREADS: '4'
@@ -27,6 +32,7 @@ jobs:
           cache-dependency-path: tests/go.sum
       - run: python3 -m unittest discover -s scripts -p 'test_*.py'
       - run: python3 scripts/case_docs.py --check
+      - run: python3 scripts/quality_docs.py --check
       - run: go -C tests run ./cmd/detectordocs --check
       - run: go -C tests test ./cmd/detectordocs -count=1
       - run: python3 scripts/check_prose.py
@@ -82,7 +88,7 @@ jobs:
           go -C tests test . -run '^TestQuint' -count=1
   benchmark:
     needs: changes
-    if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.detectors == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -96,10 +102,49 @@ jobs:
           cache-dependency-path: tests/go.sum
       - name: Compare base and head on this runner
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || inputs.benchmark_base || 'origin/main' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python3 scripts/ci_benchmark.py --base "$BASE_SHA" --head "$HEAD_SHA"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
         with:
           name: paired-benchmark
           path: benchmark-results/
+  accuracy:
+    needs: changes
+    if: needs.changes.outputs.detectors == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: tests/go.sum
+      - run: python3 scripts/quality_gate.py accuracy
+  false_positives:
+    needs: changes
+    if: needs.changes.outputs.detectors == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: tests/go.sum
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ${{ runner.temp }}/embargo-real-logs
+          key: real-logs-${{ hashFiles('doc/real-logs-manifest.json') }}
+      - name: Enforce per-Kind sampled false-positive ceilings
+        run: python3 scripts/quality_gate.py false-positives --cache "$RUNNER_TEMP/embargo-real-logs"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: quality-false-positives
+          path: quality-results/

@@ -94,6 +94,10 @@ The inventory below translates the owner's active repository instructions into c
 | Canary fragments retain minimum-length and option-order boundaries | M21 | [TestCanaryFragmentBoundsAndOrder](../embargotest/canary_fragment_test.go) | MultiPlatformUnitTest |
 | Local log audits count actual findings without echoing source values | M21 | [TestAuditCountsOffsetsAndNeverEchoesInput](../tests/cmd/embargo-audit/main_test.go) | MultiPlatformUnitTest |
 | Diagnostic-preservation recipes retain IDs and expose their recall tradeoff | M21 | [TestAuditDiagnosticRecipe](../tests/audit_recipes_test.go) | MultiPlatformUnitTest |
+| Detector changes enforce frozen per-Kind accuracy and critical exposure floors | M21 | [TestQualityAccuracy](../tests/quality_accuracy_test.go) | Verification |
+| Real-log gates compare exact sampled FP rates with explicit per-Kind ceilings | M21 | [compare_rates](../scripts/quality_gate.py) | Verification |
+| Default-scanner medians fail above twenty percent regression on paired samples | M21 | [default_gate](../scripts/ci_benchmark.py) | Verification |
+| Quality jobs use the detector filter and threshold tables cannot silently drift | M21 | [main](../scripts/quality_docs.py) | Verification |
 <!-- policy-map:end -->
 
 ## Changing a rule
