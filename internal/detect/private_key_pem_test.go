@@ -103,7 +103,7 @@ func TestPrivateKeyPEMDetector_Scan(t *testing.T) {
 
 func TestPEMHeaderVectors(t *testing.T) {
 	t.Parallel()
-	for _, kind := range []string{"PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY", "DSA PRIVATE KEY", "OPENSSH PRIVATE KEY", "ENCRYPTED PRIVATE KEY"} {
+	for _, kind := range []string{"PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY", "DSA PRIVATE KEY", "OPENSSH PRIVATE KEY", "ENCRYPTED PRIVATE KEY", "PGP PRIVATE KEY BLOCK"} {
 		raw := "-----BEGIN " + kind + "-----"
 		got := NewPrivateKeyPEM().Scan([]byte(raw))
 		if len(got) != 1 || got[0].RawValue != raw {
@@ -130,5 +130,30 @@ func TestPrivateKeyPemRejectedBoundaries(t *testing.T) {
 	t.Parallel()
 	if indexOf([]byte("-----BEGIN unterminated"), 0, "PRIVATE KEY-----") != -1 {
 		t.Fatal("unterminated header accepted")
+	}
+}
+
+func TestPEMFrameSpanProperty(t *testing.T) {
+	t.Parallel()
+	detector := NewPrivateKeyPEM()
+	for _, label := range []string{"PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY", "DSA PRIVATE KEY", "OPENSSH PRIVATE KEY", "ENCRYPTED PRIVATE KEY", "PGP PRIVATE KEY BLOCK"} {
+		header, footer := "-----BEGIN "+label+"-----", "-----END "+label+"-----"
+		for _, newline := range []string{"\n", "\r\n"} {
+			for _, middle := range []string{"opaqueBody", "opaqueBody" + newline + "-----BEGIN PUBLIC KEY-----" + newline + "opaqueTail", "opaqueBody" + newline + header + newline + "opaqueTail", "opaqueBody" + newline + "-----END PUBLIC KEY-----" + newline + "opaqueTail"} {
+				lines := strings.Split(header+newline+middle+newline+footer, newline)
+				for cut := 1; cut <= len(lines); cut++ {
+					block := strings.Join(lines[:cut], newline)
+					prefix := "visible" + newline
+					input := prefix + block
+					if cut == len(lines) {
+						input += newline + "public tail"
+					}
+					got := detector.Scan([]byte(input))
+					if len(got) != 1 || got[0].Start != len(prefix) || got[0].End != len(prefix)+len(block) || got[0].RawValue != block {
+						t.Fatalf("private frame boundary changed at line %d for %s: %+v", cut, label, got)
+					}
+				}
+			}
+		}
 	}
 }
