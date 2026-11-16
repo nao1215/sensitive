@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- Optional WithCanaryFragments checks contiguous raw canary pieces of at least 16 bytes in Recorder and Guard; default whole-value checks are unchanged ([7372eda](https://github.com/nao1215/embargo/commit/7372eda4ab7e4bede24b14d9acfd3a23819cc01d)).
+
 ## [0.5.1] - 2026-11-16
 
 This patch release fixes sensitive-data leaks in logging and telemetry boundaries and at inclusive confidence thresholds. Upgrade the root module and every installed adapter module to v0.5.1.
