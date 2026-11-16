@@ -2,14 +2,14 @@ goos: linux
 goarch: amd64
 pkg: github.com/nao1215/embargo/tests
 cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-                   │   masq.txt    │             embargo.txt              │
-                   │    sec/op     │    sec/op     vs base                │
-Comparison/flat       5.878µ ± 33%   4.650µ ± 20%        ~ (p=0.190 n=10)
-Comparison/nested    11.122µ ± 24%   8.652µ ± 27%  -22.20% (p=0.002 n=10)
-Comparison/map       17.898µ ± 31%   9.489µ ± 11%  -46.98% (p=0.000 n=10)
-Comparison/clean      6.202µ ± 35%   3.223µ ±  2%  -48.04% (p=0.000 n=10)
-Comparison/large50   129.12µ ±  6%   46.93µ ±  5%  -63.66% (p=0.000 n=10)
-geomean               15.64µ         8.959µ        -42.73%
+                   │    masq.txt    │             embargo.txt              │
+                   │     sec/op     │    sec/op     vs base                │
+Comparison/flat       4.059µ ±  30%   2.570µ ± 27%  -36.68% (p=0.000 n=10)
+Comparison/nested     9.570µ ± 145%   5.800µ ± 65%  -39.40% (p=0.011 n=10)
+Comparison/map        10.65µ ±  40%   11.41µ ± 46%        ~ (p=0.481 n=10)
+Comparison/clean      6.379µ ±   2%   3.242µ ±  1%  -49.17% (p=0.000 n=10)
+Comparison/large50   132.32µ ±   2%   48.51µ ±  2%  -63.34% (p=0.000 n=10)
+geomean               12.84µ          7.682µ        -40.18%
 
                    │   masq.txt   │             embargo.txt              │
                    │     B/op     │     B/op      vs base                │
@@ -17,7 +17,7 @@ Comparison/flat        672.0 ± 0%     760.0 ± 0%  +13.10% (p=0.000 n=10)
 Comparison/nested     1784.0 ± 0%     992.0 ± 0%  -44.39% (p=0.000 n=10)
 Comparison/map       1.703Ki ± 0%   1.492Ki ± 0%  -12.39% (p=0.000 n=10)
 Comparison/clean       792.0 ± 0%     152.0 ± 0%  -80.81% (p=0.000 n=10)
-Comparison/large50   12.41Ki ± 0%   11.03Ki ± 0%  -11.17% (p=0.000 n=10)
+Comparison/large50   12.41Ki ± 0%   11.03Ki ± 0%  -11.18% (p=0.000 n=10)
 geomean              1.796Ki        1.119Ki       -37.69%
 
                    │  masq.txt  │            embargo.txt             │
