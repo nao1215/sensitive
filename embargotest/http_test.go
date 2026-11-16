@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/nao1215/embargo"
 )
 
 func TestHTTPDifferential(t *testing.T) {
@@ -247,6 +249,29 @@ func TestHTTPMetadataBudget(t *testing.T) {
 			t.Fatal("oversized metadata did not fail")
 		}
 		p.finish()
+	}
+}
+
+func TestHTTPMetadataExactRemainingBudget(t *testing.T) {
+	t.Parallel()
+	for _, header := range []http.Header{{"X": nil}, {"X": {"ok"}}} {
+		// Metadata reservations include the framing needed by the capture.
+		cost := int64(9)
+		if len(header["X"]) != 0 {
+			cost += 6
+		}
+		for _, remaining := range []int64{cost - 1, cost, cost + 1} {
+			r := guardPolicy([]Option{WithScanner(embargo.NewScanner(embargo.WithKinds()))})
+			r.maxBytes, r.retained = 64, 64-remaining
+			w := &response{recorder: r}
+			got := w.snapshot(header, func(string) bool { return true })
+			if r.failed != (remaining < cost) {
+				t.Fatalf("remaining %d, cost %d: failed=%v", remaining, cost, r.failed)
+			}
+			if remaining >= cost && !reflect.DeepEqual(got, header) {
+				t.Fatal("metadata fitting exactly in the remaining budget was lost")
+			}
+		}
 	}
 }
 
