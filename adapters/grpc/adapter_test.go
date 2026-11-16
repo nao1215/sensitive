@@ -30,6 +30,7 @@ import (
 )
 
 const (
+	publicMethod   = "/public/Method"
 	grpcResponse   = "response"
 	grpcMessage    = "grpc request"
 	redacted       = "[REDACTED]"
@@ -529,11 +530,11 @@ func TestNumericMetadataLexemeProperty(t *testing.T) {
 				var out bytes.Buffer
 				logger := slog.New(slog.NewJSONHandler(&out, nil))
 				if streaming {
-					if err := embargogrpc.NewStreamServerInterceptor(logger, embargo.NewScanner())(nil, &contextStream{getContext: func() context.Context { return ctx }}, &grpc.StreamServerInfo{FullMethod: "/public/Method"}, func(any, grpc.ServerStream) error { return nil }); err != nil {
+					if err := embargogrpc.NewStreamServerInterceptor(logger, embargo.NewScanner())(nil, &contextStream{getContext: func() context.Context { return ctx }}, &grpc.StreamServerInfo{FullMethod: publicMethod}, func(any, grpc.ServerStream) error { return nil }); err != nil {
 						t.Fatal(err)
 					}
 				} else {
-					if _, err := embargogrpc.NewUnaryServerInterceptor(logger, embargo.NewScanner())(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/public/Method"}, func(context.Context, any) (any, error) { return grpcResponse, nil }); err != nil {
+					if _, err := embargogrpc.NewUnaryServerInterceptor(logger, embargo.NewScanner())(ctx, nil, &grpc.UnaryServerInfo{FullMethod: publicMethod}, func(context.Context, any) (any, error) { return grpcResponse, nil }); err != nil {
 						t.Fatal(err)
 					}
 				}
@@ -545,6 +546,35 @@ func TestNumericMetadataLexemeProperty(t *testing.T) {
 				}
 				if !slices.Equal(record.Metadata["number"], []string{redacted}) {
 					t.Fatalf("numeric metadata retained part of lexeme %s", lexeme)
+				}
+			}
+		}
+	}
+}
+
+func TestFreeTextMetadataProperty(t *testing.T) {
+	t.Parallel()
+	for n := 1; n < 254; n += 17 {
+		secret := fmt.Sprintf("opaqueMetadataFixture%dTail", n)
+		address := fmt.Sprintf("::ffff:203.0.113.%d", n)
+		for _, text := range []string{fmt.Sprintf("map[Authorization:[Bearer %s]]", secret), fmt.Sprintf("body=%q", `{"password":"`+secret+`"}`), "password=[REDACTED]" + secret} {
+			for _, stream := range []bool{false, true} {
+				var out bytes.Buffer
+				ctx := metadata.NewIncomingContext(t.Context(), metadata.Pairs("x-forwarded-for", address, "x-context", text))
+				logger := slog.New(slog.NewJSONHandler(&out, nil))
+				scanner := embargo.NewScanner()
+				serviceError := errors.New(text)
+				var err error
+				if stream {
+					err = embargogrpc.NewStreamServerInterceptor(logger, scanner)(nil, &contextStream{getContext: func() context.Context { return ctx }}, &grpc.StreamServerInfo{FullMethod: publicMethod}, func(any, grpc.ServerStream) error { return serviceError })
+				} else {
+					_, err = embargogrpc.NewUnaryServerInterceptor(logger, scanner)(ctx, nil, &grpc.UnaryServerInfo{FullMethod: publicMethod}, func(context.Context, any) (any, error) { return grpcResponse, serviceError })
+				}
+				if !errors.Is(err, serviceError) {
+					t.Fatal("RPC outcome changed")
+				}
+				if out.Len() == 0 || strings.Contains(out.String(), secret) || strings.Contains(out.String(), ".0.113.") || !strings.Contains(out.String(), redacted) {
+					t.Fatalf("metadata or error leaked: %s", out.String())
 				}
 			}
 		}
