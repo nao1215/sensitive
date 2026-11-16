@@ -303,3 +303,19 @@ func TestEmailDetector_DomainStartsWithDot(t *testing.T) {
 		})
 	}
 }
+
+func TestEmailExactDocumentedScores(t *testing.T) {
+	t.Parallel()
+	for _, fixture := range []struct {
+		text  string
+		score float64
+	}{{"alice@example.com", 1}, {"alice@example.zzzz", 0.8}, {"alice@ex..ample.com", 0.9}} {
+		t.Run(fixture.text, func(t *testing.T) {
+			t.Parallel()
+			findings := detect.NewEmail().Scan([]byte(fixture.text))
+			if len(findings) != 1 || findings[0].Confidence != fixture.score {
+				t.Fatalf("got %v want exact score %.17g", findings, fixture.score)
+			}
+		})
+	}
+}
