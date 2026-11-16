@@ -135,7 +135,7 @@ def render(manifest, before, after):
     table = '| Dataset | Split | Scope | Bytes | Lines | License / source |\n|---|---|---|---:|---:|---|\n'
     for d in datasets:
         table += f"| {d['name']} | {d['split']} | {d['scope']} | {d['bytes']:,} | {d['lines']:,} | [LogHub research/academic use]({d['license_url']}); [provenance]({d['readme_url']}) |\n"
-    table += '\nBefore retains b8290bc, the input to round 13; after uses the round-15 policy with opt-in country identifiers. These columns include the earlier round-13 fixes. The held split has now been seen and serves as regression data, not an independent evaluation of this change.\n\nRates below are estimated false-positive findings per decimal GB (10⁹ bytes), not counts of affected lines. IP addresses and published user/contact identities are sensitive references under this evaluation policy; the unspecified listener address 0.0.0.0 is an FP. Checksums do not establish a real account. A hostname fragment is an FP for MyNumber even if the hostname itself identifies a machine.\n\n'
+    table += '\nBefore is the retained baseline aggregate; after is the measured current policy, including opt-in country identifiers. The held split has now been seen and serves as regression data, not an independent evaluation of this change.\n\nRates below are estimated false-positive findings per decimal GB (10⁹ bytes), not counts of affected lines. IP addresses and published user/contact identities are sensitive references under this evaluation policy; the unspecified listener address 0.0.0.0 is an FP. Checksums do not establish a real account. A hostname fragment is an FP for MyNumber even if the hostname itself identifies a machine.\n\n'
     table += '| Detector | Development before / GB | Development after / GB | Held before / GB | Held after / GB |\n|---|---:|---:|---:|---:|\n'
     active=[]
     for kind in manifest['kinds']:
@@ -202,7 +202,7 @@ def main():
     updated=re.sub(pattern,lambda m:m[1]+table+m[2],text)
     readme = ROOT/'README.md'
     original = readme.read_text(encoding='utf-8')
-    synopsis = '![Estimated false positives on public logs](doc/images/real-logs.svg)\n\nRound 15: 8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.\n'
+    synopsis = '![Estimated false positives on public logs](doc/images/real-logs.svg)\n\n8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.\n'
     readme_pattern = r'(?s)(<!-- real-logs-summary:start -->\n).*?(<!-- real-logs-summary:end -->)'
     if len(re.findall(readme_pattern,original)) != 1:
         raise ValueError('expected one README real-log block')

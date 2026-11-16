@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Freeze synthetic round-12 corpora; independent seeds and surrounding templates."""
+"""Freeze synthetic credential corpora; independent seeds and surrounding templates."""
 import argparse
 import json
 import random

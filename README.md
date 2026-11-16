@@ -294,7 +294,7 @@ Held-out synthetic set, default minimum confidence 0. [Generation, test cases an
 <!-- real-logs-summary:start -->
 ![Estimated false positives on public logs](doc/images/real-logs.svg)
 
-Round 15: 8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.
+8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.
 <!-- real-logs-summary:end -->
 
 ## Testing

@@ -20,7 +20,7 @@ Brazil's [e-Financeira manual](https://sped.rfb.gov.br/estatico/54/B1B0F2B283ECD
 
 ## Frozen evaluation
 
-The generator uses different seeds and surrounding log templates for development and held data. Both 6,720-row files were prepared before detector implementation; [freeze metadata](../tests/testdata/countries-freeze.json) and the [manifest](../tests/testdata/countries-manifest.json) retain their hashes. Each kind has 96 generated values in bare, formatted and percent-encoded forms, plus rejected mutations, embedded identifiers, public order IDs and clean logs. RRN adds 32 labeled modern values with invalid legacy checks. Public-ID negatives deliberately share valid identity syntax, exposing the precision cost of retaining ambiguous values. The initial rules were evaluated before inspecting held results. Review later exposed an overlapping-SIN omission; its independent regression test drove the correction, and both frozen corpora were replayed unchanged. These committed rows are regression data after this round.
+The generator uses different seeds and surrounding log templates for development and held data. Both 6,720-row files were prepared before detector implementation; [freeze metadata](../tests/testdata/countries-freeze.json) and the [manifest](../tests/testdata/countries-manifest.json) retain their hashes. Each kind has 96 generated values in bare, formatted and percent-encoded forms, plus rejected mutations, embedded identifiers, public order IDs and clean logs. RRN adds 32 labeled modern values with invalid legacy checks. Public-ID negatives deliberately share valid identity syntax, exposing the precision cost of retaining ambiguous values. The initial rules were evaluated before inspecting held results. Review later exposed an overlapping-SIN omission; its independent regression test drove the correction, and both frozen corpora were replayed unchanged. These committed rows are regression data after evaluation.
 
 The measurements select each kind explicitly with WithKinds. They describe enabled detectors; the default scanner does not enable these new families.
 
@@ -66,7 +66,7 @@ At threshold 0.5 the synthetic business-label false positives disappear without 
 
 ## Cached real logs
 
-The eight checksum-pinned datasets are the same 92,409,848 bytes and 819,576 lines used in round 13. Raw logs and sampled excerpts remain outside Git. The [real-log evidence](real-logs.md) records licenses, hashes and sample labels. Each dataset/kind stratum uses at most 40 deterministic sampled findings; FP/GB is count multiplied by the sampled false-positive fraction, divided by decimal GB. This is an estimate, not recall or a confidence bound. The previous held log split has already been inspected in earlier rounds.
+The eight checksum-pinned datasets are 92,409,848 bytes and 819,576 lines in the pinned manifest. Raw logs and sampled excerpts remain outside Git. The [real-log evidence](real-logs.md) records licenses, hashes and sample labels. Each dataset/kind stratum uses at most 40 deterministic sampled findings; FP/GB is count multiplied by the sampled false-positive fraction, divided by decimal GB. This is an estimate, not recall or a confidence bound. The previous held log split has already been inspected during evaluation.
 
 <!-- country-logs:start -->
 | Kind | Dev findings | Dev sampled FP / sample | Dev estimated FP / GB | Held findings | Held sampled FP / sample | Held estimated FP / GB |

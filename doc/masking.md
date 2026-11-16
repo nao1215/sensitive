@@ -17,11 +17,11 @@ flowchart LR
 ```
 <!-- overlap:end -->
 
-The diagram comes from the [runnable overlap Example](../masking_example_test.go). `make masking-doc` regenerates it and the README before/after table; ordinary tests reject differences.
+The diagram comes from the [runnable overlap Example](../example_test.go). `make masking-doc` regenerates it and the README before/after table; ordinary tests reject differences.
 
 `MaskFunc` receives the original text of each merged range and chooses its replacement. The highest-confidence finding supplies the kind; ties sort by kind, start, then descending end. Adjacent ranges remain separate; invalid ranges redact the entire input without calling the callback.
 
-See [Mask and MaskFunc Examples](../example_test.go), [overlap tests](../tests/mask_test.go), and [custom detector contracts](../scanner_test.go).
+See [Mask and MaskFunc Examples](../example_test.go), [overlap tests](../tests/properties_test.go), and [custom detector contracts](../scanner_test.go).
 
 ## Custom detection
 

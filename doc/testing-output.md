@@ -1,6 +1,6 @@
 # Checking real output
 
-A canary is a distinctive fake secret placed in the application path being tested. The recorder searches captured bytes for that value and its supported encodings, independently of detector findings. The [README test](../readme_output_test.go) shows a Secret passing through a real JSON logger.
+A canary is a distinctive fake secret placed in the application path being tested. The recorder searches captured bytes for that value and its supported encodings, independently of detector findings. The [README test](../doc_test.go) shows a Secret passing through a real JSON logger.
 
 ## What a pass proves
 
@@ -19,7 +19,7 @@ Neither default check establishes absence of partial, truncated, split or hashed
 
 `embargotest.WithCanaryFragments(16)` adds every raw 16-byte window of the configured canary to Recorder and Guard. Any longer surviving raw piece contains such a window. The option accepts a minimum from 16 through the canary length, regardless of option order, and leaves the default whole-value encodings active. It does not encode fragments, reconstruct shorter pieces or reverse hashes. Choose a distinctive fake canary; even a long repeated or common fragment can match unrelated diagnostic output. The minimum is a bound, not a probability guarantee.
 
-The [failing-first regression](../embargotest/canary_fragment_test.go) tests prefix, interior, suffix, split writes and split records with all detectors disabled. The existing suites and the following cases pass without new false rejections. Last-four and eight-digit card fragments remain outside this extension; detecting arbitrary short numbers as secrets would discard ordinary diagnostics.
+The [failing-first regression](../embargotest/canary_test.go) tests prefix, interior, suffix, split writes and split records with all detectors disabled. The existing suites and the following cases pass without new false rejections. Last-four and eight-digit card fragments remain outside this extension; detecting arbitrary short numbers as secrets would discard ordinary diagnostics.
 
 ### Separate checks on the application cases
 
@@ -48,8 +48,8 @@ Regenerate both output tables with `python3 scripts/case_docs.py`; --check execu
 
 | Producer | Connect to | Tested output |
 |---|---|---|
-| Logger or encoder | `recorder.Writer("logs")` | [Real loggers and encoders](../tests/compatibility_integration_test.go) |
-| HTTP handler | `recorder.HTTP("http")` | [Status, headers, body, trailers and interim responses](../tests/http_integration_test.go) |
+| Logger or encoder | `recorder.Writer("logs")` | [Real loggers and encoders](../tests/integrations_test.go) |
+| HTTP handler | `recorder.HTTP("http")` | [Status, headers, body, trailers and interim responses](../tests/integrations_test.go) |
 | Test-binary child | `recorder.Run(ctx, "TestHelper", exitCode)` | [stdout, stderr, panic and cleanup](../tests/lifecycle_test.go) |
 
 ## Require useful content
@@ -66,7 +66,7 @@ The default Recorder and Guard scanners enable 25 built-ins at minimum confidenc
 
 ## Keep an existing masker and check the real application output
 
-embargotest does not require replacing a team's logger or masker. In [TestExistingMaskerOutputCheck](../tests/comparison_libraries_test.go), the application writes a real JSON event through either a plain slog handler or masq configured with email/card regexes and field rules. An email in an attribute key remains visible in both original paths, and the recorder's Check fails. Wrapping that same handler in NewSlogHandler makes the test pass. The test records the expected failure in a test observer, so the repository suite itself stays green while proving both outcomes.
+embargotest does not require replacing a team's logger or masker. In [TestExistingMaskerOutputCheck](../tests/comparison_test.go), the application writes a real JSON event through either a plain slog handler or masq configured with email/card regexes and field rules. An email in an attribute key remains visible in both original paths, and the recorder's Check fails. Wrapping that same handler in NewSlogHandler makes the test pass. The test records the expected failure in a test observer, so the repository suite itself stays green while proving both outcomes.
 
 The same test uses the existing `Expect` callback to compare compact captured JSON with `scanner.MaskJSON(data)`, ensuring opaque values under sensitive keys are masked as well as detector-recognized text. For NDJSON, apply that comparison separately to each record. `WithScanner` alone checks text detectors and does not infer key rules. Teams can fix their existing masker instead of adding a wrapper and retain the same output assertions; a matching snapshot or JSON expectation should also confirm useful diagnostic fields survived.
 

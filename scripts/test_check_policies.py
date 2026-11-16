@@ -12,7 +12,7 @@ import fuzz_targets
 class PolicyTests(unittest.TestCase):
     def test_test_file_budget_rejects_extra_files(self):
         for extra in ('scan_contract_test.go', 'scan_linux_test.go',
-                      'adapters/logger/snapshot_test.go', 'tests/accuracy_extra_test.go',
+                      'adapters/logger/secret_test.go', 'tests/accuracy_extra_test.go',
                       'tests/cmd/tool/scores_test.go'):
             with self.subTest(extra=extra):
                 files = ['scan.go', 'scan_test.go', 'adapters/logger/adapter.go',
@@ -27,6 +27,20 @@ class PolicyTests(unittest.TestCase):
                                   'tests/doc.go', 'tests/accuracy_test.go', 'tests/quality_gates_test.go',
                                   'tests/contracts/policy_test.go', 'tests/cmd/tool/main.go',
                                   'tests/cmd/tool/main_test.go'])
+
+    def test_repository_traces_reject_development_labels(self):
+        labels = ['Rou'+'nd 99', 'rou'+'nd-99', 'rou'+'nd99', 'rou'+'nds 98 and 99',
+                  'R'+'98-01', 'ADR'+'-42', 'PR'+' A']
+        for label in labels:
+            with self.subTest(label=label):
+                for files in ({'doc/current.md': label}, {label+'.md': 'current behavior'}):
+                    with self.assertRaisesRegex(ValueError, 'development trace'):
+                        policies.repository_traces(files)
+
+    def test_repository_traces_keep_provenance_and_changelog(self):
+        policies.repository_traces({'CHANGELOG.md': 'Rou'+'nd 99',
+                                    'doc/source.md': 'https://github.com/logpai/loghub/commit/'+'a'*40,
+                                    'scanner_test.go': 'TestRoundTrip; protocol R2; port 443'})
 
     def test_root_dependencies(self):
         for manifest in ({'Require':[{'Path':'example.com/runtime'}]}, {'Tool':['example.com/tool']}):

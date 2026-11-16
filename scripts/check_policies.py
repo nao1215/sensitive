@@ -40,6 +40,21 @@ def test_file_budget(files=None):
     require(not violations, 'test file budget: ' + ', '.join(violations))
 
 
+def repository_traces(files=None):
+    """Keep development labels out of filenames, prose and generated text."""
+    if files is None:
+        names = subprocess.check_output(['git', 'ls-files'], cwd=ROOT, text=True).splitlines()
+        files = {name: (ROOT/name).read_bytes().decode('utf-8', errors='replace') for name in names}
+    pattern = re.compile(r'(?i)(?<![a-z])rounds?[ _-]*[0-9]+|\bR[0-9]+-[0-9]+\b|\bADR[ _-]*[0-9]+\b|\bPR [A-Z]\b|github\.com/nao1215/embargo/(?:pull/[0-9]+|commit/[0-9a-f]+)')
+    violations = []
+    for name, text in sorted(files.items()):
+        if name == 'CHANGELOG.md':
+            continue
+        if pattern.search(name) or pattern.search(text):
+            violations.append(name)
+    require(not violations, 'development trace labels: ' + ', '.join(violations))
+
+
 def root_module():
     module = json.loads(subprocess.check_output(['go', 'mod', 'edit', '-json'], cwd=ROOT))
     require(not module.get('Require'), 'root go.mod must have no require directives')
@@ -156,7 +171,7 @@ def evidence():
 
 def mapping():
     rows=json.loads(read('scripts/policies.json'))
-    checks={'test-file-budget':test_file_budget,'root-module':root_module,'workflow-security':workflows,'branding':branding,'lint-config':lint_rules,'api-boundary':api_boundaries,'schedules':schedules,'pr-metadata':pr_metadata,'technique-links':linked_tests, 'evidence':evidence, 'detector-docs':detector_docs}
+    checks={'repository-traces':repository_traces,'test-file-budget':test_file_budget,'root-module':root_module,'workflow-security':workflows,'branding':branding,'lint-config':lint_rules,'api-boundary':api_boundaries,'schedules':schedules,'pr-metadata':pr_metadata,'technique-links':linked_tests, 'evidence':evidence, 'detector-docs':detector_docs}
     for row in rows:
         require(row['source'] and row['rule'] and row['where'], 'policy mapping is incomplete')
         if row['check'] in checks:

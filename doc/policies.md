@@ -99,6 +99,7 @@ This inventory states the owner's active maintenance policy and maps each rule t
 | Default-scanner medians fail above twenty percent regression on paired samples | Repository maintenance policy | [default_gate](../scripts/ci_benchmark.py) | Verification |
 | Quality jobs use the detector filter and threshold tables cannot silently drift | Repository maintenance policy | [main](../scripts/quality_docs.py) | Verification |
 | Tests stay beside sources or in one file per tests-module subject | Repository maintenance policy | [test-file-budget](../scripts/check_policies.py) | Verification |
+| Tracked files describe current behavior without development trace labels | Repository maintenance policy | [repository-traces](../scripts/check_policies.py) | Verification |
 <!-- policy-map:end -->
 
 The TDD rule requires a failing regression before a production fix. Record that evidence in the PR or external work report; CI checks that the regression remains. Test readability, useful explanations, false-positive labeling and table layout retain human review alongside executable checks.
@@ -106,3 +107,5 @@ The TDD rule requires a failing regression before a production fix. Record that 
 Heavy local jobs run serially with GOMAXPROCS at most 4. Every PR changes fewer than 100 files and carries observed workflow/job timings in its body. Preserve the README opening above Quick start. Use English Conventional Commits without agent trailers, squash after green CI, never force push, and do not mutate third-party repositories. Release only when explicitly requested.
 
 Go packages may have one test file per non-test source, plus example_test.go, fuzz_test.go and benchmark_test.go. The tests module uses one file per canonical subject: accuracy, real_logs, comparison, cases, docs, severity, integrations, quality_gates, properties, lifecycle, oracles, api and policy. Command packages retain the source-file rule.
+
+Keep development round labels, finding IDs, numbered decision labels, PR letters, repository PR numbers and repository commit hashes out of tracked text and filenames. CHANGELOG.md retains release references; external dependency and dataset pins retain their provenance. Generators follow the same rule.

@@ -562,5 +562,11 @@
     "source": "Repository maintenance policy",
     "check": "test-file-budget",
     "where": "Verification"
+  },
+  {
+    "rule": "Tracked files describe current behavior without development trace labels",
+    "source": "Repository maintenance policy",
+    "check": "repository-traces",
+    "where": "Verification"
   }
 ]

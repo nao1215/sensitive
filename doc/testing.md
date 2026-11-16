@@ -176,7 +176,7 @@ Same-runner benchmarks build base and head once and alternate ten measurements i
 | Artifact | Content property before equality | Check |
 |---|---|---|
 | Public API goldens | Constants are included; promoted members are rejected | contracts/api_test.go |
-| Logger event snapshots | Valid JSON, no canary/email, retained nested object and array fields | Each adapter secret_test.go |
+| Logger event snapshots | Valid JSON, no canary/email, retained nested object and array fields | Each adapter test file |
 | Guard failure message | Active test names survive validation; canaries and rejected names do not | embargotest/guard_test.go and guard_test.go |
 | Large MaskJSON snapshot | Every sensitive field removed; exact integer and public fields retained | secret_test.go |
 | Accuracy tables and figures | Unique exact-span matching, valid counters and measured-data rendering | accuracy_test.go and test_accuracy_figures.py |

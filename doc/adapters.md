@@ -73,11 +73,11 @@ The HTTP hook lives in the root module and uses only the standard library. gRPC,
 
 | Boundary | Constructor | Runnable Example | Integration test |
 |---|---|---|---|
-| HTTP access logs | NewHTTPHandler | [request and status](../http_example_test.go) | [httptest server and client](../http_handler_test.go) |
+| HTTP access logs | NewHTTPHandler | [request and status](../example_test.go) | [httptest server and client](../http_handler_test.go) |
 | gRPC unary access logs | NewUnaryServerInterceptor | [unary status and masked metadata](../adapters/grpc/example_test.go) | [health RPC over bufconn](../adapters/grpc/adapter_test.go) |
 | gRPC stream access logs | NewStreamServerInterceptor | [stream failure record](../adapters/grpc/example_test.go) | [real Health Watch stream](../adapters/grpc/adapter_test.go) |
-| OpenTelemetry log export | NewLogExporter | [masked log body](../adapters/otel/example_test.go) | [LoggerProvider and exporter](../adapters/otel/adapter_test.go) |
-| OpenTelemetry span export | NewSpanExporter | [email span attribute](../adapters/otel/example_test.go) | [TracerProvider and exporter](../adapters/otel/adapter_test.go) |
+| OpenTelemetry log export | NewLogExporter | [masked log body](../adapters/otel/example_test.go) | [LoggerProvider and exporter](../adapters/otel/values_test.go) |
+| OpenTelemetry span export | NewSpanExporter | [email span attribute](../adapters/otel/example_test.go) | [TracerProvider and exporter](../adapters/otel/values_test.go) |
 | Sentry error events | NewBeforeSend | [message and context](../adapters/sentry/example_test.go) | [Client.CaptureEvent](../adapters/sentry/adapter_test.go) |
 
 NewHTTPHandler always hides Authorization, Cookie and Set-Cookie in its access record. Additional headers and parsed query keys use the scanner's WithSensitiveKeys policy. It checks redirect Location values as URLs, including their parsed query keys, and scans other header values. It preserves request inputs, response status, body and wire headers; it is an access-log boundary, so a redirect sent to a browser is not sanitized by this middleware. Bodies are not recorded. The writer supports ResponseController, Flush, Hijack and Push; unsupported operations return the underlying error. A final header snapshot prevents later header-map changes from rewriting the logged response.

@@ -653,13 +653,13 @@ func checkJSONPaths(t relationTB, value map[string]any) {
 }
 
 // Licensed data stays in the owner's cache. CI runs the synthetic generators;
-// the round evidence records a full replay and never commits raw public logs.
+// the measurement report records a full replay without committing raw public logs.
 //
 //nolint:paralleltest // This opt-in measurement reads the full corpus serially.
 func TestMetamorphicRealLogs(t *testing.T) {
 	cache := os.Getenv("EMBARGO_LOG_CACHE")
 	if cache == "" {
-		t.Skip("set EMBARGO_LOG_CACHE to the verified round-13 cache")
+		t.Skip("set EMBARGO_LOG_CACHE to the verified public-log cache")
 	}
 	scanner := embargo.NewScanner(embargo.WithAll())
 	kinds := []embargo.Kind{

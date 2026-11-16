@@ -26,7 +26,6 @@ func TestBenchmarkTable(t *testing.T) {
 		OS             string                        `json:"os"`
 		Arch           string                        `json:"arch"`
 		CPU            string                        `json:"cpu"`
-		Commit         string                        `json:"commit"`
 	}
 	if err := json.Unmarshal(data, &snapshot); err != nil {
 		t.Fatal(err)

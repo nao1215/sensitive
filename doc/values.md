@@ -9,21 +9,21 @@
 | JSON encoding of that Secret | `"[REDACTED]"` |
 | `secret.Reveal()` | `fake-key` |
 
-See the [runnable Secret Examples](../secret_example_test.go) and [actual encoder tests](../tests/compatibility_integration_test.go).
+See the [runnable Secret Examples](../example_test.go) and [actual encoder tests](../tests/integrations_test.go).
 
 ## Decode before publishing a Secret
 
 `Input[string]` decodes JSON strings or text; `Input[[]byte]` uses JSON's base64 convention for byte slices. `Secret()` returns a snapshot unaffected by later decoding into the Input. Its decoding errors clear the stored value, including a rejected redaction marker.
 
-Decode into a fresh object: absent fields and invalid outer JSON can prevent Input's decoder from being called. The [outer-object regression](../tests/input_lifecycle_test.go) demonstrates why reusing a populated object can retain an earlier value.
+Decode into a fresh object: absent fields and invalid outer JSON can prevent Input's decoder from being called. The [outer-object regression](../tests/lifecycle_test.go) demonstrates why reusing a populated object can retain an earlier value.
 
-[Decoding contracts and regressions](../input_test.go), [Input Examples](../secret_example_test.go).
+[Decoding contracts and regressions](../input_test.go), [Input Examples](../example_test.go).
 
 ## Database and configuration inputs
 
 `Input` already implements `encoding.TextUnmarshaler` for environment/configuration loaders that support that interface. `Input.Scan` implements `sql.Scanner` for database string and byte columns; the Input destination may use a named string or byte-slice type. Driver source values must be ordinary string or []byte values, or nil. It copies the driver's bytes before they can be reused; SQL NULL clears the value; unsupported source types and redaction markers clear it and return a fixed error. Use `rows.Scan(&input)` during initialization and publish `input.Secret()` afterwards. Concurrent mutation and observation of an Input are unsupported. A failed outer query or scan of another column can leave earlier columns assigned; discard the whole DTO on failure.
 
-`Secret` stays an immutable snapshot and does not implement scanning or text unmarshaling. Neither wrapper implements `driver.Valuer`: implicitly returning its raw value would create an output path that bypasses the wrapper's display contract, while returning the marker could silently corrupt stored credentials. Write deliberately with `db.ExecContext(ctx, query, secret.Reveal())`. Use string/byte Input fields for secrets; arbitrary numeric or driver-specific SQL types need explicit conversion by the application. See the [runnable database Example](../structured_example_test.go) and [copy, NULL and failure tests](../input_sql_test.go).
+`Secret` stays an immutable snapshot and does not implement scanning or text unmarshaling. Neither wrapper implements `driver.Valuer`: implicitly returning its raw value would create an output path that bypasses the wrapper's display contract, while returning the marker could silently corrupt stored credentials. Write deliberately with `db.ExecContext(ctx, query, secret.Reveal())`. Use string/byte Input fields for secrets; arbitrary numeric or driver-specific SQL types need explicit conversion by the application. See the [runnable database Example](../example_test.go) and [copy, NULL and failure tests](../input_test.go).
 
 ## Migrating from struct tags
 
@@ -53,7 +53,7 @@ type Credentials struct { Recovery embargo.Secret[string] }
 credentials := Credentials{Recovery: embargo.NewSecret("synthetic-recovery-code")}
 ```
 
-A database/config DTO can instead declare `Recovery embargo.Input[string]` and copy its Secret into the application's immutable Credentials after loading. Both wrappers mask themselves through fmt, encoding/json and their other supported formatting interfaces. This is not memory erasure or protection after an explicit Reveal, a custom formatter that ignores the interfaces, or a process memory dump. [Runnable Secret Examples](../secret_example_test.go) and [cross-encoder tests](../tests/compatibility_integration_test.go) define the supported paths.
+A database/config DTO can instead declare `Recovery embargo.Input[string]` and copy its Secret into the application's immutable Credentials after loading. Both wrappers mask themselves through fmt, encoding/json and their other supported formatting interfaces. This is not memory erasure or protection after an explicit Reveal, a custom formatter that ignores the interfaces, or a process memory dump. [Runnable Secret Examples](../example_test.go) and [cross-encoder tests](../tests/integrations_test.go) define the supported paths.
 
 [Support maintenance](https://github.com/sponsors/nao1215).
 
@@ -139,7 +139,7 @@ For each call, trace the returned string or bytes to its destination: an authent
 
 `MarshalJSON` and `MarshalText` write the marker. Saving `json.Marshal(credentials)` with a Secret field stores `"[REDACTED]"`, not an encrypted or recoverable value. The original value is lost from that serialized copy. Input rejects the marker on decode so it cannot silently become a password. Persist a deliberately revealed value through an appropriate storage boundary when that is the intended operation; serializing a Secret is a display safeguard.
 
-A homemade `type Password string` with only `String()` can look safe at the top level and still expose its underlying string through `fmt.Sprint(struct{ password Password }{...})`. fmt does not call methods on unexported fields. [The regression test](../secret_debug_test.go) contrasts that case with Secret's pointer storage. CheckValue now covers `%v`, `%+v` and `%#v` inside such a field, so the incomplete type fails with a path such as `fmt/unexported/%v`. The domain example above uses the same storage principle without importing embargo.
+A homemade `type Password string` with only `String()` can look safe at the top level and still expose its underlying string through `fmt.Sprint(struct{ password Password }{...})`. fmt does not call methods on unexported fields. [The regression test](../secret_test.go) contrasts that case with Secret's pointer storage. CheckValue now covers `%v`, `%+v` and `%#v` inside such a field, so the incomplete type fails with a path such as `fmt/unexported/%v`. The domain example above uses the same storage principle without importing embargo.
 
 ## Memory lifetime
 

@@ -44,11 +44,10 @@ embargo is a Go library for detecting sensitive data in text. It detects credit 
 - Documentation comments: Write documentation comments to help users understand how to use the code. In-code comments should explain why or why not something is done.
 - Zero external dependencies: This library must have zero external dependencies. Use only the Go standard library.
 - Performance first: Minimize scan cost. Use hint-based pre-filtering (bytes.Contains) before expensive operations. Avoid regular expressions unless absolutely necessary — prefer dedicated parsers and domain rule validation.
-- CHANGELOG.md maintenance: When updating CHANGELOG.md, always include references to the relevant PR numbers and commit hashes with clickable GitHub links. Format examples:
-  - **Feature description ([abc1234](https://github.com/nao1215/embargo/commit/abc1234))**: Detailed explanation of the change
-  - **Feature description (PR #123, [abc1234](https://github.com/nao1215/embargo/commit/abc1234))**: When both PR and commit are relevant
+- CHANGELOG.md maintenance: Include clickable references to the relevant pull requests and commits when recording release changes. CHANGELOG.md is the exception to the repository's development-trace rule; use current behavior and evidence in other tracked files.
 
 ## Testing
+
 - [Readable Test Code](https://logmi.jp/main/technology/327449): Avoid excessive optimization (DRY) and aim for a state where it's easy to understand what tests exist.
 - Clear input/output: Create tests with `t.Run()` and clarify test case input/output. Test cases clarify test intent by explicitly showing input and expected output.
 - Test descriptions: The first argument of `t.Run()` should clearly describe the relationship between input and expected output.
