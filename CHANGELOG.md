@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Detector-change CI jobs enforce frozen per-Kind precision/recall floors, sampled real-log FP/GB ceilings and a +20% paired default-scanner median budget ([e1b3bec](https://github.com/nao1215/embargo/commit/e1b3becd47860a0881b83e1679b0deb55a0c9992)).
+
 - Audit local logs with the isolated tests/cmd/embargo-audit command, reporting per-Kind counts, masked byte offsets and kind-selection guidance ([349bb11](https://github.com/nao1215/embargo/commit/349bb118791c6916ebd18c288616db4937a7e3f1)).
 
 - Optional WithCanaryFragments checks contiguous raw canary pieces of at least 16 bytes in Recorder and Guard; default whole-value checks are unchanged ([7372eda](https://github.com/nao1215/embargo/commit/7372eda4ab7e4bede24b14d9acfd3a23819cc01d)).

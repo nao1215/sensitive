@@ -40,16 +40,17 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--base',required=True);parser.add_argument('--head',required=True);args=parser.parse_args()
     results=ROOT/'benchmark-results';results.mkdir(exist_ok=True)
     env=dict(os.environ,GOMAXPROCS='1')
+    revisions={label:run(['git','rev-parse','--verify',revision+'^{commit}'],cwd=ROOT).strip() for label,revision in [('base',args.base),('head',args.head)]}
+    harness=subprocess.check_output(['git','show',revisions['head']+':tests/benchmarks/default_test.go'],cwd=ROOT)
     with tempfile.TemporaryDirectory(prefix='embargo-benchmark-') as tmp:
         binaries={}
-        for label,revision in [('base',args.base),('head',args.head)]:
-            sha=run(['git','rev-parse','--verify',revision+'^{commit}'],cwd=ROOT).strip()
+        for label,sha in revisions.items():
             checkout=Path(tmp)/label;checkout.mkdir()
             # An archive avoids changing the active checkout or Git worktree state.
             archive=subprocess.check_output(['git','archive',sha],cwd=ROOT)
             subprocess.run(['tar','-x','-C',str(checkout)],input=archive,check=True)
             # Copy the head-owned harness to both revisions, including older bases.
-            (checkout/'ci_default_benchmark_test.go').write_bytes((ROOT/'tests/benchmarks/default_test.go').read_bytes())
+            (checkout/'ci_default_benchmark_test.go').write_bytes(harness)
             binary=Path(tmp)/(label+'.test');binaries[label]=binary
             subprocess.run(['go','test','-c','-o',str(binary),'.'],cwd=checkout,env=env,check=True)
         samples={'base':[],'head':[]}
@@ -61,7 +62,7 @@ def main():
         for label,text in samples.items():(results/(label+'.txt')).write_text(''.join(text))
     summary=run(['go','-C','tests/tools','run','golang.org/x/perf/cmd/benchstat',str(results/'base.txt'),str(results/'head.txt')],cwd=ROOT)
     (results/'benchstat.txt').write_text(summary)
-    (results/'conditions.json').write_text(json.dumps({'base':args.base,'head':args.head,'order':orders,'go':run(['go','version']).strip(),'gomaxprocs':1,'benchtime':'100ms'},indent=2)+'\n')
+    (results/'conditions.json').write_text(json.dumps({'base':revisions['base'],'head':revisions['head'],'order':orders,'go':run(['go','version']).strip(),'gomaxprocs':1,'benchtime':'100ms'},indent=2)+'\n')
     gate=default_gate((results/'base.txt').read_text(),(results/'head.txt').read_text())
     (results/'gate.json').write_text(json.dumps(gate,indent=2)+'\n')
     print(summary)
