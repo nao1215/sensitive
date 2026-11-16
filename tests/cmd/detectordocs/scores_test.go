@@ -95,6 +95,7 @@ func TestKindConfidenceScores(t *testing.T) {
 					if math.Abs(findings[0].Confidence-tc.score) > 1e-12 {
 						t.Fatalf("confidence %g, want %g", findings[0].Confidence, tc.score)
 					}
+					checkScoreThreshold(t, kind, tc, findings[0].Confidence)
 					observed[scoreText(findings[0].Confidence)] = true
 				})
 			}
@@ -174,5 +175,13 @@ func TestReadmeDefaultsRejectChangedSelection(t *testing.T) {
 	readme := strings.Replace(repositoryReadme(t), "| on |", "| off |", 1)
 	if err := checkDefaults(repositoryKinds(t), readme); err == nil {
 		t.Fatal("default mismatch accepted")
+	}
+}
+
+func checkScoreThreshold(t *testing.T, kind embargo.Kind, tc scoreCase, actual float64) {
+	t.Helper()
+	threshold := embargo.NewScanner(embargo.WithKinds(kind), embargo.WithMinConfidence(tc.score))
+	if got := threshold.ScanString(tc.input); len(got) != 1 || embargo.Mask(tc.input, got) == tc.input {
+		t.Fatalf("documented inclusive threshold %.17g rejected score %.17g", tc.score, actual)
 	}
 }

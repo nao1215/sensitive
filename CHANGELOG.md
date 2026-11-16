@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Security
 
+- Prevent email/JWT threshold leaks caused by floating-point addition in the core scanner and all hooks using it (R18-04; released tags v0.0.2–v0.5.0, including the earlier module names). Accumulate integer scores before conversion so the documented inclusive thresholds retain matching values. [PR #95](https://github.com/nao1215/embargo/pull/95), [61a44a5](https://github.com/nao1215/embargo/commit/61a44a5461e0eacfba0b0d9854dd66eda5f9e491).
+
 - Fix original-key context leaks in slog scalars, errors, bound attributes, groups and LogValuer values (R18-01; v0.4.0–v0.5.0), HTTP query and redirect-query logs (v0.5.0), and boolean/null JSON leaves in MaskJSON and encoded adapters (v0.4.0–v0.5.0). [PR #94](https://github.com/nao1215/embargo/pull/94), [9e0e6f0](https://github.com/nao1215/embargo/commit/9e0e6f049fda9a82747a8fbec4cecae32d9723de).
 - Scan both standard slog handler representations, including Duration nanoseconds and TextHandler millisecond timestamps (R18-03; v0.4.0–v0.5.0). A match in either representation masks the forwarded value. [PR #94](https://github.com/nao1215/embargo/pull/94), [9e0e6f0](https://github.com/nao1215/embargo/commit/9e0e6f049fda9a82747a8fbec4cecae32d9723de).
 

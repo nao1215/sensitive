@@ -190,3 +190,19 @@ func TestJWTDetector_EmptyHeaderRejected(t *testing.T) {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
 }
+
+func TestJWTExactDocumentedScores(t *testing.T) {
+	t.Parallel()
+	for _, fixture := range []struct {
+		text  string
+		score float64
+	}{{"eyJ4IjoxfQ.e30.c2ln", 0.9}} {
+		t.Run(fixture.text, func(t *testing.T) {
+			t.Parallel()
+			findings := detect.NewJWT().Scan([]byte(fixture.text))
+			if len(findings) != 1 || findings[0].Confidence != fixture.score {
+				t.Fatalf("got %v want exact score %.17g", findings, fixture.score)
+			}
+		})
+	}
+}

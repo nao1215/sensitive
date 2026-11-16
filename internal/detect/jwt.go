@@ -6,8 +6,8 @@ import (
 )
 
 // decodeJWTHeader attempts to base64-decode and JSON-parse the JWT header.
-// Returns the algorithm string and a confidence boost (0.0 to 0.3).
-func decodeJWTHeader(headerPart []byte) (algorithm string, boost float64) {
+// Returns the algorithm string and a confidence boost in integer tenths (0 to 3).
+func decodeJWTHeader(headerPart []byte) (algorithm string, boost int) {
 	headerJSON, err := base64.RawURLEncoding.DecodeString(string(headerPart))
 	if err != nil {
 		return "", 0
@@ -16,12 +16,13 @@ func decodeJWTHeader(headerPart []byte) (algorithm string, boost float64) {
 	if json.Unmarshal(headerJSON, &header) != nil {
 		return "", 0
 	}
-	boost = 0.2
+	const objectPoints, algorithmPoints = 2, 1
+	boost = objectPoints
 	alg, ok := header["alg"]
 	if !ok {
 		return "", boost
 	}
-	boost += 0.1
+	boost += algorithmPoints
 	if s, ok := alg.(string); ok {
 		return s, boost
 	}
@@ -68,22 +69,23 @@ func (d *JWT) Scan(data []byte) []Finding {
 			continue
 		}
 
-		confidence := 0.7
+		const signedPoints, unsignedPoints, scoreScale = 7, 5, 10
+		points := signedPoints
 		if len(parts[2]) == 0 {
 			// Unsigned JWT (alg:none or malformed). These tokens have an empty
 			// signature part (e.g., "header.payload."). We intentionally detect
 			// them because alg:none is a known attack vector (CVE-2015-9235),
 			// but use lower base confidence since they may also be malformed strings.
-			confidence = 0.5
+			points = unsignedPoints
 		}
 		algorithm, boost := decodeJWTHeader(parts[0])
-		confidence += boost
+		points += boost
 
 		findings = append(findings, Finding{
 			DetectorName: d.Name(),
 			Start:        i,
 			End:          end,
-			Confidence:   confidence,
+			Confidence:   float64(points) / scoreScale,
 			RawValue:     string(data[i:end]),
 			Detail:       &JWTDetail{Algorithm: algorithm},
 		})

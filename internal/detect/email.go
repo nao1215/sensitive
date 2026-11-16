@@ -55,13 +55,15 @@ func (d *Email) Scan(data []byte) []Finding {
 			continue
 		}
 
-		confidence := 0.7
+		// Integer tenths avoid losing an inclusive documented threshold to rounding.
+		const basePoints, tldPoints, structurePoints, scoreScale = 7, 2, 1, 10
+		points := basePoints
 		if isKnownTLD(tld) {
-			confidence += 0.2
+			points += tldPoints
 		}
 		// Structural check: no consecutive dots in domain.
 		if !hasConsecutiveDots(domain) {
-			confidence += 0.1
+			points += structurePoints
 		}
 
 		raw := string(data[localStart:domainEnd])
@@ -69,7 +71,7 @@ func (d *Email) Scan(data []byte) []Finding {
 			DetectorName: d.Name(),
 			Start:        localStart,
 			End:          domainEnd,
-			Confidence:   confidence,
+			Confidence:   float64(points) / scoreScale,
 			RawValue:     raw,
 			Detail: &EmailDetail{
 				Local:  string(data[localStart:i]),

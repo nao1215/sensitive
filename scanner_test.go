@@ -31,3 +31,27 @@ func TestScannerRecognitionRegressions(t *testing.T) {
 		t.Fatal(got)
 	}
 }
+
+func TestDocumentedConfidenceBoundary(t *testing.T) {
+	t.Parallel()
+	const documentedEmail = "alice@example.com"
+	for _, fixture := range []struct {
+		text      string
+		kind      embargo.Kind
+		threshold float64
+	}{
+		{documentedEmail, embargo.KindEmail, 1},
+		{"alice@example.zzzz", embargo.KindEmail, 0.8},
+		{"alice@ex..ample.com", embargo.KindEmail, 0.9},
+		{"eyJ4IjoxfQ.e30.c2ln", embargo.KindJWT, 0.9},
+	} {
+		t.Run(fixture.text, func(t *testing.T) {
+			t.Parallel()
+			scanner := embargo.NewScanner(embargo.WithKinds(fixture.kind), embargo.WithMinConfidence(fixture.threshold))
+			findings := scanner.ScanString(fixture.text)
+			if len(findings) != 1 || findings[0].Confidence != fixture.threshold || embargo.Mask(fixture.text, findings) == fixture.text {
+				t.Fatalf("inclusive threshold %g lost or changed score: %v", fixture.threshold, findings)
+			}
+		})
+	}
+}

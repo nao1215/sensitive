@@ -436,5 +436,11 @@
     "source": "M19",
     "check": "slog_handler_test.go#TestSlogWithGroupDepth",
     "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Every documented Kind score survives its inclusive threshold",
+    "source": "M19",
+    "check": "tests/cmd/detectordocs/scores_test.go#checkScoreThreshold",
+    "where": "Verification"
   }
 ]
