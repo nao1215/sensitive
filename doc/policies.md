@@ -78,6 +78,7 @@ The inventory below translates the owner's active repository instructions into c
 | Logger scalar masking agrees with original-key JSON context | M19 | [TestLoggerKeyContextDifferential](../tests/slog_handler_test.go) | MultiPlatformUnitTest |
 | Slog scans both standard handler representations | M19 | [TestSlogEncodedRepresentations](../slog_handler_test.go) | MultiPlatformUnitTest |
 | Slog explicit groups and WithGroup share a depth bound | M19 | [TestSlogWithGroupDepth](../slog_handler_test.go) | MultiPlatformUnitTest |
+| Every documented Kind score survives its inclusive threshold | M19 | [checkScoreThreshold](../tests/cmd/detectordocs/scores_test.go) | Verification |
 <!-- policy-map:end -->
 
 ## Changing a rule

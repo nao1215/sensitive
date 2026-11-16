@@ -34,31 +34,31 @@ The invalid-Luhn row is a deliberate negative example. embargo's default minimum
 <!-- comparison:start -->
 | Benchmark | ns/op | B/op | allocs/op |
 |---|---:|---:|---:|
-| Comparison/clean/embargo | 1,419.0 | 152 | 14 |
-| Comparison/clean/masq | 4,146.0 | 792 | 50 |
-| Comparison/flat/embargo | 4,171.0 | 760 | 25 |
-| Comparison/flat/masq | 7,086.5 | 672 | 32 |
-| Comparison/large50/embargo | 42,204.5 | 11,289 | 177 |
-| Comparison/large50/masq | 70,267.5 | 12,710 | 561 |
-| Comparison/map/embargo | 9,541.5 | 1,496 | 56 |
-| Comparison/map/masq | 12,469.0 | 1,744 | 63 |
-| Comparison/nested/embargo | 7,959.0 | 960 | 44 |
-| Comparison/nested/masq | 11,530.0 | 1,784 | 61 |
-| ComparisonFormatter/clean | 1,291.5 | 0 | 0 |
-| ComparisonFormatter/flat | 1,420.5 | 32 | 2 |
-| ComparisonFormatter/large50 | 16,446.5 | 7,873 | 10 |
-| ComparisonFormatter/map | 1,052.5 | 0 | 0 |
-| ComparisonFormatter/nested | 1,052.5 | 0 | 0 |
-| ComparisonStruct/embargo | 5,121.5 | 1,000 | 42 |
-| ComparisonStruct/go_mask | 1,250.5 | 328 | 7 |
-| ComparisonText/embargo | 4,720.5 | 1,640 | 42 |
-| ComparisonText/godlp | 69,203.5 | 11,714 | 59 |
-| StructuredPath/json_shape | 5,109.0 | 1,000 | 42 |
-| StructuredPath/old_string | 1,829.0 | 752 | 14 |
+| Comparison/clean/embargo | 2,751.5 | 152 | 14 |
+| Comparison/clean/masq | 6,592.5 | 792 | 50 |
+| Comparison/flat/embargo | 4,208.0 | 760 | 25 |
+| Comparison/flat/masq | 5,866.5 | 672 | 32 |
+| Comparison/large50/embargo | 41,951.0 | 11,289 | 177 |
+| Comparison/large50/masq | 134,168.0 | 12,710 | 561 |
+| Comparison/map/embargo | 9,739.0 | 1,496 | 56 |
+| Comparison/map/masq | 12,693.0 | 1,744 | 63 |
+| Comparison/nested/embargo | 8,118.5 | 960 | 44 |
+| Comparison/nested/masq | 11,507.5 | 1,784 | 61 |
+| ComparisonFormatter/clean | 1,274.5 | 0 | 0 |
+| ComparisonFormatter/flat | 1,433.5 | 32 | 2 |
+| ComparisonFormatter/large50 | 16,347.5 | 7,873 | 10 |
+| ComparisonFormatter/map | 1,057.5 | 0 | 0 |
+| ComparisonFormatter/nested | 1,054.5 | 0 | 0 |
+| ComparisonStruct/embargo | 2,352.5 | 1,000 | 42 |
+| ComparisonStruct/go_mask | 922.0 | 328 | 7 |
+| ComparisonText/embargo | 2,394.5 | 1,640 | 42 |
+| ComparisonText/godlp | 70,063.0 | 11,714 | 59 |
+| StructuredPath/json_shape | 5,147.5 | 1,000 | 42 |
+| StructuredPath/old_string | 1,847.5 | 752 | 14 |
 
 Measured 2026-11-16 with go version go1.26.11 linux/amd64, Linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S; GOMAXPROCS=1, ten 200 ms samples per case. Construction is outside the timed loop; JSON encoding and masking are included. Source and dependency fingerprints, CPU affinity and command are in [comparison.json](comparison.json).
 
-For these five configured events, embargo/masq median time ranges from 0.34 to 0.77; below 1 means less time for embargo. The structured JSON path uses 2.79 times the old string-only time. These ratios are regenerated from the same samples as the table.
+For these five configured events, embargo/masq median time ranges from 0.31 to 0.77; below 1 means less time for embargo. The structured JSON path uses 2.79 times the old string-only time. These ratios are regenerated from the same samples as the table.
 <!-- comparison:end -->
 
 The five head-to-head events are a flat email/card pair, a nested struct with opaque password and tagged recovery field, a map, a clean event, and 50 attributes (48 clean plus the flat pair). Both loggers use the same io.Discard sink. masq uses its documented WithAllowedType for time.Time and slog.Level, matching embargo's decision to preserve that metadata; this avoids charging masq for an unnecessary reflection traversal. Masker/scanner construction and regex compilation are excluded for both. The tests use prebuilt slog.Attr slices and LogAttrs to avoid attributing caller argument construction to either library.
