@@ -41,3 +41,4 @@ __pycache__/
 /tests/lean/.lake/
 /_apalache-out/
 /benchmark-results/
+/quality-results/

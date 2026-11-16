@@ -6,6 +6,9 @@ on:
       code:
         description: Whether the full Go checks are needed
         value: ${{ jobs.changes.outputs.code }}
+      detectors:
+        description: Whether detector or scanner production code changed
+        value: ${{ jobs.changes.outputs.detectors }}
       workflows:
         description: Whether workflow validation is needed
         value: ${{ jobs.changes.outputs.workflows }}
@@ -19,6 +22,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       code: ${{ steps.filter.outputs.code }}
+      detectors: ${{ steps.filter.outputs.detectors }}
       workflows: ${{ steps.filter.outputs.workflows }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

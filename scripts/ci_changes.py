@@ -11,7 +11,13 @@ def classify(paths):
         return (path.startswith("doc/") or path in {"LICENSE", ".all-contributorsrc"}
                 or PurePosixPath(path).suffix.lower() in
                 {".md", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".ico"})
+    def detector(path):
+        p = PurePosixPath(path)
+        return (p.suffix == '.go' and not path.endswith('_test.go') and p.name != 'doc.go'
+                and (path.startswith(('internal/detect/', 'internal/ascii/'))
+                     or (len(p.parts) == 1 and p.name not in {'input.go', 'secret.go', 'slog_handler.go', 'http_handler.go'})))
     return {
+        "detectors": any(detector(path) for path in paths),
         "code": any(not documentation(path) for path in paths),
         "workflows": any(path.startswith(".github/workflows/") or path.startswith(".github/actions/")
                          or path in {"scripts/ci_changes.py", "scripts/test_ci_changes.py"} for path in paths),
@@ -20,7 +26,7 @@ def classify(paths):
 
 def changes(event_name, event):
     if event_name not in {"pull_request", "push"}:
-        return {"code": True, "workflows": True}
+        return {"code": True, "workflows": True, "detectors": True}
     if event_name == "pull_request":
         base = event["pull_request"]["base"]["sha"]
         head = event["pull_request"]["head"]["sha"]
@@ -28,7 +34,7 @@ def changes(event_name, event):
     else:
         base, head = event["before"], event["after"]
         if set(base) == {"0"}:
-            return {"code": True, "workflows": True}
+            return {"code": True, "workflows": True, "detectors": True}
         revision = [base, head]
     # --no-renames includes the deleted source as well as the added destination.
     # Missing history fails this job instead of silently skipping code checks.

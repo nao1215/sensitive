@@ -532,5 +532,29 @@
     "source": "M21",
     "check": "tests/audit_recipes_test.go#TestAuditDiagnosticRecipe",
     "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Detector changes enforce frozen per-Kind accuracy and critical exposure floors",
+    "source": "M21",
+    "check": "tests/quality_accuracy_test.go#TestQualityAccuracy",
+    "where": "Verification"
+  },
+  {
+    "rule": "Real-log gates compare exact sampled FP rates with explicit per-Kind ceilings",
+    "source": "M21",
+    "check": "scripts/quality_gate.py#compare_rates",
+    "where": "Verification"
+  },
+  {
+    "rule": "Default-scanner medians fail above twenty percent regression on paired samples",
+    "source": "M21",
+    "check": "scripts/ci_benchmark.py#default_gate",
+    "where": "Verification"
+  },
+  {
+    "rule": "Quality jobs use the detector filter and threshold tables cannot silently drift",
+    "source": "M21",
+    "check": "scripts/quality_docs.py#main",
+    "where": "Verification"
   }
 ]

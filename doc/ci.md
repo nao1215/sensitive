@@ -70,7 +70,7 @@ The slowest baseline jobs were the Windows minimum-Go unit leg (123 seconds), en
 
 Head root lint fell from 118 to 48 seconds; the negative-fixture step fell from 66 to 10 seconds after binary reuse, while architecture checks fell from 34 to 22 seconds. The slowest head job was Windows stable property/race testing at 145 seconds: setup-go took 40 seconds despite an 84 MB cache hit, including about 15 seconds extracting the cache, and the test step took 87 seconds. The test binary reported 40.938 seconds for the main tests package; compilation, dependency preparation and other packages account for the rest. Added race coverage costs time, so the unit workflow rose from 134 to 156 seconds. Reviewdog also rose from 27 to 51 seconds, with 36 seconds in its lint annotation step; this observation is retained without attributing all variation to code changes.
 
-Minimum and stable Go remain on Linux, Windows and macOS. Stable legs run the race detector for the root, tests and adapter modules; minimum-Go legs retain ordinary tests. Adapter race coverage remains on all three OSes without repeating it in both toolchain legs. Documentation-only changes continue to skip code jobs while documentation and policy checks run. Formal verification and paired benchmarks use the same change classification; heavy mutation and scaling run weekly, and fuzz search runs nightly. Shared runners and cache state affect the timing table, so an observed delta is not attributed solely to one edit.
+Minimum and stable Go remain on Linux, Windows and macOS. Stable legs run the race detector for the root, tests and adapter modules; minimum-Go legs retain ordinary tests. Adapter race coverage remains on all three OSes without repeating it in both toolchain legs. Documentation-only changes continue to skip code jobs while documentation and policy checks run. Formal verification uses the code change classification; the current detector-only quality filter is described below; heavy mutation and scaling run weekly, and fuzz search runs nightly. Shared runners and cache state affect the timing table, so an observed delta is not attributed solely to one edit.
 
 CodeRabbit is configured to review the Lean and Quint source, generators and replay assertions; regenerated vector and trace bulk is excluded from prose review while formal CI checks exact staleness. Intentional output snapshots remain reviewable. Verification costs 72 seconds wall time with separate runner jobs: policies 16 seconds, formal 62 seconds and paired benchmark 41 seconds. Quint generation/model checking took 25 seconds, Lean download/extraction 14 seconds and compilation/vector checks 8 seconds. Model/oracle replay in policies took 6 seconds, lock provenance checking 2 seconds and prose checking 1 second; API timestamps round subsecond checks to zero. Metamorphic and snapshot assertions share the ordinary/race jobs, so these runs do not isolate their marginal cost. Mutation and scaling remain weekly, with no claimed GitHub duration before a scheduled run; their local measured costs are recorded in testing.md. Each future round report must retain a workflow/job timing table, commit IDs, slowest-job causes and the effect of any CI edit. Do not omit a check merely to improve the table.
 
@@ -236,5 +236,74 @@ PR B compares main 780b634915d21ff1782ecd5cde6e1956fb10f949 with implementation 
 | reviewdog: misspell | n/a | 11 |
 
 The unit workflow changed from 194 to 179 seconds while adding the three SDK modules to the existing OS and Go-version matrix. Windows stable unit time was 140 versus 145 seconds; Linux pinned unit time was 32 versus 24 seconds. These single shared-runner observations do not isolate a performance effect. The preceding head took 228 seconds, illustrating the scheduling and cache variation. reviewdog took 31 seconds, with 19 seconds in its lint job; the round-14 observation was 51 seconds. The baseline is a main push and therefore has no reviewdog run. All existing checks remain, and the new SDK modules also reach lint, gosec, govulncheck and declared-root verification.
+
+## Detector quality gates
+
+Accuracy, real-log false positives and paired speed run as three separate Verification jobs when the reusable changes workflow finds production changes in the scanner or its detector dependencies. Documentation, tests, logger wrappers and audit tools alone do not start these jobs. A manual Verification dispatch runs all three so a change to the gates themselves can be tested before merge; set benchmark_base to the intended base commit. Existing allocation contracts, OS tests and security checks remain in their original jobs.
+
+The frozen [threshold file](quality-gates.json) records the v0.5.1 baseline commit and SHA-256 hashes of the accuracy, country, credential, severity and real-log inputs. Each of the 37 Kinds has separate development and held thresholds. Precision and recall use exact TP/FP/FN fractions at minimum confidence zero with only the Kind under test enabled; critical Kinds also require zero residual exposed bytes, matching severity.json. The default scanner has a separate speed gate. These are regression budgets on known corpora, including held examples already inspected during earlier fixes, rather than estimates of recall on a new application's logs.
+
+Real-log ceilings use the existing reviewed, stratified sample labels and per-dataset finding counts with all Kinds enabled. Each stratum contributes findings times sampled FP fraction; those estimates are summed and divided by the split's pinned byte count in decimal GB. The gate compares exact rational values, including zero ceilings, without rounding to the displayed table. It verifies checksums after restoring the manifest-keyed cache, scans the current source, and fails on unreviewed sample IDs instead of assigning them a label. Raw logs and sampled values remain in the external cache; artifacts contain aggregate rates only. A zero observed rate is not proof that a Kind never over-masks. For local deployment evidence, use the [audit recipes](audit.md) and review both sensitive and diagnostic fields.
+
+<!-- quality-gates:start -->
+| Kind | Development P / R floor (%) | Held P / R floor (%) | Development FP/GB ceiling | Held FP/GB ceiling |
+|---|---:|---:|---:|---:|
+| aba_routing | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 82.980309 |
+| ach_trace | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| awskey | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| bank_account | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| br_cnpj | 75.00 / 100.00 | 75.00 / 100.00 | 0.000000 | 0.000000 |
+| br_cpf | 75.00 / 100.00 | 75.00 / 100.00 | 0.000000 | 0.000000 |
+| btc | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| ca_sin | 75.00 / 100.00 | 75.00 / 100.00 | 1862.778774 | 106.688969 |
+| card_expiry | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| cn_resident_id | 75.00 / 100.00 | 75.00 / 100.00 | 0.000000 | 0.000000 |
+| credential | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| cvv | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| email | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| eth | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| github_token | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| google_api_key | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| high_entropy | 50.00 / 100.00 | 50.00 / 98.33 | 0.000000 | 0.000000 |
+| iban | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| in_aadhaar | 75.00 / 100.00 | 75.00 / 100.00 | 0.000000 | 0.000000 |
+| in_pan | 75.00 / 100.00 | 75.00 / 100.00 | 0.000000 | 0.000000 |
+| ipaddr | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| jwt | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| kr_rrn | 76.92 / 100.00 | 76.92 / 100.00 | 0.000000 | 0.000000 |
+| merchant_id | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| mynumber | 81.56 / 100.00 | 81.82 / 100.00 | 0.000000 | 0.000000 |
+| pan | 60.08 / 100.00 | 60.00 / 100.00 | 0.000000 | 0.000000 |
+| payment_token | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| phone_jp | 82.02 / 100.00 | 81.82 / 100.00 | 0.000000 | 0.000000 |
+| private_key_pem | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| service_token | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| slack_token | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| swiftbic | 54.89 / 100.00 | 100.00 / 100.00 | 124.185252 | 320.066908 |
+| uk_nhs | 75.00 / 100.00 | 75.00 / 100.00 | 0.000000 | 2287.885674 |
+| uk_nino | 75.00 / 100.00 | 75.00 / 100.00 | 0.000000 | 0.000000 |
+| uk_sortcode | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
+| us_itin | 75.00 / 100.00 | 75.00 / 100.00 | 0.000000 | 0.000000 |
+| us_ssn | 75.00 / 100.00 | 75.00 / 100.00 | 20490.566516 | 379.338557 |
+<!-- quality-gates:end -->
+
+P and R mean precision and exact-span recall. Display rounding does not change the committed count fractions or FP/GB rational ceilings. Every built-in Kind, including opt-in Kinds, must have both split entries; a missing entry fails closed.
+
+The speed job builds base and head once, copies the same head-owned default-scanner harness into both archived revisions, and alternates ten 100ms samples in both orders on one runner with GOMAXPROCS=1. Both clean and dirty default-scanner medians must be at most 1.20 times their respective base medians; exactly +20% passes. Missing, nonfinite or nonpositive samples fail. Raw samples, benchstat output, conditions and the machine-readable gate result are retained even on failure. The existing narrowing comparisons remain observations. Shared-runner variation still exists: inspect paired samples when a run fails, and do not retry selectively until a regression disappears.
+
+To run the same gates locally, execute the following commands sequentially with GOMAXPROCS no greater than four. Speed needs two committed revisions because it measures archived source rather than uncommitted edits.
+
+```sh
+GOMAXPROCS=4 python3 scripts/quality_gate.py accuracy
+GOMAXPROCS=4 python3 scripts/quality_gate.py false-positives --cache "$HOME/.cache/embargo-real-logs"
+GOMAXPROCS=4 python3 scripts/ci_benchmark.py --base origin/main --head HEAD
+python3 scripts/quality_docs.py --check
+```
+
+To raise or lower a precision or recall floor, edit the explicit TP/FP/FN baseline in quality-gates.json in a reviewed PR, regenerate this table with python3 scripts/quality_docs.py, and include labeled examples, previous and proposed ratios, and the reason the changed contract is acceptable. Lowering a floor accepts additional misses or false positives and needs that cost stated explicitly. To tighten or relax an FP ceiling, edit its numerator and denominator with the same evidence and explain the affected diagnostic fields. Never copy new measurement output over the thresholds merely to make CI green; refreshing accuracy or real-log snapshots does not refresh these budgets. The speed policy stays at +20%; changing it requires a separate policy change with paired evidence.
+
+A new detector needs labeled positive and negative examples in both accuracy splits, reviewed real-log sample labels, an explicit precision/recall floor and an initial zero FP/GB ceiling, followed by all three gates. Do not increase a ceiling to hide a new default detector's over-masking. If it exceeds the FP ceiling, keep it opt-in and review a separately documented opt-in ceiling; if it slows the default scanner beyond the speed budget, keep it opt-in. Opt-in status does not bypass the Kind's accuracy or reviewed real-log budget. Existing opt-in Kinds retain their historical nonzero ceilings shown above; the table is a baseline contract, not a recommendation to enable them all.
+
+The [local failing-first record](performance/round21-gate-failures.json) retains scratch commit IDs, patches, commands, exits and restored results. Disabling email matching failed both recall floors; admitting unspecified IPs exceeded the held IP ceiling by 144062.115171 FP/GB; adding 1ms to Scan exceeded both default speed budgets. Each restored gate passed. These deliberately broken branches were neither pushed nor merged.
 
 [Support maintenance](https://github.com/sponsors/nao1215).
