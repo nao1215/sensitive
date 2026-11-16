@@ -4,18 +4,18 @@ These optional modules mask at the final JSON boundary, after the real logger ha
 
 ## Installation
 
-The six adapter modules are published at v0.5.0 and require root v0.5.0. Install the module for the logger or SDK the application uses:
+The six adapter modules are published at v0.5.1 and require root v0.5.1. Upgrade the root and every installed adapter to receive the security fixes in [v0.5.1](../CHANGELOG.md#051---2026-11-16). Install the module for the logger or SDK the application uses:
 
 ```sh
-go get github.com/nao1215/embargo/adapters/zap@v0.5.0
-go get github.com/nao1215/embargo/adapters/zerolog@v0.5.0
-go get github.com/nao1215/embargo/adapters/logrus@v0.5.0
-go get github.com/nao1215/embargo/adapters/grpc@v0.5.0
-go get github.com/nao1215/embargo/adapters/otel@v0.5.0
-go get github.com/nao1215/embargo/adapters/sentry@v0.5.0
+go get github.com/nao1215/embargo/adapters/zap@v0.5.1
+go get github.com/nao1215/embargo/adapters/zerolog@v0.5.1
+go get github.com/nao1215/embargo/adapters/logrus@v0.5.1
+go get github.com/nao1215/embargo/adapters/grpc@v0.5.1
+go get github.com/nao1215/embargo/adapters/otel@v0.5.1
+go get github.com/nao1215/embargo/adapters/sentry@v0.5.1
 ```
 
-For `NewHTTPHandler`, install the root module with `go get github.com/nao1215/embargo@v0.5.0`; no adapter module is needed.
+For `NewHTTPHandler`, install the root module with `go get github.com/nao1215/embargo@v0.5.1`; no adapter module is needed.
 
 Use only the module for your integration. The [zap](../adapters/zap/example_test.go), [zerolog](../adapters/zerolog/example_test.go) and [logrus](../adapters/logrus/example_test.go) Examples show complete setup and their actual JSON output.
 
@@ -46,7 +46,7 @@ The public Examples run real loggers with Output comments. Tests inspect message
 
 ## Versions
 
-Each adapter is its own module with a tag of the form `adapters/<name>/vX.Y.Z`, where `<name>` is `zap`, `zerolog`, `logrus`, `grpc`, `otel` or `sentry`, and requires the matching root release. The first published gRPC, OpenTelemetry and Sentry adapter versions are v0.5.0. Unreleased adapters pin reviewed root commits through Go pseudo-versions to include the Round 19 fixes without a release or tag. The local replace directives are used only for development and CI; downstream builds ignore them.
+Each adapter is its own module with a tag of the form `adapters/<name>/vX.Y.Z`, where `<name>` is `zap`, `zerolog`, `logrus`, `grpc`, `otel` or `sentry`, and requires the matching root release. The first published gRPC, OpenTelemetry and Sentry adapter versions are v0.5.0. The local replace directives are used only for development and CI; downstream builds ignore them.
 
 ## Shared JSON policy
 
