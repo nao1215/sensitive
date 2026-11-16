@@ -536,13 +536,11 @@ func TestOutputMaskJSONNumberLexemes(t *testing.T) {
 		`{"card":4111111111111111e0}`,
 		`{"card":4.000000000000000001e18}`,
 		`{"card":411111111111111100e-2}`,
-		`{"card":4.000000000000000001e18}`,
-		`{"card":411111111111111100e-2}`,
 	} {
 		out, err := s.MaskJSON([]byte(in))
 		t.Logf("%s -> %s err=%v", in, out, err)
-		if err == nil && !bytes.Contains(out, []byte(`"[REDACTED]"`)) {
-			t.Errorf("number not masked: %s", out)
+		if err != nil || string(out) != `{"card":"[REDACTED]"}` {
+			t.Errorf("number lexeme not masked as a whole: %s, error=%v", out, err)
 		}
 	}
 	var buf bytes.Buffer
@@ -606,12 +604,17 @@ func TestAdversarialSharedSuffixScaling(t *testing.T) {
 				best := time.Hour
 				for range 3 {
 					start := time.Now()
-					got := scanner.Scan(data)
-					elapsed := time.Since(start)
-					if len(got) != 0 {
-						t.Fatalf("unexpected findings: %v", got)
+					calls := 0
+					var elapsed time.Duration
+					// Batch beyond coarse platform clocks before comparing per-call costs.
+					for elapsed < 20*time.Millisecond {
+						if got := scanner.Scan(data); len(got) != 0 {
+							t.Fatalf("unexpected findings: %v", got)
+						}
+						calls++
+						elapsed = time.Since(start)
 					}
-					best = min(best, elapsed)
+					best = min(best, elapsed/time.Duration(calls))
 				}
 				return best
 			}
@@ -622,5 +625,34 @@ func TestAdversarialSharedSuffixScaling(t *testing.T) {
 				t.Fatal("shared suffix scanning is superlinear")
 			}
 		})
+	}
+}
+
+func TestExactIntegerBoundaries(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		input, want string
+		failure     bool
+	}{
+		{"-123.00", "-123", false},
+		{"0.000e100", "0", false},
+		{"1.25", "", false},
+		{"1e-100", "", false},
+		{"1.0e-1000000000", "", false},
+		{"1e1000000000", "", true},
+		{"1e99999999999999999999", "", true},
+		{"100e-2", "1", false},
+		{"411111111111111100e-2", "4111111111111111", false},
+		{"4.000000000000000001e18", "4000000000000000001", false},
+	} {
+		got, err := exactInteger(tc.input)
+		if got != tc.want || (err != nil) != tc.failure {
+			t.Errorf("%s: got %q, %v; want %q, failure=%v", tc.input, got, err, tc.want, tc.failure)
+		}
+	}
+	for _, input := range []string{"1e99999999999999999999", "1e1000000000"} {
+		if out, err := NewScanner().MaskJSON([]byte(input)); err == nil || out != nil {
+			t.Errorf("unbounded expansion accepted: %q", out)
+		}
 	}
 }

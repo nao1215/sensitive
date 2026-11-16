@@ -577,3 +577,20 @@ func TestOutputSlogBytesBase64(t *testing.T) {
 		}
 	}
 }
+
+func TestSlogByteContentsKeepPublicShape(t *testing.T) {
+	t.Parallel()
+	type namedBytes []byte
+	for _, value := range []any{[]byte("public"), namedBytes("public"), []byte(nil)} {
+		var out bytes.Buffer
+		slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(&out, nil), embargo.NewScanner())).Info("entry", "data", value)
+		var record map[string]json.RawMessage
+		if err := json.Unmarshal(out.Bytes(), &record); err != nil {
+			t.Fatal(err)
+		}
+		want, err := json.Marshal(value)
+		if err != nil || !bytes.Equal(record["data"], want) {
+			t.Fatalf("public bytes changed: %s want=%s error=%v", out.Bytes(), want, err)
+		}
+	}
+}

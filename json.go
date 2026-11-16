@@ -179,10 +179,10 @@ func (w *jsonWalker) scalar(ctx context.Context, raw []byte, key string) error {
 // exactInteger expands a valid JSON number without floating-point rounding.
 // Expansion is bounded before allocating; non-integers have no second spelling.
 func exactInteger(text string) (string, error) {
-	mantissa, exponent := text, int64(0)
+	mantissa, exponent := text, 0
 	if i := strings.IndexAny(text, "eE"); i >= 0 {
 		mantissa = text[:i]
-		value, err := strconv.ParseInt(text[i+1:], 10, 64)
+		value, err := strconv.Atoi(text[i+1:])
 		if err != nil {
 			return "", saferecord.ErrSizeLimit
 		}
@@ -192,10 +192,10 @@ func exactInteger(text string) (string, error) {
 	mantissa = strings.TrimPrefix(mantissa, "-")
 	if dot := strings.IndexByte(mantissa, '.'); dot >= 0 {
 		fraction := len(mantissa) - dot - 1
-		if exponent < -int64(maxEventBytes) {
+		if exponent < -maxEventBytes {
 			return "", nil
 		}
-		exponent -= int64(fraction)
+		exponent -= fraction
 		mantissa = mantissa[:dot] + mantissa[dot+1:]
 	}
 	mantissa = strings.TrimLeft(mantissa, "0")
@@ -203,19 +203,19 @@ func exactInteger(text string) (string, error) {
 		return "0", nil
 	}
 	if exponent < 0 {
-		if exponent < -int64(len(mantissa)) {
+		if exponent < -len(mantissa) {
 			return "", nil
 		}
-		cut := len(mantissa) + int(exponent)
+		cut := len(mantissa) + exponent
 		if strings.Trim(mantissa[cut:], "0") != "" {
 			return "", nil
 		}
 		mantissa = mantissa[:cut]
 	} else {
-		if exponent > int64(maxEventBytes-len(mantissa)) {
+		if exponent > maxEventBytes-len(mantissa) {
 			return "", saferecord.ErrSizeLimit
 		}
-		mantissa += strings.Repeat("0", int(exponent))
+		mantissa += strings.Repeat("0", exponent)
 	}
 	if negative {
 		mantissa = "-" + mantissa
