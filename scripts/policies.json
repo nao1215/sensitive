@@ -592,5 +592,11 @@
     "source": "Repository maintenance policy",
     "check": "scripts/mutation_gate.py#def check(",
     "where": "Heavy verification"
+  },
+  {
+    "rule": "Documented packages and coverage match Go and the coverage gate",
+    "source": "CLAUDE.md",
+    "check": "documentation-contract",
+    "where": "Verification"
   }
 ]

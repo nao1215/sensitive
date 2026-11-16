@@ -42,6 +42,13 @@ class PolicyTests(unittest.TestCase):
                                     'doc/source.md': 'https://github.com/logpai/loghub/commit/'+'a'*40,
                                     'scanner_test.go': 'TestRoundTrip; protocol R2; port 443'})
 
+    def test_documented_inventory_and_coverage_reject_drift(self):
+        for text in ('<!-- packages:start -->\n<!-- packages:end -->\nCoverage: 97%',
+                     '<!-- packages:start -->\n'+('- `example.com/module`\n'*7)+'<!-- packages:end -->\nCoverage: 80%'):
+            with patch.object(policies.subprocess, 'check_output', return_value='example.com/module\n'), patch.object(policies, 'read', side_effect=lambda path: 'acceptable: 97%' if path == '.octocov.yml' else text):
+                with self.assertRaises(ValueError):
+                    policies.documentation_contract()
+
     def test_root_dependencies(self):
         for manifest in ({'Require':[{'Path':'example.com/runtime'}]}, {'Tool':['example.com/tool']}):
             with patch.object(policies.subprocess, 'check_output', return_value=json.dumps(manifest)):

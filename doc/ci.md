@@ -17,7 +17,7 @@ Real-log ceilings use the existing reviewed, stratified sample labels and per-da
 <!-- quality-gates:start -->
 | Kind | Development P / R floor (%) | Held P / R floor (%) | Development FP/GB ceiling | Held FP/GB ceiling |
 |---|---:|---:|---:|---:|
-| aba_routing | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 82.980309 |
+| aba_routing | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
 | ach_trace | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
 | awskey | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
 | bank_account | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
@@ -48,7 +48,7 @@ Real-log ceilings use the existing reviewed, stratified sample labels and per-da
 | private_key_pem | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
 | service_token | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
 | slack_token | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
-| swiftbic | 54.89 / 100.00 | 100.00 / 100.00 | 124.185252 | 320.066908 |
+| swiftbic | 54.89 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |
 | uk_nhs | 75.00 / 100.00 | 75.00 / 100.00 | 0.000000 | 2287.885674 |
 | uk_nino | 75.00 / 100.00 | 75.00 / 100.00 | 0.000000 | 0.000000 |
 | uk_sortcode | 100.00 / 100.00 | 100.00 / 100.00 | 0.000000 | 0.000000 |

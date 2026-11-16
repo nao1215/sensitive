@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -690,9 +691,9 @@ func TestCredentialRenderingProperty(t *testing.T) {
 	scanner := NewScanner(WithKinds(KindCredential))
 	for n := range 12 {
 		secret := fmt.Sprintf("opaqueFixture%02dxYz", n)
-		for _, key := range []string{credentialFixtureKey, "token", "api_key", "Authorization", "Proxy-Authorization", "access_token", "refresh_token", "id_token", "x-api-key", "DB_PASSWORD", "Private-Token", "client_secret", "auth_token"} {
+		for _, key := range []string{credentialFixtureKey, "token", "api_key", authorizationFixtureKey, "Proxy-Authorization", "access_token", "refresh_token", "id_token", "x-api-key", "DB_PASSWORD", "Private-Token", "client_secret", "auth_token"} {
 			schemes := []string{""}
-			if strings.Contains(key, "Authorization") {
+			if strings.Contains(key, authorizationFixtureKey) {
 				schemes = []string{"Bearer ", "Basic ", "bEaReR "}
 			}
 			for _, scheme := range schemes {
@@ -754,9 +755,10 @@ func TestEmbeddedIPv4WholeSpanProperty(t *testing.T) {
 }
 
 const (
-	credentialFixtureKey = "password"
-	fmtGoSyntaxVerb      = "%#v"
-	fmtFieldVerb         = "%+v"
+	credentialFixtureKey    = "password"
+	authorizationFixtureKey = "Authorization"
+	fmtGoSyntaxVerb         = "%#v"
+	fmtFieldVerb            = "%+v"
 )
 
 func TestEscapedCredentialFragments(t *testing.T) {
@@ -779,5 +781,267 @@ func TestEscapedCredentialFragments(t *testing.T) {
 				t.Errorf("slice fragment retained: %q => %q", input, got)
 			}
 		}
+	}
+}
+
+func TestIPAddressPunctuationProperty(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindIPAddr))
+	punctuation := []string{"...", ".:", ":."}
+	for b := byte('!'); b <= '~'; b++ {
+		if (b < '0' || b > '9') && (b < 'A' || b > 'Z') && (b < 'a' || b > 'z') {
+			punctuation = append(punctuation, string(b))
+		}
+	}
+	for n := 1; n < 255; n += 13 {
+		v4 := fmt.Sprintf("203.0.113.%d", n)
+		for _, address := range []string{v4, fmt.Sprintf("2001:db8::%x", n), "2001:db8::", "::ffff:" + v4, "::" + v4, "64:ff9b::" + v4} {
+			for _, form := range []string{address, "[" + address + "]", "[" + address + "]:51234"} {
+				for _, tail := range punctuation {
+					input := "peer " + form + tail + " closed"
+					want := "peer " + strings.Replace(form, address, redactionMarker, 1) + tail + " closed"
+					if got := Mask(input, scanner.ScanString(input)); got != want {
+						t.Errorf("%q => %q; want %q", input, got, want)
+					}
+				}
+			}
+		}
+	}
+	for _, input := range []string{"203.0.113.9.8", "203.0.113.9_tail", "203.0.113.9-tail", "2001:db8::5_tail", "2001:db8::5-tail"} {
+		if got := scanner.ScanString(input); len(got) != 0 {
+			t.Errorf("larger token: %q %+v", input, got)
+		}
+	}
+}
+
+func TestAuthorizationSchemeProperty(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindCredential))
+	for n := range 24 {
+		secret := fmt.Sprintf("opaqueAuth%02dFixture", n)
+		for _, scheme := range []string{"Token", "Negotiate", "Digest", "AWS4-HMAC-SHA256", "Bearer", "Basic", fmt.Sprintf("Scheme%d!#$%%&'*+-.^_`|~", n)} {
+			for _, space := range []string{" ", "\t", "   "} {
+				credential := secret
+				if scheme == "Digest" {
+					credential = `username="fixture", realm="example", response="` + secret + `"`
+				}
+				if scheme == "AWS4-HMAC-SHA256" {
+					credential = "Credential=fixture, SignedHeaders=host, Signature=" + secret
+				}
+				value := scheme + space + credential
+				for count := 1; count <= 3; count++ {
+					list := strings.TrimSuffix(strings.Repeat(value+", ", count), ", ")
+					for _, input := range []string{"Authorization: " + list, "Proxy-Authorization: " + list, `{"msg":` + strconv.Quote("Authorization: "+list) + `}`, fmt.Sprintf("%v", http.Header{authorizationFixtureKey: {list}}), fmt.Sprintf(fmtGoSyntaxVerb, http.Header{authorizationFixtureKey: {list}})} {
+						got := Mask(input, scanner.ScanString(input))
+						if strings.Contains(got, secret) {
+							t.Fatalf("credential visible: %q => %q", input, got)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func TestDefaultCredentialSegmentsProperty(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindCredential))
+	for _, prefix := range []string{"SECRET", "POSTGRES", "MYSQL", "GITHUB", "AWS_SESSION", "X-Auth", "spring.datasource", "user", strings.Repeat("component.", 10)} {
+		for _, word := range []string{credentialFixtureKey, "passwd", "secret", "token", string(KindCredential), "auth"} {
+			for _, separator := range []string{"_", "-", ".", ""} {
+				suffix := word
+				if separator == "" {
+					suffix = strings.ToUpper(word[:1]) + word[1:]
+				}
+				key := prefix + separator + suffix
+				// #nosec G101 -- Synthetic generated-key fixture, not a credential.
+				secret := "opaqueSegmentFixture"
+				input := key + "=" + secret
+				if got := Mask(input, scanner.ScanString(input)); strings.Contains(got, secret) {
+					t.Errorf("assignment: %q => %q", input, got)
+				}
+				document := []byte(`{"` + key + `":"` + secret + `"}`)
+				if got, err := scanner.MaskJSON(document); err != nil || strings.Contains(string(got), secret) {
+					t.Errorf("JSON key %q: %s %v", key, got, err)
+				}
+			}
+		}
+	}
+	for _, key := range []string{"SECRET_KEY", "secretKey", "X-Goog-Api-Key", "AWS_SECRET_ACCESS_KEY"} {
+		if got := Mask(key+"=opaqueSegmentFixture", scanner.ScanString(key+"=opaqueSegmentFixture")); strings.Contains(got, "opaqueSegmentFixture") {
+			t.Errorf("key %s visible", key)
+		}
+	}
+	for _, key := range []string{"primary_key", "sort_key", "foreign_key", "monkey", "keyboard", "token_count", "password_length", "secret_name", "authentication_status"} {
+		input := key + "=ordinary"
+		if got := Mask(input, scanner.ScanString(input)); got != input {
+			t.Errorf("noncredential key %s masked", key)
+		}
+	}
+}
+
+type credentialString string
+
+func TestCredentialGoRenderingProperty(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindCredential))
+	for n := range 16 {
+		secret := fmt.Sprintf("opaqueGo%02dFixture", n)
+		for _, value := range []any{secret, []byte(secret), []any{secret}, []string{secret}, map[string]string{"access": secret}, sql.NullString{String: secret, Valid: true}, credentialString(secret)} {
+			for _, verb := range []string{"%v", fmtFieldVerb, fmtGoSyntaxVerb, "%q"} {
+				for _, input := range []string{fmt.Sprintf(verb, map[string]any{credentialFixtureKey: value}), fmt.Sprintf(verb, struct{ Password any }{value})} {
+					// Plain struct %v and %q omit field names; no credential context survives.
+					if !strings.Contains(strings.ToLower(input), credentialFixtureKey) {
+						continue
+					}
+					got := Mask(input, scanner.ScanString(input))
+					hexBytes := fmt.Sprintf(fmtGoSyntaxVerb, []byte(secret))
+					if strings.Contains(got, secret) || strings.Contains(got, strings.TrimSuffix(strings.TrimPrefix(hexBytes, "[]byte{"), "}")) || strings.Contains(got, fmt.Sprintf("%v", []byte(secret))) {
+						t.Errorf("Go value visible: %q => %q", input, got)
+					}
+				}
+			}
+		}
+		for _, input := range []string{`password:main.Password("` + secret + `")`, `password:[]interface {}{"` + secret + `"}`, `password:map[string]string{"access":"` + secret + `"}`, `password:sql.NullString{String:"` + secret + `", Valid:true}`} {
+			if got := Mask(input, scanner.ScanString(input)); strings.Contains(got, secret) {
+				t.Errorf("typed value visible: %q => %q", input, got)
+			}
+		}
+	}
+}
+
+func TestCredentialEscapesAndBoundariesProperty(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindCredential))
+	for n := range 16 {
+		secret := fmt.Sprintf("opaqueBoundary%02dFixture", n)
+		inputs := make([]string, 0, 18)
+		inputs = append(inputs, "map[password:"+secret+" tail user:bob]", "{Password:head "+secret+" tail}", "password=`head "+secret+" tail`", "password := "+secret, "q=password%3D"+secret+"%26user%3Dbob", "{DSN:{Scheme:https Opaque: User:bob:"+secret+" Host:example.com Path:/x}}")
+		for _, prefix := range []string{"[]", "[abc]", ",", ")", "[REDACTED]]", "[REDACTED][REDACTED]"} {
+			inputs = append(inputs, "password="+prefix+secret)
+		}
+		escaped := `{"password":"` + secret + `"}`
+		for range 4 {
+			inputs = append(inputs, escaped)
+			escaped = strconv.Quote(escaped)
+		}
+		for _, quote := range []string{`\x22`, `\u0022`} {
+			inputs = append(inputs, "{"+quote+credentialFixtureKey+quote+":"+quote+secret+quote+"}")
+		}
+		for _, input := range inputs {
+			if got := Mask(input, scanner.ScanString(input)); strings.Contains(got, secret) {
+				t.Errorf("boundary visible: %q => %q", input, got)
+			}
+		}
+	}
+}
+
+func TestCredentialYAMLBlockProperty(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindCredential))
+	for _, indent := range []string{"", "  ", "    "} {
+		for _, indicator := range []string{"|", ">", "|-", ">+", "|2"} {
+			input := indent + "password: " + indicator + "\n" + indent + "  opaqueBlockFixture\n" + indent + "  opaqueBodyFixture\n" + indent + "public: retained\n"
+			got := Mask(input, scanner.ScanString(input))
+			if strings.Contains(got, "opaque") || !strings.Contains(got, "public: retained") {
+				t.Errorf("block boundary: %q => %q", input, got)
+			}
+		}
+	}
+}
+
+func TestARNAccountGrammarProperty(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindMyNumber))
+	for _, account := range []string{"123456789018", "1234 5678 9018"} {
+		for _, partition := range []string{"aws", "aws-cn", "aws-us-gov", "jp"} {
+			input := "arn:" + partition + ":iam::" + account + ":role"
+			want := partition == "jp" || strings.Contains(account, " ")
+			if got := scanner.ScanString(input); (len(got) > 0) != want {
+				t.Errorf("ARN grammar %q: %+v", input, got)
+			}
+		}
+	}
+}
+
+func TestKnownLimitVersionAddressFieldsProperty(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindIPAddr))
+	for n := 1; n < 255; n += 13 {
+		address := fmt.Sprintf("198.51.100.%d", n)
+		for _, key := range []string{"build", "v", "version", "release"} {
+			for _, input := range []string{key + ": " + address, `{"` + key + `":"` + address + `"}`} {
+				if got := Mask(input, scanner.ScanString(input)); !strings.Contains(got, address) {
+					t.Errorf("version-label limit changed; update the documented scope: %q", input)
+				}
+			}
+		}
+	}
+}
+
+func TestKnownLimitSSHRemoteMailbox(t *testing.T) {
+	t.Parallel()
+	input := "git@corp.example.co.jp:alice"
+	if got := Mask(input, NewScanner().ScanString(input)); got != input {
+		t.Fatal("SSH-remote exclusion changed; update the documented scope")
+	}
+}
+
+func TestMixedPercentCredentialViews(t *testing.T) {
+	t.Parallel()
+	for _, prefix := range []string{"password=firstFixture", "https://user:first%40Fixture@example.invalid/"} {
+		input := prefix + " token%3DsecondFixture public=retained"
+		findings := NewScanner(WithKinds(KindCredential)).ScanString(input)
+		masked := Mask(input, findings)
+		if len(findings) != 2 || strings.Contains(masked, "Fixture") || !strings.Contains(masked, "public=retained") {
+			t.Fatalf("mixed raw and encoded assignments: %q, %+v", masked, findings)
+		}
+	}
+}
+
+func TestIPAddressRangeMaskingProperty(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindIPAddr))
+	for n := 1; n < 32; n++ {
+		addresses := []string{fmt.Sprintf("198.51.100.%d", n), fmt.Sprintf("fd00::%x", n), fmt.Sprintf("::ffff:203.0.113.%d", n)}
+		for _, left := range addresses {
+			for _, right := range addresses {
+				input := left + "-" + right
+				masked := Mask(input, scanner.ScanString(input))
+				if masked != redactionMarker+"-"+redactionMarker || Mask(masked, scanner.ScanString(masked)) != masked {
+					t.Fatalf("range masking not complete and idempotent: %q => %q", input, masked)
+				}
+			}
+		}
+	}
+}
+
+func TestCredentialRedactedCollections(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindCredential))
+	for _, content := range []string{`"[REDACTED]"`, `"[REDACTED]", "[REDACTED]"`, `["[REDACTED]"]`} {
+		input := `{"X-Token":[` + content + `]}`
+		if got := scanner.ScanString(input); len(got) != 0 {
+			t.Errorf("already masked collection: %+v", got)
+		}
+		for _, tail := range []string{`,"fixtureSecret"`, `,"[REDACTED]fixtureSecret"`} {
+			input := `{"X-Token":[` + content + tail + `]}`
+			if strings.Contains(Mask(input, scanner.ScanString(input)), "fixtureSecret") {
+				t.Error("marker collection hid a real credential")
+			}
+		}
+	}
+}
+
+func TestKnownLimitGenericCodeKey(t *testing.T) {
+	t.Parallel()
+	input := `{"code":"opaqueOAuthFixture"}`
+	got, err := NewScanner().MaskJSON([]byte(input))
+	if err != nil || string(got) != input {
+		t.Fatal("generic code key limit changed; update the documented policy")
+	}
+	got, err = NewScanner(WithSensitiveKeys("code")).MaskJSON([]byte(input))
+	if err != nil || strings.Contains(string(got), "opaqueOAuthFixture") {
+		t.Fatal("explicit OAuth key policy failed")
 	}
 }

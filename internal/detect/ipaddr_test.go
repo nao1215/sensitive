@@ -205,8 +205,8 @@ func TestIPAddrDetector_IPv4FollowedByDot(t *testing.T) {
 
 	d := NewIPAddr()
 	findings := d.Scan([]byte("192.168.1.1."))
-	if len(findings) != 0 {
-		t.Errorf("got %d findings for IP followed by dot, want 0", len(findings))
+	if len(findings) != 1 || findings[0].End != len("192.168.1.1") {
+		t.Errorf("got %v findings for IP followed by dot, want the address only", findings)
 	}
 }
 

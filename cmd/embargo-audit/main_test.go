@@ -79,6 +79,9 @@ func TestAuditSelectionAndSampleLimit(t *testing.T) {
 
 func TestAuditRejectsInvalidConfigurationAndIncompleteInput(t *testing.T) {
 	t.Parallel()
+	if run([]string{"--help"}, strings.NewReader(""), failingOutput{}) == nil {
+		t.Fatal("help output failure ignored")
+	}
 	for _, args := range [][]string{{auditKindsFlag, "unknown"}, {auditKindsFlag, auditPAN, "--all"}, {auditConfidenceFlag, "NaN"}, {auditConfidenceFlag, "2"}, {auditSamplesFlag, "-1"}, {auditSamplesFlag, "21"}, {"extra"}, {"--unknown"}} {
 		var out bytes.Buffer
 		if run(args, strings.NewReader("sensitive-input"), &out) == nil || out.Len() != 0 {
@@ -192,6 +195,35 @@ func TestAuditHelpAndInvalidFlagUsage(t *testing.T) {
 		}
 		if code != want || !strings.Contains(combined, "Usage:") || !strings.Contains(combined, "--kinds") || strings.Contains(combined, "opaqueFixture") {
 			t.Errorf("%s: status=%d output=%q", arg, code, combined)
+		}
+	}
+}
+
+const auditSecretFixture = "password=opaqueFixture"
+
+func TestAuditOptionDiagnostics(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		want string
+		args []string
+	}{
+		{args: []string{auditConfidenceFlag, "2"}, want: "embargo-audit: --min-confidence must be between 0 and 1\n"},
+		{args: []string{auditConfidenceFlag, auditSecretFixture}, want: "embargo-audit: --min-confidence must be between 0 and 1\n"},
+		{args: []string{auditSamplesFlag, "21"}, want: "embargo-audit: --samples must be between 0 and 20\n"},
+		{args: []string{auditSamplesFlag, auditSecretFixture}, want: "embargo-audit: --samples must be between 0 and 20\n"},
+		{args: []string{"--kinds", "xyz"}, want: "embargo-audit: --kinds contains an unknown kind; use --help for kinds\n"},
+		{args: []string{"--kinds", auditSecretFixture}, want: "embargo-audit: --kinds contains an unknown kind; use --help for kinds\n"},
+	} {
+		var out, diagnostics bytes.Buffer
+		code := exitCode(tc.args, strings.NewReader(auditSecretFixture), &out, &diagnostics)
+		if code != 1 || out.Len() != 0 || diagnostics.String() != tc.want {
+			t.Errorf("exit=%d stdout=%q stderr=%q want=%q", code, out.String(), diagnostics.String(), tc.want)
+		}
+	}
+	for _, args := range [][]string{{auditConfidenceFlag, "0"}, {auditConfidenceFlag, "1"}, {auditSamplesFlag, "0"}, {auditSamplesFlag, "20"}} {
+		var out, diagnostics bytes.Buffer
+		if code := exitCode(args, strings.NewReader("clean"), &out, &diagnostics); code != 0 || out.Len() == 0 || diagnostics.Len() != 0 {
+			t.Errorf("valid boundary rejected: %v", args)
 		}
 	}
 }

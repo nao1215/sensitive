@@ -19,11 +19,24 @@ embargo is a Go library for detecting sensitive data in text. It detects credit 
 - Custom detectors: Users can register their own detectors via the Detector interface
 
 ### Architecture
-- `finding.go` / `detector.go`: Root Finding, Kind and custom Detector contracts
-- `scanner.go`: Scanner implementation with multi-stage filtering
-- `mask.go`: Mask and caller-controlled MaskFunc
-- `internal/detect/`: Private detector implementations and validation algorithms
-- `embargotest/`: Test-only output recorder with canary and detector checks
+
+The root package owns scanning, masking, JSON, slog and HTTP policy. Internal packages implement ASCII handling, detection, safe diagnostics and output framing. embargotest owns test capture and canaries; cmd/embargo-audit owns local log inspection. Each adapter remains an independent module. The following production inventory is checked against go list by scripts/check_policies.py.
+
+<!-- packages:start -->
+- `github.com/nao1215/embargo`
+- `github.com/nao1215/embargo/adapters/grpc`
+- `github.com/nao1215/embargo/adapters/logrus`
+- `github.com/nao1215/embargo/adapters/otel`
+- `github.com/nao1215/embargo/adapters/sentry`
+- `github.com/nao1215/embargo/adapters/zap`
+- `github.com/nao1215/embargo/adapters/zerolog`
+- `github.com/nao1215/embargo/cmd/embargo-audit`
+- `github.com/nao1215/embargo/embargotest`
+- `github.com/nao1215/embargo/internal/ascii`
+- `github.com/nao1215/embargo/internal/detect`
+- `github.com/nao1215/embargo/internal/output`
+- `github.com/nao1215/embargo/internal/saferecord`
+<!-- packages:end -->
 
 ## Development Rules
 - Test-Driven Development: We adopt the test-driven development promoted by t-wada (Takuto Wada). Always write test code and be mindful of the test pyramid.
@@ -51,8 +64,8 @@ embargo is a Go library for detecting sensitive data in text. It detects credit 
 - [Readable Test Code](https://logmi.jp/main/technology/327449): Avoid excessive optimization (DRY) and aim for a state where it's easy to understand what tests exist.
 - Clear input/output: Create tests with `t.Run()` and clarify test case input/output. Test cases clarify test intent by explicitly showing input and expected output.
 - Test descriptions: The first argument of `t.Run()` should clearly describe the relationship between input and expected output.
-- Test granularity: Aim for 80% or higher coverage with unit tests.
+- Test granularity: Aim for 97% or higher coverage with unit tests.
 - Parallel test execution: Use `t.Parallel()` to run tests in parallel whenever possible.
-- Using `octocov`: Run `octocov` after `make test` to confirm test coverage exceeds 80%.
+- Using `octocov`: Run `octocov` after `make test` to confirm test coverage exceeds 97%.
 - Cross-platform support: Tests run on Linux, macOS, and Windows through GitHub Actions.
 - Test data: Never use real sensitive data. Use well-known test numbers (e.g., Stripe test card numbers), example.com for emails, and fictitious numbers for phone and My Number.

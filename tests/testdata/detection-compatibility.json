@@ -82,5 +82,176 @@
   },
   {
     "text": "Private-Token=opaqueFixture"
+  },
+  {
+    "text": "connection from 2001:db8::5."
+  },
+  {
+    "text": "peer ::ffff:203.0.113.9."
+  },
+  {
+    "text": "Accepted connection from 203.0.113.9."
+  },
+  {
+    "text": "blocked 203.0.113.9..."
+  },
+  {
+    "text": "peer 2001:db8::5: closed"
+  },
+  {
+    "text": "198.51.100.7-198.51.100.9"
+  },
+  {
+    "text": "Authorization: Token opaqueFixture"
+  },
+  {
+    "text": "Authorization: Bearer\topaqueFixture"
+  },
+  {
+    "text": "Authorization: Bearer firstFixture, Basic secondFixture"
+  },
+  {
+    "text": "Authorization: Digest username=\"public\", response=\"opaqueFixture\""
+  },
+  {
+    "text": "Authorization: AWS4-HMAC-SHA256 Signature=opaqueFixture"
+  },
+  {
+    "text": "%2D----BEGIN PRIVATE KEY-----\nopaqueKeyBody\n-----END PRIVATE KEY-----"
+  },
+  {
+    "text": "-----BEGIN PRIVATE%20KEY-----\nopaqueKeyBody\n-----END PRIVATE KEY-----"
+  },
+  {
+    "text": "-----BEGIN PGP PRIVATE KEY BLOCK-----\nopaqueKeyBody\n-----END PGP PRIVATE KEY BLOCK-----"
+  },
+  {
+    "text": "SWIFT-Code: DEUTDEFF"
+  },
+  {
+    "text": "swiftCode=DEUTDEFF"
+  },
+  {
+    "text": "swift_code=DEUTDEFF"
+  },
+  {
+    "text": "SWIFT number DEUTDEFF"
+  },
+  {
+    "text": "main.Cfg{Password:[]uint8{0x70, 0x77}}"
+  },
+  {
+    "text": "main.Cfg{Token:[]interface {}{\"opaqueFixture\"}}"
+  },
+  {
+    "text": "main.Cfg{Token:map[string]string{\"access\":\"opaqueFixture\"}}"
+  },
+  {
+    "text": "main.Cfg{Password:sql.NullString{String:\"opaqueFixture\", Valid:true}}"
+  },
+  {
+    "text": "main.Cfg{Password:main.Password(\"opaqueFixture\")}"
+  },
+  {
+    "text": "map[password:head opaqueFixture tail user:public]"
+  },
+  {
+    "text": "password: |\n  opaqueFixture\npublic: retained"
+  },
+  {
+    "text": "password=`opaqueFixture with spaces`"
+  },
+  {
+    "text": "password := opaqueFixture"
+  },
+  {
+    "text": "password=[]opaqueFixture"
+  },
+  {
+    "text": "password=[REDACTED]]opaqueFixture"
+  },
+  {
+    "text": "q=password%3DopaqueFixture%26user%3Dpublic"
+  },
+  {
+    "text": "{DSN:{Scheme:https Opaque: User:bob:opaqueFixture Host:example.invalid}}"
+  },
+  {
+    "text": "arn:jp:mynumber::123456789018:role"
+  },
+  {
+    "text": "arn:aws:iam::1234 5678 9018:role"
+  },
+  {
+    "text": "syscall=59 a0=fefbAE01"
+  },
+  {
+    "text": "invalid user BOFAUS3N"
+  },
+  {
+    "text": "prefix_DEUTDEFF_suffix"
+  },
+  {
+    "text": "warning for torus wire, fefbAE01"
+  },
+  {
+    "text": "021000021 double-hummer alignment exceptions"
+  },
+  {
+    "text": "log.021000021"
+  },
+  {
+    "text": "BIC: fefbAE01"
+  },
+  {
+    "text": "wire to HSBCHKHH"
+  },
+  {
+    "text": "swift: deutdeff"
+  },
+  {
+    "text": "ABA: 021000021"
+  },
+  {
+    "text": "021000021"
+  },
+  {
+    "text": "SECRET_KEY=opaqueFixture"
+  },
+  {
+    "text": "POSTGRES_PASSWORD=opaqueFixture"
+  },
+  {
+    "text": "MYSQL_PASSWORD=opaqueFixture"
+  },
+  {
+    "text": "GITHUB_TOKEN=opaqueFixture"
+  },
+  {
+    "text": "AWS_SESSION_TOKEN=opaqueFixture"
+  },
+  {
+    "text": "X-Auth-Token=opaqueFixture"
+  },
+  {
+    "text": "spring.datasource.password=opaqueFixture"
+  },
+  {
+    "text": "primary_key=opaqueFixture"
+  },
+  {
+    "text": "sort_key=opaqueFixture"
+  },
+  {
+    "text": "token_count=opaqueFixture"
+  },
+  {
+    "text": "{\\x22password\\x22:\\x22opaqueFixture\\x22}"
+  },
+  {
+    "text": "{\\u0022password\\u0022:\\u0022opaqueFixture\\u0022}"
+  },
+  {
+    "text": "\"\\\"\\\\\\\"\\\\\\\\\\\\\\\"{\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"password\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"opaqueFixture\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"}\\\\\\\\\\\\\\\"\\\\\\\"\\\"\""
   }
 ]

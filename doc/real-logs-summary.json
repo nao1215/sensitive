@@ -1,5 +1,5 @@
 {
-  "source_sha256": "b1375e2ddc07d06b5f4be1419b11e32b8f50dfa5bbca67aaaa26e9157e274478",
+  "source_sha256": "57b67eb52876570af09210e75cbd2912ffa90e8968e7e76b83d2627302047c67",
   "manifest_sha256": "1edd580861a43bde10bfc7f2ea09c523de68e4fd11961abd62c8bee84fa4eab4",
   "labels_sha256": "b32bf320efbf13be205ef2f683aacaa7557df1fc95e75adcf0e43efcf069eedc",
   "baseline_sha256": "f7066945d56d1b3526d282f2f68efe5fe158ed71c3b845b3d9f86aa1df090ac5",
@@ -263,27 +263,19 @@
     {
       "counts": {
         "all": {
-          "aba_routing": 5,
           "ca_sin": 2,
           "ipaddr": 36,
-          "swiftbic": 3,
           "uk_nhs": 193,
           "us_ssn": 32
         },
         "default": {
-          "aba_routing": 5,
-          "ipaddr": 36,
-          "swiftbic": 3
+          "ipaddr": 36
         },
         "default50": {
-          "aba_routing": 5,
-          "ipaddr": 36,
-          "swiftbic": 3
+          "ipaddr": 36
         },
         "default70": {
-          "aba_routing": 5,
-          "ipaddr": 36,
-          "swiftbic": 3
+          "ipaddr": 36
         },
         "kinds1": {},
         "kinds3": {},
@@ -292,21 +284,10 @@
         }
       },
       "dataset": "BGL",
-      "findings_sha256": "cc21eddcd619a29e182b6cfe88ea08604f83c0a26990f1304c1203fe1e2a73e6",
+      "findings_sha256": "323c8af1ce6b69250e08e9436ed8df6b11e302e0bd7bf1c48afe5afb609028c6",
       "bytes": 317150,
       "lines": 2000,
       "strata": {
-        "aba_routing": {
-          "sample_ids": [
-            "0cd1fc7696a74d28ff1caab2a5d010c35edbbbbefa3df49c171622c64e10cfde",
-            "3a4b874b50c811c0d18eff3fbb022ef0d10d3143066981dff129070c4806a454",
-            "4d3d65630412e622b5ca63187be9f1f7c047a31fe3473d685a42b0bc8ad24515",
-            "75ef2afacb9d477737377b12c4ff2ea9fa2a9dc95e6a0da06c66fe6236169dd3",
-            "cf69154f98268418373eef234f81fa3043e276131c860760bff04f79ecb64c51"
-          ],
-          "sample_count": 5,
-          "sample_fp": 5
-        },
         "ca_sin": {
           "sample_ids": [
             "15f6cc697ec3ee544e9347174356c2154665240097f900e5fa84115c98157e06",
@@ -356,15 +337,6 @@
           ],
           "sample_count": 36,
           "sample_fp": 0
-        },
-        "swiftbic": {
-          "sample_ids": [
-            "ddec3601e54f87a23e01b3d4698402ea358bd087daa81be5bec171c0ec2c3b84",
-            "f3dd014c33cdce820ccde3932eed269f6a7e5cd55f41e0e8e94b9e211b95c2c9",
-            "f897b224eb065f4a9f60ac1b19519aa407b6ab626492a99fd4ef1e4ffc049607"
-          ],
-          "sample_count": 3,
-          "sample_fp": 3
         },
         "uk_nhs": {
           "sample_ids": [
@@ -453,17 +425,6 @@
       },
       "threshold_strata": {
         "default50": {
-          "aba_routing": {
-            "sample_ids": [
-              "0cd1fc7696a74d28ff1caab2a5d010c35edbbbbefa3df49c171622c64e10cfde",
-              "3a4b874b50c811c0d18eff3fbb022ef0d10d3143066981dff129070c4806a454",
-              "4d3d65630412e622b5ca63187be9f1f7c047a31fe3473d685a42b0bc8ad24515",
-              "75ef2afacb9d477737377b12c4ff2ea9fa2a9dc95e6a0da06c66fe6236169dd3",
-              "cf69154f98268418373eef234f81fa3043e276131c860760bff04f79ecb64c51"
-            ],
-            "sample_count": 5,
-            "sample_fp": 5
-          },
           "ipaddr": {
             "sample_ids": [
               "003917f400bef2c8c0dfe67c2691dd206fccf2dc1be8a32cc5f674bc8e0d48f0",
@@ -505,29 +466,9 @@
             ],
             "sample_count": 36,
             "sample_fp": 0
-          },
-          "swiftbic": {
-            "sample_ids": [
-              "ddec3601e54f87a23e01b3d4698402ea358bd087daa81be5bec171c0ec2c3b84",
-              "f3dd014c33cdce820ccde3932eed269f6a7e5cd55f41e0e8e94b9e211b95c2c9",
-              "f897b224eb065f4a9f60ac1b19519aa407b6ab626492a99fd4ef1e4ffc049607"
-            ],
-            "sample_count": 3,
-            "sample_fp": 3
           }
         },
         "default70": {
-          "aba_routing": {
-            "sample_ids": [
-              "0cd1fc7696a74d28ff1caab2a5d010c35edbbbbefa3df49c171622c64e10cfde",
-              "3a4b874b50c811c0d18eff3fbb022ef0d10d3143066981dff129070c4806a454",
-              "4d3d65630412e622b5ca63187be9f1f7c047a31fe3473d685a42b0bc8ad24515",
-              "75ef2afacb9d477737377b12c4ff2ea9fa2a9dc95e6a0da06c66fe6236169dd3",
-              "cf69154f98268418373eef234f81fa3043e276131c860760bff04f79ecb64c51"
-            ],
-            "sample_count": 5,
-            "sample_fp": 5
-          },
           "ipaddr": {
             "sample_ids": [
               "003917f400bef2c8c0dfe67c2691dd206fccf2dc1be8a32cc5f674bc8e0d48f0",
@@ -569,15 +510,6 @@
             ],
             "sample_count": 36,
             "sample_fp": 0
-          },
-          "swiftbic": {
-            "sample_ids": [
-              "ddec3601e54f87a23e01b3d4698402ea358bd087daa81be5bec171c0ec2c3b84",
-              "f3dd014c33cdce820ccde3932eed269f6a7e5cd55f41e0e8e94b9e211b95c2c9",
-              "f897b224eb065f4a9f60ac1b19519aa407b6ab626492a99fd4ef1e4ffc049607"
-            ],
-            "sample_count": 3,
-            "sample_fp": 3
           }
         }
       }
@@ -759,23 +691,19 @@
           "ca_sin": 6,
           "email": 32,
           "ipaddr": 6062,
-          "swiftbic": 1,
           "us_ssn": 33
         },
         "default": {
           "email": 32,
-          "ipaddr": 6062,
-          "swiftbic": 1
+          "ipaddr": 6062
         },
         "default50": {
           "email": 32,
-          "ipaddr": 6062,
-          "swiftbic": 1
+          "ipaddr": 6062
         },
         "default70": {
           "email": 32,
-          "ipaddr": 6062,
-          "swiftbic": 1
+          "ipaddr": 6062
         },
         "kinds1": {
           "email": 32
@@ -789,7 +717,7 @@
         }
       },
       "dataset": "Linux",
-      "findings_sha256": "81e61a85e5f5b6735e4f3e03abcbba248fa466af2340054a7e13955636457a70",
+      "findings_sha256": "3d718da6c595809a800ee3e05091ca0be97ca2a7082ce00973d957a72072e0ab",
       "bytes": 2349686,
       "lines": 25567,
       "strata": {
@@ -888,13 +816,6 @@
           ],
           "sample_count": 40,
           "sample_fp": 0
-        },
-        "swiftbic": {
-          "sample_ids": [
-            "e63387858d6c2f6a4bdd3677e1ccd9c93edca77ad6976f00b42739d5037fc34f"
-          ],
-          "sample_count": 1,
-          "sample_fp": 1
         },
         "us_ssn": {
           "sample_ids": [
@@ -1021,13 +942,6 @@
             ],
             "sample_count": 40,
             "sample_fp": 0
-          },
-          "swiftbic": {
-            "sample_ids": [
-              "e63387858d6c2f6a4bdd3677e1ccd9c93edca77ad6976f00b42739d5037fc34f"
-            ],
-            "sample_count": 1,
-            "sample_fp": 1
           }
         },
         "default70": {
@@ -1114,13 +1028,6 @@
             ],
             "sample_count": 40,
             "sample_fp": 0
-          },
-          "swiftbic": {
-            "sample_ids": [
-              "e63387858d6c2f6a4bdd3677e1ccd9c93edca77ad6976f00b42739d5037fc34f"
-            ],
-            "sample_count": 1,
-            "sample_fp": 1
           }
         }
       }
@@ -1129,20 +1036,16 @@
       "counts": {
         "all": {
           "ca_sin": 1,
-          "ipaddr": 542844,
-          "swiftbic": 22
+          "ipaddr": 542844
         },
         "default": {
-          "ipaddr": 542844,
-          "swiftbic": 22
+          "ipaddr": 542844
         },
         "default50": {
-          "ipaddr": 542844,
-          "swiftbic": 22
+          "ipaddr": 542844
         },
         "default70": {
-          "ipaddr": 542844,
-          "swiftbic": 22
+          "ipaddr": 542844
         },
         "kinds1": {},
         "kinds3": {},
@@ -1151,7 +1054,7 @@
         }
       },
       "dataset": "OpenSSH",
-      "findings_sha256": "664442c205ff031371f14ef2635684efe24338a86b59c239baa583aaec7f5dde",
+      "findings_sha256": "30f75097e590985cfb1468e4e14ce1c7404d1da0518693720521d4451d82b744",
       "bytes": 73417506,
       "lines": 655147,
       "strata": {
@@ -1207,34 +1110,6 @@
           ],
           "sample_count": 40,
           "sample_fp": 0
-        },
-        "swiftbic": {
-          "sample_ids": [
-            "02f30000d443cf0007560512fa0d6683078ed2514fca2b7babb721adb162d3a7",
-            "0c3e494c4922a9abd8ef8aaf10b7aa59c331cb62d1c463165a3e93c9bca9c1c5",
-            "13aa2b3736a7053d7bfb168d3162f11ad172b1e7ca1aab4acffe8b8173f2e767",
-            "17f861fe246ac500b4a7ac2d5dd611a77508a501898c569bfe3f768e63ec4483",
-            "28febb083a5002f4541f752e638a05f27aeb79c1eb0b4a0c6b0858bfba1f62b3",
-            "388c479b70fc08d562062c78c5abd0868d4b934dc8c2acf6b5a72342a4027d0e",
-            "44987a7eeb3cb3182fc9f30fd9b6c08b61c22816825c8f275436188efa0b4c3c",
-            "567664eceb6b01154415c9b229c5c9a5aa64ec7248faba65c1777e36fc02efa0",
-            "66439cb3129208ac74e3497866706fe353652eafc9b4b48ddfb61df3a25a6dc2",
-            "7b3b2deb75d940b2cf7fa7e38ba6e878b5e1558d888ec91d1e119db6d5ed4174",
-            "86a08f54bbe372126c6e8d0dc772bf1cbfafff253b91eaf48f09975e740e173e",
-            "880142b80e4e256b6a1cf404b802fc9c03108a75c871a24db0995778ed5ba222",
-            "8b8e7a76a2cb0eaf12ac9926acd8a9fcacef54a41e75c94c692e68cb2ca4a339",
-            "93e97f62a21e6a53813b622d2dcc1ac92743a75d68dab97924134a7bc93e5a7d",
-            "b1ba2a8d9d9b5ac080a010a45e5ee927c0ea79a30364c5706681842e7860e6d5",
-            "cab8768840c46529ffd13df8b6eb8bbff174a284080b926bd90581632d7eafcb",
-            "d191c7a583e23f4f8137de9498adcd73535c92731475a97b2cc9f63ebc123bcf",
-            "daeb65bc843b69377b9cd15e306a4ff3ce3ddff85ca9b142e5252513dcba8acf",
-            "f666c0dd0338858b32820a544a3bca3dbb2815b1c70ba57016bb71a21aafb250",
-            "f7adc77ef9859362ca9e9088b851e5de26b4a6461338bdf3659ced26533521fb",
-            "fc75bf445fd10986888326323db261b24f6dba6ebe649b68cba8b79085127b25",
-            "ff87060bd77dab8ec902b8cc429f87d3aa87e0add479a9913b3089669039eb17"
-          ],
-          "sample_count": 22,
-          "sample_fp": 22
         }
       },
       "threshold_strata": {
@@ -1284,34 +1159,6 @@
             ],
             "sample_count": 40,
             "sample_fp": 0
-          },
-          "swiftbic": {
-            "sample_ids": [
-              "02f30000d443cf0007560512fa0d6683078ed2514fca2b7babb721adb162d3a7",
-              "0c3e494c4922a9abd8ef8aaf10b7aa59c331cb62d1c463165a3e93c9bca9c1c5",
-              "13aa2b3736a7053d7bfb168d3162f11ad172b1e7ca1aab4acffe8b8173f2e767",
-              "17f861fe246ac500b4a7ac2d5dd611a77508a501898c569bfe3f768e63ec4483",
-              "28febb083a5002f4541f752e638a05f27aeb79c1eb0b4a0c6b0858bfba1f62b3",
-              "388c479b70fc08d562062c78c5abd0868d4b934dc8c2acf6b5a72342a4027d0e",
-              "44987a7eeb3cb3182fc9f30fd9b6c08b61c22816825c8f275436188efa0b4c3c",
-              "567664eceb6b01154415c9b229c5c9a5aa64ec7248faba65c1777e36fc02efa0",
-              "66439cb3129208ac74e3497866706fe353652eafc9b4b48ddfb61df3a25a6dc2",
-              "7b3b2deb75d940b2cf7fa7e38ba6e878b5e1558d888ec91d1e119db6d5ed4174",
-              "86a08f54bbe372126c6e8d0dc772bf1cbfafff253b91eaf48f09975e740e173e",
-              "880142b80e4e256b6a1cf404b802fc9c03108a75c871a24db0995778ed5ba222",
-              "8b8e7a76a2cb0eaf12ac9926acd8a9fcacef54a41e75c94c692e68cb2ca4a339",
-              "93e97f62a21e6a53813b622d2dcc1ac92743a75d68dab97924134a7bc93e5a7d",
-              "b1ba2a8d9d9b5ac080a010a45e5ee927c0ea79a30364c5706681842e7860e6d5",
-              "cab8768840c46529ffd13df8b6eb8bbff174a284080b926bd90581632d7eafcb",
-              "d191c7a583e23f4f8137de9498adcd73535c92731475a97b2cc9f63ebc123bcf",
-              "daeb65bc843b69377b9cd15e306a4ff3ce3ddff85ca9b142e5252513dcba8acf",
-              "f666c0dd0338858b32820a544a3bca3dbb2815b1c70ba57016bb71a21aafb250",
-              "f7adc77ef9859362ca9e9088b851e5de26b4a6461338bdf3659ced26533521fb",
-              "fc75bf445fd10986888326323db261b24f6dba6ebe649b68cba8b79085127b25",
-              "ff87060bd77dab8ec902b8cc429f87d3aa87e0add479a9913b3089669039eb17"
-            ],
-            "sample_count": 22,
-            "sample_fp": 22
           }
         },
         "default70": {
@@ -1360,34 +1207,6 @@
             ],
             "sample_count": 40,
             "sample_fp": 0
-          },
-          "swiftbic": {
-            "sample_ids": [
-              "02f30000d443cf0007560512fa0d6683078ed2514fca2b7babb721adb162d3a7",
-              "0c3e494c4922a9abd8ef8aaf10b7aa59c331cb62d1c463165a3e93c9bca9c1c5",
-              "13aa2b3736a7053d7bfb168d3162f11ad172b1e7ca1aab4acffe8b8173f2e767",
-              "17f861fe246ac500b4a7ac2d5dd611a77508a501898c569bfe3f768e63ec4483",
-              "28febb083a5002f4541f752e638a05f27aeb79c1eb0b4a0c6b0858bfba1f62b3",
-              "388c479b70fc08d562062c78c5abd0868d4b934dc8c2acf6b5a72342a4027d0e",
-              "44987a7eeb3cb3182fc9f30fd9b6c08b61c22816825c8f275436188efa0b4c3c",
-              "567664eceb6b01154415c9b229c5c9a5aa64ec7248faba65c1777e36fc02efa0",
-              "66439cb3129208ac74e3497866706fe353652eafc9b4b48ddfb61df3a25a6dc2",
-              "7b3b2deb75d940b2cf7fa7e38ba6e878b5e1558d888ec91d1e119db6d5ed4174",
-              "86a08f54bbe372126c6e8d0dc772bf1cbfafff253b91eaf48f09975e740e173e",
-              "880142b80e4e256b6a1cf404b802fc9c03108a75c871a24db0995778ed5ba222",
-              "8b8e7a76a2cb0eaf12ac9926acd8a9fcacef54a41e75c94c692e68cb2ca4a339",
-              "93e97f62a21e6a53813b622d2dcc1ac92743a75d68dab97924134a7bc93e5a7d",
-              "b1ba2a8d9d9b5ac080a010a45e5ee927c0ea79a30364c5706681842e7860e6d5",
-              "cab8768840c46529ffd13df8b6eb8bbff174a284080b926bd90581632d7eafcb",
-              "d191c7a583e23f4f8137de9498adcd73535c92731475a97b2cc9f63ebc123bcf",
-              "daeb65bc843b69377b9cd15e306a4ff3ce3ddff85ca9b142e5252513dcba8acf",
-              "f666c0dd0338858b32820a544a3bca3dbb2815b1c70ba57016bb71a21aafb250",
-              "f7adc77ef9859362ca9e9088b851e5de26b4a6461338bdf3659ced26533521fb",
-              "fc75bf445fd10986888326323db261b24f6dba6ebe649b68cba8b79085127b25",
-              "ff87060bd77dab8ec902b8cc429f87d3aa87e0add479a9913b3089669039eb17"
-            ],
-            "sample_count": 22,
-            "sample_fp": 22
           }
         }
       }
@@ -1566,20 +1385,16 @@
     {
       "counts": {
         "all": {
-          "aba_routing": 2,
           "ca_sin": 6,
           "ipaddr": 34894
         },
         "default": {
-          "aba_routing": 2,
           "ipaddr": 34894
         },
         "default50": {
-          "aba_routing": 2,
           "ipaddr": 34894
         },
         "default70": {
-          "aba_routing": 2,
           "ipaddr": 34894
         },
         "kinds1": {},
@@ -1589,18 +1404,10 @@
         }
       },
       "dataset": "Zookeeper",
-      "findings_sha256": "664b2c8216e760d76878c7cf76fb9afd6935288095580bacf9151189d51e373e",
+      "findings_sha256": "37676f3afd895809a9dbaf10396a5355bc11e162d303cc9a2a485492afd03fba",
       "bytes": 10426438,
       "lines": 74380,
       "strata": {
-        "aba_routing": {
-          "sample_ids": [
-            "816594669aaae6988e4d6ec355f07bfce55c04305c5a298296a0a8219ab8d4c6",
-            "f0927dc3b1b01fea484f3652b985615a1ea744720e781187c1444250879c9e34"
-          ],
-          "sample_count": 2,
-          "sample_fp": 2
-        },
         "ca_sin": {
           "sample_ids": [
             "20a723952e3cec58058b3c4c4f6a0e53d13bf07a44431e053fc61053eebedeef",
@@ -1662,14 +1469,6 @@
       },
       "threshold_strata": {
         "default50": {
-          "aba_routing": {
-            "sample_ids": [
-              "816594669aaae6988e4d6ec355f07bfce55c04305c5a298296a0a8219ab8d4c6",
-              "f0927dc3b1b01fea484f3652b985615a1ea744720e781187c1444250879c9e34"
-            ],
-            "sample_count": 2,
-            "sample_fp": 2
-          },
           "ipaddr": {
             "sample_ids": [
               "00002918a139bfeea99aa0b9f9c652d5c7b82ae9e9e2b10cf980e79dcf6e4d8d",
@@ -1718,14 +1517,6 @@
           }
         },
         "default70": {
-          "aba_routing": {
-            "sample_ids": [
-              "816594669aaae6988e4d6ec355f07bfce55c04305c5a298296a0a8219ab8d4c6",
-              "f0927dc3b1b01fea484f3652b985615a1ea744720e781187c1444250879c9e34"
-            ],
-            "sample_count": 2,
-            "sample_fp": 2
-          },
           "ipaddr": {
             "sample_ids": [
               "00002918a139bfeea99aa0b9f9c652d5c7b82ae9e9e2b10cf980e79dcf6e4d8d",

@@ -2,6 +2,8 @@ package detect
 
 import (
 	"bytes"
+	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -260,5 +262,47 @@ func TestAbaRejectedBoundaries(t *testing.T) {
 	}
 	if got := NewABARouting().Scan([]byte("021000021x")); len(got) != 0 {
 		t.Fatal("routing suffix accepted")
+	}
+}
+
+func TestABAExceptionCounterProperty(t *testing.T) {
+	t.Parallel()
+	d := NewABARouting()
+	for n := range 100 {
+		code := fmt.Sprintf("02%06d", n)
+		sum := 0
+		for i, b := range []byte(code) {
+			sum += int(b-'0') * []int{3, 7, 1}[i%3]
+		}
+		code += strconv.Itoa((10 - sum%10) % 10)
+		if got := d.Scan([]byte(code + " double-hummer alignment exceptions")); len(got) != 0 {
+			t.Errorf("context accepted: %s: %+v", code, got)
+		}
+		for _, positive := range []string{code, "ABA: " + code} {
+			if got := d.Scan([]byte(positive)); len(got) != 1 {
+				t.Errorf("positive lost: %s: %+v", positive, got)
+			}
+		}
+	}
+}
+
+func TestABALogSequenceProperty(t *testing.T) {
+	t.Parallel()
+	d := NewABARouting()
+	for n := range 100 {
+		code := fmt.Sprintf("02%06d", n)
+		sum := 0
+		for i, b := range []byte(code) {
+			sum += int(b-'0') * []int{3, 7, 1}[i%3]
+		}
+		code += strconv.Itoa((10 - sum%10) % 10)
+		if got := d.Scan([]byte("Creating new log file: log." + code)); len(got) != 0 {
+			t.Errorf("context accepted: %s: %+v", code, got)
+		}
+		for _, positive := range []string{code, "ABA: " + code} {
+			if got := d.Scan([]byte(positive)); len(got) != 1 {
+				t.Errorf("positive lost: %s: %+v", positive, got)
+			}
+		}
 	}
 }

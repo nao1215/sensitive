@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -172,32 +173,73 @@ func TestScannerPathsAtBufferBoundaries(t *testing.T) {
 	}
 }
 
+//nolint:gocognit // Keep encoding, newline, nested frame and truncation axes visible in one differential property.
 func TestPEMTruncationProperty(t *testing.T) {
 	t.Parallel()
 	scanner := NewScanner(WithKinds(KindPrivateKeyPEM))
-	for _, label := range []string{"PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY", "DSA PRIVATE KEY", "OPENSSH PRIVATE KEY", "ENCRYPTED PRIVATE KEY", "ANY PRIVATE KEY"} {
+	for _, label := range []string{"PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY", "DSA PRIVATE KEY", "OPENSSH PRIVATE KEY", "ENCRYPTED PRIVATE KEY", "ANY PRIVATE KEY", "PGP PRIVATE KEY BLOCK"} {
+		header, footer := "-----BEGIN "+label+"-----", "-----END "+label+"-----"
 		for _, newline := range []string{"\n", "\r\n"} {
-			lines := []string{"-----BEGIN " + label + "-----", "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=", "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=", "-----END " + label + "-----"}
-			for cut := 1; cut <= len(lines); cut++ {
-				input := strings.Join(lines[:cut], newline)
-				if got := Mask(input, scanner.ScanString(input)); got != redactionMarker {
-					t.Errorf("whole PEM %s/%d: %q", label, cut, got)
-				}
-				seen := 0
-				if err := scanner.ScanLines(strings.NewReader(input), func(n int, line []byte, findings []Finding) {
-					seen++
-					if n != seen || Mask(string(line), findings) != redactionMarker {
-						t.Errorf("line %d of %s retained", n, label)
+			for _, nested := range []bool{false, true} {
+				for encoding := -1; encoding <= len(header)+len(footer); encoding++ {
+					head, tail := header, footer
+					if encoding < len(header) && encoding >= 0 {
+						head = percentFrameByte(header, encoding)
 					}
-				}); err != nil {
-					t.Fatal(err)
-				}
-				if seen != cut {
-					t.Errorf("only %d/%d lines reported for %s", seen, cut, label)
+					if encoding >= len(header) && encoding < len(header)+len(footer) {
+						tail = percentFrameByte(footer, encoding-len(header))
+					}
+					if encoding == len(header)+len(footer) {
+						head, tail = percentFrame(header), percentFrame(footer)
+					}
+					lines := []string{head, "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=", "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=", tail}
+					if nested {
+						lines = append(lines[:2], append([]string{"-----BEGIN PUBLIC KEY-----"}, lines[2:]...)...)
+					}
+					for cut := 1; cut <= len(lines); cut++ {
+						input := strings.Join(lines[:cut], newline)
+						if got := Mask(input, scanner.ScanString(input)); got != redactionMarker {
+							t.Errorf("whole %s/%d/%d: %q", label, encoding, cut, got)
+						}
+						seen := 0
+						if err := scanner.ScanLines(strings.NewReader(input), func(n int, line []byte, findings []Finding) {
+							seen++
+							if n != seen || Mask(string(line), findings) != redactionMarker {
+								t.Errorf("line %d of %s/%d retained", n, label, encoding)
+							}
+						}); err != nil {
+							t.Fatal(err)
+						}
+						if seen != cut {
+							t.Errorf("only %d/%d lines for %s/%d", seen, cut, label, encoding)
+						}
+					}
+					// Matching encoded footers must also end continuation state.
+					if err := scanner.ScanLines(strings.NewReader(strings.Join(lines, newline)+newline+"visible"), func(_ int, line []byte, _ []Finding) {
+						if string(line) == "visible" {
+							t.Errorf("state survived footer %s/%d", label, encoding)
+						}
+					}); err != nil {
+						t.Fatal(err)
+					}
 				}
 			}
 		}
 	}
+}
+
+func percentFrameByte(s string, at int) string {
+	return s[:at] + fmt.Sprintf("%%%02X", s[at]) + s[at+1:]
+}
+
+func percentFrame(s string) string {
+	var b strings.Builder
+	for i := range len(s) {
+		if _, err := fmt.Fprintf(&b, "%%%02X", s[i]); err != nil {
+			panic(err)
+		}
+	}
+	return b.String()
 }
 
 func TestPEMStreamTransitions(t *testing.T) {
@@ -249,7 +291,27 @@ func TestPEMLineStateRejectsUnrelatedCustomFinding(t *testing.T) {
 	// A custom finding with the PEM kind is not proof of a BEGIN header.
 	raw := []byte("unrelated text")
 	finding := Finding{Kind: KindPrivateKeyPEM, Start: 0, End: len(raw), Confidence: 1}
-	if footer := pemLineFooter(raw, []Finding{finding}, 0); footer != nil {
+	if footer := pemLineLabel(raw, nil, []Finding{finding}, 0); footer != nil {
 		t.Fatal("custom finding entered PEM state")
+	}
+	decoded, positions := normalizedScanInput([]byte("%2D----BEGIN PRIVATE KEY-----"))
+	finding.Start = 1 // Inside the encoded byte, not a normalized boundary.
+	if label := pemLineLabel(decoded, positions, []Finding{finding}, 0); label != nil {
+		t.Fatal("unaligned custom finding entered PEM state")
+	}
+}
+
+func TestZeroScannerCarriesEncodedPEMState(t *testing.T) {
+	t.Parallel()
+	var scanner Scanner
+	input := "%2D----BEGIN PRIVATE KEY-----\nfixtureBody\n-----END PRIVATE KEY-----"
+	seen := 0
+	if err := scanner.ScanLines(strings.NewReader(input), func(_ int, line []byte, findings []Finding) {
+		seen++
+		if Mask(string(line), findings) != redactionMarker {
+			t.Fatal("zero scanner leaked block")
+		}
+	}); err != nil || seen != 3 {
+		t.Fatalf("zero scanner callbacks=%d error=%v", seen, err)
 	}
 }

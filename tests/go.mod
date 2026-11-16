@@ -25,7 +25,16 @@ require (
 	pgregory.net/rapid v1.3.0
 )
 
-require github.com/icntswm/go-masker v0.6.1
+require (
+	github.com/icntswm/go-masker v0.6.1
+	google.golang.org/grpc v1.85.0
+)
+
+require (
+	golang.org/x/net v0.62.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260817212433-ac3dfec99bb1 // indirect
+	google.golang.org/protobuf v1.36.12 // indirect
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -34,6 +43,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/nao1215/embargo/adapters/grpc v0.9.0
 	github.com/nao1215/embargo/adapters/logrus v0.9.0
 	github.com/nao1215/embargo/adapters/otel v0.9.0
 	github.com/nao1215/embargo/adapters/sentry v0.9.0
@@ -61,3 +71,5 @@ replace github.com/nao1215/embargo/adapters/zerolog => ../adapters/zerolog
 replace github.com/nao1215/embargo/adapters/otel => ../adapters/otel
 
 replace github.com/nao1215/embargo/adapters/sentry => ../adapters/sentry
+
+replace github.com/nao1215/embargo/adapters/grpc => ../adapters/grpc

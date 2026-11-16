@@ -75,7 +75,7 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [phone_jp](#phone-jp) | 146 / 562 | 146 / 32 / 0 | 82.0% | 100.0% |
 | [private_key_pem](#private-key-pem) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [slack_token](#slack-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [swiftbic](#swiftbic) | 146 / 562 | 146 / 120 / 0 | 54.9% | 100.0% |
+| [swiftbic](#swiftbic) | 146 / 562 | 146 / 24 / 0 | 85.9% | 100.0% |
 | [uk_sortcode](#uk-sortcode) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 
 PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 development, 0.0 held. See [public-log sampling and classification](real-logs.md).
@@ -135,7 +135,7 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [phone_jp](#phone-jp) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [private_key_pem](#private-key-pem) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [slack_token](#slack-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [swiftbic](#swiftbic) | 146 / 562 | 146 / 120 / 0 | 54.9% | 100.0% |
+| [swiftbic](#swiftbic) | 146 / 562 | 146 / 24 / 0 | 85.9% | 100.0% |
 | [uk_sortcode](#uk-sortcode) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 
 PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 development, 0.0 held. See [public-log sampling and classification](real-logs.md).
@@ -195,7 +195,7 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [phone_jp](#phone-jp) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [private_key_pem](#private-key-pem) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [slack_token](#slack-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [swiftbic](#swiftbic) | 146 / 562 | 146 / 120 / 0 | 54.9% | 100.0% |
+| [swiftbic](#swiftbic) | 146 / 562 | 146 / 24 / 0 | 85.9% | 100.0% |
 | [uk_sortcode](#uk-sortcode) | 146 / 562 | 140 / 0 / 6 | 100.0% | 95.9% |
 
 PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 development, 0.0 held. See [public-log sampling and classification](real-logs.md).
@@ -391,7 +391,7 @@ Verified by the [swiftbic format tests](../internal/detect/swiftbic_test.go) and
 
 | Set / observed limit | Input example | Why it remains |
 |---|---|---|
-| development: `swiftbic/positive/0/json` | `{"message":"SWIFT: TESTGBIK","result":"accepted"}` | Explanation 1 below. |
+| development: `swiftbic/positive/0/multiline` | `request accepted ↵ SWIFT: TESTGBIK ↵ worker finished` | Explanation 1 below. |
 
 1. The nearby SWIFT keyword permits alphabetic BIC shapes; ordinary words such as accepted or finished can satisfy the format. Institution assignment is not checked.
 
@@ -454,9 +454,9 @@ The default remains 0 for all 25 default kinds. Public-log rates are sample esti
 
 | Minimum confidence | Public FP/GB | Public precision | Development precision / misses | Held precision / misses |
 |---|---:|---:|---:|---:|
-| 0.0 | 357.1 | 99.9947% | 93.16% / 0 | 95.95% / 0 |
-| 0.5 | 357.1 | 99.9947% | 95.43% / 0 | 98.34% / 0 |
-| 0.7 | 357.1 | 99.9947% | 96.85% / 152 | 100.00% / 150 |
+| 0.0 | 0.0 | 100.0000% | 95.38% / 0 | 95.95% / 0 |
+| 0.5 | 0.0 | 100.0000% | 97.76% / 0 | 98.34% / 0 |
+| 0.7 | 0.0 | 100.0000% | 99.35% / 152 | 100.00% / 150 |
 
 Choose 0 when retaining ambiguous secrets is the priority. On these synthetic sets, 0.5 removes business-label false positives without additional misses; validate it against your own mislabeled secrets before opting in. A global 0.7 loses bank-account and sort-code positives. These thresholds do not fix the remaining public-log ABA/SWIFT false positives. Select relevant kinds and sensitive keys before raising the global cutoff; confidence is not a probability. Regenerate with make accuracy-doc and make real-log-accuracy; python3 scripts/accuracy_figures.py --check verifies this table.
 
@@ -471,13 +471,13 @@ Each split combines the original synthetic corpus, credentials and the frozen co
 |---|---|---:|---:|---:|---:|
 | development | critical | 0.0 | 1648 / 97 / 0 | 100.00% | 0 / 0 |
 | development | high | 0.0 | 3930 / 1089 / 0 | 100.00% | 0 / 0 |
-| development | standard | 0.0 | 1580 / 272 / 0 | 100.00% | 0 / 0 |
+| development | standard | 0.0 | 1580 / 176 / 0 | 100.00% | 0 / 0 |
 | development | critical | 0.5 | 1648 / 64 / 0 | 100.00% | 0 / 0 |
 | development | high | 0.5 | 3930 / 0 / 0 | 100.00% | 0 / 0 |
-| development | standard | 0.5 | 1460 / 120 / 120 | 92.41% | 120 / 4800 |
+| development | standard | 0.5 | 1460 / 24 / 120 | 92.41% | 120 / 4800 |
 | development | critical | 0.7 | 1648 / 0 / 0 | 100.00% | 0 / 0 |
 | development | high | 0.7 | 3170 / 0 / 760 | 80.66% | 760 / 10687 |
-| development | standard | 0.7 | 1460 / 120 / 120 | 92.41% | 120 / 4800 |
+| development | standard | 0.7 | 1460 / 24 / 120 | 92.41% | 120 / 4800 |
 | held | critical | 0.0 | 1632 / 96 / 0 | 100.00% | 0 / 0 |
 | held | high | 0.0 | 3920 / 1088 / 0 | 100.00% | 0 / 0 |
 | held | standard | 0.0 | 1558 / 150 / 2 | 99.87% | 2 / 80 |
@@ -515,7 +515,7 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 
 | Detector | Development before / GB | Development after / GB | Held before / GB | Held after / GB |
 |---|---:|---:|---:|---:|
-| aba_routing | 1,614.4 | 0.0 | 83.0 | 83.0 |
+| aba_routing | 1,614.4 | 0.0 | 83.0 | 0.0 |
 | ach_trace | 0.0 | 0.0 | 0.0 | 0.0 |
 | awskey | 0.0 | 0.0 | 0.0 | 0.0 |
 | bank_account | 0.0 | 0.0 | 0.0 | 0.0 |
@@ -546,7 +546,7 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 | private_key_pem | 0.0 | 0.0 | 0.0 | 0.0 |
 | service_token | 0.0 | 0.0 | 0.0 | 0.0 |
 | slack_token | 0.0 | 0.0 | 0.0 | 0.0 |
-| swiftbic | 739,274.8 | 124.2 | 343.8 | 296.4 |
+| swiftbic | 739,274.8 | 0.0 | 343.8 | 0.0 |
 | uk_nhs | 0.0 | 0.0 | 0.0 | 2,287.9 |
 | uk_nino | 0.0 | 0.0 | 0.0 | 0.0 |
 | uk_sortcode | 0.0 | 0.0 | 0.0 | 0.0 |
@@ -555,8 +555,8 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 
 | Configuration | Development before / GB | Development after / GB | Held before / GB | Held after / GB |
 |---|---:|---:|---:|---:|
-| WithAll | 827,818.9 | 22,477.5 | 145,650.6 | 3,153.3 |
-| Default slog handler | 827,818.9 | 124.2 | 145,650.6 | 379.3 |
+| WithAll | 827,818.9 | 22,353.3 | 145,650.6 | 2,773.9 |
+| Default slog handler | 827,818.9 | 0.0 | 145,650.6 | 0.0 |
 | kinds1 | 0.0 | 0.0 | 0.0 | 0.0 |
 | kinds3 | 44,955.1 | 0.0 | 0.0 | 0.0 |
 | kinds8 | 47,563.0 | 0.0 | 144,062.1 | 0.0 |
@@ -578,7 +578,7 @@ Run `make real-log-accuracy LOG_CACHE=/path/outside/the/repository` to verify ca
 
 Classification is kind-specific: an actual contact or network endpoint is a sensitive reference even when published intentionally, while a block ID is not a payment card and a pathname is not an entropy token. The wildcard listener address is valid IP syntax but not a private endpoint, so it counts as an FP for this privacy policy. LogHub logs do not establish that any credential is active, and no authentication was attempted. Uncertain cases must remain unclassified until reviewed rather than being silently counted as true negatives.
 
-The remaining held-partition errors include ABA-shaped counters and log file suffixes, plus SWIFT-shaped usernames and words near “wire”. Those rules were not tuned from held data. The IP policy excludes unspecified and loopback addresses; measured held ipaddr FP/GB is 0.0, ABA is 83.0 and SWIFT is 320.1. These are sample estimates on seen data. Path filtering can miss a secret placed in a URL path or a filename; use key-context detection or explicit Secret values there. Numeric fragment checks also exclude decimal tails and hostname components, and the unquoted token rule omits Java object references. Quoted tokens and password/secret fields retain credential masking.
+The generated table above is the source for current per-kind rates, and the accuracy page includes the same generated evidence. The held partition has now informed the register-slot, invalid-user, identifier, hardware-warning, exception-counter and log-sequence regression rules. These seen logs cannot establish rates on unseen deployments. Path filtering can miss secrets in filenames; version labels can hide real IP addresses, and an unquoted Java object-reference shape under token can hide a real credential. Quoted tokens and password/secret fields retain credential masking.
 
 ## Your application logs
 

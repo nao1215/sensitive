@@ -1,6 +1,9 @@
 package detect
 
-import "bytes"
+import (
+	"bytes"
+	"slices"
+)
 
 // SWIFTBICDetail holds SWIFT/BIC code-specific detail information.
 type SWIFTBICDetail struct {
@@ -45,6 +48,22 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 
 		end, branchCode, ok := determineSWIFTLength(data, i)
 		if !ok || (entropyLocation(data, i, end) && !swiftSlashList(data, i, end)) {
+			continue
+		}
+
+		if registerSlot(data, i, end) {
+			continue
+		}
+
+		if invalidUserSlot(data, i) {
+			continue
+		}
+
+		if (i > 0 && data[i-1] == '_') || (end < len(data) && data[end] == '_') {
+			continue
+		}
+
+		if hardwareWireSlot(data, i) {
 			continue
 		}
 
@@ -190,15 +209,17 @@ func hasSWIFTContext(data []byte, start, end int) bool {
 			at += offset
 			after := at + len(kw)
 			offset = after
-			if (at > 0 && isAlphaNum(window[at-1])) || (after < len(window) && isAlphaNum(window[after])) {
+			if at > 0 && isTokenByte(window[at-1]) {
 				continue
 			}
-			if string(kw) == "swift" && after < start-searchStart {
-				gap := bytes.TrimSpace(window[after : start-searchStart])
-				if len(gap) > 0 && gap[0] != ':' && gap[0] != '=' && !bytes.HasPrefix(gap, []byte("code")) {
+			if string(kw) == "swift" && after <= start-searchStart {
+				if !swiftLabelGap(window[after : start-searchStart]) {
 					continue
 				}
+			} else if after < len(window) && isTokenByte(window[after]) {
+				continue
 			}
+
 			return true
 		}
 	}
@@ -255,4 +276,30 @@ func isSWIFTCountry(code string) bool {
 	default:
 		return false
 	}
+}
+
+// swiftLabelGap accepts ordinary field spellings without treating Swift build
+// terminology as banking context. Case folding is owned by the caller.
+func swiftLabelGap(gap []byte) bool {
+	const separators = " \t\r\n_-/:=\"'.("
+	list := bytes.ContainsRune(gap, '/')
+	gap = bytes.Trim(gap, separators)
+	// Earlier complete codes in a slash list share the same field label.
+	for list && len(gap) >= 8 {
+		end, _, ok := determineSWIFTLength(gap, 0)
+		if !validateSWIFTStructure(gap, 0) || !ok {
+			break
+		}
+		if end == len(gap) {
+			return true
+		}
+		if gap[end] != '/' {
+			break
+		}
+		gap = gap[end+1:]
+	}
+	if len(gap) == 0 {
+		return true
+	}
+	return slices.Contains([]string{"code", "no", "number", "address", "bic"}, string(gap))
 }

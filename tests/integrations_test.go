@@ -48,7 +48,11 @@ import (
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/packages"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"pgregory.net/rapid"
+
+	embargogrpc "github.com/nao1215/embargo/adapters/grpc"
 
 	"github.com/nao1215/embargo"
 	embargologrus "github.com/nao1215/embargo/adapters/logrus"
@@ -1372,3 +1376,174 @@ func freeTextErrorOutput(t *testing.T, scanner *embargo.Scanner, name, input str
 }
 
 const freeTextAuthorizationHeader = "Authorization"
+
+// Every free-text and key-value hook consumes the same generated failure shapes.
+const (
+	boundaryIPv4 = "203.0.113.9"
+	boundaryBIC  = "DEUTDEFF"
+)
+
+func TestMaskingBoundaryHooks(t *testing.T) {
+	t.Parallel()
+	for n := range 3 {
+		secret := fmt.Sprintf("opaqueHook%02dFixture", n)
+		inputs := []struct{ text, needle string }{
+			{"connection from 2001:db8::5.", "2001:db8::5"},
+			{"peer ::ffff:203.0.113.9.", boundaryIPv4},
+			{"Accepted connection from 203.0.113.9.", boundaryIPv4},
+			{"blocked 203.0.113.9...", boundaryIPv4},
+			{`{"ip":"203.0.113.9."}`, boundaryIPv4},
+			{"peer 2001:db8::5: closed", "2001:db8::5"},
+			{"SWIFT-Code: DEUTDEFF", boundaryBIC},
+			{"swift_code=DEUTDEFF", boundaryBIC},
+			{"swiftCode=DEUTDEFF", boundaryBIC},
+			{"SWIFT number DEUTDEFF", boundaryBIC},
+			{"password := " + secret, secret},
+			{"password=`head " + secret + " tail`", secret},
+			{"password: |\n  " + secret + "\n  body\npublic: retained", secret},
+			{"q=password%3D" + secret + "%26user%3Dbob", secret},
+			{"{DSN:{Scheme:https Opaque: User:bob:" + secret + " Host:example.com Path:/x}}", secret},
+			{"user arn:jp:mynumber::123456789018: ok", "123456789018"},
+			{"arn:aws:iam::1234 5678 9018:role", "1234 5678 9018"},
+		}
+		for _, label := range []string{"PRIVATE KEY", "PGP PRIVATE KEY BLOCK"} {
+			for _, header := range []string{"-----BEGIN " + label + "-----", "%2D----BEGIN " + label + "-----", "-----BEGIN " + strings.ReplaceAll(label, " ", "%20") + "-----"} {
+				inputs = append(inputs, struct{ text, needle string }{header + "\n" + secret + "\n-----END " + label + "-----", secret})
+			}
+		}
+		for _, scheme := range []string{"Bearer\t", "Token ", "Negotiate ", "Digest response=", "AWS4-HMAC-SHA256 Signature="} {
+			inputs = append(inputs, struct{ text, needle string }{"Authorization: " + scheme + secret + ", Basic " + secret, secret})
+		}
+		for _, prefix := range []string{"[]", "[abc]", ",", ")", "[REDACTED]]", "[REDACTED][REDACTED]"} {
+			inputs = append(inputs, struct{ text, needle string }{"password=" + prefix + secret, secret})
+		}
+		escaped := `{"password":"` + secret + `"}`
+		for range 4 {
+			inputs = append(inputs, struct{ text, needle string }{escaped, secret})
+			escaped = strconv.Quote(escaped)
+		}
+		for _, quote := range []string{`\x22`, `\u0022`} {
+			inputs = append(inputs, struct{ text, needle string }{"{" + quote + "password" + quote + ":" + quote + secret + quote + "}", secret})
+		}
+		for _, form := range []string{`[]interface {}{"%s"}`, `map[string]string{"access":"%s"}`, `sql.NullString{String:"%s", Valid:true}`, `main.Password("%s")`, `head %s tail`} {
+			inputs = append(inputs, struct{ text, needle string }{"{Password:" + fmt.Sprintf(form, secret) + "}", secret})
+		}
+		byteLiteral := fmt.Sprintf("%#v", []byte(secret))
+		inputs = append(inputs, struct{ text, needle string }{"{Password:" + byteLiteral + "}", strings.TrimSuffix(strings.TrimPrefix(byteLiteral, "[]byte{"), "}")})
+		for i, input := range inputs {
+			t.Run(fmt.Sprintf("text/%d/%d", n, i), func(t *testing.T) {
+				t.Parallel()
+				checkBoundaryHooks(t, input.text, input.needle, "detail", input.text)
+			})
+		}
+		for _, key := range []string{"SECRET_KEY", "POSTGRES_PASSWORD", "MYSQL_PASSWORD", "GITHUB_TOKEN", "AWS_SESSION_TOKEN", "X-Auth-Token", "X-Goog-Api-Key", "spring.datasource.password", "service.credential", "client_auth"} {
+			t.Run(fmt.Sprintf("key/%d/%s", n, key), func(t *testing.T) { t.Parallel(); checkBoundaryHooks(t, key+"="+secret, secret, key, secret) })
+		}
+	}
+}
+
+func checkBoundaryHooks(t *testing.T, text, needle, key, value string) {
+	t.Helper()
+	scanner := embargo.NewScanner()
+	check := func(name string, data []byte) {
+		t.Helper()
+		if len(data) == 0 || bytes.Contains(data, []byte(needle)) || bytes.Contains(data, []byte(strconv.Quote(needle)[1:len(strconv.Quote(needle))-1])) {
+			t.Errorf("%s retained fixture: %s", name, data)
+		}
+	}
+	// Attributes and message are independently scanned by each logging wrapper.
+	for _, name := range []string{loggerSlog, loggerZap, loggerZerolog, loggerLogrus} {
+		check(name+" attribute", loggerOutput(t, scanner, name, key, value))
+	}
+	var out bytes.Buffer
+	slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(&out, nil), scanner)).Info(text)
+	check("slog message", out.Bytes())
+	out.Reset()
+	sink := embargozap.NewWriteSyncer(zapcore.AddSync(&out), scanner)
+	logger := zap.New(zapcore.NewCore(zapcore.NewJSONEncoder(zapcore.EncoderConfig{MessageKey: "msg"}), sink, zap.InfoLevel))
+	logger.Info(text)
+	if err := logger.Sync(); err != nil {
+		t.Fatal(err)
+	}
+	check("zap message", out.Bytes())
+	out.Reset()
+	writer := embargozerolog.NewWriter(&out, scanner)
+	zero := zerolog.New(writer)
+	zero.Info().Msg(text)
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	check("zerolog message", out.Bytes())
+	out.Reset()
+	log := logrus.New()
+	log.SetOutput(&out)
+	log.SetFormatter(embargologrus.NewFormatter(&logrus.JSONFormatter{}, scanner))
+	log.Info(text)
+	check("logrus message", out.Bytes())
+	out.Reset()
+	event := &sentry.Event{Message: text, Exception: []sentry.Exception{{Value: text}}}
+	event.Contexts = map[string]sentry.Context{"extra": {key: value}}
+	event = embargosentry.NewBeforeSend(scanner)(event, nil)
+	encoded, err := json.Marshal(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	check("Sentry", encoded)
+	provider := sdklog.NewLoggerProvider(sdklog.WithProcessor(sdklog.NewSimpleProcessor(embargootel.NewLogExporter(&sdkLogCapture{writer: &out}, scanner))))
+	var record otellog.Record
+	record.SetBody(attribute.StringValue(text))
+	record.AddAttributes(attribute.String(key, value))
+	provider.Logger("boundary").Emit(t.Context(), record)
+	if shutdownErr := provider.Shutdown(t.Context()); shutdownErr != nil {
+		t.Fatal(shutdownErr)
+	}
+	check("OTel log", out.Bytes())
+	out.Reset()
+	spans := tracetest.NewInMemoryExporter()
+	tracer := sdktrace.NewTracerProvider(sdktrace.WithSyncer(embargootel.NewSpanExporter(spans, scanner)))
+	_, span := tracer.Tracer("boundary").Start(t.Context(), text)
+	span.SetAttributes(attribute.String(key, value))
+	span.AddEvent(text)
+	span.End()
+	encoded, err = json.Marshal(spans.GetSpans())
+	if err != nil {
+		t.Fatal(err)
+	}
+	check("OTel span", encoded)
+	if err := tracer.Shutdown(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		if err != nil || string(body) != text {
+			t.Error("HTTP wire body changed")
+		}
+		w.Header().Set("X-Debug", text)
+		w.WriteHeader(http.StatusOK)
+	})
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "http://example.com/?"+url.QueryEscape(key)+"="+url.QueryEscape(value), strings.NewReader(text))
+	req.Header.Set(key, value)
+	embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, nil)), scanner).ServeHTTP(httptest.NewRecorder(), req)
+	check("HTTP request/response headers and query", out.Bytes())
+	out.Reset()
+	ctx := metadata.NewIncomingContext(t.Context(), metadata.Pairs(strings.ToLower(key), value, "detail", text))
+	unary := embargogrpc.NewUnaryServerInterceptor(slog.New(slog.NewJSONHandler(&out, nil)), scanner)
+	if response, err := unary(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/fixture/Call"}, func(context.Context, any) (any, error) { return "service-response", nil }); err != nil || response != "service-response" {
+		t.Fatal("RPC outcome changed")
+	}
+	check("gRPC unary metadata", out.Bytes())
+	out.Reset()
+	stream := embargogrpc.NewStreamServerInterceptor(slog.New(slog.NewJSONHandler(&out, nil)), scanner)
+	if err := stream(nil, boundaryServerStream{context: func() context.Context { return ctx }}, &grpc.StreamServerInfo{FullMethod: "/fixture/Stream"}, func(any, grpc.ServerStream) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	check("gRPC stream metadata", out.Bytes())
+}
+
+type boundaryServerStream struct {
+	grpc.ServerStream
+
+	context func() context.Context
+}
+
+func (s boundaryServerStream) Context() context.Context { return s.context() }

@@ -18,6 +18,7 @@ import (
 
 func fuzzSeeds() []string {
 	return []string{
+		"password%3DopaqueFixture%26public%3Dvalue", `Authorization: Digest response="opaqueFixture"`, `Password:[]uint8{0x61, 0x62}`, `password=\x22opaqueFixture\x22`,
 		"us_ssn=663-27-1262",
 		"us_itin=984-73-5739",
 		"uk_nino=ZM 88 85 70 B",
@@ -102,18 +103,17 @@ func FuzzScanner(f *testing.F) {
 		want := make(map[findingKey]int)
 		decoded, positions := percentOracle(text)
 		for _, d := range detectors {
-			input := decoded
-			if d.Name() == "credential" {
-				input = data
-			}
-			for _, v := range d.Scan(input) {
-				if d.Name() == "credential" {
+			if Kind(d.Name()) == KindCredential {
+				for _, v := range credentialViewOracle(d, data, decoded, positions) {
 					want[findingKey{Kind(v.DetectorName), v.Start, v.End, v.Confidence}]++
-					continue
 				}
+				continue
+			}
+			for _, v := range d.Scan(decoded) {
 				want[findingKey{Kind(v.DetectorName), positions[v.Start], positions[v.End], v.Confidence}]++
 			}
 		}
+
 		if !sameKeys(keysOf(got), want) {
 			t.Fatal("hint filter changed matches")
 		}
@@ -152,6 +152,18 @@ func TestAllBuiltinsHaveSeeds(t *testing.T) {
 //
 //nolint:gocognit // The line-stream oracle checks content, numbering, and omissions together against independent splitting.
 func FuzzScanLines(f *testing.F) {
+	for _, label := range []string{"PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY", "DSA PRIVATE KEY", "OPENSSH PRIVATE KEY", "ENCRYPTED PRIVATE KEY", "PGP PRIVATE KEY BLOCK"} {
+		header, footer := "-----BEGIN "+label+"-----", "-----END "+label+"-----"
+		for _, newline := range []string{"\n", "\r\n"} {
+			for i := range len(header) {
+				f.Add(percentFrameByte(header, i) + newline + "body" + newline + percentFrame(footer) + newline + "visible")
+			}
+			for i := range len(footer) {
+				f.Add(percentFrame(header) + newline + "body" + newline + percentFrameByte(footer, i) + newline + "visible")
+			}
+		}
+	}
+
 	for _, s := range fuzzSeeds() {
 		f.Add(s)
 	}

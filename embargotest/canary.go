@@ -24,6 +24,7 @@ func representations(canary []byte) [][]byte {
 		[]byte(strings.ToUpper(hex.EncodeToString(canary))),
 		encoded[1 : len(encoded)-1],
 		[]byte(fmt.Sprintf("%v", canary)),
+		[]byte(strings.TrimSuffix(strings.TrimPrefix(fmt.Sprintf("%#v", canary), "[]byte{"), "}")),
 		[]byte(new(big.Int).SetBytes(canary).String()),
 	}
 	// Go quoting with and without escaping non-ASCII, and JSON written by an

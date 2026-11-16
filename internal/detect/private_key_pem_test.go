@@ -5,6 +5,15 @@ import (
 	"testing"
 )
 
+func TestPEMMismatchedFooterDoesNotReleaseBody(t *testing.T) {
+	t.Parallel()
+	input := pemHeader("RSA") + "\nfirst\n-----END EC PRIVATE KEY-----\nsecond\n-----END RSA PRIVATE KEY----- visible"
+	got := NewPrivateKeyPEM().Scan([]byte(input))
+	if len(got) != 1 || got[0].End != len(input)-len(" visible") {
+		t.Fatalf("mismatched footer released key material: %+v", got)
+	}
+}
+
 // pemHeader builds a PEM "BEGIN" header for the given algorithm (empty for a bare
 // PKCS#8 key). It assembles the string from parts so the full literal is never
 // present in source — a fictitious test fixture must not trip secret scanners.

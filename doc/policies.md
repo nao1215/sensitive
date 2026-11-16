@@ -104,6 +104,7 @@ This inventory states the owner's active maintenance policy and maps each rule t
 | Every measured library runs every chart scenario and controls remain visible | Comparison policy | [TestComparisonScenarios](../tests/comparison_test.go) | MultiPlatformUnitTest |
 | Changed root statements require coverage or a source-bound triage exception | Repository maintenance policy | [def check(](../scripts/diff_coverage.py) | Coverage |
 | Mutation package scores and coverage cannot fall below recorded floors | Repository maintenance policy | [def check(](../scripts/mutation_gate.py) | Heavy verification |
+| Documented packages and coverage match Go and the coverage gate | CLAUDE.md | [documentation-contract](../scripts/check_policies.py) | Verification |
 <!-- policy-map:end -->
 
 The TDD rule requires a failing regression before a production fix. Record that evidence in the PR or external work report; CI checks that the regression remains. Test readability, useful explanations, false-positive labeling and table layout retain human review alongside executable checks.

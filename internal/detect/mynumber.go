@@ -151,7 +151,7 @@ func isValidMyNumber(digits []byte) bool {
 
 // ARN has partition, service, region and account fields before its resource.
 func arnAccount(data []byte, start, end int) bool {
-	if end >= len(data) || data[end] != ':' {
+	if end >= len(data) || data[end] != ':' || end-start != 12 {
 		return false
 	}
 	left := start
@@ -171,5 +171,5 @@ func arnAccount(data []byte, start, end int) bool {
 		return false
 	}
 	fields := bytes.Split(data[left:start], []byte(":"))
-	return len(fields) == 5 && string(fields[0]) == "arn" && len(fields[1]) > 0 && len(fields[2]) > 0 && len(fields[4]) == 0
+	return len(fields) == 5 && string(fields[0]) == "arn" && (string(fields[1]) == "aws" || string(fields[1]) == "aws-cn" || string(fields[1]) == "aws-us-gov" || string(fields[1]) == "aws-iso" || string(fields[1]) == "aws-iso-b" || string(fields[1]) == "aws-iso-e" || string(fields[1]) == "aws-iso-f") && len(fields[2]) > 0 && len(fields[4]) == 0
 }

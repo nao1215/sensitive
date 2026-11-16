@@ -20,8 +20,19 @@ const (
 	ErrCanceled
 )
 
-// Error keeps the public JSON error text independent of its cause.
-func (SanitizationError) Error() string { return "embargo: invalid or unmaskable JSON" }
+// Error distinguishes fixed failure reasons without carrying input bytes.
+func (e SanitizationError) Error() string {
+	switch e {
+	case ErrSizeLimit:
+		return "embargo: JSON size limit exceeded"
+	case ErrCanceled:
+		return "embargo: JSON masking canceled"
+	case ErrMasking:
+		return "embargo: invalid or unmaskable JSON"
+	default:
+		return "embargo: invalid or unmaskable JSON"
+	}
+}
 
 // Reason classifies only trusted errors and never reads an error's text.
 func Reason(ctx context.Context, err error) SanitizationError {

@@ -206,3 +206,15 @@ func TestCanaryExplicitDecodingBoundaries(t *testing.T) {
 		t.Fatal("decoded Unicode canary missed")
 	}
 }
+
+func TestCanaryGoByteRenderingProperty(t *testing.T) {
+	t.Parallel()
+	for n := range 32 {
+		canary := []byte(fmt.Sprintf("distinctive-byte-fixture-%02d", n))
+		for _, value := range [][]byte{canary, append(append([]byte("prefix"), canary...), []byte("suffix")...)} {
+			if !containsCanary([]byte(fmt.Sprintf("%#v", value)), representations(canary)) {
+				t.Fatal("Go hexadecimal byte list escaped the canary check")
+			}
+		}
+	}
+}

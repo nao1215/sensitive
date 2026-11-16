@@ -157,3 +157,23 @@ func TestMixedCredentialEscapeLayers(t *testing.T) {
 		t.Fatalf("mixed layers lost or duplicated a value: %+v", findings)
 	}
 }
+
+func TestCredentialLineAndBlockBoundaries(t *testing.T) {
+	t.Parallel()
+	const scalar = "fixture"
+	for _, tc := range []struct{ input, want string }{
+		{"password=fixture\npublic=kept", scalar},
+		{"password=fixture\r\npublic=kept", scalar},
+		{`password=fixture" public=kept`, scalar},
+		{"Authorization: Token fixture\npublic=kept", scalar},
+		{"Authorization: Token fixture\r\npublic=kept", scalar},
+		{"password: |", "|"},
+		{"password: |literal", "|literal"},
+		{"password: |\n  fixture", "|\n  fixture"},
+	} {
+		got := (&Credential{}).Scan([]byte(tc.input))
+		if len(got) != 1 || got[0].RawValue != tc.want {
+			t.Errorf("boundary %q: %+v", tc.input, got)
+		}
+	}
+}

@@ -85,22 +85,22 @@ func (d *IPAddr) tryIPv4(data []byte, i int) (Finding, int, bool) {
 		j++
 	}
 
-	candidate := string(data[i:j])
-	ip := net.ParseIP(candidate)
+	candidate, ip := parseIPSentence(string(data[i:j]))
+	end := i + len(candidate)
 	if ip == nil || ip.To4() == nil || ip.IsUnspecified() || ip.IsLoopback() || versionLabel(data, i) {
 		return Finding{}, j, false
 	}
 
 	// Reject if followed by a character that indicates the IP is part
 	// of a larger token (dot, digit, underscore, hyphen, or letter).
-	if j < len(data) && isIPv4TrailingChar(data[j]) {
+	if j < len(data) && isIPTokenSuffix(data, j) {
 		return Finding{}, j, false
 	}
 
 	return Finding{
 		DetectorName: d.Name(),
 		Start:        i,
-		End:          j,
+		End:          end,
 		//nolint:mnd // The detector contract documents this heuristic score.
 		Confidence: 0.8,
 		RawValue:   candidate,
@@ -109,10 +109,19 @@ func (d *IPAddr) tryIPv4(data []byte, i int) (Finding, int, bool) {
 	}, j, true
 }
 
-// isIPv4TrailingChar reports whether b indicates the IPv4 candidate is part
-// of a larger token.
-func isIPv4TrailingChar(b byte) bool {
-	return b == '.' || isDigit(b) || b == '_' || b == '-' || isAlpha(b)
+// isIPTokenSuffix distinguishes identifiers from punctuation and IP ranges.
+func isIPTokenSuffix(data []byte, at int) bool {
+	b := data[at]
+	if b == '-' {
+		end := at + 1
+		for end < len(data) && (isHexDigit(data[end]) || data[end] == ':' || data[end] == '.') {
+			end++
+		}
+		if _, ip := parseIPSentence(string(data[at+1 : end])); ip != nil {
+			return false
+		}
+	}
+	return isAlphaNum(b) || ((b == '_' || b == '-') && at+1 < len(data) && isAlphaNum(data[at+1]))
 }
 
 // tryIPv6 attempts to parse an IPv6 address starting at data[i].
@@ -135,12 +144,12 @@ func (d *IPAddr) tryIPv6(data []byte, i int) (Finding, int, bool) {
 	}
 
 	// Reject if followed by alphanumeric, '_', or '-'.
-	if j < len(data) && (isAlphaNum(data[j]) || data[j] == '_' || data[j] == '-') {
+	if j < len(data) && isIPTokenSuffix(data, j) {
 		return Finding{}, j, false
 	}
 
-	candidate := string(data[i:j])
-	ip := net.ParseIP(candidate)
+	candidate, ip := parseIPSentence(string(data[i:j]))
+	end := i + len(candidate)
 	if ip == nil || ip.IsUnspecified() || ip.IsLoopback() {
 		return Finding{}, j, false
 	}
@@ -148,7 +157,7 @@ func (d *IPAddr) tryIPv6(data []byte, i int) (Finding, int, bool) {
 	return Finding{
 		DetectorName: d.Name(),
 		Start:        i,
-		End:          j,
+		End:          end,
 		//nolint:mnd // The detector contract documents this heuristic score.
 		Confidence: 0.8,
 		RawValue:   candidate,
@@ -170,4 +179,30 @@ func isHexDigit(b byte) bool {
 func versionLabel(data []byte, start int) bool {
 	_, word := previousLabelWord(labelPrefix(data, start))
 	return labelIs(word, "version", "v", "ver", "build", "release")
+}
+
+// parseIPSentence keeps the longest valid address before sentence punctuation.
+// At most two terminal colons can belong to an IPv6 address; bounded retries
+// avoid quadratic parsing of a long run of dots or colons.
+func parseIPSentence(candidate string) (string, net.IP) {
+	if ip := net.ParseIP(candidate); ip != nil {
+		return candidate, ip
+	}
+	end := len(candidate)
+	for end > 0 && (candidate[end-1] == '.' || candidate[end-1] == ':') {
+		end--
+	}
+	if end == len(candidate) {
+		return candidate, nil
+	}
+	colons := end
+	for colons < len(candidate) && colons < end+2 && candidate[colons] == ':' {
+		colons++
+	}
+	for stop := colons; stop >= end; stop-- {
+		if ip := net.ParseIP(candidate[:stop]); ip != nil {
+			return candidate[:stop], ip
+		}
+	}
+	return candidate, nil
 }
