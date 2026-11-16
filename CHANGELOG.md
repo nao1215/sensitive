@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-17
+
+This minor release closes formatted and escaped credential leaks, handles complete IPv4-embedded IPv6 and streaming PEM spans, and refines context-sensitive detection. The public API and default minimum confidence of 0 are unchanged, and the root module remains dependency-free. Upgrade every installed adapter to v0.9.0 after the adapter tags are published.
+
 ### Detection changes
 
 - Mask every credential element in Go fmt maps and slices, quoted Bearer/Basic header values, and assignments inside up to two Go/JSON quote and backslash escape layers; findings retain original byte offsets. A marker prefix no longer exempts the rest of a value.
