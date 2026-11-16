@@ -212,3 +212,20 @@ func TestHTTPUnsupportedFlushLeavesStatusUncommitted(t *testing.T) {
 		t.Fatalf("unsupported flush committed status %d", response.Code)
 	}
 }
+
+func TestHTTPImplicitFlushSnapshotsCommittedHeaders(t *testing.T) {
+	t.Parallel()
+	var logs bytes.Buffer
+	handler := embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("X-Phase", "flushed")
+		if err := http.NewResponseController(w).Flush(); err != nil {
+			t.Fatal(err)
+		}
+		w.Header().Set("X-Phase", "too late")
+	}), slog.New(slog.NewJSONHandler(&logs, nil)), embargo.NewScanner())
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", http.NoBody))
+	if !response.Flushed || response.Code != http.StatusOK || !strings.Contains(logs.String(), `"X-Phase":["flushed"]`) || !strings.Contains(logs.String(), `"status":200`) {
+		t.Fatal("implicit flush lost the committed response snapshot")
+	}
+}

@@ -95,6 +95,8 @@ Sentry BeforeSend masks the serialized error-event fields and reconstructs a fre
 | Span resource, scope, link and error description | Exported ReadOnlySpan | All recorded text paths masked | TestSpanResourceScopeLinksAndStatusAreMasked |
 | Log resource contains an opaque password | Export batch | Nothing forwarded | TestSensitiveResourceSuppressesLogBatch |
 | Sentry request, context and breadcrumb contain secrets | Event delivered by the SDK | Serialized values hidden; public count retained | TestBeforeSendThroughSentryClient |
+| Vendor TraceState contains email or an opaque session | Span, parent and link contexts | TraceState omitted; IDs and flags retained | TestSpanContextsOmitTraceStateWithoutChangingIdentity |
+| Sentry sampling context contains a customer email | SDK envelope sampling context | Email masked; public sampling fields retained | TestClientPreservesAndMasksDynamicSamplingContext |
 
 The [comparison matrix](comparison.md#service-leak-scenarios) measures older application-emission paths. These rows cover the added hooks and distinguish access logs from service wire output. Allocation gates and the scheduled five-size matrix include each new hook; the [threat model](threat-model.md) records what those measurements establish.
 

@@ -53,7 +53,7 @@
     30,
     31
   ],
-  "background_load": "no intentional concurrent workload",
+  "background_load": "no concurrent heavy jobs; brief documentation and unit checks overlapped",
   "versions": {
     "masq": "v0.2.3",
     "slog-formatter": "v1.3.0",

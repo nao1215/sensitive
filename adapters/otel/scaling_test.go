@@ -99,7 +99,9 @@ func TestWideAttributeAllocationBudget(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if allocated := after.TotalAlloc - before.TotalAlloc; allocated > uint64(128*len(raw)+1<<20) {
+		allocated := after.TotalAlloc - before.TotalAlloc
+		t.Logf("%s: %d allocated bytes for %d JSON bytes", value.Type(), allocated, len(raw))
+		if allocated > uint64(128*len(raw)+1<<20) {
 			t.Errorf("%s allocated %d bytes for %d JSON bytes", value.Type(), allocated, len(raw))
 		}
 	}

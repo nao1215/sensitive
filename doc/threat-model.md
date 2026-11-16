@@ -20,6 +20,8 @@ MaskJSON limits input/output and cumulative scan work to the limits documented i
 
 The same built-in inventory now includes all eleven country detectors in allocation and scaling tests. HTTP, gRPC, OpenTelemetry and Sentry add TestHookAllocationBudget and BenchmarkHookScaling at the same five sizes. Large MaskJSON-backed SDK records measure fail-closed rejection above the JSON limit; HTTP and gRPC remain access-log boundaries and do not mask service wire data. Log metadata that an SDK does not permit the wrapper to replace is either suppressed or explicitly outside the documented wrapper scope. See the [production scenario matrix](adapters.md#production-leak-scenarios).
 
+The round-15 [scaling samples](performance/round15-scaling.txt) contain 2,550 measurements across 850 conditions, with three one-iteration samples per condition on the recorded host and GOMAXPROCS=4. For the new country kinds, the worst median among the four 16 MiB inputs ranged from 0.093 to 0.175 seconds; their maximum allocation was 150,994,944 bytes, or nine bytes per input byte. At 16 MiB the hook medians were HTTP 1.738 seconds, gRPC 0.061 seconds, OpenTelemetry 0.052 seconds and Sentry 0.126 seconds. The last three measure oversized-record suppression, not successful export throughput; dedicated tests assert that no such record reaches the sink. A separate 256-element OpenTelemetry map/slice budget guards against copying the whole SDK value for every element. These finite samples and allocation checks do not establish a universal complexity bound.
+
 ## Encodings and audit tradeoffs
 
 | Attempt | Status | Test or limit |
