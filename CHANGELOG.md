@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-16
+
+This minor release adds the installable embargo-audit command and broadens normalization and joined-key masking. The default minimum confidence remains 0 and the root module remains dependency-free. Upgrade installed adapters to v0.8.0 after their separate tags are published.
+
 ### Detection changes
 
 - Normalize non-ASCII Unicode dash, space and format categories inside tokens, preserving original byte offsets; retain ASCII delimiters.
@@ -15,7 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Installable embargo-audit command with streaming comparisons between two scanner settings.
-- Changed-statement coverage and detection compatibility gates, plus category and grammar properties across loggers.
+- Changed-statement coverage, detection compatibility and per-package mutation gates, plus category and grammar properties across loggers.
+- An independent leak-testing tutorial and measured comparisons including go-masker, with event-time and scenario charts.
 
 ## [0.7.0] - 2026-11-16
 
