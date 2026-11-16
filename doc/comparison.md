@@ -1,6 +1,6 @@
 # Measured application masking comparison
 
-This compares overlapping use cases, not overall library quality or adoption. masq v0.2.3 offers a convenient slog ReplaceAttr, type/tag/name/prefix rules, allowed types and custom censors/redactors. embargo adds built-in detection, output-safe values, multiple logger adapters and application output assertions. These measurements use unreleased embargo source; the exact source fingerprint is recorded with the results.
+This compares overlapping use cases, not overall library quality or adoption. masq v0.2.3 offers a convenient slog ReplaceAttr, type/tag/name/prefix rules, allowed types and custom censors/redactors. embargo adds built-in detection, output-safe values, multiple logger adapters and application output assertions. The measured embargo production and benchmark source is identical to v0.8.1; the exact source fingerprint is recorded with the results.
 
 ## Correctness before speed
 
@@ -128,7 +128,7 @@ PIIFormatter for email/card/user/data/password/token; preserves a four-character
 
 <a id="table-explanation-2"></a>
 
-Embedded documented rules 1/2/6/16/20/35 for phone/email/card/IP; no rewritten detector regexes. It masks email/card partially, detects but deliberately does not mask IP under its default IP rule, and handles US/Chinese phones rather than embargo's Japanese phone family. The table shows both Japanese and US fixtures. The US-phone fixture is a measured capability absent from embargo.
+Embedded documented rules 1/2/6/16/20/35 for phone/email/card/IP; no rewritten detector regexes. It masks email/card partially, detects but deliberately does not mask IP under its default IP rule, and handles US phones rather than embargo's Japanese phone family. The table shows both Japanese and US fixtures. The US-phone fixture is a measured capability absent from embargo.
 
 <a id="table-explanation-3"></a>
 
