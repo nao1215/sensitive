@@ -96,7 +96,7 @@ func TestSpanWithheldRecord(t *testing.T) {
 				t.Fatal("wrong fallback metadata")
 			}
 			attrs := after.Attributes()
-			if len(attrs) != 1 || string(attrs[0].Key) != "withheld_attributes" || attrs[0].Value.AsInt64() != 1 || len(after.Events()) != 0 || len(after.Links()) != 0 || len(after.Resource().Attributes()) != 0 {
+			if len(attrs) != 1 || string(attrs[0].Key) != withheldCountKey || attrs[0].Value.AsInt64() != 1 || len(after.Events()) != 0 || len(after.Links()) != 0 || len(after.Resource().Attributes()) != 0 {
 				t.Fatal("original data retained")
 			}
 		})

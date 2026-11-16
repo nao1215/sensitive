@@ -25,6 +25,8 @@ const (
 	exampleEmail     = "alice@example.com"
 )
 
+const withheldCountKey = "withheld_attributes"
+
 func reviewRecord(t *testing.T, limit int, attrs ...attribute.KeyValue) sdklog.Record {
 	t.Helper()
 	capture := &captureLog{}
@@ -240,12 +242,66 @@ func testLogWithheld(t *testing.T, reason string) {
 		t.Fatal("original attributes retained")
 	}
 	after.WalkAttributes(func(kv attribute.KeyValue) bool {
-		if string(kv.Key) != "withheld_attributes" || kv.Value.AsInt64() != int64(before.AttributesLen()+len(before.Resource().Attributes())) {
+		if string(kv.Key) != withheldCountKey || kv.Value.AsInt64() != int64(before.AttributesLen()+len(before.Resource().Attributes())) {
 			t.Error("wrong withheld count")
 		}
 		return true
 	})
 	if len(after.Resource().Attributes()) != 0 || after.InstrumentationScope().Name != "embargo" {
 		t.Fatal("original resource or scope retained")
+	}
+}
+
+//nolint:paralleltest // Exercise SDK environment defaults with testing.Setenv.
+func TestFallbackAttributeLimitIsIndependentOfEnvironment(t *testing.T) {
+	for _, limit := range []string{"0", "1", "128"} {
+		t.Setenv("OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT", limit)
+		before := reviewRecord(t, 8, attribute.String("detail", publicText))
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+		sink := &captureLog{}
+		if err := embargootel.NewLogExporter(sink, embargo.NewScanner()).Export(ctx, []sdklog.Record{before}); err != nil {
+			t.Fatal(err)
+		}
+		if len(sink.records) != 1 {
+			t.Fatal("wrong record count")
+		}
+		after := sink.records[0]
+		count := -1
+		after.WalkAttributes(func(kv attribute.KeyValue) bool {
+			if kv.Key == withheldCountKey {
+				count = int(kv.Value.AsInt64())
+			}
+			return true
+		})
+		if after.AttributesLen() != 1 || after.DroppedAttributes() != 0 || count < 1 {
+			t.Fatalf("environment %s removed diagnostic: count=%d dropped=%d", limit, count, after.DroppedAttributes())
+		}
+	}
+}
+
+func TestFallbackPreservesOriginalTraceIdentity(t *testing.T) {
+	t.Parallel()
+	for _, present := range []bool{false, true} {
+		before := reviewRecord(t, 8, attribute.String("detail", publicText))
+		if present {
+			before.SetTraceID(trace.TraceID{1})
+			before.SetSpanID(trace.SpanID{2})
+			before.SetTraceFlags(trace.FlagsSampled)
+		}
+		ctx := trace.ContextWithSpanContext(t.Context(), trace.NewSpanContext(trace.SpanContextConfig{TraceID: trace.TraceID{3}, SpanID: trace.SpanID{4}}))
+		ctx, cancel := context.WithCancel(ctx)
+		cancel()
+		sink := &captureLog{}
+		if err := embargootel.NewLogExporter(sink, embargo.NewScanner()).Export(ctx, []sdklog.Record{before}); err != nil {
+			t.Fatal(err)
+		}
+		if len(sink.records) != 1 {
+			t.Fatal("wrong record count")
+		}
+		after := sink.records[0]
+		if after.TraceID() != before.TraceID() || after.SpanID() != before.SpanID() || after.TraceFlags() != before.TraceFlags() {
+			t.Fatalf("export context contaminated trace identity: got %s/%s/%v want %s/%s/%v", after.TraceID(), after.SpanID(), after.TraceFlags(), before.TraceID(), before.SpanID(), before.TraceFlags())
+		}
 	}
 }

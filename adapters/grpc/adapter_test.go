@@ -25,10 +25,13 @@ import (
 
 	"github.com/nao1215/embargo"
 	embargogrpc "github.com/nao1215/embargo/adapters/grpc"
+	"github.com/nao1215/embargo/internal/saferecord"
 )
 
 const (
 	grpcResponse   = "response"
+	grpcMessage    = "grpc request"
+	redacted       = "[REDACTED]"
 	canceledReason = "canceled"
 )
 
@@ -93,7 +96,7 @@ func TestInterceptorsWithRealGRPC(t *testing.T) {
 			t.Errorf("log leaked %s", secret)
 		}
 	}
-	if strings.Count(text, "grpc request") != 2 || !strings.Contains(text, "kept") {
+	if strings.Count(text, grpcMessage) != 2 || !strings.Contains(text, "kept") {
 		t.Fatal(text)
 	}
 }
@@ -223,7 +226,7 @@ func TestGRPCContextCancellation(t *testing.T) {
 						return grpcResponse, status.Error(codes.ResourceExhausted, "alice@example.com")
 					})
 				}
-				if response != grpcResponse || status.Code(err) != codes.ResourceExhausted || !strings.Contains(out.String(), "grpc request") || detector.calls == 0 {
+				if response != grpcResponse || status.Code(err) != codes.ResourceExhausted || !strings.Contains(out.String(), grpcMessage) || detector.calls == 0 {
 					t.Fatalf("err=%v output=%s scans=%d", err, out.String(), detector.calls)
 				}
 				requireCanceledAccessRecord(t, out.Bytes())
@@ -314,25 +317,27 @@ type auditPanicDetector struct{}
 
 func (auditPanicDetector) Scan([]byte) []embargo.Finding { panic("planted-panic") }
 
-//nolint:paralleltest // Isolate reason checks under the real 100 ms masking budget.
 func TestWithheldRecord(t *testing.T) {
+	t.Parallel()
 	for _, streaming := range []bool{false, true} {
 		for _, reason := range []string{"masking error", "size limit", canceledReason} {
 			t.Run(fmt.Sprintf("stream=%v/%s", streaming, reason), func(t *testing.T) {
+				t.Parallel()
 				testWithheldRPC(t, streaming, reason)
 			})
 		}
 	}
 }
 
-type budgetDetector struct{ calls int }
+type budgetDetector struct {
+	cancel context.CancelFunc
+	calls  int
+}
 
 func (d *budgetDetector) Scan([]byte) []embargo.Finding {
 	d.calls++
-	if d.calls == 1 {
-		timer := time.NewTimer(150 * time.Millisecond)
-		defer timer.Stop()
-		<-timer.C
+	if d.cancel != nil {
+		d.cancel()
 	}
 	return nil
 }
@@ -342,26 +347,63 @@ func TestMaskingBudgetEmitsFallback(t *testing.T) {
 	for _, streaming := range []bool{false, true} {
 		t.Run(strconv.FormatBool(streaming), func(t *testing.T) {
 			t.Parallel()
-			ctx, cancel := context.WithCancel(t.Context())
-			cancel()
 			detector := &budgetDetector{}
+			ticks := 0
+			ctx := saferecord.WithAccessPolicy(t.Context(), saferecord.AccessPolicy{
+				Now: func() time.Time { ticks++; return time.Unix(7, 0).Add(time.Duration(ticks) * time.Second) },
+				Timeout: func(parent context.Context, budget time.Duration) (context.Context, context.CancelFunc) {
+					if budget != 100*time.Millisecond || parent.Err() != nil {
+						t.Error("wrong detached budget")
+					}
+					bounded, cancel := context.WithCancel(parent)
+					detector.cancel = cancel
+					return bounded, cancel
+				},
+			})
+			ctx, cancel := context.WithCancel(ctx)
+			cancel()
 			scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(detector))
 			var out bytes.Buffer
 			logger := slog.New(slog.NewJSONHandler(&out, nil))
+			serviceError := status.Error(codes.ResourceExhausted, "planted-error")
 			var err error
 			if streaming {
-				err = embargogrpc.NewStreamServerInterceptor(logger, scanner)(nil, &contextStream{getContext: func() context.Context { return ctx }}, &grpc.StreamServerInfo{FullMethod: "planted-method"}, func(any, grpc.ServerStream) error { return nil })
+				err = embargogrpc.NewStreamServerInterceptor(logger, scanner)(nil, &contextStream{getContext: func() context.Context { return ctx }}, &grpc.StreamServerInfo{FullMethod: "planted-method"}, func(any, grpc.ServerStream) error { return serviceError })
 			} else {
-				_, err = embargogrpc.NewUnaryServerInterceptor(logger, scanner)(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "planted-method"}, func(context.Context, any) (any, error) { return grpcResponse, nil })
+				_, err = embargogrpc.NewUnaryServerInterceptor(logger, scanner)(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "planted-method"}, func(context.Context, any) (any, error) { return grpcResponse, serviceError })
 			}
-			if err != nil || detector.calls != 1 {
+			if !errors.Is(err, serviceError) || detector.calls != 1 {
 				t.Fatalf("err=%v scans=%d", err, detector.calls)
 			}
 			requireDiagnostic(t, out.Bytes(), canceledReason)
-			if !strings.Contains(out.String(), "record withheld (canceled)") || !strings.Contains(out.String(), `"withheld_attributes":4`) || strings.Contains(out.String(), "planted") {
-				t.Fatal(out.String())
+			var record map[string]any
+			if err := json.Unmarshal(out.Bytes(), &record); err != nil {
+				t.Fatal(err)
+			}
+			if record["code"] != codes.ResourceExhausted.String() || record["duration"] != float64(time.Second) || strings.Contains(out.String(), "planted") {
+				t.Fatalf("outcome lost or input survived: %s", out.String())
 			}
 		})
+	}
+}
+
+func TestOrdinaryRequestUsesOriginalContext(t *testing.T) {
+	t.Parallel()
+	ctx := saferecord.WithAccessPolicy(t.Context(), saferecord.AccessPolicy{Timeout: func(context.Context, time.Duration) (context.Context, context.CancelFunc) {
+		t.Fatal("ordinary request got detached budget")
+		return nil, nil
+	}})
+	var out bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&out, nil))
+	if _, err := embargogrpc.NewUnaryServerInterceptor(logger, embargo.NewScanner())(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/audit/Unary"}, func(context.Context, any) (any, error) { return grpcResponse, nil }); err != nil {
+		t.Fatal(err)
+	}
+	var record map[string]any
+	if err := json.Unmarshal(out.Bytes(), &record); err != nil {
+		t.Fatal(err)
+	}
+	if record["msg"] != grpcMessage || record["code"] != codes.OK.String() || record["duration"] == nil {
+		t.Fatalf("ordinary access record missing: %s", out.String())
 	}
 }
 
@@ -401,22 +443,23 @@ func testWithheldRPC(t *testing.T, streaming bool, reason string) {
 		requireDiagnostic(t, out.Bytes(), reason)
 	}
 	if reason == canceledReason {
-		if got["msg"] != "grpc request" || strings.Contains(out.String(), "planted-secret") {
+		values, ok := got["metadata"].(map[string]any)
+		if !ok || values["authorization"] != redacted || got["msg"] != grpcMessage || got["code"] != codes.OK.String() || got["duration"] == nil || strings.Contains(out.String(), "planted-secret") {
 			t.Fatal(out.String())
 		}
-	} else if got["msg"] != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(4) || strings.Contains(out.String(), "planted") {
+	} else if got["code"] != codes.OK.String() || got["duration"] == nil || got["msg"] != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(3) || strings.Contains(out.String(), "planted") {
 		t.Fatal(out.String())
 	}
 }
 
-// Diagnostic records contain no original fields or values.
+// Diagnostic records contain only fixed metadata and trusted protocol outcomes.
 func requireDiagnostic(t *testing.T, data []byte, reason string) {
 	t.Helper()
 	var record map[string]any
 	if err := json.Unmarshal(data, &record); err != nil {
 		t.Fatal(err)
 	}
-	if len(record) != 4 || record["level"] != "INFO" || record["msg"] != "embargo: record withheld ("+reason+")" || record["withheld_attributes"] != float64(4) {
+	if len(record) != 6 || record["level"] != "INFO" || record["msg"] != "embargo: record withheld ("+reason+")" || record["withheld_attributes"] != float64(3) {
 		t.Fatal("failed access record retained original content")
 	}
 	stamp, ok := record["time"].(string)
@@ -435,11 +478,11 @@ func requireCanceledAccessRecord(t *testing.T, data []byte) {
 		t.Fatal(decodeErr)
 	}
 	values, ok := record["metadata"].(map[string]any)
-	if !ok || record["msg"] != "grpc request" || record["method"] != "/test/[REDACTED]" || record["code"] != codes.ResourceExhausted.String() || values["authorization"] != "[REDACTED]" || record["error"] != "rpc error: code = ResourceExhausted desc = [REDACTED]" {
+	if !ok || record["msg"] != grpcMessage || record["method"] != "/test/[REDACTED]" || record["code"] != codes.ResourceExhausted.String() || values["authorization"] != redacted || record["error"] != "rpc error: code = ResourceExhausted desc = [REDACTED]" {
 		t.Fatalf("wrong access record: %s", string(data))
 	}
 	email, ok := values["email"].([]any)
-	if !ok || len(email) != 1 || email[0] != "[REDACTED]" {
+	if !ok || len(email) != 1 || email[0] != redacted {
 		t.Fatalf("metadata not masked: %s", string(data))
 	}
 }
