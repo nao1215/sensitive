@@ -272,3 +272,47 @@ func TestMetamorphicRealLogs(t *testing.T) {
 		})
 	}
 }
+
+func TestMaskIdempotentAllKinds(t *testing.T) {
+	t.Parallel()
+	samples := allAccuracySamples(t, developmentAccuracySet)
+	samples = append(samples, countrySamples(t, developmentAccuracySet)...)
+	samples = append(samples, readGeneratedAccuracy[labeledAccuracySample](t, "testdata/credentials-development.jsonl")...)
+	byKind := map[embargo.Kind][]string{}
+	for _, sample := range samples {
+		if len(sample.Expected) > 0 {
+			byKind[sample.Kind] = append(byKind[sample.Kind], sample.Text)
+		}
+	}
+	if len(byKind) != 37 {
+		t.Fatal("every Kind needs positive adjacency fixtures")
+	}
+	for kind, inputs := range byKind {
+		t.Run(string(kind), func(t *testing.T) {
+			t.Parallel()
+			scanner := embargo.NewScanner(embargo.WithKinds(kind))
+			rapid.Check(t, func(t *rapid.T) {
+				left := rapid.SampledFrom(inputs).Draw(t, "left")
+				right := rapid.SampledFrom(inputs).Draw(t, "right")
+				separator := rapid.SampledFrom([]string{"", " ", "+", ".", "..", "-", "_", "@", ":", ";", "\n"}).Draw(t, "separator")
+				text := left + separator + right
+				masked := embargo.Mask(text, scanner.ScanString(text))
+				if again := embargo.Mask(masked, scanner.ScanString(masked)); masked != again {
+					t.Fatalf("%s: %q -> %q -> %q", kind, text, masked, again)
+				}
+				document, err := json.Marshal(text)
+				if err != nil {
+					t.Fatal(err)
+				}
+				first, err := scanner.MaskJSON(document)
+				if err != nil {
+					t.Fatal(err)
+				}
+				second, err := scanner.MaskJSON(first)
+				if err != nil || !bytes.Equal(first, second) {
+					t.Fatalf("%s JSON: %s -> %s -> %s: %v", kind, document, first, second, err)
+				}
+			})
+		})
+	}
+}

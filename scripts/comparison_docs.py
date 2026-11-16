@@ -89,7 +89,6 @@ def measure():
         "date": datetime.datetime.now(datetime.timezone.utc).date().isoformat(),
         "command": "GOMAXPROCS=1 GOTOOLCHAIN=go1.26.11 " + shlex.join(COMMAND),
         "go": subprocess.check_output(["go", "version"], env=env, text=True).strip(),
-        "base_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "source_sha256": source_hash(),
         "full_source_sha256": full_source_hash(),
         "measured_modules": list(MEASURED_MODULES),
