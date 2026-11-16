@@ -520,5 +520,17 @@
     "source": "M21",
     "check": "embargotest/canary_fragment_test.go#TestCanaryFragmentBoundsAndOrder",
     "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Local log audits count actual findings without echoing source values",
+    "source": "M21",
+    "check": "tests/cmd/embargo-audit/main_test.go#TestAuditCountsOffsetsAndNeverEchoesInput",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Diagnostic-preservation recipes retain IDs and expose their recall tradeoff",
+    "source": "M21",
+    "check": "tests/audit_recipes_test.go#TestAuditDiagnosticRecipe",
+    "where": "MultiPlatformUnitTest"
   }
 ]

@@ -275,6 +275,8 @@ Each link opens the test that produces and checks the shown output.
 
 ## Accuracy
 
+[Audit your own logs](doc/audit.md): count findings by Kind, inspect masked offsets and test settings that preserve diagnostic IDs.
+
 Held-out synthetic set, default minimum confidence 0. [Generation, test cases and observed misses](doc/accuracy.md) · [Credential detectors](doc/credentials-accuracy.md), measured separately
 
 <!-- accuracy:start -->
