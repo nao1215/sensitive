@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Honor logrus Entry.Context before formatting and between detector scans, completing the R18-06 hook audit. Keep object framing and event limits in the shared JSON boundary and pin adapters to its context-aware root commit. [0ecd98a](https://github.com/nao1215/embargo/commit/0ecd98a37fabb10fd3bc6a4ae380367f180f38f7).
+
 - Preserve OTel log dropped-attribute counts and other telemetry metadata; reject edits the SDK cannot represent without losing counters (R18-05). Add Scanner.MaskJSONContext and stop canceled OTel, slog, HTTP, gRPC and Sentry scans before subsequent detectors or values (R18-06). Pin unreleased adapters to the fixed root commit. [5b9b76c](https://github.com/nao1215/embargo/commit/5b9b76c91cd7d5684c853e5e1763c263e9fc765b).
 
 - Enforce a combined 64-level limit for WithGroup chains and explicit slog groups, including bound attributes (R18-07). [PR #94](https://github.com/nao1215/embargo/pull/94), [9e0e6f0](https://github.com/nao1215/embargo/commit/9e0e6f049fda9a82747a8fbec4cecae32d9723de).
