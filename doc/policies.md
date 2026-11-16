@@ -14,9 +14,9 @@ The inventory below translates the owner's active repository instructions into c
 | Constructor fields and receiver exceptions stay narrow | R11; R13 | [addedContractField](../scripts/check_lint_contracts.py) | golangci-lint |
 | Printing exceptions apply only to runnable Examples | R13 | [TestUncheckedPrintingIsOnlyInExamples](../tests/contracts/example_print_test.go) | MultiPlatformUnitTest |
 | Exported declarations and fields have useful English godoc | CLAUDE; M14 | [godoc](../scripts/check_prose.py) | Verification |
-| Runtime public API has runnable godoc Examples | CLAUDE; R3; R6 | [TestExamplesAppearInGodoc](../doc_sync_test.go) | MultiPlatformUnitTest |
-| README Go blocks equal runnable public Examples | R3; R6 | [TestReadmeExamples](../doc_sync_test.go) | MultiPlatformUnitTest |
-| Examples avoid private imports | R6 | [TestPublicExamplesOnlyImportPublicPackages](../doc_sync_test.go) | MultiPlatformUnitTest |
+| Runtime public API has runnable godoc Examples | CLAUDE; R3; R6 | [TestExamplesAppearInGodoc](../doc_test.go) | MultiPlatformUnitTest |
+| README Go blocks equal runnable public Examples | R3; R6 | [TestReadmeExamples](../doc_test.go) | MultiPlatformUnitTest |
+| Examples avoid private imports | R6 | [TestPublicExamplesOnlyImportPublicPackages](../doc_test.go) | MultiPlatformUnitTest |
 | API signatures and constant values require review | R6; R13 | [TestAPIGoldenIncludesConstantValues](../tests/contracts/api_test.go) | MultiPlatformUnitTest |
 | Prose avoids filler, bold, emoji and wrapped paragraphs | R3; R8; M14 | [markdown](../scripts/check_prose.py) | Verification |
 | Godoc varies its openings and avoids repeated benchmark claims | M14; R13 | [repeated-sentence](../scripts/check_prose.py) | Verification |
@@ -30,7 +30,7 @@ The inventory below translates the owner's active repository instructions into c
 | Guard shares limits and replays only safe complete streams | R12; M14 | [TestQuintGuardReplay](../embargotest/model_replay_test.go) | Verification |
 | Recorder cannot start detached goroutines | R6 | [TestRecorderDoesNotStartDetachedGoroutines](../tests/contracts/policy_test.go) | MultiPlatformUnitTest |
 | Slog failures suppress output and emit fixed errors | R6; R11 | [TestSlogSuppressesNormalizationFailures](../slog_handler_test.go) | MultiPlatformUnitTest |
-| Structured masking preserves shape and bounds its work | R11 | [TestMaskJSONFailureBounds](../structured_test.go) | MultiPlatformUnitTest |
+| Structured masking preserves shape and bounds its work | R11 | [TestMaskJSONFailureBounds](../json_test.go) | MultiPlatformUnitTest |
 | HTTP interim responses share the retention budget | R6 | [TestInformationalHeadersConsumeTotalBudget](../embargotest/detector_test.go) | MultiPlatformUnitTest |
 | Hint dispatch agrees with exhaustive scanning | CLAUDE; R9 | [TestDispatchDifferential](../scanner_dispatch_test.go) | MultiPlatformUnitTest |
 | Clean scanning retains deterministic allocation gates | CLAUDE; R9 | [TestCleanScanAllocationBudget](../scanner_dispatch_test.go) | MultiPlatformUnitTest |
@@ -67,7 +67,7 @@ The inventory below translates the owner's active repository instructions into c
 | Country checksum references are compiled and compared with Go | M15 | [TestLeanReferenceVectors](../tests/lean_vectors_test.go) | Verification |
 | Country precision and residual exposure stay exact-span scored | M15 | [TestCountryAccuracy](../tests/countries_accuracy_test.go) | MultiPlatformUnitTest |
 | New hooks keep allocation budgets and scheduled scaling measurements | M15 | [test_hook_scaling_is_scheduled_for_each_new_module](../scripts/test_production_hooks.py) | Verification |
-| Encoding limits have one current-behavior regression per disguise | M15 | [TestAdversarialEncodingBoundary](../adversarial_test.go) | MultiPlatformUnitTest |
+| Encoding limits have one current-behavior regression per disguise | M15 | [TestAdversarialEncodingBoundary](../json_test.go) | MultiPlatformUnitTest |
 | Country documentation generation uses UTF-8 independently of the host locale | M15; PR88 review | [test_country_docs_under_ascii_locale](../scripts/test_countries.py) | Verification |
 | Mutation workers and per-test CPUs stay capped at two | M15 | [test_mutation_target_limits_workers_and_test_cpus](../scripts/test_production_hooks.py) | Verification |
 | Every Kind documents matching, validation, scores and default selection | M16 | [kind-contract](../scripts/check_prose.py) | Verification |
@@ -82,11 +82,11 @@ The inventory below translates the owner's active repository instructions into c
 | Masked-key collisions never restore original telemetry values | M19 | [TestMaskedKeyCollisionNeverRestoresOriginal](../adapters/otel/values_test.go) | MultiPlatformUnitTest |
 | Log masking retains dropped counts and metadata | M19 | [TestLogPreservesDroppedAttributesAndMetadata](../adapters/otel/log_test.go) | MultiPlatformUnitTest |
 | Span masking retains all telemetry counters | M19 | [TestSpanPreservesTelemetryCounters](../adapters/otel/span_test.go) | MultiPlatformUnitTest |
-| Context cancellation stops subsequent detectors and output | M19 | [TestMaskJSONContextStopsBetweenDetectors](../structured_test.go) | MultiPlatformUnitTest |
+| Context cancellation stops subsequent detectors and output | M19 | [TestMaskJSONContextStopsBetweenDetectors](../json_test.go) | MultiPlatformUnitTest |
 | Every logger handles colliding masked keys without original values | M19 | [TestLoggerMaskedKeyCollisions](../tests/slog_handler_test.go) | MultiPlatformUnitTest |
-| README-linked examples run alone without private helper files | M19 | [TestReadmeLinkedExamplesStandalone](../doc_sync_test.go) | MultiPlatformUnitTest |
-| Documentation distinguishes default kinds and raw credential keys | M19 | [TestDefaultPolicyDocumentation](../doc_sync_test.go) | MultiPlatformUnitTest |
-| Standalone-example checks reject missing helper definitions | M19 | [TestStandaloneExamplesRejectMissingHelpers](../doc_sync_test.go) | MultiPlatformUnitTest |
+| README-linked examples run alone without private helper files | M19 | [TestReadmeLinkedExamplesStandalone](../doc_test.go) | MultiPlatformUnitTest |
+| Documentation distinguishes default kinds and raw credential keys | M19 | [TestDefaultPolicyDocumentation](../doc_test.go) | MultiPlatformUnitTest |
+| Standalone-example checks reject missing helper definitions | M19 | [TestStandaloneExamplesRejectMissingHelpers](../doc_test.go) | MultiPlatformUnitTest |
 | Logrus Entry.Context cancels formatting and subsequent detector work | M19 | [TestEntryContextCancellation](../adapters/logrus/adapter_test.go) | MultiPlatformUnitTest |
 | Adoption cases exercise real outputs and retain declared-policy controls | M21 | [TestAdoptionDeclaredControls](../tests/adoption_cases_test.go) | MultiPlatformUnitTest |
 | Adoption table is generated from executed cases and checked in CI | M21 | [main](../scripts/case_docs.py) | Verification |

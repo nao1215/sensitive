@@ -36,13 +36,13 @@ The generator rejects incomplete mutation/fuzz runs and records source-log hashe
 
 ### Examples and unit tests
 
-Incorrect fixed outputs and public usage contracts. Tests: [example_test](../example_test.go), [doc_sync_test](../doc_sync_test.go). CI: `unit_test:unit_test`.
+Incorrect fixed outputs and public usage contracts. Tests: [example_test](../example_test.go), [doc_test](../doc_test.go). CI: `unit_test:unit_test`.
 
 <a id="generated-properties"></a>
 
 ### Generated properties
 
-Combinations absent from handwritten checksum fixtures. Tests: [properties_test](../tests/properties_test.go), [mask_test](../tests/mask_test.go), [mask_oracle_test](../mask_oracle_test.go). CI: `unit_test:property_tests`.
+Combinations absent from handwritten checksum fixtures. Tests: [properties_test](../tests/properties_test.go), [mask_test](../tests/mask_test.go), [mask_test](../mask_test.go). CI: `unit_test:property_tests`.
 
 <a id="metamorphic-relations"></a>
 
@@ -66,7 +66,7 @@ Arithmetic and interval errors beyond a finite random sample. Tests: [Reference]
 
 ### Intentional snapshots
 
-Unreviewed output shape changes despite correct redaction. Tests: [snapshot_test](../snapshot_test.go), [snapshot_test](../adapters/zap/snapshot_test.go), [guard_test](../embargotest/guard_test.go). CI: `unit_test:unit_test`.
+Unreviewed output shape changes despite correct redaction. Tests: [secret_test](../secret_test.go), [snapshot_test](../adapters/zap/snapshot_test.go), [guard_test](../embargotest/guard_test.go). CI: `unit_test:unit_test`.
 
 <a id="independent-differential-oracles"></a>
 
@@ -78,7 +78,7 @@ A shared implementation mistake in locally written expected values. Tests: [exte
 
 ### Structure-aware fuzzing
 
-Malformed nested paths, quoted credentials and split stream frames. Tests: [structure_fuzz_test](../structure_fuzz_test.go), [guard_fuzz_test](../embargotest/guard_fuzz_test.go). CI: `fuzz:fuzz`.
+Malformed nested paths, quoted credentials and split stream frames. Tests: [fuzz_test](../fuzz_test.go), [guard_fuzz_test](../embargotest/guard_fuzz_test.go). CI: `fuzz:fuzz`.
 
 <a id="mutation-testing"></a>
 
@@ -114,7 +114,7 @@ Stale documentation and unimplemented repository rules. Tests: [check_prose](../
 
 ### Adversarial budgets
 
-Resource amplification, framing spoofing and ambiguous encodings. Tests: [adversarial_test](../adversarial_test.go), [guard_adversarial_test](../embargotest/guard_adversarial_test.go). CI: `heavy:scaling`.
+Resource amplification, framing spoofing and ambiguous encodings. Tests: [json_test](../json_test.go), [guard_adversarial_test](../embargotest/guard_adversarial_test.go). CI: `heavy:scaling`.
 
 <!-- techniques:end -->
 
@@ -181,9 +181,9 @@ Same-runner benchmarks build base and head once and alternate ten measurements i
 | Artifact | Content property before equality | Check |
 |---|---|---|
 | Public API goldens | Constants are included; promoted members are rejected | contracts/api_test.go |
-| Logger event snapshots | Valid JSON, no canary/email, retained nested object and array fields | Each adapter snapshot_test.go |
+| Logger event snapshots | Valid JSON, no canary/email, retained nested object and array fields | Each adapter secret_test.go |
 | Guard failure message | Active test names survive validation; canaries and rejected names do not | guard_adversarial_test.go and guard_test.go |
-| Large MaskJSON snapshot | Every sensitive field removed; exact integer and public fields retained | snapshot_test.go |
+| Large MaskJSON snapshot | Every sensitive field removed; exact integer and public fields retained | secret_test.go |
 | Accuracy tables and figures | Unique exact-span matching, valid counters and measured-data rendering | accuracy_test.go and test_accuracy_figures.py |
 | Benchmark tables and figures | Parsed samples, confidence intervals and masking correctness | benchmark_docs_test.go and log_benchmark_contract_test.go |
 | Compatibility and leak tables | Real serializer/SDK/HTTP outputs satisfy masking assertions | compatibility_integration_test.go and leak_scenarios_test.go |
