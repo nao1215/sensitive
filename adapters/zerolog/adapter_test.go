@@ -238,11 +238,33 @@ func TestWithheldRecord(t *testing.T) {
 			if message != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(1) || got["level"] != "warn" || strings.Contains(out.String(), "planted") {
 				t.Fatal(out.String())
 			}
-			// Byte-only fallbacks may omit metadata whose origin is unproven.
-			// A retained legacy timestamp must still be the known safe fixture.
-			if got["ts"] != nil && got["ts"] != float64(7) || got["time"] != nil && got["time"] != "1970-01-01T00:00:07Z" {
-				t.Fatal("unexpected timestamp retained", got)
+			if got["ts"] != nil || got["time"] != nil || got["timestamp"] != nil {
+				t.Fatal("unproven timestamp survived", got)
 			}
 		})
+	}
+}
+
+func TestWithheldUserTimestampField(t *testing.T) {
+	t.Parallel()
+	for _, key := range []string{"ts", "time", "timestamp", "custom_clock"} {
+		for _, text := range []bool{false, true} {
+			var out bytes.Buffer
+			writer := embargozerolog.NewWriter(&out, embargo.NewScanner())
+			logger := zerolog.New(writer)
+			event := logger.Info()
+			if text {
+				event.Str(key, "2026-11-16T00:00:00.4111111111111111Z")
+			} else {
+				event.Int64(key, 4111111111111111)
+			}
+			event.Str("body", strings.Repeat("x", 1<<20)).Msg("upload")
+			if err := writer.Close(); err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(out.String(), "4111111111111111") || !strings.Contains(out.String(), "record withheld") {
+				t.Fatalf("user timestamp survived: %s", out.String())
+			}
+		}
 	}
 }
