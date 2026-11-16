@@ -6,7 +6,7 @@ replace github.com/nao1215/embargo => ../..
 
 require (
 	github.com/getsentry/sentry-go v0.50.0
-	github.com/nao1215/embargo v0.5.1-0.20261116044452-655c366d8a3d
+	github.com/nao1215/embargo v0.5.1
 )
 
 require (
