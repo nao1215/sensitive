@@ -508,5 +508,17 @@
     "source": "M21",
     "check": "scripts/case_docs.py#main",
     "where": "Verification"
+  },
+  {
+    "rule": "Output cases isolate detector decisions from canary and fragment matching",
+    "source": "M21",
+    "check": "tests/check_independence_test.go#TestAdoptionCheckIndependence",
+    "where": "Verification"
+  },
+  {
+    "rule": "Canary fragments retain minimum-length and option-order boundaries",
+    "source": "M21",
+    "check": "embargotest/canary_fragment_test.go#TestCanaryFragmentBoundsAndOrder",
+    "where": "MultiPlatformUnitTest"
   }
 ]

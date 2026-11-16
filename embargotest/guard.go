@@ -102,7 +102,7 @@ func guardPolicy(opts []Option) *Recorder {
 			r.failed = true
 		}
 	}
-	r.needles = representations(r.canary)
+	r.configureNeedles()
 	return r
 }
 

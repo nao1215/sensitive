@@ -52,3 +52,44 @@ func containsCanary(data []byte, needles [][]byte) bool {
 	}
 	return false
 }
+
+type fragmentOption int
+
+// WithCanaryFragments also checks every contiguous raw canary fragment of at
+// least minBytes bytes. The minimum must be 16 through the final canary length.
+// This opt-in policy catches long partial values and pieces on separate lines
+// or sinks; it does not reconstruct smaller pieces or transform fragments.
+// Choose a distinctive fake canary: matching a common fragment can reject
+// unrelated output. The default checks only whole-value representations.
+func WithCanaryFragments(minBytes int) Option { return fragmentOption(minBytes) }
+
+func (o fragmentOption) apply(r *Recorder) bool {
+	const smallestFragment = 16
+	const largestCanary = 1024
+	if int(o) < smallestFragment || int(o) > largestCanary {
+		return false
+	}
+	r.minFragment = int(o)
+	return true
+}
+
+func (r *Recorder) configureNeedles() {
+	r.needles = representations(r.canary)
+	if r.minFragment > len(r.canary) {
+		r.failed = true
+		return
+	}
+	if r.minFragment == 0 {
+		return
+	}
+	// A longer raw fragment necessarily contains a minimum-length window.
+	// The canary already belongs to the policy and remains immutable.
+	seen := make(map[string]bool)
+	for start := 0; start+r.minFragment <= len(r.canary); start++ {
+		fragment := r.canary[start : start+r.minFragment]
+		if !seen[string(fragment)] {
+			seen[string(fragment)] = true
+			r.needles = append(r.needles, fragment)
+		}
+	}
+}

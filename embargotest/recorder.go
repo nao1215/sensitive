@@ -34,6 +34,7 @@ type Recorder struct {
 	maxBytes      int64
 	timeout       time.Duration
 	retained      int64
+	minFragment   int
 	running       int
 	mu            sync.Mutex
 	scannerFailed bool
@@ -94,13 +95,13 @@ func (o limitsOption) apply(r *Recorder) bool {
 // do nothing. The default scanner omits unlabelled entropy tokens; use WithScanner to choose kinds. Invalid options fail the test and leave Check unable to succeed.
 func New(tb testing.TB, opts ...Option) *Recorder {
 	tb.Helper()
-	r := &Recorder{detected: false, scannerFailed: false, responses: nil, mu: sync.Mutex{}, needles: nil, retained: 0, expectations: nil, checked: false, failed: false, reported: false, leaked: false, running: 0, scanner: embargo.NewScanner(), allowedKinds: map[embargo.Kind]bool{}, allowedValues: map[string]bool{}, tb: tb, canary: []byte(defaultCanary), maxBytes: defaultMaxBytes, timeout: defaultTimeout, sinks: make(map[string]*stream)}
+	r := &Recorder{minFragment: 0, detected: false, scannerFailed: false, responses: nil, mu: sync.Mutex{}, needles: nil, retained: 0, expectations: nil, checked: false, failed: false, reported: false, leaked: false, running: 0, scanner: embargo.NewScanner(), allowedKinds: map[embargo.Kind]bool{}, allowedValues: map[string]bool{}, tb: tb, canary: []byte(defaultCanary), maxBytes: defaultMaxBytes, timeout: defaultTimeout, sinks: make(map[string]*stream)}
 	for _, o := range opts {
 		if o != nil && !o.apply(r) {
 			r.failed = true
 		}
 	}
-	r.needles = representations(r.canary)
+	r.configureNeedles()
 	if r.failed {
 		tb.Error("embargotest: invalid options")
 	}

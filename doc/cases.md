@@ -29,7 +29,7 @@ masq v0.2.3 is pinned by tests/go.mod. The tag column uses its documented WithTa
 
 The unwrapped logger writes to the captured sink through log.New, bypassing every slog handler. The recorder catches the full token. Production masking still requires wrapping or removing that output path; a test failure alone does not sanitize deployed logs.
 
-Last-four and eight-digit card fragments are outside PAN recognition. The split token crosses two JSON records, so neither a full token detector nor whole-canary matching reconstructs it. Base64 and hex tokens are outside default detector decoding, but whole-value canary representations catch these two fixtures independently. See [what each output check proves](testing-output.md). Hashes, arbitrary transforms and unobserved output need explicit tests and policy decisions.
+Last-four and eight-digit card fragments are outside PAN recognition. The split token crosses two JSON records, so neither a full token detector nor default whole-canary matching reconstructs it. The opt-in WithCanaryFragments(16) check added afterward catches its long raw pieces; the table above retains the default policy. Base64 and hex tokens are outside default detector decoding, but whole-value canary representations catch these two fixtures independently. See [what each output check proves](testing-output.md). Hashes, arbitrary transforms and unobserved output need explicit tests and policy decisions.
 
 Last-four display may be intentional. Here it is deliberately classified as exposure to show the boundary; a team's own policy must decide whether to permit it. Keeping useful order IDs and completion messages is also an assertion, because deleting diagnostic context is an operational failure.
 

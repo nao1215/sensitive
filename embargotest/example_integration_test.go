@@ -312,3 +312,15 @@ func ExampleWithAllowedValues() {
 
 	// Output: true
 }
+
+func ExampleWithCanaryFragments() {
+	fmt.Println(runExample(func(tb testing.TB) bool {
+		tb.Helper()
+		r := embargotest.New(tb, embargotest.WithCanaryFragments(16))
+		// Preserve useful content; a surviving 16-byte raw fragment would fail Check.
+		fmt.Fprint(r.Writer("logs"), "order accepted: ", embargo.NewSecret(r.Canary()))
+		r.Expect("logs", func(data []byte) bool { return string(data) == "order accepted: [REDACTED]" })
+		return r.Check()
+	}))
+	// Output: true
+}
