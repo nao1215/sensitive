@@ -1,15 +1,13 @@
-package detect_test
+package detect
 
 import (
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestAWSKeyDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewAWSKey()
+	d := NewAWSKey()
 	tests := []struct {
 		name       string
 		input      string
@@ -22,7 +20,7 @@ func TestAWSKeyDetector_Scan(t *testing.T) {
 			name:       "AKIA prefix key",
 			input:      "aws_access_key_id = AKIAIOSFODNN7EXAMPLE",
 			wantLen:    1,
-			wantRaw:    "AKIAIOSFODNN7EXAMPLE",
+			wantRaw:    sampleAccessKey,
 			wantMinCon: 0.9,
 		},
 		// #nosec G101 -- This public synthetic credential is a positive detection fixture, not an authentication secret.
@@ -84,15 +82,15 @@ func TestAWSKeyDetector_Scan(t *testing.T) {
 func TestAWSKeyDetector_Detail(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewAWSKey()
+	d := NewAWSKey()
 	tests := []struct {
 		input    string
-		wantType detect.AWSKeyType
+		wantType AWSKeyType
 	}{
 		// #nosec G101 -- This public synthetic credential is a positive detection fixture, not an authentication secret.
-		{input: "AKIAIOSFODNN7EXAMPLE", wantType: detect.AWSKeyTypeLongTerm},
+		{input: sampleAccessKey, wantType: AWSKeyTypeLongTerm},
 		// #nosec G101 -- This public synthetic credential is a positive detection fixture, not an authentication secret.
-		{input: "ASIAIMOSTEMPKEY12345", wantType: detect.AWSKeyTypeTemporary},
+		{input: "ASIAIMOSTEMPKEY12345", wantType: AWSKeyTypeTemporary},
 	}
 	for _, tt := range tests {
 		findings := d.Scan([]byte(tt.input))
@@ -112,16 +110,16 @@ func TestAWSKeyDetector_Detail(t *testing.T) {
 func TestAWSKeyDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewAWSKey()
-	if d.Name() != detect.NameAWSKey {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameAWSKey)
+	d := NewAWSKey()
+	if d.Name() != NameAWSKey {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameAWSKey)
 	}
 }
 
 func TestAWSKeyDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewAWSKey()
+	d := NewAWSKey()
 	hints := d.Hints()
 	if len(hints) != 2 {
 		t.Errorf("Hints() returned %d hints, want 2", len(hints))
@@ -131,7 +129,7 @@ func TestAWSKeyDetector_Hints(t *testing.T) {
 func TestAWSKeyDetector_FollowedByAlphaNum(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewAWSKey()
+	d := NewAWSKey()
 	findings := d.Scan([]byte("AKIAIOSFODNN7EXAMPLEX"))
 	if len(findings) != 0 {
 		t.Errorf("got %d findings for key followed by alpha, want 0", len(findings))
@@ -141,7 +139,7 @@ func TestAWSKeyDetector_FollowedByAlphaNum(t *testing.T) {
 func TestAWSKeyDetector_LowercaseInSuffix(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewAWSKey()
+	d := NewAWSKey()
 	findings := d.Scan([]byte("AKIAiosfodnn7example"))
 	if len(findings) != 0 {
 		t.Errorf("got %d findings for lowercase suffix, want 0", len(findings))
@@ -151,7 +149,7 @@ func TestAWSKeyDetector_LowercaseInSuffix(t *testing.T) {
 func TestAWSKeyDetector_MultipleKeys(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewAWSKey()
+	d := NewAWSKey()
 	findings := d.Scan([]byte("AKIAIOSFODNN7EXAMPLE ASIAIMOSTEMPKEY12345"))
 	if len(findings) != 2 {
 		t.Fatalf("got %d findings, want 2", len(findings))
@@ -161,7 +159,7 @@ func TestAWSKeyDetector_MultipleKeys(t *testing.T) {
 func TestAWSKeyDetector_TruncatedKey(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewAWSKey()
+	d := NewAWSKey()
 	// Key with only 19 chars (missing last char).
 	findings := d.Scan([]byte("AKIAIOSFODNN7EXAMPL"))
 	if len(findings) != 0 {
@@ -172,10 +170,17 @@ func TestAWSKeyDetector_TruncatedKey(t *testing.T) {
 func TestAWSKeyDetector_NonAKIAPrefix(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewAWSKey()
+	d := NewAWSKey()
 	// ANPA prefix should not match.
 	findings := d.Scan([]byte("ANPAIOSFODNN7EXAMPLE"))
 	if len(findings) != 0 {
 		t.Errorf("got %d findings for ANPA prefix, want 0", len(findings))
+	}
+}
+
+func TestAwskeyRejectedBoundaries(t *testing.T) {
+	t.Parallel()
+	if validateAWSKeyBody([]byte("AKIA"), 4) {
+		t.Fatal("truncated key body accepted")
 	}
 }

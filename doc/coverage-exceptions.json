@@ -1,0 +1,128 @@
+[
+  {
+    "file": "cmd/embargo-audit/main.go",
+    "start": 37,
+    "end": 37,
+    "sha256": "b2849765c2b6e4020fe6008f325bbc591a90fd2a587d912e0c4722eefdaed6c4",
+    "reason": "The os.Exit entry point is exercised by the installed command subprocess; exitCode and run are fully covered in-process. Child profiles are not merged into this profile."
+  },
+  {
+    "file": "embargotest/canary.go",
+    "start": 18,
+    "end": 20,
+    "sha256": "84575a5af41c6d69f1abec9e707f345adfaf0f87dddb0c28c742382d829b2a77",
+    "reason": "encoding/json.Marshal receives a string; the standard library cannot return an encoding error for this type."
+  },
+  {
+    "file": "embargotest/guard.go",
+    "start": 142,
+    "end": 144,
+    "sha256": "1ba08dfeb6709927ede9415e871646cdedb853667b1439ceeb9739b0b7f9c190",
+    "reason": "The emergency stderr write has no injectable sink; closing process-wide stderr would interfere with parallel tests. Real child failure diagnostics and replay errors are asserted separately."
+  },
+  {
+    "file": "embargotest/guard.go",
+    "start": 44,
+    "end": 45,
+    "sha256": "559befe46216ba8c0f4e9a1bae0f45a226e388e7923793e6968c8cd328b90f1b",
+    "reason": "The TestMain parent branch runs in compiled child fixtures; their counters are not part of the parent profile. guardParent has complete in-process coverage."
+  },
+  {
+    "file": "embargotest/guard.go",
+    "start": 45,
+    "end": 48,
+    "sha256": "80d1280ee2d47ae662a3575004b07d3651c6fcb21ec58e6c5b42499eedea2484",
+    "reason": "os.Executable cannot be made to fail portably inside an already running Go test binary; the fallback is retained for unsupported or damaged process environments."
+  },
+  {
+    "file": "embargotest/guard.go",
+    "start": 49,
+    "end": 50,
+    "sha256": "2938df88695c0c1ff2d6d013b421eee1fd755001336b958985d0534dead67061",
+    "reason": "The TestMain parent branch runs in compiled child fixtures; argument forwarding, safe replay and leak rejection are asserted by TestPackageGuard."
+  },
+  {
+    "file": "embargotest/http.go",
+    "start": 184,
+    "end": 187,
+    "sha256": "8c2e3490620a1e55ce8d0ce146a718eb38d33275910ffad7ed17c386476cdd33",
+    "reason": "encoding/json.Marshal receives only map[string][]string; these values have no custom marshaler or unsupported type."
+  },
+  {
+    "file": "embargotest/json.go",
+    "start": 119,
+    "end": 120,
+    "sha256": "f043155ee1279e89967ed108a020784d0bbd987567c9b2debcb03f16f528fe8d",
+    "reason": "encoding/json.Decoder.Token reports malformed JSON as an error before this delimiter fallback; only object and array opening delimiters reach the switch."
+  },
+  {
+    "file": "embargotest/json.go",
+    "start": 91,
+    "end": 93,
+    "sha256": "65aaf55f159f36ef07d5497043ee1a0668f41cb4a0739531efae741a7bba468b",
+    "reason": "encoding/json.Decoder.Token enforces string object keys and returns an error before a non-string key can be observed."
+  },
+  {
+    "file": "embargotest/run.go",
+    "start": 22,
+    "end": 24,
+    "sha256": "8beba6f9550b341f36af78ce74c4601d1ab36d7f0564dceab9a54cd9596bd1c5",
+    "reason": "os.Executable cannot be made to fail portably inside an already running Go test binary; start failures and unavailable helpers are tested through the actual supervisor."
+  },
+  {
+    "file": "http_handler.go",
+    "start": 151,
+    "end": 153,
+    "sha256": "2c19588e72beb5a23bef34bcd2a6b6eef5127b99ae976411fb04cb903433c364",
+    "reason": "The header map contains only strings and string slices; encoding/json.Marshal cannot fail for these types."
+  },
+  {
+    "file": "json.go",
+    "start": 298,
+    "end": 300,
+    "sha256": "449238c18e2164ad2c9363aaad5a272b01b4da5226bcf50e848f30e8fc020601",
+    "reason": "The public JSON entry point validates the entire input before the walker decodes a string; encoding/json cannot reject this already validated string token."
+  },
+  {
+    "file": "json.go",
+    "start": 320,
+    "end": 321,
+    "sha256": "601e7d43c105093b16776cf5882993ac9fe0f66e3905029b62c2d34f9f45a649",
+    "reason": "encoding/json.Marshal receives a string and cannot return an error; the defensive panic never contains input data."
+  },
+  {
+    "file": "slog_handler.go",
+    "start": 269,
+    "end": 271,
+    "sha256": "5b18a53d7a8b8b34c0d858072174b0f41ff262deff392942a98f7410355a4300",
+    "reason": "Cancellation must arrive after the key scanner final cancellation check but before this adjacent check; ordinary canceled contexts and cancellation during scanning are covered, but no deterministic portable scheduler can target this gap."
+  },
+  {
+    "file": "slog_handler.go",
+    "start": 279,
+    "end": 281,
+    "sha256": "6822e7556f662faffbc391642141ba33369dd49cbb2c27f2897d071a31815102",
+    "reason": "Cancellation must arrive between the preceding context check and entry into LogValue resolution; tests assert cancellation caused by LogValue and by scanners without relying on scheduler timing."
+  },
+  {
+    "file": "slog_handler.go",
+    "start": 310,
+    "end": 311,
+    "sha256": "8f4bc62f79c322849541349a9b394487810c9f83e708f26de46697be5c7886a9",
+    "reason": "LogValue resolution loops until Kind is no longer KindLogValuer; it returns on depth limits or panic before the switch. The defensive fallback rejects a malformed value."
+  },
+  {
+    "file": "slog_handler.go",
+    "start": 313,
+    "end": 313,
+    "sha256": "d0500ff13f80504d1f6f7ef28e8836aeb3de821a6fb1214f3aa83a31e9d473f8",
+    "reason": "Every public slog.Value constructor produces a handled Kind; reaching an unknown kind requires unsafe corruption of private standard-library state."
+  },
+  {
+    "file": "slog_handler.go",
+    "start": 406,
+    "end": 408,
+    "sha256": "c83c2af07ed5ec04f71d2d073cadbff734a8543e6c68b91bd941cc89131bc88c",
+    "reason": "encoding/json.Marshal receives a byte slice and always succeeds, including invalid UTF-8 bytes; the defensive failure path cannot arise for this type."
+  }
+]

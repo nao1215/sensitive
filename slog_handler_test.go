@@ -681,3 +681,36 @@ func TestJoinedPathBindingsStayFrozen(t *testing.T) {
 		}
 	}
 }
+
+type enabledContextKey struct{}
+
+type contextEnabledHandler struct {
+	slog.Handler
+
+	observed error
+	value    any
+	level    slog.Level
+}
+
+func (h *contextEnabledHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	h.observed, h.value, h.level = ctx.Err(), ctx.Value(enabledContextKey{}), level
+	return ctx.Err() == nil && level >= slog.LevelWarn
+}
+
+func TestSlogEnabledKeepsValuesAndDropsCancellation(t *testing.T) {
+	t.Parallel()
+	for _, canceled := range []bool{false, true} {
+		ctx, cancel := context.WithCancel(context.WithValue(t.Context(), enabledContextKey{}, "public-request"))
+		if canceled {
+			cancel()
+		}
+		for _, level := range []slog.Level{slog.LevelDebug, slog.LevelWarn, slog.LevelError} {
+			next := &contextEnabledHandler{}
+			handler := embargo.NewSlogHandler(next, embargo.NewScanner())
+			if handler.Enabled(ctx, level) != (level >= slog.LevelWarn) || next.observed != nil || next.value != "public-request" || next.level != level {
+				t.Fatal("downstream enablement lost context values, level or cancellation isolation")
+			}
+		}
+		cancel()
+	}
+}

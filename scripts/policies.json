@@ -580,5 +580,17 @@
     "source": "Comparison policy",
     "check": "tests/comparison_test.go#TestComparisonScenarios",
     "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Changed root statements require coverage or a source-bound triage exception",
+    "source": "Repository maintenance policy",
+    "check": "scripts/diff_coverage.py#def check(",
+    "where": "Coverage"
+  },
+  {
+    "rule": "Mutation package scores and coverage cannot fall below recorded floors",
+    "source": "Repository maintenance policy",
+    "check": "scripts/mutation_gate.py#def check(",
+    "where": "Heavy verification"
   }
 ]

@@ -1,10 +1,8 @@
-package detect_test
+package detect
 
 import (
 	"strings"
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 // pemHeader builds a PEM "BEGIN" header for the given algorithm (empty for a bare
@@ -21,7 +19,7 @@ func pemHeader(algo string) string {
 func TestPrivateKeyPEMDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPrivateKeyPEM()
+	d := NewPrivateKeyPEM()
 	tests := []struct {
 		name     string
 		input    string
@@ -98,12 +96,12 @@ func TestPEMHeaderVectors(t *testing.T) {
 	t.Parallel()
 	for _, kind := range []string{"PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY", "DSA PRIVATE KEY", "OPENSSH PRIVATE KEY", "ENCRYPTED PRIVATE KEY"} {
 		raw := "-----BEGIN " + kind + "-----"
-		got := detect.NewPrivateKeyPEM().Scan([]byte(raw))
+		got := NewPrivateKeyPEM().Scan([]byte(raw))
 		if len(got) != 1 || got[0].RawValue != raw {
 			t.Fatalf("private header rejected: %s", kind)
 		}
 		bad := strings.Replace(raw, "PRIVATE", "PUBLIC", 1)
-		if len(detect.NewPrivateKeyPEM().Scan([]byte(bad))) != 0 {
+		if len(NewPrivateKeyPEM().Scan([]byte(bad))) != 0 {
 			t.Fatal("public header accepted")
 		}
 	}
@@ -113,8 +111,15 @@ func TestPEMIncompleteBlockDoesNotConsumeNextKey(t *testing.T) {
 	t.Parallel()
 	first := pemHeader("")
 	second := first + "\nFAKE\n-----END PRIVATE KEY-----"
-	got := detect.NewPrivateKeyPEM().Scan([]byte(first + "\n" + second))
+	got := NewPrivateKeyPEM().Scan([]byte(first + "\n" + second))
 	if len(got) != 2 || got[0].RawValue != first || got[1].RawValue != second {
 		t.Fatalf("wrong block bounds: %v", got)
+	}
+}
+
+func TestPrivateKeyPemRejectedBoundaries(t *testing.T) {
+	t.Parallel()
+	if indexOf([]byte("-----BEGIN unterminated"), 0, "PRIVATE KEY-----") != -1 {
+		t.Fatal("unterminated header accepted")
 	}
 }

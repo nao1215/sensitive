@@ -301,6 +301,13 @@ func TestIBAN(t *testing.T) {
 
 func TestTokens(t *testing.T) {
 	t.Parallel()
+	// Sort-code grammar requires ASCII delimiters; interior obfuscation is tested separately.
+	var separators []string
+	for _, separator := range unicodeSeparators() {
+		if len(separator) == 1 && separator[0] <= unicode.MaxASCII {
+			separators = append(separators, separator)
+		}
+	}
 	for _, family := range []string{"aws", "github", "slack", "google", "jwt", "pem", "swift", "sort"} {
 		t.Run(family, func(t *testing.T) {
 			t.Parallel()
@@ -359,7 +366,7 @@ func TestTokens(t *testing.T) {
 					bad = raw[:4] + "00" + raw[6:]
 				case "sort":
 					d = embargo.NewScanner(embargo.WithKinds(embargo.KindUKSortCode))
-					sep := rapid.SampledFrom([]string{"-", " "}).Draw(t, "separator")
+					sep := rapid.SampledFrom(separators).Draw(t, "separator")
 					raw = digits(t, 2) + sep + digits(t, 2) + sep + digits(t, 2)
 					if strings.ReplaceAll(raw, sep, "") == "000000" {
 						raw = "01" + raw[2:]
@@ -1058,6 +1065,37 @@ func TestByteContentsBeforeEncoderProperty(t *testing.T) {
 					rt.Fatal("encoder hid raw bytes from inspection")
 				}
 			}
+		}
+	})
+}
+
+func TestHTTPWithheldSchemaProperty(t *testing.T) {
+	t.Parallel()
+	rapid.Check(t, func(rt *rapid.T) {
+		status := rapid.IntRange(200, 599).Draw(rt, "final status")
+		count := rapid.IntRange(0, 16).Draw(rt, "headers")
+		request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?planted;private@example.com", http.NoBody)
+		for index := range count {
+			request.Header.Set("Planted-"+strconv.Itoa(index), "private@example.com")
+		}
+		var out bytes.Buffer
+		handler := embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Planted-Response", "private@example.com")
+			w.WriteHeader(status)
+		}), slog.New(slog.NewJSONHandler(&out, nil)), embargo.NewScanner())
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, request)
+		var record map[string]any
+		if err := json.Unmarshal(out.Bytes(), &record); err != nil {
+			rt.Fatal(err)
+		}
+		if len(record) != 6 || record["level"] != "INFO" || record["msg"] != "embargo: record withheld (masking error)" || record["withheld_attributes"] != float64(6) || record["status"] != float64(status) || response.Code != status {
+			rt.Fatalf("unexpected withheld schema or changed response: %s", out.Bytes())
+		}
+		stamp, stampOK := record["time"].(string)
+		duration, durationOK := record["duration"].(float64)
+		if !stampOK || stamp == "" || !durationOK || duration < 0 || strings.Contains(out.String(), "planted") || strings.Contains(out.String(), "private@example.com") {
+			rt.Fatalf("missing trusted metadata or unsafe field: %s", out.Bytes())
 		}
 	})
 }

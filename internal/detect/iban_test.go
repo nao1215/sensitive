@@ -319,3 +319,10 @@ func TestIBANReservedCheckDigits(t *testing.T) {
 		})
 	}
 }
+
+func TestIbanRejectedBoundaries(t *testing.T) {
+	t.Parallel()
+	if validateIBANMod97([]byte("GB82WEST1234569876543!")) {
+		t.Fatal("invalid IBAN byte accepted")
+	}
+}

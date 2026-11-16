@@ -8,6 +8,7 @@ import os
 import pathlib
 import re
 import subprocess
+from mutation_gate import measurement_from_log
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--coverage", type=pathlib.Path, required=True)
@@ -19,9 +20,7 @@ args = parser.parse_args()
 root = pathlib.Path(__file__).resolve().parents[1]
 coverage = [line.split() for line in args.coverage.read_text().splitlines()[1:]]
 mutation = args.mutation.read_text()
-summary = re.search(r"Killed: (\d+), Lived: (\d+), Not covered: (\d+)\s+Timed out: (\d+), Not viable: (\d+), Skipped: (\d+)\s+Test efficacy: ([\d.]+)%\s+Mutator coverage: ([\d.]+)%", mutation)
-if not summary or "Mutation testing completed" not in mutation:
-    raise ValueError("mutation run must be complete")
+measurement = measurement_from_log(mutation)
 fuzz_runs = []
 for block in args.fuzz.read_text().split("go test ")[1:]:
     name = re.search(r"-fuzz '\^(Fuzz\w+)\$'", block)
@@ -41,11 +40,11 @@ snapshot = {
     "date": datetime.datetime.now(datetime.timezone.utc).date().isoformat(),
     "covered_statements": sum(int(fields[1]) for fields in coverage if int(fields[2]) > 0),
     "total_statements": sum(int(fields[1]) for fields in coverage),
-    "mutation": dict(zip(["killed", "lived", "uncovered", "timed_out", "not_viable", "skipped"], map(int, summary.groups()[:6]))),
-    "efficacy": float(summary[7]),
+    "mutation": measurement['mutation'],
+    "efficacy": measurement['efficacy'],
     "mutation_timeout_coefficient": args.mutation_timeout_coefficient,
     "mutation_workers": args.mutation_workers,
-    "mutator_coverage": float(summary[8]),
+    "mutator_coverage": measurement['mutator_coverage'],
     "fuzz": fuzz_runs,
     "source_sha256": {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in [("coverage", args.coverage), ("mutation", args.mutation), ("fuzz", args.fuzz)]},
 }

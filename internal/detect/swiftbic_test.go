@@ -212,3 +212,20 @@ func TestSWIFTSlashListAndSourcePath(t *testing.T) {
 		}
 	}
 }
+
+func TestSWIFTZCountryCodes(t *testing.T) {
+	t.Parallel()
+	for _, country := range []string{"ZA", "ZM", "ZW", "ZZ"} {
+		raw := "BANK" + country + "12"
+		findings := NewSWIFTBIC().Scan([]byte("SWIFT: " + raw))
+		if country == "ZZ" {
+			if len(findings) != 0 {
+				t.Fatal("unsupported country accepted")
+			}
+			continue
+		}
+		if len(findings) != 1 || findings[0].RawValue != raw || findings[0].Start != len("SWIFT: ") || findings[0].End != len("SWIFT: ")+len(raw) {
+			t.Fatalf("valid country %s lost or mislocated: %+v", country, findings)
+		}
+	}
+}

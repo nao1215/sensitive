@@ -29,6 +29,43 @@ The timeout coefficient defaults to 10; set DOC_MUTATION_TIMEOUT to the actual v
 
 The generator rejects incomplete mutation/fuzz runs and records source-log hashes. Commit the generated JSON, detail pages, figures and README together. Run the benchmark publication separately, after other intentional CPU workloads have finished.
 
+## Package mutation gate
+
+`make mutation` runs [Gremlins v0.6.0](https://github.com/go-gremlins/gremlins/releases/tag/v0.6.0) through the tools module; the root module has no tool dependency. The scheduled/manual heavy workflow checks every root package and the audit command with two workers, GOMAXPROCS=2 and a 10x timeout. It rejects scores or mutation coverage below [the recorded package floors](mutation-baseline.json). Timeouts count as un-killed executed mutants: score = killed / (killed + lived + timed out). Mutation coverage divides that executed count by executed plus uncovered mutants. The older dated summary below uses the tool's killed / (killed + lived) efficacy; it is not the new gate's denominator.
+
+Every run first verifies a known killed expression and a known surviving expression, then compares all measured expression coordinates with a fresh dry-run inventory. The wrapper clears the Go test cache after inventory collection so the campaign timeout comes from an actual test run. This prevents missing files, truncated reports or a failing test launcher from creating a passing score. v0.6.0 mispasses its own --test-cpu flag, so the wrapper sets GOMAXPROCS instead. Its nested package-main mapping is also incorrect; the audit command runs as a temporary root module with the same command source, tests and scanner snapshot. No third-party source is patched.
+
+[Recorded expression outcomes and source fingerprints](performance/mutation-baseline.json) support the baseline; `python3 scripts/mutation_gate.py --check-evidence` rejects a mismatch between those outcomes and the package scores. Reports from future full runs are uploaded as workflow artifacts. Use `python3 scripts/mutation_gate.py --record` only after reviewing a complete run; it refuses to lower an existing floor. Surviving equivalent comparisons, capacity changes and defensive branches are retained as survivors, never relabeled as kills.
+
+<!-- mutation-baseline:start -->
+| Package | Score floor | Mutation coverage floor | Killed | Lived | Timed out | Uncovered |
+|---|---:|---:|---:|---:|---:|---:|
+| . | 82.29% | 96.73% | 316 | 52 | 16 | 13 |
+| cmd/embargo-audit | 82.86% | 100.00% | 29 | 6 | 0 | 0 |
+| embargotest | 90.64% | 98.74% | 213 | 19 | 3 | 3 |
+| internal/ascii | 100.00% | 100.00% | 15 | 0 | 0 | 0 |
+| internal/detect | 86.87% | 87.35% | 1548 | 203 | 31 | 258 |
+| internal/output | 82.35% | 100.00% | 56 | 10 | 2 | 0 |
+| internal/saferecord | 100.00% | 100.00% | 5 | 0 | 0 | 0 |
+<!-- mutation-baseline:end -->
+
+## Coverage triage and changed statements
+
+CI merges root and tests-module coverage and retains the 97% total floor. Every added or changed root-module statement must also be covered. `scripts/diff_coverage.py` checks the actual Go statement blocks against the pull-request diff, inventories all root packages, and rejects missing instrumentation. [Coverage exceptions](coverage-exceptions.json) name exact source ranges, their content hashes and reasons; a source edit invalidates an exception until it is reviewed again.
+
+Boundary tests cover invalid checksum lengths and alphabets, reserved routing districts, malformed tokens, full Keccak blocks, canary encodings and fragment limits, child environment propagation, HTTP outcome flags, overlapping-kind priority, repeated terminal keywords, canceled slog enablement and cancellation between detectors. Unused exported internal detector wrappers and unreachable keyword branches have been removed. `jsonError.Error` and the Guard parent supervisor now have complete statement coverage with assertions on diagnostics, actual child streams, exit failures and withheld replay.
+
+The remaining exceptions fall into four groups: standard-library encoding failures for strings, bytes and string-only maps; decoder states excluded by prior validation; process entry points and unavailable executable paths tested through child processes whose counters are not merged; and adjacent cancellation checks or private slog kinds that cannot be targeted deterministically through supported APIs. Guard still exercises its actual TestMain path in compiled fixtures; its supervisor is measured in-process. These exceptions permit coverage accounting only and never bypass masking, accuracy, scaling or output-schema assertions.
+
+| Remaining function | Missing path and disposition |
+|---|---|
+| cmd/embargo-audit.main; embargotest.Guard | Child fixtures assert entry points; run, exitCode and guardParent are measured in-process. |
+| embargotest.Run; embargotest.Guard | os.Executable failure is not portable to induce in an already running Go test binary. |
+| embargotest.guardMessage | Replacing process-wide stderr disturbs other tests; replay and child diagnostics are asserted. |
+| embargotest.representations; embargotest.recordHeaders; maskHTTPHeaders; appendString; sanitizeBytes | encoding/json cannot fail for the concrete string, byte slice and string-only map types passed here. |
+| embargotest.jsonValue; stringValue | Decoder invariants or prior whole-document validation exclude these malformed states. |
+| sanitizeAttr | Adjacent cancellation races and private slog kinds cannot be selected through supported APIs. |
+
 ## Technique inventory
 
 <!-- techniques:start -->

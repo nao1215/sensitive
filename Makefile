@@ -46,7 +46,7 @@ race: ## Run race detection in all modules
 properties: ## Run property and API contract tests
 	go -C tests test ./...
 mutation: ## Mutate root module packages with gremlins
-	go run github.com/go-gremlins/gremlins/cmd/gremlins@v0.6.0 unleash --workers 2 --test-cpu 2 --timeout-coefficient 10 .
+	python3 scripts/mutation_gate.py --workers 2 --test-cpu 2
 fuzz: ## Smoke test every root fuzz target
 	python3 scripts/fuzz_targets.py --run 10s
 

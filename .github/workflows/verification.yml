@@ -37,6 +37,7 @@ jobs:
       - run: go -C tests test ./cmd/detectordocs -count=1
       - run: python3 scripts/check_prose.py
       - run: python3 scripts/check_policies.py
+      - run: python3 scripts/mutation_gate.py --check-evidence
       - run: python3 scripts/testing_techniques.py --check
       - name: Verify workflow lockfile and provenance
         env:

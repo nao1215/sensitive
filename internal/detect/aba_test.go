@@ -252,3 +252,13 @@ func BenchmarkABALeadingWhitespace(b *testing.B) {
 		}
 	}
 }
+
+func TestAbaRejectedBoundaries(t *testing.T) {
+	t.Parallel()
+	if validateABAChecksum(nil) || abaFederalReserveDistrict(nil) != "" || abaDistrictName(0) != "" {
+		t.Fatal("invalid routing metadata accepted")
+	}
+	if got := NewABARouting().Scan([]byte("021000021x")); len(got) != 0 {
+		t.Fatal("routing suffix accepted")
+	}
+}
