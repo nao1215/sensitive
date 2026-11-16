@@ -19,7 +19,8 @@ import (
 
 // NewLogExporter checks cloned records before calling next.Export.
 // Both dependencies must be non-nil. A failed record becomes a diagnostic with
-// the same timestamp/severity, a fixed body and withheld_attributes; original
+// the same timestamp/severity and trace/span IDs/flags, a fixed body and
+// withheld_attributes independent of SDK environment limits; original
 // resource, scope and attributes are omitted. Other records remain independently
 // masked. Cancellation uses the same fallback and a detached 100 ms export budget.
 // Successful diagnostic delivery returns nil; downstream failures return a fixed error.
@@ -84,7 +85,7 @@ func (e *logExporter) safeLog(ctx context.Context, original *sdklog.Record) (saf
 // an isolated SDK provider instead of cloning immutable, potentially unsafe data.
 func withheldLog(ctx context.Context, original *sdklog.Record, cause error) sdklog.Record {
 	capture := &fallbackProcessor{}
-	provider := sdklog.NewLoggerProvider(sdklog.WithResource(resource.Empty()), sdklog.WithProcessor(capture))
+	provider := sdklog.NewLoggerProvider(sdklog.WithResource(resource.Empty()), sdklog.WithAttributeCountLimit(1), sdklog.WithProcessor(capture))
 	var record apilog.Record
 	record.SetTimestamp(original.Timestamp())
 	record.SetObservedTimestamp(original.ObservedTimestamp())
@@ -96,6 +97,9 @@ func withheldLog(ctx context.Context, original *sdklog.Record, cause error) sdkl
 	defer cancel()
 	provider.Logger("embargo").Emit(detached, record)
 	_ = provider.Shutdown(detached) //nolint:errcheck // This private processor's Shutdown always succeeds.
+	capture.record.SetTraceID(original.TraceID())
+	capture.record.SetSpanID(original.SpanID())
+	capture.record.SetTraceFlags(original.TraceFlags())
 	return capture.record
 }
 
