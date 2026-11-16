@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-16
+
+This minor release closes masking gaps and changes access-log failure behavior. Only requests already canceled when their access record is built receive a detached 100 ms masking budget; failed access records retain their HTTP status or gRPC code and handler duration. The public API and the default minimum confidence of 0 are unchanged. Upgrade the root and every installed adapter to v0.7.0 when the adapter tags are published.
+
+### Fixed
+
+- Scan decoded HTTP query keys and values once without re-encoding, preserve one-pass masking across kinds, and hide Proxy-Authorization credentials.
+- Normalize additional Unicode digit separators and ignore interior zero-width and nonbreaking formatting marks while preserving original byte offsets.
+- Mask whole fractional or exponential JSON number lexemes whose exact integer value is detected, including slog json.Number values; scan slog byte contents and group-qualified text keys.
+- Omit unproven input timestamps from zap and zerolog withheld records so user fields cannot survive through diagnostic metadata.
+- Make shared numeric suffix checks and rejected GitHub and Slack token scans linear, with adversarial scaling regression coverage.
+- Record HTTP status 0 with response_written=false when a handler panics before writing a final response, then propagate the panic unchanged.
+- The v0.7.0 adapters preserve gRPC outcomes and original OTel trace/span IDs and flags in diagnostics, and keep the OTel attribute count independently of SDK environment limits. These modules are released separately after the root.
+
+### Validation
+
+- Require unique, ordered comparison markers and exactly one replacement, and assert complete HTTP and gRPC cancellation records with mutation checks.
+- Test detached-budget exhaustion with an internal clock and timeout seam, preserving coverage and masking gates without timing-based serialization.
+
 ## [0.6.0] - 2026-11-16
 
 This minor release replaces silently discarded log records with safe withheld diagnostics and retains access records for canceled requests. The public API and the default minimum confidence of 0 are unchanged. Upgrade the root and every installed adapter to v0.6.0 when the adapter tags are published.
