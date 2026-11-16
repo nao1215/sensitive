@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-11-16
+
+### Documentation
+
+- Restore the original README introduction; detection behavior and the public API are unchanged from v0.8.0.
+
 ## [0.8.0] - 2026-11-16
 
 This minor release adds the installable embargo-audit command and broadens normalization and joined-key masking. The default minimum confidence remains 0 and the root module remains dependency-free. Upgrade installed adapters to v0.8.0 after their separate tags are published.
