@@ -887,7 +887,7 @@ func TestCredentialGoRenderingProperty(t *testing.T) {
 	scanner := NewScanner(WithKinds(KindCredential))
 	for n := range 16 {
 		secret := fmt.Sprintf("opaqueGo%02dFixture", n)
-		for _, value := range []any{secret, []byte(secret), []any{secret}, []string{secret}, map[string]string{"access": secret}, sql.NullString{String: secret, Valid: true}, credentialString(secret)} {
+		for _, value := range []any{secret, []byte(secret), []any{secret}, []string{secret}, map[string]string{"access": secret}, sql.NullString{String: secret, Valid: true}, sql.Null[string]{V: secret, Valid: true}, struct{ Raw string }{secret}, []struct{ Raw string }{{secret}}, credentialString(secret)} {
 			for _, verb := range []string{"%v", fmtFieldVerb, fmtGoSyntaxVerb, "%q"} {
 				for _, input := range []string{fmt.Sprintf(verb, map[string]any{credentialFixtureKey: value}), fmt.Sprintf(verb, struct{ Password any }{value})} {
 					// Plain struct %v and %q omit field names; no credential context survives.

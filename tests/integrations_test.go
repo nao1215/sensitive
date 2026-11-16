@@ -25,6 +25,8 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"reflect"
 	"slices"
 	"strconv"
@@ -48,11 +50,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/packages"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 	"pgregory.net/rapid"
-
-	embargogrpc "github.com/nao1215/embargo/adapters/grpc"
 
 	"github.com/nao1215/embargo"
 	embargologrus "github.com/nao1215/embargo/adapters/logrus"
@@ -1385,6 +1383,7 @@ const (
 
 func TestMaskingBoundaryHooks(t *testing.T) {
 	t.Parallel()
+	var grpcCases [][]string
 	for n := range 3 {
 		secret := fmt.Sprintf("opaqueHook%02dFixture", n)
 		inputs := []struct{ text, needle string }{
@@ -1425,21 +1424,24 @@ func TestMaskingBoundaryHooks(t *testing.T) {
 		for _, quote := range []string{`\x22`, `\u0022`} {
 			inputs = append(inputs, struct{ text, needle string }{"{" + quote + "password" + quote + ":" + quote + secret + quote + "}", secret})
 		}
-		for _, form := range []string{`[]interface {}{"%s"}`, `map[string]string{"access":"%s"}`, `sql.NullString{String:"%s", Valid:true}`, `main.Password("%s")`, `head %s tail`} {
+		for _, form := range []string{`[]interface {}{"%s"}`, `map[string]string{"access":"%s"}`, `sql.NullString{String:"%s", Valid:true}`, `main.Password("%s")`, `struct { Raw string }{Raw:"%s"}`, `[]struct { Raw string }{struct { Raw string }{Raw:"%s"}}`, `head %s tail`} {
 			inputs = append(inputs, struct{ text, needle string }{"{Password:" + fmt.Sprintf(form, secret) + "}", secret})
 		}
 		byteLiteral := fmt.Sprintf("%#v", []byte(secret))
 		inputs = append(inputs, struct{ text, needle string }{"{Password:" + byteLiteral + "}", strings.TrimSuffix(strings.TrimPrefix(byteLiteral, "[]byte{"), "}")})
 		for i, input := range inputs {
+			grpcCases = append(grpcCases, []string{input.text, input.needle, "detail", input.text})
 			t.Run(fmt.Sprintf("text/%d/%d", n, i), func(t *testing.T) {
 				t.Parallel()
 				checkBoundaryHooks(t, input.text, input.needle, "detail", input.text)
 			})
 		}
 		for _, key := range []string{"SECRET_KEY", "POSTGRES_PASSWORD", "MYSQL_PASSWORD", "GITHUB_TOKEN", "AWS_SESSION_TOKEN", "X-Auth-Token", "X-Goog-Api-Key", "spring.datasource.password", "service.credential", "client_auth"} {
+			grpcCases = append(grpcCases, []string{key + "=" + secret, secret, key, secret})
 			t.Run(fmt.Sprintf("key/%d/%s", n, key), func(t *testing.T) { t.Parallel(); checkBoundaryHooks(t, key+"="+secret, secret, key, secret) })
 		}
 	}
+	checkGRPCBoundaryHooks(t, grpcCases)
 }
 
 func checkBoundaryHooks(t *testing.T, text, needle, key, value string) {
@@ -1526,24 +1528,44 @@ func checkBoundaryHooks(t *testing.T, text, needle, key, value string) {
 	embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, nil)), scanner).ServeHTTP(httptest.NewRecorder(), req)
 	check("HTTP request/response headers and query", out.Bytes())
 	out.Reset()
-	ctx := metadata.NewIncomingContext(t.Context(), metadata.Pairs(strings.ToLower(key), value, "detail", text))
-	unary := embargogrpc.NewUnaryServerInterceptor(slog.New(slog.NewJSONHandler(&out, nil)), scanner)
-	if response, err := unary(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/fixture/Call"}, func(context.Context, any) (any, error) { return "service-response", nil }); err != nil || response != "service-response" {
-		t.Fatal("RPC outcome changed")
-	}
-	check("gRPC unary metadata", out.Bytes())
-	out.Reset()
-	stream := embargogrpc.NewStreamServerInterceptor(slog.New(slog.NewJSONHandler(&out, nil)), scanner)
-	if err := stream(nil, boundaryServerStream{context: func() context.Context { return ctx }}, &grpc.StreamServerInfo{FullMethod: "/fixture/Stream"}, func(any, grpc.ServerStream) error { return nil }); err != nil {
+}
+
+// Build the same case matrix against the gRPC module in a temporary consumer.
+// Its upstream transitive versions stay out of the tests module's manifest.
+func checkGRPCBoundaryHooks(t *testing.T, rows [][]string) {
+	t.Helper()
+	versionCommand := exec.CommandContext(t.Context(), "go", "list", "-m", "-f", "{{.Version}}", "github.com/nao1215/embargo")
+	version, err := versionCommand.Output()
+	if err != nil {
 		t.Fatal(err)
 	}
-	check("gRPC stream metadata", out.Bytes())
+	root, err := filepath.Abs("..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	directory := t.TempDir()
+	module := fmt.Sprintf("module grpchooks\n\ngo 1.26.11\nrequire (\ngithub.com/nao1215/embargo %s\ngithub.com/nao1215/embargo/adapters/grpc %s\n)\nreplace github.com/nao1215/embargo => %q\nreplace github.com/nao1215/embargo/adapters/grpc => %q\n", strings.TrimSpace(string(version)), strings.TrimSpace(string(version)), filepath.ToSlash(root), filepath.ToSlash(filepath.Join(root, "adapters", "grpc")))
+	if writeErr := os.WriteFile(filepath.Join(directory, "go.mod"), []byte(module), 0o600); writeErr != nil {
+		t.Fatal(writeErr)
+	}
+	//nolint:errchkjson // Keep serialization failure explicit if the case shape changes.
+	input, err := json.Marshal(rows)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// #nosec G204 -- Execute only the fixed repository fixture in an isolated consumer.
+	command := exec.CommandContext(t.Context(), "go", "run", "-mod=mod", filepath.Join(root, "tests", "testdata", "grpchooks", "main.go"))
+	command.Dir = directory
+	command.Env = append(os.Environ(), "GOWORK=off")
+	command.Stdin = bytes.NewReader(input)
+	var diagnostic bytes.Buffer
+	command.Stderr = &diagnostic
+	output, err := command.Output()
+	if err != nil {
+		t.Fatalf("gRPC boundary gate: %v\n%s", err, diagnostic.String())
+	}
+	if string(output) != fmt.Sprintf("checked %d unary and %d stream cases\n", len(rows), len(rows)) {
+		t.Fatal("gRPC case matrix was not completely exercised")
+	}
+	t.Log(strings.TrimSpace(string(output)))
 }
-
-type boundaryServerStream struct {
-	grpc.ServerStream
-
-	context func() context.Context
-}
-
-func (s boundaryServerStream) Context() context.Context { return s.context() }

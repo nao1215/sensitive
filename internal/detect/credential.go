@@ -372,16 +372,38 @@ func credentialTypedValue(data []byte, start int) (begin int, closeByte byte) {
 			continue
 		} // interface {} type.
 		if c == '{' {
-			return at + 1, '}'
+			return credentialStructValue(data, at), '}'
 		}
 		if c == '(' {
 			return at + 1, ')'
 		}
-		if !isAlphaNum(c) && !strings.ContainsRune("[].*", rune(c)) && (c != ' ' || at < len("interface") || string(data[at-len("interface"):at]) != "interface") {
+		if !isAlphaNum(c) && !strings.ContainsRune("[].*", rune(c)) && (c != ' ' || !credentialTypeSpace(data, at)) {
 			break
 		}
 	}
 	return start, 0
+}
+
+func credentialTypeSpace(data []byte, at int) bool {
+	for _, word := range []string{"interface", "struct"} {
+		if at >= len(word) && hasASCIIPrefix(data, at-len(word), word) {
+			return true
+		}
+	}
+	return false
+}
+
+// Anonymous struct types have their own braces before the actual value. Keep
+// the type declaration intact and scan the following literal as one value.
+func credentialStructValue(data []byte, opener int) int {
+	const anonymous = "struct "
+	if opener >= len(anonymous) && hasASCIIPrefix(data, opener-len(anonymous), anonymous) {
+		end := credentialContainerEnd(data, opener+1, '}')
+		if end+1 < len(data) && data[end+1] == '{' {
+			return end + len("}{")
+		}
+	}
+	return opener + 1
 }
 
 func fmtCredentialField(data []byte, start int) bool {

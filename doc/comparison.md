@@ -34,41 +34,41 @@ The invalid-Luhn row is a deliberate negative example. embargo uses its default 
 <!-- comparison:start -->
 | Benchmark | ns/op | B/op | allocs/op |
 |---|---:|---:|---:|
-| Comparison/clean/embargo | 2,263.0 | 152 | 14 |
-| Comparison/clean/go-masker | 1,689.5 | 8 | 1 |
-| Comparison/clean/masq | 6,356.0 | 792 | 50 |
-| Comparison/clean/plain | 986.0 | 0 | 0 |
-| Comparison/flat/embargo | 4,669.5 | 760 | 25 |
-| Comparison/flat/go-masker | 3,206.5 | 48 | 3 |
-| Comparison/flat/masq | 6,917.5 | 672 | 32 |
-| Comparison/flat/plain | 938.4 | 0 | 0 |
-| Comparison/large50/embargo | 46,082.0 | 11,290 | 177 |
-| Comparison/large50/go-masker | 33,990.5 | 2,096 | 4 |
-| Comparison/large50/masq | 129,545.0 | 12,710 | 561 |
-| Comparison/large50/plain | 4,258.5 | 2,048 | 1 |
-| Comparison/map/embargo | 10,731.0 | 1,528 | 57 |
-| Comparison/map/go-masker | 7,925.5 | 1,448 | 29 |
-| Comparison/map/masq | 12,544.0 | 1,744 | 63 |
-| Comparison/map/plain | 2,631.0 | 288 | 9 |
-| Comparison/nested/embargo | 8,762.0 | 992 | 45 |
-| Comparison/nested/go-masker | 6,716.5 | 800 | 19 |
-| Comparison/nested/masq | 11,405.0 | 1,784 | 61 |
-| Comparison/nested/plain | 1,367.0 | 0 | 0 |
-| ComparisonFormatter/clean | 748.7 | 0 | 0 |
-| ComparisonFormatter/flat | 1,499.5 | 32 | 2 |
-| ComparisonFormatter/large50 | 16,760.0 | 7,873 | 10 |
-| ComparisonFormatter/map | 526.2 | 0 | 0 |
-| ComparisonFormatter/nested | 1,082.5 | 0 | 0 |
-| ComparisonStruct/embargo | 6,063.0 | 1,032 | 43 |
-| ComparisonStruct/go_mask | 1,306.5 | 328 | 7 |
-| ComparisonText/embargo | 4,940.0 | 1,720 | 47 |
-| ComparisonText/godlp | 67,542.5 | 11,714 | 59 |
-| StructuredPath/json_shape | 5,981.0 | 1,032 | 43 |
-| StructuredPath/old_string | 1,934.5 | 752 | 14 |
+| Comparison/clean/embargo | 3,222.5 | 152 | 14 |
+| Comparison/clean/go-masker | 2,103.5 | 8 | 1 |
+| Comparison/clean/masq | 6,202.0 | 792 | 50 |
+| Comparison/clean/plain | 866.6 | 0 | 0 |
+| Comparison/flat/embargo | 4,650.0 | 760 | 25 |
+| Comparison/flat/go-masker | 3,201.5 | 48 | 3 |
+| Comparison/flat/masq | 5,878.0 | 672 | 32 |
+| Comparison/flat/plain | 484.8 | 0 | 0 |
+| Comparison/large50/embargo | 46,926.0 | 11,290 | 177 |
+| Comparison/large50/go-masker | 35,817.5 | 2,096 | 4 |
+| Comparison/large50/masq | 129,120.5 | 12,710 | 561 |
+| Comparison/large50/plain | 8,315.0 | 2,048 | 1 |
+| Comparison/map/embargo | 9,489.0 | 1,528 | 57 |
+| Comparison/map/go-masker | 5,975.0 | 1,448 | 29 |
+| Comparison/map/masq | 17,897.5 | 1,744 | 63 |
+| Comparison/map/plain | 3,767.0 | 288 | 9 |
+| Comparison/nested/embargo | 8,652.0 | 992 | 45 |
+| Comparison/nested/go-masker | 6,653.0 | 800 | 19 |
+| Comparison/nested/masq | 11,121.5 | 1,784 | 61 |
+| Comparison/nested/plain | 1,344.0 | 0 | 0 |
+| ComparisonFormatter/clean | 1,004.5 | 0 | 0 |
+| ComparisonFormatter/flat | 1,384.5 | 32 | 2 |
+| ComparisonFormatter/large50 | 10,848.0 | 7,873 | 10 |
+| ComparisonFormatter/map | 1,061.0 | 0 | 0 |
+| ComparisonFormatter/nested | 1,044.5 | 0 | 0 |
+| ComparisonStruct/embargo | 6,406.5 | 1,032 | 43 |
+| ComparisonStruct/go_mask | 927.2 | 328 | 7 |
+| ComparisonText/embargo | 4,415.0 | 1,720 | 47 |
+| ComparisonText/godlp | 58,416.5 | 11,714 | 59 |
+| StructuredPath/json_shape | 5,557.5 | 1,032 | 43 |
+| StructuredPath/old_string | 1,977.0 | 752 | 14 |
 
 Measured 2026-11-16 with go version go1.26.11 linux/amd64, Linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S; GOMAXPROCS=1, ten 200 ms samples per case. Construction is outside the timed loop; JSON encoding and masking are included. Source and dependency fingerprints, CPU affinity and command are in [comparison.json](comparison.json).
 
-For these five configured events, embargo/masq median time ranges from 0.36 to 0.86; below 1 means less time for embargo. The structured JSON path uses 3.09 times the old string-only time. These ratios are regenerated from the same samples as the table.
+For these five configured events, embargo/masq median time ranges from 0.36 to 0.79; below 1 means less time for embargo. The structured JSON path uses 2.81 times the old string-only time. These ratios are regenerated from the same samples as the table.
 <!-- comparison:end -->
 
 The five head-to-head events are a flat email/card pair, a nested struct with opaque password and tagged recovery field, a map, a clean event, and 50 attributes (48 clean plus the flat pair). All four paths use the same io.Discard sink. masq uses its documented WithAllowedType for time.Time and slog.Level, matching embargo's decision to preserve that metadata; this avoids charging masq for an unnecessary reflection traversal. Masker/scanner construction and regex compilation are excluded for every path. The tests use prebuilt slog.Attr slices and LogAttrs to avoid attributing caller argument construction to any library.

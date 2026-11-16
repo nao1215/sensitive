@@ -1987,6 +1987,32 @@
       ]
     },
     {
+      "source": "synthetic/detection-compatibility.json/85",
+      "input_sha256": "fcf41222e35a2161e45f1274c4cb342ef5a40c45bf9230c4a77114ffd602e5e3",
+      "masked_sha256": "4a4ab0e08ea9a5ae2911afd94397cc8229a85667bf618fd08f1c346f1f4c6ca2",
+      "findings": [
+        {
+          "Kind": "credential",
+          "Start": 40,
+          "End": 59,
+          "Confidence": 0.95
+        }
+      ]
+    },
+    {
+      "source": "synthetic/detection-compatibility.json/86",
+      "input_sha256": "f318c3f5d8017d91b3fbc2b0d53488cb6fc3792b725ba09f9b2d82625fb4092f",
+      "masked_sha256": "3cc2389e0b4631fc2d2fb775cad2f8c3d0f6970c2095e73002178c7a84597e81",
+      "findings": [
+        {
+          "Kind": "credential",
+          "Start": 42,
+          "End": 63,
+          "Confidence": 0.95
+        }
+      ]
+    },
+    {
       "source": "public/Android/1",
       "input_sha256": "b9cd16fab640ecd53773b9ce5a802951d5231b79bbf39ad67444740fd87fb273",
       "masked_sha256": "b9cd16fab640ecd53773b9ce5a802951d5231b79bbf39ad67444740fd87fb273",

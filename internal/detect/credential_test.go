@@ -177,3 +177,17 @@ func TestCredentialLineAndBlockBoundaries(t *testing.T) {
 		}
 	}
 }
+
+func TestCredentialAnonymousTypeBoundaries(t *testing.T) {
+	t.Parallel()
+	for _, input := range []string{
+		`password:struct { Raw string }{Raw:"opaqueAnonymousFixture"} public:kept`,
+		`password:[]struct { Raw string }{{Raw:"opaqueAnonymousFixture"}} public:kept`,
+		`password:map[string]struct { Raw string }{"item":{Raw:"opaqueAnonymousFixture"}} public:kept`,
+	} {
+		got := (&Credential{}).Scan([]byte(input))
+		if len(got) != 1 || !strings.Contains(got[0].RawValue, "opaqueAnonymousFixture") || strings.Contains(got[0].RawValue, "public:kept") || strings.Contains(got[0].RawValue, "Raw string") {
+			t.Errorf("anonymous type was mistaken for its value: %+v", got)
+		}
+	}
+}

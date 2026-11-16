@@ -253,5 +253,11 @@
   },
   {
     "text": "\"\\\"\\\\\\\"\\\\\\\\\\\\\\\"{\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"password\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"opaqueFixture\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"}\\\\\\\\\\\\\\\"\\\\\\\"\\\"\""
+  },
+  {
+    "text": "main.Cfg{Password:struct { Raw string }{Raw:\"opaqueFixture\"}}"
+  },
+  {
+    "text": "main.Cfg{Password:[]struct { Raw string }{{Raw:\"opaqueFixture\"}}}"
   }
 ]
