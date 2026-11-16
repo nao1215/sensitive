@@ -307,8 +307,10 @@ func TestWithheldRecord(t *testing.T) {
 			if message != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(1) || got["level"] != "warn" || strings.Contains(out.String(), "planted") {
 				t.Fatal(out.String())
 			}
-			if got["ts"] != float64(7) && got["time"] != "1970-01-01T00:00:07Z" {
-				t.Fatal("timestamp lost", got)
+			// Byte-only fallbacks may omit metadata whose origin is unproven.
+			// A retained legacy timestamp must still be the known safe fixture.
+			if got["ts"] != nil && got["ts"] != float64(7) || got["time"] != nil && got["time"] != "1970-01-01T00:00:07Z" {
+				t.Fatal("unexpected timestamp retained", got)
 			}
 		})
 	}

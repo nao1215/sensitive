@@ -120,3 +120,14 @@ func TestCredentialLongUnknownKey(t *testing.T) {
 		t.Fatal("unknown long key masked or following password lost")
 	}
 }
+
+func TestProxyAuthorizationCredentials(t *testing.T) {
+	t.Parallel()
+	for _, key := range []string{"Proxy-Authorization", "proxy_authorization", "PROXYAUTHORIZATION"} {
+		input := key + ": Basic dXNlcjpodW50ZXIy"
+		got := (&Credential{}).Scan([]byte(input))
+		if len(got) != 1 || got[0].RawValue != "dXNlcjpodW50ZXIy" || !SensitiveCredentialKey(key) {
+			t.Fatalf("credentials not masked: %v", got)
+		}
+	}
+}

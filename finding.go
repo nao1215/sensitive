@@ -7,8 +7,11 @@ package embargo
 // A business label means order, invoice, tracking, version, build, serial or
 // shipment immediately before a candidate in the same field, within 48 bytes,
 // optionally followed by id, number, ref or code; ASCII case is ignored.
-// Numeric normalization accepts full-width digits and hyphen variants for PAN,
+// Numeric normalization accepts full-width digits, U+FF0D, U+30FC, U+2212 and
+// U+2010–U+2015 as hyphens, and U+3000 as a space for PAN,
 // JPPhone, MyNumber, ABARouting, BankAccount and the eleven country kinds.
+// Built-ins except Credential ignore U+200B, U+00A0, U+202F and U+00AD inside
+// alphanumeric tokens, including digit runs and fixed-format tokens.
 // Scan decodes one percent-encoding layer for every built-in except Credential.
 // These checks do not establish that an account, credential or identity exists.
 type Kind string
@@ -30,7 +33,7 @@ const (
 	KindServiceToken Kind = "service_token"
 	// KindHighEntropy looks for unlabeled runs of 32–256 ASCII letters, digits, _, - or +; Shannon entropy of at least 4.5 bits per byte and three of lowercase, uppercase, digit and symbol classes yield 0.3. No keyword is required; slash/backslash-adjacent or dotted path components and assignments to id, requestid, traceid, spanid, commit, sha, hash, checksum or uuid (case and key separators ignored) are excluded (NewScanner default: off).
 	KindHighEntropy Kind = "high_entropy"
-	// KindCredential locates nonempty assignment values, Authorization credentials and URL/DSN passwords; delimiter and quoting checks give 0.95, preserving labels, Bearer/Basic schemes, usernames and hosts. Required assignment keys are password, passwd, secret, token, api_key, authorization, cookie, set-cookie, X-Amz-Signature, sig, AccountKey, SharedAccessSignature, aws_secret_access_key, SecretAccessKey, private_key, client_secret, TWILIO_AUTH_TOKEN or auth_token (ASCII case and _, -, dot or space variants); = or : introduces the value, quotes honor backslash escapes, unquoted values stop at field delimiters, cookies retain spaces/semicolons, [REDACTED] and unquoted Java object references under token are excluded, URL user:password@ after :// and MySQL @tcp(/@unix( need no keyword, and a 40-byte secret using ASCII letters, digits, + or / is accepted within 128 bytes of an AKIA/ASIA access-key ID (NewScanner default: on).
+	// KindCredential locates nonempty assignment values, Authorization credentials and URL/DSN passwords; delimiter and quoting checks give 0.95, preserving labels, Bearer/Basic schemes, usernames and hosts. Required assignment keys are password, passwd, secret, token, api_key, authorization, proxy-authorization, cookie, set-cookie, X-Amz-Signature, sig, AccountKey, SharedAccessSignature, aws_secret_access_key, SecretAccessKey, private_key, client_secret, TWILIO_AUTH_TOKEN or auth_token (ASCII case and _, -, dot or space variants); = or : introduces the value, quotes honor backslash escapes, unquoted values stop at field delimiters, cookies retain spaces/semicolons, [REDACTED] and unquoted Java object references under token are excluded, URL user:password@ after :// and MySQL @tcp(/@unix( need no keyword, and a 40-byte secret using ASCII letters, digits, + or / is accepted within 128 bytes of an AKIA/ASIA access-key ID (NewScanner default: on).
 	KindCredential Kind = "credential"
 	// KindPAN finds 13–19 digits with Visa, Mastercard, Amex, JCB, Discover, Diners or UnionPay prefixes; Luhn plus issuer length scores 1.0, a failed checksum 0.6, and an attached business label 0.4. No keyword is needed; spaces/hyphens are allowed, prefixes are 4, 51–55 or 2221–2720, 34/37, 3528–3589, 6011/644–649/65, 300–305/36/38 and 62 respectively, with Luhn-valid lengths 13/16, 16, 15, 16, 16, 14–16 and 16–19; other Luhn-valid lengths are rejected (NewScanner default: on).
 	KindPAN Kind = "pan"

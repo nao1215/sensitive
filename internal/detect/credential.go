@@ -8,10 +8,11 @@ import (
 )
 
 const (
-	authorizationKey   = "authorization"
-	credentialTokenKey = "token"
-	cookieKey          = "cookie"
-	setCookieKey       = "setcookie"
+	authorizationKey      = "authorization"
+	proxyAuthorizationKey = "proxyauthorization"
+	credentialTokenKey    = "token"
+	cookieKey             = "cookie"
+	setCookieKey          = "setcookie"
 )
 
 // Credential implements the public matching contract at
@@ -46,7 +47,7 @@ func NormalizeCredentialKey(key string) string {
 // SensitiveCredentialKey implements the shared default key rule.
 func SensitiveCredentialKey(key string) bool {
 	switch NormalizeCredentialKey(key) {
-	case "password", "passwd", "secret", credentialTokenKey, "apikey", authorizationKey, cookieKey, setCookieKey:
+	case "password", "passwd", "secret", credentialTokenKey, "apikey", authorizationKey, proxyAuthorizationKey, cookieKey, setCookieKey:
 		return true
 	}
 	return false
@@ -77,7 +78,7 @@ func (d *Credential) secretKey(key []byte) bool {
 	name := string(normalized[:n])
 	if d.MatchKey == nil {
 		switch name {
-		case "password", "passwd", "secret", credentialTokenKey, "apikey", authorizationKey, cookieKey, setCookieKey:
+		case "password", "passwd", "secret", credentialTokenKey, "apikey", authorizationKey, proxyAuthorizationKey, cookieKey, setCookieKey:
 			return true
 		}
 	}
@@ -296,7 +297,7 @@ func awsSecretPair(data []byte) []Finding {
 func awsSecretByte(b byte) bool { return isBase62(b) || b == '+' || b == '/' }
 
 func authorizationValueStart(data []byte, start, end int, key string) int {
-	if key == authorizationKey {
+	if key == authorizationKey || key == proxyAuthorizationKey {
 		for _, scheme := range []string{"Bearer ", "Basic "} {
 			if end-start >= len(scheme) && strings.EqualFold(string(data[start:start+len(scheme)]), scheme) {
 				start += len(scheme)

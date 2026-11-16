@@ -4,12 +4,12 @@ pkg: github.com/nao1215/embargo/tests
 cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
                    │   masq.txt    │             embargo.txt              │
                    │    sec/op     │    sec/op     vs base                │
-Comparison/flat      3.526µ ±   2%   2.144µ ±  2%  -39.19% (p=0.000 n=10)
-Comparison/nested    9.461µ ±  13%   8.011µ ± 12%  -15.32% (p=0.003 n=10)
-Comparison/map       6.213µ ± 168%   5.678µ ± 73%        ~ (p=0.075 n=10)
-Comparison/clean     3.044µ ±   3%   1.539µ ± 27%  -49.46% (p=0.000 n=10)
-Comparison/large50   77.09µ ±  20%   23.51µ ± 31%  -69.50% (p=0.000 n=10)
-geomean              8.658µ          5.123µ        -40.83%
+Comparison/flat       6.860µ ± 14%   4.396µ ± 11%  -35.92% (p=0.000 n=10)
+Comparison/nested     9.139µ ± 37%   8.318µ ±  8%        ~ (p=0.247 n=10)
+Comparison/map       12.078µ ±  4%   9.784µ ±  2%  -19.00% (p=0.000 n=10)
+Comparison/clean      6.173µ ±  5%   2.998µ ±  3%  -51.44% (p=0.000 n=10)
+Comparison/large50   131.72µ ±  4%   44.53µ ±  3%  -66.19% (p=0.000 n=10)
+geomean               14.38µ         8.626µ        -40.03%
 
                    │   masq.txt   │             embargo.txt              │
                    │     B/op     │     B/op      vs base                │

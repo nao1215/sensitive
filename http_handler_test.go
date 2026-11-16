@@ -3,9 +3,11 @@ package embargo_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"log/slog"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -16,6 +18,7 @@ import (
 	"time"
 
 	"github.com/nao1215/embargo"
+	"github.com/nao1215/embargo/internal/saferecord"
 )
 
 func TestHTTPHandlerMasksLogsAndPreservesExchange(t *testing.T) {
@@ -273,17 +276,48 @@ func TestHTTPContextCancellation(t *testing.T) {
 			if alreadyCanceled {
 				cancel()
 			}
-			detector := &cancelingScan{cancel: cancel}
-			scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(detector))
 			var out bytes.Buffer
-			next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusAccepted) })
-			handler := embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, nil)), scanner)
+			next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { cancel(); w.WriteHeader(http.StatusAccepted) })
+			request := httptest.NewRequestWithContext(ctx, http.MethodGet, "/pay?email=alice%40example.com&token=planted-query", http.NoBody)
+			request.Header.Set("Authorization", "planted-header")
 			response := httptest.NewRecorder()
-			handler.ServeHTTP(response, httptest.NewRequestWithContext(ctx, http.MethodGet, "/pay?first=public&second=public", http.NoBody))
-			if response.Code != http.StatusAccepted || !strings.Contains(out.String(), "http request") || detector.calls == 0 {
-				t.Fatalf("status=%d output=%s scans=%d", response.Code, out.String(), detector.calls)
+			embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, nil)), embargo.NewScanner()).ServeHTTP(response, request)
+			if response.Code != http.StatusAccepted {
+				t.Fatal("response changed")
 			}
+			assertHTTPAccessRecord(t, out.Bytes(), "/pay?email=[REDACTED]&token=[REDACTED]")
 		})
+	}
+}
+
+func assertHTTPAccessRecord(t *testing.T, data []byte, target string) {
+	t.Helper()
+	const marker = "[REDACTED]"
+	var record struct {
+		RequestHeaders map[string]any `json:"request_headers"`
+		Msg            string         `json:"msg"`
+		Method         string         `json:"method"`
+		Target         string         `json:"target"`
+		Status         int            `json:"status"`
+	}
+	// Unmarshal rejects trailing records as well as missing or malformed JSON.
+	if err := json.Unmarshal(data, &record); err != nil {
+		t.Fatal(err)
+	}
+	if record.Msg != "http request" || record.Method != http.MethodGet || record.Target != target || record.Status != http.StatusAccepted || record.RequestHeaders["Authorization"] != marker {
+		t.Fatalf("wrong access record: %s", data)
+	}
+}
+
+func assertHTTPWithheld(t *testing.T, data []byte, reason string) {
+	t.Helper()
+	assertWithheldJSON(t, data, reason, 6)
+	var record map[string]any
+	if err := json.Unmarshal(data, &record); err != nil {
+		t.Fatal(err)
+	}
+	if len(record) != 6 || record["status"] != float64(http.StatusAccepted) || record["duration"] == nil {
+		t.Fatalf("unsafe or incomplete fallback: %s", data)
 	}
 }
 
@@ -324,10 +358,11 @@ func BenchmarkHookScaling(b *testing.B) {
 	}
 }
 
-//nolint:paralleltest // Isolate reason checks under the real 100 ms masking budget.
 func TestHTTPWithheldRecord(t *testing.T) {
+	t.Parallel()
 	for _, reason := range []string{maskingReason, sizeReason, canceledReason} {
 		t.Run(reason, func(t *testing.T) {
+			t.Parallel()
 			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
 			scanner := embargo.NewScanner()
@@ -335,7 +370,12 @@ func TestHTTPWithheldRecord(t *testing.T) {
 				scanner = embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(&failingHTTPDetector{}))
 			}
 			var out bytes.Buffer
-			next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { cancel(); w.WriteHeader(http.StatusAccepted) })
+			next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				if reason == canceledReason {
+					cancel()
+				}
+				w.WriteHeader(http.StatusAccepted)
+			})
 			req := httptest.NewRequestWithContext(ctx, http.MethodGet, "/pay?token=planted-query", http.NoBody)
 			req.Header.Set("Authorization", "planted-header")
 			if reason == sizeReason {
@@ -343,41 +383,56 @@ func TestHTTPWithheldRecord(t *testing.T) {
 			}
 			embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, nil)), scanner).ServeHTTP(httptest.NewRecorder(), req)
 			if reason == canceledReason {
-				if !strings.Contains(out.String(), "http request") || strings.Contains(out.String(), "planted") {
-					t.Fatalf("missing safe access record: %s", out.String())
-				}
+				assertHTTPAccessRecord(t, out.Bytes(), "/pay?token=[REDACTED]")
 			} else {
-				assertWithheldJSON(t, out.Bytes(), reason, 6)
+				assertHTTPWithheld(t, out.Bytes(), reason)
 			}
 		})
 	}
 }
 
-type budgetDetector struct{ calls int }
+type budgetDetector struct {
+	cancel context.CancelFunc
+	calls  int
+}
 
 func (d *budgetDetector) Scan([]byte) []embargo.Finding {
 	d.calls++
-	if d.calls == 1 {
-		timer := time.NewTimer(150 * time.Millisecond)
-		defer timer.Stop()
-		<-timer.C
+	if d.cancel != nil {
+		d.cancel()
 	}
 	return nil
 }
 
 func TestHTTPMaskingBudgetEmitsFallback(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithCancel(t.Context())
-	cancel()
 	detector := &budgetDetector{}
+	clockCalls := 0
+	ctx := saferecord.WithAccessPolicy(t.Context(), saferecord.AccessPolicy{
+		Now: func() time.Time { clockCalls++; return time.Unix(7, 0).Add(time.Duration(clockCalls) * time.Second) },
+		Timeout: func(parent context.Context, budget time.Duration) (context.Context, context.CancelFunc) {
+			if budget != 100*time.Millisecond || parent.Err() != nil {
+				t.Error("wrong detached budget")
+			}
+			bounded, cancel := context.WithCancel(parent)
+			detector.cancel = cancel
+			return bounded, cancel
+		},
+	})
+	ctx, cancel := context.WithCancel(ctx)
+	cancel()
 	scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(detector))
 	var out bytes.Buffer
 	handler := embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusAccepted) }), slog.New(slog.NewJSONHandler(&out, nil)), scanner)
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, httptest.NewRequestWithContext(ctx, http.MethodGet, "/?token=planted-query", http.NoBody))
-	assertWithheldJSON(t, out.Bytes(), canceledReason, 6)
-	if detector.calls != 1 || response.Code != http.StatusAccepted {
-		t.Fatal("budget did not stop subsequent scans or changed response")
+	assertHTTPWithheld(t, out.Bytes(), canceledReason)
+	var record map[string]any
+	if err := json.Unmarshal(out.Bytes(), &record); err != nil {
+		t.Fatal(err)
+	}
+	if record["duration"] != float64(time.Second) || detector.calls != 1 || response.Code != http.StatusAccepted {
+		t.Fatal("budget changed outcome or duration")
 	}
 }
 
@@ -401,7 +456,7 @@ func TestHTTPMalformedHeaderTargetWithholdsWholeRecord(t *testing.T) {
 				}
 				response := httptest.NewRecorder()
 				handler.ServeHTTP(response, request)
-				assertWithheldJSON(t, out.Bytes(), maskingReason, 6)
+				assertHTTPWithheld(t, out.Bytes(), maskingReason)
 				if response.Code != http.StatusAccepted {
 					t.Fatal("diagnosing a header changed the service response")
 				}
@@ -419,5 +474,254 @@ func TestHTTPDiagnosticSinkFailurePreservesResponse(t *testing.T) {
 	handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?bad;planted-secret", http.NoBody))
 	if response.Code != http.StatusAccepted || sink.handled != 1 || sink.record.Message != "embargo: record withheld (masking error)" {
 		t.Fatal("sink failure changed the response or prevented the diagnostic attempt")
+	}
+}
+
+func noTime(groups []string, a slog.Attr) slog.Attr {
+	if len(groups) == 0 && a.Key == slog.TimeKey {
+		return slog.Attr{}
+	}
+	return a
+}
+
+func httpLog(t *testing.T, target string, reqHeader http.Header) string {
+	t.Helper()
+	var out bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: noTime}))
+	h := embargo.NewHTTPHandler(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}), logger, embargo.NewScanner())
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, target, http.NoBody)
+	maps.Copy(req.Header, reqHeader)
+	h.ServeHTTP(httptest.NewRecorder(), req)
+	return strings.TrimSpace(out.String())
+}
+
+func TestOutputQueryKeyReencoding(t *testing.T) {
+	t.Parallel()
+	scanner := embargo.NewScanner()
+	for _, key := range []string{"4111%201111%201111%201111", "090%201234%205678", "1234%205678%209018", "DE89%203704%200044%200532%200130%2000"} {
+		for _, suffix := range []string{"", "=public"} {
+			target := "/search?" + key + suffix
+			want := embargo.Mask(target, scanner.ScanString(target))
+			if want == target {
+				t.Fatalf("scanner control failed: %q", target)
+			}
+			var record map[string]any
+			if err := json.Unmarshal([]byte(httpLog(t, target, nil)), &record); err != nil {
+				t.Fatal(err)
+			}
+			if record["target"] != want {
+				t.Fatalf("scanner masked %q but access target is %q", want, record["target"])
+			}
+		}
+	}
+}
+
+func TestOutputProxyAuthorization(t *testing.T) {
+	t.Parallel()
+	got := httpLog(t, "/", http.Header{"Proxy-Authorization": {"Basic dXNlcjpodW50ZXIy"}, "Authorization": {"Basic dXNlcjpodW50ZXIy"}})
+	t.Logf("%s", got)
+	if strings.Contains(got, "dXNlcjpodW50ZXIy") {
+		t.Errorf("Basic credentials reached the access log")
+	}
+}
+
+func TestHTTPSinglePassQuery(t *testing.T) {
+	t.Parallel()
+	scanner := embargo.NewScanner()
+	for _, input := range []string{"cvv: " + strings.Repeat("a", 60) + "@example.com 123", "bank account: " + strings.Repeat("a", 60) + "@example.com 2026", "exp " + strings.Repeat("a", 60) + "@example.com 12/29"} {
+		//nolint:errchkjson // Match the explicit JSON error boundaries in the test.
+		raw, err := json.Marshal(map[string]string{"detail": input})
+		if err != nil {
+			t.Fatal(err)
+		}
+		expected, err := scanner.MaskJSON(raw)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var values map[string]string
+		if err := json.Unmarshal(expected, &values); err != nil {
+			t.Fatal(err)
+		}
+		var record map[string]any
+		if err := json.Unmarshal([]byte(httpLog(t, "/health?detail="+url.QueryEscape(input), http.Header{"Detail": {input}})), &record); err != nil {
+			t.Fatal(err)
+		}
+		// Query values are decoded before scanning and are never encoded again.
+		if record["target"] != "/health?detail="+values["detail"] {
+			t.Fatalf("single pass target=%q, got=%q", values["detail"], record["target"])
+		}
+		headers, ok := record["request_headers"].(map[string]any)
+		if !ok {
+			t.Fatal("missing headers")
+		}
+		detail, ok := headers["Detail"].([]any)
+		if !ok || len(detail) != 1 || detail[0] != values["detail"] {
+			t.Fatalf("header scanned more than once: %v", headers)
+		}
+	}
+}
+
+func TestHTTPPanicStatus(t *testing.T) {
+	t.Parallel()
+	for _, panicValue := range []any{"planted-panic", http.ErrAbortHandler} {
+		for _, status := range []int{0, http.StatusAccepted} {
+			var out bytes.Buffer
+			handler := embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				if status != 0 {
+					w.WriteHeader(status)
+				}
+				panic(panicValue)
+			}), slog.New(slog.NewJSONHandler(&out, nil)), embargo.NewScanner())
+			func() {
+				defer func() {
+					if got := recover(); got != panicValue {
+						t.Errorf("panic changed: %v", got)
+					}
+				}()
+				handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", http.NoBody))
+			}()
+			var record map[string]any
+			if err := json.Unmarshal(out.Bytes(), &record); err != nil {
+				t.Fatal(err)
+			}
+			if record["status"] != float64(status) {
+				t.Fatalf("panic status=%v, want=%d", record["status"], status)
+			}
+			if strings.Contains(out.String(), "planted") {
+				t.Fatal("panic content retained")
+			}
+		}
+	}
+}
+
+func TestHTTPOrdinaryRequestHasNoDetachedDeadline(t *testing.T) {
+	t.Parallel()
+	detector := &budgetDetector{}
+	ctx := saferecord.WithAccessPolicy(t.Context(), saferecord.AccessPolicy{Timeout: func(context.Context, time.Duration) (context.Context, context.CancelFunc) {
+		t.Fatal("ordinary request used detached budget")
+		return nil, nil
+	}})
+	var out bytes.Buffer
+	handler := embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusAccepted) }), slog.New(slog.NewJSONHandler(&out, nil)), embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(detector)))
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequestWithContext(ctx, http.MethodGet, "/safe", http.NoBody))
+	var record map[string]any
+	if err := json.Unmarshal(out.Bytes(), &record); err != nil {
+		t.Fatal(err)
+	}
+	if record["msg"] != "http request" || record["status"] != float64(http.StatusAccepted) {
+		t.Fatalf("ordinary record lost: %s", out.String())
+	}
+}
+
+func TestHTTPInvalidStatusPanicDoesNotBecomeOutcome(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	handler := embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(9999) }), slog.New(slog.NewJSONHandler(&out, nil)), embargo.NewScanner())
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Error("invalid status panic swallowed")
+			}
+		}()
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", http.NoBody))
+	}()
+	var record map[string]any
+	if err := json.Unmarshal(out.Bytes(), &record); err != nil {
+		t.Fatal(err)
+	}
+	if record["status"] != float64(0) {
+		t.Fatalf("unwritten invalid status retained: %s", out.String())
+	}
+}
+
+func TestHTTPRequestCanceledDuringMasking(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	detector := &cancelingScan{cancel: cancel}
+	var out bytes.Buffer
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusAccepted) })
+	handler := embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, nil)), embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(detector)))
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequestWithContext(ctx, http.MethodGet, "/planted-target", http.NoBody))
+	assertHTTPWithheld(t, out.Bytes(), canceledReason)
+	if detector.calls != 1 {
+		t.Fatal("scanned after request cancellation")
+	}
+}
+
+func TestHTTPTargetPartsAndBounds(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name, query, fragment, want, reason string
+		force                               bool
+	}{
+		{name: "bare query", force: true, want: "/?"},
+		{name: "flags", query: "public&flag=&x=a%20b", want: "/?public&flag=&x=a b"},
+		{name: "fragment email", fragment: "alice@example.com", want: "/#[REDACTED]"},
+		{name: "bad key escape", query: "%zz=planted", reason: maskingReason},
+		{name: "bad value escape", query: "key=%zz", reason: maskingReason},
+		{name: "oversized query", query: strings.Repeat("x", (1<<20)+1), reason: sizeReason},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			var out bytes.Buffer
+			req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", http.NoBody)
+			req.URL.RawQuery, req.URL.Fragment, req.URL.ForceQuery = tc.query, tc.fragment, tc.force
+			handler := embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusAccepted) }), slog.New(slog.NewJSONHandler(&out, nil)), embargo.NewScanner())
+			handler.ServeHTTP(httptest.NewRecorder(), req)
+			if tc.reason != "" {
+				assertHTTPWithheld(t, out.Bytes(), tc.reason)
+				return
+			}
+			var record map[string]any
+			if err := json.Unmarshal(out.Bytes(), &record); err != nil || record["target"] != tc.want {
+				t.Fatalf("record=%s error=%v want=%s", out.Bytes(), err, tc.want)
+			}
+		})
+	}
+}
+
+type selectiveCancelDetector struct {
+	cancel context.CancelFunc
+	match  string
+}
+
+func (d selectiveCancelDetector) Scan(data []byte) []embargo.Finding {
+	if string(data) == d.match {
+		d.cancel()
+	}
+	return nil
+}
+
+func TestHTTPCancellationAtEveryInputBoundary(t *testing.T) {
+	t.Parallel()
+	for _, match := range []string{"key", "key: value", "fragment", "X-Public", "X-Public: value", "method: GET"} {
+		t.Run(match, func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			req := httptest.NewRequestWithContext(ctx, http.MethodGet, "/?key=value", http.NoBody)
+			req.URL.Fragment = "fragment"
+			req.Header.Set("X-Public", "value")
+			var out bytes.Buffer
+			scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(selectiveCancelDetector{cancel: cancel, match: match}))
+			embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusAccepted) }), slog.New(slog.NewJSONHandler(&out, nil)), scanner).ServeHTTP(httptest.NewRecorder(), req)
+			assertHTTPWithheld(t, out.Bytes(), canceledReason)
+		})
+	}
+}
+
+func TestHTTPHeaderSizeBoundaries(t *testing.T) {
+	t.Parallel()
+	for _, header := range []http.Header{
+		{strings.Repeat("x", (1<<20)+1): {"value"}},
+		{"X-Value": {strings.Repeat("x", (1<<20)+1)}},
+		{"X-Value": {strings.Repeat("\x00", 1<<18)}},
+	} {
+		var out bytes.Buffer
+		req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", http.NoBody)
+		req.Header = header
+		embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusAccepted) }), slog.New(slog.NewJSONHandler(&out, nil)), embargo.NewScanner()).ServeHTTP(httptest.NewRecorder(), req)
+		assertHTTPWithheld(t, out.Bytes(), sizeReason)
 	}
 }

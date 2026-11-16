@@ -14,7 +14,7 @@ import (
 // Both dependencies are required; nil dependencies panic.
 // Write and Sync serialize access to next. Sync emits diagnostics for incomplete
 // events and synchronizes the sink even when framing failed. Masking failures emit a diagnostic retaining
-// recognized time/level metadata, a fixed reason and withheld_attributes. No
+// recognized level metadata, a fixed reason and withheld_attributes. Input timestamps are omitted because their encoder origin cannot be proven. No
 // original fields survive; subsequent complete events remain usable. See package limits.
 func NewWriteSyncer(next zapcore.WriteSyncer, scanner *embargo.Scanner) zapcore.WriteSyncer {
 	return &writeSyncer{writer: output.NewWriter(next, scanner), next: next}

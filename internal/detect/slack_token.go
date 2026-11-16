@@ -52,6 +52,10 @@ const slackMinBody = 10
 func (d *SlackToken) Scan(data []byte) []Finding {
 	var findings []Finding
 	for i := 0; i+5 <= len(data); {
+		if !credStartBoundary(data, i) {
+			i++
+			continue
+		}
 		kind, ok := slackTokenType(data, i)
 		if !ok {
 			i++

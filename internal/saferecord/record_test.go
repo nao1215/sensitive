@@ -50,3 +50,28 @@ func TestDiagnosticsContainOnlyFixedData(t *testing.T) {
 		t.Fatal("missing detached budget")
 	}
 }
+
+func TestAccessBudgetUsesOriginalContextUntilCanceled(t *testing.T) {
+	t.Parallel()
+	calls := 0
+	when := time.Unix(7, 0)
+	ctx := WithAccessPolicy(t.Context(), AccessPolicy{Now: func() time.Time { return when }, Timeout: func(parent context.Context, limit time.Duration) (context.Context, context.CancelFunc) {
+		calls++
+		if limit != 100*time.Millisecond || parent.Err() != nil {
+			t.Fatal("wrong detached budget")
+		}
+		return context.WithCancel(parent)
+	}})
+	original, stop := Budget(ctx)
+	stop()
+	if original != ctx || calls != 0 || Now(ctx) != when {
+		t.Fatal("ordinary context was detached or clock was ignored")
+	}
+	canceled, cancel := context.WithCancel(ctx)
+	cancel()
+	detached, stop := Budget(canceled)
+	defer stop()
+	if calls != 1 || detached.Err() != nil || Now(detached) != when {
+		t.Fatal("canceled context lost its internal policy")
+	}
+}

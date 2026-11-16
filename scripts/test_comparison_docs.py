@@ -24,5 +24,14 @@ class FingerprintTests(unittest.TestCase):
                 module.write_text(module.read_text().replace('v0.2.3','v0.2.4'))
                 self.assertNotEqual(before, docs.source_hash())
 
+
+class MarkerTests(unittest.TestCase):
+    def test_markers_are_unique_and_ordered(self):
+        valid = '<!-- comparison:start -->\nold\n<!-- comparison:end -->'
+        self.assertEqual(docs.replace_block(valid, 'comparison', 'new\n'), '<!-- comparison:start -->\nnew\n<!-- comparison:end -->')
+        for bad in ('', valid.replace('<!-- comparison:start -->', ''), valid.replace('<!-- comparison:end -->', ''), valid.replace('comparison:', 'renamed:'), valid+valid, '<!-- comparison:end -->\n<!-- comparison:start -->', valid.replace(':start -->\n', ':start -->')):
+            with self.subTest(text=bad), self.assertRaises(ValueError):
+                docs.replace_block(bad, 'comparison', 'new\n')
+
 if __name__ == '__main__':
     unittest.main()

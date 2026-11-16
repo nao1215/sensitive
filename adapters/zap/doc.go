@@ -16,7 +16,7 @@
 // wrap such values in embargo.Secret before logging. Zap's separate ErrorOutput
 // and any other sinks are outside this adapter's scope.
 //
-// Failed masking emits time/level, a fixed withheld message and an attribute
+// Failed masking omits unproven input timestamps and emits an allowlisted level, a fixed withheld message and an attribute
 // count, without original fields. See the logging guide for count definitions,
 // byte-writer metadata limitations and cooperative cancellation budgets:
 // https://github.com/nao1215/embargo/blob/main/doc/logging.md.

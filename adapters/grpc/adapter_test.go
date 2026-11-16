@@ -204,21 +204,29 @@ func TestGRPCContextCancellation(t *testing.T) {
 					cancel()
 				}
 				detector := &cancelingScan{cancel: cancel}
-				scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(detector))
+				scanner := embargo.NewScanner(embargo.WithDetector(detector))
+				ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("authorization", "planted-secret", "email", "alice@example.com"))
 				var out bytes.Buffer
 				logger := slog.New(slog.NewJSONHandler(&out, nil))
 				response := any(grpcResponse)
 				var err error
 				if streaming {
 					hook := embargogrpc.NewStreamServerInterceptor(logger, scanner)
-					err = hook(nil, &contextStream{getContext: func() context.Context { return ctx }}, &grpc.StreamServerInfo{FullMethod: "/test/Stream"}, func(any, grpc.ServerStream) error { return nil })
+					err = hook(nil, &contextStream{getContext: func() context.Context { return ctx }}, &grpc.StreamServerInfo{FullMethod: "/test/alice@example.com"}, func(any, grpc.ServerStream) error {
+						cancel()
+						return status.Error(codes.ResourceExhausted, "alice@example.com")
+					})
 				} else {
 					hook := embargogrpc.NewUnaryServerInterceptor(logger, scanner)
-					response, err = hook(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/test/Method"}, func(context.Context, any) (any, error) { return grpcResponse, nil })
+					response, err = hook(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/test/alice@example.com"}, func(context.Context, any) (any, error) {
+						cancel()
+						return grpcResponse, status.Error(codes.ResourceExhausted, "alice@example.com")
+					})
 				}
-				if response != grpcResponse || err != nil || !strings.Contains(out.String(), "grpc request") || detector.calls == 0 {
+				if response != grpcResponse || status.Code(err) != codes.ResourceExhausted || !strings.Contains(out.String(), "grpc request") || detector.calls == 0 {
 					t.Fatalf("err=%v output=%s scans=%d", err, out.String(), detector.calls)
 				}
+				requireCanceledAccessRecord(t, out.Bytes())
 			})
 		}
 	}
@@ -417,5 +425,21 @@ func requireDiagnostic(t *testing.T, data []byte, reason string) {
 	}
 	if _, err := time.Parse(time.RFC3339Nano, stamp); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func requireCanceledAccessRecord(t *testing.T, data []byte) {
+	t.Helper()
+	var record map[string]any
+	if decodeErr := json.Unmarshal(data, &record); decodeErr != nil {
+		t.Fatal(decodeErr)
+	}
+	values, ok := record["metadata"].(map[string]any)
+	if !ok || record["msg"] != "grpc request" || record["method"] != "/test/[REDACTED]" || record["code"] != codes.ResourceExhausted.String() || values["authorization"] != "[REDACTED]" || record["error"] != "rpc error: code = ResourceExhausted desc = [REDACTED]" {
+		t.Fatalf("wrong access record: %s", string(data))
+	}
+	email, ok := values["email"].([]any)
+	if !ok || len(email) != 1 || email[0] != "[REDACTED]" {
+		t.Fatalf("metadata not masked: %s", string(data))
 	}
 }

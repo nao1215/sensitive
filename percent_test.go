@@ -47,6 +47,9 @@ func TestPercentEncodedFindings(t *testing.T) {
 		{KindMerchantID, "merchant ID ", "ZNFBVPHU2BHHFXP"},
 		{KindPrivateKeyPEM, "", "-----BEGIN RSA PRIVATE KEY-----"},
 		{KindPAN, "", "４２４２４２４２４２４２４２４２"},
+		{KindPAN, "", "４１１１−１１１１−１１１１−１１１１"},
+		{KindPAN, "", "4111\u200b1111\u00a01111\u202f1111"},
+		{KindAWSKey, "", "AKIA\u00adIOSFODNN7EXAMPLE"},
 		{KindMyNumber, "", "１２３４５６７８９０１８"},
 		{KindJPPhone, "", "０９０－１２３４－５６７８"},
 	} {
@@ -67,11 +70,22 @@ func TestPercentRoundTripOffsets(t *testing.T) {
 	t.Parallel()
 	// #nosec G404 -- Fixed seed for reproducible synthetic tests.
 	rng := rand.New(rand.NewPCG(91, 27))
-	scanner := NewScanner(WithKinds(KindEmail))
 	for range 2000 {
 		raw := fmt.Sprintf("user%d+tag@example.com", rng.IntN(100000))
+		kind := KindEmail
+		switch rng.IntN(3) {
+		case 1:
+			kind = KindPAN
+			separators := []string{"\u2212", "\u3000", "\u2010", "\u2011", "\u2012", "\u2013", "\u2014", "\u2015", "\u200b", "\u00a0", "\u202f", "\u00ad"}
+			raw = strings.Join([]string{"４１１１", "1111", "１１１１", "1111"}, separators[rng.IntN(len(separators))])
+		case 2:
+			kind = KindAWSKey
+			raw = "AKIA\u200bIOSFODNN7EXAMPLE"
+		}
+		scanner := NewScanner(WithKinds(kind))
+
 		var encoded strings.Builder
-		for i := range raw {
+		for i := range len(raw) {
 			if rng.IntN(2) == 0 {
 				if _, err := fmt.Fprintf(&encoded, "%%%02X", raw[i]); err != nil {
 					t.Fatal(err)

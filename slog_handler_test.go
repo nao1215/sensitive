@@ -536,3 +536,61 @@ func TestSlogDiagnosticSinkErrorRemainsObservable(t *testing.T) {
 		t.Fatal("diagnostic attempt retained original fields")
 	}
 }
+
+func TestOutputTextHandlerGroupJoin(t *testing.T) {
+	t.Parallel()
+	s := embargo.NewScanner()
+	var out bytes.Buffer
+	l := slog.New(embargo.NewSlogHandler(slog.NewTextHandler(&out, &slog.HandlerOptions{ReplaceAttr: noTime}), s))
+	l.WithGroup("alice@example").Info("m", "com", "x")
+	l.Info("m", slog.Group("10.20", slog.String("30.40", "x")))
+	got := out.String()
+	t.Logf("%s", got)
+	for _, leaked := range []string{"alice@example.com", "10.20.30.40"} {
+		if f := s.ScanString(leaked); len(f) == 0 {
+			t.Fatalf("control: %q is not detected", leaked)
+		}
+		if strings.Contains(got, leaked) {
+			t.Errorf("TextHandler output contains %q", leaked)
+		}
+	}
+}
+
+func TestOutputSlogBytesBase64(t *testing.T) {
+	t.Parallel()
+	s := embargo.NewScanner()
+	body := []byte(`{"email":"alice@example.com","card":"4111111111111111"}`)
+	for name, h := range map[string]func(*bytes.Buffer) slog.Handler{
+		"json": func(b *bytes.Buffer) slog.Handler {
+			return slog.NewJSONHandler(b, &slog.HandlerOptions{ReplaceAttr: noTime})
+		},
+		"text": func(b *bytes.Buffer) slog.Handler {
+			return slog.NewTextHandler(b, &slog.HandlerOptions{ReplaceAttr: noTime})
+		},
+	} {
+		var out bytes.Buffer
+		slog.New(embargo.NewSlogHandler(h(&out), s)).Info("request", "body", body)
+		got := strings.TrimSpace(out.String())
+		t.Logf("%s: %s", name, got)
+		if strings.Contains(got, "eyJlbWFpbCI6ImFsaWNlQGV4YW1wbGUuY29tIiwiY2FyZCI6IjQxMTExMTExMTExMTExMTEifQ==") {
+			t.Errorf("%s: unmasked body bytes reached the output as base64", name)
+		}
+	}
+}
+
+func TestSlogByteContentsKeepPublicShape(t *testing.T) {
+	t.Parallel()
+	type namedBytes []byte
+	for _, value := range []any{[]byte("public"), namedBytes("public"), []byte(nil)} {
+		var out bytes.Buffer
+		slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(&out, nil), embargo.NewScanner())).Info("entry", "data", value)
+		var record map[string]json.RawMessage
+		if err := json.Unmarshal(out.Bytes(), &record); err != nil {
+			t.Fatal(err)
+		}
+		want, err := json.Marshal(value)
+		if err != nil || !bytes.Equal(record["data"], want) {
+			t.Fatalf("public bytes changed: %s want=%s error=%v", out.Bytes(), want, err)
+		}
+	}
+}

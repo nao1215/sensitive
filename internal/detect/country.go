@@ -51,13 +51,14 @@ func countryLayouts(name DetectorName) []string {
 func (d *Country) Scan(data []byte) []Finding {
 	normalized, positions := normalizeDigits(data)
 	var result []Finding
+	var logContext numericLogContext
 	for start := range normalized {
 		if start > 0 && isPhoneWordChar(normalized[start-1]) {
 			continue
 		}
 		for _, layout := range d.layouts {
 			value, end, ok := countryCandidate(normalized, start, layout)
-			if !ok || numericLogFragment(normalized, start, end) {
+			if !ok || logContext.fragment(normalized, start, end) {
 				continue
 			}
 			score := countryScore(d.name, value, normalized[:start])

@@ -6,9 +6,13 @@ import (
 	"unicode"
 )
 
-// numericLogFragment rejects decimal tails, signed identifier suffixes, and
+// numericLogContext caches each hostname suffix during a left-to-right scan.
+// Every suffix is traversed once, even when many numeric candidates share it.
+type numericLogContext struct{ end, lastDot int }
+
+// fragment rejects decimal tails, signed identifier suffixes, and
 // numeric components of hostnames. Checksums alone cannot distinguish these.
-func numericLogFragment(data []byte, start, end int) bool {
+func (c *numericLogContext) fragment(data []byte, start, end int) bool {
 	if start >= 2 && ((data[start-1] == '.' && isDigit(data[start-2])) || (data[start-1] == '-' && data[start-2] == '_')) {
 		return true
 	}
@@ -16,12 +20,17 @@ func numericLogFragment(data []byte, start, end int) bool {
 		return true
 	}
 	if end+1 < len(data) && data[end] == '-' && isAlpha(data[end+1]) {
-		//nolint:mnd // Skip the hyphen and first hostname letter already checked above.
-		for i := end + 2; i < len(data) && (isAlphaNum(data[i]) || data[i] == '-' || data[i] == '.'); i++ {
-			if data[i] == '.' {
-				return true
+		if end >= c.end {
+			c.lastDot = -1
+			c.end = end + 2 //nolint:mnd // Skip the checked hyphen and first letter.
+			for c.end < len(data) && (isAlphaNum(data[c.end]) || data[c.end] == '-' || data[c.end] == '.') {
+				if data[c.end] == '.' {
+					c.lastDot = c.end
+				}
+				c.end++
 			}
 		}
+		return c.lastDot > end
 	}
 	return false
 }

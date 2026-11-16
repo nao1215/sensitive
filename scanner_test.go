@@ -565,3 +565,51 @@ func TestDispatchRetainsMoreThan32Families(t *testing.T) {
 		t.Fatalf("selected %d families, want 37", got)
 	}
 }
+
+func TestOutputJapaneseSeparators(t *testing.T) {
+	t.Parallel()
+	s := NewScanner()
+	for _, v := range []string{
+		"０９０－１２３４－５６７８", // U+FF0D: masked (control)
+		"０９０−１２３４−５６７８", // U+2212 MINUS SIGN
+		"０９０　１２３４　５６７８", // U+3000 IDEOGRAPHIC SPACE
+		"４１１１　１１１１　１１１１　１１１１",
+		"４１１１−１１１１−１１１１−１１１１",
+		"4111‑1111‑1111‑1111", // U+2011 NON-BREAKING HYPHEN
+		"4111–1111–1111–1111", // U+2013 EN DASH
+		"１２３４　５６７８　９０１８",      // My Number
+	} {
+		var out bytes.Buffer
+		slog.New(NewSlogHandler(slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.TimeKey {
+				return slog.Attr{}
+			}
+			return a
+		}}), s)).Info("signup", "note", v)
+		got := strings.TrimSpace(out.String())
+		t.Logf("%s", got)
+		if strings.Contains(got, v) {
+			t.Errorf("unmasked: %q", v)
+		}
+	}
+}
+
+func TestOutputInvisibleSeparators(t *testing.T) {
+	t.Parallel()
+	s := NewScanner()
+	for _, v := range []string{
+		"4111\u200b1111\u200b1111\u200b1111", // ZERO WIDTH SPACE
+		"4111 1111 1111 1111",                // NO-BREAK SPACE
+		"4111 1111 1111 1111",                // NARROW NO-BREAK SPACE
+		"4111\u00ad1111\u00ad1111\u00ad1111", // SOFT HYPHEN
+		"AKIA\u200bIOSFODNN7EXAMPLE",
+		"AKIA\u200b\u00a0\u202f\u00adIOSFODNN7EXAMPLE",
+		"4111\u200b\u00a0\u202f\u00ad111111111111",
+	} {
+		got := Mask(v, s.ScanString(v))
+		t.Logf("%+q -> %+q", v, got)
+		if got == v {
+			t.Errorf("unmasked: %+q", v)
+		}
+	}
+}

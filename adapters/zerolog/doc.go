@@ -17,7 +17,7 @@
 // are not decoded; wrap values in embargo.Secret before encoding. Hooks cannot
 // reliably rewrite already encoded fields, which is why this is a writer.
 //
-// Failed masking emits time/level, a fixed withheld message and an attribute
+// Failed masking omits unproven input timestamps and emits an allowlisted level, a fixed withheld message and an attribute
 // count, without original fields. See the logging guide for count definitions,
 // byte-writer metadata limitations and cooperative cancellation budgets:
 // https://github.com/nao1215/embargo/blob/main/doc/logging.md.

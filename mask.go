@@ -9,6 +9,9 @@ const redactionMarker = "[REDACTED]"
 
 // Mask replaces overlapping spans with [REDACTED]. Adjacent spans remain separate.
 // Invalid ranges redact the entire text. Neither input nor findings is changed.
+// Masking already masked text with several kinds can mask more: shortening one
+// value may move other text into a contextual detector's window. Scan each original
+// value once per output hook; the marker is not a trusted-input bypass.
 func Mask(text string, findings []Finding) string {
 	return MaskFunc(text, findings, func(Kind, string) string { return redactionMarker })
 }

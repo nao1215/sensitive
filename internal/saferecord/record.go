@@ -48,19 +48,30 @@ func Message(reason SanitizationError) string {
 	}
 }
 
-// Budget detaches request cancellation while bounding subsequent cooperative work.
+// Budget detaches only requests already canceled when access logging starts.
+// Ordinary requests keep their own context and deadline.
 // Values survive; a running user callback or downstream sink cannot be interrupted.
 func Budget(ctx context.Context) (context.Context, context.CancelFunc) {
 	const timeout = 100 * time.Millisecond
-	return context.WithTimeout(context.WithoutCancel(ctx), timeout)
+	if ctx.Err() == nil {
+		return ctx, func() {}
+	}
+	policy, ok := ctx.Value(accessPolicyKey{}).(AccessPolicy)
+	detached := context.WithoutCancel(ctx)
+	if ok && policy.Timeout != nil {
+		return policy.Timeout(detached, timeout)
+	}
+	return context.WithTimeout(detached, timeout)
 }
 
-// Slog replaces every attribute and source location, preserving time and level.
-func Slog(ctx context.Context, next slog.Handler, when time.Time, level slog.Level, count int, reason SanitizationError) error {
+// Slog drops input attributes and source location, preserving time and level.
+// Only internal access hooks supply trusted outcome and duration attributes.
+func Slog(ctx context.Context, next slog.Handler, when time.Time, level slog.Level, count int, reason SanitizationError, trusted ...slog.Attr) error {
 	detached, cancel := Budget(ctx)
 	defer cancel()
 	record := slog.NewRecord(when, level, Message(reason), 0)
 	record.AddAttrs(slog.Int("withheld_attributes", count))
+	record.AddAttrs(trusted...)
 	return next.Handle(detached, record)
 }
 
@@ -83,4 +94,29 @@ func JSON(when time.Time, level string, count int, reason SanitizationError) []b
 	const decimalBase = 10
 	out = strconv.AppendInt(out, int64(count), decimalBase)
 	return append(out, '}', '\n')
+}
+
+// AccessPolicy is an internal injection seam for deterministic access-log tests.
+// Nil functions use the real clock and context.WithTimeout.
+type AccessPolicy struct {
+	// Now supplies timestamps and duration endpoints.
+	Now func() time.Time
+	// Timeout creates the cooperative budget for an already canceled request.
+	Timeout func(context.Context, time.Duration) (context.Context, context.CancelFunc)
+}
+
+type accessPolicyKey struct{}
+
+// WithAccessPolicy scopes an internal clock and timeout factory to a request.
+func WithAccessPolicy(ctx context.Context, policy AccessPolicy) context.Context {
+	return context.WithValue(ctx, accessPolicyKey{}, policy)
+}
+
+// Now reads the request's clock or the real clock when no override was installed.
+func Now(ctx context.Context) time.Time {
+	policy, ok := ctx.Value(accessPolicyKey{}).(AccessPolicy)
+	if ok && policy.Now != nil {
+		return policy.Now()
+	}
+	return time.Now()
 }

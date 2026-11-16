@@ -61,6 +61,10 @@ const githubFineGrainedMinBody = 22
 func (d *GitHubToken) Scan(data []byte) []Finding {
 	var findings []Finding
 	for i := 0; i < len(data); {
+		if !credStartBoundary(data, i) {
+			i++
+			continue
+		}
 		if f, end, ok := d.matchFineGrained(data, i); ok {
 			findings = append(findings, f)
 			i = end

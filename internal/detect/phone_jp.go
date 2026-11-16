@@ -88,6 +88,7 @@ func (d *JPPhone) Scan(data []byte) []Finding {
 // orig is the original (possibly full-width) input used for RawValue.
 func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	var findings []Finding
+	var logContext numericLogContext
 
 	i := 0
 	for i < len(data) {
@@ -141,7 +142,7 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		}
 
 		phoneType := classifyJPPhone(digits, digitLen)
-		if phoneType == "" || numericLogFragment(data, start, end) {
+		if phoneType == "" || logContext.fragment(data, start, end) {
 			i = end
 			continue
 		}
