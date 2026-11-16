@@ -88,6 +88,8 @@ The inventory below translates the owner's active repository instructions into c
 | Documentation distinguishes default kinds and raw credential keys | M19 | [TestDefaultPolicyDocumentation](../doc_sync_test.go) | MultiPlatformUnitTest |
 | Standalone-example checks reject missing helper definitions | M19 | [TestStandaloneExamplesRejectMissingHelpers](../doc_sync_test.go) | MultiPlatformUnitTest |
 | Logrus Entry.Context cancels formatting and subsequent detector work | M19 | [TestEntryContextCancellation](../adapters/logrus/adapter_test.go) | MultiPlatformUnitTest |
+| Adoption cases exercise real outputs and retain declared-policy controls | M21 | [TestAdoptionDeclaredControls](../tests/adoption_cases_test.go) | MultiPlatformUnitTest |
+| Adoption table is generated from executed cases and checked in CI | M21 | [main](../scripts/case_docs.py) | Verification |
 <!-- policy-map:end -->
 
 ## Changing a rule

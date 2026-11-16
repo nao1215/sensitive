@@ -15,7 +15,9 @@
   <img src="doc/images/logo-small.png" alt="Go gopher peeking over the embargo title, with email and token values blacked out" width="320">
 </p>
 
-embargo keeps secrets and personal data out of what a Go program prints: logs, JSON, error messages and test output.
+A checkout struct gains a card field after its password masking tag was written. The password stays hidden; the new card reaches the log. embargo scans the values at the output boundary and masks that card without changing the struct. [Run this case and eleven others](doc/cases.md), including encoded tokens caught only by the output test and partial values that both checks miss.
+
+embargo provides sensitive-text detection, masking and output tests for Go applications.
 
 | You have | embargo |
 |---|---|
