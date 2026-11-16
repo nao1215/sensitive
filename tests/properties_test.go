@@ -653,7 +653,7 @@ func checkJSONPaths(t relationTB, value map[string]any) {
 }
 
 // Licensed data stays in the owner's cache. CI runs the synthetic generators;
-// the round evidence records a full replay and never commits raw public logs.
+// the measurement report records a full replay without committing raw public logs.
 //
 //nolint:paralleltest // This opt-in measurement reads the full corpus serially.
 func TestMetamorphicRealLogs(t *testing.T) {
