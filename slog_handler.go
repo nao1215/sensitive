@@ -226,7 +226,7 @@ func (h *slogHandler) sanitizeAny(ctx context.Context, key, originalKey string, 
 // methods cannot introduce another representation after this boundary.
 func (h *slogHandler) sanitizeScalar(ctx context.Context, key, originalKey string, value slog.Value) (slog.Attr, error) {
 	representations := []string{value.String()}
-	switch value.Kind() { //nolint:exhaustive // Only these kinds have additional standard-handler encodings.
+	switch value.Kind() {
 	case slog.KindTime:
 		representations = []string{value.Time().Format(time.RFC3339Nano), value.Time().Format("2006-01-02T15:04:05.000Z07:00")}
 	case slog.KindDuration:
@@ -237,6 +237,8 @@ func (h *slogHandler) sanitizeScalar(ctx context.Context, key, originalKey strin
 			return slog.Attr{}, slogSanitizationError()
 		}
 		representations = append(representations, string(encoded))
+	case slog.KindAny, slog.KindBool, slog.KindGroup, slog.KindInt64, slog.KindLogValuer, slog.KindString, slog.KindUint64:
+		// Other kinds add no scalar encoding here; composites have separate paths.
 	}
 	scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
 	for _, text := range representations {
