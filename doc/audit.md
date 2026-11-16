@@ -7,9 +7,9 @@ Run the audit against a local application log before choosing scanner kinds. It 
 The command is part of the root module, which retains zero dependencies. The audit imports only embargo and the Go standard library and sends no log data anywhere.
 
 ```sh
-go run github.com/nao1215/embargo/cmd/embargo-audit@latest < app.log
-go run github.com/nao1215/embargo/cmd/embargo-audit@latest --all < app.log
-go run github.com/nao1215/embargo/cmd/embargo-audit@latest --kinds pan,credential --min-confidence 0.7 < app.log
+go run github.com/nao1215/embargo/cmd/embargo-audit@v0.8.1 < app.log
+go run github.com/nao1215/embargo/cmd/embargo-audit@v0.8.1 --all < app.log
+go run github.com/nao1215/embargo/cmd/embargo-audit@v0.8.1 --kinds pan,credential --min-confidence 0.7 < app.log
 ```
 
 The default is NewScanner's 25 kinds at minimum confidence 0. --all includes the national identifiers and entropy heuristic. --kinds replaces the selection; combining it with --all is rejected. --samples bounds locations per kind (default 3, range 0–20); counts still cover the complete input. Lines must be shorter than 4 MiB; read failures and oversized lines exit nonzero without a partial report.
@@ -23,8 +23,8 @@ Each Kind includes a drop_option explaining how to omit it from WithKinds. Exclu
 `--compare` reports before/after counts and gained/lost findings, identified by kind and exact byte span. Both scanners see the same line before it is discarded. Samples stay masked, counts are complete, and incomplete input produces no report. The second setting defaults to NewScanner; use `--compare-kinds`, `--compare-all` and `--compare-min-confidence` to change it. These flags require `--compare`.
 
 ```sh
-go run github.com/nao1215/embargo/cmd/embargo-audit@latest --compare --compare-min-confidence 0.7 < app.log
-go run github.com/nao1215/embargo/cmd/embargo-audit@latest --compare --kinds pan,email --compare-kinds pan,credential < app.log
+go run github.com/nao1215/embargo/cmd/embargo-audit@v0.8.1 --compare --compare-min-confidence 0.7 < app.log
+go run github.com/nao1215/embargo/cmd/embargo-audit@v0.8.1 --compare --kinds pan,email --compare-kinds pan,credential < app.log
 ```
 
 The gained/lost lists measure the effect of a selection, not whether that choice is correct for the application. Inspect the masked locations against your local source and retain application leak tests.
