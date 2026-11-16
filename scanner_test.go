@@ -896,7 +896,7 @@ func TestCredentialGoRenderingProperty(t *testing.T) {
 					}
 					got := Mask(input, scanner.ScanString(input))
 					hexBytes := fmt.Sprintf(fmtGoSyntaxVerb, []byte(secret))
-					if strings.Contains(got, secret) || strings.Contains(got, strings.TrimSuffix(strings.TrimPrefix(hexBytes, "[]byte{"), "}")) || strings.Contains(got, fmt.Sprintf("%v", []byte(secret))) {
+					if strings.Contains(got, secret) || strings.Contains(got, hexBytes[strings.IndexByte(hexBytes, '{')+1:len(hexBytes)-1]) || strings.Contains(got, strings.Trim(fmt.Sprintf("%v", []byte(secret)), "[]")) {
 						t.Errorf("Go value visible: %q => %q", input, got)
 					}
 				}

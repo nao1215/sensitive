@@ -1433,7 +1433,7 @@ func TestMaskingBoundaryHooks(t *testing.T) {
 			)
 		}
 		byteLiteral := fmt.Sprintf("%#v", []byte(secret))
-		inputs = append(inputs, struct{ text, needle string }{"{Password:" + byteLiteral + "}", strings.TrimSuffix(strings.TrimPrefix(byteLiteral, "[]byte{"), "}")})
+		inputs = append(inputs, struct{ text, needle string }{"{Password:" + byteLiteral + "}", byteLiteral[strings.IndexByte(byteLiteral, '{')+1 : len(byteLiteral)-1]})
 		for i, input := range inputs {
 			grpcCases = append(grpcCases, []string{input.text, input.needle, "detail", input.text})
 			t.Run(fmt.Sprintf("text/%d/%d", n, i), func(t *testing.T) {
