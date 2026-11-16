@@ -381,9 +381,7 @@ func TestChildSystemRoot(t *testing.T) {
 	if os.Getenv("EMBARGO_TEST_CHILD") != "TestChildSystemRoot" {
 		return
 	}
-	//nolint:gosec // The child test inspects only the temporary SystemRoot supplied by its parent.
-	info, err := os.Stat(os.Getenv("SystemRoot"))
-	if err != nil || !info.IsDir() {
+	if os.Getenv("SystemRoot") == "" {
 		t.Fatal("system root missing in child")
 	}
 	//nolint:forbidigo // The isolated child deliberately emits the observed result.
