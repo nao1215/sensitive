@@ -1054,6 +1054,10 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "00397115534961037ef83d7a50bcfbb83b02b45fa347b6f4376b7e7a53da38b2": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
+    },
     "003997fcb05e014c4e53ae4bc2c59265eca43f01264e526df691bfbb60d16921": {
       "dataset": "Apache",
       "line": 14032,
@@ -1071,6 +1075,10 @@
       "end": 80,
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
+    },
+    "003b30d9f7cd9ea9a41cda6d56557cd476fa6be7009bb0df84e38f9d3aaf1709": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
     },
     "003c8dc1f13ae61839915a7fb2cf9174b824e5296b6324e145063d9633cb328e": {
       "dataset": "Apache",
@@ -1108,6 +1116,14 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "003f83998ca3758e9af39e01d67f94786e26e434d4b47048eb7c5dc616d503fa": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
+    },
+    "00402016051016facae044d9495c376dd476c5a0e30068514a355fbcf4a8816c": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
+    },
     "004035fc205eb66fbaec96831d275fc959edf1b338939619d04f3d8cf5401a31": {
       "dataset": "Linux",
       "line": 24733,
@@ -1116,6 +1132,10 @@
       "end": 64,
       "classification": "sensitive-reference",
       "rule": "network-address"
+    },
+    "00405aecda22f9aa93911db39b2b897470920ba8c6998cf51bef163e31288c3e": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
     },
     "00423ccf8774b54cb335086b3c2a21acefb1db4e3a9fb27dd18219a24a8a1567": {
       "dataset": "Apache",
@@ -1153,6 +1173,14 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "004357e3cc43a9cc344d646540ad6feb6622a8728312183d47c3bce64e2d9162": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
+    },
+    "0043859eae969ffc3bf23d1a02f16e21055be9bec2efdb97962b68c63319e0cc": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
+    },
     "0043a0575ad97d9b979ca9c75afce943c2cfda793156bfed41b96e32c79a6390": {
       "dataset": "Linux",
       "line": 6645,
@@ -1161,6 +1189,10 @@
       "end": 62,
       "classification": "sensitive-reference",
       "rule": "network-address"
+    },
+    "0043e20d72c98cd20c884131b5d05a09e3376c322c8a877e3c9feafbf684834b": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
     },
     "0046287834037bbb70882f3c770e32f52887560e24331b9b323d43a47891d36c": {
       "dataset": "Apache",
@@ -1188,6 +1220,10 @@
       "end": 54,
       "classification": "sensitive-reference",
       "rule": "network-address"
+    },
+    "004851ada6c9b523ab4614c1a8f507cebfe7b38b57fc59f8686d5dd9c0f9c7ad": {
+      "classification": "sensitive-reference",
+      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
     },
     "0048afa02b7292c7653317ed40c9b638df575c3fdc28081ec2aecd3b90c1d68c": {
       "dataset": "Apache",
@@ -2125,6 +2161,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
     },
+    "02771c830b42c3d4116c2b683b4307786b0fb7596da61b63f5ee7e1a32856a08": {
+      "dataset": "Android",
+      "line": 1329,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "0278801d1ef38fe3ef7d505435685e059519a2ac605f4f34a3a6ba6a097a8adf": {
       "dataset": "HDFS",
       "line": 478,
@@ -2178,6 +2223,15 @@
       "end": 130,
       "classification": "sensitive-reference",
       "rule": "network-address"
+    },
+    "032d566de8fa043e54880eaef0b15c0688ae2afea82fd7af5f47b4872f94ae0a": {
+      "dataset": "Android",
+      "line": 1263,
+      "kind": "us_ssn",
+      "start": 67,
+      "end": 76,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
     },
     "03348811f9e7cf5c12ee0521a77595c2c268bfb2b940edd38439bda0dc6d0d18": {
       "dataset": "Linux",
@@ -2251,6 +2305,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "039e0b5ed9ff7ce43b012c74d7d396464caab2c5a628e749ca4cdeac76771583": {
+      "dataset": "Android",
+      "line": 1523,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "03b804b645202f9e011b4fcda3f53e46cfd57236a594778f00cd7dbbe58cad75": {
       "dataset": "HDFS",
       "line": 1473,
@@ -2286,6 +2349,15 @@
       "end": 123,
       "classification": "sensitive-reference",
       "rule": "network-address"
+    },
+    "040dbdb452b62490d3d20dde0e21395d6691299ef5e7633f54a63abd040193c4": {
+      "dataset": "BGL",
+      "line": 834,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
     },
     "041e4054019a82447533b17990fad5a5234eda0eec864e760c1c640e449e9ea4": {
       "dataset": "HDFS",
@@ -2349,6 +2421,15 @@
       "end": 112,
       "classification": "sensitive-reference",
       "rule": "network-address"
+    },
+    "049db099c262757a267ecd27a2e8e341c901ebdac7f4562d3411008a98f0d942": {
+      "dataset": "BGL",
+      "line": 1480,
+      "kind": "uk_nhs",
+      "start": 7,
+      "end": 17,
+      "classification": "false-positive",
+      "rule": "epoch-time"
     },
     "04c45b75abe1c837c656b4b7158fb9c444063db328aff96a9c738f835e5968f7": {
       "dataset": "BGL",
@@ -2431,6 +2512,15 @@
       "classification": "false-positive",
       "rule": "path-not-token"
     },
+    "0576a717c2f4c34c5941ff1bd9ce87d89b4d20b79fe56bb3e026ccf4360c8a3d": {
+      "dataset": "BGL",
+      "line": 469,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "05bb2c306e67a5aa3321401832da2e265234f94881e296bc601bb2fb71dc1eb1": {
       "dataset": "Spark",
       "line": 1039,
@@ -2475,6 +2565,15 @@
       "end": 93,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
+    },
+    "05fa313c82a31b41ce1ec52cf1eb1a857f4a4da21c41f096bea979faf8f444c2": {
+      "dataset": "BGL",
+      "line": 877,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
     },
     "061c0d7d5bd028ac0c9101caf49d8cb92f3a51b33d3fc381a1f7763ad8aaeb44": {
       "dataset": "Android",
@@ -2539,6 +2638,15 @@
       "classification": "false-positive",
       "rule": "path-not-token"
     },
+    "07979e8e21a64856f4c712d7b9993e38fd2f0c12e5ac73b2dcf8ad730363d936": {
+      "dataset": "BGL",
+      "line": 931,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "07a723f357cfb462108b21536b0fce73d8c1e6ca8c800f226228c20150f42bf8": {
       "dataset": "HDFS",
       "line": 877,
@@ -2557,6 +2665,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid"
     },
+    "07fb6e299e6248b895ab811646c7ce6c6c87161b43d88d472b2a27b197154a98": {
+      "dataset": "BGL",
+      "line": 711,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "0806a3e49c8e80ac6b702039cc93c920c3593e72bc22c51c587b71cea93b502a": {
       "dataset": "HDFS",
       "line": 1917,
@@ -2566,6 +2683,24 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
     },
+    "082ba520ced1c52607b279d01ced26ff7e7fe20aae3dad49c820f61b73f36883": {
+      "dataset": "BGL",
+      "line": 443,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
+    "0840778cd9d4866100e2071c983fc9a9d502d82ac64b932d963856c3caa76be9": {
+      "dataset": "Android",
+      "line": 225,
+      "kind": "us_ssn",
+      "start": 67,
+      "end": 76,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "084b13ea0e35bbf355c2a5c1dee5b544c4924c313d3108c34696aea8c1eaabf4": {
       "dataset": "HDFS",
       "line": 1844,
@@ -2574,6 +2709,24 @@
       "end": 90,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
+    },
+    "086a3577cca8c9066b061311e0a7854581ccacf02d532be988b3236122a1e77e": {
+      "dataset": "Android",
+      "line": 559,
+      "kind": "ca_sin",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
+    "086fd658e5f4ea427ab98e01d1d420ccb0aa886f8dc36afbcaa952b544f5bb90": {
+      "dataset": "BGL",
+      "line": 525,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
     },
     "0880624c0fde6168c6047662ae592165527b35c1c983d5a964566615ce0020d5": {
       "dataset": "HDFS",
@@ -2701,6 +2854,24 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "0a624b9ccff4762ccd16be8be2dad2164c95689543aaa1f9f47cc5cb66c9ce33": {
+      "dataset": "BGL",
+      "line": 58,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
+    "0aa0c5d697c417eb4d4c24e2aa21ad34f60bc3bd0948464f501af102818a5aa0": {
+      "dataset": "Android",
+      "line": 1813,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "0aaaf5b40ed91cd0e18754994eea7e2b5d2d31e900b6b61c4f202a5bc93f5ff0": {
       "dataset": "HDFS",
       "line": 1388,
@@ -2709,6 +2880,24 @@
       "end": 144,
       "classification": "false-positive",
       "rule": "path-not-token"
+    },
+    "0b12d6008be16076365e0471b3b3f307eca9ceba44322c8065fb70bceebef331": {
+      "dataset": "BGL",
+      "line": 46,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
+    "0b1eaeb45ba10e11336098c82cac2e7be91014db80a0676ab9b8c8405b87a4db": {
+      "dataset": "Android",
+      "line": 1796,
+      "kind": "us_ssn",
+      "start": 67,
+      "end": 76,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
     },
     "0b305eb7595b34a1798e7dc62d675cbf06286068586740e1bf6d36a2fd360d85": {
       "dataset": "HDFS",
@@ -2764,6 +2953,15 @@
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
     },
+    "0c3edeca8ee7419a0b6acb33dc3451605bb5ffbfe28f33f935db2dbbc6187b48": {
+      "dataset": "BGL",
+      "line": 1585,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "0c43f66c0df7f6585de545d913f631bc60212aff5404d1fa118d1021f4d3e089": {
       "dataset": "HDFS",
       "line": 1004,
@@ -2772,6 +2970,15 @@
       "end": 144,
       "classification": "false-positive",
       "rule": "path-not-token"
+    },
+    "0c5f918b81389d301916f9ae8a1fa3e4b77e7e9387dbf16ba6bfbbb8b093fcb0": {
+      "dataset": "Android",
+      "line": 377,
+      "kind": "us_ssn",
+      "start": 67,
+      "end": 76,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
     },
     "0c77d9af21d62d2efb11e47abc4858e922e486411ef2fe12d96817e30c273cf0": {
       "dataset": "Android",
@@ -2818,6 +3025,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
     },
+    "0cd121ff13525b1abd0f768f2098684cf5cd971bdbcb4186a72a0cfa2c8af683": {
+      "dataset": "Android",
+      "line": 72,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "0cd1fc7696a74d28ff1caab2a5d010c35edbbbbefa3df49c171622c64e10cfde": {
       "dataset": "BGL",
       "line": 852,
@@ -2835,6 +3051,15 @@
       "end": 1962,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
+    },
+    "0cf6d5ddd9ba78199b75a73d77791a0db9a1a3ee9ffe38a1f1a64617ff050177": {
+      "dataset": "BGL",
+      "line": 603,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
     },
     "0d486ec841f66509bdd85e0a7f40681367e2573b83dc72c25e466bf4752ea790": {
       "dataset": "HDFS",
@@ -2854,6 +3079,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
     },
+    "0dc81ad2d4355cf88e46558699b6ee87f0151283399e9751e342202c53dfc0d9": {
+      "dataset": "BGL",
+      "line": 1423,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "0e227d2bbf4a828765a35af1e320ec709be2a3922c608ce51adc617adfd5e86f": {
       "dataset": "HDFS",
       "line": 754,
@@ -2862,6 +3096,15 @@
       "end": 91,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
+    },
+    "0e249a545c5d1a3e5c2591b2ea9438be0b5314529635a2a463caf0572daa09c7": {
+      "dataset": "Android",
+      "line": 709,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
     },
     "0e4c5428cce56c48f192b07846be47d0d977872b2245c09502b5789401f4e885": {
       "dataset": "Linux",
@@ -2899,6 +3142,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
     },
+    "0e78022957a272fd3b41bdbc17de9ba9a3db95b23c997732cac50bbf618e68f8": {
+      "dataset": "BGL",
+      "line": 1579,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "0efbc0de2f9ac6cbfaa14e3a00b1ce790040a2529be8d800a1e63df283ca733c": {
       "dataset": "HDFS",
       "line": 1601,
@@ -2935,6 +3187,33 @@
       "classification": "false-positive",
       "rule": "path-not-token"
     },
+    "0f9ce05410671f73a6af5a5385fd28c7cb28fba4f0ada6f044c73ccfaa7404de": {
+      "dataset": "BGL",
+      "line": 1495,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
+    "0fde7ed63b988aade17fb8b214b971de57ca36661995a2ea5f66f2aa65e72f72": {
+      "dataset": "Android",
+      "line": 1257,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
+    "0ff75209db054ae0a8f592da1045de5c6b5fc4cbfa07b1abd2c2917f374692f2": {
+      "dataset": "Linux",
+      "line": 3136,
+      "kind": "us_ssn",
+      "start": 56,
+      "end": 65,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "0ff96ccbfabb9075d8637a2a340935a8e842e6fdd2e2a2a2067fa359bc3bd36e": {
       "dataset": "HDFS",
       "line": 1138,
@@ -2943,6 +3222,15 @@
       "end": 90,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
+    },
+    "10118cd18abe397bfc6fe3e902f5efffca7cee843c3b3358fc44b2ee651e1270": {
+      "dataset": "BGL",
+      "line": 1659,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
     },
     "10294c3f579f303c7961f119de272c0e8fb8b0528c085bb01e1f9d7a5b5ac4b6": {
       "dataset": "HDFS",
@@ -2998,6 +3286,24 @@
       "classification": "false-positive",
       "rule": "path-not-token"
     },
+    "114a206f6b962c9e37bcaa963ab378fdebde4aa18d452dfd069d5247f40e2700": {
+      "dataset": "Linux",
+      "line": 23650,
+      "kind": "us_ssn",
+      "start": 141,
+      "end": 150,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
+    "114aad3f9d285dbcc76ad51a0b4d27a3a278e88d0348ef1e4152afc3d99d38f7": {
+      "dataset": "BGL",
+      "line": 363,
+      "kind": "uk_nhs",
+      "start": 9,
+      "end": 19,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "1154cc675ee31501ccf8342fc2fddb61dfb6035d0fc840bf98959dbf62e6c397": {
       "dataset": "HDFS",
       "line": 484,
@@ -3006,6 +3312,15 @@
       "end": 142,
       "classification": "false-positive",
       "rule": "path-not-token"
+    },
+    "11ca7273e0c08990c902763cd85e5a53c3a941ff4ad88bd3264cf35fb30a8592": {
+      "dataset": "BGL",
+      "line": 1303,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
     },
     "11d77b8afe7804e3daeab9226f293c68c19a16b9c28383ab9c5c7ffc4f0b0fda": {
       "dataset": "Spark",
@@ -3034,6 +3349,15 @@
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
     },
+    "127ca5f954ec1b845bc6166eb3c69623361947a7fa2b1384e820636cf86c2428": {
+      "dataset": "Android",
+      "line": 1289,
+      "kind": "us_ssn",
+      "start": 67,
+      "end": 76,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "1287fb08117967b6d4c473a0a363338c33b02bc9a4e22c78fffb31f27340e579": {
       "dataset": "HDFS",
       "line": 874,
@@ -3061,6 +3385,24 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
     },
+    "12da54d131cbbcb8c8323b2799c4f5633656f364a472a8a277524021a2f7710d": {
+      "dataset": "BGL",
+      "line": 970,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
+    "12fae9ec1fb6276c3717e43399dcfea25c468950d5c38334ed49dcbcf5adbc27": {
+      "dataset": "BGL",
+      "line": 705,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "12fbfdc43b06b525bb0b22d3a4fec80fc770a75b6d74079847c19f01081b32bb": {
       "dataset": "HDFS",
       "line": 873,
@@ -3087,6 +3429,24 @@
       "end": 118,
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
+    },
+    "1351850e8d21e2574cd5cf2d8352d638361288c58fcc9f3761eff94b2a219f80": {
+      "dataset": "Android",
+      "line": 1870,
+      "kind": "us_ssn",
+      "start": 67,
+      "end": 76,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
+    "13573bbe5eb5f69ae95cc673a48b35b3b317be4f126cda7278d043b865da560e": {
+      "dataset": "BGL",
+      "line": 1842,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
     },
     "13694f9e46872372f7d9af742c06544afbcf37cc744381d89fe0ee61c0dcdcd7": {
       "dataset": "HDFS",
@@ -3160,6 +3520,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
     },
+    "1446ee35440f7cf7a429372872f779fc5602012777e24ea5058593681c900df8": {
+      "dataset": "BGL",
+      "line": 1720,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "14be3ebf829c399f302b8bc1b4f9eebe631bf05c6a2ee2e86b235c8f9974da66": {
       "dataset": "HDFS",
       "line": 445,
@@ -3168,6 +3537,33 @@
       "end": 144,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
+    },
+    "14f95c06e971653c16af8614e47d1f1a1a838524c9808a3a2839a4c604528d86": {
+      "dataset": "Android",
+      "line": 966,
+      "kind": "us_ssn",
+      "start": 67,
+      "end": 76,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
+    "152594c930bde989f0ae859200ee8397de6e1d302c4946206ff9f98ca18dacf6": {
+      "dataset": "BGL",
+      "line": 1476,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
+    "1546b0fd0faa4cd7e969b5a02fbf89939799730c111483255986bb1d1acd6c61": {
+      "dataset": "Android",
+      "line": 1706,
+      "kind": "us_ssn",
+      "start": 67,
+      "end": 76,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
     },
     "1555d3bc323de6300550e8da085644152f25133e1ce3f5b581bd17868b8b8bca": {
       "dataset": "HDFS",
@@ -3186,6 +3582,33 @@
       "end": 143,
       "classification": "false-positive",
       "rule": "path-not-token"
+    },
+    "159ae92f10ea3f8eb5a55b9e6d66c406416e4e7e6cee7716fa9c73ef79067b3e": {
+      "dataset": "BGL",
+      "line": 587,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
+    "15f6cc697ec3ee544e9347174356c2154665240097f900e5fa84115c98157e06": {
+      "dataset": "BGL",
+      "line": 389,
+      "kind": "ca_sin",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
+    "16110eb8c5033604cffe9d27aedc8dea3ddf3ddde0738a0f79b520403a3d4b63": {
+      "dataset": "BGL",
+      "line": 1738,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
     },
     "162c17f3ca458a8caeb86d5202e83eed265e13d33132d494d5ba0e6207beaf2e": {
       "dataset": "HDFS",
@@ -3259,6 +3682,24 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "1737e9d2f779f328e85c55c7e90706f6adb44d3e299bfbebad767bc863179418": {
+      "dataset": "BGL",
+      "line": 768,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
+    "17789693e96aa5e92aab5133337f995df2b33ddbc1b597f9bb8e396adbd8aca2": {
+      "dataset": "Android",
+      "line": 446,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "17f861fe246ac500b4a7ac2d5dd611a77508a501898c569bfe3f768e63ec4483": {
       "dataset": "OpenSSH",
       "line": 123593,
@@ -3277,6 +3718,15 @@
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
     },
+    "1859099b4f7a48219917a18ebbffad9d1c3874ba76bde9bd062ad2fc341984ba": {
+      "dataset": "BGL",
+      "line": 685,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "188325757a1713aae477eb34892cc04d90258c02c73dcbbcafd113a1d9afe73e": {
       "dataset": "HDFS",
       "line": 897,
@@ -3294,6 +3744,15 @@
       "end": 118,
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
+    },
+    "18c74c688ed11dfcb6ca0692235c7263e8c94ac4061f96000762a29f34c390f5": {
+      "dataset": "BGL",
+      "line": 1946,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
     },
     "193fc804a2e20e19e8cf48fdde5961d30aae3e8e59bafaa80c1149fd0de45dbf": {
       "dataset": "HDFS",
@@ -3349,6 +3808,15 @@
       "classification": "sensitive-reference",
       "rule": "published-identity"
     },
+    "1a407916aac850004f6fbf397d4172fb43f6ec2841a67671da912f80e3dc54b5": {
+      "dataset": "BGL",
+      "line": 1777,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "1a712778485f884a487f291d3fc069285bb7946bc15047e9fe2ecf6335ee6d1e": {
       "dataset": "Linux",
       "line": 24665,
@@ -3376,6 +3844,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "1aa600615ad45608e0f713fb9b5ba97fcaaea9b63dce351acfb1b784cbf258cf": {
+      "dataset": "BGL",
+      "line": 920,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "1acc05ffb5fec76759376ce6a7a4f3c78a9d74e215821f2725da8e1f18b31958": {
       "dataset": "HDFS",
       "line": 1730,
@@ -3385,6 +3862,24 @@
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
     },
+    "1ad838793a9bb92747ce9a48196c2dbd448c2f00ed5d16b9d066fde8fc5b25d4": {
+      "dataset": "BGL",
+      "line": 611,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
+    "1afad1b3f281efc34a11be80bcdd946b45f40387d8f2e3619676e00e2be8a552": {
+      "dataset": "Android",
+      "line": 1712,
+      "kind": "us_ssn",
+      "start": 67,
+      "end": 76,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "1b1cd3e204873a0754785c408e32e1680917a3774b2b37cc5657638e9c5daad4": {
       "dataset": "HDFS",
       "line": 1168,
@@ -3393,6 +3888,33 @@
       "end": 142,
       "classification": "false-positive",
       "rule": "path-not-token"
+    },
+    "1b7c9c92fdae9611faa019153aafc1cd56f45b434bbe9ba7f6a25eac0e2b387b": {
+      "dataset": "BGL",
+      "line": 833,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
+    "1bc27d1ac7248249915251fb1cfab0fd1fb271c0f94d7357d279d00b8cc0091c": {
+      "dataset": "BGL",
+      "line": 850,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
+    "1bf1506c962718d356708a7aeb641510c95317b4bb8faf3e03ea4b2b7b8edb7f": {
+      "dataset": "BGL",
+      "line": 105,
+      "kind": "uk_nhs",
+      "start": 9,
+      "end": 19,
+      "classification": "false-positive",
+      "rule": "epoch-time"
     },
     "1bfd4a1ab3ea954ac9ca17e3751566c49fad732ee165c4b674b5e51f752217a1": {
       "dataset": "Android",
@@ -3430,6 +3952,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
     },
+    "1cd4c7d2c9771c3716e45207629845ffb011360c960fd8c473eb7daef5782d61": {
+      "dataset": "Android",
+      "line": 2,
+      "kind": "us_ssn",
+      "start": 67,
+      "end": 76,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "1d03e702e63f6b3b047619b10ea8cce6fa0eaee09d5784395bfca1354f4ed14f": {
       "dataset": "HDFS",
       "line": 1745,
@@ -3438,6 +3969,15 @@
       "end": 118,
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
+    },
+    "1d81a729bcc291a6e3827f046ffba0fb93dc49f9f8194c9f2a052488a4792922": {
+      "dataset": "BGL",
+      "line": 1651,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
     },
     "1d91f5a8b4b03399187a7cd65e322d68216d47c50757345eb6e793a3ba50fd6d": {
       "dataset": "HDFS",
@@ -3475,6 +4015,15 @@
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
     },
+    "1df4e28b9fe48c9e476cf3e050c4e422841fe3d0696469fc7c7d4f9aeb6a0107": {
+      "dataset": "Android",
+      "line": 433,
+      "kind": "us_ssn",
+      "start": 87,
+      "end": 96,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "1df6a21be1799bf59e47b0b0f06d213aa5da156029b2d1e938f99e7679fb3e14": {
       "dataset": "Android",
       "line": 1388,
@@ -3511,6 +4060,15 @@
       "classification": "false-positive",
       "rule": "path-not-token"
     },
+    "1eddb2f516c1027316e20ccc4dfe8c5c16f7f5d3aa012b7409857ba09de79eff": {
+      "dataset": "BGL",
+      "line": 851,
+      "kind": "ca_sin",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
     "1ee9a9ef3b66fc71c5bf1d5bf2042377fa9add780720d4bd96851ea1002fab13": {
       "dataset": "OpenSSH",
       "line": 105859,
@@ -3520,6 +4078,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "1eef6e689888f5f78d694faf5656799a51ba5770a764dcd3cf183b2e264f0f50": {
+      "dataset": "BGL",
+      "line": 548,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "1f06a381d4e93f79627b703de0d27b0f5bea5d20d437f4f9c23422f26e8d2de6": {
       "dataset": "Android",
       "line": 1615,
@@ -3528,6 +4095,15 @@
       "end": 30,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
+    },
+    "1f1a7d63238b1787eb618f4474b888596d80628953e1e90471ec9fcb8aac2921": {
+      "dataset": "Android",
+      "line": 509,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
     },
     "1f2a5df81dbe426ebaa74e2c201e13dffb897009b75d5670cbbc9fda39d4065f": {
       "dataset": "HDFS",
@@ -3547,6 +4123,15 @@
       "classification": "false-positive",
       "rule": "path-not-token"
     },
+    "1ff2ab6b4f245840f5649dfc14455d9bc22f42ad1ba7e08ba4f1902ee0430911": {
+      "dataset": "BGL",
+      "line": 96,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "1ff8031f8607e013be8632a6bfbdc91b6e47b2a628886c3fdc4cd18649118072": {
       "dataset": "HDFS",
       "line": 1635,
@@ -3565,6 +4150,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
     },
+    "20290da8a75ff00bfc585cca9beff4ec38608959562217fc33a9c8f875fb57f2": {
+      "dataset": "BGL",
+      "line": 420,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "20334e20bde8c85ed6bbc537e8e4ca83c0b8f6ce885dfb2d907b1e0f442185a4": {
       "dataset": "Linux",
       "line": 23840,
@@ -3573,6 +4167,24 @@
       "end": 142,
       "classification": "false-positive",
       "rule": "operational-counter-or-file-id"
+    },
+    "206b7d5a4545055d0db9b7cc38ced18be219b8ba66bdbe36019409cff193f6ed": {
+      "dataset": "Android",
+      "line": 1802,
+      "kind": "us_ssn",
+      "start": 67,
+      "end": 76,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
+    "20a723952e3cec58058b3c4c4f6a0e53d13bf07a44431e053fc61053eebedeef": {
+      "dataset": "Zookeeper",
+      "line": 71058,
+      "kind": "ca_sin",
+      "start": 143,
+      "end": 152,
+      "classification": "false-positive",
+      "rule": "snapshot-or-log-file-id"
     },
     "20adafe043d1536951710ac4b0aef55de3dc692f53fa2b926bb281954eae4ded": {
       "dataset": "HDFS",
@@ -3610,6 +4222,15 @@
       "classification": "false-positive",
       "rule": "path-not-token"
     },
+    "2178a2f73d9d4e85075672d9fb1fda9eb55d714903bec9551c47b4750015a675": {
+      "dataset": "BGL",
+      "line": 110,
+      "kind": "uk_nhs",
+      "start": 9,
+      "end": 19,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "217ad2c5754f9b7e42c4f24ffd537056085edd96abbd1d7f413d153cee83c0d3": {
       "dataset": "Android",
       "line": 35,
@@ -3618,6 +4239,15 @@
       "end": 30,
       "classification": "false-positive",
       "rule": "timestamp-pid"
+    },
+    "2184ef5c70b4ae3954b8a836142360f26b75b7722d2971c1b700d95f9665f971": {
+      "dataset": "Android",
+      "line": 644,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
     },
     "21bb6e12e26571d7748af7fe9ba21350eada89da274ae68a7bdbb98fc489f66f": {
       "dataset": "Android",
@@ -3736,6 +4366,15 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "24f8d062fa2e1d81399f5a8e05bbac8ddb6cc8d3b4fd82230be5355d4f01e5c4": {
+      "dataset": "BGL",
+      "line": 1957,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "252796f5a5de5c8a129537f019ccbe845bf1485877930f055af65a17bbe45e9f": {
       "dataset": "HDFS",
       "line": 1406,
@@ -3826,6 +4465,15 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "2860840dd8ec643183b598d1fb99db918ef2eb4fb1e9d9c5a14b3a815d4676d9": {
+      "dataset": "Android",
+      "line": 1420,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "28d88d356ed7784fdefc403dba34e5b9421706a4a67cd09ebdfa721c5844f828": {
       "dataset": "Android",
       "line": 32,
@@ -3844,6 +4492,15 @@
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
     },
+    "2962121c7d6653d5f28ce865e7be4022ce11ebb66aee9f546a11dd001b8da5e0": {
+      "dataset": "Android",
+      "line": 77,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "2ac534654b4a30437610dcfe63cb4c5be5915c9176d927f339f199bd1319ffe4": {
       "dataset": "Android",
       "line": 459,
@@ -3852,6 +4509,69 @@
       "end": 30,
       "classification": "false-positive",
       "rule": "timestamp-pid"
+    },
+    "2aca3b4295d516d847a10f47d503b50de3ec60e5442c802fde4f1f5e5aa52fd2": {
+      "dataset": "Android",
+      "line": 734,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
+    "2b36f948d29be18bd575e72a484dc8dcb1e94d8129685861f30d149d04aa251c": {
+      "dataset": "Android",
+      "line": 1710,
+      "kind": "us_ssn",
+      "start": 67,
+      "end": 76,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
+    "2b5c8e1be8a18e5990a2d0c503ef3748de1a0ec927377b62d5ee0897806ab9b8": {
+      "dataset": "Android",
+      "line": 210,
+      "kind": "us_ssn",
+      "start": 274,
+      "end": 283,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
+    "2b5d131bf4554d7500b9f703c8e7f59e9094c7c8216c23eca402f9f4acacbd0e": {
+      "dataset": "Android",
+      "line": 859,
+      "kind": "us_ssn",
+      "start": 85,
+      "end": 94,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
+    "2b67c6fb6ba0322e1fcbf2354b3b3e10ad8b2c013fb3c16233486992bbf2b3b8": {
+      "dataset": "BGL",
+      "line": 304,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
+    "2c1df8a8a91514a67ce19cae25ef77584c4b434da9a245934fad2181192027b9": {
+      "dataset": "Android",
+      "line": 1920,
+      "kind": "ca_sin",
+      "start": 271,
+      "end": 280,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
+    "2c4201ab2b7026d9aaf99b777a6bdceae8491fed2e41e02213d7b18634842d39": {
+      "dataset": "Android",
+      "line": 370,
+      "kind": "us_ssn",
+      "start": 67,
+      "end": 76,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
     },
     "2c7904a7e7b4538d577d61dc3817676d05b61170b0b1518ed05a6e53a1e037e4": {
       "dataset": "Spark",
@@ -3871,6 +4591,15 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "2ce033792c71e400585907c6f301673db9e559a3eb96fd1df78506877891d8bc": {
+      "dataset": "BGL",
+      "line": 800,
+      "kind": "uk_nhs",
+      "start": 2,
+      "end": 12,
+      "classification": "false-positive",
+      "rule": "epoch-time"
+    },
     "2d5a017f4bd8758cc2e90a5d20e48b4811be17c68f8a8c8e7d7142bd91ee3ac7": {
       "dataset": "OpenSSH",
       "line": 123864,
@@ -3889,6 +4618,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "2e0c9f0d6509750ef7143f978fb2b2713edc2778169e557259b46ed3b37d92bc": {
+      "dataset": "Android",
+      "line": 559,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "2e76ae3c682405db847283e05b45cf9ed8ba5a009ed08c67d3ec716ce418e306": {
       "dataset": "Android",
       "line": 1967,
@@ -3897,6 +4635,24 @@
       "end": 30,
       "classification": "false-positive",
       "rule": "timestamp-pid"
+    },
+    "2e9a48cfba539528493e5f1d67ee540d93542764f879a729f4d213aadcf3d5ed": {
+      "dataset": "Android",
+      "line": 1545,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
+    "2ef8858fa80307d7b1d44d8d81e7cb9742bd0a64814babad56cec6dac56ebe40": {
+      "dataset": "OpenSSH",
+      "line": 139244,
+      "kind": "ca_sin",
+      "start": 76,
+      "end": 87,
+      "classification": "false-positive",
+      "rule": "hostname-fragment"
     },
     "2fd0a4b684a9cb0cef21879c7e96c795f093f322c80ae0443660693cd6a270df": {
       "dataset": "Android",
@@ -3915,6 +4671,15 @@
       "end": 91,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
+    },
+    "2feacbb9061e211bf0858ee8ebb0dc7e128d046b9c6598e1911802ffe7591482": {
+      "dataset": "Android",
+      "line": 880,
+      "kind": "us_ssn",
+      "start": 67,
+      "end": 76,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
     },
     "3091526ecbf39d2b856c9d0229745975a2593a2cc6f3dcc7197803645f5c6093": {
       "dataset": "Android",
@@ -3951,6 +4716,15 @@
       "end": 69,
       "classification": "sensitive-reference",
       "rule": "network-address"
+    },
+    "318d6c0fd5fadd7f059d044be74cad215049560261a598dd7207feb9ae9e0439": {
+      "dataset": "BGL",
+      "line": 842,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
     },
     "31bc4db348878a47fb24649dae95b792010ec2b4893202a1a50c40da96d4ceea": {
       "dataset": "Android",
@@ -4006,6 +4780,15 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "339c4c006f7be449de0e996eb571ec8a2fdcd185f016436607c2fb99d71a1239": {
+      "dataset": "BGL",
+      "line": 847,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
     "33b07ff3ac0c3451d577a21e7da4dc4eb0499acc2489820da0889c6a525ae1b3": {
       "dataset": "Linux",
       "line": 23444,
@@ -4014,6 +4797,24 @@
       "end": 88,
       "classification": "sensitive-reference",
       "rule": "published-identity"
+    },
+    "33b44568ceff5b6304dbdf83aacc0869e1bb7f387c8c684966f0b54e2ef835ea": {
+      "dataset": "Android",
+      "line": 1412,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
+    "33c1f355153d96bc3467744ed01d258d523c5de70bf999997f99fdaacc5cbe25": {
+      "dataset": "BGL",
+      "line": 855,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
     },
     "3454839a484941d068f099170e402f436da76a6140c836d607080deb4def70ce": {
       "dataset": "BGL",
@@ -4069,6 +4870,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "35164b9a73700ffc68d37d5dc267f82bc0df4908f5e57e41f8d8bbd9c1cc40e9": {
+      "dataset": "Android",
+      "line": 1818,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "354a16cc39fe44909333223f7721af08a053d8b6859a306a28fff80850e010b4": {
       "dataset": "Spark",
       "line": 1007,
@@ -4123,6 +4933,24 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "3730210254e91df02914d93f102fd851251aa6bf94abc0c85f9ae44e93fe0953": {
+      "dataset": "Linux",
+      "line": 23753,
+      "kind": "us_ssn",
+      "start": 154,
+      "end": 163,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
+    "373dd0d099b90c688b6899030a61dcdd171e268aff605d8ad0c88e9135fbe76b": {
+      "dataset": "BGL",
+      "line": 1333,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
     "377d4234ce998560eb2390bf8f9a069214629ddf827e331445c41747ab1666dc": {
       "dataset": "OpenSSH",
       "line": 105851,
@@ -4158,6 +4986,24 @@
       "end": 48,
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
+    },
+    "38e1d545d2de534c5c6051fbd0b665b0c9a8a3b65302c3e5bf74b09b4f243062": {
+      "dataset": "Android",
+      "line": 1292,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
+    "38e7fdc408a2e28f48b6595432f4072f227015f2c41e52f371a54f04cc8b11fe": {
+      "dataset": "BGL",
+      "line": 609,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
     },
     "3a0bf0e89bfe39139aca98e7448ed984cce2c30133af4712038a01be71c359a1": {
       "dataset": "Linux",
@@ -4231,6 +5077,15 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "3cd4fbc9a4ca57dc4b4c8355b532633c2bf5eb42106453ddf2f0968f4e461754": {
+      "dataset": "Android",
+      "line": 1826,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "3d55d58cd5ecdd07206b0160ab32b29c1f2efbd043f1adf70e7561c264fbb1ca": {
       "dataset": "BGL",
       "line": 1222,
@@ -4240,6 +5095,15 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "3e99bfa4f3ca52db051167d72ca783b3b4dfc09bc1ee66f3c4238662138a9f35": {
+      "dataset": "Zookeeper",
+      "line": 71048,
+      "kind": "ca_sin",
+      "start": 143,
+      "end": 152,
+      "classification": "false-positive",
+      "rule": "snapshot-or-log-file-id"
+    },
     "3fe409f1dd34c7d360511ef90c4bd9e2c2e1b06235522e20cffab2884a08511d": {
       "dataset": "OpenSSH",
       "line": 105839,
@@ -4248,6 +5112,15 @@
       "end": 91,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
+    },
+    "408c956882d8949cad93a355a1ff4c2dba65b9fbcfc0918b4fc1489dcd515c4a": {
+      "dataset": "Android",
+      "line": 1607,
+      "kind": "ca_sin",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
     },
     "40c69e577c7dcb00fa7b749c3c034464030497f3fe220c987ea039a8d2fd8867": {
       "dataset": "BGL",
@@ -4285,6 +5158,24 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "425c906e5fa91122fd01b51013cd24a91c96bdbf869a7dc7a7471ac5bc382c15": {
+      "dataset": "Android",
+      "line": 480,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
+    "42a6d4459985b947a5cc9bf7b7619d748734a66c14f875b158d9f59e53cce788": {
+      "dataset": "Android",
+      "line": 1691,
+      "kind": "us_ssn",
+      "start": 85,
+      "end": 94,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "42c8127c56270357fb34bb612cf867343636d53d9abcb795f27d565d3c6c7ec0": {
       "dataset": "Linux",
       "line": 179,
@@ -4312,6 +5203,15 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "43dd73f576cd538b1b1300326280997110cbc907fb08b6c6b289b0f330b5ae95": {
+      "dataset": "Android",
+      "line": 1687,
+      "kind": "us_ssn",
+      "start": 87,
+      "end": 96,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "44987a7eeb3cb3182fc9f30fd9b6c08b61c22816825c8f275436188efa0b4c3c": {
       "dataset": "OpenSSH",
       "line": 215437,
@@ -4329,6 +5229,15 @@
       "end": 125,
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
+    },
+    "44f5a354285cbdc0b8dbdf310bb68140607fd33d95021a11e51d7f2e066138d2": {
+      "dataset": "Android",
+      "line": 35,
+      "kind": "us_ssn",
+      "start": 67,
+      "end": 76,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
     },
     "45151abcb3a5267b0394fac190bbbfeaa8e5849917f66433ba07fcc015e60a41": {
       "dataset": "OpenSSH",
@@ -4393,6 +5302,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-block-id"
     },
+    "49528810c3ef25ac395be3897ce9d4608637da93d6773c57b8bfc9d97f82fe7c": {
+      "dataset": "Android",
+      "line": 1417,
+      "kind": "us_ssn",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "49b0489a701c4e8171a289d5249b3c9734003887f8a8014c8ddf8c83be1d42be": {
       "dataset": "Linux",
       "line": 23963,
@@ -4410,6 +5328,15 @@
       "end": 186,
       "classification": "false-positive",
       "rule": "path-not-token"
+    },
+    "4a337682cc916cf096f5c9756dfa6d5574affef7bfe361b531267ef68bbb7e88": {
+      "dataset": "Linux",
+      "line": 23792,
+      "kind": "us_ssn",
+      "start": 138,
+      "end": 147,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
     },
     "4aa69cbe815cc5dee8c523357878be4552aaa6262991989e78c5ae709602c79e": {
       "dataset": "BGL",
@@ -4546,6 +5473,24 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "55edee4d781dd40f2c2fa70a0b4da1b382a1e77e5e7948b0a878e05eb676af65": {
+      "dataset": "BGL",
+      "line": 610,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
+    "55f70cbcdb5df019d542b6037c35c69a563075d69ef65847c7c66b2994aa66c4": {
+      "dataset": "Linux",
+      "line": 23759,
+      "kind": "us_ssn",
+      "start": 137,
+      "end": 146,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "5652276a658d3a6a836b576e341df4ed18f802cfc28542b083a569426d42ec03": {
       "dataset": "Spark",
       "line": 1049,
@@ -4600,6 +5545,15 @@
       "classification": "sensitive-reference",
       "rule": "published-identity"
     },
+    "595bf965e64b7322d97f640faf4e3dfce18f6211aa86943a9c6974456debd7b9": {
+      "dataset": "BGL",
+      "line": 849,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
     "59c389620e5170bd658c6874eac65d31a601755da6274da793d84b129ce94d88": {
       "dataset": "OpenSSH",
       "line": 105764,
@@ -4636,6 +5590,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "5a3cc9d4557e12e815e5040a605db36aa75d1d27091a2850622853456473c5a9": {
+      "dataset": "Linux",
+      "line": 23965,
+      "kind": "us_ssn",
+      "start": 94,
+      "end": 103,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "5a5b7c3743eec00ea5270e9eb64f86c1e264427eaa453344228d78769b5262bc": {
       "dataset": "Linux",
       "line": 5318,
@@ -4644,6 +5607,33 @@
       "end": 86,
       "classification": "sensitive-reference",
       "rule": "published-identity"
+    },
+    "5e5a42c6992f8b7862d07ff92c3335274fa76bc7466a54718036b4e1a1790df9": {
+      "dataset": "Linux",
+      "line": 23840,
+      "kind": "us_ssn",
+      "start": 133,
+      "end": 142,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
+    "5e7b520751e1d41f8b2d2d9a464b699333fb95b9e74cca3728a99932cd898851": {
+      "dataset": "BGL",
+      "line": 612,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
+    "5ee590f552bd17060bdd4cf0a39fe0d9968ad60ba668f6d9f86e6dab8aceebf9": {
+      "dataset": "BGL",
+      "line": 1332,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
     },
     "5f2a23ec659e88789d194ea78f69ca8d665f6544c99cc9b87242d1d1834210cf": {
       "dataset": "BGL",
@@ -4762,6 +5752,24 @@
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
     },
+    "659abf128077d15f2d9b091a4ef0b26db23e99fe57f95568ae8ef47f268ee48a": {
+      "dataset": "Linux",
+      "line": 227,
+      "kind": "us_ssn",
+      "start": 56,
+      "end": 65,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
+    "659ee34ca5cfc083583a0fbc48639771ce819648250a9c97b0baad36bb6d4df7": {
+      "dataset": "Linux",
+      "line": 23807,
+      "kind": "us_ssn",
+      "start": 140,
+      "end": 149,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "65cc5663f04d31fb463efacfe53d6fe51defca9dbf7506594e05e4c249492ef1": {
       "dataset": "Spark",
       "line": 1244,
@@ -4770,6 +5778,15 @@
       "end": 69,
       "classification": "sensitive-reference",
       "rule": "network-address"
+    },
+    "65ef412b395ff75b97eefd53c67631fb9a62b9aea5ebe1a305b1146a70df24c3": {
+      "dataset": "Android",
+      "line": 208,
+      "kind": "ca_sin",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
     },
     "66439cb3129208ac74e3497866706fe353652eafc9b4b48ddfb61df3a25a6dc2": {
       "dataset": "OpenSSH",
@@ -4798,6 +5815,15 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "66fd6a7f006ff1f5fe040474c1469efb3cee2308e1920e35fe2d4fa2366ff3f4": {
+      "dataset": "BGL",
+      "line": 845,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
     "67a220bde7fb1fe55c707d26427ade12d4a8758de59c1176a0dc6fec6cc86d24": {
       "dataset": "Android",
       "line": 1525,
@@ -4815,6 +5841,15 @@
       "end": 84,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
+    },
+    "681722280a1853e38ec4e21e01c9f6889fe6775ed7800ba3bd6e74fbcde053b8": {
+      "dataset": "BGL",
+      "line": 848,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
     },
     "68bdbbeafcb262793fd78d4616f1036307813956320eb1c96cc79eceb9c4c186": {
       "dataset": "Linux",
@@ -4861,6 +5896,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "6a427783bf35a6898c66d03b3fe4e367190effd249e490a1de2ab856c90ede41": {
+      "dataset": "BGL",
+      "line": 852,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
     "6c796a0702abe8dd5c9363c7fc7c8c0bd5c06497d480439d17e2a76cda2bb41c": {
       "dataset": "Linux",
       "line": 2092,
@@ -4870,6 +5914,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "6c943628ef102461bff2db8f48cabfe21f8b4f81e4050862d26855d517548319": {
+      "dataset": "Linux",
+      "line": 23762,
+      "kind": "ca_sin",
+      "start": 156,
+      "end": 165,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "6d4628cab2ecab43fe9bbcf928b0600e9f2c61efb1ae9232872a603dbb5f15f2": {
       "dataset": "Spark",
       "line": 1166,
@@ -4878,6 +5931,15 @@
       "end": 69,
       "classification": "sensitive-reference",
       "rule": "network-address"
+    },
+    "6d9de68fae4f6ee46facbd00da9fc5dabcf1e3a31166b4ef510abb8e8308f1c1": {
+      "dataset": "Linux",
+      "line": 23756,
+      "kind": "us_ssn",
+      "start": 138,
+      "end": 147,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
     },
     "6eb2f3c819ef81c7ddc43fdae31c2e791346de06dd04cf05481a1c9e6411aa96": {
       "dataset": "Linux",
@@ -4906,6 +5968,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "7121d384ec1fcc0d501f10625c1a96843ad72ede410742f2e47e0f6568b6c736": {
+      "dataset": "Android",
+      "line": 210,
+      "kind": "ca_sin",
+      "start": 274,
+      "end": 283,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "713480fd09d7d30f722014168dfb1fe1a000698dd671bf0dbd6f61589c2c71ef": {
       "dataset": "Android",
       "line": 86,
@@ -4923,6 +5994,15 @@
       "end": 135,
       "classification": "sensitive-reference",
       "rule": "network-address"
+    },
+    "72affc4aabd98bf52c1528f17b377ba514890514029c4e08eedb6a4101785391": {
+      "dataset": "Linux",
+      "line": 23849,
+      "kind": "ca_sin",
+      "start": 143,
+      "end": 152,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
     },
     "7449b07e2943f8edcf6ced5176cc2da4cfa0fe1e14388177109d46d784094baf": {
       "dataset": "Linux",
@@ -4959,6 +6039,15 @@
       "end": 116,
       "classification": "false-positive",
       "rule": "operational-counter-or-file-id"
+    },
+    "762053cc3ce10d4ec604a182a4f9c129831000cbf1a70b36b1b8861220cc417d": {
+      "dataset": "Linux",
+      "line": 21342,
+      "kind": "us_ssn",
+      "start": 56,
+      "end": 65,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
     },
     "7658c53e2dd036ec3c97f081fefe0c743a17fcbf45a876009bd3c01864876746": {
       "dataset": "Linux",
@@ -5013,6 +6102,15 @@
       "end": 91,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
+    },
+    "788fa33d346fb5e9c3adb54e9418bfdddc00b6e536a59da4a1f6ffb1f70323c8": {
+      "dataset": "BGL",
+      "line": 846,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
     },
     "7b387c775c14035ef4cbf088cf8e85bc5d42b7cf0e18c78167d499f44238d5bc": {
       "dataset": "OpenSSH",
@@ -5131,6 +6229,15 @@
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
     },
+    "844f56dc9b5bbdacaae4631ff68d6dc14ba3c60a2950cd5f4093ad7b2a9050c7": {
+      "dataset": "Linux",
+      "line": 5360,
+      "kind": "us_ssn",
+      "start": 56,
+      "end": 65,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "84f3a87f35186eb6ebe324a05c126c8856b48a07e9014a0818a9f46a6b7b0df0": {
       "dataset": "Android",
       "line": 1970,
@@ -5157,6 +6264,15 @@
       "end": 30,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
+    },
+    "858ed24ba4dd7cf0c38ce1c105af17197ea02a7d046a7eb8a91a4fddf6f7206f": {
+      "dataset": "Linux",
+      "line": 21342,
+      "kind": "ca_sin",
+      "start": 56,
+      "end": 65,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
     },
     "85fab6f7eeee9033cee40210e4db3c0b6de400c681c9c2d8a0f5db1f6de2ae88": {
       "dataset": "BGL",
@@ -5230,6 +6346,15 @@
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
     },
+    "8841306fbea312f483d7da3b4e1dd057e741f8c43491de6cdf01dc14104488b8": {
+      "dataset": "BGL",
+      "line": 854,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
     "888660f3a1931c3e138d2584ed6e3de97e34e52fa0a79040a14de611e8210d65": {
       "dataset": "Linux",
       "line": 24949,
@@ -5238,6 +6363,15 @@
       "end": 124,
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
+    },
+    "89e40be8ad0d92314544d7319e262e09d52174028e2e515e42393ecc1f206ab7": {
+      "dataset": "Linux",
+      "line": 23932,
+      "kind": "us_ssn",
+      "start": 129,
+      "end": 138,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
     },
     "8a0b34365ea56bff5db332abbe88686c67e312f1d5f15af050af702252b09905": {
       "dataset": "Android",
@@ -5248,6 +6382,24 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "8a3f5fa932459fcf83b7fc33f9c6de8670b1a1fca5e513ab8055e6e574c0fe66": {
+      "dataset": "BGL",
+      "line": 1989,
+      "kind": "us_ssn",
+      "start": 209,
+      "end": 218,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
+    "8aab2a53e21be7d136aed057ec59fc15bf9b57eb5d6770cbe77431a499753b9b": {
+      "dataset": "Linux",
+      "line": 23934,
+      "kind": "us_ssn",
+      "start": 99,
+      "end": 108,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "8b8e7a76a2cb0eaf12ac9926acd8a9fcacef54a41e75c94c692e68cb2ca4a339": {
       "dataset": "OpenSSH",
       "line": 215773,
@@ -5256,6 +6408,15 @@
       "end": 58,
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
+    },
+    "8bbf981702ef51c57835acbba307dc66cc713e0a5ec5d719d96a220531ce6585": {
+      "dataset": "Zookeeper",
+      "line": 69755,
+      "kind": "ca_sin",
+      "start": 162,
+      "end": 171,
+      "classification": "false-positive",
+      "rule": "snapshot-or-log-file-id"
     },
     "8c63574062ed018f3736815b0826ee92122d470b79ce788a1bb0720e74fa6feb": {
       "dataset": "Linux",
@@ -5283,6 +6444,24 @@
       "end": 186,
       "classification": "false-positive",
       "rule": "path-not-token"
+    },
+    "8dc124011276b4e51c378b6f40a3e94a39d836c7b6e556c8eeac6e25488e9d87": {
+      "dataset": "Linux",
+      "line": 23762,
+      "kind": "us_ssn",
+      "start": 156,
+      "end": 165,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
+    "8fa53717179d4556e0dc5107453945c79916d897ec0131819f3802a4d84d6e43": {
+      "dataset": "Linux",
+      "line": 6113,
+      "kind": "ca_sin",
+      "start": 56,
+      "end": 65,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
     },
     "90237dab581e4ea14df836b0a0aec1a8654e8cbac4214e0e7d11f70b1691da26": {
       "dataset": "Android",
@@ -5329,6 +6508,15 @@
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
     },
+    "937189084f547e3c2597d8739ea1b59f866e8734329d4f40203aaebac4b6a3c4": {
+      "dataset": "Linux",
+      "line": 571,
+      "kind": "us_ssn",
+      "start": 56,
+      "end": 65,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "93e97f62a21e6a53813b622d2dcc1ac92743a75d68dab97924134a7bc93e5a7d": {
       "dataset": "OpenSSH",
       "line": 43136,
@@ -5346,6 +6534,15 @@
       "end": 125,
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
+    },
+    "951bf838515b72e61d3f23ba5355c7fb80f1c56681667320410f36541c9037ff": {
+      "dataset": "Linux",
+      "line": 23793,
+      "kind": "us_ssn",
+      "start": 140,
+      "end": 149,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
     },
     "95309380f803815004bcf5c09a9b0f98ba420bab2009cf4985d3bd859a5c079e": {
       "dataset": "Android",
@@ -5374,6 +6571,15 @@
       "classification": "sensitive-reference",
       "rule": "published-identity"
     },
+    "979aab3cd7a41cc4ea5192ee181f52a7fa74b2ee8d3915f6eb2951b1ea7a6f36": {
+      "dataset": "Linux",
+      "line": 23807,
+      "kind": "ca_sin",
+      "start": 140,
+      "end": 149,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "98483d83ce28fdbaee8e64b302b6c6cfb032d5ca6f4a03a5e4d99e75292d3a94": {
       "dataset": "BGL",
       "line": 1465,
@@ -5382,6 +6588,15 @@
       "end": 200,
       "classification": "sensitive-reference",
       "rule": "network-address"
+    },
+    "9a683b55b4f17e15d63c7f9af274dc7fddde52df37a1633e9e3114f362464c00": {
+      "dataset": "Linux",
+      "line": 23800,
+      "kind": "us_ssn",
+      "start": 142,
+      "end": 151,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
     },
     "9b4138fb6081935aa00e96b0ee059e74a084577b8509d7d0947eae6f8559ac52": {
       "dataset": "Linux",
@@ -5409,6 +6624,15 @@
       "end": 84,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
+    },
+    "9fe945a8c5dbd749e0b31a61a258ff38897e9c1956f1949fd568bf9d22a64825": {
+      "dataset": "Linux",
+      "line": 6113,
+      "kind": "us_ssn",
+      "start": 56,
+      "end": 65,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
     },
     "a0b0babe551e67e2cb66a955d3373b7062ca807353a4814ede77baf4a28d9114": {
       "dataset": "Android",
@@ -5473,6 +6697,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "a62c21ea02ec4279ee35ecb5b6b688c9bb88e90077d04a06929af03c908e873a": {
+      "dataset": "Linux",
+      "line": 23966,
+      "kind": "us_ssn",
+      "start": 149,
+      "end": 158,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "a6521c210c8a65acedc6db61448442cdea883e4f9cadc1b0568a003623c8482f": {
       "dataset": "Linux",
       "line": 2095,
@@ -5509,6 +6742,15 @@
       "classification": "sensitive-reference",
       "rule": "published-identity"
     },
+    "a9ccee6c103e3ffc9994e743ad6b88a51cf72bbe39810753edd1463646f47f01": {
+      "dataset": "Zookeeper",
+      "line": 21930,
+      "kind": "ca_sin",
+      "start": 91,
+      "end": 100,
+      "classification": "false-positive",
+      "rule": "snapshot-or-log-file-id"
+    },
     "a9fd12c7391569a7ce415d503ab006bbd2f09a4dd0924fe43317fffe3aa5e73d": {
       "dataset": "Linux",
       "line": 5641,
@@ -5518,6 +6760,24 @@
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
     },
+    "aad74cb87771c569dbe63c40b20864a5d96800c99b46915a6270645d04f63002": {
+      "dataset": "Linux",
+      "line": 23968,
+      "kind": "us_ssn",
+      "start": 134,
+      "end": 143,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
+    "aae6f13930f15803341422fc1db91cabe718ecfbd0617fb20a948a28846d6907": {
+      "dataset": "Linux",
+      "line": 23963,
+      "kind": "us_ssn",
+      "start": 135,
+      "end": 144,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "ab5fcd77ce5873a170f802905e740a9a02a7e4d51da8b196d85d6c0b9c778202": {
       "dataset": "BGL",
       "line": 10,
@@ -5526,6 +6786,15 @@
       "end": 199,
       "classification": "sensitive-reference",
       "rule": "network-address"
+    },
+    "ac4b976695ad561ecdbf23e9317b1b41d98d79d502d1451e09a8165e4fd28ba0": {
+      "dataset": "Android",
+      "line": 1341,
+      "kind": "ca_sin",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
     },
     "acf1e2551bc8ff69a90cbf0f80c7745c12ae9d7f5d263fa27f9e9416b2b978c4": {
       "dataset": "Android",
@@ -5662,6 +6931,15 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "b6bf6a2d770743c2305624368bc2454cd40f3f18969d9b1bdc5038bb4376b2da": {
+      "dataset": "Linux",
+      "line": 7696,
+      "kind": "us_ssn",
+      "start": 56,
+      "end": 65,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "b73633da529c54859b2050c8d86139e1de6fd6ac187310a99bfd64873dd1483f": {
       "dataset": "Android",
       "line": 1341,
@@ -5716,6 +6994,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "bcfae4082782176eb8acec5f3a6a991d2f9316e7a851b607ec3e2e52435efdbc": {
+      "dataset": "BGL",
+      "line": 390,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
     "bdb467d2dd3efb282d3c8b162d868af27a91129cf54775a67dc6c04c7f83ff88": {
       "dataset": "BGL",
       "line": 1241,
@@ -5761,6 +7048,15 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "c2d490f48ff73c95df67fe4aaf564f4bdb5cf4bffb274ce487144c25e4838ad1": {
+      "dataset": "BGL",
+      "line": 1334,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
     "c3c36e8302fb7e81966fa32bb421414da75a74729efb81a26310bbfbc89ec1f9": {
       "dataset": "BGL",
       "line": 1247,
@@ -5769,6 +7065,15 @@
       "end": 186,
       "classification": "false-positive",
       "rule": "path-not-token"
+    },
+    "c3d83ab5e2248477b19d30dc394c781175de4e5b2d07708bf072af77098079ba": {
+      "dataset": "BGL",
+      "line": 843,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
     },
     "c3efb746da6c7592bf172ba1302f1bf41cec1abeb802ed3b8c61de6219bf42c4": {
       "dataset": "Android",
@@ -5796,6 +7101,15 @@
       "end": 30,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
+    },
+    "c63a5d921d7f89e6314c5fafa8e8a2e88b5e2ac4e03c05ef98c72d4731df0488": {
+      "dataset": "Linux",
+      "line": 23672,
+      "kind": "us_ssn",
+      "start": 140,
+      "end": 149,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
     },
     "c667ff73de4e74ec0b3f71fd266987bee43f3a193c54b96f994db460bdf3e7ff": {
       "dataset": "BGL",
@@ -5869,6 +7183,24 @@
       "classification": "false-positive",
       "rule": "path-not-token"
     },
+    "ce99d4d13e5a509250682bb2a22532ab6c68d8c200afeb89c7210e9bfcf6cbd5": {
+      "dataset": "Linux",
+      "line": 23797,
+      "kind": "us_ssn",
+      "start": 157,
+      "end": 166,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
+    "ced74a938f09096a3938decb8a4b8d252dd2b3be1466e9d1bd789f823178809e": {
+      "dataset": "BGL",
+      "line": 856,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
     "cf69154f98268418373eef234f81fa3043e276131c860760bff04f79ecb64c51": {
       "dataset": "BGL",
       "line": 856,
@@ -5905,6 +7237,15 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "d170bd591fc3e6d50060fd5d243bfe90d0a3a39b884009c5814236c60809eae6": {
+      "dataset": "Linux",
+      "line": 23692,
+      "kind": "us_ssn",
+      "start": 143,
+      "end": 152,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "d191c7a583e23f4f8137de9498adcd73535c92731475a97b2cc9f63ebc123bcf": {
       "dataset": "OpenSSH",
       "line": 501030,
@@ -5932,6 +7273,24 @@
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
     },
+    "d26ed122f9382fbf010eed80406e29f1dd7c0f79e9a1f0466a530d5e1b335a8b": {
+      "dataset": "Zookeeper",
+      "line": 73082,
+      "kind": "ca_sin",
+      "start": 91,
+      "end": 100,
+      "classification": "false-positive",
+      "rule": "snapshot-or-log-file-id"
+    },
+    "d27c12297b8794ab1fede5c7dea440ede0a584ec9b88bbae19fbd03d3a02ede4": {
+      "dataset": "Linux",
+      "line": 23759,
+      "kind": "ca_sin",
+      "start": 137,
+      "end": 146,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "d31c3324ea297abd8b17a08a42b06195b077bc361c49f145848606191a0fcd91": {
       "dataset": "Android",
       "line": 1545,
@@ -5941,6 +7300,24 @@
       "classification": "false-positive",
       "rule": "operational-counter-or-file-id"
     },
+    "d380b8dd0e9648ab0c8c71b7c7c0606e7290438faa50d4759caba486397f6e36": {
+      "dataset": "Linux",
+      "line": 23628,
+      "kind": "us_ssn",
+      "start": 136,
+      "end": 145,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
+    "d406c67b457410190575b39470862ea43d2ad3720fbae0a0b9b11e0d774574eb": {
+      "dataset": "Linux",
+      "line": 23833,
+      "kind": "us_ssn",
+      "start": 56,
+      "end": 65,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "d40fcd1d23c795b66cae6c98a4b4c5b1a5178f50afe78cf3a158c56e6ad296b7": {
       "dataset": "Linux",
       "line": 24941,
@@ -5949,6 +7326,15 @@
       "end": 124,
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
+    },
+    "d4c776ce0b9d8d56544d1f6082d177430df6b9c56b2cc0e82eb7dfeae6c83c1d": {
+      "dataset": "BGL",
+      "line": 853,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
     },
     "d62ddf00fd78885b9d83edb2132e591523c7c05344e7acf1557d2e7b20feebb5": {
       "dataset": "Android",
@@ -5977,6 +7363,24 @@
       "classification": "false-positive",
       "rule": "timestamp-pid"
     },
+    "d8120a36ab25973971274f811b449ff879223f7b85fd0180e0d9c4a1686bb843": {
+      "dataset": "BGL",
+      "line": 1335,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
+    "d93bf9e010f84f1c461095c1823a1c2d6504a2f80e5d9c23d85c752ccf8e075c": {
+      "dataset": "Zookeeper",
+      "line": 50667,
+      "kind": "ca_sin",
+      "start": 91,
+      "end": 100,
+      "classification": "false-positive",
+      "rule": "snapshot-or-log-file-id"
+    },
     "d960e6c4c7eeb848e27f3c5fe26bb248a754216fcedceb8b1e913d87a8ea3898": {
       "dataset": "Linux",
       "line": 24400,
@@ -5985,6 +7389,15 @@
       "end": 122,
       "classification": "sensitive-reference",
       "rule": "published-identity"
+    },
+    "d9bbc3e294d77899e869443b4869f7c81612236e3ad327697e150dbaa8d99cf4": {
+      "dataset": "BGL",
+      "line": 851,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
     },
     "d9c7e86a753e416ea51f12eba7a947aebe10abc8c30c7b6b38ad885ed9e79c91": {
       "dataset": "BGL",
@@ -6058,6 +7471,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid"
     },
+    "df6e9ddd7fe29ff3b83fa7fc256cf4254340097600d6909e2a1db9ab837a69ac": {
+      "dataset": "Android",
+      "line": 723,
+      "kind": "ca_sin",
+      "start": 92,
+      "end": 101,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "e0bc6a20a463b09662188e87e27c8b444f6887ba132b9840fc34de6c2f2617ca": {
       "dataset": "Linux",
       "line": 24401,
@@ -6075,6 +7497,15 @@
       "end": 84,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
+    },
+    "e402672adfcbb0aa7354b7ebd822284b342f908f95082658803e4fa00b98ebce": {
+      "dataset": "Linux",
+      "line": 23675,
+      "kind": "us_ssn",
+      "start": 161,
+      "end": 170,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
     },
     "e4c5672afe9f10a3834db085d4e17978bd4edddedb8613a8e677a2b11c9f48f7": {
       "dataset": "Linux",
@@ -6112,6 +7543,15 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "e59e75955233cc0ef4eae9257e534704123c6d3aa4984771939874ecddf2091b": {
+      "dataset": "Android",
+      "line": 213,
+      "kind": "ca_sin",
+      "start": 292,
+      "end": 301,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "e5e47b395dcdf094d7a858f94bb02ce4d51104a68944f096c71788460d8ca0a1": {
       "dataset": "BGL",
       "line": 1407,
@@ -6130,6 +7570,15 @@
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
     },
+    "e73610cce13f8747d0844318f732ed4a4ab8c4255dbe96a274eedf70a4f72381": {
+      "dataset": "Linux",
+      "line": 23962,
+      "kind": "us_ssn",
+      "start": 137,
+      "end": 146,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "e7f0664327fde39ce619804f0ef5beaeeb271d87f8b53a3210cfee099f70eb7f": {
       "dataset": "Linux",
       "line": 2107,
@@ -6138,6 +7587,15 @@
       "end": 84,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
+    },
+    "e86408c11c167fd4517c1fb2e7c04c0ed20a25356ff5e3a5df56a6a8adeed4e6": {
+      "dataset": "BGL",
+      "line": 389,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
     },
     "e9020164362735cd8d5a3ebed83cfa6ea95b88b2b31d99d75dbf427f6055bd29": {
       "dataset": "Android",
@@ -6148,6 +7606,24 @@
       "classification": "false-positive",
       "rule": "timestamp-pid"
     },
+    "e9999f1ef164c9b3ccbd8ede691a9d4a7fe2196d8d5ede017bc786a410a329a3": {
+      "dataset": "BGL",
+      "line": 839,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
+    "e9b5b4ce56d1718b8eb7964add71c2a1f2cfd04bf643f276169c20826bc336c4": {
+      "dataset": "BGL",
+      "line": 844,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
     "ea01d0587710d5af0b19a1d7a3aab8b7704e4013e17722978117e8059c283995": {
       "dataset": "Linux",
       "line": 24668,
@@ -6157,6 +7633,15 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "ea27f8f77faf42f98cd1a03f761ea04f0d458fe6b38aba81567d9dd6e6e93818": {
+      "dataset": "Linux",
+      "line": 23881,
+      "kind": "us_ssn",
+      "start": 191,
+      "end": 200,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
     "eb5f23108b6c6d8f7d881ebc2360e19128926df63c4a0ef9bff85f683dbbad10": {
       "dataset": "Linux",
       "line": 2110,
@@ -6165,6 +7650,24 @@
       "end": 84,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
+    },
+    "eb76f056463be88766bda564ff99b805d9437c037c5be3cb460f2f91fa6a62e5": {
+      "dataset": "Linux",
+      "line": 23849,
+      "kind": "us_ssn",
+      "start": 143,
+      "end": 152,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
+    },
+    "ed8f7fb243130d4407830c8ddda610b385c3afefb3436b04ee6844b357b38204": {
+      "dataset": "Linux",
+      "line": 23818,
+      "kind": "us_ssn",
+      "start": 140,
+      "end": 149,
+      "classification": "false-positive",
+      "rule": "inode-or-process-value"
     },
     "edb71daaf8c6d89ca1dd691ce52212718d8a4399fdeefe625a05d24c10de954b": {
       "dataset": "Linux",
@@ -6193,6 +7696,15 @@
       "classification": "false-positive",
       "rule": "operational-counter-or-file-id"
     },
+    "f0d6166e9a0b3c274222a216b3c6ce6fd3eec51771eb58da8f2e018607cd78aa": {
+      "dataset": "BGL",
+      "line": 841,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
     "f108a13b2ef58b7fa039530ca501d01322a4817e6b95d912b8f233d6eece95da": {
       "dataset": "Linux",
       "line": 5639,
@@ -6210,6 +7722,15 @@
       "end": 125,
       "classification": "false-positive",
       "rule": "path-hostname-username-word-or-register"
+    },
+    "f2c314738f16c166307d84b8f61806fa17ea22b20ad8e6b014433f3b490e19fa": {
+      "dataset": "BGL",
+      "line": 840,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
     },
     "f30af1de1565f542114ec5f891f1a2462048a3f200be837a4cfc5756439982d5": {
       "dataset": "Linux",
@@ -6292,6 +7813,15 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "f83d2c72b4fa9b966b3f2ab07ca248aaa1e767444f618ce06c2f239bb30097a3": {
+      "dataset": "Android",
+      "line": 210,
+      "kind": "ca_sin",
+      "start": 294,
+      "end": 303,
+      "classification": "false-positive",
+      "rule": "event-time-or-lock-id"
+    },
     "f897b224eb065f4a9f60ac1b19519aa407b6ab626492a99fd4ef1e4ffc049607": {
       "dataset": "BGL",
       "line": 1751,
@@ -6337,6 +7867,15 @@
       "classification": "false-positive",
       "rule": "operational-counter-or-file-id"
     },
+    "fbbd2879b4d9f244b2df6775d5e5124481b2d87801bac31a2006ac3c958fa659": {
+      "dataset": "BGL",
+      "line": 1989,
+      "kind": "us_ssn",
+      "start": 221,
+      "end": 230,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
     "fc75bf445fd10986888326323db261b24f6dba6ebe649b68cba8b79085127b25": {
       "dataset": "OpenSSH",
       "line": 215774,
@@ -6364,6 +7903,24 @@
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
     },
+    "fed1d9c7b711d2ae363005cfc751f4b2487966bad22087cbac680526aed05556": {
+      "dataset": "BGL",
+      "line": 857,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
+    "ff55ac80f27fe607918f931c9330433a35f2b16248c0447b6370b5ad510358d0": {
+      "dataset": "BGL",
+      "line": 388,
+      "kind": "us_ssn",
+      "start": 107,
+      "end": 116,
+      "classification": "false-positive",
+      "rule": "kernel-counter"
+    },
     "ff87060bd77dab8ec902b8cc429f87d3aa87e0add479a9913b3089669039eb17": {
       "dataset": "OpenSSH",
       "line": 613635,
@@ -6381,42 +7938,6 @@
       "end": 30,
       "classification": "false-positive",
       "rule": "timestamp-pid-or-hostname"
-    },
-    "00397115534961037ef83d7a50bcfbb83b02b45fa347b6f4376b7e7a53da38b2": {
-      "classification": "sensitive-reference",
-      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
-    },
-    "003b30d9f7cd9ea9a41cda6d56557cd476fa6be7009bb0df84e38f9d3aaf1709": {
-      "classification": "sensitive-reference",
-      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
-    },
-    "003f83998ca3758e9af39e01d67f94786e26e434d4b47048eb7c5dc616d503fa": {
-      "classification": "sensitive-reference",
-      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
-    },
-    "00402016051016facae044d9495c376dd476c5a0e30068514a355fbcf4a8816c": {
-      "classification": "sensitive-reference",
-      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
-    },
-    "00405aecda22f9aa93911db39b2b897470920ba8c6998cf51bef163e31288c3e": {
-      "classification": "sensitive-reference",
-      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
-    },
-    "004357e3cc43a9cc344d646540ad6feb6622a8728312183d47c3bce64e2d9162": {
-      "classification": "sensitive-reference",
-      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
-    },
-    "0043859eae969ffc3bf23d1a02f16e21055be9bec2efdb97962b68c63319e0cc": {
-      "classification": "sensitive-reference",
-      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
-    },
-    "0043e20d72c98cd20c884131b5d05a09e3376c322c8a877e3c9feafbf684834b": {
-      "classification": "sensitive-reference",
-      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
-    },
-    "004851ada6c9b523ab4614c1a8f507cebfe7b38b57fc59f8686d5dd9c0f9c7ad": {
-      "classification": "sensitive-reference",
-      "reason": "Private cluster endpoint in a connection or election log; newly sampled after excluding local listeners in round 14."
     }
   }
 }

@@ -78,3 +78,30 @@ updates:
         applies-to: version-updates
         patterns:
           - "*"
+  - package-ecosystem: gomod
+    directory: "/adapters/grpc"
+    schedule:
+      interval: monthly
+    groups:
+      grpc:
+        applies-to: version-updates
+        patterns:
+          - "*"
+  - package-ecosystem: gomod
+    directory: "/adapters/otel"
+    schedule:
+      interval: monthly
+    groups:
+      otel:
+        applies-to: version-updates
+        patterns:
+          - "*"
+  - package-ecosystem: gomod
+    directory: "/adapters/sentry"
+    schedule:
+      interval: monthly
+    groups:
+      sentry:
+        applies-to: version-updates
+        patterns:
+          - "*"

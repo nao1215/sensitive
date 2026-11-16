@@ -1,0 +1,12 @@
+{
+  "prepared_at": "2026-11-15T23:14:08.289136+00:00",
+  "production_head": "5468cb0895bc4235ab334687c88fbff846113c23",
+  "implementation_started": false,
+  "files": {
+    "country_reference.py": "f85f6a2e219b031d019d0589335f63ad926b1a7ec0a146a659c2d3ab2049da7a",
+    "generate_countries.py": "f18e4b97b79aa4540e6bd45210c2682e2132227df8aff5fc7c43db2affbc2211",
+    "countries-held.jsonl": "b446ccc364957bfd58d9fbaee7915fdd1f4aa1a746d1eaf9ea2b7a3cabcb10ea",
+    "countries-manifest.json": "05c6dbe533a018551f38196e84977be16a1ef87592aa961d5976687d50acefa7",
+    "countries-development.jsonl": "e2d8f00f089fa277a04fde68e55128c6738b38303b125a22f13a1b67b9d3c069"
+  }
+}

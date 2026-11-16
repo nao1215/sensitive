@@ -39,6 +39,11 @@ jobs:
         with:
           go-version-file: go.mod
       - run: go test . -run '^TestAdversarial' -bench '^BenchmarkAdversarialScaling$' -benchtime=1x -count=3 -benchmem > scaling.txt
+      - run: |
+          go test . -run '^TestHookAllocationBudget$' -bench '^BenchmarkHookScaling$' -benchtime=1x -count=3 -benchmem >> scaling.txt
+          for module in grpc otel sentry; do
+            go -C adapters/$module test -run '^TestHookAllocationBudget$' -bench '^BenchmarkHookScaling$' -benchtime=1x -count=3 -benchmem >> scaling.txt
+          done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:

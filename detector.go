@@ -37,5 +37,16 @@ func builtins() []detect.Detector {
 		detect.NewSlackToken(),
 		detect.NewGoogleAPIKey(),
 		detect.NewPrivateKeyPEM(),
+		detect.NewCountry("us_ssn"),
+		detect.NewCountry("us_itin"),
+		detect.NewCountry("uk_nino"),
+		detect.NewCountry("uk_nhs"),
+		detect.NewCountry("in_aadhaar"),
+		detect.NewCountry("in_pan"),
+		detect.NewCountry("br_cpf"),
+		detect.NewCountry("br_cnpj"),
+		detect.NewCountry("cn_resident_id"),
+		detect.NewCountry("kr_rrn"),
+		detect.NewCountry("ca_sin"),
 	}
 }

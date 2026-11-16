@@ -440,32 +440,32 @@ Scanner, slog, adapters and embargotest keep threshold 0. NewScanner and the zer
 
 These evaluation tiers are private to the test suite. Critical covers credentials, service and payment tokens, cloud and VCS tokens, private keys, PAN and JWT. High covers national IDs, bank accounts, IBAN and routing numbers, including UK sort codes. Email, phone, IP, crypto addresses and the remaining kinds are standard. Tier labels do not change the public Scanner API.
 
-Both committed synthetic corpora are combined with the credential corpus for the same split. Each detector runs alone. Recall still requires an exact kind and span; residual exposure independently counts original bytes outside the union of masked ranges for every expected secret. A partially masked value remains exposed. Overlapping findings cover a byte once, and an invalid range follows Mask’s whole-input redaction rule. The [per-secret ledger](../tests/testdata/residual-exposure.json) records every expected range and its unmasked byte count at threshold zero, including zeros. These historical held fixtures are regression evidence after inspection.
+Each split combines the original synthetic corpus, credentials and the frozen country corpus. Each detector runs alone through WithKinds; opt-in families are included in these evaluation counts. See [country results](countries.md) for their separate precision and recall. Recall still requires an exact kind and span; residual exposure independently counts original bytes outside the union of masked ranges for every expected secret. A partially masked value remains exposed. Overlapping findings cover a byte once, and an invalid range follows Mask’s whole-input redaction rule. The [per-secret ledger](../tests/testdata/residual-exposure.json) records every expected range and its unmasked byte count at threshold zero, including zeros. These historical held fixtures are regression evidence after inspection.
 
 | Set | Tier | Threshold | TP / FP / misses | Recall | Exposed values / bytes |
 |---|---|---:|---:|---:|---:|
 | development | critical | 0.0 | 1648 / 97 / 0 | 100.00% | 0 / 0 |
-| development | high | 0.0 | 730 / 33 / 0 | 100.00% | 0 / 0 |
+| development | high | 0.0 | 3930 / 1089 / 0 | 100.00% | 0 / 0 |
 | development | standard | 0.0 | 1580 / 272 / 0 | 100.00% | 0 / 0 |
 | development | critical | 0.5 | 1648 / 64 / 0 | 100.00% | 0 / 0 |
-| development | high | 0.5 | 730 / 0 / 0 | 100.00% | 0 / 0 |
+| development | high | 0.5 | 3930 / 0 / 0 | 100.00% | 0 / 0 |
 | development | standard | 0.5 | 1460 / 120 / 120 | 92.41% | 120 / 4800 |
 | development | critical | 0.7 | 1648 / 0 / 0 | 100.00% | 0 / 0 |
-| development | high | 0.7 | 578 / 0 / 152 | 79.18% | 152 / 1215 |
+| development | high | 0.7 | 3170 / 0 / 760 | 80.66% | 760 / 10687 |
 | development | standard | 0.7 | 1460 / 120 / 120 | 92.41% | 120 / 4800 |
 | held | critical | 0.0 | 1632 / 96 / 0 | 100.00% | 0 / 0 |
-| held | high | 0.0 | 720 / 32 / 0 | 100.00% | 0 / 0 |
+| held | high | 0.0 | 3920 / 1088 / 0 | 100.00% | 0 / 0 |
 | held | standard | 0.0 | 1558 / 150 / 2 | 99.87% | 2 / 80 |
 | held | critical | 0.5 | 1632 / 64 / 0 | 100.00% | 0 / 0 |
-| held | high | 0.5 | 720 / 0 / 0 | 100.00% | 0 / 0 |
+| held | high | 0.5 | 3920 / 0 / 0 | 100.00% | 0 / 0 |
 | held | standard | 0.5 | 1440 / 0 / 120 | 92.31% | 120 / 4800 |
 | held | critical | 0.7 | 1632 / 0 / 0 | 100.00% | 0 / 0 |
-| held | high | 0.7 | 570 / 0 / 150 | 79.17% | 150 / 1200 |
+| held | high | 0.7 | 3162 / 0 / 758 | 80.66% | 758 / 10672 |
 | held | standard | 0.7 | 1440 / 0 / 120 | 92.31% | 120 / 4800 |
 
 The critical gate requires the current 100% exact-span recall and zero residual bytes in each split at threshold zero. Updating a snapshot cannot relax this assertion. Unit tests inject a partial mask, overlapping ranges, missing findings and an empty corpus to check the gate and exposure calculation.
 
-The default confidence decision is 0 for every tier. Critical precision improves at 0.7 on these committed fixtures, but the fixtures do not establish that a mislabeled card can be discarded safely; a business label can reduce a real PAN’s score to 0.4. High loses 152 development and 150 held findings at 0.7, leaving 1,215 and 1,200 bytes exposed. Standard loses all 120 entropy positives in each split at 0.5. Entropy remains opt-in because its public-ID negatives have the same value distribution. These observations support retaining findings and selecting kinds or sensitive keys for a particular output boundary; they do not support an implicit per-tier cutoff.
+The default confidence decision is 0 for every tier. Critical precision improves at 0.7 on these committed fixtures, but the fixtures do not establish that a mislabeled card can be discarded safely; a business label can reduce a real PAN’s score to 0.4. High loses 760 development and 758 held findings at 0.7, leaving 10,687 and 10,672 bytes exposed, including SSN, ITIN and modern RRN. Standard loses all 120 entropy positives in each split at 0.5. Entropy remains opt-in because its public-ID negatives have the same value distribution. These observations support retaining findings and selecting kinds or sensitive keys for a particular output boundary; they do not support an implicit per-tier cutoff.
 
 
 ## Public system logs
@@ -484,7 +484,7 @@ The default confidence decision is 0 for every tier. Critical precision improves
 | Spark | held | official 2,000-line sample | 196,268 | 2,000 | [LogHub research/academic use](https://github.com/logpai/loghub/blob/dd61d0952749ee7963bde24220d1be5ede023033/LICENSE); [provenance](https://github.com/logpai/loghub/blob/dd61d0952749ee7963bde24220d1be5ede023033/Spark/README.md) |
 | Zookeeper | held | complete | 10,426,438 | 74,380 | [LogHub research/academic use](https://github.com/logpai/loghub/blob/dd61d0952749ee7963bde24220d1be5ede023033/LICENSE); [provenance](https://github.com/logpai/loghub/blob/dd61d0952749ee7963bde24220d1be5ede023033/Zookeeper/README.md) |
 
-Before retains b8290bc, the input to round 13; after uses the round-14 policy. These columns include the earlier round-13 fixes. The held split has now been seen and serves as regression data, not an independent evaluation of this change.
+Before retains b8290bc, the input to round 13; after uses the round-15 policy with opt-in country identifiers. These columns include the earlier round-13 fixes. The held split has now been seen and serves as regression data, not an independent evaluation of this change.
 
 Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), not counts of affected lines. IP addresses and published user/contact identities are sensitive references under this evaluation policy; the unspecified listener address 0.0.0.0 is an FP. Checksums do not establish a real account. A hostname fragment is an FP for MyNumber even if the hostname itself identifies a machine.
 
@@ -494,8 +494,12 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 | ach_trace | 0.0 | 0.0 | 0.0 | 0.0 |
 | awskey | 0.0 | 0.0 | 0.0 | 0.0 |
 | bank_account | 0.0 | 0.0 | 0.0 | 0.0 |
+| br_cnpj | 0.0 | 0.0 | 0.0 | 0.0 |
+| br_cpf | 0.0 | 0.0 | 0.0 | 0.0 |
 | btc | 0.0 | 0.0 | 0.0 | 0.0 |
+| ca_sin | 0.0 | 1,862.8 | 0.0 | 106.7 |
 | card_expiry | 0.0 | 0.0 | 0.0 | 0.0 |
+| cn_resident_id | 0.0 | 0.0 | 0.0 | 0.0 |
 | credential | 745.1 | 0.0 | 0.0 | 0.0 |
 | cvv | 0.0 | 0.0 | 0.0 | 0.0 |
 | email | 0.0 | 0.0 | 0.0 | 0.0 |
@@ -504,8 +508,11 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 | google_api_key | 0.0 | 0.0 | 0.0 | 0.0 |
 | high_entropy | 31,294.7 | 0.0 | 248.9 | 0.0 |
 | iban | 0.0 | 0.0 | 0.0 | 0.0 |
+| in_aadhaar | 0.0 | 0.0 | 0.0 | 0.0 |
+| in_pan | 0.0 | 0.0 | 0.0 | 0.0 |
 | ipaddr | 0.0 | 0.0 | 144,062.1 | 0.0 |
 | jwt | 0.0 | 0.0 | 0.0 | 0.0 |
+| kr_rrn | 0.0 | 0.0 | 0.0 | 0.0 |
 | merchant_id | 0.0 | 0.0 | 0.0 | 0.0 |
 | mynumber | 8,072.0 | 0.0 | 912.8 | 0.0 |
 | pan | 44,209.9 | 0.0 | 0.0 | 0.0 |
@@ -515,17 +522,21 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 | service_token | 0.0 | 0.0 | 0.0 | 0.0 |
 | slack_token | 0.0 | 0.0 | 0.0 | 0.0 |
 | swiftbic | 739,274.8 | 124.2 | 343.8 | 320.1 |
+| uk_nhs | 0.0 | 0.0 | 0.0 | 2,287.9 |
+| uk_nino | 0.0 | 0.0 | 0.0 | 0.0 |
 | uk_sortcode | 0.0 | 0.0 | 0.0 | 0.0 |
+| us_itin | 0.0 | 0.0 | 0.0 | 0.0 |
+| us_ssn | 0.0 | 20,490.6 | 0.0 | 379.3 |
 
 | Configuration | Development before / GB | Development after / GB | Held before / GB | Held after / GB |
 |---|---:|---:|---:|---:|
-| WithAll | 827,818.9 | 124.2 | 145,650.6 | 403.0 |
+| WithAll | 827,818.9 | 22,477.5 | 145,650.6 | 3,177.0 |
 | Default slog handler | 827,818.9 | 124.2 | 145,650.6 | 403.0 |
 | kinds1 | 0.0 | 0.0 | 0.0 | 0.0 |
 | kinds3 | 44,955.1 | 0.0 | 0.0 | 0.0 |
 | kinds8 | 47,563.0 | 0.0 | 144,062.1 | 0.0 |
 
-The handler receives each raw line as its message and no attributes; its encoded message is checked against the scanner mask after JSON UTF-8 replacement. These numbers do not measure application-specific field-key policies. All 26 detectors also run separately, with exact findings compared to WithAll.
+The handler receives each raw line as its message and no attributes; its encoded message is checked against the scanner mask after JSON UTF-8 replacement. These numbers do not measure application-specific field-key policies. All 37 detectors also run separately, with exact findings compared to WithAll.
 
 - kinds1: email.
 - kinds3: email, pan, credential.

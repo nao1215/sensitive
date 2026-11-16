@@ -92,6 +92,6 @@ jobs:
       - run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
       - name: Lint all optional modules
         run: |
-          for module in zap zerolog logrus; do
+          for module in zap zerolog logrus grpc otel sentry; do
             (cd adapters/$module && golangci-lint run --config ../../.golangci.yml)
           done

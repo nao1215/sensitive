@@ -42,7 +42,7 @@ arch: ## Check production package boundaries
 race: ## Run race detection in all modules
 	go test -race ./...
 	go -C tests test -race ./...
-	@for module in zap zerolog logrus; do go -C adapters/$$module test -race ./... || exit; done
+	@for module in zap zerolog logrus grpc otel sentry; do go -C adapters/$$module test -race ./... || exit; done
 properties: ## Run property and API contract tests
 	go -C tests test ./...
 mutation: ## Mutate root module packages with gremlins
@@ -81,7 +81,7 @@ masking-doc: ## Regenerate masking views from runnable Examples
 
 .PHONY: adapters
 adapters: ## Test all optional logger modules
-	@for module in zap zerolog logrus; do go -C adapters/$$module test ./... || exit; done
+	@for module in zap zerolog logrus grpc otel sentry; do go -C adapters/$$module test ./... || exit; done
 
 .PHONY: comparison-doc
 comparison-doc: ## Measure masking libraries and regenerate comparison tables and chart

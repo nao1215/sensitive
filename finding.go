@@ -69,3 +69,28 @@ const (
 	// KindPrivateKeyPEM selects PEM private keys through their END marker, or incomplete headers.
 	KindPrivateKeyPEM Kind = "private_key_pem"
 )
+
+const (
+	// KindUSSSN excludes invalid area, group and serial fields from US Social Security candidates.
+	KindUSSSN Kind = "us_ssn"
+	// KindUSITIN limits US taxpayer candidates to a leading 9 and IRS-permitted middle groups.
+	KindUSITIN Kind = "us_itin"
+	// KindUKNINO accepts UK National Insurance prefixes, six digits and suffix A through D.
+	KindUKNINO Kind = "uk_nino"
+	// KindUKNHS applies weighted MOD 11 to the tenth digit of an NHS number.
+	KindUKNHS Kind = "uk_nhs"
+	// KindIndiaAadhaar requires a Verhoeff check for twelve-digit Aadhaar candidates.
+	KindIndiaAadhaar Kind = "in_aadhaar"
+	// KindIndiaPAN checks Indian tax PAN structure, including the holder-type letter.
+	KindIndiaPAN Kind = "in_pan"
+	// KindBrazilCPF validates both MOD 11 check digits in a Brazilian CPF.
+	KindBrazilCPF Kind = "br_cpf"
+	// KindBrazilCNPJ includes numeric and 2026 alphanumeric CNPJ formats with both check digits.
+	KindBrazilCNPJ Kind = "br_cnpj"
+	// KindChinaResidentID combines Chinese resident-ID date checks with the MOD 11-2 check.
+	KindChinaResidentID Kind = "cn_resident_id"
+	// KindKoreaRRN covers legacy Korean RRN checksums and explicitly labelled modern RRN structure.
+	KindKoreaRRN Kind = "kr_rrn"
+	// KindCanadaSIN uses Luhn and the permitted first digits to select Canadian SIN candidates.
+	KindCanadaSIN Kind = "ca_sin"
+)

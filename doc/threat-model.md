@@ -18,15 +18,18 @@ The round-14 [scaling samples](performance/round14-scaling.txt) contain 1,800 me
 
 MaskJSON limits input/output and cumulative scan work to the limits documented in json.go; JSON nesting is limited to 64. Inputs over 1 MiB or over the nesting bound return a fixed error and no output. The structured normalizer also bounds slog Any values; a failed record is suppressed. Slog messages and typed string attributes use raw Scan and do not inherit the JSON input limit, so callers must bound their record size. Tests cover deep trees, wide objects, large scalars and invalid strings. ScanLines has the documented bufio line limit and returns an error for an oversized line; direct Scan is the path for a caller that explicitly accepts larger lines. Guard and Recorder share a retained-byte budget across streams and reject overflow; timeout and scanner failure prevent replay. A synchronous custom detector can still loop forever: the caller must trust extensions or isolate them in a process.
 
+The same built-in inventory now includes all eleven country detectors in allocation and scaling tests. HTTP, gRPC, OpenTelemetry and Sentry add TestHookAllocationBudget and BenchmarkHookScaling at the same five sizes. Large MaskJSON-backed SDK records measure fail-closed rejection above the JSON limit; HTTP and gRPC remain access-log boundaries and do not mask service wire data. Log metadata that an SDK does not permit the wrapper to replace is either suppressed or explicitly outside the documented wrapper scope. See the [production scenario matrix](adapters.md#production-leak-scenarios).
+
 ## Encodings and audit tradeoffs
 
 | Attempt | Status | Test or limit |
 |---|---|---|
 | JSON Unicode escapes | Caught after JSON decoding | TestAdversarialEncodingBoundary |
 | One percent-encoding layer | Caught with original-byte positions | Metamorphic and Lean vector tests |
-| Double percent encoding | Limit: no recursive decoding | TestAdversarialEncodingBoundary |
-| Base64 | Limit for arbitrary text; registered canaries include encoded forms | canary_test.go |
-| Zero-width text and letter homoglyphs | Limit: no general Unicode confusable normalization | TestAdversarialEncodingBoundary |
+| Double percent encoding | Limit: no recursive decoding | TestAdversarialEncodingBoundary/double-percent |
+| Base64 | Limit for arbitrary text; registered canaries include encoded forms | TestAdversarialEncodingBoundary/base64 |
+| Zero-width text | Limit: characters are not removed | TestAdversarialEncodingBoundary/zero-width |
+| Letter homoglyphs | Limit: confusable letters are not normalized | TestAdversarialEncodingBoundary/homoglyph |
 | Full-width numeric digits | Caught by numeric normalization | mutation_round9_test.go |
 | A forged redaction marker or finding label | Does not bypass scanning adjacent secrets | TestAdversarialEncodingBoundary |
 | Secret split across writes | Caught after complete stream assembly | Guard model and framing fuzz target |

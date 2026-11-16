@@ -7,8 +7,12 @@
     "ach_trace",
     "awskey",
     "bank_account",
+    "br_cnpj",
+    "br_cpf",
     "btc",
+    "ca_sin",
     "card_expiry",
+    "cn_resident_id",
     "credential",
     "cvv",
     "email",
@@ -17,8 +21,11 @@
     "google_api_key",
     "high_entropy",
     "iban",
+    "in_aadhaar",
+    "in_pan",
     "ipaddr",
     "jwt",
+    "kr_rrn",
     "merchant_id",
     "mynumber",
     "pan",
@@ -28,7 +35,11 @@
     "service_token",
     "slack_token",
     "swiftbic",
-    "uk_sortcode"
+    "uk_nhs",
+    "uk_nino",
+    "uk_sortcode",
+    "us_itin",
+    "us_ssn"
   ],
   "configurations": {
     "kinds1": [

@@ -45,3 +45,7 @@ Format + country code validation; all-letter codes such as DEUTDEFF also need ne
 <a id="table-explanation-2"></a>
 
 Secrets in assignments, headers, URLs and DSNs (`password=`, `"token":"..."`, `Authorization: Bearer`, `postgres://user:pass@host`)
+
+## Additional country identifiers
+
+The eleven opt-in [country kinds](countries.md) cover SSN, ITIN, NINO, NHS, Aadhaar, Indian PAN, CPF, CNPJ, Chinese resident ID, Korean RRN and Canadian SIN. That page gives each format, checksum definition, held evaluation and real-log false positives. WithKinds selects regions explicitly; WithAll includes all eleven.

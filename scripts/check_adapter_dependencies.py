@@ -11,7 +11,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 def main():
-    for module in ("zap", "zerolog", "logrus"):
+    for module in ("zap", "zerolog", "logrus", "grpc", "otel", "sentry"):
         with tempfile.TemporaryDirectory(prefix="embargo-dependency-") as directory:
             target = pathlib.Path(directory) / module
             shutil.copytree(ROOT / "adapters" / module, target)

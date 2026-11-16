@@ -4,13 +4,13 @@ import "github.com/nao1215/embargo/internal/ascii"
 
 type dispatchHint struct {
 	hint []byte
-	mask uint32
+	mask uint64
 }
 
 // buildDispatch compiles immutable first-byte buckets once per scanner.
 func (s *Scanner) buildDispatch() {
 	for i, entries := range s.hintCache {
-		mask := uint32(1) << i
+		mask := uint64(1) << i
 		if len(entries) == 0 {
 			switch Kind(s.detectors[i].Name()) { //nolint:exhaustive // Only hintless numeric detectors need extra dispatch constraints.
 			case KindMyNumber, KindABARouting, KindUKSortCode:
@@ -33,7 +33,7 @@ func (s *Scanner) buildDispatch() {
 	}
 }
 
-func (s *Scanner) selectDetectors(data []byte) uint32 {
+func (s *Scanner) selectDetectors(data []byte) uint64 {
 	// A single detector benefits from the standard library substring search;
 	// walking every byte through dispatch buckets would add work for no sharing.
 	if len(s.detectors) == 1 {
@@ -45,7 +45,7 @@ func (s *Scanner) selectDetectors(data []byte) uint32 {
 		return 0
 	}
 	selected := s.unconditional
-	all := uint32(1)<<len(s.detectors) - 1
+	all := uint64(1)<<len(s.detectors) - 1
 	for i, b := range data {
 		for _, entry := range s.hintIndex[ascii.ToLower(b)] {
 			if selected&entry.mask != 0 || len(entry.hint) > len(data)-i {

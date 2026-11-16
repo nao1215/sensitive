@@ -1,0 +1,73 @@
+package embargosentry_test
+
+import (
+	"context"
+	"encoding/json"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/getsentry/sentry-go"
+
+	"github.com/nao1215/embargo"
+	embargosentry "github.com/nao1215/embargo/adapters/sentry"
+)
+
+const sentryPassword = "synthetic-password"
+
+type eventTransport struct{ events []*sentry.Event }
+
+func (*eventTransport) Configure(sentry.ClientOptions)        {}
+func (t *eventTransport) SendEvent(event *sentry.Event)       { t.events = append(t.events, event) }
+func (*eventTransport) Flush(time.Duration) bool              { return true }
+func (*eventTransport) Close()                                {}
+func (*eventTransport) FlushWithContext(context.Context) bool { return true }
+
+func TestBeforeSendThroughSentryClient(t *testing.T) {
+	t.Parallel()
+	transport := &eventTransport{}
+	client, err := sentry.NewClient(sentry.ClientOptions{Dsn: "https://public@example.com/1", Transport: transport, BeforeSend: embargosentry.NewBeforeSend(embargo.NewScanner())})
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := sentry.NewEvent()
+	event.Message = "alice@example.com failed"
+	event.Contexts = map[string]sentry.Context{"details": {"password": sentryPassword, "count": 7}}
+	event.Request = &sentry.Request{URL: "https://example.com/login?token=synthetic-query", Headers: map[string]string{"Authorization": "Bearer synthetic-session"}}
+	event.Breadcrumbs = []*sentry.Breadcrumb{{Message: "token=synthetic-breadcrumb"}}
+	client.CaptureEvent(event, nil, sentry.NewScope())
+	if len(transport.events) != 1 {
+		t.Fatal("expected one transmitted event")
+	}
+	data, err := json.Marshal(transport.events[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, secret := range []string{"alice@example.com", sentryPassword, "synthetic-query", "synthetic-session", "synthetic-breadcrumb"} {
+		if strings.Contains(string(data), secret) {
+			t.Errorf("sent %s", secret)
+		}
+	}
+	if event.Contexts["details"]["password"] != sentryPassword || !strings.Contains(string(data), `"count":7`) {
+		t.Fatal("event copy changed types or mutated input")
+	}
+}
+
+type failingEventValue struct{}
+
+func (*failingEventValue) MarshalJSON() ([]byte, error) { panic("private event panic") }
+
+func TestBeforeSendSuppressesInvalidEvents(t *testing.T) {
+	t.Parallel()
+	hook := embargosentry.NewBeforeSend(embargo.NewScanner())
+	if hook(nil, nil) != nil {
+		t.Fatal("nil event became output")
+	}
+	for _, value := range []any{make(chan int), &failingEventValue{}} {
+		event := sentry.NewEvent()
+		event.Contexts = map[string]sentry.Context{"details": {"value": value}}
+		if hook(event, nil) != nil {
+			t.Fatal("invalid event reached transport")
+		}
+	}
+}

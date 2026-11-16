@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: ['.', tests, adapters/zap, adapters/zerolog, adapters/logrus]
+        module: ['.', tests, adapters/zap, adapters/zerolog, adapters/logrus, adapters/grpc, adapters/otel, adapters/sentry]
     env:
       GOTOOLCHAIN: auto
     steps:
