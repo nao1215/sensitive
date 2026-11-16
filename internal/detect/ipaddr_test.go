@@ -1,6 +1,8 @@
 package detect
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -307,6 +309,57 @@ func TestIPVersionLabels(t *testing.T) {
 			input := label + sep + "10.2.3.4"
 			if got := NewIPAddr().Scan([]byte(input)); len(got) != 0 {
 				t.Errorf("version treated as IP: %s", input)
+			}
+		}
+	}
+}
+
+func TestIPSentencePunctuationProperty(t *testing.T) {
+	t.Parallel()
+	detector := NewIPAddr()
+	punctuation := []string{"...", ".:", ":."}
+	for b := byte('!'); b <= '~'; b++ {
+		if !strings.ContainsRune("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", rune(b)) {
+			punctuation = append(punctuation, string(b))
+		}
+	}
+	for n := 1; n < 255; n += 13 {
+		v4 := fmt.Sprintf("203.0.113.%d", n)
+		for _, address := range []string{v4, fmt.Sprintf("2001:db8::%x", n), "2001:db8::", "::ffff:" + v4, "::" + v4, "64:ff9b::" + v4} {
+			forms := []string{address, "[" + address + "]", "[" + address + "]:51234"}
+			if address == v4 {
+				forms = append(forms, address+":51234")
+			}
+			for _, form := range forms {
+				for _, tail := range punctuation {
+					input := "peer " + form + tail + " closed"
+					got := detector.Scan([]byte(input))
+					start := strings.Index(input, address)
+					if len(got) != 1 || got[0].Start != start || got[0].End != start+len(address) || got[0].RawValue != address {
+						t.Fatalf("sentence punctuation changed the address boundary: %q: %+v", input, got)
+					}
+				}
+			}
+		}
+	}
+	for _, input := range []string{"203.0.113.9.8", "203.0.113.9_tail", "203.0.113.9-tail", "2001:db8::5_tail", "2001:db8::5-tail"} {
+		if got := detector.Scan([]byte(input)); len(got) != 0 {
+			t.Fatalf("larger token accepted: %q: %+v", input, got)
+		}
+	}
+}
+
+func TestIPRangeSpanProperty(t *testing.T) {
+	t.Parallel()
+	detector := NewIPAddr()
+	for n := 1; n < 32; n++ {
+		addresses := []string{fmt.Sprintf("198.51.100.%d", n), fmt.Sprintf("fd00::%x", n), fmt.Sprintf("::ffff:203.0.113.%d", n)}
+		for _, left := range addresses {
+			for _, right := range addresses {
+				got := detector.Scan([]byte(left + "-" + right))
+				if len(got) != 2 || got[0].Start != 0 || got[0].End != len(left) || got[1].Start != len(left)+1 || got[1].End != len(left)+1+len(right) {
+					t.Fatalf("range endpoints lost: %+v", got)
+				}
 			}
 		}
 	}
