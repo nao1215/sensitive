@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+
+- Fix original-key context leaks in slog scalars, errors, bound attributes, groups and LogValuer values (R18-01; v0.4.0–v0.5.0), HTTP query and redirect-query logs (v0.5.0), and boolean/null JSON leaves in MaskJSON and encoded adapters (v0.4.0–v0.5.0). [PR #94](https://github.com/nao1215/embargo/pull/94), [9e0e6f0](https://github.com/nao1215/embargo/commit/9e0e6f049fda9a82747a8fbec4cecae32d9723de).
+- Scan both standard slog handler representations, including Duration nanoseconds and TextHandler millisecond timestamps (R18-03; v0.4.0–v0.5.0). A match in either representation masks the forwarded value. [PR #94](https://github.com/nao1215/embargo/pull/94), [9e0e6f0](https://github.com/nao1215/embargo/commit/9e0e6f049fda9a82747a8fbec4cecae32d9723de).
+
+### Fixed
+
+- Enforce a combined 64-level limit for WithGroup chains and explicit slog groups, including bound attributes (R18-07). [PR #94](https://github.com/nao1215/embargo/pull/94), [9e0e6f0](https://github.com/nao1215/embargo/commit/9e0e6f049fda9a82747a8fbec4cecae32d9723de).
+
+### Docs
+
+- Describe original-key scanning and scalar representations; retain differential logger and other-hook context checks in the policy inventory. Refresh measured comparison and real-log evidence after their source checks fail. [PR #94](https://github.com/nao1215/embargo/pull/94), [9e0e6f0](https://github.com/nao1215/embargo/commit/9e0e6f049fda9a82747a8fbec4cecae32d9723de).
+
 ## [0.5.0] - 2026-11-16
 
 This release adds service and telemetry hooks, opt-in national ID detectors and explicit matching contracts. Users upgrading from v0.4.0 should review the default detector and IP behavior changes in [doc/migration.md](doc/migration.md).
