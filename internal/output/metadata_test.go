@@ -90,3 +90,38 @@ func TestMetadataRejectsUserTimeFields(t *testing.T) {
 		}
 	}
 }
+
+func TestConsoleWithheldLevelProperty(t *testing.T) {
+	t.Parallel()
+	for _, level := range []string{"DEBUG", "INFO", "WARN", "ERROR", "DPANIC", "PANIC", "FATAL"} {
+		for _, prefix := range []string{"", "1700000000.000\t", "2026-01-01T00:00:00Z\t"} {
+			input := prefix + level + "\tplanted-message\t{\"body\":\"planted-value\"}\n"
+			for _, chunk := range []int{1, 7, len(input)} {
+				var meta eventMetadata
+				for data := []byte(input); len(data) > 0; {
+					n := min(chunk, len(data))
+					meta.feed(data[:n])
+					data = data[n:]
+				}
+				raw := meta.fallback(saferecord.ErrMasking)
+				var got map[string]any
+				if err := json.Unmarshal(raw, &got); err != nil {
+					t.Fatal(err)
+				}
+				if got["level"] != level || len(got) != 3 || got["msg"] != "embargo: record withheld (masking error)" || got["withheld_attributes"] != float64(1) || bytes.Contains(raw, []byte("planted")) {
+					t.Errorf("level/shape: %q => %s", input, raw)
+				}
+			}
+		}
+	}
+}
+
+func TestMalformedMetadataKeyCannotSupplyLevel(t *testing.T) {
+	t.Parallel()
+	var metadata eventMetadata
+	metadata.feed([]byte(`{"lev\qel":"fatal","secret":"planted"}`))
+	got := metadata.fallback(saferecord.ErrMasking)
+	if bytes.Contains(got, []byte("level")) || bytes.Contains(got, []byte("planted")) || !json.Valid(got) {
+		t.Fatal("malformed key supplied metadata")
+	}
+}

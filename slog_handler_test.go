@@ -483,6 +483,42 @@ func assertWithheldJSON(t *testing.T, data []byte, reason string, count int) {
 	}
 }
 
+// Compare the entire encoded record with the documented schema, including custom
+// levels and bound groups. Equality rejects extra fields as well as leaked values.
+func TestSlogWithheldSchemaProperty(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	for _, structured := range []bool{false, true} {
+		for level := slog.Level(-8); level <= 12; level++ {
+			for count := range 9 {
+				var actual, expected bytes.Buffer
+				options := &slog.HandlerOptions{Level: slog.Level(-8), AddSource: true}
+				var next, oracle slog.Handler = slog.NewTextHandler(&actual, options), slog.NewTextHandler(&expected, options)
+				if structured {
+					next, oracle = slog.NewJSONHandler(&actual, options), slog.NewJSONHandler(&expected, options)
+				}
+				handler := embargo.NewSlogHandler(next, embargo.NewScanner()).WithAttrs([]slog.Attr{slog.String("planted-bound", "bound@example.com")}).WithGroup("planted-group")
+				record := slog.NewRecord(time.Unix(7, 0).UTC(), level, "planted-message", 123)
+				for index := range count {
+					record.AddAttrs(slog.Any("planted-"+strconv.Itoa(index), map[string]any{"nested": "hidden@example.com"}))
+				}
+				if err := handler.Handle(ctx, record); err == nil {
+					t.Fatal("canceled record accepted")
+				}
+				safe := slog.NewRecord(record.Time, level, "embargo: record withheld (canceled)", 0)
+				safe.AddAttrs(slog.Int("withheld_attributes", count+1))
+				if err := oracle.Handle(t.Context(), safe); err != nil {
+					t.Fatal(err)
+				}
+				if !bytes.Equal(actual.Bytes(), expected.Bytes()) {
+					t.Fatalf("structured=%v level=%v count=%d: unexpected schema: %s", structured, level, count, actual.Bytes())
+				}
+			}
+		}
+	}
+}
+
 //nolint:paralleltest // Isolate allocation accounting for the oversized scalar boundary.
 func TestSlogRejectsLargePlainValuesBeforeEncoding(t *testing.T) {
 	for _, value := range []any{strings.Repeat("x", 8<<20), bytes.Repeat([]byte("x"), 8<<20)} {
@@ -591,6 +627,57 @@ func TestSlogByteContentsKeepPublicShape(t *testing.T) {
 		want, err := json.Marshal(value)
 		if err != nil || !bytes.Equal(record["data"], want) {
 			t.Fatalf("public bytes changed: %s want=%s error=%v", out.Bytes(), want, err)
+		}
+	}
+}
+
+//nolint:gocognit // Enumerate independent handler, binding and split dimensions with visible fixtures.
+func TestJoinedPathHidesEverySegment(t *testing.T) {
+	t.Parallel()
+	for _, text := range []string{"reader@example.net", "10.20.30.40", "bob@service.example.org"} {
+		for split := 1; split < len(text)-1; split++ {
+			if text[split] != '.' {
+				continue
+			}
+			left, right := text[:split], text[split+1:]
+			if len(embargo.NewScanner().ScanString(left)) > 0 || len(embargo.NewScanner().ScanString(right)) > 0 {
+				continue
+			}
+			for _, format := range []string{"plain", "json"} {
+				for _, bound := range []bool{false, true} {
+					var out bytes.Buffer
+					var next slog.Handler = slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: omitRecordTime})
+					if format == "plain" {
+						next = slog.NewTextHandler(&out, &slog.HandlerOptions{ReplaceAttr: omitRecordTime})
+					}
+					logger := slog.New(embargo.NewSlogHandler(next, embargo.NewScanner()))
+					if bound {
+						logger.WithGroup(left).With(right, "x").Info("event")
+					} else {
+						logger.Info("event", slog.Group(left, slog.String(right, "x")))
+					}
+					got := out.String()
+					if strings.Contains(got, left) || strings.Contains(got, right) || !strings.Contains(got, "[REDACTED]") {
+						t.Errorf("%s bound=%v path %q: %s", format, bound, text, got)
+					}
+				}
+			}
+		}
+	}
+}
+
+func TestJoinedPathBindingsStayFrozen(t *testing.T) {
+	t.Parallel()
+	for _, structured := range []bool{false, true} {
+		var out bytes.Buffer
+		var next slog.Handler = slog.NewTextHandler(&out, nil)
+		if structured {
+			next = slog.NewJSONHandler(&out, nil)
+		}
+		logger := slog.New(embargo.NewSlogHandler(next, embargo.NewScanner())).WithGroup("reader@example").With("net", "kept").WithGroup("public")
+		logger.Info("event", "status", "accepted")
+		if strings.Contains(out.String(), "reader@example") || !strings.Contains(out.String(), "kept") || !strings.Contains(out.String(), "accepted") {
+			t.Fatal("rebuilt binding lost content or exposed a path")
 		}
 	}
 }

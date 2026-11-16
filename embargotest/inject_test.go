@@ -30,7 +30,7 @@ func TestCanaryHTTPInputs(t *testing.T) {
 	}
 	logger := slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(r.Writer("logs"), nil), embargo.NewScanner()))
 	logger.Info("received", slog.String("authorization", request.Header.Get("Authorization")), slog.String("token", string(body)))
-	r.ExpectJSON("logs", nil, map[string]string{"authorization": "[REDACTED]", "token": "[REDACTED]"}, 1)
+	r.ExpectJSON("logs", nil, map[string]string{"authorization": injectedMarker, "token": injectedMarker}, 1)
 	r.Check()
 }
 
@@ -80,3 +80,5 @@ func TestCanaryFileCreationFailure(t *testing.T) {
 		t.Fatal("failed fixture write did not return a fixed diagnostic and empty path")
 	}
 }
+
+const injectedMarker = "[REDACTED]"

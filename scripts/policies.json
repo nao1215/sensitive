@@ -524,7 +524,7 @@
   {
     "rule": "Local log audits count actual findings without echoing source values",
     "source": "Repository maintenance policy",
-    "check": "tests/cmd/embargo-audit/main_test.go#TestAuditCountsOffsetsAndNeverEchoesInput",
+    "check": "cmd/embargo-audit/main_test.go#TestAuditCountsOffsetsAndNeverEchoesInput",
     "where": "MultiPlatformUnitTest"
   },
   {
@@ -568,5 +568,17 @@
     "source": "Repository maintenance policy",
     "check": "repository-traces",
     "where": "Verification"
+  },
+  {
+    "rule": "Fixed-corpus detection drift requires an Unreleased Detection changes entry",
+    "source": "Detection compatibility policy",
+    "check": "scripts/detection_changes.py#def check_change(",
+    "where": "Verification"
+  },
+  {
+    "rule": "Every measured library runs every chart scenario and controls remain visible",
+    "source": "Comparison policy",
+    "check": "tests/comparison_test.go#TestComparisonScenarios",
+    "where": "MultiPlatformUnitTest"
   }
 ]

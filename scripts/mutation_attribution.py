@@ -13,7 +13,7 @@ CASES = [
     ('mask-range', 'mask.go', 'f.End <= f.Start', 'f.End < f.Start'),
     ('json-depth', 'json.go', 'depth > maxDepth', 'depth >= maxDepth'),
     ('json-space', 'json.go', 'for w.pos < len(w.data) {', 'for w.pos >= len(w.data) {'),
-    ('json-scalar', 'json.go', "raw[0] == 't'", "raw[0] != 't'"),
+    ('json-scalar', 'json.go', "hidden := masked != text", "hidden := masked == text"),
     ('json-escaped', 'json.go', "bytes.IndexByte(raw, '\\\\') >= 0", "bytes.IndexByte(raw, '\\\\') < 0"),
     ('json-unmarshal', 'json.go', 'if err := json.Unmarshal(raw, &text); err != nil {', 'if err := json.Unmarshal(raw, &text); err == nil {'),
     ('recorder-empty', 'embargotest/recorder.go', 'len(r.sinks) > 0 && len(r.expectations) > 0', 'len(r.sinks) >= 0 && len(r.expectations) > 0'),

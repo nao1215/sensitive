@@ -75,3 +75,10 @@ func TestAccessBudgetUsesOriginalContextUntilCanceled(t *testing.T) {
 		t.Fatal("canceled context lost its internal policy")
 	}
 }
+
+func TestUnknownReasonUsesFixedMaskingMessage(t *testing.T) {
+	t.Parallel()
+	if Message(SanitizationError(255)) != "embargo: record withheld (masking error)" {
+		t.Fatal("unknown reason exposed an unstable diagnostic")
+	}
+}

@@ -1,6 +1,6 @@
 # Measured application masking comparison
 
-This compares overlapping use cases, not overall library quality or adoption. masq v0.2.3 (`1f7750ea536855e965a421bfd47f4057c3ba605d`) offers a convenient slog ReplaceAttr, type/tag/name/prefix rules, allowed types and custom censors/redactors. embargo adds built-in detection, output-safe values, multiple logger adapters and application output assertions. These measurements use unreleased embargo source; the exact source fingerprint is recorded with the results.
+This compares overlapping use cases, not overall library quality or adoption. masq v0.2.3 offers a convenient slog ReplaceAttr, type/tag/name/prefix rules, allowed types and custom censors/redactors. embargo adds built-in detection, output-safe values, multiple logger adapters and application output assertions. These measurements use unreleased embargo source; the exact source fingerprint is recorded with the results.
 
 ## Correctness before speed
 
@@ -34,34 +34,44 @@ The invalid-Luhn row is a deliberate negative example. embargo's default minimum
 <!-- comparison:start -->
 | Benchmark | ns/op | B/op | allocs/op |
 |---|---:|---:|---:|
-| Comparison/clean/embargo | 2,997.5 | 152 | 14 |
-| Comparison/clean/masq | 6,173.0 | 792 | 50 |
-| Comparison/flat/embargo | 4,396.0 | 760 | 25 |
-| Comparison/flat/masq | 6,860.0 | 672 | 32 |
-| Comparison/large50/embargo | 44,531.0 | 11,289 | 177 |
-| Comparison/large50/masq | 131,721.0 | 12,710 | 561 |
-| Comparison/map/embargo | 9,783.5 | 1,496 | 56 |
-| Comparison/map/masq | 12,078.0 | 1,744 | 63 |
-| Comparison/nested/embargo | 8,318.0 | 960 | 44 |
-| Comparison/nested/masq | 9,138.5 | 1,784 | 61 |
-| ComparisonFormatter/clean | 1,256.0 | 0 | 0 |
-| ComparisonFormatter/flat | 1,299.5 | 32 | 2 |
-| ComparisonFormatter/large50 | 16,090.5 | 7,873 | 10 |
-| ComparisonFormatter/map | 983.9 | 0 | 0 |
-| ComparisonFormatter/nested | 990.2 | 0 | 0 |
-| ComparisonStruct/embargo | 2,918.5 | 1,000 | 42 |
-| ComparisonStruct/go_mask | 1,338.0 | 328 | 7 |
-| ComparisonText/embargo | 5,046.0 | 1,640 | 42 |
-| ComparisonText/godlp | 38,686.0 | 11,714 | 59 |
-| StructuredPath/json_shape | 5,334.5 | 1,000 | 42 |
-| StructuredPath/old_string | 1,892.5 | 752 | 14 |
+| Comparison/clean/embargo | 3,210.5 | 152 | 14 |
+| Comparison/clean/go-masker | 2,902.5 | 8 | 1 |
+| Comparison/clean/masq | 6,277.0 | 792 | 50 |
+| Comparison/clean/plain | 909.0 | 0 | 0 |
+| Comparison/flat/embargo | 4,628.0 | 760 | 25 |
+| Comparison/flat/go-masker | 3,179.5 | 48 | 3 |
+| Comparison/flat/masq | 6,857.5 | 672 | 32 |
+| Comparison/flat/plain | 878.2 | 0 | 0 |
+| Comparison/large50/embargo | 46,541.5 | 11,290 | 177 |
+| Comparison/large50/go-masker | 32,610.5 | 2,096 | 4 |
+| Comparison/large50/masq | 128,943.0 | 12,710 | 561 |
+| Comparison/large50/plain | 7,846.5 | 2,048 | 1 |
+| Comparison/map/embargo | 6,025.5 | 1,528 | 57 |
+| Comparison/map/go-masker | 4,383.0 | 1,448 | 29 |
+| Comparison/map/masq | 10,920.5 | 1,744 | 63 |
+| Comparison/map/plain | 1,461.5 | 288 | 9 |
+| Comparison/nested/embargo | 8,606.0 | 992 | 45 |
+| Comparison/nested/go-masker | 6,686.5 | 800 | 19 |
+| Comparison/nested/masq | 11,152.5 | 1,784 | 61 |
+| Comparison/nested/plain | 1,311.0 | 0 | 0 |
+| ComparisonFormatter/clean | 903.2 | 0 | 0 |
+| ComparisonFormatter/flat | 699.9 | 32 | 2 |
+| ComparisonFormatter/large50 | 10,109.5 | 7,873 | 10 |
+| ComparisonFormatter/map | 647.3 | 0 | 0 |
+| ComparisonFormatter/nested | 521.8 | 0 | 0 |
+| ComparisonStruct/embargo | 3,251.0 | 1,032 | 43 |
+| ComparisonStruct/go_mask | 793.5 | 328 | 7 |
+| ComparisonText/embargo | 2,438.5 | 1,640 | 42 |
+| ComparisonText/godlp | 43,021.5 | 11,714 | 59 |
+| StructuredPath/json_shape | 5,903.0 | 1,032 | 43 |
+| StructuredPath/old_string | 1,877.0 | 752 | 14 |
 
 Measured 2026-11-16 with go version go1.26.11 linux/amd64, Linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S; GOMAXPROCS=1, ten 200 ms samples per case. Construction is outside the timed loop; JSON encoding and masking are included. Source and dependency fingerprints, CPU affinity and command are in [comparison.json](comparison.json).
 
-For these five configured events, embargo/masq median time ranges from 0.34 to 0.91; below 1 means less time for embargo. The structured JSON path uses 2.82 times the old string-only time. These ratios are regenerated from the same samples as the table.
+For these five configured events, embargo/masq median time ranges from 0.36 to 0.77; below 1 means less time for embargo. The structured JSON path uses 3.14 times the old string-only time. These ratios are regenerated from the same samples as the table.
 <!-- comparison:end -->
 
-The five head-to-head events are a flat email/card pair, a nested struct with opaque password and tagged recovery field, a map, a clean event, and 50 attributes (48 clean plus the flat pair). Both loggers use the same io.Discard sink. masq uses its documented WithAllowedType for time.Time and slog.Level, matching embargo's decision to preserve that metadata; this avoids charging masq for an unnecessary reflection traversal. Masker/scanner construction and regex compilation are excluded for both. The tests use prebuilt slog.Attr slices and LogAttrs to avoid attributing caller argument construction to either library.
+The five head-to-head events are a flat email/card pair, a nested struct with opaque password and tagged recovery field, a map, a clean event, and 50 attributes (48 clean plus the flat pair). All four paths use the same io.Discard sink. masq uses its documented WithAllowedType for time.Time and slog.Level, matching embargo's decision to preserve that metadata; this avoids charging masq for an unnecessary reflection traversal. Masker/scanner construction and regex compilation are excluded for every path. The tests use prebuilt slog.Attr slices and LogAttrs to avoid attributing caller argument construction to any library.
 
 The generated ratios describe these configured events. Raw samples and confidence intervals matter more than a single rounded speedup. They do not predict tag-only or type-only masq policies, other payloads or machines.
 
@@ -80,10 +90,7 @@ Run `make comparison-doc` to rerun ten samples, benchstat and all generated comp
 | [samber/slog-formatter v1.3.0](https://github.com/samber/slog-formatter/tree/v1.3.0) | [Explanation 1](#table-explanation-1) |
 | [bytedance/godlp v1.2.15](https://github.com/bytedance/godlp/tree/v1.2.15) | [Explanation 2](#table-explanation-2) |
 | [showa-93/go-mask v0.6.2](https://github.com/showa-93/go-mask/tree/v0.6.2) | [Explanation 3](#table-explanation-3) |
-| [ggwhite/go-masker v3.3.0](https://github.com/ggwhite/go-masker/tree/v3.3.0) | [Explanation 4](#table-explanation-4) |
-| [cockroachdb/redact v1.1.8](https://github.com/cockroachdb/redact/tree/v1.1.8) | [Explanation 5](#table-explanation-5) |
-| [zap v1.28.0](https://github.com/uber-go/zap/tree/v1.28.0) | [Explanation 6](#table-explanation-6) |
-| [OTel Collector redaction processor v0.165.1](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.165.1/processor/redactionprocessor) | [Explanation 7](#table-explanation-7) |
+| [icntswm/go-masker v0.6.1](https://github.com/icntswm/go-masker/tree/v0.6.1) | [Shared scenarios and setup](#shared-scenarios-and-setup) |
 
 ## Remaining use cases
 
@@ -98,15 +105,15 @@ embargo cannot automatically identify arbitrary unregistered secrets; use Secret
 The runnable `scenarioService` handles HTTP requests using a database DSN, an opaque password, a synthetic third-party token, wrapped and joined errors, and either slog or zap. The comparison configures masq's documented field rules and email/PAN regexes, slog-formatter's documented FormatByKey rules for password/token, and go-mask's registered field masks. No library receives an oracle containing the planted values. Users can extend all of these configurations; this measures the listed configurations, not every possible custom rule. go-mask processes attribute containers before logging; message text is outside that field policy. Redirect responses bypass every logger, so an output guard remains necessary.
 
 <!-- leak-scenarios:start -->
-| Service output | embargo slog | embargo zap | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 |
-|---|---|---|---|---|---|
-| Password under the key `password` | caught | caught | caught | caught | caught |
-| Config struct holding a database DSN | caught | caught | caught | leaked | leaked |
-| DSN inside a wrapped error | caught | caught | caught | leaked | leaked |
-| DSN and an API key joined with errors.Join | caught | caught | leaked | leaked | leaked |
-| Bearer header value in a log message | caught | caught | leaked | leaked | leaked |
-| Third-party API key in a log message | caught | caught | leaked | leaked | leaked |
-| Redirect URL query, never logged | leaked | leaked | leaked | leaked | leaked |
+| Service output | embargo slog | embargo zap | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |
+|---|---|---|---|---|---|---|---|
+| Password under the key `password` | caught | caught | caught | caught | caught | caught | leaked |
+| Config struct holding a database DSN | caught | caught | caught | leaked | leaked | caught | leaked |
+| DSN inside a wrapped error | caught | caught | caught | leaked | leaked | caught | leaked |
+| DSN and an API key joined with errors.Join | caught | caught | leaked | leaked | leaked | caught | leaked |
+| Bearer header value in a log message | caught | caught | leaked | leaked | leaked | caught | leaked |
+| Third-party API key in a log message | caught | caught | leaked | leaked | leaked | leaked | leaked |
+| Redirect URL query, never logged | leaked | leaked | leaked | leaked | leaked | leaked | leaked |
 <!-- leak-scenarios:end -->
 
 Run `make leak-scenarios` to regenerate this table. `TestLeakScenarios` checks it for staleness, and `TestLeakScenarioGuard` verifies that a real recorder rejects the planted logs and accepts the masked slog and zap variants. Caught means the entire planted value disappeared from the observed output; it does not imply arbitrary secrets are detected. SDK serialization and unrelated output paths require their own checks.
@@ -117,28 +124,33 @@ The staleness check fingerprints embargo production code, comparison tests, the 
 
 <a id="table-explanation-1"></a>
 
-PIIFormatter for email/card/user/data; preserves a four-character prefix of long strings, preserves ID fields in slog groups, and replaces Any objects with a marker rather than preserving their nested JSON fields. The same five events are measured.
+PIIFormatter for email/card/user/data/password/token; preserves a four-character prefix of long strings, preserves ID fields in slog groups, and replaces Any objects with a marker rather than preserving their nested JSON fields. The same five events are measured.
 
 <a id="table-explanation-2"></a>
 
-Embedded documented rules 1/2/6/16/20/35 for phone/email/card/IP; no rewritten detector regexes. It masks email/card partially, detects but deliberately does not mask IP under its default IP rule, and handles US/Chinese phones rather than embargo's Japanese phone family. The table shows both Japanese and US fixtures. The project has been archived since 2023.
+Embedded documented rules 1/2/6/16/20/35 for phone/email/card/IP; no rewritten detector regexes. It masks email/card partially, detects but deliberately does not mask IP under its default IP rule, and handles US/Chinese phones rather than embargo's Japanese phone family. The table shows both Japanese and US fixtures. The US-phone fixture is a measured capability absent from embargo.
 
 <a id="table-explanation-3"></a>
 
 Documented fixed string masker plus field registration for Email/Password/Recovery/email/password/card; same event payloads and nested struct. It returns a Go value copy suitable for callers that need that type, rather than encoded JSON.
 
-<a id="table-explanation-4"></a>
+## Shared scenarios and setup
 
-Tag-based copies and field-specific partial masking for API display; also Sensitive[T] wrappers with Reveal and an optional full-redaction mode. Reviewed for scope; no performance ranking is claimed here.
+All six libraries run the same 13 positive scenarios and two clean controls. The [full synthetic outputs](comparison-scenarios.json) record their exact released versions. The fixtures include cases outside embargo's capabilities: tag-only opaque secrets and US phone numbers. A catch means the original planted value is absent from a nonempty JSON log event; partial masks count, and absence does not imply complete redaction. The catch rate is for these configurations and scenarios, not production accuracy. The clean controls are excluded from its denominator.
 
-<a id="table-explanation-5"></a>
+![Scenario catch rate with individual results](images/scenario-catch.svg)
 
-Safe/unsafe markers and redactable formatting let an application mark trusted context and later strip unsafe spans. embargo does not provide a provenance-preserving redactable string format.
+| Library | Setup used by the executable probe | Measured strengths and limits |
+|---|---|---|
+| embargo | Default kinds, confidence 0.7, slog wrapper | 11/13; masks keys and groups; misses tag-only secrets and US phones |
+| masq v0.2.3 | Two regexes, three field names, one tag; time/level allowed | 6/13; tag-only protection wins; whole-string redaction loses context |
+| go-masker v0.6.1 | Default key policy, Luhn cards, safe types, fixed tag rule | 8/13; faster slog events; tags win and embedded JSON ties; partial display values |
+| slog-formatter v1.3.0 | PIIFormatter on six sensitive field names | 3/13; fixed field transforms are cheaper; arbitrary message text remains |
+| go-mask v0.6.2 | Fixed masker, six registered fields and a fixed struct tag | 3/13; tags win and typed copies aid reuse; message text remains |
+| godlp v1.2.15 | Six built-in rules; apply to string and JSON values | 5/13; US phone wins; email/labeled-card partial masking ties; opaque tokens remain |
 
-<a id="table-explanation-6"></a>
+The labeled and unlabeled card rows expose a context difference: godlp detects the credit-card-labeled message in this fixture, while the unlabeled charge message remains visible. These setup counts describe this harness, not universal effort. No configuration contains the planted secret values. The timing event selects only email and PAN at confidence 0.7 for embargo; the scenario matrix uses its default detector set at 0.7. Neither changes the library default of zero. go-masker uses its default policy with opt-in Luhn card detection, so the invalid-card control stays visible; its CardRule keeps the last four digits. Its value inspection recognizes credentials inside JSON strings and free text. Its key policies and struct tags offer partial display rules that embargo lacks. TestComparisonMaskerAdapters runs its slog, zap, zerolog and HTTP paths against synthetic credentials; HTTP masks copies of headers and URLs, rather than installing an access logger.
 
-ObjectMarshaler/LogObjectMarshaler and typed fields let application code select exactly what to emit. The embargo adapter also examines the final encoded bytes, but is not a substitute for domain-specific allowlisting.
+Runtime dependency counts are measured with `go list -deps`, excluding the library's own module and the standard library, and recorded in comparison.json. embargo, masq, go-mask and go-masker have zero external runtime modules on these paths; masq and go-mask declare test dependencies that do not enter an application's binary. slog-formatter reaches four external runtime modules and godlp one. This distinction replaces counts of all go.mod requirements, which unfairly charged test dependencies to consumers.
 
-<a id="table-explanation-7"></a>
-
-Collector-side allowed/ignored keys, regex rules and hashing can enforce a centralized telemetry policy outside a Go process. embargo does not provide a Collector processor, telemetry allowlist or keyed pseudonymization.
+The four bars in the [time-per-event chart](images/log-event-time.svg) use exactly the same prebuilt request/email/card event, JSONHandler, sink and ten-sample method. The slog-alone bar measures the encoding cost before masking. Compare absolute microseconds and allocations in the full table: faster field transformations and partial redaction perform different work from a detector scan. Build and setup costs are outside the timed loop for every library.

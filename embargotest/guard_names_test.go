@@ -170,3 +170,22 @@ func TestGuardValidatesEachDistinctNameOnce(t *testing.T) {
 		t.Fatalf("got %q with %d detector calls; want one name check and one joined check", got, detector.calls)
 	}
 }
+
+type joinedNameDetector struct{}
+
+func (joinedNameDetector) Scan(data []byte) []embargo.Finding {
+	if string(data) == "TestA, TestB" {
+		return []embargo.Finding{{Kind: embargo.KindCredential, Start: 0, End: len(data), Confidence: 1}}
+	}
+	return nil
+}
+
+func TestGuardJoinedNamesAreScanned(t *testing.T) {
+	t.Parallel()
+	frames := "=== RUN   TestA\n=== RUN   TestB\n"
+	policy := guardPolicy([]Option{WithScanner(embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(joinedNameDetector{})))})
+	capture := &guardCapture{data: [2][]byte{[]byte(frames + "leak"), nil}}
+	if guardTests(capture, 0, []embargo.Finding{{Start: len(frames), End: len(frames) + 4}}, policy) != "[redacted test name]" {
+		t.Fatal("joined-name detector bypassed")
+	}
+}

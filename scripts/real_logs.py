@@ -159,22 +159,24 @@ def render(manifest, before, after):
     table+='\nThe handler receives each raw line as its message and no attributes; its encoded message is checked against the scanner mask after JSON UTF-8 replacement. These numbers do not measure application-specific field-key policies. All 37 detectors also run separately, with exact findings compared to WithAll.\n\n'
     for name,kinds in manifest['configurations'].items():table+=f"- {name}: "+', '.join(kinds)+'.\n'
     table+='\nEach dataset/kind stratum uses the 40 lowest SHA-256 finding IDs, or every finding if there are fewer. Review labels are in [real-logs-labels.json](real-logs-labels.json); counts and sampled FP fractions are in [real-logs-summary.json](real-logs-summary.json). The estimate sums count × sampled FP fraction across datasets. Zero observed sample FPs does not establish zero population FPs. Small samples, repeated templates and this 92.4 MB source mix cannot predict a deployment’s rate. No recall estimate is possible without labeling undetected secrets.\n'
-    height=125+len(active)*64
+    height=160+len(active)*112
     maximum=max(max(v) for _,v in active)
-    svg=[f'<svg xmlns="http://www.w3.org/2000/svg" width="960" height="{height}" viewBox="0 0 960 {height}" role="img" aria-labelledby="title desc">',
+    svg=[f'<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="{height}" viewBox="0 0 1100 {height}" role="img" aria-labelledby="title desc">',
          '<title id="title">Estimated false positives on public logs</title>',
-         '<desc id="desc">Before and after rates per decimal GB, split by development and held-out sources. Bars show the same sample-based estimates as the adjacent table; they are not recall measurements.</desc>',
-         f'<rect width="960" height="{height}" fill="#101923"/>',
-         '<g font-family="sans-serif" fill="#eff6ff"><text x="24" y="30" font-size="22">Public logs · estimated FP per GB · lower is better</text>',
-         '<text x="24" y="55" font-size="14">Development: before / after (blue) · Held-out: before / after (orange)</text>',
+         '<desc id="desc">Labeled before and after rates per decimal gigabyte, split by development and held sources. Linear bars show sample estimates, not recall.</desc>',
+         f'<rect width="1100" height="{height}" fill="#101923"/>',
+         '<g font-family="sans-serif" fill="#eff6ff"><text x="24" y="30" font-size="22">Public logs: estimated false positives per gigabyte</text>',
+         '<text x="24" y="55" font-size="14">Lower is better. Linear axis; one gigabyte = 1,000,000,000 bytes.</text>',
          '<text x="24" y="78" font-size="13">8 datasets · 819,576 lines · 92.4 MB · at most 40 sampled findings per stratum</text>']
     for i,(kind,values) in enumerate(active):
-        y=100+i*64
+        y=105+i*112
         svg.append(f'<text x="24" y="{y+18}" font-size="15">{html.escape(kind)}</text>')
         for j,value in enumerate(values):
-            width=value/maximum*570
+            width=value/maximum*550
             color=('#85b8ff','#347ac7','#ffc78a','#b87629')[j]
-            svg.append(f'<rect x="160" y="{y+j*13}" width="{width:.2f}" height="10" fill="{color}"/><text x="{170+width:.2f}" y="{y+j*13+9}" font-size="10">{value:,.1f}</text>')
+            label=('Development before','Development after','Held before','Held after')[j]
+            svg.append(f'<text x="170" y="{y+j*23+15}" font-size="13">{label}</text><rect x="330" y="{y+j*23}" width="{width:.2f}" height="18" fill="{color}"/><text x="{340+width:.2f}" y="{y+j*23+14}" font-size="13">{value:,.1f}</text>')
+    svg.append(f'<text x="24" y="{height-20}" font-size="13">Both source splits have been seen. Zero in the sample does not prove zero false positives in deployment.</text>')
     svg.append('</g></svg>\n')
     return table,'\n'.join(svg)
 
@@ -205,7 +207,7 @@ def main():
     updated=re.sub(pattern,lambda m:m[1]+table+m[2],text)
     readme = ROOT/'README.md'
     original = readme.read_text(encoding='utf-8')
-    synopsis = '![Estimated false positives on public logs](doc/images/real-logs.svg)\n\n8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.\n'
+    synopsis = '[Public-log chart and measured results](doc/real-logs.md).\n\n8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.\n'
     readme_pattern = r'(?s)(<!-- real-logs-summary:start -->\n).*?(<!-- real-logs-summary:end -->)'
     if len(re.findall(readme_pattern,original)) != 1:
         raise ValueError('expected one README real-log block')

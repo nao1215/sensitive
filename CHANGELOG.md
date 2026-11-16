@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Detection changes
+
+- Normalize non-ASCII Unicode dash, space and format categories inside tokens, preserving original byte offsets; retain ASCII delimiters.
+- Hide every segment of a key path when detection spans a join, and mask whole numeric JSON lexemes including strings emitted by logger encoders.
+- Preserve recognized standard console levels in withheld diagnostics while discarding original timestamps and message content.
+
+### Added
+
+- Installable embargo-audit command with streaming comparisons between two scanner settings.
+- Changed-statement coverage and detection compatibility gates, plus category and grammar properties across loggers.
+
 ## [0.7.0] - 2026-11-16
 
 This minor release closes masking gaps and changes access-log failure behavior. Only requests already canceled when their access record is built receive a detached 100 ms masking budget; failed access records retain their HTTP status or gRPC code and handler duration. The public API and the default minimum confidence of 0 are unchanged. Upgrade the root and every installed adapter to v0.7.0 when the adapter tags are published.

@@ -50,11 +50,6 @@ func (d *ACHTrace) Scan(data []byte) []Finding {
 				continue
 			}
 
-			// Ensure the digit sequence doesn't overlap with the keyword.
-			if seq.start < m.end && seq.end > m.start {
-				continue
-			}
-
 			digits := data[seq.start:seq.end]
 
 			// Validate that the first 2 digits are a valid Federal Reserve

@@ -31,9 +31,7 @@ func (d *ServiceToken) Scan(data []byte) []Finding {
 		start := i
 		if bytes.HasPrefix(data[i:], []byte("https://hooks.slack")) {
 			marker := bytes.Index(data[i:end], []byte("/services/"))
-			if marker < 0 {
-				continue
-			}
+			// serviceTokenEnd accepted a complete /services/ prefix.
 			start = i + marker + len("/services/")
 		}
 		//nolint:mnd // Prefix-based candidates use the documented heuristic score.

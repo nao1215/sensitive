@@ -1,15 +1,15 @@
 package guard_test
 
 import (
- "fmt"
- "github.com/nao1215/embargo"
- "github.com/nao1215/embargo/embargotest"
- "log/slog"
- "os"
- "os/exec"
- "strings"
- "testing"
- "time"
+	"fmt"
+	"github.com/nao1215/embargo"
+	"github.com/nao1215/embargo/embargotest"
+	"log/slog"
+	"os"
+	"os/exec"
+	"strings"
+	"testing"
+	"time"
 )
 
 func TestMain(m *testing.M) {

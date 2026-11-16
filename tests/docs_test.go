@@ -75,10 +75,7 @@ func TestBenchmarkTable(t *testing.T) {
 	}
 	printLine("\n</details>\n")
 	syncDocTable(t, "../doc/benchmarks.md", "benchmarks", table.String())
-	all := snapshot.Benchmarks["BenchmarkPublishedScanner/all/dirty"]["MB/s"]
-	plain := snapshot.Benchmarks["BenchmarkPublishedSlog/plain-clean"]["ns/op"]
-	masked := snapshot.Benchmarks["BenchmarkPublishedSlog/masked-clean"]["ns/op"]
-	summary := fmt.Sprintf("![Scanner throughput and slog time](doc/images/benchmarks.svg)\n\nAll detectors scan sensitive text at %.2f MB/s; masking a clean slog event takes %.2f µs, %.1f× the plain handler.\n", all, masked/1000, masked/plain)
+	summary := "![Time per log event](doc/images/log-event-time.svg)\n\nThe same event through slog alone, embargo, masq and go-masker. [Configurations, medians and allocations](doc/comparison.md) · [Full scanner benchmark plot](doc/benchmarks.md).\n"
 	syncReadmeTable(t, "benchmarks", summary)
 }
 

@@ -46,13 +46,17 @@ func Guard(m *testing.M, opts ...Option) int {
 		guardMessage("embargotest: guard executable unavailable")
 		return 1
 	}
+	args := append([]string{"-test.v=true"}, os.Args[1:]...)
+	return guardParent(executable, args, policy, os.Stdout, os.Stderr)
+}
+
+func guardParent(executable string, args []string, policy *Recorder, stdout, stderr io.Writer) int {
 	ctx, cancel := context.WithTimeout(context.Background(), policy.timeout)
 	defer cancel()
-	args := append([]string{"-test.v=true"}, os.Args[1:]...)
-	// #nosec G204 G702 -- Re-exec this test binary with its own arguments, never a shell.
+	// #nosec G204 G702 -- The parent supplies its own executable and test arguments, never a shell.
 	cmd := exec.CommandContext(ctx, executable, args...)
-	cmd.Env = append(os.Environ(), childEnv+"=child")
-	return guardCommand(ctx, cmd, policy, os.Stdout, os.Stderr)
+	cmd.Env = append(os.Environ(), "EMBARGO_PACKAGE_GUARD=child")
+	return guardCommand(ctx, cmd, policy, stdout, stderr)
 }
 
 // guardCommand owns capture and replay; tests exercise it with real child pipes
@@ -134,6 +138,7 @@ func (w *guardStream) Write(data []byte) (int, error) {
 }
 
 func guardMessage(message string) {
+	// Guard already returns failure; a failed diagnostic cannot change the result.
 	if _, err := os.Stderr.WriteString(message + "\n"); err != nil {
 		return
 	}

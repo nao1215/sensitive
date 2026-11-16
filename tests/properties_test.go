@@ -12,6 +12,9 @@ import (
 	"io"
 	"log/slog"
 	"math/big"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -21,6 +24,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode"
 
 	"golang.org/x/crypto/sha3"
 	"pgregory.net/rapid"
@@ -34,6 +38,16 @@ func chars(t *rapid.T, alphabet string, n int) string {
 }
 
 func digits(t *rapid.T, n int) string { return chars(t, "0123456789", n) }
+
+func unicodeSeparators() []string {
+	var result []string
+	for r := rune(0); r <= unicode.MaxRune; r++ {
+		if unicode.Is(unicode.Pd, r) || unicode.Is(unicode.Zs, r) || unicode.Is(unicode.Cf, r) || unicode.Is(unicode.Sm, r) && unicode.Is(unicode.Dash, r) {
+			result = append(result, string(r))
+		}
+	}
+	return result
+}
 
 func changedDigit(raw string, i int) string {
 	b := []byte(raw)
@@ -710,6 +724,15 @@ func TestMetamorphicRealLogs(t *testing.T) {
 
 func TestMaskIdempotentAllKinds(t *testing.T) {
 	t.Parallel()
+	separators := unicodeSeparators()
+	// Empty adjacency and repeated punctuation are grammar constructions;
+	// individual Unicode separators and ASCII punctuation come from categories.
+	separators = append(separators, "", "..")
+	for r := rune(0); r <= unicode.MaxASCII; r++ {
+		if unicode.IsPunct(r) || unicode.IsSymbol(r) || unicode.IsSpace(r) {
+			separators = append(separators, string(r))
+		}
+	}
 	samples := allAccuracySamples(t, developmentAccuracySet)
 	samples = append(samples, countrySamples(t, developmentAccuracySet)...)
 	samples = append(samples, readGeneratedAccuracy[labeledAccuracySample](t, "testdata/credentials-development.jsonl")...)
@@ -729,7 +752,7 @@ func TestMaskIdempotentAllKinds(t *testing.T) {
 			rapid.Check(t, func(t *rapid.T) {
 				left := rapid.SampledFrom(inputs).Draw(t, "left")
 				right := rapid.SampledFrom(inputs).Draw(t, "right")
-				separator := rapid.SampledFrom([]string{"", " ", "+", ".", "..", "-", "_", "@", ":", ";", "\n"}).Draw(t, "separator")
+				separator := rapid.SampledFrom(separators).Draw(t, "separator")
 				text := left + separator + right
 				masked := embargo.Mask(text, scanner.ScanString(text))
 				if again := embargo.Mask(masked, scanner.ScanString(masked)); masked != again {
@@ -907,4 +930,134 @@ func TestQuintInputReplay(t *testing.T) {
 	if len(seen) != 10 {
 		t.Fatal("trace generation missed an Input operation")
 	}
+}
+
+// JSON number grammar: optional minus, a nonzero integer prefix (or zero),
+// optional fraction, and optional signed exponent. Decimal arithmetic is exact.
+func equivalentNumber(t *rapid.T, integer string) string {
+	if rapid.Bool().Draw(t, "omit fraction and exponent") {
+		return integer
+	}
+	zeros := rapid.IntRange(0, 24).Draw(t, "trailing zero digits")
+	digits := integer + strings.Repeat("0", zeros)
+	point := rapid.IntRange(0, len(digits)).Draw(t, "decimal point")
+	exponent := len(digits) - point - zeros
+	mantissa := digits
+	switch {
+	case point == 0:
+		mantissa = "0." + digits
+	case point < len(digits):
+		mantissa = digits[:point] + "." + digits[point:]
+	case rapid.Bool().Draw(t, "zero fraction"):
+		mantissa += ".000"
+	}
+	if exponent == 0 && rapid.Bool().Draw(t, "omit exponent") {
+		return mantissa
+	}
+	sign := ""
+	if exponent >= 0 && rapid.Bool().Draw(t, "exponent plus") {
+		sign = "+"
+	}
+	exp := strconv.Itoa(exponent)
+	if exponent < 0 {
+		sign = "-"
+		exp = strconv.Itoa(-exponent)
+	}
+	exp = strings.Repeat("0", rapid.IntRange(0, 3).Draw(t, "exponent leading zeros")) + exp
+	return mantissa + rapid.SampledFrom([]string{"e", "E"}).Draw(t, "exponent case") + sign + exp
+}
+
+//nolint:gocognit // Keep the sign, equivalent-lexeme and real-logger dimensions together.
+func TestJSONNumberGrammarAcrossLoggers(t *testing.T) {
+	t.Parallel()
+	scanner := embargo.NewScanner(embargo.WithAll())
+	rapid.Check(t, func(rt *rapid.T) {
+		integer := rapid.SampledFrom([]string{"4111111111111111", "123456789018", "9007199254740993", "123", "12345678", "4" + digits(rt, 15), "121000358", "401236", "123456789", "123456789012345", "1" + digits(rt, rapid.IntRange(0, 32).Draw(rt, "digit count"))}).Draw(rt, "integer")
+		key := rapid.SampledFrom([]string{"value", "payment card", "cvv", "bank account", "routing number", "sort code", "ach trace", "merchant id", "ssn", "sin", "resident id"}).Draw(rt, "context")
+		for _, sign := range []string{"", "-"} {
+			if len(scanner.ScanString(key+": "+sign+integer)) == 0 {
+				continue
+			}
+			for range 4 {
+				lexeme := sign + equivalentNumber(rt, integer)
+				a, ok := new(big.Rat).SetString(lexeme)
+				b, baseOK := new(big.Rat).SetString(sign + integer)
+				if !ok || !baseOK || a.Cmp(b) != 0 || !json.Valid([]byte(lexeme)) {
+					rt.Fatalf("invalid grammar/oracle: %q", lexeme)
+				}
+				input := []byte(`{"` + key + `":` + lexeme + `}`)
+				masked, err := scanner.MaskJSON(input)
+				if err != nil || loggerField(t, masked, key) != referenceMarker {
+					rt.Fatalf("whole lexeme not masked: %s => %s (%v)", input, masked, err)
+				}
+				for _, name := range []string{loggerSlog, loggerZap, loggerZerolog, loggerLogrus} {
+					out := loggerOutput(t, scanner, name, key, json.Number(lexeme))
+					if loggerField(t, out, key) != referenceMarker {
+						rt.Fatalf("%s retained lexeme: %s", name, out)
+					}
+				}
+				invalid := []byte(`{"` + key + `":0` + integer + `}`)
+				if out, err := scanner.MaskJSON(invalid); err == nil || len(out) != 0 {
+					rt.Fatal("leading zero accepted")
+				}
+			}
+		}
+	})
+}
+
+func TestHTTPEncodedKeysAndCredentialHeadersProperty(t *testing.T) {
+	t.Parallel()
+	rapid.Check(t, func(rt *rapid.T) {
+		email := "person" + strconv.Itoa(rapid.IntRange(1, 999999).Draw(rt, "user")) + "@example.net"
+		key := rapid.SampledFrom([]string{email, "4111 1111 1111 1111", "090-1234-5678"}).Draw(rt, "query key")
+		credential := "Basic " + base64.StdEncoding.EncodeToString([]byte("user:"+email))
+		request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?"+url.QueryEscape(key)+"=public", http.NoBody)
+		request.Header.Set("Authorization", credential)
+		request.Header.Set("Proxy-Authorization", credential)
+		var out bytes.Buffer
+		handler := embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Location", "/?"+url.QueryEscape(key)+"=public")
+			w.WriteHeader(http.StatusTemporaryRedirect)
+		}), slog.New(slog.NewJSONHandler(&out, nil)), embargo.NewScanner())
+		handler.ServeHTTP(httptest.NewRecorder(), request)
+		var record struct {
+			RequestHeaders  map[string]any      `json:"request_headers"`
+			ResponseHeaders map[string][]string `json:"response_headers"`
+			Target          string              `json:"target"`
+			Status          int                 `json:"status"`
+		}
+		if err := json.Unmarshal(out.Bytes(), &record); err != nil {
+			rt.Fatal(err)
+		}
+		if record.Target != "/?[REDACTED]=public" || record.ResponseHeaders["Location"][0] != "/?[REDACTED]=public" || record.Status != http.StatusTemporaryRedirect {
+			rt.Fatal("query/redirect semantics lost", out.String())
+		}
+		for _, header := range []string{"Authorization", "Proxy-Authorization"} {
+			if record.RequestHeaders[header] != referenceMarker {
+				rt.Fatal("credential header escaped", header)
+			}
+		}
+	})
+}
+
+type propertyBytes []byte
+
+func TestByteContentsBeforeEncoderProperty(t *testing.T) {
+	t.Parallel()
+	rapid.Check(t, func(rt *rapid.T) {
+		email := "person" + strconv.Itoa(rapid.IntRange(1, 999999).Draw(rt, "user")) + "@example.net"
+		for _, value := range []any{[]byte(email), propertyBytes(email)} {
+			for _, structured := range []bool{false, true} {
+				var out bytes.Buffer
+				var handler slog.Handler = slog.NewTextHandler(&out, nil)
+				if structured {
+					handler = slog.NewJSONHandler(&out, nil)
+				}
+				slog.New(embargo.NewSlogHandler(handler, embargo.NewScanner())).Info("event", "data", value)
+				if strings.Contains(out.String(), email) || strings.Contains(out.String(), base64.StdEncoding.EncodeToString([]byte(email))) || !strings.Contains(out.String(), referenceMarker) {
+					rt.Fatal("encoder hid raw bytes from inspection")
+				}
+			}
+		}
+	})
 }

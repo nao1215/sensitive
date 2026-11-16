@@ -20,7 +20,13 @@ import (
 
 	dlp "github.com/bytedance/godlp"
 	"github.com/bytedance/godlp/dlpheader"
+	masker "github.com/icntswm/go-masker"
+	"github.com/icntswm/go-masker/httpmask"
+	"github.com/icntswm/go-masker/slogmask"
+	"github.com/icntswm/go-masker/zapmask"
+	"github.com/icntswm/go-masker/zerologmask"
 	"github.com/m-mizutani/masq"
+	"github.com/rs/zerolog"
 	slogformatter "github.com/samber/slog-formatter"
 	mask "github.com/showa-93/go-mask"
 	"go.uber.org/zap"
@@ -33,6 +39,9 @@ import (
 
 const (
 	comparisonFlat           = "flat"
+	comparisonDLPName        = "godlp"
+	comparisonFormatterName  = "slog-formatter"
+	comparisonCopyName       = "go-mask"
 	comparisonNested         = "nested"
 	comparisonLarge          = "large50"
 	comparisonPasswordKey    = "password"
@@ -41,6 +50,7 @@ const (
 	comparisonEmailKey       = "email"
 	comparisonClean          = "clean"
 	comparisonEmail          = "alice@example.com"
+	comparisonMaskerName     = "go-masker"
 	comparisonMasqName       = "masq"
 	comparisonEmbargoName    = "embargo"
 	comparisonMap            = "map"
@@ -73,6 +83,9 @@ func comparisonMasq() func([]string, slog.Attr) slog.Attr {
 
 func comparisonHandler(mode string, out io.Writer) slog.Handler {
 	options := &slog.HandlerOptions{}
+	if mode == comparisonMaskerName {
+		options.ReplaceAttr = slogmask.ReplaceAttr(comparisonValueMasker())
+	}
 	if mode == comparisonMasqName {
 		options.ReplaceAttr = comparisonMasq()
 	}
@@ -173,7 +186,7 @@ func BenchmarkComparison(b *testing.B) {
 	for _, name := range []string{comparisonFlat, comparisonNested, comparisonMap, comparisonClean, comparisonLarge} {
 		attrs := events[name]
 		b.Run(name, func(b *testing.B) {
-			for _, mode := range []string{comparisonMasqName, comparisonEmbargoName} {
+			for _, mode := range []string{scenarioPlain, comparisonMasqName, comparisonEmbargoName, comparisonMaskerName} {
 				b.Run(mode, func(b *testing.B) {
 					logger := slog.New(comparisonHandler(mode, io.Discard))
 					ctx := context.Background()
@@ -231,7 +244,7 @@ func TestMasqRequiresDetectionRules(t *testing.T) {
 }
 
 func formatterHandler(out io.Writer) slog.Handler {
-	return slogformatter.NewFormatterHandler(slogformatter.PIIFormatter(comparisonEmailKey), slogformatter.PIIFormatter("card"), slogformatter.PIIFormatter("user"), slogformatter.PIIFormatter("data"))(slog.NewJSONHandler(out, nil))
+	return slogformatter.NewFormatterHandler(slogformatter.PIIFormatter(comparisonEmailKey), slogformatter.PIIFormatter("card"), slogformatter.PIIFormatter("user"), slogformatter.PIIFormatter("data"), slogformatter.PIIFormatter(comparisonPasswordKey), slogformatter.PIIFormatter("token"))(slog.NewJSONHandler(out, nil))
 }
 
 func comparisonMasker() *mask.Masker {
@@ -346,7 +359,7 @@ func BenchmarkComparisonText(b *testing.B) {
 	engine := godlpEngine(b)
 	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN, embargo.KindIPAddr, embargo.KindJPPhone), embargo.WithMinConfidence(0.7))
 	text := "email alice@example.com; credit card 4111111111111111; IP 192.0.2.1; phone 03-1234-5678"
-	b.Run("godlp", func(b *testing.B) {
+	b.Run(comparisonDLPName, func(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
 			if _, _, err := engine.Deidentify(text); err != nil {
@@ -364,12 +377,12 @@ func BenchmarkComparisonText(b *testing.B) {
 
 func BenchmarkComparisonStruct(b *testing.B) {
 	value := comparisonUser{comparisonID, comparisonEmail, comparisonPassword, comparisonRecovery, 17}
-	masker := comparisonMasker()
+	copyMasker := comparisonMasker()
 	scanner := comparisonScanner()
 	b.Run("go_mask", func(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
-			safe, err := masker.Mask(value)
+			safe, err := copyMasker.Mask(value)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -511,14 +524,18 @@ func scenarioEmit(t *testing.T, mode string, out io.Writer) func(string, ...slog
 	switch mode {
 	case scenarioSlog:
 		handler = embargo.NewSlogHandler(handler, scanner)
-	case "masq":
+	case comparisonMaskerName:
+		handler = comparisonHandler(comparisonMaskerName, out)
+	case comparisonDLPName:
+		handler = catchHandler(t, mode, out, godlpEngine(t))
+	case comparisonMasqName:
 		handler = slog.NewJSONHandler(out, &slog.HandlerOptions{ReplaceAttr: comparisonMasq()})
-	case "slog-formatter":
+	case comparisonFormatterName:
 		handler = slogformatter.NewFormatterHandler(slogformatter.FormatByKey("password", func(slog.Value) slog.Value { return slog.StringValue("[REDACTED]") }), slogformatter.FormatByKey(scenarioTokenKey, func(slog.Value) slog.Value { return slog.StringValue("[REDACTED]") }))(handler)
 	}
 	logger := slog.New(handler)
 	return func(message string, attrs ...slog.Attr) {
-		if mode == "go-mask" {
+		if mode == comparisonCopyName {
 			payload := map[string]any{}
 			for _, a := range attrs {
 				payload[a.Key] = a.Value.Any()
@@ -540,11 +557,11 @@ func scenarioEmit(t *testing.T, mode string, out io.Writer) func(string, ...slog
 	}
 }
 
+//nolint:paralleltest // The shared scenarios also initialize godlp's package globals.
 func TestLeakScenarios(t *testing.T) {
-	t.Parallel()
-	modes := []string{scenarioSlog, scenarioZap, "masq", "slog-formatter", "go-mask"}
+	modes := []string{scenarioSlog, scenarioZap, comparisonMasqName, comparisonFormatterName, comparisonCopyName, comparisonMaskerName, comparisonDLPName}
 	var table strings.Builder
-	writeComparisonTable(t, &table, "| Service output | embargo slog | embargo zap | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 |\n|---|---|---|---|---|---|\n")
+	writeComparisonTable(t, &table, "| Service output | embargo slog | embargo zap | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |\n|---|---|---|---|---|---|---|---|\n")
 	rows := []struct{ path, label string }{
 		{"declared", "Password under the key `password`"},
 		{"config", "Config struct holding a database DSN"},
@@ -605,5 +622,188 @@ func TestLeakScenarioGuard(t *testing.T) {
 			}
 			probe.finish()
 		})
+	}
+}
+
+func comparisonValueMasker() *masker.Masker {
+	core, err := masker.New(masker.DefaultPolicy(), masker.WithCardNumberDetection(), masker.WithPreserveSafeTypes(), masker.WithTagRule("fixed", masker.FullRule()))
+	if err != nil {
+		panic(err)
+	}
+	return core
+}
+
+type comparisonTagged struct {
+	Value string `masq:"secret" mask:"fixed"`
+}
+type catchScenario struct {
+	emit                func(*slog.Logger)
+	name, label, needle string
+	positive            bool
+}
+
+func catchScenarios() []catchScenario {
+	return []catchScenario{
+		{name: "message_email", label: "Email in message", needle: comparisonEmail, emit: func(l *slog.Logger) { l.Info("login " + comparisonEmail) }, positive: true},
+		{name: "nested_email", label: "Nested email", needle: comparisonEmail, emit: func(l *slog.Logger) { l.Info("event", "user", struct{ Email string }{comparisonEmail}) }, positive: true},
+		{name: "attribute_key", label: "Email in attribute key", needle: comparisonEmail, emit: func(l *slog.Logger) { l.Info("event", comparisonEmail, "ok") }, positive: true},
+		{name: "group_name", label: "Email in group name", needle: comparisonEmail, emit: func(l *slog.Logger) { l.WithGroup(comparisonEmail).Info("event", "status", "ok") }, positive: true},
+		{name: "marshal_json", label: "Custom JSON email", needle: comparisonEmail, emit: func(l *slog.Logger) { l.Info("event", "data", comparisonJSON{}) }, positive: true},
+		{name: "opaque_password", label: "Named password", needle: comparisonOpaque, emit: func(l *slog.Logger) { l.Info("event", "password", comparisonOpaque) }, positive: true},
+		{name: "tag_only", label: "Opaque value: tag only", needle: comparisonOpaque, emit: func(l *slog.Logger) { l.Info("event", "payload", comparisonTagged{comparisonOpaque}) }, positive: true},
+		{name: "valid_card", label: "Valid card in text", needle: "4111111111111111", emit: func(l *slog.Logger) { l.Info("charge 4111111111111111") }, positive: true},
+		{name: "labeled_card", label: "Card with credit card label", needle: "4111111111111111", emit: func(l *slog.Logger) { l.Info("credit card 4111111111111111") }, positive: true},
+		{name: "embedded_json", label: "JSON inside a string", needle: comparisonOpaque, emit: func(l *slog.Logger) { l.Info("event", "detail", `{"token":"opaque-value"}`) }, positive: true},
+		{name: "bearer", label: "Bearer in message", needle: comparisonOpaque, emit: func(l *slog.Logger) { l.Info("Authorization: Bearer " + comparisonOpaque) }, positive: true},
+		{name: "japanese_phone", label: "Japanese phone", needle: "03-1234-5678", emit: func(l *slog.Logger) { l.Info("contact 03-1234-5678") }, positive: true},
+		{name: "us_phone", label: "US phone", needle: "202-555-0123", emit: func(l *slog.Logger) { l.Info("contact 202-555-0123") }, positive: true},
+		{name: "invalid_luhn", label: "Invalid card control", needle: "4111111111111112", emit: func(l *slog.Logger) { l.Info("order 4111111111111112") }, positive: false},
+		{name: "clean_reference", label: "Clean reference control", needle: "job-R7", emit: func(l *slog.Logger) { l.Info("completed job-R7") }, positive: false},
+	}
+}
+
+type catchObservation struct {
+	Output  string `json:"output"`
+	Removed bool   `json:"removed"`
+}
+type catchRow struct {
+	Results  map[string]catchObservation `json:"results"`
+	Name     string                      `json:"name"`
+	Label    string                      `json:"label"`
+	Positive bool                        `json:"positive"`
+}
+type catchReport struct {
+	Versions map[string]string `json:"versions"`
+	Rows     []catchRow        `json:"rows"`
+}
+
+func catchHandler(t *testing.T, mode string, out io.Writer, engine dlpheader.EngineAPI) slog.Handler {
+	t.Helper()
+	switch mode {
+	case comparisonEmbargoName:
+		return embargo.NewSlogHandler(slog.NewJSONHandler(out, nil), embargo.NewScanner(embargo.WithMinConfidence(0.7)))
+	case comparisonMasqName, comparisonMaskerName:
+		return comparisonHandler(mode, out)
+	case comparisonFormatterName:
+		return formatterHandler(out)
+	}
+	copyMasker := comparisonMasker()
+	return slog.NewJSONHandler(out, &slog.HandlerOptions{ReplaceAttr: func(_ []string, attr slog.Attr) slog.Attr {
+		if attr.Key == slog.TimeKey || attr.Key == slog.LevelKey {
+			return attr
+		}
+		value := attr.Value.Any()
+		if mode == comparisonCopyName {
+			safe, err := copyMasker.Mask(map[string]any{attr.Key: value})
+			if err != nil {
+				t.Fatal(err)
+			}
+			fields, ok := safe.(map[string]any)
+			if !ok {
+				t.Fatal("copy masker changed object type")
+			}
+			return slog.Any(attr.Key, fields[attr.Key])
+		}
+		if err, ok := value.(error); ok {
+			value = err.Error()
+		}
+		if text, ok := value.(string); ok {
+			safe, _, err := engine.Deidentify(text)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return slog.String(attr.Key, safe)
+		}
+		encoded, err := json.Marshal(value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		safe, _, err := engine.Deidentify(string(encoded))
+		if err != nil || !json.Valid([]byte(safe)) {
+			t.Fatal("invalid masked JSON", err)
+		}
+		return slog.Any(attr.Key, json.RawMessage(safe))
+	}})
+}
+
+//nolint:paralleltest // godlp initializes package globals; use the same serial setup as its other probes.
+func TestComparisonScenarios(t *testing.T) {
+	engine := godlpEngine(t)
+	report := catchReport{Versions: map[string]string{"embargo": "working source", "masq": "v0.2.3", comparisonFormatterName: "v1.3.0", comparisonCopyName: "v0.6.2", comparisonDLPName: "v1.2.15", "go-masker": "v0.6.1"}}
+	for _, scenario := range catchScenarios() {
+		row := catchRow{Name: scenario.name, Label: scenario.label, Positive: scenario.positive, Results: map[string]catchObservation{}}
+		for _, mode := range []string{comparisonEmbargoName, comparisonMasqName, comparisonMaskerName, comparisonFormatterName, comparisonCopyName, comparisonDLPName} {
+			var out bytes.Buffer
+			scenario.emit(slog.New(catchHandler(t, mode, &out, engine)))
+			var event map[string]any
+			if err := json.Unmarshal(out.Bytes(), &event); err != nil || len(event) == 0 {
+				t.Fatal("missing or invalid scenario output", mode, err)
+			}
+			delete(event, "time")
+			data, err := json.Marshal(event)
+			if err != nil {
+				t.Fatal(err)
+			}
+			row.Results[mode] = catchObservation{Output: string(data), Removed: !strings.Contains(string(data), scenario.needle)}
+		}
+		report.Rows = append(report.Rows, row)
+	}
+	//nolint:errchkjson // Keep output errors explicit if report types evolve.
+	data, err := json.MarshalIndent(report, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	data = append(data, '\n')
+	path := "../doc/comparison-scenarios.json"
+	if os.Getenv("UPDATE_DOCS") == "1" {
+		if writeErr := os.WriteFile(path, data, 0o600); writeErr != nil {
+			t.Fatal(writeErr)
+		}
+	}
+	got, err := os.ReadFile(path)
+	if err != nil || !bytes.Equal(got, data) {
+		t.Fatal("comparison scenarios changed: run make comparison-doc", err)
+	}
+}
+
+func TestComparisonMaskerAdapters(t *testing.T) {
+	t.Parallel()
+	core := comparisonValueMasker()
+	for _, mode := range []string{"slog", "zap", "zerolog"} {
+		var out bytes.Buffer
+		switch mode {
+		case "slog":
+			slog.New(comparisonHandler(comparisonMaskerName, &out)).Info("event", "token", comparisonOpaque)
+		case "zap":
+			zap.New(zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()), zapmask.NewWriteSyncer(&out, core), zap.InfoLevel)).Info("event", zap.String("token", comparisonOpaque))
+		case "zerolog":
+			logger := zerolog.New(zerologmask.NewWriter(&out, core))
+			logger.Info().Str("token", comparisonOpaque).Msg("event")
+		}
+		if !json.Valid(out.Bytes()) || strings.Contains(out.String(), comparisonOpaque) || !strings.Contains(out.String(), referenceMarker) {
+			t.Fatal(mode, "adapter did not mask", out.String())
+		}
+	}
+	adapter, err := httpmask.New(core)
+	if err != nil {
+		t.Fatal(err)
+	}
+	headers, err := adapter.Headers(http.Header{"Authorization": {"Bearer " + comparisonOpaque}})
+	if err != nil || strings.Contains(fmt.Sprint(headers), comparisonOpaque) {
+		t.Fatal("HTTP header leak", err)
+	}
+	target, err := adapter.URLString("https://example.net/?token=" + comparisonOpaque)
+	if err != nil || strings.Contains(target, comparisonOpaque) {
+		t.Fatal("HTTP URL leak", err)
+	}
+}
+
+func TestComparisonTypedCopy(t *testing.T) {
+	t.Parallel()
+	original := comparisonUser{ID: comparisonID, Email: comparisonEmail, Password: comparisonOpaque}
+	masked, err := comparisonMasker().Mask(original)
+	copyOf, ok := masked.(comparisonUser)
+	if err != nil || !ok || copyOf.ID != original.ID || copyOf.Email == original.Email || copyOf.Password == original.Password || original.Password != comparisonOpaque {
+		t.Fatal("typed copy contract changed", err)
 	}
 }

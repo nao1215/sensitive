@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"reflect"
+	"slices"
 	"strconv"
 	"time"
 
@@ -43,18 +44,25 @@ func NewSlogHandler(next slog.Handler, scanner *Scanner) slog.Handler {
 	if scanner == nil {
 		panic("embargo: nil scanner")
 	}
-	return &slogHandler{next: next, scanner: scanner, base: next, failed: nil, hidden: false, depth: 0, bound: 0, groups: ""}
+	return &slogHandler{next: next, scanner: scanner, base: next, failed: nil, hidden: false, depth: 0, bound: 0, groups: "", operations: nil, redactGroups: false}
+}
+
+type slogOperation struct {
+	group string
+	attrs []slog.Attr
 }
 
 type slogHandler struct {
-	next    slog.Handler
-	scanner *Scanner
-	base    slog.Handler
-	failed  error
-	groups  string
-	bound   int
-	hidden  bool
-	depth   int
+	next         slog.Handler
+	base         slog.Handler
+	failed       error
+	scanner      *Scanner
+	groups       string
+	operations   []slogOperation
+	bound        int
+	depth        int
+	hidden       bool
+	redactGroups bool
 }
 
 // Enabled asks the downstream handler whether this level is enabled.
@@ -70,12 +78,13 @@ func (h *slogHandler) Enabled(ctx context.Context, level slog.Level) bool {
 //nolint:gocritic // slog.Handler requires the record by value.
 func (h *slogHandler) Handle(ctx context.Context, record slog.Record) error {
 	var safe slog.Record
+	crossed := false
 	err := h.failed
 	if ctx.Err() != nil {
 		err = saferecord.ErrCanceled
 	}
 	if err == nil {
-		safe, err = h.sanitizeRecord(ctx, &record)
+		safe, crossed, err = h.sanitizeRecord(ctx, &record)
 	}
 	if ctx.Err() != nil {
 		err = saferecord.ErrCanceled
@@ -87,7 +96,11 @@ func (h *slogHandler) Handle(ctx context.Context, record slog.Record) error {
 		}
 		return slogSanitizationError()
 	}
-	return h.next.Handle(ctx, safe)
+	next := h.next
+	if crossed && !h.redactGroups {
+		next = h.rebuildGroups()
+	}
+	return next.Handle(ctx, safe)
 }
 
 // WithAttrs freezes masked attributes for subsequent records.
@@ -97,10 +110,16 @@ func (h *slogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	if h.hidden || h.failed != nil {
 		return &copyOf
 	}
-	safe, err := h.sanitizeAttrs(attrs)
+	safe, crossed, err := h.sanitizeAttrs(attrs)
 	copyOf.failed = err
 	if err == nil {
-		copyOf.next = h.next.WithAttrs(safe)
+		copyOf.operations = append(slices.Clone(h.operations), slogOperation{attrs: safe})
+		copyOf.redactGroups = h.redactGroups || crossed
+		if copyOf.redactGroups {
+			copyOf.next = copyOf.rebuildGroups()
+		} else {
+			copyOf.next = h.next.WithAttrs(safe)
+		}
 	}
 	return &copyOf
 }
@@ -111,7 +130,7 @@ func (h *slogHandler) WithGroup(name string) slog.Handler {
 		return h
 	}
 	copyOf := *h
-	safe, err := h.sanitizeAttrs([]slog.Attr{slog.String(name, "")})
+	safe, crossed, err := h.sanitizeAttrs([]slog.Attr{slog.String(name, "")})
 	if h.depth >= maxDepth {
 		err = saferecord.ErrSizeLimit
 	}
@@ -120,19 +139,45 @@ func (h *slogHandler) WithGroup(name string) slog.Handler {
 		return &copyOf
 	}
 	if h.scanner.sensitiveKey(name) {
-		copyOf.next = h.next.WithAttrs([]slog.Attr{slog.String(safe[0].Key, redactionMarker)})
+		attrs := []slog.Attr{slog.String(safe[0].Key, redactionMarker)}
+		copyOf.operations = append(slices.Clone(h.operations), slogOperation{attrs: attrs})
+		copyOf.next = h.next.WithAttrs(attrs)
 		copyOf.hidden = true
 	} else {
 		copyOf.next = h.next.WithGroup(safe[0].Key)
 		copyOf.depth++
-		copyOf.groups = joinedKey(h.groups, safe[0].Key)
+		pathGroup := safe[0].Key
+		if crossed {
+			// Later segments can extend the same detectable path. Keep its scan
+			// context even though every emitted group has already been masked.
+			pathGroup = name
+		}
+		copyOf.groups = joinedKey(h.groups, pathGroup)
+		copyOf.operations = append(slices.Clone(h.operations), slogOperation{group: safe[0].Key})
+	}
+	copyOf.redactGroups = h.redactGroups || crossed
+	if copyOf.redactGroups {
+		copyOf.next = copyOf.rebuildGroups()
 	}
 	return &copyOf
 }
 
+// Replay only frozen attributes; original callbacks are never evaluated twice.
+func (h *slogHandler) rebuildGroups() slog.Handler {
+	next := h.base
+	for _, op := range h.operations {
+		if op.group != "" {
+			next = next.WithGroup(redactionMarker)
+		} else {
+			next = next.WithAttrs(op.attrs)
+		}
+	}
+	return next
+}
+
 func slogSanitizationError() error { return errors.New("embargo: slog record could not be sanitized") }
 
-func (h *slogHandler) sanitizeRecord(ctx context.Context, record *slog.Record) (safe slog.Record, err error) {
+func (h *slogHandler) sanitizeRecord(ctx context.Context, record *slog.Record) (safe slog.Record, crossed bool, err error) {
 	completed := false
 	defer func() {
 		if !completed {
@@ -145,16 +190,18 @@ func (h *slogHandler) sanitizeRecord(ctx context.Context, record *slog.Record) (
 	}()
 	message, err := h.mask(ctx, record.Message)
 	if err != nil {
-		return slog.Record{}, err
+		return slog.Record{}, false, err
 	}
 	safe = slog.NewRecord(record.Time, record.Level, message, record.PC)
 	if h.hidden {
 		completed = true
-		return safe, nil
+		return safe, false, nil
 	}
 	record.Attrs(func(attr slog.Attr) bool {
 		var clean slog.Attr
-		clean, err = h.sanitizeAttr(ctx, attr, h.depth, h.groups)
+		var pathHidden bool
+		clean, pathHidden, err = h.sanitizeAttr(ctx, attr, h.depth, h.groups)
+		crossed = crossed || pathHidden
 		if err != nil {
 			return false
 		}
@@ -162,10 +209,10 @@ func (h *slogHandler) sanitizeRecord(ctx context.Context, record *slog.Record) (
 		return true
 	})
 	completed = true
-	return safe, err
+	return safe, crossed, err
 }
 
-func (h *slogHandler) sanitizeAttrs(attrs []slog.Attr) (safe []slog.Attr, err error) {
+func (h *slogHandler) sanitizeAttrs(attrs []slog.Attr) (safe []slog.Attr, crossed bool, err error) {
 	completed := false
 	defer func() {
 		if !completed {
@@ -178,14 +225,15 @@ func (h *slogHandler) sanitizeAttrs(attrs []slog.Attr) (safe []slog.Attr, err er
 	}()
 	safe = make([]slog.Attr, 0, len(attrs))
 	for _, attr := range attrs {
-		clean, err := h.sanitizeAttr(context.Background(), attr, h.depth, h.groups)
+		clean, pathHidden, err := h.sanitizeAttr(context.Background(), attr, h.depth, h.groups)
+		crossed = crossed || pathHidden
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		safe = append(safe, clean)
 	}
 	completed = true
-	return safe, nil
+	return safe, crossed, nil
 }
 
 func (h *slogHandler) mask(ctx context.Context, text string) (string, error) {
@@ -193,40 +241,46 @@ func (h *slogHandler) mask(ctx context.Context, text string) (string, error) {
 	return scan.maskScalar(ctx, text, "")
 }
 
-func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth int, groups string) (slog.Attr, error) {
+func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth int, groups string) (slog.Attr, bool, error) {
 	const maxDepth = 64
 	const maxLogValues = 100
 	if ctx.Err() != nil {
-		return slog.Attr{}, saferecord.ErrCanceled
+		return slog.Attr{}, false, saferecord.ErrCanceled
 	}
 	if depth > maxDepth {
-		return slog.Attr{}, saferecord.ErrSizeLimit
+		return slog.Attr{}, false, saferecord.ErrSizeLimit
 	}
-	path := joinedKey(groups, attr.Key)
-	key, err := h.mask(ctx, path)
-	if key == path {
-		key = attr.Key
-	} else if groups != "" {
-		key = redactionMarker
-	}
+	key, err := h.mask(ctx, attr.Key)
 	if err != nil {
-		return slog.Attr{}, err
+		return slog.Attr{}, false, err
+	}
+	pathKey := key
+	crossed := false
+	if groups != "" && attr.Key != "" {
+		scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
+		crossed, err = scan.joinedKeySensitive(ctx, joinedKey(groups, key), len(groups))
+		if err != nil {
+			return slog.Attr{}, false, err
+		}
+		if crossed {
+			key = redactionMarker
+		}
 	}
 	if ctx.Err() != nil {
-		return slog.Attr{}, slogSanitizationError()
+		return slog.Attr{}, false, slogSanitizationError()
 	}
 	if h.scanner.sensitiveKey(attr.Key) {
-		return slog.String(key, redactionMarker), nil
+		return slog.String(key, redactionMarker), crossed, nil
 	}
 	value := attr.Value
 	// Calling LogValue directly lets the outer boundary discard panic values.
 	// Value.Resolve converts panic contents to an error, which could reveal them.
 	for count := 0; value.Kind() == slog.KindLogValuer; count++ {
 		if ctx.Err() != nil {
-			return slog.Attr{}, saferecord.ErrCanceled
+			return slog.Attr{}, false, saferecord.ErrCanceled
 		}
 		if count == maxLogValues {
-			return slog.Attr{}, saferecord.ErrSizeLimit
+			return slog.Attr{}, false, saferecord.ErrSizeLimit
 		}
 		value = value.LogValuer().LogValue()
 	}
@@ -235,22 +289,28 @@ func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth in
 		attrs := value.Group()
 		safe := make([]slog.Attr, 0, len(attrs))
 		for _, child := range attrs {
-			clean, err := h.sanitizeAttr(ctx, child, depth+1, joinedKey(groups, key))
+			clean, childCrossed, err := h.sanitizeAttr(ctx, child, depth+1, joinedKey(groups, pathKey))
+			crossed = crossed || childCrossed
 			if err != nil {
-				return slog.Attr{}, err
+				return slog.Attr{}, false, err
 			}
 			safe = append(safe, clean)
 		}
-		return slog.Attr{Key: key, Value: slog.GroupValue(safe...)}, nil
+		if crossed && key != "" {
+			key = redactionMarker
+		}
+		return slog.Attr{Key: key, Value: slog.GroupValue(safe...)}, crossed, nil
 	case slog.KindAny:
-		return h.sanitizeAny(ctx, key, attr.Key, value.Any())
+		safe, err := h.sanitizeAny(ctx, key, attr.Key, value.Any())
+		return safe, crossed, err
 	case slog.KindString, slog.KindBool, slog.KindDuration, slog.KindFloat64, slog.KindInt64, slog.KindTime, slog.KindUint64:
-		return h.sanitizeScalar(ctx, key, attr.Key, value)
+		safe, err := h.sanitizeScalar(ctx, key, attr.Key, value)
+		return safe, crossed, err
 
 	case slog.KindLogValuer:
-		return slog.Attr{}, slogSanitizationError()
+		return slog.Attr{}, false, slogSanitizationError()
 	}
-	return slog.Attr{}, slogSanitizationError()
+	return slog.Attr{}, false, slogSanitizationError()
 }
 
 // JSONHandler uses MarshalJSON. TextHandler quotes the compact JSON bytes;

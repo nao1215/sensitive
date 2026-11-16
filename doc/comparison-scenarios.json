@@ -1,0 +1,477 @@
+{
+  "versions": {
+    "embargo": "working source",
+    "go-mask": "v0.6.2",
+    "go-masker": "v0.6.1",
+    "godlp": "v1.2.15",
+    "masq": "v0.2.3",
+    "slog-formatter": "v1.3.0"
+  },
+  "rows": [
+    {
+      "results": {
+        "embargo": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"login [REDACTED]\"}",
+          "removed": true
+        },
+        "go-mask": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"login alice@example.com\"}",
+          "removed": false
+        },
+        "go-masker": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"login alice@example.com\"}",
+          "removed": false
+        },
+        "godlp": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"login a****@***********\"}",
+          "removed": true
+        },
+        "masq": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"[REDACTED]\"}",
+          "removed": true
+        },
+        "slog-formatter": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"login alice@example.com\"}",
+          "removed": false
+        }
+      },
+      "name": "message_email",
+      "label": "Email in message",
+      "positive": true
+    },
+    {
+      "results": {
+        "embargo": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"user\":{\"Email\":\"[REDACTED]\"}}",
+          "removed": true
+        },
+        "go-mask": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"user\":{\"Email\":\"********\"}}",
+          "removed": true
+        },
+        "go-masker": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"user\":{\"Email\":\"a***@example.com\"}}",
+          "removed": true
+        },
+        "godlp": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"user\":{\"Email\":\"a****@***********\"}}",
+          "removed": true
+        },
+        "masq": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"user\":{\"Email\":\"[REDACTED]\"}}",
+          "removed": true
+        },
+        "slog-formatter": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"user\":\"*******\"}",
+          "removed": true
+        }
+      },
+      "name": "nested_email",
+      "label": "Nested email",
+      "positive": true
+    },
+    {
+      "results": {
+        "embargo": {
+          "output": "{\"[REDACTED]\":\"ok\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": true
+        },
+        "go-mask": {
+          "output": "{\"alice@example.com\":\"ok\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        },
+        "go-masker": {
+          "output": "{\"alice@example.com\":\"ok\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        },
+        "godlp": {
+          "output": "{\"alice@example.com\":\"ok\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        },
+        "masq": {
+          "output": "{\"alice@example.com\":\"ok\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        },
+        "slog-formatter": {
+          "output": "{\"alice@example.com\":\"ok\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        }
+      },
+      "name": "attribute_key",
+      "label": "Email in attribute key",
+      "positive": true
+    },
+    {
+      "results": {
+        "embargo": {
+          "output": "{\"[REDACTED]\":{\"status\":\"ok\"},\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": true
+        },
+        "go-mask": {
+          "output": "{\"alice@example.com\":{\"status\":\"ok\"},\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        },
+        "go-masker": {
+          "output": "{\"alice@example.com\":{\"status\":\"ok\"},\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        },
+        "godlp": {
+          "output": "{\"alice@example.com\":{\"status\":\"ok\"},\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        },
+        "masq": {
+          "output": "{\"alice@example.com\":{\"status\":\"ok\"},\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        },
+        "slog-formatter": {
+          "output": "{\"alice@example.com\":{\"status\":\"ok\"},\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        }
+      },
+      "name": "group_name",
+      "label": "Email in group name",
+      "positive": true
+    },
+    {
+      "results": {
+        "embargo": {
+          "output": "{\"data\":{\"email\":\"[REDACTED]\"},\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": true
+        },
+        "go-mask": {
+          "output": "{\"data\":{\"email\":\"alice@example.com\"},\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        },
+        "go-masker": {
+          "output": "{\"data\":{},\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": true
+        },
+        "godlp": {
+          "output": "{\"data\":{\"email\":\"a****@***********\"},\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": true
+        },
+        "masq": {
+          "output": "{\"data\":{\"email\":\"alice@example.com\"},\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        },
+        "slog-formatter": {
+          "output": "{\"data\":\"*******\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": true
+        }
+      },
+      "name": "marshal_json",
+      "label": "Custom JSON email",
+      "positive": true
+    },
+    {
+      "results": {
+        "embargo": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"password\":\"[REDACTED]\"}",
+          "removed": true
+        },
+        "go-mask": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"password\":\"********\"}",
+          "removed": true
+        },
+        "go-masker": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"password\":\"[REDACTED]\"}",
+          "removed": true
+        },
+        "godlp": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"password\":\"opaque-value\"}",
+          "removed": false
+        },
+        "masq": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"password\":\"[REDACTED]\"}",
+          "removed": true
+        },
+        "slog-formatter": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"password\":\"opaq*******\"}",
+          "removed": true
+        }
+      },
+      "name": "opaque_password",
+      "label": "Named password",
+      "positive": true
+    },
+    {
+      "results": {
+        "embargo": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"payload\":{\"Value\":\"opaque-value\"}}",
+          "removed": false
+        },
+        "go-mask": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"payload\":{\"Value\":\"********\"}}",
+          "removed": true
+        },
+        "go-masker": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"payload\":{\"Value\":\"[REDACTED]\"}}",
+          "removed": true
+        },
+        "godlp": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"payload\":{\"Value\":\"opaque-value\"}}",
+          "removed": false
+        },
+        "masq": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"payload\":{\"Value\":\"[REDACTED]\"}}",
+          "removed": true
+        },
+        "slog-formatter": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"payload\":{\"Value\":\"opaque-value\"}}",
+          "removed": false
+        }
+      },
+      "name": "tag_only",
+      "label": "Opaque value: tag only",
+      "positive": true
+    },
+    {
+      "results": {
+        "embargo": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"charge [REDACTED]\"}",
+          "removed": true
+        },
+        "go-mask": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"charge 4111111111111111\"}",
+          "removed": false
+        },
+        "go-masker": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"charge ************1111\"}",
+          "removed": true
+        },
+        "godlp": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"charge 4111111111111111\"}",
+          "removed": false
+        },
+        "masq": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"[REDACTED]\"}",
+          "removed": true
+        },
+        "slog-formatter": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"charge 4111111111111111\"}",
+          "removed": false
+        }
+      },
+      "name": "valid_card",
+      "label": "Valid card in text",
+      "positive": true
+    },
+    {
+      "results": {
+        "embargo": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"credit card [REDACTED]\"}",
+          "removed": true
+        },
+        "go-mask": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"credit card 4111111111111111\"}",
+          "removed": false
+        },
+        "go-masker": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"credit card ************1111\"}",
+          "removed": true
+        },
+        "godlp": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"credit card ************1111\"}",
+          "removed": true
+        },
+        "masq": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"[REDACTED]\"}",
+          "removed": true
+        },
+        "slog-formatter": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"credit card 4111111111111111\"}",
+          "removed": false
+        }
+      },
+      "name": "labeled_card",
+      "label": "Card with credit card label",
+      "positive": true
+    },
+    {
+      "results": {
+        "embargo": {
+          "output": "{\"detail\":\"{\\\"token\\\":\\\"[REDACTED]\\\"}\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": true
+        },
+        "go-mask": {
+          "output": "{\"detail\":\"{\\\"token\\\":\\\"opaque-value\\\"}\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        },
+        "go-masker": {
+          "output": "{\"detail\":\"{\\\"token\\\":\\\"[REDACTED]\\\"}\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": true
+        },
+        "godlp": {
+          "output": "{\"detail\":\"{\\\"token\\\":\\\"opaque-value\\\"}\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        },
+        "masq": {
+          "output": "{\"detail\":\"{\\\"token\\\":\\\"opaque-value\\\"}\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        },
+        "slog-formatter": {
+          "output": "{\"detail\":\"{\\\"token\\\":\\\"opaque-value\\\"}\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        }
+      },
+      "name": "embedded_json",
+      "label": "JSON inside a string",
+      "positive": true
+    },
+    {
+      "results": {
+        "embargo": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"Authorization: Bearer [REDACTED]\"}",
+          "removed": true
+        },
+        "go-mask": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"Authorization: Bearer opaque-value\"}",
+          "removed": false
+        },
+        "go-masker": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"Authorization: [REDACTED]\"}",
+          "removed": true
+        },
+        "godlp": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"Authorization: Bearer opaque-value\"}",
+          "removed": false
+        },
+        "masq": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"Authorization: Bearer opaque-value\"}",
+          "removed": false
+        },
+        "slog-formatter": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"Authorization: Bearer opaque-value\"}",
+          "removed": false
+        }
+      },
+      "name": "bearer",
+      "label": "Bearer in message",
+      "positive": true
+    },
+    {
+      "results": {
+        "embargo": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact [REDACTED]\"}",
+          "removed": true
+        },
+        "go-mask": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact 03-1234-5678\"}",
+          "removed": false
+        },
+        "go-masker": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact 03-1234-5678\"}",
+          "removed": false
+        },
+        "godlp": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact 03-1234-5678\"}",
+          "removed": false
+        },
+        "masq": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact 03-1234-5678\"}",
+          "removed": false
+        },
+        "slog-formatter": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact 03-1234-5678\"}",
+          "removed": false
+        }
+      },
+      "name": "japanese_phone",
+      "label": "Japanese phone",
+      "positive": true
+    },
+    {
+      "results": {
+        "embargo": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact 202-555-0123\"}",
+          "removed": false
+        },
+        "go-mask": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact 202-555-0123\"}",
+          "removed": false
+        },
+        "go-masker": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact 202-555-0123\"}",
+          "removed": false
+        },
+        "godlp": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact 20*-***-**23\"}",
+          "removed": true
+        },
+        "masq": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact 202-555-0123\"}",
+          "removed": false
+        },
+        "slog-formatter": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact 202-555-0123\"}",
+          "removed": false
+        }
+      },
+      "name": "us_phone",
+      "label": "US phone",
+      "positive": true
+    },
+    {
+      "results": {
+        "embargo": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"order 4111111111111112\"}",
+          "removed": false
+        },
+        "go-mask": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"order 4111111111111112\"}",
+          "removed": false
+        },
+        "go-masker": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"order 4111111111111112\"}",
+          "removed": false
+        },
+        "godlp": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"order 4111111111111112\"}",
+          "removed": false
+        },
+        "masq": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"[REDACTED]\"}",
+          "removed": true
+        },
+        "slog-formatter": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"order 4111111111111112\"}",
+          "removed": false
+        }
+      },
+      "name": "invalid_luhn",
+      "label": "Invalid card control",
+      "positive": false
+    },
+    {
+      "results": {
+        "embargo": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"completed job-R7\"}",
+          "removed": false
+        },
+        "go-mask": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"completed job-R7\"}",
+          "removed": false
+        },
+        "go-masker": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"completed job-R7\"}",
+          "removed": false
+        },
+        "godlp": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"completed job-R7\"}",
+          "removed": false
+        },
+        "masq": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"completed job-R7\"}",
+          "removed": false
+        },
+        "slog-formatter": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"completed job-R7\"}",
+          "removed": false
+        }
+      },
+      "name": "clean_reference",
+      "label": "Clean reference control",
+      "positive": false
+    }
+  ]
+}

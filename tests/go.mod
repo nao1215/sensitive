@@ -25,6 +25,8 @@ require (
 	pgregory.net/rapid v1.3.0
 )
 
+require github.com/icntswm/go-masker v0.6.1
+
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
