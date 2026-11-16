@@ -104,6 +104,9 @@ func TestReadmeDetectorCounts(t *testing.T) {
 	if !strings.Contains(string(readme), want) {
 		t.Fatalf("README must say %q", want)
 	}
+	if overview := fmt.Sprintf("[%d built-in detectors](", len(builtins())); !strings.Contains(string(readme), overview) {
+		t.Fatalf("README overview must link %q", overview)
+	}
 	_, table, found := strings.Cut(string(readme), "| Group | Detectors | What is detected |\n|---|---:|---|\n")
 	if !found {
 		t.Fatal("README detector group table not found")

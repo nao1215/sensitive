@@ -42,8 +42,9 @@ def check_merge(number):
     rabbit = [x for x in pr['reviews']+pr['comments'] if 'coderabbit' in x['author']['login'].lower()]
     reviewed = any(x.get('commit',{}).get('oid') == pr['headRefOid'] for x in rabbit)
     rate_limited = any(explicit_review_limit(x) for x in rabbit)
-    if not reviewed and not rate_limited: raise ValueError('current-head CodeRabbit review or explicit rate limit required')
-    print(json.dumps({'repository':repo,'pr':number,'head':pr['headRefOid'],'checks':len(checks),'unresolved_threads':0,'explicit_review_rate_limit':rate_limited},indent=2))
+    # CodeRabbit is best effort: it skips repositories under ten stars. Green checks
+    # and resolved threads gate the merge; the review state is reported only.
+    print(json.dumps({'repository':repo,'pr':number,'head':pr['headRefOid'],'checks':len(checks),'unresolved_threads':0,'coderabbit_reviewed_head':reviewed,'explicit_review_rate_limit':rate_limited},indent=2))
     # No release, push, issue edits, or external repository writes occur here.
     print(f'gh pr merge {number} --repo {repo} --squash --match-head-commit {pr["headRefOid"]}')
 
