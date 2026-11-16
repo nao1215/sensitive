@@ -46,7 +46,7 @@ The public Examples run real loggers with Output comments. Tests inspect message
 
 ## Versions
 
-Each adapter is its own module with a tag of the form `adapters/<name>/vX.Y.Z`, where `<name>` is `zap`, `zerolog`, `logrus`, `grpc`, `otel` or `sentry`, and requires the matching root release. The first published gRPC, OpenTelemetry and Sentry adapter versions are v0.5.0. Unreleased adapters pin root commit 5b9b76c91cd7 through its Go pseudo-version to include the Round 19 fixes without a release or tag. The local replace directives are used only for development and CI; downstream builds ignore them.
+Each adapter is its own module with a tag of the form `adapters/<name>/vX.Y.Z`, where `<name>` is `zap`, `zerolog`, `logrus`, `grpc`, `otel` or `sentry`, and requires the matching root release. The first published gRPC, OpenTelemetry and Sentry adapter versions are v0.5.0. Unreleased adapters pin reviewed root commits through Go pseudo-versions to include the Round 19 fixes without a release or tag. The local replace directives are used only for development and CI; downstream builds ignore them.
 
 ## Shared JSON policy
 
@@ -88,7 +88,7 @@ The OpenTelemetry exporter wrappers mask copied bodies, attributes, span names, 
 
 Sentry BeforeSend masks the serialized error-event fields and reconstructs a fresh event, keeping the original event unchanged. Attachments are omitted. Dynamic sampling context is masked alongside event content, then restored through a fresh SDK scope; clean sampling fields survive, and no private serialization cache is copied. Trace context in serialized fields remains subject to the masking policy. The helper is for ClientOptions.BeforeSend, not the separate BeforeSendTransaction, BeforeSendLog or BeforeSendMetric callbacks. A serialization or scanner failure returns nil, asking Sentry to drop the event. Downstream envelope additions and independently configured uploads need their own boundary.
 
-HTTP and gRPC access logging, both OTel exporters and Sentry BeforeSend stop scanning on cancellation, including between detectors and scalar values. Service responses remain unchanged; canceled telemetry batches return a fixed error and Sentry drops canceled events. Sentry uses EventHint.Context, then EventHint.Request.Context when the former is absent; a missing hint has no cancellation source. Scanner.MaskJSONContext exposes the same cancellation boundary for other request-scoped JSON work. An already running detector or user marshaler cannot be interrupted.
+Logrus uses Entry.Context when present, with cancellation checks before calling the formatter and between scanner calls. Zap WriteSyncer and zerolog Writer receive bytes without a context, so they have no cancellation source. HTTP and gRPC access logging, both OTel exporters and Sentry BeforeSend stop scanning on cancellation, including between detectors and scalar values. Service responses remain unchanged; canceled telemetry batches return a fixed error and Sentry drops canceled events. Sentry uses EventHint.Context, then EventHint.Request.Context when the former is absent; a missing hint has no cancellation source. Scanner.MaskJSONContext exposes the same cancellation boundary for other request-scoped JSON work. An already running detector or user marshaler cannot be interrupted.
 
 ## Production leak scenarios
 

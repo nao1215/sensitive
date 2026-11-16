@@ -490,5 +490,11 @@
     "source": "M19",
     "check": "doc_sync_test.go#TestStandaloneExamplesRejectMissingHelpers",
     "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Logrus Entry.Context cancels formatting and subsequent detector work",
+    "source": "M19",
+    "check": "adapters/logrus/adapter_test.go#TestEntryContextCancellation",
+    "where": "MultiPlatformUnitTest"
   }
 ]

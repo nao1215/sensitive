@@ -2,8 +2,10 @@ package output
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -95,5 +97,40 @@ func TestJSONOutputLimitIncludesTerminatingNewline(t *testing.T) {
 	input := []byte(`{"x":"` + strings.Repeat("a", maxEventBytes-len(`{"x":""}`)) + `"}`)
 	if data, err := JSON(input, embargo.NewScanner(embargo.WithKinds())); err == nil || data != nil {
 		t.Fatal("output exceeded the complete event byte limit")
+	}
+}
+
+type cancelScan struct {
+	cancel context.CancelFunc
+	calls  int
+}
+
+func (d *cancelScan) Scan([]byte) []embargo.Finding { d.calls++; d.cancel(); return nil }
+
+func TestJSONContextCancellation(t *testing.T) {
+	t.Parallel()
+	for _, before := range []bool{false, true} {
+		t.Run(strconv.FormatBool(before), func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			if before {
+				cancel()
+			}
+			detector := &cancelScan{cancel: cancel}
+			scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(detector))
+			data, err := JSONContext(ctx, []byte(`{"first":"public","second":"retained"}`), scanner)
+			want := 1
+			if before {
+				want = 0
+			}
+			if err == nil || len(data) != 0 || detector.calls != want {
+				t.Fatalf("err=%v bytes=%d scans=%d want=%d", err, len(data), detector.calls, want)
+			}
+		})
+	}
+	var missing context.Context
+	if data, err := JSONContext(missing, []byte(`{}`), embargo.NewScanner()); err == nil || len(data) != 0 {
+		t.Fatal("nil context accepted")
 	}
 }
