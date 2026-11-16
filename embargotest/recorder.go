@@ -169,15 +169,11 @@ func (s *stream) Write(p []byte) (int, error) {
 		r.failed = true
 		return len(p), nil
 	}
-	return r.capture(s, p)
+	return r.capture(s, p), nil
 }
 
 // capture appends while the caller holds mu.
-func (r *Recorder) capture(s *stream, p []byte) (int, error) {
-	if r.checked {
-		r.failed = true
-		return len(p), nil
-	}
+func (r *Recorder) capture(s *stream, p []byte) int {
 	remaining := r.maxBytes - r.retained
 	keep := len(p)
 	if int64(keep) > remaining {
@@ -186,7 +182,7 @@ func (r *Recorder) capture(s *stream, p []byte) (int, error) {
 	}
 	s.data = append(s.data, p[:keep]...)
 	r.retained += int64(keep)
-	return len(p), nil
+	return len(p)
 }
 
 // Expect registers a synchronous, terminating validator for a copy of a sink's

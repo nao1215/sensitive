@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math"
+	"net/http"
+	"net/url"
 	"reflect"
 	"runtime"
 	"slices"
@@ -15,6 +18,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/nao1215/embargo/internal/saferecord"
 )
 
 type cancelingScan struct {
@@ -653,6 +658,138 @@ func TestExactIntegerBoundaries(t *testing.T) {
 	for _, input := range []string{"1e99999999999999999999", "1e1000000000"} {
 		if out, err := NewScanner().MaskJSON([]byte(input)); err == nil || out != nil {
 			t.Errorf("unbounded expansion accepted: %q", out)
+		}
+	}
+}
+
+func TestJSONJoinedKeyPaths(t *testing.T) {
+	t.Parallel()
+	for _, input := range []string{
+		`{"alice@example":{"com":"x"}}`,
+		`{"10":{"20":{"30":{"40":"x"}}}}`,
+		`{"alice@example":[{"com":1},{"com":2}],"safe":3}`,
+		`{"alice@example":{"com":1},"alice@example":{"com":2}}`,
+	} {
+		got, err := NewScanner().MaskJSON([]byte(input))
+		if err != nil || !json.Valid(got) || bytes.Contains(got, []byte("alice@example")) || bytes.Contains(got, []byte(`"com"`)) || bytes.Contains(got, []byte(`"10"`)) || bytes.Contains(got, []byte(`"20"`)) || bytes.Contains(got, []byte(`"30"`)) || bytes.Contains(got, []byte(`"40"`)) {
+			t.Errorf("path: %s => %s (%v)", input, got, err)
+		}
+	}
+}
+
+func TestWalkerFailureBoundaries(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	walker := jsonWalker{data: []byte(`[]`), scanner: eventScanner{scanner: NewScanner(), remaining: maxScanBytes}}
+	if err := walker.value(ctx, 0, "", false); !errors.Is(err, saferecord.ErrCanceled) {
+		t.Fatal("canceled walk accepted")
+	}
+	walker.err = saferecord.ErrSizeLimit
+	if err := walker.value(t.Context(), 0, "", false); !errors.Is(err, saferecord.ErrSizeLimit) {
+		t.Fatal("sticky walk failure cleared")
+	}
+	walker.appendResult([]byte("private"))
+	if walker.result != nil {
+		t.Fatal("failed walker retained output")
+	}
+	walker.err = nil
+	walker.result = bytes.Repeat([]byte("x"), maxEventBytes)
+	if err := walker.container(t.Context(), 0, "", false); !errors.Is(err, saferecord.ErrSizeLimit) {
+		t.Fatal("container expansion exceeded budget")
+	}
+	scanner := eventScanner{scanner: NewScanner(), remaining: 1}
+	if _, err := scanner.joinedKeySensitive(t.Context(), "a.b", 1); !errors.Is(err, saferecord.ErrSizeLimit) {
+		t.Fatal("joined path exceeded scan budget")
+	}
+	scanner.remaining = maxScanBytes
+	if _, err := scanner.joinedKeySensitive(ctx, "a.b", 1); !errors.Is(err, saferecord.ErrCanceled) {
+		t.Fatal("canceled joined path accepted")
+	}
+	if _, err := scanner.scanScalar(ctx, "private", ""); !errors.Is(err, saferecord.ErrCanceled) {
+		t.Fatal("canceled scalar accepted")
+	}
+	scanner.remaining = len("1.0e0")
+	if _, err := scanner.maskScalar(t.Context(), "1.0e0", ""); !errors.Is(err, saferecord.ErrSizeLimit) {
+		t.Fatal("canonical number scan escaped budget")
+	}
+	walker = jsonWalker{path: []jsonKeyPosition{{path: "a"}}, scanner: eventScanner{scanner: NewScanner(), remaining: 1}}
+	if err := walker.keyPath(t.Context(), "b", 0, 3); !errors.Is(err, saferecord.ErrSizeLimit) {
+		t.Fatal("path error did not propagate")
+	}
+}
+
+func TestJoinedJSONOutputExpansionIsBounded(t *testing.T) {
+	t.Parallel()
+	suffix := `","1":{"2":{"3":{"4":0}}}}`
+	input := `{"padding":"` + strings.Repeat("x", maxEventBytes-len(`{"padding":"`)-len(suffix)) + suffix
+	masked, err := NewScanner(WithKinds(KindIPAddr)).MaskJSON([]byte(input))
+	if !errors.Is(err, saferecord.ErrSizeLimit) || masked != nil {
+		t.Fatal("joined key replacement exceeded output budget", err)
+	}
+}
+
+func TestSanitizationInternalBoundaries(t *testing.T) {
+	t.Parallel()
+	handler, ok := NewSlogHandler(slog.DiscardHandler, NewScanner()).(*slogHandler)
+	if !ok {
+		t.Fatal("unexpected handler")
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	if _, _, err := handler.sanitizeAttr(ctx, slog.String("key", "private"), 0, ""); !errors.Is(err, saferecord.ErrCanceled) {
+		t.Fatal("canceled attribute accepted")
+	}
+	if _, err := handler.sanitizeBytes(ctx, "key", "key", []byte("private")); !errors.Is(err, saferecord.ErrCanceled) {
+		t.Fatal("canceled bytes accepted")
+	}
+	if _, err := handler.sanitizeScalar(t.Context(), "value", "value", slog.Float64Value(math.Inf(1))); err == nil {
+		t.Fatal("non-JSON scalar accepted")
+	}
+	if _, _, err := handler.sanitizeAttr(t.Context(), slog.String(strings.Repeat("x", maxScanBytes+1), "value"), 0, ""); !errors.Is(err, saferecord.ErrSizeLimit) {
+		t.Fatal("oversize key accepted")
+	}
+	if _, _, err := handler.sanitizeAttr(t.Context(), slog.String("key", "value"), 0, strings.Repeat("x", maxScanBytes)); !errors.Is(err, saferecord.ErrSizeLimit) {
+		t.Fatal("oversize group path accepted")
+	}
+	if got := joinedKey("group", ""); got != "group" {
+		t.Fatal("empty group changed path")
+	}
+	value := maskedJSON(`{"safe":true}`)
+	if value.String() != string(value) {
+		t.Fatal("frozen value changed in a fmt-based handler")
+	}
+	scan := eventScanner{scanner: NewScanner(), remaining: maxScanBytes}
+	if _, err := scan.maskHTTPHeaders(ctx, http.Header{}); !errors.Is(err, saferecord.ErrCanceled) {
+		t.Fatal("canceled headers accepted")
+	}
+	if _, err := scan.httpTarget(ctx, &url.URL{}); !errors.Is(err, saferecord.ErrCanceled) {
+		t.Fatal("canceled target accepted")
+	}
+	if _, err := scan.httpQuery(t.Context(), strings.Repeat("token=&", 65000)); !errors.Is(err, saferecord.ErrSizeLimit) {
+		t.Fatal("query expansion exceeded output budget", err)
+	}
+}
+
+type jsonPanicDetector struct{}
+
+func (jsonPanicDetector) Scan([]byte) []Finding { panic("private detector failure") }
+func TestJSONDetectorPanicReturnsNoPartialDocument(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(), WithDetector(jsonPanicDetector{}))
+	got, err := scanner.MaskJSON([]byte(`{"public":true,"secret":"private"}`))
+	if !errors.Is(err, saferecord.ErrMasking) || got != nil || strings.Contains(err.Error(), "private") {
+		t.Fatal("detector panic exposed a partial document")
+	}
+}
+
+func TestJSONNumberWholeSignedString(t *testing.T) {
+	t.Parallel()
+	for _, number := range []string{"4111111111111111", "-4111111111111111", "4111111111111111.0", "-4111111111111111e0"} {
+		input := []byte(`{"value":"` + number + `"}`)
+		got, err := NewScanner().MaskJSON(input)
+		if err != nil || string(got) != `{"value":"[REDACTED]"}` {
+			t.Fatalf("whole numeric string: %s -> %s (%v)", input, got, err)
 		}
 	}
 }

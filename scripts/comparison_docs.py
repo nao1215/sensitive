@@ -3,7 +3,6 @@
 import argparse
 import datetime
 import hashlib
-import html
 import json
 import os
 import pathlib
@@ -12,6 +11,8 @@ import shlex
 import statistics
 import subprocess
 import tempfile
+
+from doc_figures import SVG
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DOC = ROOT / "doc"
@@ -26,10 +27,10 @@ def full_source_hash():
     return digest.hexdigest()
 
 
-# Modules reached by go list -deps on the four compared libraries. A version
+# Modules reached by go list -deps on the compared libraries. A version
 # change here invalidates timings; unrelated SDK/test dependencies do not.
 MEASURED_MODULES = (
-    "github.com/bytedance/godlp", "github.com/m-mizutani/masq",
+    "github.com/bytedance/godlp", "github.com/m-mizutani/masq", "github.com/icntswm/go-masker",
     "github.com/samber/lo", "github.com/samber/slog-common",
     "github.com/samber/slog-formatter", "github.com/samber/slog-multi",
     "github.com/showa-93/go-mask", "golang.org/x/text", "gopkg.in/yaml.v2",
@@ -63,9 +64,19 @@ def parse(raw):
     return {name: {unit: statistics.median(x[unit] for x in values) for unit in ("ns/op", "B/op", "allocs/op")} for name, values in sorted(rows.items())}
 
 
+def runtime_modules(env):
+    packages = {"embargo": "github.com/nao1215/embargo", "masq": "github.com/m-mizutani/masq", "go-masker": "github.com/icntswm/go-masker/slogmask", "slog-formatter": "github.com/samber/slog-formatter", "go-mask": "github.com/showa-93/go-mask", "godlp": "github.com/bytedance/godlp"}
+    result = {}
+    for name, package in packages.items():
+        own = package.removesuffix('/slogmask')
+        raw = subprocess.check_output(['go', '-C', 'tests', 'list', '-deps', '-f', '{{if not .Standard}}{{if .Module}}{{.Module.Path}}{{end}}{{end}}', package], cwd=ROOT, env=env, text=True)
+        result[name] = sorted(set(raw.split()) - {own})
+    return result
+
+
 def measure():
     env = dict(os.environ, GOMAXPROCS="1", GOTOOLCHAIN="go1.26.11")
-    subprocess.run(["go", "-C", "tests", "test", "-run", "^TestComparison(Correctness|OtherLibraries)$", "-count=1", "."], cwd=ROOT, env=dict(env, UPDATE_DOCS="1"), check=True)
+    subprocess.run(["go", "-C", "tests", "test", "-run", "^Test(Comparison(Correctness|OtherLibraries|Scenarios|MaskerAdapters)|LeakScenarios)$", "-count=1", "."], cwd=ROOT, env=dict(env, UPDATE_DOCS="1"), check=True)
     raw = subprocess.check_output(COMMAND, cwd=ROOT, env=env, text=True)
     (DOC / "comparison.raw.txt").write_text(raw, encoding="utf-8")
     with tempfile.TemporaryDirectory(prefix="embargo-benchstat-") as tmp:
@@ -86,6 +97,9 @@ def measure():
         stats = subprocess.check_output(["benchstat", *files], cwd=tmp, text=True)
     (DOC / "comparison.benchstat.txt").write_text(stats, encoding="utf-8")
     meta = {
+        "runtime_modules": runtime_modules(env),
+        "benchmarks": parse(raw),
+        "scenarios_sha256": hashlib.sha256((DOC/"comparison-scenarios.json").read_bytes()).hexdigest(),
         "date": datetime.datetime.now(datetime.timezone.utc).date().isoformat(),
         "command": "GOMAXPROCS=1 GOTOOLCHAIN=go1.26.11 " + shlex.join(COMMAND),
         "go": subprocess.check_output(["go", "version"], env=env, text=True).strip(),
@@ -97,7 +111,7 @@ def measure():
         "cpu": re.search(r"^cpu: (.+)$", raw, re.M)[1].strip(),
         "affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
         "background_load": "no intentional concurrent workload",
-        "versions": {"masq": "v0.2.3", "slog-formatter": "v1.3.0", "godlp": "v1.2.15", "go-mask": "v0.6.2"},
+        "versions": {"go-masker": "v0.6.1", "masq": "v0.2.3", "slog-formatter": "v1.3.0", "godlp": "v1.2.15", "go-mask": "v0.6.2"},
     }
     (DOC / "comparison.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
 
@@ -111,18 +125,31 @@ def rendered(raw, meta):
     ratios = [rows[f"BenchmarkComparison/{event}/embargo"]["ns/op"] / rows[f"BenchmarkComparison/{event}/masq"]["ns/op"] for event in ("flat", "nested", "map", "clean", "large50")]
     shape_ratio = rows["BenchmarkStructuredPath/json_shape"]["ns/op"] / rows["BenchmarkStructuredPath/old_string"]["ns/op"]
     text += f"\nFor these five configured events, embargo/masq median time ranges from {min(ratios):.2f} to {max(ratios):.2f}; below 1 means less time for embargo. The structured JSON path uses {shape_ratio:.2f} times the old string-only time. These ratios are regenerated from the same samples as the table.\n"
-    svg = ['<svg xmlns="http://www.w3.org/2000/svg" width="920" height="440" viewBox="0 0 920 440" role="img" aria-labelledby="title desc">', '<title id="title">JSON logging: median time per event</title>', '<desc id="desc">Identical events with masq regex and field rules, and embargo detectors and key rules. Lower is faster. See the adjacent measured table for numbers and allocations.</desc>', '<rect width="920" height="440" fill="#101923"/>', '<g font-family="sans-serif" fill="#eff6ff"><text x="24" y="32" font-size="22">JSON logging · median ns/op · lower is faster</text><text x="24" y="58" font-size="14">masq v0.2.3 (blue) / embargo (green) · ten samples</text>']
-    events = ("flat", "nested", "map", "clean", "large50")
-    maximum = max(rows[f"BenchmarkComparison/{e}/{m}"]["ns/op"] for e in events for m in ("masq", "embargo"))
+    modes = ('plain', 'embargo', 'masq', 'go-masker')
+    events = ('flat', 'nested', 'map', 'clean', 'large50')
+    maximum = max(rows[f"BenchmarkComparison/{event}/{mode}"]["ns/op"]/1000 for event in events for mode in modes)
+    chart = SVG(1100, 920, 'JSON slog time by event', 'Identical events through plain slog, embargo, masq and go-masker; median microseconds per event on one linear axis. Lower is faster.')
+    chart.text(24, 34, 'JSON slog time by event', 25)
+    chart.text(24, 61, 'Median microseconds per event; same linear axis. Lower is faster.', 16)
+    chart.text(24, 84, 'masq v0.2.3 and go-masker v0.6.1; identical events, sink and ten-sample method.', 14)
+    labels = ('slog alone', 'slog + embargo', 'slog + masq', 'slog + go-masker')
     for index, event in enumerate(events):
-        y = 90 + index * 64
-        svg.append(f'<text x="24" y="{y+20}" font-size="16">{html.escape(event)}</text>')
-        for offset, mode, color in ((0, "masq", "#68a6fa"), (25, "embargo", "#55d6b0")):
-            value = rows[f"BenchmarkComparison/{event}/{mode}"]["ns/op"]
-            width = value / maximum * 580
-            svg.append(f'<rect x="130" y="{y+offset}" width="{width:.2f}" height="19" rx="3" fill="{color}"/><text x="{140+width:.2f}" y="{y+offset+15}" font-size="13">{value:,.1f}</text>')
-    svg.append('</g></svg>\n')
-    return text, "\n".join(svg)
+        y = 112 + index * 146
+        chart.text(24, y+17, {'flat':'Email + card', 'nested':'Nested struct', 'map':'Map', 'clean':'Clean event', 'large50':'50 attributes'}[event], 16)
+        for offset, (mode, label, color) in enumerate(zip(modes, labels, ('#617281', '#087f75', '#4169b1', '#9a4814'))):
+            value = rows[f"BenchmarkComparison/{event}/{mode}"]["ns/op"]/1000
+            width = value/maximum*590
+            row = y+offset*28
+            chart.text(190, row+17, label, 14)
+            chart.bar(350, row, width, 22, color)
+            chart.text(round(360+width, 2), row+17, f'{value:.2f} µs', 14)
+    chart.line(350, 833, 940, 833)
+    for step in range(5):
+        chart.text(350+590*step/4, 857, f'{maximum*step/4:.1f}', 12, anchor='middle')
+    chart.text(645, 881, 'Time per event (microseconds; linear scale)', 15, anchor='middle')
+    chart.text(24, 907, 'Encoding and masking included; construction excluded. The scenario matrix shows differing protection and partial masking.', 13)
+    return text, chart.render()
+
 
 
 def replace_block(text, name, content):
@@ -149,6 +176,8 @@ def main():
     for name, field in (("comparison.raw.txt", "raw_sha256"), ("comparison.benchstat.txt", "benchstat_sha256")):
         if hashlib.sha256((DOC / name).read_text(encoding="utf-8").encode()).hexdigest() != meta[field]:
             raise SystemExit("comparison evidence changed: " + name)
+    if meta["benchmarks"] != parse(raw) or meta["scenarios_sha256"] != hashlib.sha256((DOC/"comparison-scenarios.json").read_bytes()).hexdigest():
+        raise ValueError("comparison JSON does not match measured evidence")
     table, svg = rendered(raw, meta)
     page = DOC / "comparison.md"
     original = page.read_text(encoding="utf-8")
@@ -161,6 +190,9 @@ def main():
                 raise SystemExit("stale generated comparison: " + str(path))
         else:
             path.write_text(content, encoding="utf-8")
+
+    import readme_charts
+    readme_charts.generate(check=args.check)
 
 
 if __name__ == "__main__":

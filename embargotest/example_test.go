@@ -393,3 +393,23 @@ func runExample(f func(testing.TB) bool) bool {
 	testing.Benchmark(func(b *testing.B) { b.Helper(); passed = f(b) })
 	return passed
 }
+
+// This example preserves an application's existing key-based masking. Only the
+// test recorder comes from embargotest; it does not replace the masking policy.
+func ExampleRecorder_existingMasking() {
+	fmt.Println(runExample(func(tb testing.TB) bool {
+		tb.Helper()
+		recorder := embargotest.New(tb)
+		existing := &slog.HandlerOptions{ReplaceAttr: func(_ []string, attr slog.Attr) slog.Attr {
+			if attr.Key == "token" {
+				return slog.String(attr.Key, "[REDACTED]")
+			}
+			return attr
+		}}
+		logger := slog.New(slog.NewJSONHandler(recorder.Writer("logs"), existing))
+		logger.Info("accepted", "token", string(recorder.Canary()))
+		recorder.ExpectJSON("logs", nil, map[string]string{"msg": "accepted", "token": "[REDACTED]"}, 1)
+		return recorder.Check()
+	}))
+	// Output: true
+}

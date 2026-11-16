@@ -397,3 +397,21 @@ func TestPanicGolden(t *testing.T) {
 	}
 	r.Check()
 }
+
+func TestRecorderRejectsRegistrationDuringValidation(t *testing.T) {
+	t.Parallel()
+	p := &probeTB{TB: t}
+	r := New(p)
+	write(t, r, "out", []byte("ok"))
+	r.Expect("out", func(data []byte) bool {
+		// A validator runs outside the lock; a competing registration must remain sticky.
+		done := make(chan struct{})
+		go func() { r.Writer("late"); close(done) }()
+		<-done
+		return string(data) == "ok"
+	})
+	if r.Check() || p.errors != 1 || !strings.Contains(p.messages[0], "changed during Check") {
+		t.Fatal("registration race was not rejected")
+	}
+	p.finish()
+}

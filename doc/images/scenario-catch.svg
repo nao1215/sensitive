@@ -1,0 +1,241 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="880" viewBox="0 0 1120 880" role="img">
+<title>Scenario catch rate and every observed result</title><desc>Bars count the original planted values removed from identical positive scenarios. The matrix also shows two clean controls, ties, tag-only wins and the US phone case.</desc>
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="Arial, sans-serif" font-size="15" fill="#172033">
+<text x="24" y="34" font-size="25" fill="#172033" text-anchor="start">Scenario catch rate</text>
+<text x="24" y="60" font-size="16" fill="#172033" text-anchor="start">Same 13 positive scenarios for every library; matrix shows all results and clean controls.</text>
+<text x="24" y="101" font-size="14" fill="#172033" text-anchor="start">embargo</text>
+<rect x="245" y="84" width="507.69" height="23" rx="2" fill="#087f75"/>
+<text x="764.69" y="101" font-size="14" fill="#172033" text-anchor="start">11 / 13</text>
+<text x="24" y="133" font-size="14" fill="#172033" text-anchor="start">masq v0.2.3</text>
+<rect x="245" y="116" width="276.92" height="23" rx="2" fill="#4169b1"/>
+<text x="533.92" y="133" font-size="14" fill="#172033" text-anchor="start">6 / 13</text>
+<text x="24" y="165" font-size="14" fill="#172033" text-anchor="start">go-masker v0.6.1</text>
+<rect x="245" y="148" width="369.23" height="23" rx="2" fill="#9a4814"/>
+<text x="626.23" y="165" font-size="14" fill="#172033" text-anchor="start">8 / 13</text>
+<text x="24" y="197" font-size="14" fill="#172033" text-anchor="start">slog-formatter v1.3.0</text>
+<rect x="245" y="180" width="138.46" height="23" rx="2" fill="#75539f"/>
+<text x="395.46" y="197" font-size="14" fill="#172033" text-anchor="start">3 / 13</text>
+<text x="24" y="229" font-size="14" fill="#172033" text-anchor="start">go-mask v0.6.2</text>
+<rect x="245" y="212" width="138.46" height="23" rx="2" fill="#506878"/>
+<text x="395.46" y="229" font-size="14" fill="#172033" text-anchor="start">3 / 13</text>
+<text x="24" y="261" font-size="14" fill="#172033" text-anchor="start">godlp v1.2.15</text>
+<rect x="245" y="244" width="230.77" height="23" rx="2" fill="#a43658"/>
+<text x="487.77" y="261" font-size="14" fill="#172033" text-anchor="start">5 / 13</text>
+<path d="M245,278 L845,278" stroke="#e1e5ec"/>
+<text x="245.0" y="299" font-size="12" fill="#172033" text-anchor="middle">0</text>
+<text x="337.31" y="299" font-size="12" fill="#172033" text-anchor="middle">2</text>
+<text x="429.62" y="299" font-size="12" fill="#172033" text-anchor="middle">4</text>
+<text x="521.92" y="299" font-size="12" fill="#172033" text-anchor="middle">6</text>
+<text x="614.23" y="299" font-size="12" fill="#172033" text-anchor="middle">8</text>
+<text x="706.54" y="299" font-size="12" fill="#172033" text-anchor="middle">10</text>
+<text x="798.85" y="299" font-size="12" fill="#172033" text-anchor="middle">12</text>
+<text x="545" y="323" font-size="14" fill="#172033" text-anchor="middle">Scenarios with the planted value removed (count; higher is better)</text>
+<text x="24" y="356" font-size="14" fill="#172033" text-anchor="start">Positive scenario</text>
+<text x="365.0" y="356" font-size="13" fill="#172033" text-anchor="middle">embargo</text>
+<text x="495.0" y="356" font-size="13" fill="#172033" text-anchor="middle">masq</text>
+<text x="625.0" y="356" font-size="13" fill="#172033" text-anchor="middle">go-masker</text>
+<text x="755.0" y="356" font-size="13" fill="#172033" text-anchor="middle">slog-formatter</text>
+<text x="885.0" y="356" font-size="13" fill="#172033" text-anchor="middle">go-mask</text>
+<text x="1015.0" y="356" font-size="13" fill="#172033" text-anchor="middle">godlp</text>
+<text x="24" y="388" font-size="14" fill="#172033" text-anchor="start">Email in message</text>
+<rect x="302" y="371" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="365.0" y="387" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="432" y="371" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="495.0" y="387" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="562" y="371" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="625.0" y="387" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="692" y="371" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="755.0" y="387" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="822" y="371" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="885.0" y="387" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="952" y="371" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="1015.0" y="387" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<text x="24" y="415" font-size="14" fill="#172033" text-anchor="start">Nested email</text>
+<rect x="302" y="398" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="365.0" y="414" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="432" y="398" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="495.0" y="414" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="562" y="398" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="625.0" y="414" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="692" y="398" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="755.0" y="414" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="822" y="398" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="885.0" y="414" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="952" y="398" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="1015.0" y="414" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<text x="24" y="442" font-size="14" fill="#172033" text-anchor="start">Email in attribute key</text>
+<rect x="302" y="425" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="365.0" y="441" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="432" y="425" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="495.0" y="441" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="562" y="425" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="625.0" y="441" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="692" y="425" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="755.0" y="441" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="822" y="425" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="885.0" y="441" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="952" y="425" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="1015.0" y="441" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<text x="24" y="469" font-size="14" fill="#172033" text-anchor="start">Email in group name</text>
+<rect x="302" y="452" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="365.0" y="468" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="432" y="452" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="495.0" y="468" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="562" y="452" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="625.0" y="468" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="692" y="452" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="755.0" y="468" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="822" y="452" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="885.0" y="468" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="952" y="452" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="1015.0" y="468" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<text x="24" y="496" font-size="14" fill="#172033" text-anchor="start">Custom JSON email</text>
+<rect x="302" y="479" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="365.0" y="495" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="432" y="479" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="495.0" y="495" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="562" y="479" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="625.0" y="495" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="692" y="479" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="755.0" y="495" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="822" y="479" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="885.0" y="495" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="952" y="479" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="1015.0" y="495" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<text x="24" y="523" font-size="14" fill="#172033" text-anchor="start">Named password</text>
+<rect x="302" y="506" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="365.0" y="522" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="432" y="506" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="495.0" y="522" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="562" y="506" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="625.0" y="522" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="692" y="506" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="755.0" y="522" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="822" y="506" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="885.0" y="522" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="952" y="506" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="1015.0" y="522" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<text x="24" y="550" font-size="14" fill="#172033" text-anchor="start">Opaque value: tag only</text>
+<rect x="302" y="533" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="365.0" y="549" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="432" y="533" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="495.0" y="549" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="562" y="533" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="625.0" y="549" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="692" y="533" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="755.0" y="549" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="822" y="533" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="885.0" y="549" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="952" y="533" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="1015.0" y="549" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<text x="24" y="577" font-size="14" fill="#172033" text-anchor="start">Valid card in text</text>
+<rect x="302" y="560" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="365.0" y="576" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="432" y="560" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="495.0" y="576" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="562" y="560" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="625.0" y="576" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="692" y="560" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="755.0" y="576" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="822" y="560" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="885.0" y="576" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="952" y="560" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="1015.0" y="576" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<text x="24" y="604" font-size="14" fill="#172033" text-anchor="start">Card with credit card label</text>
+<rect x="302" y="587" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="365.0" y="603" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="432" y="587" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="495.0" y="603" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="562" y="587" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="625.0" y="603" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="692" y="587" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="755.0" y="603" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="822" y="587" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="885.0" y="603" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="952" y="587" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="1015.0" y="603" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<text x="24" y="631" font-size="14" fill="#172033" text-anchor="start">JSON inside a string</text>
+<rect x="302" y="614" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="365.0" y="630" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="432" y="614" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="495.0" y="630" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="562" y="614" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="625.0" y="630" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="692" y="614" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="755.0" y="630" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="822" y="614" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="885.0" y="630" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="952" y="614" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="1015.0" y="630" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<text x="24" y="658" font-size="14" fill="#172033" text-anchor="start">Bearer in message</text>
+<rect x="302" y="641" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="365.0" y="657" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="432" y="641" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="495.0" y="657" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="562" y="641" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="625.0" y="657" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="692" y="641" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="755.0" y="657" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="822" y="641" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="885.0" y="657" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="952" y="641" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="1015.0" y="657" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<text x="24" y="685" font-size="14" fill="#172033" text-anchor="start">Japanese phone</text>
+<rect x="302" y="668" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="365.0" y="684" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="432" y="668" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="495.0" y="684" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="562" y="668" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="625.0" y="684" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="692" y="668" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="755.0" y="684" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="822" y="668" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="885.0" y="684" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="952" y="668" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="1015.0" y="684" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<text x="24" y="712" font-size="14" fill="#172033" text-anchor="start">US phone</text>
+<rect x="302" y="695" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="365.0" y="711" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="432" y="695" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="495.0" y="711" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="562" y="695" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="625.0" y="711" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="692" y="695" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="755.0" y="711" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="822" y="695" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="885.0" y="711" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
+<rect x="952" y="695" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="1015.0" y="711" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<path d="M24,717 L1090,717" stroke="#526472"/>
+<text x="24" y="739" font-size="14" fill="#172033" text-anchor="start">Invalid card control</text>
+<rect x="302" y="722" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="365.0" y="738" font-size="12" fill="#173d35" text-anchor="middle">kept</text>
+<rect x="432" y="722" width="125.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="495.0" y="738" font-size="12" fill="#62351c" text-anchor="middle">changed</text>
+<rect x="562" y="722" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="625.0" y="738" font-size="12" fill="#173d35" text-anchor="middle">kept</text>
+<rect x="692" y="722" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="755.0" y="738" font-size="12" fill="#173d35" text-anchor="middle">kept</text>
+<rect x="822" y="722" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="885.0" y="738" font-size="12" fill="#173d35" text-anchor="middle">kept</text>
+<rect x="952" y="722" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="1015.0" y="738" font-size="12" fill="#173d35" text-anchor="middle">kept</text>
+<text x="24" y="766" font-size="14" fill="#172033" text-anchor="start">Clean reference control</text>
+<rect x="302" y="749" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="365.0" y="765" font-size="12" fill="#173d35" text-anchor="middle">kept</text>
+<rect x="432" y="749" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="495.0" y="765" font-size="12" fill="#173d35" text-anchor="middle">kept</text>
+<rect x="562" y="749" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="625.0" y="765" font-size="12" fill="#173d35" text-anchor="middle">kept</text>
+<rect x="692" y="749" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="755.0" y="765" font-size="12" fill="#173d35" text-anchor="middle">kept</text>
+<rect x="822" y="749" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="885.0" y="765" font-size="12" fill="#173d35" text-anchor="middle">kept</text>
+<rect x="952" y="749" width="125.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="1015.0" y="765" font-size="12" fill="#173d35" text-anchor="middle">kept</text>
+<text x="24" y="788" font-size="14" fill="#172033" text-anchor="start">Masked means the original planted value disappeared; partial masks count. Kept is correct for the two controls.</text>
+<text x="24" y="813" font-size="13" fill="#172033" text-anchor="start">embargo: default kinds, confidence 0.7. go-masker: default policy, Luhn cards enabled, fixed tag rule.</text>
+<text x="24" y="837" font-size="13" fill="#172033" text-anchor="start">masq: regex, name and tag rules. go-mask: field/tag rules. slog-formatter: PII fields. godlp: six built-in rules.</text>
+<text x="24" y="861" font-size="13" fill="#172033" text-anchor="start">This measures these configurations, not production accuracy. Full synthetic outputs: doc/comparison-scenarios.json.</text>
+</g></svg>

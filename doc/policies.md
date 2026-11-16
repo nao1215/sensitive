@@ -92,7 +92,7 @@ This inventory states the owner's active maintenance policy and maps each rule t
 | Adoption table is generated from executed cases and checked in CI | Repository maintenance policy | [main](../scripts/case_docs.py) | Verification |
 | Output cases isolate detector decisions from canary and fragment matching | Repository maintenance policy | [TestAdoptionCheckIndependence](../tests/cases_test.go) | Verification |
 | Canary fragments retain minimum-length and option-order boundaries | Repository maintenance policy | [TestCanaryFragmentBoundsAndOrder](../embargotest/canary_test.go) | MultiPlatformUnitTest |
-| Local log audits count actual findings without echoing source values | Repository maintenance policy | [TestAuditCountsOffsetsAndNeverEchoesInput](../tests/cmd/embargo-audit/main_test.go) | MultiPlatformUnitTest |
+| Local log audits count actual findings without echoing source values | Repository maintenance policy | [TestAuditCountsOffsetsAndNeverEchoesInput](../cmd/embargo-audit/main_test.go) | MultiPlatformUnitTest |
 | Diagnostic-preservation recipes retain IDs and expose their recall tradeoff | Repository maintenance policy | [TestAuditDiagnosticRecipe](../tests/cases_test.go) | MultiPlatformUnitTest |
 | Detector changes enforce frozen per-Kind accuracy and critical exposure floors | Repository maintenance policy | [TestQualityAccuracy](../tests/quality_gates_test.go) | Verification |
 | Real-log gates compare exact sampled FP rates with explicit per-Kind ceilings | Repository maintenance policy | [compare_rates](../scripts/quality_gate.py) | Verification |
@@ -100,6 +100,8 @@ This inventory states the owner's active maintenance policy and maps each rule t
 | Quality jobs use the detector filter and threshold tables cannot silently drift | Repository maintenance policy | [main](../scripts/quality_docs.py) | Verification |
 | Tests stay beside sources or in one file per tests-module subject | Repository maintenance policy | [test-file-budget](../scripts/check_policies.py) | Verification |
 | Tracked files describe current behavior without development trace labels | Repository maintenance policy | [repository-traces](../scripts/check_policies.py) | Verification |
+| Fixed-corpus detection drift requires an Unreleased Detection changes entry | Detection compatibility policy | [def check_change(](../scripts/detection_changes.py) | Verification |
+| Every measured library runs every chart scenario and controls remain visible | Comparison policy | [TestComparisonScenarios](../tests/comparison_test.go) | MultiPlatformUnitTest |
 <!-- policy-map:end -->
 
 The TDD rule requires a failing regression before a production fix. Record that evidence in the PR or external work report; CI checks that the regression remains. Test readability, useful explanations, false-positive labeling and table layout retain human review alongside executable checks.
@@ -109,3 +111,19 @@ Heavy local jobs run serially with GOMAXPROCS at most 4. Every PR changes fewer 
 Go packages may have one test file per non-test source, plus example_test.go, fuzz_test.go and benchmark_test.go. The tests module uses one file per canonical subject: accuracy, real_logs, comparison, cases, docs, severity, integrations, quality_gates, properties, lifecycle, oracles, api and policy. Command packages retain the source-file rule.
 
 Keep development round labels, finding IDs, numbered decision labels, PR letters, repository PR numbers and repository commit hashes out of tracked text and filenames. CHANGELOG.md retains release references; external dependency and dataset pins retain their provenance. Generators follow the same rule.
+
+## Detection compatibility
+
+A detection change includes adding or removing a default kind, changing a confidence score or threshold, changing the redaction marker or withheld record shape, and adding normalization or decoding. The default minimum confidence is 0. Per-kind thresholds are not supported.
+
+Changes to these observable behaviors require a minor release while the project is below 1.0; a removal or incompatible public API change also requires a minor release. From 1.0, removing a documented detection guarantee, changing defaults or markers, or breaking the withheld record contract requires a major release. Additive opt-in detectors or options require a minor release. A patch may fix an implementation that violates its documented contract, including a security fix, without changing the contract; it must still disclose detection differences.
+
+Every release with a detection change includes a `### Detection changes` heading. During development the entry belongs under `## [Unreleased]`, explains gains and possible false positives or missed values, and names any migration action. Release PRs move those entries into the released section. Security reports and coordinated fixes use [GitHub Security Advisories](https://github.com/nao1215/embargo/security/advisories/new), following [SECURITY.md](../SECURITY.md).
+
+The compatibility gate measures fixed synthetic fixtures and the first 128 lines of each checksum-pinned public log dataset. Only finding locations, kinds, confidence scores and input/masked-output digests are checked in; raw public logs stay in the external cache. `scripts/detection_changes.py --cache CACHE` rejects a stale snapshot and rejects changes from a PR's base unless Unreleased has a nonempty Detection changes entry. `--update` explicitly regenerates the snapshot; it does not waive the release note rule. Existing exact-span accuracy and public-log false-positive gates still apply.
+
+## Unicode separators
+
+Built-in scanners ignore interior non-ASCII characters in Unicode Pd (dash punctuation), Zs (space separators), Cf (format controls), and Sm intersected with the Unicode Dash property (mathematical minus variants). Test generators enumerate the running Go release's tables, so new members are exercised automatically. Numeric normalization also retains the legacy U+30FC prolonged sound mark as a hyphen. Original byte offsets include removed interior formatting runs, including percent-encoded runs.
+
+The allow list is U+0020 SPACE and U+002D HYPHEN-MINUS for fixed-format tokens: these ASCII characters carry ordinary word and token grammar and are not silently removed. Numeric detectors accept their documented space/hyphen separators. Mathematical symbols outside Sm intersected with Dash are operators rather than minus separators and are outside this normalization contract; arbitrary Unicode letters or digits are not transliterated. Leading or trailing formatting marks are preserved because they are outside a token. This normalization may join text that an application intended as separate words; measure the policy on application logs before adoption.

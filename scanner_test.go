@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"math"
 	"math/bits"
@@ -12,6 +13,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"unicode"
 
 	"github.com/nao1215/embargo/internal/detect"
 )
@@ -611,5 +613,51 @@ func TestOutputInvisibleSeparators(t *testing.T) {
 		if got == v {
 			t.Errorf("unmasked: %+q", v)
 		}
+	}
+}
+
+// Derive candidates from the Go toolchain's Unicode tables, including future additions.
+func unicodeSeparatorRunes() []rune {
+	var result []rune
+	for r := rune(0); r <= unicode.MaxRune; r++ {
+		if unicode.Is(unicode.Pd, r) || unicode.Is(unicode.Zs, r) || unicode.Is(unicode.Cf, r) || unicode.Is(unicode.Sm, r) && unicode.Is(unicode.Dash, r) {
+			result = append(result, r)
+		}
+	}
+	return result
+}
+
+func TestUnicodeCategoryMasking(t *testing.T) {
+	t.Parallel()
+	for _, r := range unicodeSeparatorRunes() {
+		t.Run(fmt.Sprintf("U+%04X", r), func(t *testing.T) {
+			t.Parallel()
+			for _, tc := range []struct {
+				kind  Kind
+				parts []string
+			}{
+				{KindPAN, []string{"4111", "1111", "1111", "1111"}},
+				{KindJPPhone, []string{"090", "1234", "5678"}},
+				{KindMyNumber, []string{"1234", "5678", "9018"}},
+				{KindAWSKey, []string{"AKIA", "IOSFODNN7EXAMPLE"}},
+			} {
+				// ASCII spaces and hyphens are actual token delimiters, not obfuscation.
+				if tc.kind == KindAWSKey && (r == ' ' || r == '-') {
+					continue
+				}
+				for _, repetitions := range []int{1, 3} {
+					sep := strings.Repeat(string(r), repetitions)
+					if (r == ' ' || r == '-') && repetitions > 1 {
+						continue
+					}
+					raw := strings.Join(tc.parts, sep)
+					input := "記録: " + raw + "!"
+					findings := NewScanner(WithKinds(tc.kind)).ScanString(input)
+					if got := Mask(input, findings); got != "記録: [REDACTED]!" {
+						t.Errorf("%s %U x%d: %q => %q", tc.kind, r, repetitions, raw, got)
+					}
+				}
+			}
+		})
 	}
 }

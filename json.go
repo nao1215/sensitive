@@ -78,18 +78,36 @@ func (scanner *Scanner) maskJSON(ctx context.Context, data []byte, key string) (
 		return nil, err
 	}
 	complete = true
-	return walker.result, nil
+	if len(walker.pathMasks) == 0 {
+		return walker.result, nil
+	}
+	spans := make([]Finding, 0, len(walker.pathMasks))
+	for _, span := range walker.pathMasks {
+		spans = append(spans, span)
+	}
+	masked = []byte(MaskFunc(string(walker.result), spans, func(Kind, string) string { return `"` + redactionMarker + `"` }))
+	if len(masked) > maxEventBytes {
+		return nil, saferecord.ErrSizeLimit
+	}
+	return masked, nil
 }
 
 // json.Valid establishes grammar and bounds before this allocation-light walk.
 // Original numeric lexemes are retained, equivalent to decoding with UseNumber.
 // Unlike a map tree, the walk retains every duplicate key and its value.
+type jsonKeyPosition struct {
+	path       string
+	start, end int
+}
+
 type jsonWalker struct {
-	err     error
-	scanner eventScanner
-	data    []byte
-	result  []byte
-	pos     int
+	path      []jsonKeyPosition
+	pathMasks map[int]Finding
+	err       error
+	scanner   eventScanner
+	data      []byte
+	result    []byte
+	pos       int
 }
 
 func (w *jsonWalker) space() {
@@ -155,19 +173,6 @@ func (w *jsonWalker) scalar(ctx context.Context, raw []byte, key string) error {
 		return err
 	}
 	hidden := masked != text
-	if !hidden && (raw[0] == '-' || raw[0] >= '0' && raw[0] <= '9') && strings.ContainsAny(text, ".eE") {
-		integer, err := exactInteger(text)
-		if err != nil {
-			return err
-		}
-		if integer != "" && integer != text {
-			safe, scanErr := w.scanner.maskScalar(ctx, integer, key)
-			if scanErr != nil {
-				return scanErr
-			}
-			hidden = safe != integer
-		}
-	}
 	if hidden {
 		w.appendString(redactionMarker)
 	} else {
@@ -239,11 +244,12 @@ func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidde
 	w.space()
 	for w.data[w.pos] != closeByte {
 		fieldContext := key
+		pathDepth := len(w.path)
 		if open == '{' {
 			raw := w.stringToken()
 			if !hidden {
 				var err error
-				fieldContext, err = w.stringValue(ctx, raw, "")
+				fieldContext, err = w.objectKey(ctx, raw)
 				if err != nil {
 					return err
 				}
@@ -255,6 +261,7 @@ func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidde
 		if err := w.value(ctx, depth+1, fieldContext, hidden); err != nil {
 			return err
 		}
+		w.path = w.path[:pathDepth]
 		w.space()
 		if w.data[w.pos] == ',' {
 			w.pos++
@@ -319,6 +326,34 @@ func (w *jsonWalker) appendString(text string) {
 // Include the field name so context-based detectors can recognize, for example,
 // {"cvv":123}. Translate findings back to value bytes before replacing them.
 func (s *eventScanner) maskScalar(ctx context.Context, value, key string) (string, error) {
+	masked, err := s.scanScalar(ctx, value, key)
+	if err != nil {
+		return masked, err
+	}
+	if value == "" || (value[0] != '-' && (value[0] < '0' || value[0] > '9')) || !json.Valid([]byte(value)) {
+		return masked, nil
+	}
+	if masked != value {
+		return redactionMarker, nil
+	}
+	integer, err := exactInteger(value)
+	if err != nil {
+		return "", err
+	}
+	if integer == "" || integer == value {
+		return masked, nil
+	}
+	safe, err := s.scanScalar(ctx, integer, key)
+	if err != nil {
+		return "", err
+	}
+	if safe != integer {
+		return redactionMarker, nil
+	}
+	return masked, nil
+}
+
+func (s *eventScanner) scanScalar(ctx context.Context, value, key string) (string, error) {
 	if ctx.Err() != nil {
 		return "", saferecord.ErrCanceled
 	}
@@ -365,4 +400,61 @@ func (w *jsonWalker) appendResult(data []byte) {
 		return
 	}
 	w.result = append(w.result, data...)
+}
+
+// Keep original keys for path detection and output ranges for replacing every segment.
+func (w *jsonWalker) keyPath(ctx context.Context, key string, start, end int) error {
+	path := key
+	if len(w.path) > 0 {
+		path = joinedKey(w.path[len(w.path)-1].path, key)
+	}
+	w.path = append(w.path, jsonKeyPosition{path: path, start: start, end: end})
+	if len(w.path) == 1 {
+		return nil
+	} // Single keys were already scanned by stringValue.
+	crossed, err := w.scanner.joinedKeySensitive(ctx, path, len(w.path[len(w.path)-2].path))
+	if err != nil {
+		return err
+	}
+	if !crossed {
+		return nil
+	}
+	if w.pathMasks == nil {
+		w.pathMasks = make(map[int]Finding)
+	}
+	for _, segment := range w.path {
+		w.pathMasks[segment.start] = Finding{Start: segment.start, End: segment.end}
+	}
+	return nil
+}
+
+// A finding must cross the last join; detecting an ancestor alone does not hide descendants.
+func (s *eventScanner) joinedKeySensitive(ctx context.Context, path string, boundary int) (bool, error) {
+	if len(path) > s.remaining {
+		return false, saferecord.ErrSizeLimit
+	}
+	s.remaining -= len(path)
+	findings := s.scanner.scan([]byte(path), ctx.Err)
+	if ctx.Err() != nil {
+		return false, saferecord.ErrCanceled
+	}
+	for _, f := range findings {
+		if f.Start < boundary && f.End > boundary+1 {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (w *jsonWalker) objectKey(ctx context.Context, raw []byte) (string, error) {
+	start := len(w.result)
+	original, err := w.stringValue(ctx, raw, "")
+	if err != nil {
+		return "", err
+	}
+	pathKey := original
+	if !bytes.Equal(w.result[start:], raw) {
+		pathKey = redactionMarker
+	}
+	return original, w.keyPath(ctx, pathKey, start, len(w.result))
 }

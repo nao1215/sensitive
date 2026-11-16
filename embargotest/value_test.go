@@ -1,4 +1,4 @@
-package embargotest_test
+package embargotest
 
 import (
 	"errors"
@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/nao1215/embargo"
-	"github.com/nao1215/embargo/embargotest"
 )
 
 type valueProbe struct {
@@ -47,7 +46,7 @@ func TestCheckValue(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			p := &valueProbe{TB: t}
-			if embargotest.CheckValue(p, tc.build) != tc.safe {
+			if CheckValue(p, tc.build) != tc.safe {
 				t.Fatal("wrong formatter verdict", p.messages)
 			}
 			if !tc.safe && len(p.messages) == 0 {
@@ -69,7 +68,7 @@ func (panickingPassword) Format(fmt.State, rune) { panic("formatter failed") }
 func TestCheckValueRejectsFormattingPanic(t *testing.T) {
 	t.Parallel()
 	p := &valueProbe{TB: t}
-	if embargotest.CheckValue(p, func(s string) any { return panickingPassword{embargo.NewSecret(s)} }) {
+	if CheckValue(p, func(s string) any { return panickingPassword{embargo.NewSecret(s)} }) {
 		t.Fatal("fmt recovered a formatter panic but the contract passed")
 	}
 	if !strings.Contains(strings.Join(p.messages, "\n"), "fmt/%#v") {
@@ -83,7 +82,7 @@ func (panickingLogValue) LogValue() slog.Value { panic("log value failed") }
 func TestCheckValueRejectsLogValuePanic(t *testing.T) {
 	t.Parallel()
 	p := &valueProbe{TB: t}
-	if embargotest.CheckValue(p, func(s string) any { return panickingLogValue{embargo.NewSecret(s)} }) {
+	if CheckValue(p, func(s string) any { return panickingLogValue{embargo.NewSecret(s)} }) {
 		t.Fatal("slog panic accepted")
 	}
 	if !strings.Contains(strings.Join(p.messages, "\n"), "slog/json") {
@@ -109,7 +108,7 @@ func (v groupedLogValue) LogValue() slog.Value {
 
 func TestCheckValueAcceptsNestedSlogValue(t *testing.T) {
 	t.Parallel()
-	if !embargotest.CheckValue(t, func(s string) any { return groupedLogValue{embargo.NewSecret(s)} }) {
+	if !CheckValue(t, func(s string) any { return groupedLogValue{embargo.NewSecret(s)} }) {
 		t.Fatal("safe nested group rejected")
 	}
 }
@@ -129,7 +128,7 @@ func TestCheckValueRejectsNestedSlogFailures(t *testing.T) {
 		func(s string) any { return cyclicLogValue{embargo.NewSecret(s)} },
 	} {
 		p := &valueProbe{TB: t}
-		if embargotest.CheckValue(p, build) {
+		if CheckValue(p, build) {
 			t.Error("failed nested slog value was accepted")
 		}
 		if !strings.Contains(strings.Join(p.messages, "\n"), "slog/json") {
@@ -141,7 +140,7 @@ func TestCheckValueRejectsNestedSlogFailures(t *testing.T) {
 func TestCheckValueNamesUnexportedFieldLeak(t *testing.T) {
 	t.Parallel()
 	probe := &valueProbe{TB: t}
-	embargotest.CheckValue(probe, func(s string) any { return incompletePassword(s) })
+	CheckValue(probe, func(s string) any { return incompletePassword(s) })
 	if !strings.Contains(strings.Join(probe.messages, "\n"), "fmt/unexported/%v") {
 		t.Fatal("missing unexported field diagnostic", probe.messages)
 	}
@@ -149,12 +148,18 @@ func TestCheckValueNamesUnexportedFieldLeak(t *testing.T) {
 
 type maskedError struct{ embargo.Secret[string] }
 
-//nolint:goconst // Keep the error marker explicit as an independent expected output.
 func (maskedError) Error() string { return "[REDACTED]" }
 
 func TestCheckValueAcceptsMaskedError(t *testing.T) {
 	t.Parallel()
-	if !embargotest.CheckValue(t, func(canary string) any { return maskedError{embargo.NewSecret(canary)} }) {
+	if !CheckValue(t, func(canary string) any { return maskedError{embargo.NewSecret(canary)} }) {
 		t.Fatal("safe error failed formatting and wrapping checks")
+	}
+}
+
+func TestUnknownValuePathFails(t *testing.T) {
+	t.Parallel()
+	if data, valid := formatValue("unsupported", "public"); valid || data != nil {
+		t.Fatal("unsupported formatter succeeded")
 	}
 }

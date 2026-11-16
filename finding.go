@@ -7,11 +7,11 @@ package embargo
 // A business label means order, invoice, tracking, version, build, serial or
 // shipment immediately before a candidate in the same field, within 48 bytes,
 // optionally followed by id, number, ref or code; ASCII case is ignored.
-// Numeric normalization accepts full-width digits, U+FF0D, U+30FC, U+2212 and
-// U+2010–U+2015 as hyphens, and U+3000 as a space for PAN,
-// JPPhone, MyNumber, ABARouting, BankAccount and the eleven country kinds.
-// Built-ins except Credential ignore U+200B, U+00A0, U+202F and U+00AD inside
-// alphanumeric tokens, including digit runs and fixed-format tokens.
+// Numeric normalization accepts full-width digits and Unicode dash variants for
+// PAN, JPPhone, MyNumber, ABARouting, BankAccount and the eleven country kinds.
+// Built-ins except Credential ignore interior non-ASCII Unicode Pd, Zs, Cf and
+// Sm intersected with Dash in token runs; ASCII space/hyphen remain delimiters.
+// U+30FC remains a legacy numeric hyphen. See doc/policies.md for the allow list.
 // Scan decodes one percent-encoding layer for every built-in except Credential.
 // These checks do not establish that an account, credential or identity exists.
 type Kind string

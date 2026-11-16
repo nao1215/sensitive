@@ -99,7 +99,7 @@ func (w *response) Write(data []byte) (int, error) {
 		}
 		w.commit(http.StatusOK)
 	}
-	return r.capture(w.body, data)
+	return r.capture(w.body, data), nil
 }
 
 // Flush records an implicit successful status before flushing the response.
@@ -114,9 +114,7 @@ func (w *response) finalize() {
 		w.commit(http.StatusOK)
 	}
 	w.recordHeaders(w.trailers, w.trailerSnapshot())
-	if _, err := w.recorder.capture(w.status, []byte(strconv.Itoa(w.code))); err != nil {
-		w.recorder.failed = true
-	}
+	w.recorder.capture(w.status, []byte(strconv.Itoa(w.code)))
 }
 
 // trailersChanged reports whether the trailers in the Header map differ from
@@ -187,7 +185,5 @@ func (w *response) recordHeaders(target *stream, header http.Header) {
 		w.recorder.failed = true
 		return
 	}
-	if _, err := w.recorder.capture(target, encoded); err != nil {
-		w.recorder.failed = true
-	}
+	w.recorder.capture(target, encoded)
 }

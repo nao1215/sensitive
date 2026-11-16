@@ -96,6 +96,7 @@ linters:
           - '!**/tests/**'
           - '!**/adapters/**'
           - '!**/internal/output/**'
+          - '!**/cmd/**'
           allow:
           - $gostd
           - github.com/nao1215/embargo/internal/
@@ -104,6 +105,14 @@ linters:
             desc: Runtime packages must not depend on testing.
           - pkg: testing/
             desc: Runtime packages must not depend on testing helpers.
+        commands:
+          list-mode: strict
+          files:
+          - '**/cmd/embargo-audit/*.go'
+          - '!$test'
+          allow:
+          - $gostd
+          - github.com/nao1215/embargo$
         logger-output:
           list-mode: strict
           files:
@@ -181,6 +190,7 @@ linters:
           - go.opentelemetry.io/otel
           - github.com/getsentry/sentry-go
           - github.com/m-mizutani/masq$
+          - github.com/icntswm/go-masker
           - github.com/samber/slog-formatter$
           - github.com/showa-93/go-mask$
           - github.com/bytedance/godlp

@@ -23,10 +23,6 @@ func (s *Scanner) buildDispatch() {
 			}
 		}
 		for _, entry := range entries {
-			if len(entry.lowered) == 0 {
-				s.unconditional |= mask
-				continue
-			}
 			b := entry.lowered[0]
 			s.hintIndex[b] = append(s.hintIndex[b], dispatchHint{hint: entry.lowered, mask: mask})
 		}

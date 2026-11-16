@@ -101,11 +101,8 @@ func (c *childOutput) ReadFrom(src io.Reader) (int64, error) {
 	for {
 		n, err := src.Read(buf)
 		if n > 0 {
-			written, werr := c.stream.Write(buf[:n])
+			written, _ := c.Write(buf[:n]) //nolint:errcheck // childOutput.Write only calls stream.Write, which always consumes the full input without an error.
 			total += int64(written)
-			if werr != nil {
-				return total, werr
-			}
 		}
 		if errors.Is(err, io.EOF) {
 			c.complete = true

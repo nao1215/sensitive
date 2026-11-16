@@ -1,6 +1,8 @@
 package embargotest
 
 import (
+	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 )
@@ -95,6 +97,20 @@ func TestJSONDepthBoundary(t *testing.T) {
 				t.Fatal("JSON depth boundary changed")
 			}
 			p.finish()
+		}
+	}
+}
+
+func TestJSONErrorPaths(t *testing.T) {
+	t.Parallel()
+	for _, input := range []string{`{"private":1,"private":2}`, `{1:2}`, `{"bad`, strings.Repeat("[", 66) + strings.Repeat("]", 66)} {
+		_, err := jsonValue(json.NewDecoder(strings.NewReader(input)), 0)
+		if err == nil {
+			t.Fatalf("invalid input accepted: %q", input)
+		}
+		var malformed jsonError
+		if errors.As(err, &malformed) && err.Error() != "embargotest: invalid JSON record" {
+			t.Fatal("JSON error exposes input or changed")
 		}
 	}
 }

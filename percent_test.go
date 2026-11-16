@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"unicode"
 )
 
 type rawPercentDetector struct {
@@ -70,17 +71,21 @@ func TestPercentRoundTripOffsets(t *testing.T) {
 	t.Parallel()
 	// #nosec G404 -- Fixed seed for reproducible synthetic tests.
 	rng := rand.New(rand.NewPCG(91, 27))
+	separators := unicodeSeparatorRunes()
 	for range 2000 {
 		raw := fmt.Sprintf("user%d+tag@example.com", rng.IntN(100000))
 		kind := KindEmail
 		switch rng.IntN(3) {
 		case 1:
 			kind = KindPAN
-			separators := []string{"\u2212", "\u3000", "\u2010", "\u2011", "\u2012", "\u2013", "\u2014", "\u2015", "\u200b", "\u00a0", "\u202f", "\u00ad"}
-			raw = strings.Join([]string{"４１１１", "1111", "１１１１", "1111"}, separators[rng.IntN(len(separators))])
+			raw = strings.Join([]string{"４１１１", "1111", "１１１１", "1111"}, string(separators[rng.IntN(len(separators))]))
 		case 2:
 			kind = KindAWSKey
-			raw = "AKIA\u200bIOSFODNN7EXAMPLE"
+			separator := separators[rng.IntN(len(separators))]
+			if separator <= unicode.MaxASCII {
+				continue // ASCII token delimiters are the documented allow list.
+			}
+			raw = "AKIA" + string(separator) + "IOSFODNN7EXAMPLE"
 		}
 		scanner := NewScanner(WithKinds(kind))
 

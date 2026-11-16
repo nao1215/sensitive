@@ -244,7 +244,7 @@ func TestReadmeCheckOutput(t *testing.T) {
 }
 ```
 
-[HTTP, child processes, and canaries in env, files and headers](doc/testing-output.md)
+[Keep your masking, add the leak test](doc/keep-your-masking.md) shows how to add only embargotest to existing masking. [HTTP, child processes, and canaries in env, files and headers](doc/testing-output.md)
 
 In a sample service with planted leaks (a DSN, wrapped errors, an Authorization header, a token in a request body), the slog and zap paths masked every leak that reached a logger. The redirect URL never reaches a logger; `embargotest.HTTP` catches it. [Scenario table](doc/comparison.md#service-leak-scenarios)
 
@@ -279,7 +279,7 @@ Each link opens the test that produces and checks the shown output.
 Held-out synthetic set, default minimum confidence 0. [Generation, test cases and observed misses](doc/accuracy.md) · [Credential detectors](doc/credentials-accuracy.md), measured separately
 
 <!-- accuracy:start -->
-![Precision and recall on held-out synthetic samples](doc/images/accuracy.svg)
+[Per-detector precision, recall and charts](doc/accuracy.md).
 
 | Detector details | | |
 |---|---|---|
@@ -294,7 +294,7 @@ Held-out synthetic set, default minimum confidence 0. [Generation, test cases an
 <!-- accuracy:end -->
 
 <!-- real-logs-summary:start -->
-![Estimated false positives on public logs](doc/images/real-logs.svg)
+[Public-log chart and measured results](doc/real-logs.md).
 
 8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.
 <!-- real-logs-summary:end -->
@@ -329,9 +329,9 @@ Coverage 97.1% · mutation score 88.37% · 13 fuzz targets, 3354049 executions.
 ## Benchmarks
 
 <!-- benchmarks:start -->
-![Scanner throughput and slog time](doc/images/benchmarks.svg)
+![Time per log event](doc/images/log-event-time.svg)
 
-All detectors scan sensitive text at 4.89 MB/s; masking a clean slog event takes 2.48 µs, 2.9× the plain handler.
+The same event through slog alone, embargo, masq and go-masker. [Configurations, medians and allocations](doc/comparison.md) · [Full scanner benchmark plot](doc/benchmarks.md).
 <!-- benchmarks:end -->
 
 <!-- narrowing-summary:start -->
@@ -349,35 +349,37 @@ Recorded scanner medians (ten interleaved samples):
 
 [Machine, method, profiles and full results](doc/benchmarks.md).
 
-Same slog events through masq v0.2.3: 7–67% less time and fewer allocations on all five events. [Comparison](doc/comparison.md) · [benchstat](doc/comparison.benchstat.txt)
-
 ## Compared with other Go libraries
 
-masq, slog-formatter and go-mask hide what you configure: types, struct tags, field names, log keys or your own regular expressions. godlp has built-in rules for strings, maps and JSON, but no logger integration, and its repository has been archived since 2023. None of them documents a way to fail tests when a secret reaches the output.
+The same scenarios and log events run against the latest releases of masq, go-masker, slog-formatter, go-mask and godlp. The chart shows every positive scenario and two clean controls, including cases embargo misses. A catch means the original planted value was removed; partial masks count. These configured examples are not a production accuracy estimate.
 
-| | embargo | [masq](https://github.com/m-mizutani/masq) v0.2.3 | [slog-formatter](https://github.com/samber/slog-formatter) v1.3.0 | [go-mask](https://github.com/showa-93/go-mask) v0.6.2 | [godlp](https://github.com/bytedance/godlp) v1.2.15 |
-|---|---|---|---|---|---|
-| Decides what to hide by | 37 detectors that read the values, plus key rules | types, tags, field names, your regexes | formatters you attach to keys or types | fields you register | its built-in rules |
-| Works with | slog, zap, zerolog, logrus, net/http, gRPC, OpenTelemetry, Sentry | slog | slog | Go values | strings, maps, JSON |
-| Secret inside a log message | masked; the rest of the message stays | masked with your regex; the whole message is replaced | not masked | not masked | partly masked |
-| Test that fails on a leak | `embargotest.Guard` | none | none | none | none |
-| Direct dependencies | 0 | 1 | 2 | 2 | 1 |
+![Scenario catch rate](doc/images/scenario-catch.svg)
 
-The same service logs a planted password and token through each library, configured as its documentation describes. caught means the value is absent from every log line, response body and header:
+| Library | Where it wins or ties | Where embargo adds coverage |
+|---|---|---|
+| [masq v0.2.3](https://github.com/m-mizutani/masq) | Tag-only opaque secrets; no runtime dependencies; custom type/tag policies | Detects keys, groups and custom JSON output; keeps message context |
+| [go-masker v0.6.1](https://github.com/icntswm/go-masker) | Faster measured slog events; tag-only secrets; partial masks; no runtime dependencies | More tested detector families and joined-key scanning |
+| [slog-formatter v1.3.0](https://github.com/samber/slog-formatter) | Faster configured field transforms; nested email ties | Scans arbitrary message values and preserves structured fields |
+| [go-mask v0.6.2](https://github.com/showa-93/go-mask) | Tags; faster typed masked copies; no runtime dependencies | Detects unregistered values inside message text |
+| [godlp v1.2.15](https://github.com/bytedance/godlp) | US phone detection; partial email/labeled-card masking ties | Recognizes the tested Japanese phone and opaque credential contexts |
+
+embargo also has no runtime dependencies. go-masker's measured configuration uses its default key policies and opts into Luhn card detection; its slog, zap, zerolog and HTTP adapters are exercised. [Exact outputs, setup, runtime dependencies and speed](doc/comparison.md) document the strengths and limits of every configuration. [Keep your masking, add the leak test](doc/keep-your-masking.md) works with any of them.
+
+The service probe below also checks a redirect that bypasses every logger. `embargotest.HTTP` catches that response leak:
 
 <!-- leak-scenarios:start -->
-| Service output | embargo slog | embargo zap | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 |
-|---|---|---|---|---|---|
-| Password under the key `password` | caught | caught | caught | caught | caught |
-| Config struct holding a database DSN | caught | caught | caught | leaked | leaked |
-| DSN inside a wrapped error | caught | caught | caught | leaked | leaked |
-| DSN and an API key joined with errors.Join | caught | caught | leaked | leaked | leaked |
-| Bearer header value in a log message | caught | caught | leaked | leaked | leaked |
-| Third-party API key in a log message | caught | caught | leaked | leaked | leaked |
-| Redirect URL query, never logged | leaked | leaked | leaked | leaked | leaked |
+| Service output | embargo slog | embargo zap | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |
+|---|---|---|---|---|---|---|---|
+| Password under the key `password` | caught | caught | caught | caught | caught | caught | leaked |
+| Config struct holding a database DSN | caught | caught | caught | leaked | leaked | caught | leaked |
+| DSN inside a wrapped error | caught | caught | caught | leaked | leaked | caught | leaked |
+| DSN and an API key joined with errors.Join | caught | caught | leaked | leaked | leaked | caught | leaked |
+| Bearer header value in a log message | caught | caught | leaked | leaked | leaked | caught | leaked |
+| Third-party API key in a log message | caught | caught | leaked | leaked | leaked | leaked | leaked |
+| Redirect URL query, never logged | leaked | leaked | leaked | leaked | leaked | leaked | leaked |
 <!-- leak-scenarios:end -->
 
-The redirect row leaks for every library because the token never passes a logger; `embargotest.HTTP` catches it in tests. On the same slog events embargo is also faster than masq ([Benchmarks](#benchmarks)). Configurations, exact outputs, [twelve more leak cases](doc/cases.md) and where the other libraries fit better are in [doc/comparison.md](doc/comparison.md).
+[Service setup and full results](doc/comparison.md#service-leak-scenarios).
 
 ## Contributing
 

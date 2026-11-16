@@ -1,6 +1,7 @@
 package embargotest
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -307,4 +308,29 @@ func TestHTTPTrailerChangeAfterCheckIsReported(t *testing.T) {
 	if len(p.messages) != 1 || p.messages[0] != "embargotest: output or registration changed after Check" {
 		t.Fatalf("messages = %q", p.messages)
 	}
+}
+
+func TestHTTPRepeatedCheckAndLateTrailers(t *testing.T) {
+	t.Parallel()
+	p := &probeTB{TB: t}
+	r := New(p)
+	response := r.HTTP("http")
+	response.Header().Set("Trailer", "X-Result")
+	data := bytes.Repeat([]byte("a"), 600)
+	if n, err := response.Write(data); n != len(data) || err != nil {
+		t.Fatal("body capture failed")
+	}
+	response.Header().Set("X-Result", "ok")
+	r.Expect("http/body", func(got []byte) bool { return bytes.Equal(got, data) })
+	r.Expect("http/headers", func(got []byte) bool { return bytes.Contains(got, []byte("text/plain; charset=utf-8")) })
+	for range 2 {
+		if !r.Check() {
+			t.Fatal("completed response did not stay valid")
+		}
+	}
+	response.Header().Set("X-Result", "changed")
+	if r.Check() || p.errors == 0 {
+		t.Fatal("changed trailer accepted")
+	}
+	p.finish()
 }

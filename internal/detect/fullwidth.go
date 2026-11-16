@@ -1,15 +1,15 @@
 package detect
 
 import (
-	"bytes"
 	"math"
 	"strconv"
+	"unicode"
 	"unicode/utf8"
 )
 
-// NormalizeFullWidthDigits converts U+FF10–U+FF19 digits and hyphen variants U+FF0D, U+30FC, U+2212 and U+2010–U+2015 to ASCII; U+3000 becomes a space. The returned map translates normalized byte indexes to original indexes, including an end sentinel equal to len(data).
+// NormalizeFullWidthDigits converts full-width digits and Unicode dash separators to ASCII. Interior non-ASCII Pd, Zs, Cf and Sm intersected with Dash are ignored. The returned map translates normalized byte indexes to original indexes, including an end sentinel equal to len(data).
 //
-// ASCII-only input is returned unchanged with an allocated identity map; input containing non-ASCII bytes uses a new buffer. U+200B, U+00A0, U+202F and U+00AD inside tokens are ignored; other bytes are preserved.
+// ASCII-only input is returned unchanged with an allocated identity map; input containing non-ASCII bytes uses a new buffer. U+30FC remains a legacy numeric hyphen. Other bytes are preserved.
 func NormalizeFullWidthDigits(data []byte) (normalizedData []byte, positions []int) {
 	// Quick check: if no multi-byte characters, return as-is.
 	hasMultiByte := false
@@ -40,7 +40,7 @@ func NormalizeFullWidthDigits(data []byte) (normalizedData []byte, positions []i
 			posMap = append(posMap, i)
 			//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 			normalized = append(normalized, byte(r-0xFEE0))
-		case r == 0xFF0D || r == 0x30FC || r == 0x2212 || r >= 0x2010 && r <= 0x2015:
+		case unicode.Is(unicode.Pd, r) || unicode.Is(unicode.Sm, r) && unicode.Is(unicode.Dash, r) || r == 0x30FC:
 			// Full-width hyphen variants → ASCII hyphen.
 			posMap = append(posMap, i)
 			normalized = append(normalized, '-')
@@ -48,7 +48,7 @@ func NormalizeFullWidthDigits(data []byte) (normalizedData []byte, positions []i
 			posMap = append(posMap, i)
 			normalized = append(normalized, ' ')
 		case ignoredTokenSeparator(r) && tokenInterior(data, i, size):
-			// Interior formatting marks have no semantic token bytes.
+			// Interior formatting runs have no semantic token bytes.
 		default:
 			// Copy bytes as-is.
 			for k := range size {
@@ -106,16 +106,17 @@ func originalPosition(positions []int, index int) int {
 	return positions[index]
 }
 
-// RemoveTokenSeparators ignores U+200B, U+00A0, U+202F and U+00AD inside
+// RemoveTokenSeparators ignores non-ASCII Unicode Pd, Zs, Cf and Sm/Dash inside
 // alphanumeric tokens. The optional map includes the original end sentinel.
 // Other whitespace, invalid UTF-8 and marks outside tokens remain unchanged.
 func RemoveTokenSeparators(data []byte) (normalized []byte, positions []int) {
-	// UTF-8 encodes all four marks with C2 or E2. Keep ordinary ASCII scans
-	// allocation-free and use byte searches before decoding any rune.
-	const twoByteLead, threeByteLead = 0xC2, 0xE2
-	first := bytes.IndexByte(data, twoByteLead)
-	if other := bytes.IndexByte(data, threeByteLead); other >= 0 && (first < 0 || other < first) {
-		first = other
+	// Keep ordinary ASCII scans allocation-free, including delimiters.
+	first := -1
+	for i, b := range data {
+		if b >= utf8.RuneSelf {
+			first = i
+			break
+		}
 	}
 	if first < 0 {
 		return data, nil
@@ -145,7 +146,7 @@ func RemoveTokenSeparators(data []byte) (normalized []byte, positions []int) {
 }
 
 func ignoredTokenSeparator(r rune) bool {
-	return r == 0x200B || r == 0x00A0 || r == 0x202F || r == 0x00AD
+	return r > unicode.MaxASCII && (unicode.Is(unicode.Cf, r) || unicode.Is(unicode.Zs, r) || unicode.Is(unicode.Pd, r) || unicode.Is(unicode.Sm, r) && unicode.Is(unicode.Dash, r))
 }
 
 func tokenInterior(data []byte, i, size int) bool {

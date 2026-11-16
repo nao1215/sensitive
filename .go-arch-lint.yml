@@ -10,6 +10,8 @@ exclude:
 excludeFiles:
 - ^.*_test\.go$
 components:
+  commands:
+    in: cmd/**
   saferecord:
     in: internal/saferecord
   output:
@@ -23,6 +25,9 @@ components:
   ascii:
     in: internal/ascii
 deps:
+  commands:
+    mayDependOn:
+    - runtime
   output:
     mayDependOn:
     - runtime

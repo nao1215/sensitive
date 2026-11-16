@@ -1156,3 +1156,83 @@ func TestDomainValueDocumentation(t *testing.T) {
 	}
 	syncDocTable(t, "../doc/values.md", "domain-value", "```go\n"+string(source)+"```\n")
 }
+
+const (
+	loggerGroupText = "slog-group-text"
+	loggerText      = "slog-text"
+)
+
+func TestLoggerJoinedPathProperty(t *testing.T) {
+	t.Parallel()
+	scanner := embargo.NewScanner()
+	rapid.Check(t, func(rt *rapid.T) {
+		local := "user" + strconv.Itoa(rapid.IntRange(1, 999999).Draw(rt, "mailbox"))
+		for _, parts := range [][]string{{local + "@example", "com"}, {local, "tag@example", "co", "uk"}} {
+			for _, name := range []string{loggerSlog, loggerText, "slog-group-json", loggerGroupText, loggerZap, loggerZerolog, loggerLogrus} {
+				var out bytes.Buffer
+				emitJoinedPath(t, &out, scanner, name, parts)
+				got := out.String()
+				if !strings.Contains(got, referenceMarker) {
+					rt.Fatalf("%s split path missing mask: %s", name, got)
+				}
+				for _, part := range parts {
+					if strings.Contains(got, part) {
+						rt.Fatalf("%s split path retains %s: %s", name, part, got)
+					}
+				}
+			}
+		}
+	})
+}
+
+func emitJoinedPath(t *testing.T, out io.Writer, scanner *embargo.Scanner, name string, parts []string) {
+	t.Helper()
+	last := len(parts) - 1
+	switch name {
+	case "slog-group-json", loggerGroupText:
+		var handler slog.Handler = slog.NewJSONHandler(out, nil)
+		if name == loggerGroupText {
+			handler = slog.NewTextHandler(out, nil)
+		}
+		attr := slog.String(parts[last], "x")
+		for i := last - 1; i >= 0; i-- {
+			attr = slog.Attr{Key: parts[i], Value: slog.GroupValue(attr)}
+		}
+		slog.New(embargo.NewSlogHandler(handler, scanner)).LogAttrs(t.Context(), slog.LevelInfo, "event", attr)
+	case loggerSlog, loggerText:
+		var handler slog.Handler = slog.NewJSONHandler(out, nil)
+		if name == loggerText {
+			handler = slog.NewTextHandler(out, nil)
+		}
+		logger := slog.New(embargo.NewSlogHandler(handler, scanner))
+		for _, part := range parts[:last] {
+			logger = logger.WithGroup(part)
+		}
+		logger.Info("event", parts[last], "x")
+	case loggerZap:
+		sink := embargozap.NewWriteSyncer(zapcore.AddSync(out), scanner)
+		logger := zap.New(zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()), sink, zap.DebugLevel))
+		for _, part := range parts[:last] {
+			logger = logger.With(zap.Namespace(part))
+		}
+		logger.Info("event", zap.String(parts[last], "x"))
+	case loggerZerolog:
+		logger := zerolog.New(embargozerolog.NewWriter(out, scanner))
+		dict := zerolog.Dict().Str(parts[last], "x")
+		for i := last - 1; i > 0; i-- {
+			dict = zerolog.Dict().Dict(parts[i], dict)
+		}
+		logger.Info().Dict(parts[0], dict).Msg("event")
+	case loggerLogrus:
+		logger := logrus.New()
+		logger.SetOutput(out)
+		logger.SetFormatter(embargologrus.NewFormatter(&logrus.JSONFormatter{}, scanner))
+		value := map[string]any{parts[last]: "x"}
+		for i := last - 1; i > 0; i-- {
+			value = map[string]any{parts[i]: value}
+		}
+		logger.WithField(parts[0], value).Info("event")
+	default:
+		t.Fatal("unknown logger")
+	}
+}

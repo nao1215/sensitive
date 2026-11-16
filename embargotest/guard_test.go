@@ -359,3 +359,38 @@ func TestQuintGuardReplay(t *testing.T) {
 		})
 	}
 }
+
+func TestGuardParentAndInvalidAPI(t *testing.T) {
+	t.Parallel()
+	if Guard(nil) != 1 {
+		t.Fatal("nil test runner accepted")
+	}
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, mode := range []string{"safe", "leak"} {
+		var out, diagnostic bytes.Buffer
+		code := guardParent(executable, []string{"-test.run=^TestGuardParentChild$", "-test.v", "--", mode}, guardPolicy(nil), &out, &diagnostic)
+		if (code == 0) != (mode == "safe") || strings.Contains(out.String(), defaultCanary) || strings.Contains(diagnostic.String(), defaultCanary) {
+			t.Fatalf("supervisor verdict=%d out=%s diagnostic=%s", code, out.String(), diagnostic.String())
+		}
+		if mode == "safe" && !strings.Contains(out.String(), "public supervisor output") {
+			t.Fatal("safe child output was lost")
+		}
+	}
+}
+
+func TestGuardParentChild(t *testing.T) {
+	t.Parallel()
+	if os.Getenv("EMBARGO_PACKAGE_GUARD") != "child" {
+		return
+	}
+	message := "public supervisor output"
+	if os.Args[len(os.Args)-1] == "leak" {
+		message = defaultCanary
+	}
+	if _, err := fmt.Fprintln(os.Stdout, message); err != nil {
+		t.Fatal(err)
+	}
+}

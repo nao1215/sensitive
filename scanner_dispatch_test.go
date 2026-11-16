@@ -514,3 +514,15 @@ func BenchmarkNarrowing(b *testing.B) {
 		}
 	}
 }
+
+func TestBuiltInDispatchHintsAreNonempty(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithAll())
+	for _, hints := range scanner.hintCache {
+		for _, hint := range hints {
+			if len(hint.lowered) == 0 {
+				t.Fatal("empty built-in hint requires unconditional dispatch")
+			}
+		}
+	}
+}

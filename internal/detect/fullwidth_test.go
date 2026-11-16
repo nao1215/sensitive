@@ -5,6 +5,7 @@ import (
 	"math"
 	"strings"
 	"testing"
+	"unicode"
 )
 
 func TestNormalizeFullWidthDigits(t *testing.T) {
@@ -94,7 +95,11 @@ func TestNormalizationIdentityDifferential(t *testing.T) {
 
 func TestUnicodeNormalizationOffsets(t *testing.T) {
 	t.Parallel()
-	for _, separator := range []string{"\u2212", "\u3000", "\u2010", "\u2011", "\u2012", "\u2013", "\u2014", "\u2015", "\uff0d", "\u30fc", "\u200b", "\u00a0", "\u202f", "\u00ad", "\u200b\u00a0\u202f\u00ad"} {
+	for r := rune(0); r <= unicode.MaxRune; r++ {
+		if !unicode.Is(unicode.Pd, r) && !unicode.Is(unicode.Zs, r) && !unicode.Is(unicode.Cf, r) && (!unicode.Is(unicode.Sm, r) || !unicode.Is(unicode.Dash, r)) {
+			continue
+		}
+		separator := string(r)
 		raw := "４１１１" + separator + "１１１１" + separator + "１１１１" + separator + "１１１１"
 		input := "日本語: " + raw + "!"
 		findings := NewPAN().Scan([]byte(input))
@@ -110,8 +115,18 @@ func TestUnicodeNormalizationOffsets(t *testing.T) {
 				t.Fatal("nonmonotone byte mapping")
 			}
 		}
-		if strings.Contains(string(normalized), separator) {
+		if r > unicode.MaxASCII && strings.Contains(string(normalized), separator) {
 			t.Fatal("separator not normalized")
+		}
+	}
+}
+
+func TestFullwidthRejectedBoundaries(t *testing.T) {
+	t.Parallel()
+	for _, input := range []string{"\u200babc", "abc\u200b", "\u200b"} {
+		got, _ := RemoveTokenSeparators([]byte(input))
+		if string(got) != input {
+			t.Fatal("non-interior mark removed")
 		}
 	}
 }

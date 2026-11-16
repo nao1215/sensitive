@@ -1,0 +1,38 @@
+[
+  {
+    "text": "4111111111111111"
+  },
+  {
+    "text": "\uff10\uff19\uff10\u2212\uff11\uff12\uff13\uff14\u2212\uff15\uff16\uff17\uff18"
+  },
+  {
+    "text": "4111\u20601111\u20601111\u20601111"
+  },
+  {
+    "text": "AKIA\u200dIOSFODNN7EXAMPLE"
+  },
+  {
+    "text": "alice@example.com"
+  },
+  {
+    "text": "order_id=4111111111111111"
+  },
+  {
+    "text": "Proxy-Authorization: Basic dXNlcjpodW50ZXIy"
+  },
+  {
+    "text": "cvv: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com 123"
+  },
+  {
+    "text": "{\"alice@example\":{\"com\":\"x\"}}"
+  },
+  {
+    "text": "{\"card\":4.111111111111111e15}"
+  },
+  {
+    "text": "{\"card\":\"0.4111111111111111e16\"}"
+  },
+  {
+    "text": "{\"public\":17,\"password\":\"opaque\"}"
+  }
+]

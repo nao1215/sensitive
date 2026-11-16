@@ -60,9 +60,6 @@ func (d *MerchantID) Scan(data []byte) []Finding {
 			if overlapsFinding(findings, seq.start, seq.end) {
 				continue
 			}
-			if seq.start < m.end && seq.end > m.start {
-				continue
-			}
 
 			findings = append(findings, Finding{
 				DetectorName: d.Name(),
@@ -90,9 +87,6 @@ func (d *MerchantID) Scan(data []byte) []Finding {
 			}
 
 			if overlapsFinding(findings, seq.start, seq.end) {
-				continue
-			}
-			if seq.start < m.end && seq.end > m.start {
 				continue
 			}
 

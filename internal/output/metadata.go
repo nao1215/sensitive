@@ -20,20 +20,24 @@ const (
 )
 
 type eventMetadata struct {
-	key        string
-	messageKey string
-	token      []byte
-	level      json.RawMessage
-	depth      int
-	count      int
-	quoted     bool
-	escaped    bool
-	readingKey bool
-	wantKey    bool
+	prefix       []byte
+	key          string
+	messageKey   string
+	token        []byte
+	level        json.RawMessage
+	depth        int
+	count        int
+	prefixFields int
+	prefixDone   bool
+	quoted       bool
+	escaped      bool
+	readingKey   bool
+	wantKey      bool
 }
 
 func (m *eventMetadata) feed(data []byte) {
 	for _, c := range data {
+		m.consoleByte(c)
 		m.byte(c)
 	}
 }
@@ -134,7 +138,7 @@ func (m *eventMetadata) value() {
 	if len(m.token) == 0 || len(m.token) > metadataTokenLimit {
 		return
 	}
-	if m.key == "level" {
+	if m.key == "level" && m.level == nil {
 		var text string
 		if json.Unmarshal(m.token, &text) == nil {
 			switch strings.ToLower(text) {
@@ -165,4 +169,34 @@ func (m *eventMetadata) fallback(reason saferecord.SanitizationError) []byte {
 	const decimalBase = 10
 	out = strconv.AppendInt(out, int64(m.count), decimalBase)
 	return append(out, '}', '\n')
+}
+
+// Standard zap console encoders put the level before the message, with an optional
+// timestamp first. Only enum tokens survive; text and timestamps never do.
+func (m *eventMetadata) consoleByte(c byte) {
+	if m.prefixDone {
+		return
+	}
+	if c == '{' || c == '[' {
+		m.prefixDone = true
+		m.prefix = nil
+		return
+	}
+	if c != '\t' && c != '\n' {
+		if len(m.prefix) <= metadataTokenLimit {
+			m.prefix = append(m.prefix, c)
+		}
+		return
+	}
+	switch strings.ToLower(strings.TrimSpace(string(m.prefix))) {
+	case "trace", "debug", "info", "warn", "warning", "error", "dpanic", "panic", "fatal":
+		text := strings.TrimSpace(string(m.prefix))
+		m.level = append(append(json.RawMessage{'"'}, text...), '"')
+		m.prefixDone = true
+	}
+	m.prefix = nil
+	m.prefixFields++
+	if m.prefixFields == 2 || c == '\n' {
+		m.prefixDone = true
+	}
 }

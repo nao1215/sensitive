@@ -213,18 +213,6 @@ func (f Finding) IsBTC() bool { return f.DetectorName == NameBTC }
 // IsETH reports whether this finding is an Ethereum address.
 func (f Finding) IsETH() bool { return f.DetectorName == NameETH }
 
-// IsGitHubToken reports whether this finding is a GitHub access token.
-func (f Finding) IsGitHubToken() bool { return f.DetectorName == NameGitHubToken }
-
-// IsSlackToken reports whether this finding is a Slack API token.
-func (f Finding) IsSlackToken() bool { return f.DetectorName == NameSlackToken }
-
-// IsGoogleAPIKey reports whether this finding is a Google API key.
-func (f Finding) IsGoogleAPIKey() bool { return f.DetectorName == NameGoogleAPIKey }
-
-// IsPrivateKeyPEM reports whether this finding is a PEM private key header.
-func (f Finding) IsPrivateKeyPEM() bool { return f.DetectorName == NamePrivateKeyPEM }
-
 // PANDetail asserts Detail to *PANDetail, returning (nil, false) on a type mismatch. A typed nil pointer returns (nil, true).
 func (f Finding) PANDetail() (*PANDetail, bool) {
 	d, ok := f.Detail.(*PANDetail)

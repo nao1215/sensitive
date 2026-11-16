@@ -61,3 +61,11 @@ Logrus returns a successful formatted diagnostic after normalization failures so
 [Failure, concurrency and scalar tests](../slog_handler_test.go), [shape and boundary tests](../json_test.go), [measurements against masq](comparison.md).
 
 [Support maintenance](https://github.com/sponsors/nao1215).
+
+## Joined paths and number spellings
+
+When a finding crosses a dot between group or key segments, the JSON walker and slog handler mask every segment in that joined path. This includes bound WithAttrs/WithGroup chains and nested objects or arrays; unrelated complete keys are first masked independently. The TextHandler cannot retain a visible email prefix while replacing only its last segment. Frozen bound values are replayed without calling user formatters again.
+
+JSON number spellings are compared as exact integers without float rounding, including optional minus signs, fractions and signed exponents. When the integer is detected, the entire lexeme becomes a marker string. Numeric strings follow the same rule because some logging encoders serialize json.Number as a quoted string. Invalid JSON numbers with leading zeros are rejected as JSON input.
+
+Standard zap console encoders emit tab-delimited level tokens, with an optional timestamp first. Byte-writer fallback keeps a recognized level from those first two columns, including uppercase levels. An encoder configured without a level writes none, so the fallback cannot invent one. Arbitrary console text or custom level encodings do not become trusted metadata; only fixed level enums can survive.

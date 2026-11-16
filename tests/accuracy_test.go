@@ -258,7 +258,7 @@ func syncAccuracySnapshot(t *testing.T, set string, threshold float64, rows []ac
 func accuracyEntrance(t *testing.T, names []string) string {
 	t.Helper()
 	var entrance strings.Builder
-	if _, err := entrance.WriteString("![Precision and recall on held-out synthetic samples](doc/images/accuracy.svg)\n\n| Detector details | | |\n|---|---|---|\n"); err != nil {
+	if _, err := entrance.WriteString("[Per-detector precision, recall and charts](doc/accuracy.md).\n\n| Detector details | | |\n|---|---|---|\n"); err != nil {
 		t.Fatal(err)
 	}
 	for index, name := range names {

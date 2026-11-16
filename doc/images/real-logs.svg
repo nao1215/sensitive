@@ -1,63 +1,64 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="829" viewBox="0 0 960 829" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1392" viewBox="0 0 1100 1392" role="img" aria-labelledby="title desc">
 <title id="title">Estimated false positives on public logs</title>
-<desc id="desc">Before and after rates per decimal GB, split by development and held-out sources. Bars show the same sample-based estimates as the adjacent table; they are not recall measurements.</desc>
-<rect width="960" height="829" fill="#101923"/>
-<g font-family="sans-serif" fill="#eff6ff"><text x="24" y="30" font-size="22">Public logs · estimated FP per GB · lower is better</text>
-<text x="24" y="55" font-size="14">Development: before / after (blue) · Held-out: before / after (orange)</text>
+<desc id="desc">Labeled before and after rates per decimal gigabyte, split by development and held sources. Linear bars show sample estimates, not recall.</desc>
+<rect width="1100" height="1392" fill="#101923"/>
+<g font-family="sans-serif" fill="#eff6ff"><text x="24" y="30" font-size="22">Public logs: estimated false positives per gigabyte</text>
+<text x="24" y="55" font-size="14">Lower is better. Linear axis; one gigabyte = 1,000,000,000 bytes.</text>
 <text x="24" y="78" font-size="13">8 datasets · 819,576 lines · 92.4 MB · at most 40 sampled findings per stratum</text>
-<text x="24" y="118" font-size="15">aba_routing</text>
-<rect x="160" y="100" width="1.24" height="10" fill="#85b8ff"/><text x="171.24" y="109" font-size="10">1,614.4</text>
-<rect x="160" y="113" width="0.00" height="10" fill="#347ac7"/><text x="170.00" y="122" font-size="10">0.0</text>
-<rect x="160" y="126" width="0.06" height="10" fill="#ffc78a"/><text x="170.06" y="135" font-size="10">83.0</text>
-<rect x="160" y="139" width="0.06" height="10" fill="#b87629"/><text x="170.06" y="148" font-size="10">83.0</text>
-<text x="24" y="182" font-size="15">ca_sin</text>
-<rect x="160" y="164" width="0.00" height="10" fill="#85b8ff"/><text x="170.00" y="173" font-size="10">0.0</text>
-<rect x="160" y="177" width="1.44" height="10" fill="#347ac7"/><text x="171.44" y="186" font-size="10">1,862.8</text>
-<rect x="160" y="190" width="0.00" height="10" fill="#ffc78a"/><text x="170.00" y="199" font-size="10">0.0</text>
-<rect x="160" y="203" width="0.08" height="10" fill="#b87629"/><text x="170.08" y="212" font-size="10">106.7</text>
-<text x="24" y="246" font-size="15">credential</text>
-<rect x="160" y="228" width="0.57" height="10" fill="#85b8ff"/><text x="170.57" y="237" font-size="10">745.1</text>
-<rect x="160" y="241" width="0.00" height="10" fill="#347ac7"/><text x="170.00" y="250" font-size="10">0.0</text>
-<rect x="160" y="254" width="0.00" height="10" fill="#ffc78a"/><text x="170.00" y="263" font-size="10">0.0</text>
-<rect x="160" y="267" width="0.00" height="10" fill="#b87629"/><text x="170.00" y="276" font-size="10">0.0</text>
-<text x="24" y="310" font-size="15">high_entropy</text>
-<rect x="160" y="292" width="24.13" height="10" fill="#85b8ff"/><text x="194.13" y="301" font-size="10">31,294.7</text>
-<rect x="160" y="305" width="0.00" height="10" fill="#347ac7"/><text x="170.00" y="314" font-size="10">0.0</text>
-<rect x="160" y="318" width="0.19" height="10" fill="#ffc78a"/><text x="170.19" y="327" font-size="10">248.9</text>
-<rect x="160" y="331" width="0.00" height="10" fill="#b87629"/><text x="170.00" y="340" font-size="10">0.0</text>
-<text x="24" y="374" font-size="15">ipaddr</text>
-<rect x="160" y="356" width="0.00" height="10" fill="#85b8ff"/><text x="170.00" y="365" font-size="10">0.0</text>
-<rect x="160" y="369" width="0.00" height="10" fill="#347ac7"/><text x="170.00" y="378" font-size="10">0.0</text>
-<rect x="160" y="382" width="111.08" height="10" fill="#ffc78a"/><text x="281.08" y="391" font-size="10">144,062.1</text>
-<rect x="160" y="395" width="0.00" height="10" fill="#b87629"/><text x="170.00" y="404" font-size="10">0.0</text>
-<text x="24" y="438" font-size="15">mynumber</text>
-<rect x="160" y="420" width="6.22" height="10" fill="#85b8ff"/><text x="176.22" y="429" font-size="10">8,072.0</text>
-<rect x="160" y="433" width="0.00" height="10" fill="#347ac7"/><text x="170.00" y="442" font-size="10">0.0</text>
-<rect x="160" y="446" width="0.70" height="10" fill="#ffc78a"/><text x="170.70" y="455" font-size="10">912.8</text>
-<rect x="160" y="459" width="0.00" height="10" fill="#b87629"/><text x="170.00" y="468" font-size="10">0.0</text>
-<text x="24" y="502" font-size="15">pan</text>
-<rect x="160" y="484" width="34.09" height="10" fill="#85b8ff"/><text x="204.09" y="493" font-size="10">44,209.9</text>
-<rect x="160" y="497" width="0.00" height="10" fill="#347ac7"/><text x="170.00" y="506" font-size="10">0.0</text>
-<rect x="160" y="510" width="0.00" height="10" fill="#ffc78a"/><text x="170.00" y="519" font-size="10">0.0</text>
-<rect x="160" y="523" width="0.00" height="10" fill="#b87629"/><text x="170.00" y="532" font-size="10">0.0</text>
-<text x="24" y="566" font-size="15">phone_jp</text>
-<rect x="160" y="548" width="2.01" height="10" fill="#85b8ff"/><text x="172.01" y="557" font-size="10">2,607.9</text>
-<rect x="160" y="561" width="0.00" height="10" fill="#347ac7"/><text x="170.00" y="570" font-size="10">0.0</text>
-<rect x="160" y="574" width="0.00" height="10" fill="#ffc78a"/><text x="170.00" y="583" font-size="10">0.0</text>
-<rect x="160" y="587" width="0.00" height="10" fill="#b87629"/><text x="170.00" y="596" font-size="10">0.0</text>
-<text x="24" y="630" font-size="15">swiftbic</text>
-<rect x="160" y="612" width="570.00" height="10" fill="#85b8ff"/><text x="740.00" y="621" font-size="10">739,274.8</text>
-<rect x="160" y="625" width="0.10" height="10" fill="#347ac7"/><text x="170.10" y="634" font-size="10">124.2</text>
-<rect x="160" y="638" width="0.27" height="10" fill="#ffc78a"/><text x="170.27" y="647" font-size="10">343.8</text>
-<rect x="160" y="651" width="0.25" height="10" fill="#b87629"/><text x="170.25" y="660" font-size="10">320.1</text>
-<text x="24" y="694" font-size="15">uk_nhs</text>
-<rect x="160" y="676" width="0.00" height="10" fill="#85b8ff"/><text x="170.00" y="685" font-size="10">0.0</text>
-<rect x="160" y="689" width="0.00" height="10" fill="#347ac7"/><text x="170.00" y="698" font-size="10">0.0</text>
-<rect x="160" y="702" width="0.00" height="10" fill="#ffc78a"/><text x="170.00" y="711" font-size="10">0.0</text>
-<rect x="160" y="715" width="1.76" height="10" fill="#b87629"/><text x="171.76" y="724" font-size="10">2,287.9</text>
-<text x="24" y="758" font-size="15">us_ssn</text>
-<rect x="160" y="740" width="0.00" height="10" fill="#85b8ff"/><text x="170.00" y="749" font-size="10">0.0</text>
-<rect x="160" y="753" width="15.80" height="10" fill="#347ac7"/><text x="185.80" y="762" font-size="10">20,490.6</text>
-<rect x="160" y="766" width="0.00" height="10" fill="#ffc78a"/><text x="170.00" y="775" font-size="10">0.0</text>
-<rect x="160" y="779" width="0.29" height="10" fill="#b87629"/><text x="170.29" y="788" font-size="10">379.3</text>
+<text x="24" y="123" font-size="15">aba_routing</text>
+<text x="170" y="120" font-size="13">Development before</text><rect x="330" y="105" width="1.20" height="18" fill="#85b8ff"/><text x="341.20" y="119" font-size="13">1,614.4</text>
+<text x="170" y="143" font-size="13">Development after</text><rect x="330" y="128" width="0.00" height="18" fill="#347ac7"/><text x="340.00" y="142" font-size="13">0.0</text>
+<text x="170" y="166" font-size="13">Held before</text><rect x="330" y="151" width="0.06" height="18" fill="#ffc78a"/><text x="340.06" y="165" font-size="13">83.0</text>
+<text x="170" y="189" font-size="13">Held after</text><rect x="330" y="174" width="0.06" height="18" fill="#b87629"/><text x="340.06" y="188" font-size="13">83.0</text>
+<text x="24" y="235" font-size="15">ca_sin</text>
+<text x="170" y="232" font-size="13">Development before</text><rect x="330" y="217" width="0.00" height="18" fill="#85b8ff"/><text x="340.00" y="231" font-size="13">0.0</text>
+<text x="170" y="255" font-size="13">Development after</text><rect x="330" y="240" width="1.39" height="18" fill="#347ac7"/><text x="341.39" y="254" font-size="13">1,862.8</text>
+<text x="170" y="278" font-size="13">Held before</text><rect x="330" y="263" width="0.00" height="18" fill="#ffc78a"/><text x="340.00" y="277" font-size="13">0.0</text>
+<text x="170" y="301" font-size="13">Held after</text><rect x="330" y="286" width="0.08" height="18" fill="#b87629"/><text x="340.08" y="300" font-size="13">106.7</text>
+<text x="24" y="347" font-size="15">credential</text>
+<text x="170" y="344" font-size="13">Development before</text><rect x="330" y="329" width="0.55" height="18" fill="#85b8ff"/><text x="340.55" y="343" font-size="13">745.1</text>
+<text x="170" y="367" font-size="13">Development after</text><rect x="330" y="352" width="0.00" height="18" fill="#347ac7"/><text x="340.00" y="366" font-size="13">0.0</text>
+<text x="170" y="390" font-size="13">Held before</text><rect x="330" y="375" width="0.00" height="18" fill="#ffc78a"/><text x="340.00" y="389" font-size="13">0.0</text>
+<text x="170" y="413" font-size="13">Held after</text><rect x="330" y="398" width="0.00" height="18" fill="#b87629"/><text x="340.00" y="412" font-size="13">0.0</text>
+<text x="24" y="459" font-size="15">high_entropy</text>
+<text x="170" y="456" font-size="13">Development before</text><rect x="330" y="441" width="23.28" height="18" fill="#85b8ff"/><text x="363.28" y="455" font-size="13">31,294.7</text>
+<text x="170" y="479" font-size="13">Development after</text><rect x="330" y="464" width="0.00" height="18" fill="#347ac7"/><text x="340.00" y="478" font-size="13">0.0</text>
+<text x="170" y="502" font-size="13">Held before</text><rect x="330" y="487" width="0.19" height="18" fill="#ffc78a"/><text x="340.19" y="501" font-size="13">248.9</text>
+<text x="170" y="525" font-size="13">Held after</text><rect x="330" y="510" width="0.00" height="18" fill="#b87629"/><text x="340.00" y="524" font-size="13">0.0</text>
+<text x="24" y="571" font-size="15">ipaddr</text>
+<text x="170" y="568" font-size="13">Development before</text><rect x="330" y="553" width="0.00" height="18" fill="#85b8ff"/><text x="340.00" y="567" font-size="13">0.0</text>
+<text x="170" y="591" font-size="13">Development after</text><rect x="330" y="576" width="0.00" height="18" fill="#347ac7"/><text x="340.00" y="590" font-size="13">0.0</text>
+<text x="170" y="614" font-size="13">Held before</text><rect x="330" y="599" width="107.18" height="18" fill="#ffc78a"/><text x="447.18" y="613" font-size="13">144,062.1</text>
+<text x="170" y="637" font-size="13">Held after</text><rect x="330" y="622" width="0.00" height="18" fill="#b87629"/><text x="340.00" y="636" font-size="13">0.0</text>
+<text x="24" y="683" font-size="15">mynumber</text>
+<text x="170" y="680" font-size="13">Development before</text><rect x="330" y="665" width="6.01" height="18" fill="#85b8ff"/><text x="346.01" y="679" font-size="13">8,072.0</text>
+<text x="170" y="703" font-size="13">Development after</text><rect x="330" y="688" width="0.00" height="18" fill="#347ac7"/><text x="340.00" y="702" font-size="13">0.0</text>
+<text x="170" y="726" font-size="13">Held before</text><rect x="330" y="711" width="0.68" height="18" fill="#ffc78a"/><text x="340.68" y="725" font-size="13">912.8</text>
+<text x="170" y="749" font-size="13">Held after</text><rect x="330" y="734" width="0.00" height="18" fill="#b87629"/><text x="340.00" y="748" font-size="13">0.0</text>
+<text x="24" y="795" font-size="15">pan</text>
+<text x="170" y="792" font-size="13">Development before</text><rect x="330" y="777" width="32.89" height="18" fill="#85b8ff"/><text x="372.89" y="791" font-size="13">44,209.9</text>
+<text x="170" y="815" font-size="13">Development after</text><rect x="330" y="800" width="0.00" height="18" fill="#347ac7"/><text x="340.00" y="814" font-size="13">0.0</text>
+<text x="170" y="838" font-size="13">Held before</text><rect x="330" y="823" width="0.00" height="18" fill="#ffc78a"/><text x="340.00" y="837" font-size="13">0.0</text>
+<text x="170" y="861" font-size="13">Held after</text><rect x="330" y="846" width="0.00" height="18" fill="#b87629"/><text x="340.00" y="860" font-size="13">0.0</text>
+<text x="24" y="907" font-size="15">phone_jp</text>
+<text x="170" y="904" font-size="13">Development before</text><rect x="330" y="889" width="1.94" height="18" fill="#85b8ff"/><text x="341.94" y="903" font-size="13">2,607.9</text>
+<text x="170" y="927" font-size="13">Development after</text><rect x="330" y="912" width="0.00" height="18" fill="#347ac7"/><text x="340.00" y="926" font-size="13">0.0</text>
+<text x="170" y="950" font-size="13">Held before</text><rect x="330" y="935" width="0.00" height="18" fill="#ffc78a"/><text x="340.00" y="949" font-size="13">0.0</text>
+<text x="170" y="973" font-size="13">Held after</text><rect x="330" y="958" width="0.00" height="18" fill="#b87629"/><text x="340.00" y="972" font-size="13">0.0</text>
+<text x="24" y="1019" font-size="15">swiftbic</text>
+<text x="170" y="1016" font-size="13">Development before</text><rect x="330" y="1001" width="550.00" height="18" fill="#85b8ff"/><text x="890.00" y="1015" font-size="13">739,274.8</text>
+<text x="170" y="1039" font-size="13">Development after</text><rect x="330" y="1024" width="0.09" height="18" fill="#347ac7"/><text x="340.09" y="1038" font-size="13">124.2</text>
+<text x="170" y="1062" font-size="13">Held before</text><rect x="330" y="1047" width="0.26" height="18" fill="#ffc78a"/><text x="340.26" y="1061" font-size="13">343.8</text>
+<text x="170" y="1085" font-size="13">Held after</text><rect x="330" y="1070" width="0.24" height="18" fill="#b87629"/><text x="340.24" y="1084" font-size="13">320.1</text>
+<text x="24" y="1131" font-size="15">uk_nhs</text>
+<text x="170" y="1128" font-size="13">Development before</text><rect x="330" y="1113" width="0.00" height="18" fill="#85b8ff"/><text x="340.00" y="1127" font-size="13">0.0</text>
+<text x="170" y="1151" font-size="13">Development after</text><rect x="330" y="1136" width="0.00" height="18" fill="#347ac7"/><text x="340.00" y="1150" font-size="13">0.0</text>
+<text x="170" y="1174" font-size="13">Held before</text><rect x="330" y="1159" width="0.00" height="18" fill="#ffc78a"/><text x="340.00" y="1173" font-size="13">0.0</text>
+<text x="170" y="1197" font-size="13">Held after</text><rect x="330" y="1182" width="1.70" height="18" fill="#b87629"/><text x="341.70" y="1196" font-size="13">2,287.9</text>
+<text x="24" y="1243" font-size="15">us_ssn</text>
+<text x="170" y="1240" font-size="13">Development before</text><rect x="330" y="1225" width="0.00" height="18" fill="#85b8ff"/><text x="340.00" y="1239" font-size="13">0.0</text>
+<text x="170" y="1263" font-size="13">Development after</text><rect x="330" y="1248" width="15.24" height="18" fill="#347ac7"/><text x="355.24" y="1262" font-size="13">20,490.6</text>
+<text x="170" y="1286" font-size="13">Held before</text><rect x="330" y="1271" width="0.00" height="18" fill="#ffc78a"/><text x="340.00" y="1285" font-size="13">0.0</text>
+<text x="170" y="1309" font-size="13">Held after</text><rect x="330" y="1294" width="0.28" height="18" fill="#b87629"/><text x="340.28" y="1308" font-size="13">379.3</text>
+<text x="24" y="1372" font-size="13">Both source splits have been seen. Zero in the sample does not prove zero false positives in deployment.</text>
 </g></svg>
