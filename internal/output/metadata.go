@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/nao1215/embargo/internal/saferecord"
 )
 
 // eventMetadata observes top-level fields while an oversized record is discarded.
-// Only bounded, validated timestamp and level tokens survive; this is not the
+// Only an allowlisted level enum survives; byte writers cannot authenticate an
+// encoder timestamp or its configured field, so all time fields are omitted.
+// This is not the
 // JSON validator used to approve normal records. Incomplete input counts only
 // attributes whose key and colon arrived before Flush or Close.
 const (
@@ -20,10 +21,8 @@ const (
 
 type eventMetadata struct {
 	key        string
-	timeKey    string
 	messageKey string
 	token      []byte
-	timestamp  json.RawMessage
 	level      json.RawMessage
 	depth      int
 	count      int
@@ -135,24 +134,7 @@ func (m *eventMetadata) value() {
 	if len(m.token) == 0 || len(m.token) > metadataTokenLimit {
 		return
 	}
-	switch m.key {
-	case "time", "ts", "timestamp":
-		var text string
-		valid := false
-		if m.token[0] == '"' {
-			if json.Unmarshal(m.token, &text) == nil {
-				_, err := time.Parse(time.RFC3339Nano, text)
-				valid = err == nil
-			}
-		} else {
-			_, err := strconv.ParseFloat(string(m.token), 64)
-			valid = err == nil && json.Valid(m.token)
-		}
-		if valid {
-			m.timestamp = append(json.RawMessage(nil), m.token...)
-			m.timeKey = m.key
-		}
-	case "level":
+	if m.key == "level" {
 		var text string
 		if json.Unmarshal(m.token, &text) == nil {
 			switch strings.ToLower(text) {
@@ -170,13 +152,6 @@ func (m *eventMetadata) fallback(reason saferecord.SanitizationError) []byte {
 	}
 	// Every string here is fixed or an allowlisted enum; retained JSON metadata was validated.
 	out := []byte("{")
-	if m.timestamp != nil {
-		out = append(out, '"')
-		out = append(out, m.timeKey...)
-		out = append(out, '"', ':')
-		out = append(out, m.timestamp...)
-		out = append(out, ',')
-	}
 	if m.level != nil {
 		out = append(out, `"level":`...)
 		out = append(out, m.level...)

@@ -420,7 +420,7 @@ func ExampleNewHTTPHandler() {
 	fmt.Println(event.Target)
 	// Output:
 	// 204
-	// /profile?email=%5BREDACTED%5D
+	// /profile?email=[REDACTED]
 }
 
 func ExampleScanner_MaskJSON() {

@@ -433,6 +433,17 @@ func TestExistingMaskerOutputCheck(t *testing.T) {
 
 func TestComparisonDocuments(t *testing.T) {
 	t.Parallel()
+	document, err := os.ReadFile("../doc/comparison.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"comparison", "correctness"} {
+		start, end := "<!-- "+name+":start -->", "<!-- "+name+":end -->"
+		text := string(document)
+		if strings.Count(text, start) != 1 || strings.Count(text, end) != 1 || strings.Index(text, start) >= strings.Index(text, end) {
+			t.Fatalf("missing, repeated or reversed %s markers", name)
+		}
+	}
 	command := exec.CommandContext(t.Context(), "python3", "scripts/comparison_docs.py", "--check")
 	command.Dir = ".."
 	if output, err := command.CombinedOutput(); err != nil {

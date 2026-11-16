@@ -82,6 +82,7 @@ func (d *PAN) Scan(data []byte) []Finding {
 // orig so it matches the original text exactly.
 func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	var findings []Finding
+	var logContext numericLogContext
 
 	i := 0
 	for i < len(data) {
@@ -118,7 +119,7 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		digitLen := len(digits)
 		leadingBoundary := start == 0 || (!isAlphaNum(data[start-1]) && data[start-1] != '_') || encodedSeparatorBefore(orig, originalPosition(posMap, start))
 		trailingBoundary := end == len(data) || (!isAlphaNum(data[end]) && data[end] != '_')
-		if f, ok := d.evaluateCandidate(orig, posMap, digits, digitLen, start, end); ok && leadingBoundary && trailingBoundary && !numericLogFragment(data, start, end) {
+		if f, ok := d.evaluateCandidate(orig, posMap, digits, digitLen, start, end); ok && leadingBoundary && trailingBoundary && !logContext.fragment(data, start, end) {
 			findings = append(findings, f)
 		}
 

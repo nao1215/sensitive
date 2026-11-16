@@ -337,7 +337,7 @@ func TestAdversarialEncodingBoundary(t *testing.T) {
 		{"percent", "alice%40example.com", true},
 		{"double-percent", "alice%2540example.com", false},
 		{"base64", "YWxpY2VAZXhhbXBsZS5jb20=", false},
-		{"zero-width", "alice@exam\u200bple.com", false},
+		{"zero-width", "alice@exam\u200bple.com", true},
 		{"homoglyph", "alice＠example.com", false},
 		{"forged-marker", "[REDACTED] alice@example.com", true},
 		{"fake-finding", "{Kind:email Start:0 End:99} alice@example.com", true},
@@ -413,6 +413,7 @@ func TestAdversarialAllocationBudget(t *testing.T) {
 //nolint:gocognit // Keep the same matrix inputs visible across all public paths.
 func BenchmarkAdversarialScaling(b *testing.B) {
 	b.Run("MaskDense", benchmarkAdversarialMaskRanges)
+	b.Run("SharedSuffix", benchmarkSharedSuffix)
 	for _, pattern := range []string{digitSeparatorRun, credentialPrefixRun, nestedPercentPrefix, "DE00 "} {
 		for _, size := range []int{1 << 10, 16 << 10, 256 << 10, 1 << 20, 16 << 20} {
 			data := []byte(strings.Repeat(pattern, size/len(pattern)))
@@ -522,5 +523,104 @@ func BenchmarkJSONExpansionLimit(b *testing.B) {
 		if _, err := scanner.MaskJSON(input); err == nil {
 			b.Fatal("expanded output accepted")
 		}
+	}
+}
+
+func TestOutputMaskJSONNumberLexemes(t *testing.T) {
+	t.Parallel()
+	s := NewScanner()
+	for _, in := range []string{
+		`{"card":4111111111111111}`,     // control
+		`{"card":4111111111111111.0}`,   // Python json.dumps(float)
+		`{"card":4.111111111111111E15}`, // Java Double.toString / Jackson
+		`{"card":4111111111111111e0}`,
+		`{"card":4.000000000000000001e18}`,
+		`{"card":411111111111111100e-2}`,
+		`{"card":4.000000000000000001e18}`,
+		`{"card":411111111111111100e-2}`,
+	} {
+		out, err := s.MaskJSON([]byte(in))
+		t.Logf("%s -> %s err=%v", in, out, err)
+		if err == nil && !bytes.Contains(out, []byte(`"[REDACTED]"`)) {
+			t.Errorf("number not masked: %s", out)
+		}
+	}
+	var buf bytes.Buffer
+	slog.New(NewSlogHandler(slog.NewJSONHandler(&buf, &slog.HandlerOptions{ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+		if a.Key == slog.TimeKey {
+			return slog.Attr{}
+		}
+		return a
+	}}), s)).
+		Info("refund", "payment", map[string]any{"card": json.Number("4111111111111111.0")})
+	t.Logf("slog json.Number: %s", strings.TrimSpace(buf.String()))
+	if strings.Contains(buf.String(), "4111111111111111") {
+		t.Errorf("json.Number card reached slog output")
+	}
+}
+
+func sharedSuffixInputs() []struct {
+	kind         Kind
+	unit, suffix string
+} {
+	const hostname = "example.invalid"
+	return []struct {
+		kind         Kind
+		unit, suffix string
+	}{
+		{KindPAN, "4111111111111112-node-", hostname},
+		{KindJPPhone, "09012345678-node-", hostname},
+		{KindMyNumber, "123456789018-node-", hostname},
+		{KindGitHubToken, "xgithub_pat_", ""},
+		{KindSlackToken, "xxoxb-", ""},
+	}
+}
+
+func benchmarkSharedSuffix(b *testing.B) {
+	for _, tc := range sharedSuffixInputs() {
+		for _, count := range []int{1024, 2048, 4096, 8192} {
+			b.Run(fmt.Sprintf("%s/%d", tc.kind, count), func(b *testing.B) {
+				scanner := NewScanner(WithKinds(tc.kind))
+				data := []byte(strings.Repeat(tc.unit, count) + tc.suffix)
+				if got := scanner.Scan(data); len(got) != 0 {
+					b.Fatalf("unexpected findings: %v", got)
+				}
+				b.SetBytes(int64(len(data)))
+				b.ReportAllocs()
+				b.ResetTimer()
+				for b.Loop() {
+					scanner.Scan(data)
+				}
+			})
+		}
+	}
+}
+
+//nolint:paralleltest // Compare scaling without overlapping other test workloads.
+func TestAdversarialSharedSuffixScaling(t *testing.T) {
+	for _, tc := range sharedSuffixInputs() {
+		t.Run(string(tc.kind), func(t *testing.T) {
+			scanner := NewScanner(WithKinds(tc.kind))
+			measure := func(count int) time.Duration {
+				data := []byte(strings.Repeat(tc.unit, count) + tc.suffix)
+				best := time.Hour
+				for range 3 {
+					start := time.Now()
+					got := scanner.Scan(data)
+					elapsed := time.Since(start)
+					if len(got) != 0 {
+						t.Fatalf("unexpected findings: %v", got)
+					}
+					best = min(best, elapsed)
+				}
+				return best
+			}
+			small, large := measure(256), measure(4096)
+			t.Logf("small=%s large=%s ratio=%.2f", small, large, float64(large)/float64(small))
+			// Sixteen times the input permits four times linear cost, but not quadratic growth.
+			if large > 64*small+time.Millisecond {
+				t.Fatal("shared suffix scanning is superlinear")
+			}
+		})
 	}
 }

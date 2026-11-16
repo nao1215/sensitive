@@ -105,7 +105,7 @@ func (s *Scanner) scan(data []byte, canceled func() error) []Finding {
 	var positions []int
 	var selected uint64
 	if len(s.detectors) > 0 {
-		scanData, positions = decodePercent(data)
+		scanData, positions = normalizedScanInput(data)
 		selected = s.selectDetectors(scanData)
 	}
 	var findings []Finding
@@ -199,4 +199,18 @@ func defaultKind(kind Kind) bool {
 
 func scanCanceled(canceled func() error) bool {
 	return canceled != nil && canceled() != nil
+}
+
+func normalizedScanInput(data []byte) (normalized []byte, positions []int) {
+	decoded, positions := decodePercent(data)
+	normalized, tokenPositions := detect.RemoveTokenSeparators(decoded)
+	if tokenPositions == nil {
+		return decoded, positions
+	}
+	if positions != nil {
+		for i, pos := range tokenPositions {
+			tokenPositions[i] = positions[pos]
+		}
+	}
+	return normalized, tokenPositions
 }

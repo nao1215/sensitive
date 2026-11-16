@@ -40,7 +40,7 @@ func isTokenByte(b byte) bool {
 // credBoundary reports whether data[start:end] is delimited by non-token bytes on
 // both sides, so a credential is not matched as a substring of a longer word.
 func credBoundary(data []byte, start, end int) bool {
-	if start > 0 && isTokenByte(data[start-1]) && !encodedSeparatorBefore(data, start) {
+	if !credStartBoundary(data, start) {
 		return false
 	}
 	if end < len(data) && isTokenByte(data[end]) {
@@ -57,4 +57,9 @@ func scanCharset(data []byte, start int, allow func(byte) bool) (end, n int) {
 		j++
 	}
 	return j, j - start
+}
+
+// credStartBoundary rejects impossible prefixes before traversing a token body.
+func credStartBoundary(data []byte, start int) bool {
+	return start == 0 || !isTokenByte(data[start-1]) || encodedSeparatorBefore(data, start)
 }

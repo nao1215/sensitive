@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"strconv"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/nao1215/embargo/internal/saferecord"
@@ -35,6 +37,8 @@ func jsonFailure() error { return saferecord.ErrMasking }
 // boundary; their execution time and memory are not bounded. Use Secret or a
 // LogValuer returning a bounded value for such types.
 // Use it before sending JSON API responses, exports or audit records.
+// Fractional and exponent number lexemes are also checked as exact integers when
+// possible, without floating-point rounding; a detected number is replaced whole.
 func (scanner *Scanner) MaskJSON(data []byte) (masked []byte, err error) {
 	return scanner.MaskJSONContext(context.Background(), data)
 }
@@ -145,16 +149,78 @@ func (w *jsonWalker) value(ctx context.Context, depth int, key string, hidden bo
 }
 
 func (w *jsonWalker) scalar(ctx context.Context, raw []byte, key string) error {
-	masked, err := w.scanner.maskScalar(ctx, string(raw), key)
+	text := string(raw)
+	masked, err := w.scanner.maskScalar(ctx, text, key)
 	if err != nil {
 		return err
 	}
-	if masked == string(raw) {
-		w.appendResult(raw)
+	hidden := masked != text
+	if !hidden && (raw[0] == '-' || raw[0] >= '0' && raw[0] <= '9') && strings.ContainsAny(text, ".eE") {
+		integer, err := exactInteger(text)
+		if err != nil {
+			return err
+		}
+		if integer != "" && integer != text {
+			safe, scanErr := w.scanner.maskScalar(ctx, integer, key)
+			if scanErr != nil {
+				return scanErr
+			}
+			hidden = safe != integer
+		}
+	}
+	if hidden {
+		w.appendString(redactionMarker)
 	} else {
-		w.appendString(masked)
+		w.appendResult(raw)
 	}
 	return nil
+}
+
+// exactInteger expands a valid JSON number without floating-point rounding.
+// Expansion is bounded before allocating; non-integers have no second spelling.
+func exactInteger(text string) (string, error) {
+	mantissa, exponent := text, int64(0)
+	if i := strings.IndexAny(text, "eE"); i >= 0 {
+		mantissa = text[:i]
+		value, err := strconv.ParseInt(text[i+1:], 10, 64)
+		if err != nil {
+			return "", saferecord.ErrSizeLimit
+		}
+		exponent = value
+	}
+	negative := strings.HasPrefix(mantissa, "-")
+	mantissa = strings.TrimPrefix(mantissa, "-")
+	if dot := strings.IndexByte(mantissa, '.'); dot >= 0 {
+		fraction := len(mantissa) - dot - 1
+		if exponent < -int64(maxEventBytes) {
+			return "", nil
+		}
+		exponent -= int64(fraction)
+		mantissa = mantissa[:dot] + mantissa[dot+1:]
+	}
+	mantissa = strings.TrimLeft(mantissa, "0")
+	if mantissa == "" {
+		return "0", nil
+	}
+	if exponent < 0 {
+		if exponent < -int64(len(mantissa)) {
+			return "", nil
+		}
+		cut := len(mantissa) + int(exponent)
+		if strings.Trim(mantissa[cut:], "0") != "" {
+			return "", nil
+		}
+		mantissa = mantissa[:cut]
+	} else {
+		if exponent > int64(maxEventBytes-len(mantissa)) {
+			return "", saferecord.ErrSizeLimit
+		}
+		mantissa += strings.Repeat("0", int(exponent))
+	}
+	if negative {
+		mantissa = "-" + mantissa
+	}
+	return mantissa, nil
 }
 
 func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidden bool) error {

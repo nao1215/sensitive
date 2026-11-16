@@ -125,6 +125,16 @@ def rendered(raw, meta):
     return text, "\n".join(svg)
 
 
+def replace_block(text, name, content):
+    start, end = f"<!-- {name}:start -->", f"<!-- {name}:end -->"
+    if text.count(start) != 1 or text.count(end) != 1 or text.index(start) >= text.index(end):
+        raise ValueError(f"{name}: require exactly one ordered start/end marker")
+    updated, count = re.subn(r"(?s)(" + re.escape(start) + r"\n).*?(" + re.escape(end) + r")", lambda m: m[1] + content + m[2], text)
+    if count != 1:
+        raise ValueError(f"{name}: expected one replacement, got {count}")
+    return updated
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--measure", action="store_true")
@@ -142,9 +152,9 @@ def main():
     table, svg = rendered(raw, meta)
     page = DOC / "comparison.md"
     original = page.read_text(encoding="utf-8")
-    updated = re.sub(r"(?s)(<!-- comparison:start -->\n).*?(<!-- comparison:end -->)", lambda m: m[1] + table + m[2], original)
+    updated = replace_block(original, "comparison", table)
     correctness = (DOC / "comparison-correctness.md").read_text(encoding="utf-8")
-    updated = re.sub(r"(?s)(<!-- correctness:start -->\n).*?(<!-- correctness:end -->)", lambda m: m[1] + correctness + m[2], updated)
+    updated = replace_block(updated, "correctness", correctness)
     for path, content in ((page, updated), (DOC / "images/comparison.svg", svg)):
         if args.check:
             if path.read_text(encoding="utf-8") != content:

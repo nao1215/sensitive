@@ -307,9 +307,41 @@ func TestWithheldRecord(t *testing.T) {
 			if message != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(1) || got["level"] != "warn" || strings.Contains(out.String(), "planted") {
 				t.Fatal(out.String())
 			}
-			if got["ts"] != float64(7) && got["time"] != "1970-01-01T00:00:07Z" {
-				t.Fatal("timestamp lost", got)
+			if got["ts"] != nil || got["time"] != nil || got["timestamp"] != nil {
+				t.Fatal("unproven timestamp survived", got)
 			}
 		})
+	}
+}
+
+type timestampSink struct{ bytes.Buffer }
+
+func (*timestampSink) Sync() error { return nil }
+
+// verbatim when it is a JSON number or RFC3339 text. The normal path masks it.
+func TestWithheldUserTimestampField(t *testing.T) {
+	t.Parallel()
+	big := strings.Repeat("a", 1<<20)
+	for name, fields := range map[string][]zap.Field{
+		"normal": {zap.Int64("ts", 4111111111111111)},
+		"size":   {zap.Int64("ts", 4111111111111111), zap.String("body", big)},
+		"frac":   {zap.String("ts", "2026-11-16T00:00:00.4111111111111111Z"), zap.String("body", big)},
+	} {
+		var out timestampSink
+		core := zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()), embargozap.NewWriteSyncer(&out, embargo.NewScanner()), zap.InfoLevel)
+		zap.New(core).Info("upload", fields...)
+		got := strings.TrimSpace(out.String())
+		t.Logf("%s: %s", name, got)
+		if strings.Contains(got, "4111111111111111") {
+			t.Errorf("%s: card number reached the output", name)
+		}
+	}
+	var out timestampSink
+	core := zapcore.NewCore(zapcore.NewConsoleEncoder(zap.NewProductionEncoderConfig()), embargozap.NewWriteSyncer(&out, embargo.NewScanner()), zap.InfoLevel)
+	zap.New(core).Info("upload", zap.Int64("ts", 4111111111111111))
+	got := strings.TrimSpace(out.String())
+	t.Logf("console: %s", got)
+	if strings.Contains(got, "4111111111111111") {
+		t.Errorf("console: card number reached the output")
 	}
 }

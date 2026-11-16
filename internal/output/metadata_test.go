@@ -29,7 +29,7 @@ func TestMetadataNeverRetainsOriginalFields(t *testing.T) {
 			if err := json.Unmarshal(raw, &got); err != nil {
 				t.Fatal(err)
 			}
-			if meta.count != 2 || bytes.Contains(raw, []byte("planted")) || got["level"] == nil || meta.timestamp == nil {
+			if meta.count != 2 || bytes.Contains(raw, []byte("planted")) || got["level"] == nil {
 				t.Fatalf("wrong diagnostic: %s", raw)
 			}
 		}
@@ -49,7 +49,7 @@ func TestMetadataRejectsUntrustedMetadata(t *testing.T) {
 		var meta eventMetadata
 		meta.feed([]byte(input))
 		raw := meta.fallback(saferecord.ErrMasking)
-		if meta.timestamp != nil || meta.level != nil || bytes.Contains(raw, []byte("planted")) {
+		if meta.level != nil || bytes.Contains(raw, []byte("planted")) {
 			t.Fatalf("unsafe metadata: %s", raw)
 		}
 	}
@@ -70,5 +70,23 @@ func TestOversizedSplitRecordRetainsOnlyDiagnosticMetadata(t *testing.T) {
 	}
 	if bytes.Contains(sink.Bytes(), []byte("planted")) || !strings.Contains(sink.String(), `"withheld_attributes":2`) || !strings.HasSuffix(sink.String(), "{\"ok\":true}\n") {
 		t.Fatal(sink.String())
+	}
+}
+
+func TestMetadataRejectsUserTimeFields(t *testing.T) {
+	t.Parallel()
+	for _, key := range []string{"ts", "time", "timestamp"} {
+		for _, value := range []string{`4111111111111111`, `"2026-11-16T00:00:00.4111111111111111Z"`} {
+			var meta eventMetadata
+			meta.feed([]byte(`{"` + key + `":7,"` + key + `":` + value + `}`))
+			if got := meta.fallback(saferecord.ErrSizeLimit); bytes.Contains(got, []byte("4111111111111111")) {
+				t.Fatalf("user time survived: %s", got)
+			}
+			var onlyUser eventMetadata
+			onlyUser.feed([]byte(`{"` + key + `":` + value + `}`))
+			if got := onlyUser.fallback(saferecord.ErrMasking); bytes.Contains(got, []byte("4111111111111111")) {
+				t.Fatalf("unproven time survived: %s", got)
+			}
+		}
 	}
 }

@@ -36,6 +36,7 @@ func (d *MyNumber) Scan(data []byte) []Finding {
 // orig is the original (possibly full-width) input used for RawValue.
 func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	var findings []Finding
+	var logContext numericLogContext
 
 	i := 0
 	for i < len(data) {
@@ -70,7 +71,7 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			continue
 		}
 
-		if isValidMyNumber(digits) && !numericLogFragment(data, start, end) {
+		if isValidMyNumber(digits) && !logContext.fragment(data, start, end) {
 			origStart, origEnd := mapOriginalRange(posMap, start, end)
 
 			findings = append(findings, Finding{

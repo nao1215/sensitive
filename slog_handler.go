@@ -18,6 +18,8 @@ import (
 // Supplying a scanner with WithKinds reduces per-event detection work when only known formats matter.
 // See https://github.com/nao1215/embargo/blob/main/doc/benchmarks.md for scan costs, excluding encoding.
 // Any values keep their encoded JSON shape; errors keep their Error text.
+// Plain and named byte slices are scanned before base64 encoding.
+// Group-qualified keys are checked as TextHandler writes them.
 // Clean scalars and record metadata keep their types; WithAttrs freezes values.
 //
 // Masking errors, size limits and cancellation emit a withheld record with the
@@ -41,7 +43,7 @@ func NewSlogHandler(next slog.Handler, scanner *Scanner) slog.Handler {
 	if scanner == nil {
 		panic("embargo: nil scanner")
 	}
-	return &slogHandler{next: next, scanner: scanner, base: next, failed: nil, hidden: false, depth: 0, bound: 0}
+	return &slogHandler{next: next, scanner: scanner, base: next, failed: nil, hidden: false, depth: 0, bound: 0, groups: ""}
 }
 
 type slogHandler struct {
@@ -49,6 +51,7 @@ type slogHandler struct {
 	scanner *Scanner
 	base    slog.Handler
 	failed  error
+	groups  string
 	bound   int
 	hidden  bool
 	depth   int
@@ -122,6 +125,7 @@ func (h *slogHandler) WithGroup(name string) slog.Handler {
 	} else {
 		copyOf.next = h.next.WithGroup(safe[0].Key)
 		copyOf.depth++
+		copyOf.groups = joinedKey(h.groups, safe[0].Key)
 	}
 	return &copyOf
 }
@@ -150,7 +154,7 @@ func (h *slogHandler) sanitizeRecord(ctx context.Context, record *slog.Record) (
 	}
 	record.Attrs(func(attr slog.Attr) bool {
 		var clean slog.Attr
-		clean, err = h.sanitizeAttr(ctx, attr, h.depth)
+		clean, err = h.sanitizeAttr(ctx, attr, h.depth, h.groups)
 		if err != nil {
 			return false
 		}
@@ -174,7 +178,7 @@ func (h *slogHandler) sanitizeAttrs(attrs []slog.Attr) (safe []slog.Attr, err er
 	}()
 	safe = make([]slog.Attr, 0, len(attrs))
 	for _, attr := range attrs {
-		clean, err := h.sanitizeAttr(context.Background(), attr, h.depth)
+		clean, err := h.sanitizeAttr(context.Background(), attr, h.depth, h.groups)
 		if err != nil {
 			return nil, err
 		}
@@ -189,7 +193,7 @@ func (h *slogHandler) mask(ctx context.Context, text string) (string, error) {
 	return scan.maskScalar(ctx, text, "")
 }
 
-func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth int) (slog.Attr, error) {
+func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth int, groups string) (slog.Attr, error) {
 	const maxDepth = 64
 	const maxLogValues = 100
 	if ctx.Err() != nil {
@@ -198,7 +202,13 @@ func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth in
 	if depth > maxDepth {
 		return slog.Attr{}, saferecord.ErrSizeLimit
 	}
-	key, err := h.mask(ctx, attr.Key)
+	path := joinedKey(groups, attr.Key)
+	key, err := h.mask(ctx, path)
+	if key == path {
+		key = attr.Key
+	} else if groups != "" {
+		key = redactionMarker
+	}
 	if err != nil {
 		return slog.Attr{}, err
 	}
@@ -225,7 +235,7 @@ func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth in
 		attrs := value.Group()
 		safe := make([]slog.Attr, 0, len(attrs))
 		for _, child := range attrs {
-			clean, err := h.sanitizeAttr(ctx, child, depth+1)
+			clean, err := h.sanitizeAttr(ctx, child, depth+1, joinedKey(groups, key))
 			if err != nil {
 				return slog.Attr{}, err
 			}
@@ -257,11 +267,16 @@ func (h *slogHandler) sanitizeAny(ctx context.Context, key, originalKey string, 
 	if errValue, ok := value.(error); ok {
 		return h.sanitizeScalar(ctx, key, originalKey, slog.StringValue(errValue.Error()))
 	}
-	// Plain byte slices have a known base64 size and no user marshaler to invoke.
-	// Reject before encoding; arbitrary MarshalJSON implementations remain unbounded.
-	const jsonQuotes, base64Block, rawBlock = 2, 4, 3
-	if raw, ok := value.([]byte); ok && len(raw) > (maxEventBytes-jsonQuotes)/base64Block*rawBlock {
-		return slog.Attr{}, saferecord.ErrSizeLimit
+	// Scan byte contents before an encoder can hide them behind base64.
+	// Freeze the result so caller mutation and custom slice methods cannot leak.
+	_, rawJSON := value.(json.RawMessage)
+	rawValue := reflect.ValueOf(value)
+	if !rawJSON && rawValue.IsValid() && rawValue.Kind() == reflect.Slice && rawValue.Type().Elem().Kind() == reflect.Uint8 {
+		const jsonQuotes, base64Block, rawBlock = 2, 4, 3
+		if rawValue.Len() > (maxEventBytes-jsonQuotes)/base64Block*rawBlock {
+			return slog.Attr{}, saferecord.ErrSizeLimit
+		}
+		return h.sanitizeBytes(ctx, key, originalKey, rawValue.Bytes())
 	}
 	encoded, err := json.Marshal(value)
 	if err != nil {
@@ -304,4 +319,32 @@ func (h *slogHandler) sanitizeScalar(ctx context.Context, key, originalKey strin
 		}
 	}
 	return slog.Attr{Key: key, Value: value}, nil
+}
+
+func joinedKey(groups, key string) string {
+	if groups == "" {
+		return key
+	}
+	if key == "" {
+		return groups
+	}
+	return groups + "." + key
+}
+
+func (h *slogHandler) sanitizeBytes(ctx context.Context, key, originalKey string, raw []byte) (slog.Attr, error) {
+	scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
+	text := string(raw)
+	safe, err := scan.maskScalar(ctx, text, originalKey)
+	if err != nil {
+		return slog.Attr{}, err
+	}
+	if safe != text {
+		return slog.String(key, safe), nil
+	}
+	//nolint:errchkjson // Keep an explicit error boundary for encoding.
+	encoded, err := json.Marshal(raw)
+	if err != nil {
+		return slog.Attr{}, slogSanitizationError()
+	}
+	return slog.Any(key, maskedJSON(encoded)), nil
 }
