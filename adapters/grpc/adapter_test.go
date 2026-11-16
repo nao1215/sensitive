@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -484,5 +485,68 @@ func requireCanceledAccessRecord(t *testing.T, data []byte) {
 	email, ok := values["email"].([]any)
 	if !ok || len(email) != 1 || email[0] != redacted {
 		t.Fatalf("metadata not masked: %s", string(data))
+	}
+}
+
+func TestWithheldOutcomeSchemaProperty(t *testing.T) {
+	t.Parallel()
+	for code := codes.OK; code <= codes.Unauthenticated; code++ {
+		for _, streaming := range []bool{false, true} {
+			var out bytes.Buffer
+			logger := slog.New(slog.NewJSONHandler(&out, nil))
+			scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(auditPanicDetector{}))
+			ctx := metadata.NewIncomingContext(t.Context(), metadata.Pairs("planted-key", "private@example.com"))
+			serviceError := status.Error(code, "private@example.com")
+			var err error
+			if streaming {
+				err = embargogrpc.NewStreamServerInterceptor(logger, scanner)(nil, &contextStream{getContext: func() context.Context { return ctx }}, &grpc.StreamServerInfo{FullMethod: "/planted/Method"}, func(any, grpc.ServerStream) error { return serviceError })
+			} else {
+				_, err = embargogrpc.NewUnaryServerInterceptor(logger, scanner)(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/planted/Method"}, func(context.Context, any) (any, error) { return grpcResponse, serviceError })
+			}
+			if !errors.Is(err, serviceError) {
+				t.Fatal("service outcome changed")
+			}
+			requireDiagnostic(t, out.Bytes(), "masking error")
+			var record map[string]any
+			if err := json.Unmarshal(out.Bytes(), &record); err != nil {
+				t.Fatal(err)
+			}
+			if record["code"] != code.String() || record["duration"] == nil || strings.Contains(out.String(), "planted") || strings.Contains(out.String(), "private@example.com") {
+				t.Fatal("withheld record lost outcome or retained input")
+			}
+		}
+	}
+}
+
+func TestNumericMetadataLexemeProperty(t *testing.T) {
+	t.Parallel()
+	const integer = "4111111111111111"
+	for position := 1; position < len(integer); position++ {
+		for _, sign := range []string{"", "-"} {
+			lexeme := sign + integer[:position] + "." + integer[position:] + "00E+00" + strconv.Itoa(len(integer)-position)
+			ctx := metadata.NewIncomingContext(t.Context(), metadata.Pairs("number", lexeme))
+			for _, streaming := range []bool{false, true} {
+				var out bytes.Buffer
+				logger := slog.New(slog.NewJSONHandler(&out, nil))
+				if streaming {
+					if err := embargogrpc.NewStreamServerInterceptor(logger, embargo.NewScanner())(nil, &contextStream{getContext: func() context.Context { return ctx }}, &grpc.StreamServerInfo{FullMethod: "/public/Method"}, func(any, grpc.ServerStream) error { return nil }); err != nil {
+						t.Fatal(err)
+					}
+				} else {
+					if _, err := embargogrpc.NewUnaryServerInterceptor(logger, embargo.NewScanner())(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/public/Method"}, func(context.Context, any) (any, error) { return grpcResponse, nil }); err != nil {
+						t.Fatal(err)
+					}
+				}
+				var record struct {
+					Metadata map[string][]string `json:"metadata"`
+				}
+				if err := json.Unmarshal(out.Bytes(), &record); err != nil {
+					t.Fatal(err)
+				}
+				if !slices.Equal(record.Metadata["number"], []string{redacted}) {
+					t.Fatalf("numeric metadata retained part of lexeme %s", lexeme)
+				}
+			}
+		}
 	}
 }

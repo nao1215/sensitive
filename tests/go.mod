@@ -8,7 +8,7 @@ require (
 	github.com/bytedance/godlp v1.2.15
 	github.com/getsentry/sentry-go v0.50.0
 	github.com/m-mizutani/masq v0.2.3
-	github.com/nao1215/embargo v0.7.0
+	github.com/nao1215/embargo v0.8.1
 	github.com/rs/zerolog v1.35.1
 	github.com/samber/slog-formatter v1.3.0
 	github.com/showa-93/go-mask v0.6.2
@@ -35,6 +35,8 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/nao1215/embargo/adapters/logrus v0.7.0
+	github.com/nao1215/embargo/adapters/otel v0.7.0
+	github.com/nao1215/embargo/adapters/sentry v0.7.0
 	github.com/nao1215/embargo/adapters/zap v0.7.0
 	github.com/nao1215/embargo/adapters/zerolog v0.7.0
 	github.com/samber/lo v1.53.0 // indirect
@@ -55,3 +57,7 @@ replace github.com/nao1215/embargo/adapters/zap => ../adapters/zap
 replace github.com/nao1215/embargo/adapters/logrus => ../adapters/logrus
 
 replace github.com/nao1215/embargo/adapters/zerolog => ../adapters/zerolog
+
+replace github.com/nao1215/embargo/adapters/otel => ../adapters/otel
+
+replace github.com/nao1215/embargo/adapters/sentry => ../adapters/sentry

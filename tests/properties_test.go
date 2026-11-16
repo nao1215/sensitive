@@ -1003,6 +1003,7 @@ func TestJSONNumberGrammarAcrossLoggers(t *testing.T) {
 						rt.Fatalf("%s retained lexeme: %s", name, out)
 					}
 				}
+				checkSDKNumberLexeme(t, scanner, key, lexeme)
 				invalid := []byte(`{"` + key + `":0` + integer + `}`)
 				if out, err := scanner.MaskJSON(invalid); err == nil || len(out) != 0 {
 					rt.Fatal("leading zero accepted")

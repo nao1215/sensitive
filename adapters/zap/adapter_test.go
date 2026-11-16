@@ -304,7 +304,7 @@ func TestWithheldRecord(t *testing.T) {
 			if message == nil {
 				message = got["message"]
 			}
-			if message != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(1) || got["level"] != "warn" || strings.Contains(out.String(), "planted") {
+			if len(got) != 3 || message != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(1) || got["level"] != "warn" || strings.Contains(out.String(), "planted") {
 				t.Fatal(out.String())
 			}
 			if got["ts"] != nil || got["time"] != nil || got["timestamp"] != nil {
@@ -343,5 +343,37 @@ func TestWithheldUserTimestampField(t *testing.T) {
 	t.Logf("console: %s", got)
 	if strings.Contains(got, "4111111111111111") {
 		t.Errorf("console: card number reached the output")
+	}
+}
+
+// Console input is deliberately withheld because this writer accepts JSON only.
+// A configured encoder level must still survive, with no user fields or source.
+func TestConsoleWithheldSchemaProperty(t *testing.T) {
+	t.Parallel()
+	for _, timestamp := range []bool{false, true} {
+		for level := zapcore.DebugLevel; level <= zapcore.FatalLevel; level++ {
+			for count := range 5 {
+				var out bytes.Buffer
+				config := zap.NewProductionEncoderConfig()
+				if !timestamp {
+					config.TimeKey = ""
+				}
+				core := zapcore.NewCore(zapcore.NewConsoleEncoder(config), embargozap.NewWriteSyncer(zapcore.AddSync(&out), embargo.NewScanner()), zap.DebugLevel)
+				fields := make([]zapcore.Field, count)
+				for index := range fields {
+					fields[index] = zap.String(fmt.Sprintf("planted-%d", index), "private@example.com")
+				}
+				if err := core.Write(zapcore.Entry{Time: time.Unix(7, 0), Level: level, Message: "planted-message"}, fields); err != nil {
+					t.Fatal(err)
+				}
+				var record map[string]any
+				if err := json.Unmarshal(out.Bytes(), &record); err != nil {
+					t.Fatal(err)
+				}
+				if len(record) != 3 || record["level"] != level.String() || record["msg"] != "embargo: record withheld (masking error)" || record["withheld_attributes"] != float64(count) {
+					t.Fatalf("console timestamp=%v level=%s count=%d: %s", timestamp, level, count, out.Bytes())
+				}
+			}
+		}
 	}
 }

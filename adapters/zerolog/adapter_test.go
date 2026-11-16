@@ -235,7 +235,7 @@ func TestWithheldRecord(t *testing.T) {
 			if message == nil {
 				message = got["message"]
 			}
-			if message != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(1) || got["level"] != "warn" || strings.Contains(out.String(), "planted") {
+			if len(got) != 3 || message != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(1) || got["level"] != "warn" || strings.Contains(out.String(), "planted") {
 				t.Fatal(out.String())
 			}
 			if got["ts"] != nil || got["time"] != nil || got["timestamp"] != nil {
@@ -264,6 +264,30 @@ func TestWithheldUserTimestampField(t *testing.T) {
 			}
 			if strings.Contains(out.String(), "4111111111111111") || !strings.Contains(out.String(), "record withheld") {
 				t.Fatalf("user timestamp survived: %s", out.String())
+			}
+		}
+	}
+}
+
+func TestWithheldSchemaProperty(t *testing.T) {
+	t.Parallel()
+	for level := zerolog.TraceLevel; level <= zerolog.PanicLevel; level++ {
+		for count := range 9 {
+			var out bytes.Buffer
+			scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(auditPanicDetector{}))
+			logger := zerolog.New(embargozerolog.NewWriter(&out, scanner)).Level(zerolog.TraceLevel)
+			// WithLevel does not install Fatal's exit or Panic's panic callback.
+			event := logger.WithLevel(level).Time("time", time.Unix(7, 0))
+			for index := range count {
+				event = event.Str(fmt.Sprintf("planted-%d", index), "private@example.com")
+			}
+			event.Msg("planted-message")
+			var record map[string]any
+			if err := json.Unmarshal(out.Bytes(), &record); err != nil {
+				t.Fatal(err)
+			}
+			if len(record) != 3 || record["level"] != level.String() || record["message"] != "embargo: record withheld (masking error)" || record["withheld_attributes"] != float64(count) {
+				t.Fatalf("level=%s count=%d: %s", level, count, out.Bytes())
 			}
 		}
 	}
