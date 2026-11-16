@@ -3,6 +3,7 @@ package embargogrpc_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -120,9 +122,10 @@ func TestOversizedMetadataSuppressesAccessRecord(t *testing.T) {
 	interceptor := embargogrpc.NewUnaryServerInterceptor(logger, embargo.NewScanner())
 	ctx := metadata.NewIncomingContext(t.Context(), metadata.Pairs("public", strings.Repeat("x", 1<<20)))
 	_, err := interceptor(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/limit/Unary"}, func(context.Context, any) (any, error) { return "accepted metadata", nil })
-	if err != nil || output.Len() != 0 {
-		t.Fatal("oversized metadata was logged or changed the RPC result")
+	if err != nil {
+		t.Fatal("logging changed the RPC result")
 	}
+	requireSuppressedOrDiagnostic(t, output.Bytes(), "size limit")
 }
 
 func TestContextErrorsUseWireStatusInAccessRecords(t *testing.T) {
@@ -211,9 +214,13 @@ func TestGRPCContextCancellation(t *testing.T) {
 				if alreadyCanceled {
 					want = 0
 				}
-				if response != grpcResponse || err != nil || out.Len() != 0 || detector.calls != want {
+				if response != grpcResponse || err != nil || detector.calls != want {
 					t.Fatalf("err=%v bytes=%d scans=%d want=%d", err, out.Len(), detector.calls, want)
 				}
+				if alreadyCanceled && out.Len() != 0 {
+					t.Fatal("already canceled request reached logger")
+				}
+				requireSuppressedOrDiagnostic(t, out.Bytes(), "canceled")
 			})
 		}
 	}
@@ -295,4 +302,26 @@ type scalingStream struct {
 
 func (s *scalingStream) Context() context.Context {
 	return metadata.NewIncomingContext(context.Background(), s.values)
+}
+
+// Root handler versions differ in failure reporting; neither may forward input.
+func requireSuppressedOrDiagnostic(t *testing.T, data []byte, reason string) {
+	t.Helper()
+	if len(data) == 0 {
+		return
+	}
+	var record map[string]any
+	if err := json.Unmarshal(data, &record); err != nil {
+		t.Fatal(err)
+	}
+	if len(record) != 4 || record["level"] != "INFO" || record["msg"] != "embargo: record withheld ("+reason+")" || record["withheld_attributes"] != float64(4) {
+		t.Fatal("failed access record retained original content")
+	}
+	stamp, ok := record["time"].(string)
+	if !ok {
+		t.Fatal("diagnostic lost its timestamp")
+	}
+	if _, err := time.Parse(time.RFC3339Nano, stamp); err != nil {
+		t.Fatal(err)
+	}
 }

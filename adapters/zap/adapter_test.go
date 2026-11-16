@@ -259,7 +259,17 @@ func TestSyncChecksCompletenessBeforeDelegating(t *testing.T) {
 	if _, err := writer.Write([]byte(`{"partial":`)); err != nil {
 		t.Fatal(err)
 	}
-	if err := writer.Sync(); err == nil || sink.syncs != 1 || sink.Len() != 0 {
-		t.Fatal("partial record reached sink")
+	if err := writer.Sync(); err == nil || sink.syncs != 1 {
+		t.Fatal("incomplete record lost its framing error or changed synchronization")
+	}
+	// The root writer may suppress invalid input or emit a fixed diagnostic.
+	if sink.Len() != 0 {
+		var record map[string]any
+		if err := json.Unmarshal(sink.Bytes(), &record); err != nil {
+			t.Fatal(err)
+		}
+		if len(record) != 2 || record["msg"] != "embargo: record withheld (masking error)" || record["withheld_attributes"] != float64(1) {
+			t.Fatal("partial content reached sink")
+		}
 	}
 }
