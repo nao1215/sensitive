@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/nao1215/embargo"
 )
 
 func TestHTTPDifferential(t *testing.T) {
@@ -250,6 +252,29 @@ func TestHTTPMetadataBudget(t *testing.T) {
 	}
 }
 
+func TestHTTPMetadataExactRemainingBudget(t *testing.T) {
+	t.Parallel()
+	for _, header := range []http.Header{{"X": nil}, {"X": {"ok"}}} {
+		// Metadata reservations include the framing needed by the capture.
+		cost := int64(9)
+		if len(header["X"]) != 0 {
+			cost += 6
+		}
+		for _, remaining := range []int64{cost - 1, cost, cost + 1} {
+			r := guardPolicy([]Option{WithScanner(embargo.NewScanner(embargo.WithKinds()))})
+			r.maxBytes, r.retained = 64, 64-remaining
+			w := &response{recorder: r}
+			got := w.snapshot(header, func(string) bool { return true })
+			if r.failed != (remaining < cost) {
+				t.Fatalf("remaining %d, cost %d: failed=%v", remaining, cost, r.failed)
+			}
+			if remaining >= cost && !reflect.DeepEqual(got, header) {
+				t.Fatal("metadata fitting exactly in the remaining budget was lost")
+			}
+		}
+	}
+}
+
 func TestHTTPInformationalHeadersAreScanned(t *testing.T) {
 	t.Parallel()
 	for _, code := range []int{http.StatusContinue, http.StatusEarlyHints} {
@@ -268,7 +293,7 @@ func TestHTTPInformationalHeadersAreScanned(t *testing.T) {
 		}
 		p.finish()
 		//nolint:goconst // Independent scenarios keep their fixture and expected error literals local.
-		if len(p.messages) != 1 || p.messages[0] != "embargotest: the fake secret appeared in captured output" {
+		if len(p.messages) != 2 || p.messages[0] != "embargotest: the fake secret appeared in captured output" || p.messages[1] != "embargotest: sensitive data appeared in captured output" {
 			t.Fatalf("messages = %q", p.messages)
 		}
 	}
@@ -286,7 +311,7 @@ func TestHTTPFinalHeaderLeakNamesTheSecret(t *testing.T) {
 		t.Fatal("header canary accepted")
 	}
 	p.finish()
-	if len(p.messages) != 1 || p.messages[0] != "embargotest: the fake secret appeared in captured output" {
+	if len(p.messages) != 2 || p.messages[0] != "embargotest: the fake secret appeared in captured output" || p.messages[1] != "embargotest: sensitive data appeared in captured output" {
 		t.Fatalf("messages = %q", p.messages)
 	}
 }

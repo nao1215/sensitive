@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/nao1215/embargo/internal/ascii"
+	"github.com/nao1215/embargo/internal/detect"
 )
 
 // The pre-optimization dispatch loop remains test-only, using the same detectors
@@ -30,11 +31,11 @@ func referenceScan(s *Scanner, data []byte) []Finding {
 		if !matchesAnyHint(s.hintCache[i], data, &folded, &ready) {
 			continue
 		}
-		input := data
+		detected := d.Scan(data)
 		if Kind(d.Name()) == KindCredential {
-			input = original
+			detected = credentialViewOracle(d, original, data, positions)
 		}
-		for _, f := range d.Scan(input) {
+		for _, f := range detected {
 			if positions != nil && Kind(d.Name()) != KindCredential {
 				f.Start, f.End = positions[f.Start], positions[f.End]
 			}
@@ -525,4 +526,27 @@ func TestBuiltInDispatchHintsAreNonempty(t *testing.T) {
 			}
 		}
 	}
+}
+
+// The test oracle checks every raw span independently, without the production
+// merge cursor. Raw delimiters win unless a decoded value fully contains them.
+func credentialViewOracle(d detect.Detector, raw, decoded []byte, positions []int) []detect.Finding {
+	original := d.Scan(raw)
+	if positions == nil {
+		return original
+	}
+	out := slices.Clone(original)
+	for _, f := range d.Scan(decoded) {
+		f.Start, f.End = positions[f.Start], positions[f.End]
+		blocked := false
+		for _, r := range original {
+			if r.Start < f.End && f.Start < r.End && (f.Start >= r.Start || f.End < r.End) {
+				blocked = true
+			}
+		}
+		if !blocked {
+			out = append(out, f)
+		}
+	}
+	return out
 }

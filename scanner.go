@@ -86,10 +86,11 @@ func buildHintCache(detectors []detect.Detector) [][]hintEntry {
 
 // Scan returns every finding, including overlaps, ordered by start, descending end,
 // kind, then descending confidence. Built-ins decode one layer of valid percent
-// escapes (%HH), except KindCredential parses original URL/DSN delimiters.
+// escapes (%HH); KindCredential keeps original URL/DSN delimiters and also scans
+// normalized assignments.
 // Literal + and invalid escapes are preserved; offsets always refer
-// to original bytes. KindCredential also scans up to two Go/JSON quote and
-// backslash escape layers. Other encodings are not decoded. Custom detectors receive
+// to original bytes. KindCredential also scans up to four Go/JSON quote and
+// backslash escape layers, including hexadecimal and Unicode quote escapes. Other encodings are not decoded. Custom detectors receive
 // the original bytes. Invalid custom findings panic with a fixed message.
 func (s *Scanner) Scan(data []byte) []Finding {
 	return s.scan(data, nil)
@@ -104,11 +105,18 @@ func (s *Scanner) scan(data []byte, canceled func() error) []Finding {
 	}
 	scanData := data
 	var positions []int
-	var selected uint64
 	if len(s.detectors) > 0 {
 		scanData, positions = normalizedScanInput(data)
-		selected = s.selectDetectors(scanData)
 	}
+	return s.scanInput(data, scanData, positions, canceled)
+}
+
+// scanInput shares the normalized view with streaming frame recognition.
+func (s *Scanner) scanInput(data, scanData []byte, positions []int, canceled func() error) []Finding {
+	if len(data) == 0 || scanCanceled(canceled) {
+		return nil
+	}
+	selected := s.selectDetectors(scanData)
 	var findings []Finding
 	for i, d := range s.detectors {
 		if scanCanceled(canceled) {
@@ -117,12 +125,14 @@ func (s *Scanner) scan(data []byte, canceled func() error) []Finding {
 		if selected&(1<<i) == 0 {
 			continue
 		}
-		input := scanData
 		raw := d.Name() == "credential"
-		if raw {
-			input = data
+		var detected []detect.Finding
+		if credential, ok := d.(*detect.Credential); ok {
+			detected = credential.ScanViews(data, scanData, positions)
+		} else {
+			detected = d.Scan(scanData)
 		}
-		for _, f := range d.Scan(input) {
+		for _, f := range detected {
 			if positions != nil && !raw {
 				f.Start, f.End = positions[f.Start], positions[f.End]
 			}

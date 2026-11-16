@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"strings"
 	"testing"
 	"time"
 )
@@ -19,7 +20,7 @@ func TestDiagnosticsContainOnlyFixedData(t *testing.T) {
 		if Message(tc.failure) != "embargo: record withheld ("+tc.reason+")" {
 			t.Fatal("wrong reason")
 		}
-		if Reason(t.Context(), tc.failure) != tc.failure || tc.failure.Error() != "embargo: invalid or unmaskable JSON" {
+		if Reason(t.Context(), tc.failure) != tc.failure || !strings.HasPrefix(tc.failure.Error(), "embargo: ") {
 			t.Fatal("classification changed")
 		}
 		var sink bytes.Buffer
@@ -78,6 +79,9 @@ func TestAccessBudgetUsesOriginalContextUntilCanceled(t *testing.T) {
 
 func TestUnknownReasonUsesFixedMaskingMessage(t *testing.T) {
 	t.Parallel()
+	if SanitizationError(255).Error() != ErrMasking.Error() {
+		t.Fatal("unknown error did not use fixed fallback")
+	}
 	if Message(SanitizationError(255)) != "embargo: record withheld (masking error)" {
 		t.Fatal("unknown reason exposed an unstable diagnostic")
 	}

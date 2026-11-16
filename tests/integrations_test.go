@@ -25,6 +25,8 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"reflect"
 	"slices"
 	"strconv"
@@ -1372,3 +1374,208 @@ func freeTextErrorOutput(t *testing.T, scanner *embargo.Scanner, name, input str
 }
 
 const freeTextAuthorizationHeader = "Authorization"
+
+// Every free-text and key-value hook consumes the same generated failure shapes.
+const (
+	boundaryIPv4 = "203.0.113.9"
+	boundaryBIC  = "DEUTDEFF"
+)
+
+func TestMaskingBoundaryHooks(t *testing.T) {
+	t.Parallel()
+	var grpcCases [][]string
+	for n := range 3 {
+		secret := fmt.Sprintf("opaqueHook%02dFixture", n)
+		inputs := []struct{ text, needle string }{
+			{"connection from 2001:db8::5.", "2001:db8::5"},
+			{"peer ::ffff:203.0.113.9.", boundaryIPv4},
+			{"Accepted connection from 203.0.113.9.", boundaryIPv4},
+			{"blocked 203.0.113.9...", boundaryIPv4},
+			{`{"ip":"203.0.113.9."}`, boundaryIPv4},
+			{"peer 2001:db8::5: closed", "2001:db8::5"},
+			{"SWIFT-Code: DEUTDEFF", boundaryBIC},
+			{"swift_code=DEUTDEFF", boundaryBIC},
+			{"swiftCode=DEUTDEFF", boundaryBIC},
+			{"SWIFT number DEUTDEFF", boundaryBIC},
+			{"password := " + secret, secret},
+			{"Authorization: `Token " + secret + "` public=kept", secret},
+			{"Authorization: 'Token " + secret + "' public=kept", secret},
+			{"map[" + strings.Repeat("service_", 32) + "password:head " + secret + " tail public:kept]", secret},
+			{"map[public:" + strings.Repeat("x", 256) + " password:head " + secret + " tail public:kept]", secret},
+			{"password=`head " + secret + " tail`", secret},
+			{"password: |\n  " + secret + "\n  body\npublic: retained", secret},
+			{"q=password%3D" + secret + "%26user%3Dbob", secret},
+			{"{DSN:{Scheme:https Opaque: User:bob:" + secret + " Host:example.com Path:/x}}", secret},
+			{"user arn:jp:mynumber::123456789018: ok", "123456789018"},
+			{"arn:aws:iam::1234 5678 9018:role", "1234 5678 9018"},
+		}
+		for _, label := range []string{"PRIVATE KEY", "PGP PRIVATE KEY BLOCK"} {
+			for _, header := range []string{"-----BEGIN " + label + "-----", "%2D----BEGIN " + label + "-----", "-----BEGIN " + strings.ReplaceAll(label, " ", "%20") + "-----"} {
+				inputs = append(inputs, struct{ text, needle string }{header + "\n" + secret + "\n-----END " + label + "-----", secret})
+			}
+		}
+		for _, scheme := range []string{"Bearer\t", "Token ", "Negotiate ", "Digest response=", "AWS4-HMAC-SHA256 Signature=", "'Quoted' ", "`Wrapped` ", "'\t", "`Leading\t"} {
+			inputs = append(inputs, struct{ text, needle string }{"Authorization: " + scheme + secret + ", Basic " + secret, secret})
+		}
+		for _, scheme := range []string{"Basic ", "'Quoted' ", "`Wrapped` ", "Scheme!#$%&'*+-.^_`|~\t"} {
+			inputs = append(inputs, struct{ text, needle string }{"Authorization: Token [REDACTED], " + scheme + secret, secret})
+		}
+		for _, prefix := range []string{"[]", "[abc]", ",", ")", "[REDACTED]]", "[REDACTED][REDACTED]"} {
+			inputs = append(inputs, struct{ text, needle string }{"password=" + prefix + secret, secret})
+		}
+		escaped := `{"password":"` + secret + `"}`
+		for range 4 {
+			inputs = append(inputs, struct{ text, needle string }{escaped, secret})
+			escaped = strconv.Quote(escaped)
+		}
+		for _, quote := range []string{`\x22`, `\u0022`} {
+			inputs = append(inputs, struct{ text, needle string }{"{" + quote + "password" + quote + ":" + quote + secret + quote + "}", secret})
+		}
+		for _, form := range []string{`[]interface {}{"%s"}`, `map[string]string{"access":"%s"}`, `sql.NullString{String:"%s", Valid:true}`, `main.Password("%s")`, `main.Password_Value("%s")`, `main.秘密("%s")`, `struct { Raw string }{Raw:"%s"}`, `[]struct { Raw string }{struct { Raw string }{Raw:"%s"}}`, `head %s tail`} {
+			inputs = append(inputs,
+				struct{ text, needle string }{"{Password:" + fmt.Sprintf(form, secret) + "}", secret},
+				struct{ text, needle string }{"{Authorization:" + fmt.Sprintf(form, secret) + "}", secret},
+			)
+		}
+		byteLiteral := fmt.Sprintf("%#v", []byte(secret))
+		inputs = append(inputs, struct{ text, needle string }{"{Password:" + byteLiteral + "}", byteLiteral[strings.IndexByte(byteLiteral, '{')+1 : len(byteLiteral)-1]})
+		for i, input := range inputs {
+			grpcCases = append(grpcCases, []string{input.text, input.needle, "detail", input.text})
+			t.Run(fmt.Sprintf("text/%d/%d", n, i), func(t *testing.T) {
+				t.Parallel()
+				checkBoundaryHooks(t, input.text, input.needle, "detail", input.text)
+			})
+		}
+		for _, key := range []string{"SECRET_KEY", "POSTGRES_PASSWORD", "MYSQL_PASSWORD", "GITHUB_TOKEN", "AWS_SESSION_TOKEN", "X-Auth-Token", "X-Goog-Api-Key", "spring.datasource.password", "service.credential", "client_auth"} {
+			grpcCases = append(grpcCases, []string{key + "=" + secret, secret, key, secret})
+			t.Run(fmt.Sprintf("key/%d/%s", n, key), func(t *testing.T) { t.Parallel(); checkBoundaryHooks(t, key+"="+secret, secret, key, secret) })
+		}
+	}
+	checkGRPCBoundaryHooks(t, grpcCases)
+}
+
+func checkBoundaryHooks(t *testing.T, text, needle, key, value string) {
+	t.Helper()
+	scanner := embargo.NewScanner()
+	check := func(name string, data []byte) {
+		t.Helper()
+		if len(data) == 0 || bytes.Contains(data, []byte(needle)) || bytes.Contains(data, []byte(strconv.Quote(needle)[1:len(strconv.Quote(needle))-1])) {
+			t.Errorf("%s retained fixture: %s", name, data)
+		}
+	}
+	// Attributes and message are independently scanned by each logging wrapper.
+	for _, name := range []string{loggerSlog, loggerZap, loggerZerolog, loggerLogrus} {
+		check(name+" attribute", loggerOutput(t, scanner, name, key, value))
+	}
+	var out bytes.Buffer
+	slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(&out, nil), scanner)).Info(text)
+	check("slog message", out.Bytes())
+	out.Reset()
+	sink := embargozap.NewWriteSyncer(zapcore.AddSync(&out), scanner)
+	logger := zap.New(zapcore.NewCore(zapcore.NewJSONEncoder(zapcore.EncoderConfig{MessageKey: "msg"}), sink, zap.InfoLevel))
+	logger.Info(text)
+	if err := logger.Sync(); err != nil {
+		t.Fatal(err)
+	}
+	check("zap message", out.Bytes())
+	out.Reset()
+	writer := embargozerolog.NewWriter(&out, scanner)
+	zero := zerolog.New(writer)
+	zero.Info().Msg(text)
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	check("zerolog message", out.Bytes())
+	out.Reset()
+	log := logrus.New()
+	log.SetOutput(&out)
+	log.SetFormatter(embargologrus.NewFormatter(&logrus.JSONFormatter{}, scanner))
+	log.Info(text)
+	check("logrus message", out.Bytes())
+	out.Reset()
+	event := &sentry.Event{Message: text, Exception: []sentry.Exception{{Value: text}}}
+	event.Contexts = map[string]sentry.Context{"extra": {key: value}}
+	event = embargosentry.NewBeforeSend(scanner)(event, nil)
+	encoded, err := json.Marshal(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	check("Sentry", encoded)
+	provider := sdklog.NewLoggerProvider(sdklog.WithProcessor(sdklog.NewSimpleProcessor(embargootel.NewLogExporter(&sdkLogCapture{writer: &out}, scanner))))
+	var record otellog.Record
+	record.SetBody(attribute.StringValue(text))
+	record.AddAttributes(attribute.String(key, value))
+	provider.Logger("boundary").Emit(t.Context(), record)
+	if shutdownErr := provider.Shutdown(t.Context()); shutdownErr != nil {
+		t.Fatal(shutdownErr)
+	}
+	check("OTel log", out.Bytes())
+	out.Reset()
+	spans := tracetest.NewInMemoryExporter()
+	tracer := sdktrace.NewTracerProvider(sdktrace.WithSyncer(embargootel.NewSpanExporter(spans, scanner)))
+	_, span := tracer.Tracer("boundary").Start(t.Context(), text)
+	span.SetAttributes(attribute.String(key, value))
+	span.AddEvent(text)
+	span.End()
+	encoded, err = json.Marshal(spans.GetSpans())
+	if err != nil {
+		t.Fatal(err)
+	}
+	check("OTel span", encoded)
+	if err := tracer.Shutdown(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		if err != nil || string(body) != text {
+			t.Error("HTTP wire body changed")
+		}
+		w.Header().Set("X-Debug", text)
+		w.WriteHeader(http.StatusOK)
+	})
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "http://example.com/?"+url.QueryEscape(key)+"="+url.QueryEscape(value), strings.NewReader(text))
+	req.Header.Set(key, value)
+	embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, nil)), scanner).ServeHTTP(httptest.NewRecorder(), req)
+	check("HTTP request/response headers and query", out.Bytes())
+	out.Reset()
+}
+
+// Build the same case matrix against the gRPC module in a temporary consumer.
+// Its upstream transitive versions stay out of the tests module's manifest.
+func checkGRPCBoundaryHooks(t *testing.T, rows [][]string) {
+	t.Helper()
+	versionCommand := exec.CommandContext(t.Context(), "go", "list", "-m", "-f", "{{.Version}}", "github.com/nao1215/embargo")
+	version, err := versionCommand.Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := filepath.Abs("..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	directory := t.TempDir()
+	module := fmt.Sprintf("module grpchooks\n\ngo 1.26.11\nrequire (\ngithub.com/nao1215/embargo %s\ngithub.com/nao1215/embargo/adapters/grpc %s\n)\nreplace github.com/nao1215/embargo => %q\nreplace github.com/nao1215/embargo/adapters/grpc => %q\n", strings.TrimSpace(string(version)), strings.TrimSpace(string(version)), filepath.ToSlash(root), filepath.ToSlash(filepath.Join(root, "adapters", "grpc")))
+	if writeErr := os.WriteFile(filepath.Join(directory, "go.mod"), []byte(module), 0o600); writeErr != nil {
+		t.Fatal(writeErr)
+	}
+	//nolint:errchkjson // Keep serialization failure explicit if the case shape changes.
+	input, err := json.Marshal(rows)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// #nosec G204 -- Execute only the fixed repository fixture in an isolated consumer.
+	command := exec.CommandContext(t.Context(), "go", "run", "-mod=mod", filepath.Join(root, "adapters", "grpc", "testdata", "grpchooks", "main.go"))
+	command.Dir = directory
+	command.Env = append(os.Environ(), "GOWORK=off")
+	command.Stdin = bytes.NewReader(input)
+	var diagnostic bytes.Buffer
+	command.Stderr = &diagnostic
+	output, err := command.Output()
+	if err != nil {
+		t.Fatalf("gRPC boundary gate: %v\n%s", err, diagnostic.String())
+	}
+	if string(output) != fmt.Sprintf("checked %d unary and %d stream cases\n", len(rows), len(rows)) {
+		t.Fatal("gRPC case matrix was not completely exercised")
+	}
+	t.Log(strings.TrimSpace(string(output)))
+}

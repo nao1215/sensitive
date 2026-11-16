@@ -211,12 +211,12 @@
   },
   {
     "detector": "swiftbic",
-    "precision": "54.9%",
+    "precision": "85.9%",
     "recall": "100.0%",
     "positive": 146,
     "negative": 562,
     "tp": 146,
-    "fp": 120,
+    "fp": 24,
     "fn": 0
   },
   {

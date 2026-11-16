@@ -1,6 +1,7 @@
 package embargotest
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -161,5 +162,24 @@ func TestUnknownValuePathFails(t *testing.T) {
 	t.Parallel()
 	if data, valid := formatValue("unsupported", "public"); valid || data != nil {
 		t.Fatal("unsupported formatter succeeded")
+	}
+}
+
+func TestValueSlogGroupDepthBoundary(t *testing.T) {
+	t.Parallel()
+	for _, depth := range []int{62, 63, 64, 65} {
+		value := slog.StringValue("retained")
+		for range depth {
+			value = slog.GroupValue(slog.Any("child", value))
+		}
+		for _, path := range []string{valueSlogText, valueSlogJSON} {
+			data, ok := formatValue(path, value)
+			if ok != (depth < 64) {
+				t.Fatalf("depth %d on %s: accepted=%v", depth, path, ok)
+			}
+			if ok && !bytes.Contains(data, []byte("retained")) {
+				t.Fatal("accepted nested value disappeared from output")
+			}
+		}
 	}
 }

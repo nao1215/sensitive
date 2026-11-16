@@ -1,8 +1,30 @@
 package detect
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 )
+
+const swiftWireFixture = "wire to HSBCHKHH"
+
+func TestSWIFTContextDoesNotConsumeNeighboringWords(t *testing.T) {
+	t.Parallel()
+	for _, input := range []string{"wireless DEUTDEFF", "DEUTDEFF swiftcompiler", "bicycle DEUTDEFF"} {
+		if got := NewSWIFTBIC().Scan([]byte(input)); len(got) != 0 {
+			t.Errorf("unrelated context %q: %+v", input, got)
+		}
+	}
+	for _, input := range []string{"syscall=59 account=fefbAE01", "syscall=59 a0=BOFAUS3N"} {
+		if got := NewSWIFTBIC().Scan([]byte(input)); len(got) != 1 {
+			t.Errorf("register exclusion too broad %q: %+v", input, got)
+		}
+	}
+	input := "SWIFT: DEUTDEFF/HSBCHKHH/BNPAFRPP"
+	if got := NewSWIFTBIC().Scan([]byte(input)); len(got) != 3 {
+		t.Errorf("slash list lost later codes: %+v", got)
+	}
+}
 
 func TestSWIFTBICDetector_Scan(t *testing.T) {
 	t.Parallel()
@@ -31,7 +53,7 @@ func TestSWIFTBICDetector_Scan(t *testing.T) {
 		},
 		{
 			name:       "HSBC Hong Kong with digit in location",
-			input:      "wire to HSBCHKHH",
+			input:      swiftWireFixture,
 			wantLen:    1,
 			wantRaw:    "HSBCHKHH",
 			wantMinCon: 0.8,
@@ -252,6 +274,92 @@ func TestSWIFTLanguageWordShapeProperty(t *testing.T) {
 				}
 				if got := NewSWIFTBIC().Scan([]byte("SWIFT: " + word)); len(got) != 1 {
 					t.Fatal("explicit bank context lost")
+				}
+			}
+		}
+	}
+}
+
+func TestSWIFTRegisterProperty(t *testing.T) {
+	t.Parallel()
+	d := NewSWIFTBIC()
+	for n := range 100 {
+		code := fmt.Sprintf("fefbAE%02x", n)
+		if got := d.Scan([]byte("syscall=42 a0=" + code)); len(got) != 0 {
+			t.Errorf("context accepted: %s: %+v", code, got)
+		}
+		for _, positive := range []string{"BIC: " + code, swiftWireFixture, "swift " + strings.ToLower(code)} {
+			if got := d.Scan([]byte(positive)); len(got) != 1 {
+				t.Errorf("positive lost: %s: %+v", positive, got)
+			}
+		}
+	}
+}
+
+func TestSWIFTUserSlotProperty(t *testing.T) {
+	t.Parallel()
+	d := NewSWIFTBIC()
+	for n := range 100 {
+		code := fmt.Sprintf("fefbAE%02x", n)
+		if got := d.Scan([]byte("Invalid user " + code + " from host")); len(got) != 0 {
+			t.Errorf("context accepted: %s: %+v", code, got)
+		}
+		for _, positive := range []string{"BIC: " + code, swiftWireFixture, "swift " + strings.ToLower(code)} {
+			if got := d.Scan([]byte(positive)); len(got) != 1 {
+				t.Errorf("positive lost: %s: %+v", positive, got)
+			}
+		}
+	}
+}
+
+func TestSWIFTIdentifierProperty(t *testing.T) {
+	t.Parallel()
+	d := NewSWIFTBIC()
+	for n := range 100 {
+		code := fmt.Sprintf("fefbAE%02x", n)
+		if got := d.Scan([]byte("input_" + code + "_request swift")); len(got) != 0 {
+			t.Errorf("context accepted: %s: %+v", code, got)
+		}
+		for _, positive := range []string{"BIC: " + code, swiftWireFixture, "swift " + strings.ToLower(code)} {
+			if got := d.Scan([]byte(positive)); len(got) != 1 {
+				t.Errorf("positive lost: %s: %+v", positive, got)
+			}
+		}
+	}
+}
+
+func TestSWIFTHardwareWireProperty(t *testing.T) {
+	t.Parallel()
+	d := NewSWIFTBIC()
+	for n := range 100 {
+		code := fmt.Sprintf("fefbAE%02x", n)
+		if got := d.Scan([]byte("warning for node wire, " + code)); len(got) != 0 {
+			t.Errorf("context accepted: %s: %+v", code, got)
+		}
+		for _, positive := range []string{"BIC: " + code, swiftWireFixture, "swift " + strings.ToLower(code)} {
+			if got := d.Scan([]byte(positive)); len(got) != 1 {
+				t.Errorf("positive lost: %s: %+v", positive, got)
+			}
+		}
+	}
+}
+
+func TestSWIFTKeySpellingProperty(t *testing.T) {
+	t.Parallel()
+	d := NewSWIFTBIC()
+	for n := range 26 {
+		code := string(rune('A'+n)) + "BCDDEFF"
+		for _, key := range []string{"SWIFT-Code:", "swift_code=", "swiftCode=", "SWIFTCODE:", "SWIFT number", "SWIFT No.", "SWIFT address", "Swift/BIC:", "swift_bic=", "swift ("} {
+			input := key + " " + code
+			if got := d.Scan([]byte(input)); len(got) != 1 || got[0].RawValue != code {
+				t.Errorf("%q: %+v", input, got)
+			}
+		}
+		for _, word := range []string{"package", "dependency", "source", "compiler"} {
+			input := "swift " + word + " " + code
+			for _, got := range d.Scan([]byte(input)) {
+				if got.RawValue == code {
+					t.Errorf("build context %q: %+v", input, got)
 				}
 			}
 		}

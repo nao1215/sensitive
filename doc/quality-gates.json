@@ -720,8 +720,8 @@
     {
       "set": "development",
       "kind": "swiftbic",
-      "numerator": 500000000,
-      "denominator": 4026243
+      "numerator": 0,
+      "denominator": 1
     },
     {
       "set": "development",
@@ -756,8 +756,8 @@
     {
       "set": "held",
       "kind": "aba_routing",
-      "numerator": 3500000000,
-      "denominator": 42178681
+      "numerator": 0,
+      "denominator": 1
     },
     {
       "set": "held",
@@ -942,8 +942,8 @@
     {
       "set": "held",
       "kind": "swiftbic",
-      "numerator": 13500000000,
-      "denominator": 42178681
+      "numerator": 0,
+      "denominator": 1
     },
     {
       "set": "held",

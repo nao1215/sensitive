@@ -20,7 +20,7 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 
 | Detector | Development before / GB | Development after / GB | Held before / GB | Held after / GB |
 |---|---:|---:|---:|---:|
-| aba_routing | 1,614.4 | 0.0 | 83.0 | 83.0 |
+| aba_routing | 1,614.4 | 0.0 | 83.0 | 0.0 |
 | ach_trace | 0.0 | 0.0 | 0.0 | 0.0 |
 | awskey | 0.0 | 0.0 | 0.0 | 0.0 |
 | bank_account | 0.0 | 0.0 | 0.0 | 0.0 |
@@ -51,7 +51,7 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 | private_key_pem | 0.0 | 0.0 | 0.0 | 0.0 |
 | service_token | 0.0 | 0.0 | 0.0 | 0.0 |
 | slack_token | 0.0 | 0.0 | 0.0 | 0.0 |
-| swiftbic | 739,274.8 | 124.2 | 343.8 | 296.4 |
+| swiftbic | 739,274.8 | 0.0 | 343.8 | 0.0 |
 | uk_nhs | 0.0 | 0.0 | 0.0 | 2,287.9 |
 | uk_nino | 0.0 | 0.0 | 0.0 | 0.0 |
 | uk_sortcode | 0.0 | 0.0 | 0.0 | 0.0 |
@@ -60,8 +60,8 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 
 | Configuration | Development before / GB | Development after / GB | Held before / GB | Held after / GB |
 |---|---:|---:|---:|---:|
-| WithAll | 827,818.9 | 22,477.5 | 145,650.6 | 3,153.3 |
-| Default slog handler | 827,818.9 | 124.2 | 145,650.6 | 379.3 |
+| WithAll | 827,818.9 | 22,353.3 | 145,650.6 | 2,773.9 |
+| Default slog handler | 827,818.9 | 0.0 | 145,650.6 | 0.0 |
 | kinds1 | 0.0 | 0.0 | 0.0 | 0.0 |
 | kinds3 | 44,955.1 | 0.0 | 0.0 | 0.0 |
 | kinds8 | 47,563.0 | 0.0 | 144,062.1 | 0.0 |
@@ -83,7 +83,7 @@ Run `make real-log-accuracy LOG_CACHE=/path/outside/the/repository` to verify ca
 
 Classification is kind-specific: an actual contact or network endpoint is a sensitive reference even when published intentionally, while a block ID is not a payment card and a pathname is not an entropy token. The wildcard listener address is valid IP syntax but not a private endpoint, so it counts as an FP for this privacy policy. LogHub logs do not establish that any credential is active, and no authentication was attempted. Uncertain cases must remain unclassified until reviewed rather than being silently counted as true negatives.
 
-The remaining held-partition errors include ABA-shaped counters and log file suffixes, plus SWIFT-shaped usernames and words near “wire”. Those rules were not tuned from held data. The IP policy excludes unspecified and loopback addresses; measured held ipaddr FP/GB is 0.0, ABA is 83.0 and SWIFT is 320.1. These are sample estimates on seen data. Path filtering can miss a secret placed in a URL path or a filename; use key-context detection or explicit Secret values there. Numeric fragment checks also exclude decimal tails and hostname components, and the unquoted token rule omits Java object references. Quoted tokens and password/secret fields retain credential masking.
+The generated table above is the source for current per-kind rates, and the accuracy page includes the same generated evidence. The held partition has now informed the register-slot, invalid-user, identifier, hardware-warning, exception-counter and log-sequence regression rules. These seen logs cannot establish rates on unseen deployments. Path filtering can miss secrets in filenames; version labels can hide real IP addresses, and an unquoted Java object-reference shape under token can hide a real credential. Quoted tokens and password/secret fields retain credential masking.
 
 ## Your application logs
 

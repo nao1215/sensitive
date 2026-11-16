@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Detection changes
+
+- IP sentence punctuation now remains outside the masked address, including IPv4 tails in IPv6 and hyphenated IP ranges; addresses followed by digits or identifier text still remain excluded and may be missed there.
+- Credential masking now accepts arbitrary HTTP auth schemes including quote/backtick token bytes and partially masked credential lists, suffix-based credential keys, Go typed values including underscore and Unicode type names, spaced fmt values after long keys or fields, four quote-escape layers, percent-encoded assignments, backticks, Go assignments, indented YAML blocks and formatted URL userinfo. These forms can mask nonsecret text under credential-like keys or ambiguous fmt fields or quotation; values without a credential key, beyond the escape bound or outside supported grammar may still be missed. Custom sensitive keys replace the default suffix policy.
+- PEM and line scanning share normalized private-key frames, including PGP private key blocks and encoded headers/footers; incomplete blocks still mask through EOF and may hide following public text. Non-private labels remain outside this policy.
+- SWIFT context accepts common code/number/address key spellings. SWIFT ignores syscall hex register slots, invalid-user slots, underscore-joined identifiers and hardware wire warnings; real BICs placed in those contexts may now be missed. Lowercase and digit-bearing codes and wire-transfer context remain supported.
+- ABA ignores explicit double-hummer alignment exception counters and log sequence suffixes; actual routing numbers recorded as those counters or filenames may now be missed. Bare valid-checksum routing numbers remain supported.
+- ARN account exclusion now requires a recognized AWS partition and contiguous account digits; non-AWS lookalikes and separated My Number values are detected. Real identifiers placed in syntactically valid AWS account fields can still be missed.
+
+### Fixed
+
+- Canary checks recognize Go hexadecimal byte-list representations, including surrounding bytes.
+- Audit input diagnostics identify invalid options and allowed ranges without echoing arguments; JSON masking distinguishes malformed input, resource limits and cancellation using fixed messages.
+- Package inventory and documented coverage are checked against Go and the executable gate; real-log prose refers to the generated rates.
+
+
 ## [0.9.0] - 2026-11-17
 
 This minor release closes formatted and escaped credential leaks, handles complete IPv4-embedded IPv6 and streaming PEM spans, and refines context-sensitive detection. The public API and default minimum confidence of 0 are unchanged, and the root module remains dependency-free. Upgrade every installed adapter to v0.9.0 after the adapter tags are published.

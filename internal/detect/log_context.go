@@ -79,3 +79,49 @@ func objectReference(data []byte, start, end int) bool {
 	}
 	return true
 }
+
+func registerSlot(data []byte, start, end int) bool {
+	const contextBytes = 128
+	before := data[max(0, start-contextBytes):start]
+	if len(before) < 3 || before[len(before)-1] != '=' || !bytes.Contains(before, []byte("syscall=")) {
+		return false
+	}
+	slot := assignmentKey(before, len(before)-1)
+	if len(slot) != 2 || slot[0] != 'a' || !isDigit(slot[1]) {
+		return false
+	}
+	for _, b := range data[start:end] {
+		if !isHexDigit(b) {
+			return false
+		}
+	}
+	return true
+}
+
+func invalidUserSlot(data []byte, start int) bool {
+	const contextBytes = 32
+	before := bytes.TrimSpace(data[max(0, start-contextBytes):start])
+	const label = "invalid user"
+	return len(before) >= len(label) && bytes.EqualFold(before[len(before)-len(label):], []byte(label)) && (len(before) == len(label) || !isTokenByte(before[len(before)-len(label)-1]))
+}
+
+func hardwareWireSlot(data []byte, start int) bool {
+	const contextBytes = 128
+	before := bytes.TrimSpace(data[max(0, start-contextBytes):start])
+	const wire = "wire,"
+	if !bytes.HasSuffix(before, []byte(wire)) {
+		return false
+	}
+	return bytes.Contains(before, []byte("warning for "))
+}
+
+func exceptionCounter(data []byte, end int) bool {
+	const unit = "double-hummer alignment exceptions"
+	after := bytes.TrimLeft(data[end:], " \t")
+	return len(after) < len(data[end:]) && bytes.HasPrefix(after, []byte(unit)) && (len(after) == len(unit) || !isTokenByte(after[len(unit)]))
+}
+
+func logSequence(data []byte, start int) bool {
+	const prefix = "log."
+	return start >= len(prefix) && string(data[start-len(prefix):start]) == prefix && (start == len(prefix) || !isTokenByte(data[start-len(prefix)-1]))
+}

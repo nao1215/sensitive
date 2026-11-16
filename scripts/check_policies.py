@@ -61,6 +61,21 @@ def root_module():
     require(not module.get('Tool'), 'tools belong in a separate module')
 
 
+def documentation_contract():
+    """Compare repeated architecture facts with Go and the executable gate."""
+    expected = []
+    for directory in ['.'] + ['adapters/'+name for name in ('grpc', 'logrus', 'otel', 'sentry', 'zap', 'zerolog')]:
+        expected.extend(subprocess.check_output(['go', 'list', './...'], cwd=ROOT/directory, text=True).splitlines())
+    text = read('CLAUDE.md')
+    block = re.search(r'<!-- packages:start -->\n(.*?)<!-- packages:end -->', text, re.S)
+    require(block is not None, 'documented package inventory missing')
+    actual = re.findall(r'^- `([^`]+)`$', block[1], re.M)
+    require(sorted(actual) == sorted(expected), 'documented package inventory differs from go list')
+    gate = re.search(r'acceptable:\s*(\d+)%', read('.octocov.yml'))[1]
+    figures = re.findall(r'coverage[^\n]*?(\d+)%', text, re.I)
+    require(figures and all(value == gate for value in figures), 'documented coverage differs from the gate')
+
+
 def workflows():
     writes = {'release.yml': {'contents'}, 'coverage.yml': {'actions', 'pull-requests'},
               'reviewdog.yml': {'pull-requests'}, 'codeql.yml': {'security-events'},
@@ -171,7 +186,7 @@ def evidence():
 
 def mapping():
     rows=json.loads(read('scripts/policies.json'))
-    checks={'repository-traces':repository_traces,'test-file-budget':test_file_budget,'root-module':root_module,'workflow-security':workflows,'branding':branding,'lint-config':lint_rules,'api-boundary':api_boundaries,'schedules':schedules,'pr-metadata':pr_metadata,'technique-links':linked_tests, 'evidence':evidence, 'detector-docs':detector_docs}
+    checks={'documentation-contract':documentation_contract,'repository-traces':repository_traces,'test-file-budget':test_file_budget,'root-module':root_module,'workflow-security':workflows,'branding':branding,'lint-config':lint_rules,'api-boundary':api_boundaries,'schedules':schedules,'pr-metadata':pr_metadata,'technique-links':linked_tests, 'evidence':evidence, 'detector-docs':detector_docs}
     for row in rows:
         require(row['source'] and row['rule'] and row['where'], 'policy mapping is incomplete')
         if row['check'] in checks:

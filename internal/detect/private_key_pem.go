@@ -33,33 +33,19 @@ func (d *PrivateKeyPEM) Hints() [][]byte {
 
 // Scan returns matches in data using the rules documented on [PrivateKeyPEM].
 func (d *PrivateKeyPEM) Scan(data []byte) []Finding {
-	const opener = "-----BEGIN "
-	const closer = "-----"
 	var findings []Finding
-	for i := 0; i+len(opener) <= len(data); {
-		if !hasASCIIPrefix(data, i, opener) {
+	for i := 0; i < len(data); {
+		label, headerEnd := PEMHeader(data, i)
+		if label == nil {
 			i++
 			continue
 		}
-		contentStart := i + len(opener)
-		rel := indexOf(data, contentStart, closer)
-		if rel < 0 {
-			i += len(opener)
-			continue
-		}
-		content := string(data[contentStart:rel])
-		if !strings.HasSuffix(content, "PRIVATE KEY") {
-			i += len(opener)
-			continue
-		}
-		end := rel + len(closer)
-		footer := []byte("-----END " + content + "-----")
-		if tail := bytes.Index(data[end:], footer); tail >= 0 {
-			end += tail + len(footer)
-		} else {
+		end, complete := PEMFooter(data, headerEnd, label)
+		if !complete {
 			end = len(data)
 		}
-		algo := strings.TrimSpace(strings.TrimSuffix(content, "PRIVATE KEY"))
+		algo := strings.TrimSpace(strings.TrimSuffix(string(label), "PRIVATE KEY"))
+
 		findings = append(findings, Finding{
 			DetectorName: d.Name(),
 			Start:        i,
@@ -87,4 +73,43 @@ func indexOf(data []byte, start int, sub string) int {
 		}
 	}
 	return -1
+}
+
+// PEMHeader recognizes a private-key frame in normalized input. The returned
+// label aliases data and end is a normalized byte boundary, or zero on failure.
+func PEMHeader(data []byte, start int) (label []byte, end int) {
+	const opener = "-----BEGIN "
+	const closer = "-----"
+	if !hasASCIIPrefix(data, start, opener) {
+		return nil, 0
+	}
+	labelStart := start + len(opener)
+	stop := indexOf(data, labelStart, closer)
+	if stop < 0 {
+		return nil, 0
+	}
+	label = data[labelStart:stop]
+	if !bytes.HasSuffix(label, []byte("PRIVATE KEY")) && string(label) != "PGP PRIVATE KEY BLOCK" {
+		return nil, 0
+	}
+	return label, stop + len(closer)
+}
+
+// PEMFooter finds the matching normalized frame without constructing a second
+// copy of its label. An incomplete block extends to the end of input.
+func PEMFooter(data []byte, start int, label []byte) (end int, complete bool) {
+	const opener = "-----END "
+	const closer = "-----"
+	for start < len(data) {
+		at := bytes.Index(data[start:], []byte(opener))
+		if at < 0 {
+			break
+		}
+		at += start + len(opener)
+		if bytes.HasPrefix(data[at:], label) && hasASCIIPrefix(data, at+len(label), closer) {
+			return at + len(label) + len(closer), true
+		}
+		start = at
+	}
+	return len(data), false
 }

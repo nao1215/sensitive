@@ -102,11 +102,11 @@ The cells excerpt each constant's godoc; follow the Kind link for the full rule 
 |---|---|---|---|
 | [KindServiceToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindServiceToken) | covers provider-prefixed secrets and Slack webhook credential paths | prefix and body checks yield 0.95 without a keyword or remote authentication | on |
 | [KindHighEntropy](https://pkg.go.dev/github.com/nao1215/embargo@main#KindHighEntropy) | looks for unlabeled runs of 32–256 ASCII letters, digits, _, - or + | Shannon entropy of at least 4.5 bits per byte and three of lowercase, uppercase, digit and symbol classes yield 0.3 | off |
-| [KindCredential](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCredential) | locates nonempty assignment values, Authorization credentials and URL/DSN passwords | delimiter and quoting checks give 0.95, preserving labels, Bearer/Basic schemes, usernames and hosts | on |
+| [KindCredential](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCredential) | locates nonempty assignment values, Authorization credentials and URL/DSN passwords | delimiter and quoting checks give 0.95, preserving labels, initial auth schemes, usernames and hosts | on |
 | [KindPAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN) | finds 13–19 digits with Visa, Mastercard, Amex, JCB, Discover, Diners or UnionPay prefixes | Luhn plus issuer length scores 1.0, a failed checksum 0.6, and an attached business label 0.4 | on |
 | [KindEmail](https://pkg.go.dev/github.com/nao1215/embargo@main#KindEmail) | extracts ASCII local parts using letters, digits and .+-_ before @ and dotted domains using letters, digits and .- | structure checks score 0.7 or 0.8 for an unknown TLD and 0.9 or 1.0 for a known TLD | on |
 | [KindJPPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJPPhone) | recognizes 10- or 11-digit Japanese numbers beginning with 0, allowing spaces, hyphens and parentheses | prefix/length checks score landlines 0.8, other accepted types 0.9, and business labels 0.4 | on |
-| [KindMyNumber](https://pkg.go.dev/github.com/nao1215/embargo@main#KindMyNumber) | recognizes 12 digits with optional spaces or hyphens as Japanese individual-number candidates | the weighted MOD 11 check gives 0.95, or 0.4 under a business label, without requiring a keyword; the account field … | on |
+| [KindMyNumber](https://pkg.go.dev/github.com/nao1215/embargo@main#KindMyNumber) | recognizes 12 digits with optional spaces or hyphens as Japanese individual-number candidates | the weighted MOD 11 check gives 0.95, or 0.4 under a business label, without requiring a keyword; only a contiguous … | on |
 | [KindJWT](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJWT) | parses eyJ-prefixed base64url text with exactly two dots and nonempty header and payload segments | header checks yield 0.5, 0.7 or 0.8 with an empty signature, and 0.7, 0.9 or 1.0 otherwise | on |
 | [KindAWSKey](https://pkg.go.dev/github.com/nao1215/embargo@main#KindAWSKey) | identifies AKIA or ASIA followed by exactly 16 uppercase ASCII letters or digits (20 characters total) | length, alphabet and alphanumeric boundary checks give 0.95 without a context keyword or authentication | on |
 | [KindIBAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIBAN) | accepts two ASCII country letters, two digits and an alphanumeric BBAN with optional internal spaces | country length and MOD 97 checks give 0.95, rejecting check digits 00, 01 and 99 without requiring a keyword | on |
@@ -125,7 +125,7 @@ The cells excerpt each constant's godoc; follow the Kind link for the full rule 
 | [KindGitHubToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindGitHubToken) | distinguishes classic ghp_/gho_/ghu_/ghs_/ghr_ tokens from github_pat_ tokens | body-length and token-boundary checks yield 0.95 without a keyword or authentication | on |
 | [KindSlackToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindSlackToken) | recognizes xoxb-, xoxp-, xoxa-, xoxo-, xoxr- and xoxs- followed by ASCII letters, digits or hyphens | a body of at least 10 characters and token-boundary checks yield 0.9, with no context keyword or authentication | on |
 | [KindGoogleAPIKey](https://pkg.go.dev/github.com/nao1215/embargo@main#KindGoogleAPIKey) | looks for AIza followed by exactly 35 ASCII letters, digits, hyphens or underscores | the 39-character length and token-boundary checks give 0.9 without a keyword or authentication | on |
-| [KindPrivateKeyPEM](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPrivateKeyPEM) | covers -----BEGIN headers whose same-line content ends in PRIVATE KEY, closed by five hyphens | header grammar alone gives 0.99 without a keyword or key-material validation | on |
+| [KindPrivateKeyPEM](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPrivateKeyPEM) | covers -----BEGIN headers whose same-line content ends in PRIVATE KEY or equals PGP PRIVATE KEY BLOCK, closed by five … | header grammar alone gives 0.99 without a keyword or key-material validation | on |
 | [KindUSSSN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSSSN) | recognizes 9 digits, either contiguous or grouped 3-2-4 with hyphens | field checks yield 0.6, or 0.4 under a business label, with no keyword or checksum required | off |
 | [KindUSITIN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSITIN) | finds 9 digits starting with 9, optionally hyphenated 3-2-4 | middle-group validation gives 0.6, or 0.4 under a business label, without a keyword or checksum | off |
 | [KindUKNINO](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKNINO) | accepts two uppercase ASCII letters, six digits and a suffix A–D, optionally spaced into groups of 2 letters, 2/2/2 … | prefix checks score 0.7, reduced to 0.4 by a business label, without requiring context or a checksum | off |
@@ -257,19 +257,19 @@ Each link opens the test that produces and checks the shown output.
 <!-- tested-outputs:start -->
 | Output | Actual output (excerpt for SDKs) |
 |---|---|
-| [fmt](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L141-L141) | `embargo.Secret[string]([REDACTED])` |
-| [slog TextHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L142-L145) | `level=INFO msg=event token=[REDACTED] nested.again=[REDACTED]` |
-| [slog JSONHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L146-L149) | `{"level":"INFO","msg":"event","token":"[REDACTED]","nested":{"again":"[REDACTED]"}}` |
-| [encoding/json](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L150-L150) | `"[REDACTED]"` |
-| [encoding/xml](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L151-L156) | `<record><token>[REDACTED]</token></record>` |
-| [text/template](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L157-L163) | `[REDACTED]` |
-| [zap JSON core](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L164-L170) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
-| [zerolog JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L171-L175) | `{"level":"info","token":"[REDACTED]","message":"event"}` |
-| [logrus JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L176-L182) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
-| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L973-L1061) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
-| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L643-L726) | `"signing":{"key":"[REDACTED]"}` |
-| [HTTP](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L223-L245) | `[REDACTED]` |
-| [Child panic](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L247-L257) | `panic: [REDACTED]` |
+| [fmt](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L143-L143) | `embargo.Secret[string]([REDACTED])` |
+| [slog TextHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L144-L147) | `level=INFO msg=event token=[REDACTED] nested.again=[REDACTED]` |
+| [slog JSONHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L148-L151) | `{"level":"INFO","msg":"event","token":"[REDACTED]","nested":{"again":"[REDACTED]"}}` |
+| [encoding/json](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L152-L152) | `"[REDACTED]"` |
+| [encoding/xml](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L153-L158) | `<record><token>[REDACTED]</token></record>` |
+| [text/template](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L159-L165) | `[REDACTED]` |
+| [zap JSON core](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L166-L172) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
+| [zerolog JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L173-L177) | `{"level":"info","token":"[REDACTED]","message":"event"}` |
+| [logrus JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L178-L184) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
+| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L975-L1063) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
+| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L645-L728) | `"signing":{"key":"[REDACTED]"}` |
+| [HTTP](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L225-L247) | `[REDACTED]` |
+| [Child panic](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L249-L259) | `panic: [REDACTED]` |
 <!-- tested-outputs:end -->
 
 [Complete integration checks](tests/README.md).

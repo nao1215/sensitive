@@ -24,7 +24,7 @@
     "tier": "standard",
     "threshold": 0,
     "tp": 1580,
-    "fp": 272,
+    "fp": 176,
     "fn": 0,
     "exposed_secrets": 0,
     "residual_bytes": 0
@@ -54,7 +54,7 @@
     "tier": "standard",
     "threshold": 0.5,
     "tp": 1460,
-    "fp": 120,
+    "fp": 24,
     "fn": 120,
     "exposed_secrets": 120,
     "residual_bytes": 4800
@@ -84,7 +84,7 @@
     "tier": "standard",
     "threshold": 0.7,
     "tp": 1460,
-    "fp": 120,
+    "fp": 24,
     "fn": 120,
     "exposed_secrets": 120,
     "residual_bytes": 4800

@@ -70,6 +70,11 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			continue
 		}
 
+		if exceptionCounter(data, end) || logSequence(data, i) {
+			i = end - 1
+			continue
+		}
+
 		digits := data[i:end]
 
 		// Validate Federal Reserve routing symbol (first two digits).

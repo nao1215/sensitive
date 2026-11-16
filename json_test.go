@@ -377,7 +377,7 @@ func TestAdversarialJSONLimits(t *testing.T) {
 			if err != nil || !json.Valid(out) {
 				t.Fatal("valid bounded tree rejected")
 			}
-		} else if out != nil || err == nil || err.Error() != "embargo: invalid or unmaskable JSON" {
+		} else if out != nil || err == nil || err.Error() != "embargo: JSON size limit exceeded" {
 			t.Fatal("deep tree did not fail closed")
 		}
 	}
@@ -790,6 +790,29 @@ func TestJSONNumberWholeSignedString(t *testing.T) {
 		got, err := NewScanner().MaskJSON(input)
 		if err != nil || string(got) != `{"value":"[REDACTED]"}` {
 			t.Fatalf("whole numeric string: %s -> %s (%v)", input, got, err)
+		}
+	}
+}
+
+func TestMaskJSONFixedFailureReasons(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		want     string
+		data     []byte
+		canceled bool
+	}{
+		{"embargo: invalid or unmaskable JSON", []byte(`{"password":"opaqueFixture"`), false},
+		{"embargo: JSON size limit exceeded", []byte(`"` + strings.Repeat("opaqueFixture", 100000) + `"`), false},
+		{"embargo: JSON masking canceled", []byte(`{"password":"opaqueFixture"}`), true},
+	} {
+		ctx, cancel := context.WithCancel(t.Context())
+		if tc.canceled {
+			cancel()
+		}
+		got, err := NewScanner().MaskJSONContext(ctx, tc.data)
+		cancel()
+		if got != nil || err == nil || err.Error() != tc.want {
+			t.Errorf("got=%q err=%v want=%q", got, err, tc.want)
 		}
 	}
 }
