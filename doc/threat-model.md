@@ -28,7 +28,7 @@ The same built-in inventory now includes all eleven country detectors in allocat
 | Base64 | Limit for arbitrary text; registered canaries include encoded forms | TestAdversarialEncodingBoundary/base64 |
 | Zero-width text | Limit: characters are not removed | TestAdversarialEncodingBoundary/zero-width |
 | Letter homoglyphs | Limit: confusable letters are not normalized | TestAdversarialEncodingBoundary/homoglyph |
-| Full-width numeric digits | Caught by numeric normalization | internal/detect/digits_test.go |
+| Full-width numeric digits | Caught by numeric normalization | internal/detect/fullwidth_test.go |
 | A forged redaction marker or finding label | Does not bypass scanning adjacent secrets | TestAdversarialEncodingBoundary |
 | Secret split across writes | Caught after complete stream assembly | Guard model and framing fuzz target |
 | Secret split across logical fields or lines | Limit: no reconstruction across semantic fields | Caller must mark the owning value or key |

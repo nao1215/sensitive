@@ -42,7 +42,7 @@ Incorrect fixed outputs and public usage contracts. Tests: [example_test](../exa
 
 ### Generated properties
 
-Combinations absent from handwritten checksum fixtures. Tests: [properties_test](../tests/properties_test.go), [properties_test](../tests/properties_test.go), [mask_test](../tests/properties_test.go). CI: `unit_test:property_tests`.
+Combinations absent from handwritten checksum fixtures. Tests: [properties_test](../tests/properties_test.go), [properties_test](../tests/properties_test.go), [mask_test](../mask_test.go). CI: `unit_test:property_tests`.
 
 <a id="metamorphic-relations"></a>
 
@@ -66,7 +66,7 @@ Arithmetic and interval errors beyond a finite random sample. Tests: [Reference]
 
 ### Intentional snapshots
 
-Unreviewed output shape changes despite correct redaction. Tests: [secret_test](../secret_test.go), [adapter_test](../adapters/zap/adapters/otel/values_test.go), [guard_test](../embargotest/guard_test.go). CI: `unit_test:unit_test`.
+Unreviewed output shape changes despite correct redaction. Tests: [secret_test](../secret_test.go), [adapter_test](../adapters/zap/adapter_test.go), [guard_test](../embargotest/guard_test.go). CI: `unit_test:unit_test`.
 
 <a id="independent-differential-oracles"></a>
 

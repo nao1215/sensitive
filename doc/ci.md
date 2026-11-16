@@ -73,6 +73,4 @@ To raise or lower a precision or recall floor, edit the explicit TP/FP/FN baseli
 
 A new detector needs labeled positive and negative examples in both accuracy splits, reviewed real-log sample labels, an explicit precision/recall floor and an initial zero FP/GB ceiling, followed by all three gates. Do not increase a ceiling to hide a new default detector's over-masking. If it exceeds the FP ceiling, keep it opt-in and review a separately documented opt-in ceiling; if it slows the default scanner beyond the speed budget, keep it opt-in. Opt-in status does not bypass the Kind's accuracy or reviewed real-log budget. Existing opt-in Kinds retain their historical nonzero ceilings shown above; the table is a baseline contract, not a recommendation to enable them all.
 
-The [local failing-first record](performance/round21-gate-failures.json) retains scratch commit IDs, patches, commands, exits and restored results. Disabling email matching failed both recall floors; admitting unspecified IPs exceeded the held IP ceiling by 144062.115171 FP/GB; adding 1ms to Scan exceeded both default speed budgets. Each restored gate passed. These deliberately broken branches were neither pushed nor merged.
-
 [Support maintenance](https://github.com/sponsors/nao1215).
