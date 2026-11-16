@@ -2,6 +2,7 @@ package embargootel_test
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -116,5 +117,39 @@ func TestSpanFallbackKeepsIdentityWithoutOriginalSpan(t *testing.T) {
 	embedded := reflect.ValueOf(sink.spans[0]).Elem().FieldByName("ReadOnlySpan")
 	if embedded.IsValid() && !embedded.IsNil() {
 		t.Fatal("diagnostic retains original span object")
+	}
+}
+
+func TestSpanWithheldSchemaProperty(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	for _, code := range []codes.Code{codes.Unset, codes.Ok, codes.Error} {
+		for count := range 9 {
+			attrs := make([]attribute.KeyValue, count)
+			for index := range attrs {
+				attrs[index] = attribute.String(fmt.Sprintf("planted-%d", index), exampleEmail)
+			}
+			before := tracetest.SpanStub{Name: exampleEmail, StartTime: time.Unix(7, 0), EndTime: time.Unix(8, 0), Status: sdktrace.Status{Code: code, Description: exampleEmail}, Attributes: attrs, Events: []sdktrace.Event{{Name: exampleEmail, Attributes: attrs}}, Links: []sdktrace.Link{{Attributes: attrs}}, Resource: resource.NewWithAttributes(exampleEmail, attrs...)}.Snapshot()
+			sink := &captureSpan{}
+			if err := embargootel.NewSpanExporter(sink, embargo.NewScanner()).ExportSpans(ctx, []sdktrace.ReadOnlySpan{before}); err != nil {
+				t.Fatal(err)
+			}
+			if len(sink.spans) != 1 {
+				t.Fatal("withheld span missing")
+			}
+			after := sink.spans[0]
+			if after.Name() != withheldCanceled || after.StartTime() != before.StartTime() || after.EndTime() != before.EndTime() || after.Status().Code != code || after.Status().Description != "" || len(after.Events()) != 0 || len(after.Links()) != 0 || len(after.Resource().Attributes()) != 0 || after.Resource().SchemaURL() != "" {
+				t.Fatal("withheld span kept untrusted fields or lost status")
+			}
+			safe := after.Attributes()
+			if len(safe) != 1 || string(safe[0].Key) != withheldCountKey || safe[0].Value.AsInt64() != int64(4*count) {
+				t.Fatal("withheld span attribute schema changed")
+			}
+			scope := after.InstrumentationScope()
+			if scope.Name != "" || scope.Version != "" || scope.SchemaURL != "" || scope.Attributes.Len() != 0 {
+				t.Fatal("withheld scope retained")
+			}
+		}
 	}
 }

@@ -19,8 +19,11 @@ import (
 )
 
 const (
-	sentryPassword = "synthetic-password"
-	sentryMarker   = "[REDACTED]"
+	detailsContext     = "details"
+	canceledDiagnostic = "embargo: record withheld (canceled)"
+	plantedMessage     = "planted-message"
+	sentryPassword     = "synthetic-password"
+	sentryMarker       = "[REDACTED]"
 )
 
 type eventTransport struct{ events []*sentry.Event }
@@ -47,7 +50,7 @@ func TestBeforeSendThroughSentryClient(t *testing.T) {
 	event := sentry.NewEvent()
 	event.Message = "alice@example.com failed"
 	event.Exception = []sentry.Exception{{Type: "checkout.Failure", Value: "password=exception-secret", Stacktrace: &sentry.Stacktrace{Frames: []sentry.Frame{{Function: "checkout", Filename: "worker.go"}}}}}
-	event.Contexts = map[string]sentry.Context{"details": {"password": sentryPassword, "count": 7}}
+	event.Contexts = map[string]sentry.Context{detailsContext: {"password": sentryPassword, "count": 7}}
 	event.Request = &sentry.Request{URL: "https://example.com/login?token=synthetic-query", Headers: map[string]string{"Authorization": "Bearer synthetic-session"}}
 	event.Breadcrumbs = []*sentry.Breadcrumb{{Message: "token=synthetic-breadcrumb"}}
 	client.CaptureEvent(event, nil, sentry.NewScope())
@@ -66,7 +69,7 @@ func TestBeforeSendThroughSentryClient(t *testing.T) {
 	if len(transport.events[0].Exception) != 1 || transport.events[0].Exception[0].Value != "password=[REDACTED]" || transport.events[0].Exception[0].Stacktrace.Frames[0].Function != "checkout" {
 		t.Fatal("exception or stack frame lost during reconstruction")
 	}
-	if event.Contexts["details"]["password"] != sentryPassword || !strings.Contains(string(data), `"count":7`) {
+	if event.Contexts[detailsContext]["password"] != sentryPassword || !strings.Contains(string(data), `"count":7`) {
 		t.Fatal("event copy changed types or mutated input")
 	}
 }
@@ -83,7 +86,7 @@ func TestBeforeSendSuppressesInvalidEvents(t *testing.T) {
 	}
 	for _, value := range []any{make(chan int), &failingEventValue{}} {
 		event := sentry.NewEvent()
-		event.Contexts = map[string]sentry.Context{"details": {"value": value}}
+		event.Contexts = map[string]sentry.Context{detailsContext: {"value": value}}
 		if safe := hook(event, nil); safe == nil || safe.Message != "embargo: record withheld (masking error)" {
 			t.Fatal("invalid event reached transport")
 		}
@@ -185,7 +188,7 @@ func TestSentryContextCancellation(t *testing.T) {
 			if alreadyCanceled {
 				want = 0
 			}
-			if got == nil || got.Message != "embargo: record withheld (canceled)" || detector.calls != want {
+			if got == nil || got.Message != canceledDiagnostic || detector.calls != want {
 				t.Fatalf("forwarded=%t scans=%d want=%d", got != nil, detector.calls, want)
 			}
 		})
@@ -199,7 +202,7 @@ func TestBeforeSendRequestCancellation(t *testing.T) {
 	detector := &cancelingScan{cancel: cancel}
 	event := sentry.NewEvent()
 	hint := &sentry.EventHint{Request: httptest.NewRequestWithContext(ctx, "GET", "/", nil)}
-	if got := embargosentry.NewBeforeSend(embargo.NewScanner(embargo.WithDetector(detector)))(event, hint); got == nil || got.Message != "embargo: record withheld (canceled)" || detector.calls != 0 {
+	if got := embargosentry.NewBeforeSend(embargo.NewScanner(embargo.WithDetector(detector)))(event, hint); got == nil || got.Message != canceledDiagnostic || detector.calls != 0 {
 		t.Fatal("canceled request scanned or sent")
 	}
 }
@@ -275,7 +278,7 @@ func TestWithheldRecord(t *testing.T) {
 			event := sentry.NewEvent()
 			event.Timestamp = time.Unix(7, 0)
 			event.Level = sentry.LevelWarning
-			event.Message = "planted-message"
+			event.Message = plantedMessage
 			event.Tags = map[string]string{"planted-key": value}
 			after := embargosentry.NewBeforeSend(scanner)(event, &sentry.EventHint{Context: ctx})
 			if after == nil {
@@ -304,7 +307,7 @@ func TestWithheldRecordThroughClient(t *testing.T) {
 	}
 	event := sentry.NewEvent()
 	event.EventID = "planted-id"
-	event.Message = "planted-message"
+	event.Message = plantedMessage
 	event.Tags["planted-key"] = "planted-value"
 	id := client.CaptureEvent(event, nil, sentry.NewScope())
 	if id == nil || len(*id) != 32 || *id == event.EventID || len(transport.events) != 1 {
@@ -316,5 +319,50 @@ func TestWithheldRecordThroughClient(t *testing.T) {
 	}
 	if strings.Contains(string(raw), "planted") {
 		t.Fatal("diagnostic retained original data")
+	}
+}
+
+func TestWithheldSchemaProperty(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	for _, level := range []sentry.Level{sentry.LevelDebug, sentry.LevelInfo, sentry.LevelWarning, sentry.LevelError, sentry.LevelFatal} {
+		for count := range 9 {
+			event := sentry.NewEvent()
+			event.Timestamp = time.Unix(7, 0).UTC()
+			event.Level = level
+			event.Message = plantedMessage
+			event.Contexts = map[string]sentry.Context{detailsContext: {"nested": "private@example.com"}}
+			for index := range count {
+				event.Tags[fmt.Sprintf("planted-%d", index)] = "private@example.com"
+			}
+			safe := embargosentry.NewBeforeSend(embargo.NewScanner())(event, &sentry.EventHint{Context: ctx})
+			if safe == nil || len(safe.EventID) != 32 || safe.EventID == event.EventID {
+				t.Fatal("fallback event identifier missing")
+			}
+			expected := &sentry.Event{EventID: safe.EventID, Timestamp: event.Timestamp, Level: level, Message: canceledDiagnostic, Contexts: map[string]sentry.Context{"embargo": {"withheld_attributes": count + 1}}}
+			if !reflect.DeepEqual(safe, expected) {
+				t.Fatal("fallback contains fields outside the documented schema")
+			}
+		}
+	}
+}
+
+func TestNumberLexemeProperty(t *testing.T) {
+	t.Parallel()
+	const integer = "4111111111111111"
+	hook := embargosentry.NewBeforeSend(embargo.NewScanner())
+	for position := 1; position < len(integer); position++ {
+		for _, sign := range []string{"", "-"} {
+			for _, exponent := range []string{"e", "E+"} {
+				lexeme := sign + integer[:position] + "." + integer[position:] + "00" + exponent + "00" + strconv.Itoa(len(integer)-position)
+				event := sentry.NewEvent()
+				event.Contexts = map[string]sentry.Context{detailsContext: {"number": json.Number(lexeme), "string": lexeme}}
+				safe := hook(event, nil)
+				if safe == nil || safe.Contexts[detailsContext]["number"] != sentryMarker || safe.Contexts[detailsContext]["string"] != sentryMarker {
+					t.Fatalf("whole numeric lexeme not masked: %s", lexeme)
+				}
+			}
+		}
 	}
 }

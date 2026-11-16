@@ -291,9 +291,35 @@ func TestWithheldRecord(t *testing.T) {
 			if err := json.Unmarshal(out.Bytes(), &got); err != nil {
 				t.Fatalf("missing fallback: %v", err)
 			}
-			if got["msg"] != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(1) || got["time"] != "1970-01-01T00:00:07Z" || got["level"] != "warning" || strings.Contains(out.String(), "planted") {
+			if len(got) != 4 || got["msg"] != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(1) || got["time"] != "1970-01-01T00:00:07Z" || got["level"] != "warning" || strings.Contains(out.String(), "planted") {
 				t.Fatal(out.String())
 			}
 		})
+	}
+}
+
+func TestWithheldSchemaProperty(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	formatter := embargologrus.NewFormatter(&logrus.JSONFormatter{}, embargo.NewScanner())
+	for _, level := range logrus.AllLevels {
+		for count := range 9 {
+			data := make(logrus.Fields)
+			for index := range count {
+				data[fmt.Sprintf("planted-%d", index)] = map[string]any{"nested": "private@example.com"}
+			}
+			encoded, err := formatter.Format(&logrus.Entry{Logger: logrus.New(), Context: ctx, Time: time.Unix(7, 0).UTC(), Level: level, Message: "planted-message", Data: data})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var record map[string]any
+			if err := json.Unmarshal(encoded, &record); err != nil {
+				t.Fatal(err)
+			}
+			if len(record) != 4 || record["level"] != level.String() || record["time"] != "1970-01-01T00:00:07Z" || record["msg"] != "embargo: record withheld (canceled)" || record["withheld_attributes"] != float64(count) {
+				t.Fatalf("level=%s count=%d: %s", level, count, encoded)
+			}
+		}
 	}
 }

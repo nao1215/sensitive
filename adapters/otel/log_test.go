@@ -2,6 +2,7 @@ package embargootel_test
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -302,6 +303,50 @@ func TestFallbackPreservesOriginalTraceIdentity(t *testing.T) {
 		after := sink.records[0]
 		if after.TraceID() != before.TraceID() || after.SpanID() != before.SpanID() || after.TraceFlags() != before.TraceFlags() {
 			t.Fatalf("export context contaminated trace identity: got %s/%s/%v want %s/%s/%v", after.TraceID(), after.SpanID(), after.TraceFlags(), before.TraceID(), before.SpanID(), before.TraceFlags())
+		}
+	}
+}
+
+func TestLogWithheldSchemaProperty(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	for severity := apilog.SeverityUndefined; severity <= apilog.SeverityFatal4; severity++ {
+		for count := range 6 {
+			attrs := make([]attribute.KeyValue, count)
+			for index := range attrs {
+				attrs[index] = attribute.String(fmt.Sprintf("planted-%d", index), exampleEmail)
+			}
+			before := reviewRecord(t, -1, attrs...)
+			originalScope := before.InstrumentationScope()
+			wantCount := before.AttributesLen() + len(before.Resource().Attributes()) + originalScope.Attributes.Len()
+			before.SetTimestamp(time.Unix(7, 0))
+			before.SetObservedTimestamp(time.Unix(8, 0))
+			before.SetSeverity(severity)
+			before.SetSeverityText(exampleEmail)
+			before.SetEventName(exampleEmail)
+			before.SetBody(attribute.StringValue(exampleEmail))
+			sink := &captureLog{}
+			if err := embargootel.NewLogExporter(sink, embargo.NewScanner()).Export(ctx, []sdklog.Record{before}); err != nil {
+				t.Fatal(err)
+			}
+			if len(sink.records) != 1 {
+				t.Fatal("fallback missing")
+			}
+			after := sink.records[0]
+			if after.Severity() != severity || after.Timestamp() != before.Timestamp() || after.ObservedTimestamp() != before.ObservedTimestamp() || after.Body().AsString() != withheldCanceled || after.SeverityText() != "" || after.EventName() != "" || after.AttributesLen() != 1 || len(after.Resource().Attributes()) != 0 {
+				t.Fatal("fallback schema or metadata changed")
+			}
+			scope := after.InstrumentationScope()
+			if scope.Name != "embargo" || scope.Version != "" || scope.SchemaURL != "" || scope.Attributes.Len() != 0 {
+				t.Fatal("user scope reached fallback")
+			}
+			after.WalkAttributes(func(kv attribute.KeyValue) bool {
+				if string(kv.Key) != withheldCountKey || kv.Value.AsInt64() != int64(wantCount) {
+					t.Fatal("fallback attribute outside documented schema")
+				}
+				return true
+			})
 		}
 	}
 }

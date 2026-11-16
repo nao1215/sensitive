@@ -5,8 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -356,4 +358,72 @@ func TestAttributeOriginalKeyContext(t *testing.T) {
 		}
 		return true
 	})
+}
+
+func TestJoinedAttributePathProperty(t *testing.T) {
+	t.Parallel()
+	for mailbox := range 32 {
+		left := fmt.Sprintf("reader%d@example", mailbox)
+		for _, nested := range []bool{false, true} {
+			key := left + ".com"
+			value := attribute.StringValue("public")
+			if nested {
+				key = left
+				value = attribute.MapValue(attribute.String("com", "public"))
+			}
+			spanSink := &captureSpan{}
+			span := tracetest.SpanStub{Name: "public", Attributes: []attribute.KeyValue{{Key: attribute.Key(key), Value: value}}}.Snapshot()
+			if err := embargootel.NewSpanExporter(spanSink, embargo.NewScanner()).ExportSpans(t.Context(), []sdktrace.ReadOnlySpan{span}); err != nil {
+				t.Fatal(err)
+			}
+			if len(spanSink.spans) != 1 || len(spanSink.spans[0].Attributes()) != 1 {
+				t.Fatal("span attribute missing")
+			}
+			raw, err := json.Marshal(spanSink.spans[0].Attributes()[0])
+			if err != nil || bytes.Contains(raw, []byte(left)) || !bytes.Contains(raw, []byte("[REDACTED]")) {
+				t.Fatalf("span joined path remains: %s", raw)
+			}
+			before := reviewRecord(t, -1, attribute.KeyValue{Key: attribute.Key(key), Value: value})
+			sink := &captureLog{}
+			if err := embargootel.NewLogExporter(sink, embargo.NewScanner()).Export(t.Context(), []sdklog.Record{before}); err != nil {
+				t.Fatal(err)
+			}
+			if len(sink.records) != 1 || sink.records[0].AttributesLen() != 1 {
+				t.Fatal("attribute lost")
+			}
+			sink.records[0].WalkAttributes(func(kv attribute.KeyValue) bool {
+				raw, err := json.Marshal(kv)
+				if err != nil || bytes.Contains(raw, []byte(left)) || !bytes.Contains(raw, []byte("[REDACTED]")) {
+					t.Fatalf("joined attribute path remains: %s", raw)
+				}
+				return true
+			})
+		}
+	}
+}
+
+func TestNumberLexemeProperty(t *testing.T) {
+	t.Parallel()
+	const integer = "4111111111111111"
+	for position := 1; position < len(integer); position++ {
+		for _, sign := range []string{"", "-"} {
+			for _, exponent := range []string{"e", "E+"} {
+				lexeme := sign + integer[:position] + "." + integer[position:] + "00" + exponent + "00" + strconv.Itoa(len(integer)-position)
+				before := reviewRecord(t, -1, attribute.String("number", lexeme))
+				sink := &captureLog{}
+				if err := embargootel.NewLogExporter(sink, embargo.NewScanner()).Export(t.Context(), []sdklog.Record{before}); err != nil {
+					t.Fatal(err)
+				}
+				if len(sink.records) != 1 || sink.records[0].AttributesLen() != 1 {
+					t.Fatal("numeric attribute missing")
+				}
+				sink.records[0].WalkAttributes(func(kv attribute.KeyValue) bool {
+					if kv.Value.AsString() != "[REDACTED]" {
+						t.Fatalf("whole numeric lexeme not masked: %s", lexeme)
+					}
+					return true
+				})
+			}
+		}
+	}
 }

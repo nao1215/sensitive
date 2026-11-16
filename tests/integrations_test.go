@@ -52,6 +52,8 @@ import (
 
 	"github.com/nao1215/embargo"
 	embargologrus "github.com/nao1215/embargo/adapters/logrus"
+	embargootel "github.com/nao1215/embargo/adapters/otel"
+	embargosentry "github.com/nao1215/embargo/adapters/sentry"
 	embargozap "github.com/nao1215/embargo/adapters/zap"
 	embargozerolog "github.com/nao1215/embargo/adapters/zerolog"
 	"github.com/nao1215/embargo/embargotest"
@@ -1234,5 +1236,42 @@ func emitJoinedPath(t *testing.T, out io.Writer, scanner *embargo.Scanner, name 
 		logger.WithField(parts[0], value).Info("event")
 	default:
 		t.Fatal("unknown logger")
+	}
+}
+
+func checkSDKNumberLexeme(t *testing.T, scanner *embargo.Scanner, key, lexeme string) {
+	t.Helper()
+	event := sentry.NewEvent()
+	event.Contexts = map[string]sentry.Context{"numbers": {key: json.Number(lexeme)}}
+	safe := embargosentry.NewBeforeSend(scanner)(event, nil)
+	if safe == nil || safe.Contexts["numbers"][key] != referenceMarker {
+		t.Fatalf("Sentry retained a number lexeme: %s", lexeme)
+	}
+	var out bytes.Buffer
+	provider := sdklog.NewLoggerProvider(sdklog.WithProcessor(sdklog.NewSimpleProcessor(embargootel.NewLogExporter(&sdkLogCapture{writer: &out}, scanner))))
+	var record otellog.Record
+	record.SetBody(attribute.StringValue("public"))
+	record.AddAttributes(attribute.String(key, lexeme))
+	provider.Logger("number-property").Emit(t.Context(), record)
+	if err := provider.Shutdown(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	var logged struct {
+		Attributes map[string]string `json:"attributes"`
+	}
+	if err := json.Unmarshal(out.Bytes(), &logged); err != nil {
+		t.Fatal(err)
+	}
+	if logged.Attributes[key] != referenceMarker {
+		t.Fatalf("OTel log retained a number lexeme: %s", lexeme)
+	}
+	sink := tracetest.NewInMemoryExporter()
+	span := tracetest.SpanStub{Name: "public", Attributes: []attribute.KeyValue{attribute.String(key, lexeme)}}.Snapshot()
+	if err := embargootel.NewSpanExporter(sink, scanner).ExportSpans(t.Context(), []sdktrace.ReadOnlySpan{span}); err != nil {
+		t.Fatal(err)
+	}
+	spans := sink.GetSpans()
+	if len(spans) != 1 || len(spans[0].Attributes) != 1 || spans[0].Attributes[0].Value.AsString() != referenceMarker {
+		t.Fatalf("OTel span retained a number lexeme: %s", lexeme)
 	}
 }
