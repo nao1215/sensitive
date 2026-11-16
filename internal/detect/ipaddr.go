@@ -11,11 +11,8 @@ type IPAddrDetail struct {
 	Version int
 }
 
-// IPAddr detects IPv4 and IPv6 addresses.
-//
-//  1. Extract dot-separated decimal candidates or colon-separated hexadecimal candidates, including IPv6 :: shorthand.
-//  2. Validate with net.ParseIP, requiring four octets in 0–255 for IPv4.
-//  3. Exclude unspecified and loopback addresses; score other valid addresses as 0.8 and record their version.
+// IPAddr implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindIPAddr.
 type IPAddr struct{}
 
 // NewIPAddr excludes unspecified and loopback addresses while retaining other valid endpoints.

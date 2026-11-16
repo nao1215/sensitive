@@ -36,5 +36,19 @@ class ProseTests(unittest.TestCase):
         self.assertIn('restatement', [x['rule'] for x in prose.godoc(values)])
 
 
+class KindContractProseTests(unittest.TestCase):
+    def test_kind_contract_requires_validation_score_and_default(self):
+        for text in ['', 'KindPAN selects cards.',
+                     'KindPAN finds digits; length checks give 0.6.',
+                     'KindPAN finds digits; checks the length (NewScanner default: on).',
+                     'KindPAN finds digits; reports 0.6 (NewScanner default: on).']:
+            value = item('KindPAN', text)
+            value['path'] = 'finding.go'
+            self.assertIn('kind-contract', [x['rule'] for x in prose.godoc([value])])
+        value = item('KindPAN', 'KindPAN finds digits; length checks give 0.6 (NewScanner default: on).')
+        value['path'] = 'finding.go'
+        self.assertNotIn('kind-contract', [x['rule'] for x in prose.godoc([value])])
+
+
 if __name__ == '__main__':
     unittest.main()

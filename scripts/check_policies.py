@@ -84,6 +84,12 @@ def schedules():
         require(name in read('.github/workflows/verification.yml'), 'verification is not wired: '+name)
 
 
+def detector_docs():
+    workflow = read('.github/workflows/verification.yml')
+    for command in ['go -C tests run ./cmd/detectordocs --check', 'go -C tests test ./cmd/detectordocs -count=1']:
+        require(command in workflow, 'detector documentation check missing: '+command)
+
+
 def pr_metadata():
     if os.environ.get('GITHUB_EVENT_NAME') != 'pull_request':
         return
@@ -128,7 +134,7 @@ def evidence():
 
 def mapping():
     rows=json.loads(read('scripts/policies.json'))
-    checks={'root-module':root_module,'workflow-security':workflows,'branding':branding,'lint-config':lint_rules,'api-boundary':api_boundaries,'schedules':schedules,'pr-metadata':pr_metadata,'technique-links':linked_tests, 'evidence':evidence}
+    checks={'root-module':root_module,'workflow-security':workflows,'branding':branding,'lint-config':lint_rules,'api-boundary':api_boundaries,'schedules':schedules,'pr-metadata':pr_metadata,'technique-links':linked_tests, 'evidence':evidence, 'detector-docs':detector_docs}
     for row in rows:
         require(row['source'] and row['rule'] and row['where'], 'policy mapping is incomplete')
         if row['check'] in checks:

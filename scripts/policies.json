@@ -388,5 +388,35 @@
     "source": "M15",
     "check": "scripts/test_production_hooks.py#test_mutation_target_limits_workers_and_test_cpus",
     "where": "Verification"
+  },
+  {
+    "rule": "Every Kind documents matching, validation, scores and default selection",
+    "source": "M16",
+    "check": "scripts/check_prose.py#kind-contract",
+    "where": "Verification"
+  },
+  {
+    "rule": "README detector rows come from godoc and cannot be missing or stale",
+    "source": "M16",
+    "check": "tests/cmd/detectordocs/main_test.go#TestReadmeFreshness",
+    "where": "Verification"
+  },
+  {
+    "rule": "Documented detector scores agree with representative public scans",
+    "source": "M16",
+    "check": "tests/cmd/detectordocs/scores_test.go#TestKindConfidenceScores",
+    "where": "Verification"
+  },
+  {
+    "rule": "README detector defaults agree with NewScanner behavior",
+    "source": "M16",
+    "check": "tests/cmd/detectordocs/scores_test.go#TestReadmeDefaults",
+    "where": "Verification"
+  },
+  {
+    "rule": "Detector documentation checks stay wired into CI",
+    "source": "M16",
+    "check": "scripts/check_policies.py#detector_docs",
+    "where": "Verification"
   }
 ]

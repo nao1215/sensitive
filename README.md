@@ -90,6 +90,55 @@ fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
 | Personal | 4 | Email, IP address, Japanese phone numbers and My Number, including full-width digits |
 | National IDs | 11 | Opt-in US, UK, Indian, Brazilian, Chinese, Korean and Canadian identifiers; [rules and measured limits](doc/countries.md) |
 
+<details>
+<summary>Matching rules and validation for all 37 kinds</summary>
+
+The cells excerpt each constant's godoc; follow the Kind link for the full rule and confidence tiers. Default refers to `NewScanner()` without options.
+
+<!-- detectors:start -->
+| Kind | What it matches | How it is checked | Default |
+|---|---|---|---|
+| [KindServiceToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindServiceToken) | covers provider-prefixed secrets and Slack webhook credential paths | prefix and body checks yield 0.95 without a keyword or remote authentication | on |
+| [KindHighEntropy](https://pkg.go.dev/github.com/nao1215/embargo@main#KindHighEntropy) | looks for unlabeled runs of 32–256 ASCII letters, digits, _, - or + | Shannon entropy of at least 4.5 bits per byte and three of lowercase, uppercase, digit and symbol classes yield 0.3 | off |
+| [KindCredential](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCredential) | locates nonempty assignment values, Authorization credentials and URL/DSN passwords | delimiter and quoting checks give 0.95, preserving labels, Bearer/Basic schemes, usernames and hosts | on |
+| [KindPAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN) | finds 13–19 digits with Visa, Mastercard, Amex, JCB, Discover, Diners or UnionPay prefixes | Luhn plus issuer length scores 1.0, a failed checksum 0.6, and an attached business label 0.4 | on |
+| [KindEmail](https://pkg.go.dev/github.com/nao1215/embargo@main#KindEmail) | extracts ASCII local parts using letters, digits and .+-_ before @ and dotted domains using letters, digits and .- | structure checks score 0.7 or 0.8 for an unknown TLD and 0.9 or 1.0 for a known TLD | on |
+| [KindJPPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJPPhone) | recognizes 10- or 11-digit Japanese numbers beginning with 0, allowing spaces, hyphens and parentheses | prefix/length checks score landlines 0.8, other accepted types 0.9, and business labels 0.4 | on |
+| [KindMyNumber](https://pkg.go.dev/github.com/nao1215/embargo@main#KindMyNumber) | recognizes 12 digits with optional spaces or hyphens as Japanese individual-number candidates | the weighted MOD 11 check gives 0.95, or 0.4 under a business label, without requiring a keyword | on |
+| [KindJWT](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJWT) | parses eyJ-prefixed base64url text with exactly two dots and nonempty header and payload segments | header checks yield 0.5, 0.7 or 0.8 with an empty signature, and 0.7, 0.9 or 1.0 otherwise | on |
+| [KindAWSKey](https://pkg.go.dev/github.com/nao1215/embargo@main#KindAWSKey) | identifies AKIA or ASIA followed by exactly 16 uppercase ASCII letters or digits (20 characters total) | length, alphabet and alphanumeric boundary checks give 0.95 without a context keyword or authentication | on |
+| [KindIBAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIBAN) | accepts two ASCII country letters, two digits and an alphanumeric BBAN with optional internal spaces | country length and MOD 97 checks give 0.95, rejecting check digits 00, 01 and 99 without requiring a keyword | on |
+| [KindIPAddr](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIPAddr) | extracts dotted IPv4 decimal octets and colon-separated IPv6 hexadecimal text, including :: shorthand | net.ParseIP validation gives 0.8, excluding unspecified and loopback addresses with no keyword needed | on |
+| [KindSWIFTBIC](https://pkg.go.dev/github.com/nao1215/embargo@main#KindSWIFTBIC) | accepts 8 or 11 ASCII alphanumerics as four bank letters, two country letters, location and optional branch | country and structure checks give 0.85, with case ignored and no institution lookup | on |
+| [KindABARouting](https://pkg.go.dev/github.com/nao1215/embargo@main#KindABARouting) | selects 9 consecutive digits beginning 01–12, 21–32, 61–72 or 80 as US routing candidates | the repeating 3,7,1 weighted MOD 10 checksum must pass, giving 0.85 without a keyword | on |
+| [KindUKSortCode](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKSortCode) | picks six digits in three pairs separated consistently by hyphens or spaces with matching separators, excluding … | structure checks give 0.7, or 0.55 for contextual date-like candidates, without a checksum | on |
+| [KindCVV](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCVV) | finds 3 or 4 consecutive digits within 30 bytes of a verification-code keyword end | length and non-overlap checks yield 0.85 without a checksum | on |
+| [KindCardExpiry](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCardExpiry) | reads MM/YY, MM/YYYY, MM-YY or MM-YYYY near expiration labels | month 01–12 and adjacent-digit checks yield 0.85, without checking whether the date is in the future | on |
+| [KindPaymentToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPaymentToken) | covers Stripe identifiers and keys, PayPal PAYID- and Square sq0idp-/sq0csp- tokens | prefix and minimum-body checks yield 0.9 with no keyword or authentication | on |
+| [KindBankAccount](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBankAccount) | looks for 4–17 consecutive digits within 50 bytes of a banking keyword end | length checks give 0.5, raised to 0.65 by nearby holder context, without a checksum | on |
+| [KindACHTrace](https://pkg.go.dev/github.com/nao1215/embargo@main#KindACHTrace) | takes 15 consecutive digits within 50 bytes of an ACH or trace keyword end | prefix validation requires 01–12, 21–32, 61–72 or 80 and scores 0.75 without a checksum | on |
+| [KindMerchantID](https://pkg.go.dev/github.com/nao1215/embargo@main#KindMerchantID) | finds 15 ASCII alphanumerics for merchant IDs or 8 consecutive digits for terminal IDs | length and keyword-overlap checks give 0.7 without checksum validation | on |
+| [KindBTC](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBTC) | recognizes mainnet 1/3 Base58 text of 25–34 characters or single-case bc1 text of 42 or 62 characters | Base58Check or Bech32/Bech32m checksum validation gives 0.95 without a keyword | on |
+| [KindETH](https://pkg.go.dev/github.com/nao1215/embargo@main#KindETH) | captures 0x or 0X followed by exactly 40 hexadecimal characters at identifier boundaries | uniform-case hex scores 0.8 without checksum validation, while mixed case must pass EIP-55 (Keccak-256) for 0.95 … | on |
+| [KindGitHubToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindGitHubToken) | distinguishes classic ghp_/gho_/ghu_/ghs_/ghr_ tokens from github_pat_ tokens | body-length and token-boundary checks yield 0.95 without a keyword or authentication | on |
+| [KindSlackToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindSlackToken) | recognizes xoxb-, xoxp-, xoxa-, xoxo-, xoxr- and xoxs- followed by ASCII letters, digits or hyphens | a body of at least 10 characters and token-boundary checks yield 0.9, with no context keyword or authentication | on |
+| [KindGoogleAPIKey](https://pkg.go.dev/github.com/nao1215/embargo@main#KindGoogleAPIKey) | looks for AIza followed by exactly 35 ASCII letters, digits, hyphens or underscores | the 39-character length and token-boundary checks give 0.9 without a keyword or authentication | on |
+| [KindPrivateKeyPEM](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPrivateKeyPEM) | covers -----BEGIN headers whose same-line content ends in PRIVATE KEY, closed by five hyphens | header grammar alone gives 0.99 without a keyword or key-material validation | on |
+| [KindUSSSN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSSSN) | recognizes 9 digits, either contiguous or grouped 3-2-4 with hyphens | field checks yield 0.6, or 0.4 under a business label, with no keyword or checksum required | off |
+| [KindUSITIN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSITIN) | finds 9 digits starting with 9, optionally hyphenated 3-2-4 | middle-group validation gives 0.6, or 0.4 under a business label, without a keyword or checksum | off |
+| [KindUKNINO](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKNINO) | accepts two uppercase ASCII letters, six digits and a suffix A–D, optionally spaced into groups of 2 letters, 2/2/2 … | prefix checks score 0.7, reduced to 0.4 by a business label, without requiring context or a checksum | off |
+| [KindUKNHS](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKNHS) | collects 10 digits, contiguous or spaced 3-3-4 | weighted MOD 11 validation yields 0.95, or 0.4 with a business label, and needs no keyword | off |
+| [KindIndiaAadhaar](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIndiaAadhaar) | accepts 12 digits beginning 2–9, contiguous or spaced 4-4-4 | Verhoeff checksum validation gives 0.95, lowered to 0.4 by business context, without a keyword | off |
+| [KindIndiaPAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIndiaPAN) | recognizes five uppercase ASCII letters, four digits and one final uppercase letter | holder-type and nonzero-serial checks score 0.7, or 0.4 under a business label, with no keyword or checksum | off |
+| [KindBrazilCPF](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBrazilCPF) | takes 11 digits, contiguous or formatted DDD.DDD.DDD-DD | both MOD 11 check digits must pass for 0.95, or 0.4 under a business label, without a keyword | off |
+| [KindBrazilCNPJ](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBrazilCNPJ) | admits 12 uppercase ASCII alphanumerics and two digits, contiguous or formatted CC.CCC.CCC/CCCC-DD | two MOD 11 checks give 0.95, or 0.4 with a business label, without requiring a keyword | off |
+| [KindChinaResidentID](https://pkg.go.dev/github.com/nao1215/embargo@main#KindChinaResidentID) | requires 17 digits followed by a digit or uppercase X, including a YYYYMMDD birth date | province, date, sequence and MOD 11-2 checks yield 0.95, or 0.4 under a business label, with no keyword | off |
+| [KindKoreaRRN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindKoreaRRN) | reads 13 digits, contiguous or hyphenated 6-7, with a birth date and century/sex digit | the legacy weighted MOD 11 check scores 0.95, labeled check failures 0.6, and business labels 0.4 | off |
+| [KindCanadaSIN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCanadaSIN) | finds 9 digits starting with 1–7 or 9, contiguous or hyphenated 3-3-3 | Luhn checksum validation yields 0.95, or 0.4 under a business label, without a keyword | off |
+<!-- detectors:end -->
+
+</details>
+
 [Every detector and how it validates](doc/detectors.md) · [Provider token formats](doc/credentials.md)
 
 Mask everything a scanner finds, or keep part of a value:
@@ -296,7 +345,7 @@ Round 13 scanner medians (ten interleaved samples):
 
 [Machine, method, profiles and full results](doc/benchmarks.md).
 
-Same slog events through masq v0.2.3: 31–78% less time and fewer allocations on all five events. [Comparison](doc/comparison.md) · [benchstat](doc/comparison.benchstat.txt)
+Same slog events through masq v0.2.3: 7–67% less time and fewer allocations on all five events. [Comparison](doc/comparison.md) · [benchstat](doc/comparison.benchstat.txt)
 
 ## Contributing
 

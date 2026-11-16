@@ -1,51 +1,36 @@
 # Supported detectors
 
+The [Kind godoc](https://pkg.go.dev/github.com/nao1215/embargo@main#Kind) defines each matching rule, validation step, emitted confidence and default selection. The [README table](../README.md#find-and-mask-sensitive-text) is generated from those comments. Use this page to interpret findings and choose a threshold; format acceptance does not establish account ownership, identity issuance or successful authentication.
 
-| Kind | Detects | Validation |
-|--------|---------|------------|
-| `KindPAN` | Credit card candidates (Visa, Mastercard, Amex, JCB, Discover, Diners, UnionPay) | BIN prefix + Luhn; checksum failures remain lower-confidence candidates |
-| `KindEmail` | Email addresses | Structure + known TLD check |
-| `KindJPPhone` | Japanese phone numbers (mobile, landline, IP phone, toll-free, M2M/IoT, service) | Prefix classification + digit count |
-| `KindMyNumber` | Japanese My Number (12-digit individual number) | MOD 11 check digit |
-| `KindJWT` | JSON Web Tokens | Header decode + `alg` key check |
-| `KindAWSKey` | AWS Access Key IDs (`AKIA...` / `ASIA...`) | Prefix + 20-char alphanumeric |
-| `KindIBAN` | International Bank Account Numbers | Country code + MOD 97 check digit |
-| `KindIPAddr` | IPv4 and IPv6 addresses | `net.ParseIP` + octet range |
-| `KindSWIFTBIC` | SWIFT/BIC codes | [Explanation 1](#table-explanation-1) |
-| `KindABARouting` | US ABA routing numbers | Prefix range + checksum |
-| `KindUKSortCode` | UK sort codes (XX-XX-XX) | Pattern + boundary checks |
-| `KindCVV` | Card verification values (CVV/CVC/CID) | Context keyword + digit length (context-based, weaker) |
-| `KindCardExpiry` | Card expiration dates | Context keyword + MM/YY validation (context-based, weaker) |
-| `KindPaymentToken` | Payment processor tokens (Stripe/PayPal/Square) | Prefix + minimum body length |
-| `KindBankAccount` | Bank account numbers (context-based) | Context keyword + digit range (context-based, weaker) |
-| `KindACHTrace` | ACH trace numbers | Context keyword + prefix range (context-based, weaker) |
-| `KindMerchantID` | Merchant/terminal IDs | Context keyword + format (context-based, weaker) |
-| `KindBTC` | Bitcoin addresses (P2PKH, P2SH, Bech32, Bech32m/Taproot) | Base58Check (double SHA-256) / Bech32 polynomial checksum |
-| `KindETH` | Ethereum addresses (0x + 40 hex) | EIP-55 for mixed case; uniform case requires no checksum |
-| `KindGitHubToken` | GitHub tokens (classic `ghp_`/`gho_`/`ghu_`/`ghs_`/`ghr_`, fine-grained `github_pat_`) | Prefix + body character set + length |
-| `KindSlackToken` | Slack API tokens (`xoxb-`/`xoxp-`/`xoxa-`/`xoxo-`/`xoxr-`/`xoxs-`) | Prefix + type character + minimum body length |
-| `KindGoogleAPIKey` | Google API keys (`AIza...`) | Prefix + 35-char body |
-| `KindPrivateKeyPEM` | PEM private key headers (RSA/EC/DSA/OpenSSH/PKCS#8) | `-----BEGIN [ALGO ]PRIVATE KEY-----` header parse |
-| `KindCredential` | [Explanation 2](#table-explanation-2) | Sensitive key or URL userinfo + value grammar; only the secret part is masked |
-| `KindServiceToken` | Provider tokens (OpenAI, Anthropic, Stripe, GitLab, npm, PyPI, Slack webhooks, SendGrid, Google OAuth) | Documented prefix + body length and character set |
-| `KindHighEntropy` | Long random-looking strings with no surrounding context | Base64-like run of 32–256 bytes with Shannon entropy of at least 4.5 bits per byte; low confidence (0.3) |
-| `WithAll()` | All of the above | |
+## Confidence and false positives
 
+Confidence ranks evidence used by a detector, not the probability that a value is secret. A checksum protects against many transcription errors but says nothing about why a number appears in a log. A structurally valid public order number can share every digit with a personal identifier. The scanner keeps such ambiguous matches so callers can choose the cost of missed secrets versus excess masking.
 
-Validation checks format, not account existence or credential authentication. Confidence scores are heuristics, not probabilities. See the [accuracy corpus](accuracy.md) for examples of misses and false alarms.
+| Situation | Why interpretation matters | Matching contract |
+|---|---|---|
+| `order_id=4111111111111111` | A public order ID can look exactly like a payment card | [KindPAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN) |
+| `sort code: 20-12-25` | The same text can denote a date or a bank branch | [KindUKSortCode](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKSortCode) |
+| `bank account 12345678 holder John` | A nearby name strengthens context but does not confirm an account | [KindBankAccount](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBankAccount) |
+| `alice@ex..ample.com` | Address-shaped text can deserve masking even when mail delivery would fail | [KindEmail](https://pkg.go.dev/github.com/nao1215/embargo@main#KindEmail) |
+| `swift DEUTDEFF` | Context distinguishes an all-letter bank code from an ordinary word | [KindSWIFTBIC](https://pkg.go.dev/github.com/nao1215/embargo@main#KindSWIFTBIC) |
+| A public random request identifier | Removing its label can make it indistinguishable from an opaque secret | [KindHighEntropy](https://pkg.go.dev/github.com/nao1215/embargo@main#KindHighEntropy) |
+
+The numeric tiers live in godoc, where they are tested against representative scans. [PAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN) retains checksum failures, [JWT](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJWT) distinguishes header evidence from signature presence, and [ETH](https://pkg.go.dev/github.com/nao1215/embargo@main#KindETH) treats uniform and mixed case differently. A single threshold therefore has different effects across families; the [exact-span accuracy measurements](accuracy.md) and [country evaluation](countries.md) show those tradeoffs on fixed data.
+
+## Parser boundaries
+
+A [Japanese telephone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJPPhone) match does not consult a complete area-code allocation database. A [Chinese resident ID](https://pkg.go.dev/github.com/nao1215/embargo@main#KindChinaResidentID) can pass its checks even when its district/date combination could never have been issued. Modern [Korean RRN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindKoreaRRN) loses the evidence supplied by legacy check digits; an unlabeled value can be missed. The [country sources and evaluation](countries.md#definitions-and-independent-checks) explain why those limits affect detector selection.
+
+[Bitcoin](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBTC) acceptance is not a full wallet-address validator: a checksummed witness string can pass without proving canonical witness-program padding. [PEM](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPrivateKeyPEM) acceptance does not prove that a key body is parseable or cryptographically sound. Use a protocol library when those stronger guarantees are required after detection.
+
+Numeric parsers reject decimal tails and some hostname fragments so operational log fields do not become isolated identifiers. Boundaries differ by family: contextual digit searches can find a digit run beside letters, while country parsers exclude adjacent ASCII identifier characters. [Scan](https://pkg.go.dev/github.com/nao1215/embargo@main#Scanner.Scan) documents decoding and byte offsets; [Kind](https://pkg.go.dev/github.com/nao1215/embargo@main#Kind) documents normalization and business-label scope. The [adversarial encoding regressions](testing.md#adversarial-budgets) retain examples of unsupported disguises.
+
+[Credential grammar and provider sources](credentials.md) explain the evidence behind secret detection. Prefixes alone do not check revocation, and the generic credential parser cannot evaluate programming-language expressions or reconstruct values assembled at runtime. The [real-log analysis](real-logs.md) records observed false positives without claiming recall for unknown production secrets.
+
+## Updating detector documentation
+
+Edit the individual constant comment in finding.go, then run `go -C tests run ./cmd/detectordocs`. Each comment separates matching from validation with its first semicolon and ends with the NewScanner default in parentheses. The generator uses go/ast, takes the first validation sentence and shortens cells at word boundaries to the prose checker's 120-character budget; each Kind links to its full godoc. There is no second rule list to edit.
+
+`go -C tests run ./cmd/detectordocs --check` rejects stale output. `go -C tests test ./cmd/detectordocs` checks all constants, validation clauses, README membership, exact regeneration, observed confidence tiers and default detection through `NewScanner()`. Both commands run in CI; a new kind needs representative inputs for each score before its documentation can pass.
 
 [Support maintenance](https://github.com/sponsors/nao1215).
-
-## Table explanations
-
-<a id="table-explanation-1"></a>
-
-Format + country code validation; all-letter codes such as DEUTDEFF also need nearby swift, bic, bank identifier or wire text
-
-<a id="table-explanation-2"></a>
-
-Secrets in assignments, headers, URLs and DSNs (`password=`, `"token":"..."`, `Authorization: Bearer`, `postgres://user:pass@host`)
-
-## Additional country identifiers
-
-The eleven opt-in [country kinds](countries.md) cover SSN, ITIN, NINO, NHS, Aadhaar, Indian PAN, CPF, CNPJ, Chinese resident ID, Korean RRN and Canadian SIN. That page gives each format, checksum definition, held evaluation and real-log false positives. WithKinds selects regions explicitly; WithAll includes all eleven.

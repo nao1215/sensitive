@@ -5,12 +5,8 @@ import (
 	"strings"
 )
 
-// HighEntropy finds unlabeled 32..256 byte base64-like tokens with at least
-// three character classes and Shannon entropy >=4.5 bits/byte. Confidence is
-// only 0.3: random public IDs are indistinguishable from secrets without context.
-// Hex hashes, UUIDs and tokens directly assigned to common ID labels are omitted.
-// Slash separates candidates; components adjacent to a slash, backslash or dotted name are excluded,
-// including random-looking filename and URL-path segments. Use key context for credentials in locations.
+// HighEntropy implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindHighEntropy.
 type HighEntropy struct{}
 
 // Name returns the high entropy family.

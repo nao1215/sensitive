@@ -4,27 +4,11 @@ Use `WithKinds` to select the identifiers that an application handles. For examp
 
 ## Rules and boundaries
 
-These parsers recognize possible identifiers, not issued identities. They do not call government registries, verify a person's identity or establish whether a number belongs to anyone. Letters must be uppercase ASCII. Numeric digits accept ASCII and full-width forms, with offsets mapped back to the original bytes. The scanner decodes one percent-encoding layer. Longer adjacent ASCII identifiers are excluded; punctuation can delimit a candidate.
+The [Kind godoc](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSSSN) is the matching contract for all eleven country kinds, including formats, check digits, context and confidence tiers. These parsers recognize possible identifiers, not issued identities; they do not consult government registries or verify ownership.
 
-| Kind | Validation | Additional formatted form | Score |
-|---|---|---|---:|
-| us_ssn | Nine digits; area excludes 000, 666 and 900–999; group and serial are nonzero | 123-45-6789 | 0.6 |
-| us_itin | Starts with 9; middle group 50–65, 70–88, 90–92 or 94–99 | 912-50-1234 | 0.6 |
-| uk_nino | Allowed two-letter prefix, six digits, suffix A–D | AB 12 34 56 C | 0.7 |
-| uk_nhs | Ten digits; weighted MOD 11; check value 10 is invalid | 943 476 5919 | 0.95 |
-| in_aadhaar | Twelve digits beginning 2–9; Verhoeff check | 2345 6789 0124 | 0.95 |
-| in_pan | Five letters, four digits, final letter; holder-type letter and nonzero serial | No extra separator form | 0.7 |
-| br_cpf | Eleven digits; two MOD 11 checks | 280.012.389-38 | 0.95 |
-| br_cnpj | Twelve uppercase alphanumeric characters and two MOD 11 digits | 12.ABC.345/01DE-35 | 0.95 |
-| cn_resident_id | Eighteen characters; province prefix, calendar date, nonzero sequence, MOD 11-2 | No extra separator form | 0.95 |
-| kr_rrn | Birth date, century/sex field, legacy weighted MOD 11 check | 900101-1234568 | 0.95 |
-| ca_sin | Nine digits; first digit excludes 0 and 8; Luhn | 123-456-782 | 0.95 |
+CNPJ added an alphanumeric format for new registrations in July 2026. [KindBrazilCNPJ](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBrazilCNPJ) covers both generations. Chinese resident IDs have a different limitation: a checksum-valid date and district combination can be recognized even if no such identifier could have been issued, because historical district-assignment tables are not consulted.
 
-NINO excludes D, F, I, Q, U and V in both prefix positions, O in the second position, and prefixes BG, GB, KN, NK, NT, TN and ZZ. Indian PAN checks the fourth letter against P, C, H, A, B, G, J, L, F and T; its final letter is checked for structure, not an undocumented checksum. Repeated single-digit values are rejected for NHS, Aadhaar, CPF, CNPJ and SIN. A nearby business label such as `order_id` lowers any accepted candidate to 0.4, retaining the established scanner policy that an ambiguous label must not discard a possible secret.
-
-CNPJ accepts the numeric format and the alphanumeric format introduced for new registrations in July 2026. Checksum arithmetic maps each character to its ASCII code minus 48, so A contributes 17, and uses the same two MOD 11 checks. Chinese resident IDs validate the province prefix and date but do not consult historical district-assignment tables. A checksum-valid date and district combination can therefore be recognized even if no such identifier could have been issued.
-
-Korea replaced the encoded regional suffix with random digits for new or reassigned RRN from October 2020. A legacy-checksum-only recognizer would miss those values. A structurally valid RRN next to `rrn` or `주민등록번호` is therefore accepted at 0.6 even when the legacy check fails. Unlabeled modern RRN can be missed; the score does not identify when a number was issued. Foreigner registration numbers are outside this kind.
+Korea replaced the encoded regional suffix with random digits for new or reassigned RRN from October 2020. A legacy-checksum-only recognizer would miss those values, which motivates the contextual fallback documented on [KindKoreaRRN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindKoreaRRN). Unlabeled modern RRN can be missed; confidence does not identify when a number was issued. Foreigner registration numbers are outside this kind.
 
 ## Definitions and independent checks
 

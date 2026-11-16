@@ -7,11 +7,8 @@ type ABARoutingDetail struct {
 	FederalReserveDistrict string
 }
 
-// ABARouting detects US routing transit numbers used for ACH, wire transfers, and checks.
-//
-//  1. Extract exactly nine digits and require a routing prefix in 01–12, 21–32, 61–72, or 80 (normal, thrift, electronic, or traveler's checks).
-//  2. Require 3*(d1+d4+d7) + 7*(d2+d5+d8) + (d3+d6+d9) to be divisible by 10; reject every checksum failure.
-//  3. Score a valid match as 0.85.
+// ABARouting implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindABARouting.
 type ABARouting struct{}
 
 // NewABARouting combines US routing-prefix ranges with the weighted checksum.

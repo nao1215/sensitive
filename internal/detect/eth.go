@@ -11,11 +11,8 @@ type ETHDetail struct {
 	EIP55 bool
 }
 
-// ETH detects Ethereum addresses with optional EIP-55 checksum validation.
-//
-//  1. Find 0x or 0X followed by exactly 40 hexadecimal characters at word boundaries.
-//  2. Accept uniform-case hex with confidence 0.80.
-//  3. For mixed-case hex, require the EIP-55 checksum using Keccak-256 (the pre-FIPS-202 hash); reject failures and score valid matches as 0.95.
+// ETH implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindETH.
 type ETH struct{}
 
 // NewETH accepts uniform-case addresses and verifies EIP-55 for mixed-case addresses.

@@ -74,6 +74,13 @@ def godoc(items):
     for item in items:
         name,text,path = item['name'],item['text'],item['path']
         result.extend(text_rules(path,text,item['line'],code='/literal' in name))
+        if path == 'finding.go' and name.startswith('Kind') and name != 'Kind':
+            match, separator, validation = text.partition('; ')
+            if (not match.startswith(name+' ') or not separator
+                    or not re.search(r'\b(check\w*|validat\w*|verif\w*|structure|grammar|Shannon)\b', validation, re.I)
+                    or not re.search(r'\b(?:0\.[0-9]+|1\.0)\b', validation)
+                    or not re.search(r' \(NewScanner default: (?:on|off)\)\.\s*$', validation)):
+                result.append(issue(path, 'kind-contract', text, item['line']))
         if name.startswith('Example'):
             continue
         if not text.strip():

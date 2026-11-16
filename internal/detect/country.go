@@ -2,11 +2,8 @@ package detect
 
 import "strings"
 
-// Country recognizes one national identifier format using its published structure and check digits.
-// NHS, Aadhaar, CPF, CNPJ, Chinese IDs, legacy RRN and SIN require their arithmetic checks.
-// SSN, ITIN, NINO and Indian PAN have structure checks only; no assignment registry is consulted.
-// Modern Korean RRN needs an adjacent rrn or 주민등록번호 label because its suffix is randomized.
-// See doc/countries.md for definitions, confidence scores, accepted separators and limits.
+// Country implements the national-identifier contracts documented on the root Kind constants.
+// See https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSSSN and the following country kinds.
 type Country struct {
 	name    DetectorName
 	layouts []string
@@ -20,7 +17,7 @@ func NewCountry(name DetectorName) *Country {
 // Name identifies the selected national-number family, such as "ca_sin".
 func (d *Country) Name() DetectorName { return d.name }
 
-// Hints leaves numeric and alphabetic forms eligible without requiring a label.
+// Hints keeps all layouts eligible before context validation.
 func (d *Country) Hints() [][]byte { return nil }
 
 func countryLayouts(name DetectorName) []string {

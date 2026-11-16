@@ -20,11 +20,8 @@ type BankAccountDetail struct {
 	Language BankAccountLanguage
 }
 
-// BankAccount detects possible account numbers using context; no universal account format or checksum is assumed.
-//
-//  1. Find 口座番号, 口座名義, 振込先, 銀行口座, 預金口座, bank account, account number, acct no, or account no (ASCII case-insensitive).
-//  2. Search within 50 bytes of the keyword end for 4–17 digits that do not overlap the keyword.
-//  3. Score a match as 0.50, or 0.65 if holder-name context such as 名義 also occurs within 50 bytes of the digits.
+// BankAccount implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindBankAccount.
 type BankAccount struct {
 	bankAccountKeywords *keywordSet
 }

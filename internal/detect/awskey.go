@@ -16,11 +16,8 @@ type AWSKeyDetail struct {
 	KeyType AWSKeyType
 }
 
-// AWSKey detects AWS Access Key IDs by format, without checking whether they authenticate.
-//
-//  1. Find AKIA (long-term IAM) or ASIA (temporary STS).
-//  2. Require exactly 16 following uppercase ASCII letters or digits and token boundaries, for 20 characters total.
-//  3. Score a match as 0.95 and record [AWSKeyDetail.KeyType].
+// AWSKey implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindAWSKey.
 type AWSKey struct{}
 
 // NewAWSKey recognizes long-term and temporary access-key ID prefixes.

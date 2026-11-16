@@ -14,11 +14,8 @@ const (
 	setCookieKey       = "setcookie"
 )
 
-// Credential detects assignments, HTTP credentials and URL/DSN passwords at
-// confidence 0.95. It preserves labels, auth schemes, usernames, hosts and paths.
-// Quoted values honor backslash escapes; unquoted values end at delimiters.
-// This parser consumes original bytes so encoded URL delimiters stay in values.
-// Provider-specific secret field names also cover unprefixed cloud credentials.
+// Credential implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindCredential.
 type Credential struct {
 	// MatchKey optionally replaces the default assignment-key policy.
 	MatchKey func(string) bool

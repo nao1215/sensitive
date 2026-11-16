@@ -16,11 +16,8 @@ type MerchantIDDetail struct {
 	IDType MerchantIDType
 }
 
-// MerchantID detects merchant and terminal identifiers from nearby context.
-//
-//  1. Find merchant ID, MID, terminal ID, TID, 加盟店, or 端末 context (ASCII case-insensitive).
-//  2. Search within 30 bytes of the keyword end for 15 alphanumeric characters for a merchant ID or eight digits for a terminal ID.
-//  3. Exclude keyword overlaps and already reported ranges; score a match as 0.7 and record its identifier type.
+// MerchantID implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindMerchantID.
 type MerchantID struct {
 	merchantKeywords *keywordSet
 	terminalKeywords *keywordSet

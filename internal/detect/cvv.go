@@ -6,11 +6,8 @@ type CVVDetail struct {
 	DigitCount int
 }
 
-// CVV detects card verification values from nearby keywords, without checksum validation.
-//
-//  1. Find CVV, CVC, CID, CVV2, CVC2, security code, or セキュリティコード (ASCII case-insensitive).
-//  2. Search within 30 bytes of the keyword end for a separate three- or four-digit sequence that does not overlap the keyword.
-//  3. Return only the digits with confidence 0.85.
+// CVV implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindCVV.
 type CVV struct {
 	cvvKeywords *keywordSet
 }

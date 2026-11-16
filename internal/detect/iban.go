@@ -6,11 +6,8 @@ type IBANDetail struct {
 	CountryCode string
 }
 
-// IBAN detects International Bank Account Numbers with country-specific lengths and MOD 97 validation.
-//
-//  1. Find two ASCII letters followed by two check digits; uppercase letters for lookup in the supported SWIFT registry country table.
-//  2. Extract the country's required length (up to 30 BBAN characters after the prefix), allowing internal spaces; following spaces delimit text, while adjacent letters or digits reject the candidate.
-//  3. Reject reserved check digits 00, 01 and 99, require MOD 97 (ISO 7064) validation, and score the match as 0.95.
+// IBAN implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindIBAN.
 type IBAN struct{}
 
 // NewIBAN combines country lengths with MOD 97 validation.

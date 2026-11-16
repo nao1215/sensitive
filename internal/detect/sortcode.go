@@ -8,14 +8,11 @@ type UKSortCodeDetail struct {
 	FormattedValue string
 }
 
-// UKSortCode detects formatted UK bank/branch identifiers without a checksum or assignment check.
-//
-//  1. Extract DD-DD-DD or DD with consistent separators; reject all-zero codes, bare six-digit numbers, and candidates inside longer numeric groups.
-//  2. Treat a middle pair in 01–12 with either outer pair in 01–31 as date-like; require nearby sort-code context for these candidates and score them as 0.55.
-//  3. Score other formatted matches as 0.7.
+// UKSortCode implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKSortCode.
 type UKSortCode struct{}
 
-// NewUKSortCode requires sort-code context around six digits.
+// NewUKSortCode requires separators and context only for date-like candidates.
 func NewUKSortCode() *UKSortCode {
 	return &UKSortCode{}
 }

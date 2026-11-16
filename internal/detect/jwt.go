@@ -35,11 +35,8 @@ type JWTDetail struct {
 	Algorithm string
 }
 
-// JWT detects token-shaped strings without verifying signatures or payload JSON; unsigned tokens with an empty signature are also reported.
-//
-//  1. Find the eyJ prefix and three base64url segments separated by two dots; require nonempty header and payload.
-//  2. Score a nonempty signature as 0.7, or an empty signature as 0.5.
-//  3. Add 0.2 when the header decodes as a JSON object and 0.1 when it contains an alg key; record alg when it is a string.
+// JWT implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindJWT.
 type JWT struct{}
 
 // NewJWT checks three base64url segments and the decoded header.

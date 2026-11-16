@@ -26,11 +26,8 @@ type SlackTokenDetail struct {
 	TokenType SlackTokenType
 }
 
-// SlackToken detects Slack API tokens by format, without verifying authentication.
-//
-//  1. Find xox followed by b, p, a, o, r, or s and a hyphen; [SlackTokenType] names these families.
-//  2. Consume ASCII letters, digits, and hyphens, requiring at least ten body characters.
-//  3. Enforce a leading word boundary and score a match as 0.9.
+// SlackToken implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindSlackToken.
 type SlackToken struct{}
 
 // NewSlackToken recognizes Slack token families and their body grammar.
