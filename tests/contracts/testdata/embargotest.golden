@@ -4,6 +4,7 @@ func New(tb testing.TB, opts ...Option) *Recorder
 func WithAllowedKinds(kinds ...embargo.Kind) Option
 func WithAllowedValues(values ...string) Option
 func WithCanary(canary []byte) Option
+func WithCanaryFragments(minBytes int) Option
 func WithLimits(maxBytes int64, timeout time.Duration) Option
 func WithScanner(scanner *embargo.Scanner) Option
 methodset *Recorder func (*Recorder).Canary() []byte

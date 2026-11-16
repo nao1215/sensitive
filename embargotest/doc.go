@@ -7,7 +7,8 @@
 // unpadded standard and URL base64, JSON with and without HTML escaping, Go
 // quoting with and without ASCII escaping (%q and %+q), a decimal byte slice and
 // a big-endian decimal integer, also when it is split across writes.
-// Partial or derived values, mixed encodings, base64 shifted inside a larger
+// WithCanaryFragments opts into raw contiguous pieces of at least 16 bytes.
+// Smaller or derived values, mixed encodings, base64 shifted inside a larger
 // blob and compressed or binary exports need their own decoding before they
 // are written to a Recorder.
 //

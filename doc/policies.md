@@ -90,6 +90,8 @@ The inventory below translates the owner's active repository instructions into c
 | Logrus Entry.Context cancels formatting and subsequent detector work | M19 | [TestEntryContextCancellation](../adapters/logrus/adapter_test.go) | MultiPlatformUnitTest |
 | Adoption cases exercise real outputs and retain declared-policy controls | M21 | [TestAdoptionDeclaredControls](../tests/adoption_cases_test.go) | MultiPlatformUnitTest |
 | Adoption table is generated from executed cases and checked in CI | M21 | [main](../scripts/case_docs.py) | Verification |
+| Output cases isolate detector decisions from canary and fragment matching | M21 | [TestAdoptionCheckIndependence](../tests/check_independence_test.go) | Verification |
+| Canary fragments retain minimum-length and option-order boundaries | M21 | [TestCanaryFragmentBoundsAndOrder](../embargotest/canary_fragment_test.go) | MultiPlatformUnitTest |
 <!-- policy-map:end -->
 
 ## Changing a rule

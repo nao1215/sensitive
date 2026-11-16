@@ -2,6 +2,48 @@
 
 A canary is a distinctive fake secret placed in the application path being tested. The recorder searches captured bytes for that value and its supported encodings, independently of detector findings. The [README test](../readme_output_test.go) shows a Secret passing through a real JSON logger.
 
+## What a pass proves
+
+| Check | Independent of detectors? | Evidence and boundary |
+|---|---|---|
+| Whole canary byte matching | Yes | Raw, hex, base64 and JSON forms of the planted value in observed bytes |
+| Detector scan of output | No | Repeats the configured detectors; a shared miss can pass twice |
+| Optional raw canary fragments | Yes | WithCanaryFragments(16) catches contiguous raw pieces of at least 16 bytes |
+| Expect / ExpectJSON | Caller-defined | Requires useful content; also assert identifiers that must survive masking |
+
+Canary matching also supports Go quoting, decimal byte slices and big-endian decimal integers. The four base64 alphabets/padding variants and JSON escaping forms are enumerated in [package godoc](../embargotest/doc.go) and tested independently with standard encoders. It does not decode arbitrary base64 blobs around a secret. A full value split across writes to one sink is reassembled by capture and is detected; newlines, record framing or separate sinks between pieces break whole-value matching.
+
+Neither default check establishes absence of partial, truncated, split or hashed output. Nor does it cover output outside the captured boundary, all possible encodings or arbitrary unregistered secrets. Capture overflow itself fails closed; that is different from an application deliberately logging only part of a value. A passing detector scan can also reflect a policy that excluded the relevant kind or confidence tier.
+
+### Optional fragments
+
+`embargotest.WithCanaryFragments(16)` adds every raw 16-byte window of the configured canary to Recorder and Guard. Any longer surviving raw piece contains such a window. The option accepts a minimum from 16 through the canary length, regardless of option order, and leaves the default whole-value encodings active. It does not encode fragments, reconstruct shorter pieces or reverse hashes. Choose a distinctive fake canary; even a long repeated or common fragment can match unrelated diagnostic output. The minimum is a bound, not a probability guarantee.
+
+The [failing-first regression](../embargotest/canary_fragment_test.go) tests prefix, interior, suffix, split writes and split records with all detectors disabled. The existing suites and the following cases pass without new false rejections. Last-four and eight-digit card fragments remain outside this extension; detecting arbitrary short numbers as secrets would discard ordinary diagnostics.
+
+### Separate checks on the application cases
+
+These are actual outputs after the embargo masking step in [the case study](cases.md). Clear means this particular check did not fire, including when a value was already masked. It is not a proof of no leakage. Detector-only uses an unrelated canary; the other columns disable all detectors. Assertions fix the expected outcomes before rendering this table.
+
+<!-- check-independence:start -->
+| Output after embargo masking | Detector only | Whole canary only | Canary with 16-byte fragments |
+|---|---|---|---|
+| added struct field | clear | clear | clear |
+| client error | clear | clear | clear |
+| HTTP query | clear | clear | clear |
+| wrapped error | clear | clear | clear |
+| DSN password | clear | clear | clear |
+| header dump | clear | clear | clear |
+| unwrapped logger | detected | detected | detected |
+| card last four | clear | clear | clear |
+| truncated card | clear | clear | clear |
+| base64 token | clear | detected | detected |
+| hex token | clear | detected | detected |
+| split token lines | clear | clear | detected |
+<!-- check-independence:end -->
+
+Regenerate both output tables with `python3 scripts/case_docs.py`; --check executes the tests and rejects stale output.
+
 ## Connect the output boundary
 
 | Producer | Connect to | Tested output |
