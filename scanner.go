@@ -88,7 +88,8 @@ func buildHintCache(detectors []detect.Detector) [][]hintEntry {
 // kind, then descending confidence. Built-ins decode one layer of valid percent
 // escapes (%HH), except KindCredential parses original URL/DSN delimiters.
 // Literal + and invalid escapes are preserved; offsets always refer
-// to original bytes. Other encodings are not decoded. Custom detectors receive
+// to original bytes. KindCredential also scans up to two Go/JSON quote and
+// backslash escape layers. Other encodings are not decoded. Custom detectors receive
 // the original bytes. Invalid custom findings panic with a fixed message.
 func (s *Scanner) Scan(data []byte) []Finding {
 	return s.scan(data, nil)

@@ -25,7 +25,6 @@ func TestURLPasswordFastPathDifferential(t *testing.T) {
 	}
 }
 
-//nolint:dupl // Keep the pre-optimization parser as an independent differential oracle.
 func referenceURLPasswords(data []byte) []Finding {
 	var out []Finding
 	for start := 0; start < len(data); {
@@ -129,5 +128,32 @@ func TestProxyAuthorizationCredentials(t *testing.T) {
 		if len(got) != 1 || got[0].RawValue != "dXNlcjpodW50ZXIy" || !SensitiveCredentialKey(key) {
 			t.Fatalf("credentials not masked: %v", got)
 		}
+	}
+}
+
+func TestCredentialContainerBoundaries(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		input string
+		want  string
+	}{
+		{`password:[one [nested] tail] public:kept`, `one [nested] tail`},
+		{`password:[]string{"one\"tail", "two"} public:kept`, `"one\"tail", "two"`},
+		{`password:[unterminated`, `unterminated`},
+		{`password:["unfinished\`, `"unfinished\`},
+	} {
+		got := (&Credential{}).Scan([]byte(tc.input))
+		if len(got) != 1 || got[0].RawValue != tc.want {
+			t.Errorf("container %q: %+v", tc.input, got)
+		}
+	}
+}
+
+func TestMixedCredentialEscapeLayers(t *testing.T) {
+	t.Parallel()
+	input := `password=firstFixture body={\"token\":\"secondFixture\"}`
+	findings := (&Credential{}).Scan([]byte(input))
+	if len(findings) != 2 || findings[0].RawValue != "firstFixture" || findings[1].RawValue != "secondFixture" {
+		t.Fatalf("mixed layers lost or duplicated a value: %+v", findings)
 	}
 }

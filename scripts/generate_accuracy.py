@@ -138,7 +138,7 @@ def generate(held=False):
             for mode in ['plain', 'log', 'json', 'url', 'japanese', 'multiline']:
                 before, rendered, after = surround(prefix, value, ('held_' if held else '') + mode)
                 samples.append(dict(id=f'{kind}/positive/{i}/{mode}', kind=kind, text=before+rendered+after,
-                                    expected=[dict(start=len(before.encode()), end=len((before+rendered).encode()))]))
+                                    expected=[dict(start=len(before.encode()), end=len((before+rendered+(after if kind == "private_key_pem" else "")).encode()))]))
     for i in range(16):
         for kind, value in sorted(invalids(rng, i).items()):
             for mode in ['plain', 'log', 'json', 'japanese']:
@@ -160,6 +160,15 @@ def generate(held=False):
             ('invalid phone prefix', f'Serial: 190-{1000+i:04}-{2000+i:04}'),
             ('base64 without JWT header', 'e30.e30.' + base64.urlsafe_b64encode(raw).decode().rstrip('=')),
         ]: controls.append(dict(id=f'control/{source}/{i}', source=source, text=text))
+    for i in range(32):
+        account = mynumber(f'{12345678000+i:011}')
+        for source, text in [
+            ('ARN account', f'arn:aws:iam::{account}:role/fixture'),
+            ('Swift build', ['swift package resolved', 'swift package RESOLVED', 'swift dependencies resolved'][i%3]),
+            ('SSH remote', f'git clone git@code{i}.example.org:org/repo.git'),
+            ('IP-like version', f'{["version", "v", "ver", "build", "release"][i%5]} 10.2.3.{i+1}'),
+        ]:
+            controls.append(dict(id=f'control/{source}/{i}', source=source, text=text))
     # Keep synthetic credential prefixes split in source, as in accuracy.json,
     # so hosting push protection does not mistake offline fixtures for live keys.
     credential_kinds = {'awskey', 'jwt', 'payment_token', 'github_token', 'slack_token', 'google_api_key', 'private_key_pem'}

@@ -350,3 +350,131 @@
 {"id":"control/phone-shaped serial/31","source":"phone-shaped serial","text":"tracking_serial = 090-1031-2031"}
 {"id":"control/invalid phone prefix/31","source":"invalid phone prefix","text":"Serial: 190-1031-2031"}
 {"id":"control/base64 without JWT header/31","source":"base64 without JWT header","text":"e30.e30.dmFsaWRhdGlvbiBmaXh0dXJlIDMx"}
+{"id":"control/ARN account/0","source":"ARN account","text":"arn:aws:iam::123456780002:role/fixture"}
+{"id":"control/Swift build/0","source":"Swift build","text":"swift package resolved"}
+{"id":"control/SSH remote/0","source":"SSH remote","text":"git clone git@code0.example.org:org/repo.git"}
+{"id":"control/IP-like version/0","source":"IP-like version","text":"version 10.2.3.1"}
+{"id":"control/ARN account/1","source":"ARN account","text":"arn:aws:iam::123456780010:role/fixture"}
+{"id":"control/Swift build/1","source":"Swift build","text":"swift package RESOLVED"}
+{"id":"control/SSH remote/1","source":"SSH remote","text":"git clone git@code1.example.org:org/repo.git"}
+{"id":"control/IP-like version/1","source":"IP-like version","text":"v 10.2.3.2"}
+{"id":"control/ARN account/2","source":"ARN account","text":"arn:aws:iam::123456780029:role/fixture"}
+{"id":"control/Swift build/2","source":"Swift build","text":"swift dependencies resolved"}
+{"id":"control/SSH remote/2","source":"SSH remote","text":"git clone git@code2.example.org:org/repo.git"}
+{"id":"control/IP-like version/2","source":"IP-like version","text":"ver 10.2.3.3"}
+{"id":"control/ARN account/3","source":"ARN account","text":"arn:aws:iam::123456780037:role/fixture"}
+{"id":"control/Swift build/3","source":"Swift build","text":"swift package resolved"}
+{"id":"control/SSH remote/3","source":"SSH remote","text":"git clone git@code3.example.org:org/repo.git"}
+{"id":"control/IP-like version/3","source":"IP-like version","text":"build 10.2.3.4"}
+{"id":"control/ARN account/4","source":"ARN account","text":"arn:aws:iam::123456780045:role/fixture"}
+{"id":"control/Swift build/4","source":"Swift build","text":"swift package RESOLVED"}
+{"id":"control/SSH remote/4","source":"SSH remote","text":"git clone git@code4.example.org:org/repo.git"}
+{"id":"control/IP-like version/4","source":"IP-like version","text":"release 10.2.3.5"}
+{"id":"control/ARN account/5","source":"ARN account","text":"arn:aws:iam::123456780053:role/fixture"}
+{"id":"control/Swift build/5","source":"Swift build","text":"swift dependencies resolved"}
+{"id":"control/SSH remote/5","source":"SSH remote","text":"git clone git@code5.example.org:org/repo.git"}
+{"id":"control/IP-like version/5","source":"IP-like version","text":"version 10.2.3.6"}
+{"id":"control/ARN account/6","source":"ARN account","text":"arn:aws:iam::123456780061:role/fixture"}
+{"id":"control/Swift build/6","source":"Swift build","text":"swift package resolved"}
+{"id":"control/SSH remote/6","source":"SSH remote","text":"git clone git@code6.example.org:org/repo.git"}
+{"id":"control/IP-like version/6","source":"IP-like version","text":"v 10.2.3.7"}
+{"id":"control/ARN account/7","source":"ARN account","text":"arn:aws:iam::123456780070:role/fixture"}
+{"id":"control/Swift build/7","source":"Swift build","text":"swift package RESOLVED"}
+{"id":"control/SSH remote/7","source":"SSH remote","text":"git clone git@code7.example.org:org/repo.git"}
+{"id":"control/IP-like version/7","source":"IP-like version","text":"ver 10.2.3.8"}
+{"id":"control/ARN account/8","source":"ARN account","text":"arn:aws:iam::123456780088:role/fixture"}
+{"id":"control/Swift build/8","source":"Swift build","text":"swift dependencies resolved"}
+{"id":"control/SSH remote/8","source":"SSH remote","text":"git clone git@code8.example.org:org/repo.git"}
+{"id":"control/IP-like version/8","source":"IP-like version","text":"build 10.2.3.9"}
+{"id":"control/ARN account/9","source":"ARN account","text":"arn:aws:iam::123456780096:role/fixture"}
+{"id":"control/Swift build/9","source":"Swift build","text":"swift package resolved"}
+{"id":"control/SSH remote/9","source":"SSH remote","text":"git clone git@code9.example.org:org/repo.git"}
+{"id":"control/IP-like version/9","source":"IP-like version","text":"release 10.2.3.10"}
+{"id":"control/ARN account/10","source":"ARN account","text":"arn:aws:iam::123456780100:role/fixture"}
+{"id":"control/Swift build/10","source":"Swift build","text":"swift package RESOLVED"}
+{"id":"control/SSH remote/10","source":"SSH remote","text":"git clone git@code10.example.org:org/repo.git"}
+{"id":"control/IP-like version/10","source":"IP-like version","text":"version 10.2.3.11"}
+{"id":"control/ARN account/11","source":"ARN account","text":"arn:aws:iam::123456780118:role/fixture"}
+{"id":"control/Swift build/11","source":"Swift build","text":"swift dependencies resolved"}
+{"id":"control/SSH remote/11","source":"SSH remote","text":"git clone git@code11.example.org:org/repo.git"}
+{"id":"control/IP-like version/11","source":"IP-like version","text":"v 10.2.3.12"}
+{"id":"control/ARN account/12","source":"ARN account","text":"arn:aws:iam::123456780126:role/fixture"}
+{"id":"control/Swift build/12","source":"Swift build","text":"swift package resolved"}
+{"id":"control/SSH remote/12","source":"SSH remote","text":"git clone git@code12.example.org:org/repo.git"}
+{"id":"control/IP-like version/12","source":"IP-like version","text":"ver 10.2.3.13"}
+{"id":"control/ARN account/13","source":"ARN account","text":"arn:aws:iam::123456780134:role/fixture"}
+{"id":"control/Swift build/13","source":"Swift build","text":"swift package RESOLVED"}
+{"id":"control/SSH remote/13","source":"SSH remote","text":"git clone git@code13.example.org:org/repo.git"}
+{"id":"control/IP-like version/13","source":"IP-like version","text":"build 10.2.3.14"}
+{"id":"control/ARN account/14","source":"ARN account","text":"arn:aws:iam::123456780142:role/fixture"}
+{"id":"control/Swift build/14","source":"Swift build","text":"swift dependencies resolved"}
+{"id":"control/SSH remote/14","source":"SSH remote","text":"git clone git@code14.example.org:org/repo.git"}
+{"id":"control/IP-like version/14","source":"IP-like version","text":"release 10.2.3.15"}
+{"id":"control/ARN account/15","source":"ARN account","text":"arn:aws:iam::123456780150:role/fixture"}
+{"id":"control/Swift build/15","source":"Swift build","text":"swift package resolved"}
+{"id":"control/SSH remote/15","source":"SSH remote","text":"git clone git@code15.example.org:org/repo.git"}
+{"id":"control/IP-like version/15","source":"IP-like version","text":"version 10.2.3.16"}
+{"id":"control/ARN account/16","source":"ARN account","text":"arn:aws:iam::123456780169:role/fixture"}
+{"id":"control/Swift build/16","source":"Swift build","text":"swift package RESOLVED"}
+{"id":"control/SSH remote/16","source":"SSH remote","text":"git clone git@code16.example.org:org/repo.git"}
+{"id":"control/IP-like version/16","source":"IP-like version","text":"v 10.2.3.17"}
+{"id":"control/ARN account/17","source":"ARN account","text":"arn:aws:iam::123456780177:role/fixture"}
+{"id":"control/Swift build/17","source":"Swift build","text":"swift dependencies resolved"}
+{"id":"control/SSH remote/17","source":"SSH remote","text":"git clone git@code17.example.org:org/repo.git"}
+{"id":"control/IP-like version/17","source":"IP-like version","text":"ver 10.2.3.18"}
+{"id":"control/ARN account/18","source":"ARN account","text":"arn:aws:iam::123456780185:role/fixture"}
+{"id":"control/Swift build/18","source":"Swift build","text":"swift package resolved"}
+{"id":"control/SSH remote/18","source":"SSH remote","text":"git clone git@code18.example.org:org/repo.git"}
+{"id":"control/IP-like version/18","source":"IP-like version","text":"build 10.2.3.19"}
+{"id":"control/ARN account/19","source":"ARN account","text":"arn:aws:iam::123456780193:role/fixture"}
+{"id":"control/Swift build/19","source":"Swift build","text":"swift package RESOLVED"}
+{"id":"control/SSH remote/19","source":"SSH remote","text":"git clone git@code19.example.org:org/repo.git"}
+{"id":"control/IP-like version/19","source":"IP-like version","text":"release 10.2.3.20"}
+{"id":"control/ARN account/20","source":"ARN account","text":"arn:aws:iam::123456780207:role/fixture"}
+{"id":"control/Swift build/20","source":"Swift build","text":"swift dependencies resolved"}
+{"id":"control/SSH remote/20","source":"SSH remote","text":"git clone git@code20.example.org:org/repo.git"}
+{"id":"control/IP-like version/20","source":"IP-like version","text":"version 10.2.3.21"}
+{"id":"control/ARN account/21","source":"ARN account","text":"arn:aws:iam::123456780215:role/fixture"}
+{"id":"control/Swift build/21","source":"Swift build","text":"swift package resolved"}
+{"id":"control/SSH remote/21","source":"SSH remote","text":"git clone git@code21.example.org:org/repo.git"}
+{"id":"control/IP-like version/21","source":"IP-like version","text":"v 10.2.3.22"}
+{"id":"control/ARN account/22","source":"ARN account","text":"arn:aws:iam::123456780223:role/fixture"}
+{"id":"control/Swift build/22","source":"Swift build","text":"swift package RESOLVED"}
+{"id":"control/SSH remote/22","source":"SSH remote","text":"git clone git@code22.example.org:org/repo.git"}
+{"id":"control/IP-like version/22","source":"IP-like version","text":"ver 10.2.3.23"}
+{"id":"control/ARN account/23","source":"ARN account","text":"arn:aws:iam::123456780231:role/fixture"}
+{"id":"control/Swift build/23","source":"Swift build","text":"swift dependencies resolved"}
+{"id":"control/SSH remote/23","source":"SSH remote","text":"git clone git@code23.example.org:org/repo.git"}
+{"id":"control/IP-like version/23","source":"IP-like version","text":"build 10.2.3.24"}
+{"id":"control/ARN account/24","source":"ARN account","text":"arn:aws:iam::123456780240:role/fixture"}
+{"id":"control/Swift build/24","source":"Swift build","text":"swift package resolved"}
+{"id":"control/SSH remote/24","source":"SSH remote","text":"git clone git@code24.example.org:org/repo.git"}
+{"id":"control/IP-like version/24","source":"IP-like version","text":"release 10.2.3.25"}
+{"id":"control/ARN account/25","source":"ARN account","text":"arn:aws:iam::123456780258:role/fixture"}
+{"id":"control/Swift build/25","source":"Swift build","text":"swift package RESOLVED"}
+{"id":"control/SSH remote/25","source":"SSH remote","text":"git clone git@code25.example.org:org/repo.git"}
+{"id":"control/IP-like version/25","source":"IP-like version","text":"version 10.2.3.26"}
+{"id":"control/ARN account/26","source":"ARN account","text":"arn:aws:iam::123456780266:role/fixture"}
+{"id":"control/Swift build/26","source":"Swift build","text":"swift dependencies resolved"}
+{"id":"control/SSH remote/26","source":"SSH remote","text":"git clone git@code26.example.org:org/repo.git"}
+{"id":"control/IP-like version/26","source":"IP-like version","text":"v 10.2.3.27"}
+{"id":"control/ARN account/27","source":"ARN account","text":"arn:aws:iam::123456780274:role/fixture"}
+{"id":"control/Swift build/27","source":"Swift build","text":"swift package resolved"}
+{"id":"control/SSH remote/27","source":"SSH remote","text":"git clone git@code27.example.org:org/repo.git"}
+{"id":"control/IP-like version/27","source":"IP-like version","text":"ver 10.2.3.28"}
+{"id":"control/ARN account/28","source":"ARN account","text":"arn:aws:iam::123456780282:role/fixture"}
+{"id":"control/Swift build/28","source":"Swift build","text":"swift package RESOLVED"}
+{"id":"control/SSH remote/28","source":"SSH remote","text":"git clone git@code28.example.org:org/repo.git"}
+{"id":"control/IP-like version/28","source":"IP-like version","text":"build 10.2.3.29"}
+{"id":"control/ARN account/29","source":"ARN account","text":"arn:aws:iam::123456780290:role/fixture"}
+{"id":"control/Swift build/29","source":"Swift build","text":"swift dependencies resolved"}
+{"id":"control/SSH remote/29","source":"SSH remote","text":"git clone git@code29.example.org:org/repo.git"}
+{"id":"control/IP-like version/29","source":"IP-like version","text":"release 10.2.3.30"}
+{"id":"control/ARN account/30","source":"ARN account","text":"arn:aws:iam::123456780304:role/fixture"}
+{"id":"control/Swift build/30","source":"Swift build","text":"swift package resolved"}
+{"id":"control/SSH remote/30","source":"SSH remote","text":"git clone git@code30.example.org:org/repo.git"}
+{"id":"control/IP-like version/30","source":"IP-like version","text":"version 10.2.3.31"}
+{"id":"control/ARN account/31","source":"ARN account","text":"arn:aws:iam::123456780312:role/fixture"}
+{"id":"control/Swift build/31","source":"Swift build","text":"swift package RESOLVED"}
+{"id":"control/SSH remote/31","source":"SSH remote","text":"git clone git@code31.example.org:org/repo.git"}
+{"id":"control/IP-like version/31","source":"IP-like version","text":"v 10.2.3.32"}

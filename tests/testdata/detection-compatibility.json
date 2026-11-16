@@ -34,5 +34,53 @@
   },
   {
     "text": "{\"public\":17,\"password\":\"opaque\"}"
+  },
+  {
+    "text": "map[Authorization:[Bearer opaqueCredentialFixture]]"
+  },
+  {
+    "text": "form map[password:[opaqueFixture otherFixture]]"
+  },
+  {
+    "text": "\"{\\\"password\\\":\\\"opaqueFixture\\\"}\""
+  },
+  {
+    "text": "\"\\\"{\\\\\\\"password\\\\\\\":\\\\\\\"opaqueFixture\\\\\\\"}\\\"\""
+  },
+  {
+    "text": "[::ffff:203.0.113.7]:51234"
+  },
+  {
+    "text": "64:ff9b::198.51.100.23"
+  },
+  {
+    "text": "-----BEGIN PRIVATE KEY-----\nYWJjZGVmZ2g="
+  },
+  {
+    "text": "password=[REDACTED]opaqueFixture"
+  },
+  {
+    "text": "arn:aws:iam::123456789018:role/x"
+  },
+  {
+    "text": "swift package resolved"
+  },
+  {
+    "text": "git@github.com:org/repo.git"
+  },
+  {
+    "text": "version 10.2.3.4"
+  },
+  {
+    "text": "access_token=opaqueFixture"
+  },
+  {
+    "text": "x-api-key=opaqueFixture"
+  },
+  {
+    "text": "DB_PASSWORD=opaqueFixture"
+  },
+  {
+    "text": "Private-Token=opaqueFixture"
   }
 ]

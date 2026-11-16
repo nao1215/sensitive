@@ -38,7 +38,7 @@ func TestPrivateKeyPEMDetector_Scan(t *testing.T) {
 			name:     "PKCS8 private key header (no algorithm)",
 			input:    "config:\n" + pemHeader("") + "\n...",
 			wantLen:  1,
-			wantRaw:  pemHeader(""),
+			wantRaw:  pemHeader("") + "\n...",
 			wantAlgo: "",
 		},
 		{
@@ -107,12 +107,12 @@ func TestPEMHeaderVectors(t *testing.T) {
 	}
 }
 
-func TestPEMIncompleteBlockDoesNotConsumeNextKey(t *testing.T) {
+func TestPEMIncompleteBlockMasksFollowingInput(t *testing.T) {
 	t.Parallel()
 	first := pemHeader("")
 	second := first + "\nFAKE\n-----END PRIVATE KEY-----"
 	got := NewPrivateKeyPEM().Scan([]byte(first + "\n" + second))
-	if len(got) != 2 || got[0].RawValue != first || got[1].RawValue != second {
+	if len(got) != 1 || got[0].RawValue != first+"\n"+second {
 		t.Fatalf("wrong block bounds: %v", got)
 	}
 }

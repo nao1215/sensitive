@@ -13,6 +13,7 @@ const (
 	credentialTokenKey    = "token"
 	cookieKey             = "cookie"
 	setCookieKey          = "setcookie"
+	credentialMarker      = "[REDACTED]"
 )
 
 // Credential implements the public matching contract at
@@ -27,7 +28,7 @@ func (*Credential) Name() DetectorName { return "credential" }
 
 // Hints returns delimiters required by every supported credential form.
 func (*Credential) Hints() [][]byte {
-	return [][]byte{[]byte(":"), []byte("="), []byte("AKIA"), []byte("ASIA")}
+	return [][]byte{[]byte(":"), []byte("="), []byte("AKIA"), []byte("ASIA"), []byte("Bearer "), []byte("Basic ")}
 }
 
 // NormalizeCredentialKey removes ASCII case and key separators.
@@ -46,8 +47,12 @@ func NormalizeCredentialKey(key string) string {
 
 // SensitiveCredentialKey implements the shared default key rule.
 func SensitiveCredentialKey(key string) bool {
-	switch NormalizeCredentialKey(key) {
-	case "password", "passwd", "secret", credentialTokenKey, "apikey", authorizationKey, proxyAuthorizationKey, cookieKey, setCookieKey:
+	return sensitiveNormalizedKey(NormalizeCredentialKey(key))
+}
+
+func sensitiveNormalizedKey(key string) bool {
+	switch key {
+	case "password", "passwd", "secret", credentialTokenKey, "apikey", authorizationKey, proxyAuthorizationKey, cookieKey, setCookieKey, "accesstoken", "refreshtoken", "idtoken", "xapikey", "dbpassword", "privatetoken", "clientsecret", "authtoken", "pgpassword":
 		return true
 	}
 	return false
@@ -76,11 +81,8 @@ func (d *Credential) secretKey(key []byte) bool {
 		n++
 	}
 	name := string(normalized[:n])
-	if d.MatchKey == nil {
-		switch name {
-		case "password", "passwd", "secret", credentialTokenKey, "apikey", authorizationKey, proxyAuthorizationKey, cookieKey, setCookieKey:
-			return true
-		}
+	if d.MatchKey == nil && sensitiveNormalizedKey(name) {
+		return true
 	}
 	switch name {
 	case "xamzsignature", "sig", "accountkey", "sharedaccesssignature", "awssecretaccesskey", "secretaccesskey", "privatekey", "clientsecret", "twilioauthtoken", "authtoken":
@@ -91,6 +93,63 @@ func (d *Credential) secretKey(key []byte) bool {
 
 // Scan returns only secret spans, never their surrounding configuration fields.
 func (d *Credential) Scan(data []byte) []Finding {
+	out := d.scanPlain(data)
+	input := data
+	var positions []int
+	const layers = 2
+	for range layers {
+		decoded, mapping := credentialQuotes(input)
+		if mapping == nil {
+			break
+		}
+		if positions != nil {
+			for i, at := range mapping {
+				mapping[i] = positions[at]
+			}
+		}
+		next := d.scanPlain(decoded)
+		previous := 0
+		added := make([]Finding, 0, len(next))
+		for _, f := range next {
+			f.Start, f.End = mapping[f.Start], mapping[f.End]
+			// A valid less-escaped value owns its quotes. Decoding its interior again
+			// must not reinterpret an escaped quote as the end of that value.
+			for previous < len(out) && out[previous].End <= f.Start {
+				previous++
+			}
+			if previous < len(out) && out[previous].Start < f.End {
+				continue
+			}
+			f.RawValue = string(data[f.Start:f.End])
+			added = append(added, f)
+		}
+		out = append(out, added...)
+		slices.SortFunc(out, func(a, b Finding) int { return cmp.Compare(a.Start, b.Start) })
+		input, positions = decoded, mapping
+	}
+	return out
+}
+
+// Decode one quote/backslash escape layer. Positions
+// map each decoded boundary to the original bytes, including escaped secrets.
+func credentialQuotes(data []byte) (decoded []byte, positions []int) {
+	if !bytes.Contains(data, []byte(`\"`)) && !bytes.Contains(data, []byte(`\\`)) {
+		return data, nil
+	}
+	decoded = make([]byte, 0, len(data))
+	positions = make([]int, 0, len(data)+1)
+	for i := 0; i < len(data); i++ {
+		positions = append(positions, i)
+		if data[i] == '\\' && i+1 < len(data) && (data[i+1] == '"' || data[i+1] == '\\') {
+			i++
+		}
+		decoded = append(decoded, data[i])
+	}
+	positions = append(positions, len(data))
+	return decoded, positions
+}
+
+func (d *Credential) scanPlain(data []byte) []Finding {
 	urls := urlPasswords(data)
 	out := slices.Clone(urls)
 	urlIndex := 0
@@ -111,12 +170,13 @@ func (d *Credential) Scan(data []byte) []Finding {
 			continue
 		}
 		start, end := assignmentValue(data, i+1, NormalizeCredentialKey(string(key)))
-		if end > start && string(data[start:end]) != "[REDACTED]" && (NormalizeCredentialKey(string(key)) != credentialTokenKey || !objectReference(data, start, end)) {
+		if end > start && string(data[start:end]) != credentialMarker && (NormalizeCredentialKey(string(key)) != credentialTokenKey || !objectReference(data, start, end)) {
 			out = append(out, credentialFinding(data, start, end))
 			i = end - 1
 		}
 	}
 	out = append(out, awsSecretPair(data)...)
+	out = append(out, quotedAuthorization(data)...)
 	// Context and assignment recognizers may identify the same credential.
 	slices.SortFunc(out, func(a, b Finding) int {
 		if n := cmp.Compare(a.Start, b.Start); n != 0 {
@@ -169,12 +229,22 @@ func assignmentKey(data []byte, end int) []byte {
 	return data[start:end]
 }
 
+//nolint:gocognit,gocyclo // Keep quoted, container and scalar boundaries in one parser.
 func assignmentValue(data []byte, start int, key string) (valueStart, valueEnd int) {
 	for start < len(data) && (data[start] == ' ' || data[start] == '\t') {
 		start++
 	}
 	if start == len(data) {
 		return start, start
+	}
+	const marker = credentialMarker
+	markerPrefix := bytes.HasPrefix(data[start:], []byte(marker))
+	if !markerPrefix && data[start] == '[' {
+		if bytes.HasPrefix(data[start:], []byte("[]string{")) {
+			begin := start + len("[]string{")
+			return begin, credentialContainerEnd(data, begin, '}')
+		}
+		return start + 1, credentialContainerEnd(data, start+1, ']')
 	}
 	if data[start] == '"' || data[start] == '\'' {
 		quote := data[start]
@@ -193,7 +263,6 @@ func assignmentValue(data []byte, start int, key string) (valueStart, valueEnd i
 		return authorizationValueStart(data, start, end, key), end
 	}
 	start = authorizationValueStart(data, start, len(data), key)
-	const marker = "[REDACTED]"
 	if bytes.HasPrefix(data[start:], []byte(marker)) {
 		end := start + len(marker)
 		if end == len(data) || strings.ContainsRune(" \t\r\n\"'},;)&]>#", rune(data[end])) {
@@ -201,6 +270,9 @@ func assignmentValue(data []byte, start int, key string) (valueStart, valueEnd i
 		}
 	}
 	end := start
+	if bytes.HasPrefix(data[start:], []byte(marker)) {
+		end += len(marker)
+	}
 	for end < len(data) {
 		c := data[end]
 		if strings.ContainsRune("\r\n\"'},)]>", rune(c)) {
@@ -219,7 +291,6 @@ func credentialFinding(data []byte, start, end int) Finding {
 	return Finding{DetectorName: "credential", Start: start, End: end, Confidence: 0.95, RawValue: string(data[start:end])}
 }
 
-//nolint:dupl // Keep the pre-optimization parser as an independent differential oracle.
 func urlPasswords(data []byte) []Finding {
 	// Both URI userinfo and the Go MySQL DSN require an at-sign.
 	if !bytes.ContainsRune(data, '@') {
@@ -252,7 +323,7 @@ func urlPasswords(data []byte) []Finding {
 			if colon >= 0 && !bytes.ContainsAny(segment[:colon], "/?#@") {
 				secret := start + colon + 1
 				stop := start + at
-				if secret < stop && string(data[secret:stop]) != "[REDACTED]" {
+				if secret < stop && string(data[secret:stop]) != credentialMarker {
 					out = append(out, credentialFinding(data, secret, stop))
 				}
 			}
@@ -309,4 +380,57 @@ func authorizationValueStart(data []byte, start, end int, key string) int {
 		}
 	}
 	return start
+}
+
+// A fmt slice is one credential value, including every element and scheme.
+func credentialContainerEnd(data []byte, start int, closeByte byte) int {
+	var quote byte
+	depth := 0
+	for i := start; i < len(data); i++ {
+		if quote != 0 {
+			if data[i] == '\\' && i+1 < len(data) {
+				i++
+				continue
+			}
+			if data[i] == quote {
+				quote = 0
+			}
+			continue
+		}
+		if data[i] == closeByte {
+			if depth == 0 {
+				return i
+			}
+			depth--
+			continue
+		}
+		if closeByte == ']' && data[i] == '[' {
+			depth++
+		}
+		if data[i] == '"' || data[i] == '\'' {
+			quote = data[i]
+			continue
+		}
+	}
+	return len(data)
+}
+
+// Quoted header values retain their scheme even without an assignment label.
+func quotedAuthorization(data []byte) []Finding {
+	var out []Finding
+	for i := 0; i < len(data); i++ {
+		if data[i] != '"' && data[i] != '\'' {
+			continue
+		}
+		start := authorizationValueStart(data, i+1, len(data), authorizationKey)
+		if start == i+1 {
+			continue
+		}
+		end := credentialContainerEnd(data, start, data[i])
+		if end > start && string(data[start:end]) != credentialMarker {
+			out = append(out, credentialFinding(data, start, end))
+		}
+		i = end
+	}
+	return out
 }

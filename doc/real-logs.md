@@ -51,7 +51,7 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 | private_key_pem | 0.0 | 0.0 | 0.0 | 0.0 |
 | service_token | 0.0 | 0.0 | 0.0 | 0.0 |
 | slack_token | 0.0 | 0.0 | 0.0 | 0.0 |
-| swiftbic | 739,274.8 | 124.2 | 343.8 | 320.1 |
+| swiftbic | 739,274.8 | 124.2 | 343.8 | 296.4 |
 | uk_nhs | 0.0 | 0.0 | 0.0 | 2,287.9 |
 | uk_nino | 0.0 | 0.0 | 0.0 | 0.0 |
 | uk_sortcode | 0.0 | 0.0 | 0.0 | 0.0 |
@@ -60,8 +60,8 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 
 | Configuration | Development before / GB | Development after / GB | Held before / GB | Held after / GB |
 |---|---:|---:|---:|---:|
-| WithAll | 827,818.9 | 22,477.5 | 145,650.6 | 3,177.0 |
-| Default slog handler | 827,818.9 | 124.2 | 145,650.6 | 403.0 |
+| WithAll | 827,818.9 | 22,477.5 | 145,650.6 | 3,153.3 |
+| Default slog handler | 827,818.9 | 124.2 | 145,650.6 | 379.3 |
 | kinds1 | 0.0 | 0.0 | 0.0 | 0.0 |
 | kinds3 | 44,955.1 | 0.0 | 0.0 | 0.0 |
 | kinds8 | 47,563.0 | 0.0 | 144,062.1 | 0.0 |

@@ -182,7 +182,23 @@ func hasSWIFTContext(data []byte, start, end int) bool {
 	window := bytes.ToLower(data[searchStart:searchEnd])
 
 	for _, kw := range swiftContextKeywords() {
-		if bytes.Contains(window, kw) {
+		for offset := 0; offset < len(window); {
+			at := bytes.Index(window[offset:], kw)
+			if at < 0 {
+				break
+			}
+			at += offset
+			after := at + len(kw)
+			offset = after
+			if (at > 0 && isAlphaNum(window[at-1])) || (after < len(window) && isAlphaNum(window[after])) {
+				continue
+			}
+			if string(kw) == "swift" && after < start-searchStart {
+				gap := bytes.TrimSpace(window[after : start-searchStart])
+				if len(gap) > 0 && gap[0] != ':' && gap[0] != '=' && !bytes.HasPrefix(gap, []byte("code")) {
+					continue
+				}
+			}
 			return true
 		}
 	}

@@ -414,8 +414,8 @@
     {
       "results": {
         "embargo": {
-          "output": "{\"level\":\"INFO\",\"msg\":\"order 4111111111111112\"}",
-          "removed": false
+          "output": "{\"level\":\"INFO\",\"msg\":\"order [REDACTED]\"}",
+          "removed": true
         },
         "go-mask": {
           "output": "{\"level\":\"INFO\",\"msg\":\"order 4111111111111112\"}",

@@ -46,7 +46,7 @@ func TestPercentEncodedFindings(t *testing.T) {
 		{KindBankAccount, "bank account ", "18393904"},
 		{KindCardExpiry, "expiry ", "01/28"},
 		{KindMerchantID, "merchant ID ", "ZNFBVPHU2BHHFXP"},
-		{KindPrivateKeyPEM, "", "-----BEGIN RSA PRIVATE KEY-----"},
+		{KindPrivateKeyPEM, "", "-----BEGIN RSA PRIVATE KEY-----\nfixture\n-----END RSA PRIVATE KEY-----"},
 		{KindPAN, "", "４２４２４２４２４２４２４２４２"},
 		{KindPAN, "", "４１１１−１１１１−１１１１−１１１１"},
 		{KindPAN, "", "4111\u200b1111\u00a01111\u202f1111"},

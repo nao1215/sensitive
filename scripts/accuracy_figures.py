@@ -13,8 +13,20 @@ def read_jsonl(name):
     return [json.loads(line) for line in (ROOT/'tests/testdata'/name).read_text(encoding='utf-8').splitlines()]
 
 
+def pan_context():
+    import real_logs
+    manifest = json.loads((ROOT/'doc/real-logs-manifest.json').read_text(encoding='utf-8'))
+    rows = json.loads((ROOT/'doc/real-logs-summary.json').read_text(encoding='utf-8'))['datasets']
+    rates = []
+    for split in ('development', 'held'):
+        datasets = [d for d in manifest['datasets'] if d['split'] == split]
+        _, fp, _, _ = real_logs.estimate(rows, {d['name'] for d in datasets}, 'default', 'pan')
+        rates.append(fp*10**9/sum(d['bytes'] for d in datasets))
+    return f'PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: {rates[0]:.1f} development, {rates[1]:.1f} held.'
+
+
 def chart(rows):
-    height = 113+30*len(rows)
+    height = 143+30*len(rows)
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" width="960" height="{height}" viewBox="0 0 960 {height}" role="img">',
              '<title>Precision and recall on held-out synthetic samples</title>',
              '<desc>Blue bars show precision; orange bars show recall. Counts are positive and negative inputs per detector.</desc>',
@@ -34,6 +46,8 @@ def chart(rows):
             parts.append(f'<rect x="{x}" y="{y-9}" width="{width:.2f}" height="14" fill="{color}"/>')
             text(x+158,y+4,row[key])
         text(730,y+5,f"{row['positive']} / {row['negative']}")
+    if any(row['detector'] == 'pan' for row in rows):
+        text(20,height-14,pan_context(),12)
     return '\n'.join(parts+['</g></svg>',''])
 
 
@@ -78,6 +92,8 @@ def result_table(rows):
     for row in rows:
         k = row['detector']
         out.append(f"| [{k}](#{k.replace('_','-')}) | {row['positive']} / {row['negative']} | {row['tp']} / {row['fp']} / {row['fn']} | {row['precision']} | {row['recall']} |")
+    if any(row['detector'] == 'pan' for row in rows):
+        out += ['', pan_context()+' See [public-log sampling and classification](real-logs.md).']
     return out
 
 
@@ -141,13 +157,13 @@ def page(rows):
     dev70 = json.loads((ROOT/'doc/accuracy-70.json').read_text())
     held70 = json.loads((ROOT/'doc/accuracy-held-70.json').read_text())
     out = ['# Synthetic accuracy corpus', '', '## Conditions', '',
-           'The development set uses Python `random.Random(20261115)`; the held-out set uses `random.Random(20270129)` and six different surrounding templates. Both were fixed before detector changes. Tuning used development failures and independent code-review regressions; the held-out evaluation rejected a stricter SWIFT context rule because it reduced recall. We treated this as overfitting and reverted the rule; no held-out failure was used to tune the retained changes.', '',
+           'The development set uses Python `random.Random(20261115)`; the held-out set uses `random.Random(20270129)` and six different surrounding templates. Original inputs were fixed before detector changes. Added ARN, build-language, SSH-remote and version controls are regression evidence; incomplete PEM expected spans now include the existing suffix through end of input, retaining every previously expected byte. Tuning used development failures and independent code-review regressions; the held-out evaluation rejected a stricter SWIFT context rule because it reduced recall. We treated this as overfitting and reverted the rule; no held-out failure was used to tune the retained changes.', '',
            f'Development contains {sum(r["positive"]+r["negative"] for r in development):,} evaluations; held-out contains {sum(r["positive"]+r["negative"] for r in rows):,}. The [generator](../scripts/generate_accuracy.py) constructs values and original byte ranges without invoking embargo. Development includes hand-written controls; held-out includes only independently generated values and controls. Repeated surroundings reuse values, and deterministic format examples such as email names and date cycles occur in both sets. Counts are not independent statistical trials. This is synthetic evaluation, not evidence of production accuracy or credential validity.', '',
            'Surroundings include logs, JSON, URLs, line endings and Japanese text. Negative controls include hashes, UUIDs, timestamps, order/invoice/tracking identifiers, versions, invalid checksums and malformed credentials. Labels and templates are not a substitute for a real-world corpus.', '',
            'A hit requires the same kind and exact unused original byte range. Partial, duplicate and extra matches count as false positives; missing expected ranges count as false negatives. Precision is TP/(TP+FP); recall is TP/(TP+FN). Each detector runs alone.', '',
            'The default minimum confidence remains 0: ambiguous candidates are included. Confidence is a heuristic, not a probability. PAN checksum failures score 0.6; PAN, My Number and Japanese phone candidates with an attached order, invoice, tracking, version, build, serial or shipment label score 0.4. `WithMinConfidence(0.7)` excludes these candidates and can therefore miss genuine secrets under misleading business labels. A global 0.7 threshold also removes the 0.5–0.65 bank-account findings and some sort-code findings; it is not a universal accuracy setting. Both policies are measured below; the detector charts use held-out results at the default threshold.', '',
            '## Encoding policy', '',
-           'The original 23 built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in the input before detection. Findings map back to original bytes, so masking covers the escaped representation. Literal `+` and malformed percent escapes remain unchanged. Custom detectors receive the original bytes. Base64, hexadecimal, HTML entities, JSON escapes and recursively percent-encoded forms are not decoded by Scanner; decode application fields explicitly when needed. The logger adapters separately decode JSON strings at their output boundary.', '',
+           'The original 23 built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in the input before detection. Findings map back to original bytes, so masking covers the escaped representation. Literal `+` and malformed percent escapes remain unchanged. Custom detectors receive the original bytes. KindCredential additionally scans up to two Go/JSON quote and backslash escape layers with original byte offsets. Base64, hexadecimal, HTML entities, full Unicode escapes and recursively percent-encoded forms are not decoded by Scanner; decode application fields explicitly when needed. The logger adapters separately decode JSON strings at their output boundary.', '',
            '[Round-trip and offset properties](../percent_test.go) exercise random partial escaping and all byte values. [Regression tests](../tests/accuracy_test.go) reject new mismatches and obsolete exceptions in both sets. Known limits retain reasons in [development](../tests/testdata/accuracy_limits.jsonl) and [held-out](../tests/testdata/accuracy_held_limits.jsonl) fixtures.', '',
            '## Held-out results: default threshold 0', '',
            '![Held-out precision and recall](images/accuracy.svg)', ''] + result_table(rows)

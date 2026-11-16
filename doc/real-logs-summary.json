@@ -1,5 +1,5 @@
 {
-  "source_sha256": "838e2320604217b3a182802f135088a9920ff7c051ef0f8413e7e2159a049285",
+  "source_sha256": "b1375e2ddc07d06b5f4be1419b11e32b8f50dfa5bbca67aaaa26e9157e274478",
   "manifest_sha256": "1edd580861a43bde10bfc7f2ea09c523de68e4fd11961abd62c8bee84fa4eab4",
   "labels_sha256": "b32bf320efbf13be205ef2f683aacaa7557df1fc95e75adcf0e43efcf069eedc",
   "baseline_sha256": "f7066945d56d1b3526d282f2f68efe5fe158ed71c3b845b3d9f86aa1df090ac5",
@@ -1130,19 +1130,19 @@
         "all": {
           "ca_sin": 1,
           "ipaddr": 542844,
-          "swiftbic": 24
+          "swiftbic": 22
         },
         "default": {
           "ipaddr": 542844,
-          "swiftbic": 24
+          "swiftbic": 22
         },
         "default50": {
           "ipaddr": 542844,
-          "swiftbic": 24
+          "swiftbic": 22
         },
         "default70": {
           "ipaddr": 542844,
-          "swiftbic": 24
+          "swiftbic": 22
         },
         "kinds1": {},
         "kinds3": {},
@@ -1151,7 +1151,7 @@
         }
       },
       "dataset": "OpenSSH",
-      "findings_sha256": "463f686fc75a9c64fed0fa86e884abc3545b980fadd8915f113ae095ca312d64",
+      "findings_sha256": "664442c205ff031371f14ef2635684efe24338a86b59c239baa583aaec7f5dde",
       "bytes": 73417506,
       "lines": 655147,
       "strata": {
@@ -1211,7 +1211,6 @@
         "swiftbic": {
           "sample_ids": [
             "02f30000d443cf0007560512fa0d6683078ed2514fca2b7babb721adb162d3a7",
-            "093df6cb88bce0f97da304f74f1e1a510d8eac6fdacf776e6189091942d0d9eb",
             "0c3e494c4922a9abd8ef8aaf10b7aa59c331cb62d1c463165a3e93c9bca9c1c5",
             "13aa2b3736a7053d7bfb168d3162f11ad172b1e7ca1aab4acffe8b8173f2e767",
             "17f861fe246ac500b4a7ac2d5dd611a77508a501898c569bfe3f768e63ec4483",
@@ -1220,7 +1219,6 @@
             "44987a7eeb3cb3182fc9f30fd9b6c08b61c22816825c8f275436188efa0b4c3c",
             "567664eceb6b01154415c9b229c5c9a5aa64ec7248faba65c1777e36fc02efa0",
             "66439cb3129208ac74e3497866706fe353652eafc9b4b48ddfb61df3a25a6dc2",
-            "77b8936e56af07509a585d0d602fd4f0a2e34d13dff7d3e65d2499d79aa46209",
             "7b3b2deb75d940b2cf7fa7e38ba6e878b5e1558d888ec91d1e119db6d5ed4174",
             "86a08f54bbe372126c6e8d0dc772bf1cbfafff253b91eaf48f09975e740e173e",
             "880142b80e4e256b6a1cf404b802fc9c03108a75c871a24db0995778ed5ba222",
@@ -1235,8 +1233,8 @@
             "fc75bf445fd10986888326323db261b24f6dba6ebe649b68cba8b79085127b25",
             "ff87060bd77dab8ec902b8cc429f87d3aa87e0add479a9913b3089669039eb17"
           ],
-          "sample_count": 24,
-          "sample_fp": 24
+          "sample_count": 22,
+          "sample_fp": 22
         }
       },
       "threshold_strata": {
@@ -1290,7 +1288,6 @@
           "swiftbic": {
             "sample_ids": [
               "02f30000d443cf0007560512fa0d6683078ed2514fca2b7babb721adb162d3a7",
-              "093df6cb88bce0f97da304f74f1e1a510d8eac6fdacf776e6189091942d0d9eb",
               "0c3e494c4922a9abd8ef8aaf10b7aa59c331cb62d1c463165a3e93c9bca9c1c5",
               "13aa2b3736a7053d7bfb168d3162f11ad172b1e7ca1aab4acffe8b8173f2e767",
               "17f861fe246ac500b4a7ac2d5dd611a77508a501898c569bfe3f768e63ec4483",
@@ -1299,7 +1296,6 @@
               "44987a7eeb3cb3182fc9f30fd9b6c08b61c22816825c8f275436188efa0b4c3c",
               "567664eceb6b01154415c9b229c5c9a5aa64ec7248faba65c1777e36fc02efa0",
               "66439cb3129208ac74e3497866706fe353652eafc9b4b48ddfb61df3a25a6dc2",
-              "77b8936e56af07509a585d0d602fd4f0a2e34d13dff7d3e65d2499d79aa46209",
               "7b3b2deb75d940b2cf7fa7e38ba6e878b5e1558d888ec91d1e119db6d5ed4174",
               "86a08f54bbe372126c6e8d0dc772bf1cbfafff253b91eaf48f09975e740e173e",
               "880142b80e4e256b6a1cf404b802fc9c03108a75c871a24db0995778ed5ba222",
@@ -1314,8 +1310,8 @@
               "fc75bf445fd10986888326323db261b24f6dba6ebe649b68cba8b79085127b25",
               "ff87060bd77dab8ec902b8cc429f87d3aa87e0add479a9913b3089669039eb17"
             ],
-            "sample_count": 24,
-            "sample_fp": 24
+            "sample_count": 22,
+            "sample_fp": 22
           }
         },
         "default70": {
@@ -1368,7 +1364,6 @@
           "swiftbic": {
             "sample_ids": [
               "02f30000d443cf0007560512fa0d6683078ed2514fca2b7babb721adb162d3a7",
-              "093df6cb88bce0f97da304f74f1e1a510d8eac6fdacf776e6189091942d0d9eb",
               "0c3e494c4922a9abd8ef8aaf10b7aa59c331cb62d1c463165a3e93c9bca9c1c5",
               "13aa2b3736a7053d7bfb168d3162f11ad172b1e7ca1aab4acffe8b8173f2e767",
               "17f861fe246ac500b4a7ac2d5dd611a77508a501898c569bfe3f768e63ec4483",
@@ -1377,7 +1372,6 @@
               "44987a7eeb3cb3182fc9f30fd9b6c08b61c22816825c8f275436188efa0b4c3c",
               "567664eceb6b01154415c9b229c5c9a5aa64ec7248faba65c1777e36fc02efa0",
               "66439cb3129208ac74e3497866706fe353652eafc9b4b48ddfb61df3a25a6dc2",
-              "77b8936e56af07509a585d0d602fd4f0a2e34d13dff7d3e65d2499d79aa46209",
               "7b3b2deb75d940b2cf7fa7e38ba6e878b5e1558d888ec91d1e119db6d5ed4174",
               "86a08f54bbe372126c6e8d0dc772bf1cbfafff253b91eaf48f09975e740e173e",
               "880142b80e4e256b6a1cf404b802fc9c03108a75c871a24db0995778ed5ba222",
@@ -1392,8 +1386,8 @@
               "fc75bf445fd10986888326323db261b24f6dba6ebe649b68cba8b79085127b25",
               "ff87060bd77dab8ec902b8cc429f87d3aa87e0add479a9913b3089669039eb17"
             ],
-            "sample_count": 24,
-            "sample_fp": 24
+            "sample_count": 22,
+            "sample_fp": 22
           }
         }
       }

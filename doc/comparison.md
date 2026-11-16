@@ -4,7 +4,7 @@ This compares overlapping use cases, not overall library quality or adoption. ma
 
 ## Correctness before speed
 
-The first eight cases reproduce the original comparison probe. Both libraries receive identical events through slog.JSONHandler. masq gets precompiled email and 13–19 digit card regexes, Password/password/token field rules and `masq:"secret"`, with time.Time and slog.Level allowed; embargo selects email/PAN detectors, confidence 0.7 and its default sensitive keys plus `recovery`. The tagged Recovery field is protected by that key rule in embargo. These are practical documented configurations; neither claims that regex syntax provides a checksum validator.
+The first eight cases reproduce the original comparison probe. Both libraries receive identical events through slog.JSONHandler. masq gets precompiled email and 13–19 digit card regexes, Password/password/token field rules and `masq:"secret"`, with time.Time and slog.Level allowed; embargo selects email/PAN detectors, default confidence 0 and its default sensitive keys plus `recovery`. The tagged Recovery field is protected by that key rule in embargo. These are practical documented configurations; neither claims that regex syntax provides a checksum validator.
 
 <!-- correctness:start -->
 | Case | masq v0.2.3 output fragment | embargo output fragment |
@@ -19,13 +19,13 @@ The first eight cases reproduce the original comparison probe. Both libraries re
 | secret_wrapper | `"Password":"[REDACTED]"` | `"Password":"[REDACTED]"` |
 | tag_or_key | `"Recovery":"[REDACTED]"` | `"Recovery":"[REDACTED]"` |
 | valid_card | `"card":"[REDACTED]"` | `"card":"[REDACTED]"` |
-| invalid_luhn | `"order":"[REDACTED]"` | `"order":"4111111111111112"` |
+| invalid_luhn | `"order":"[REDACTED]"` | `"order":"[REDACTED]"` |
 | map | `"data":{"count":17,"email":null,"password":null}` | `"data":{"count":17,"email":"[REDACTED]","password":"[REDACTED]"}` |
 <!-- correctness:end -->
 
 masq requires user rules to find the email and card; plain `masq.New()` does not detect them. Its standard redactor removes an entire matched message/error string; embargo keeps the surrounding context. masq can use RedactString for partial replacement or a custom censor for validation. With this configuration it leaves attribute keys, group names and custom MarshalJSON-generated data visible. Both retain struct shape; masq v0.2.3 replaces matching interface-valued map entries with null in this fixture, while embargo uses a string marker. These are observed version-specific outputs, not claims that all masq configurations behave identically.
 
-The invalid-Luhn row is a deliberate negative example. embargo's default minimum confidence is zero and also masks such candidates; this comparison explicitly selects 0.7 to reduce false positives. A mislabeled real secret can then be missed. The [accuracy corpus](accuracy.md) covers broader detector tradeoffs; these small fixtures are not a production accuracy estimate.
+The invalid-Luhn row is a deliberate negative example. embargo uses its default minimum confidence of zero and masks this candidate. go-masker with its opt-in Luhn check keeps the invalid-card control, while masq also changes it; the matrix displays these costs beside positive catches. The [accuracy corpus](accuracy.md) covers broader detector tradeoffs; these small fixtures are not a production accuracy estimate.
 
 ## Time and allocations
 
@@ -34,41 +34,41 @@ The invalid-Luhn row is a deliberate negative example. embargo's default minimum
 <!-- comparison:start -->
 | Benchmark | ns/op | B/op | allocs/op |
 |---|---:|---:|---:|
-| Comparison/clean/embargo | 3,210.5 | 152 | 14 |
-| Comparison/clean/go-masker | 2,902.5 | 8 | 1 |
-| Comparison/clean/masq | 6,277.0 | 792 | 50 |
-| Comparison/clean/plain | 909.0 | 0 | 0 |
-| Comparison/flat/embargo | 4,628.0 | 760 | 25 |
-| Comparison/flat/go-masker | 3,179.5 | 48 | 3 |
-| Comparison/flat/masq | 6,857.5 | 672 | 32 |
-| Comparison/flat/plain | 878.2 | 0 | 0 |
-| Comparison/large50/embargo | 46,541.5 | 11,290 | 177 |
-| Comparison/large50/go-masker | 32,610.5 | 2,096 | 4 |
-| Comparison/large50/masq | 128,943.0 | 12,710 | 561 |
-| Comparison/large50/plain | 7,846.5 | 2,048 | 1 |
-| Comparison/map/embargo | 6,025.5 | 1,528 | 57 |
-| Comparison/map/go-masker | 4,383.0 | 1,448 | 29 |
-| Comparison/map/masq | 10,920.5 | 1,744 | 63 |
-| Comparison/map/plain | 1,461.5 | 288 | 9 |
-| Comparison/nested/embargo | 8,606.0 | 992 | 45 |
-| Comparison/nested/go-masker | 6,686.5 | 800 | 19 |
-| Comparison/nested/masq | 11,152.5 | 1,784 | 61 |
-| Comparison/nested/plain | 1,311.0 | 0 | 0 |
-| ComparisonFormatter/clean | 903.2 | 0 | 0 |
-| ComparisonFormatter/flat | 699.9 | 32 | 2 |
-| ComparisonFormatter/large50 | 10,109.5 | 7,873 | 10 |
-| ComparisonFormatter/map | 647.3 | 0 | 0 |
-| ComparisonFormatter/nested | 521.8 | 0 | 0 |
-| ComparisonStruct/embargo | 3,251.0 | 1,032 | 43 |
-| ComparisonStruct/go_mask | 793.5 | 328 | 7 |
-| ComparisonText/embargo | 2,438.5 | 1,640 | 42 |
-| ComparisonText/godlp | 43,021.5 | 11,714 | 59 |
-| StructuredPath/json_shape | 5,903.0 | 1,032 | 43 |
-| StructuredPath/old_string | 1,877.0 | 752 | 14 |
+| Comparison/clean/embargo | 3,219.0 | 152 | 14 |
+| Comparison/clean/go-masker | 3,130.0 | 8 | 1 |
+| Comparison/clean/masq | 6,336.0 | 792 | 50 |
+| Comparison/clean/plain | 923.2 | 0 | 0 |
+| Comparison/flat/embargo | 4,651.5 | 760 | 25 |
+| Comparison/flat/go-masker | 3,257.5 | 48 | 3 |
+| Comparison/flat/masq | 3,608.0 | 672 | 32 |
+| Comparison/flat/plain | 470.5 | 0 | 0 |
+| Comparison/large50/embargo | 46,556.0 | 11,290 | 177 |
+| Comparison/large50/go-masker | 33,541.5 | 2,096 | 4 |
+| Comparison/large50/masq | 130,814.0 | 12,710 | 561 |
+| Comparison/large50/plain | 8,399.0 | 2,048 | 1 |
+| Comparison/map/embargo | 10,488.5 | 1,528 | 57 |
+| Comparison/map/go-masker | 7,853.0 | 1,448 | 29 |
+| Comparison/map/masq | 12,155.5 | 1,744 | 63 |
+| Comparison/map/plain | 2,672.5 | 288 | 9 |
+| Comparison/nested/embargo | 8,827.5 | 992 | 45 |
+| Comparison/nested/go-masker | 6,819.0 | 800 | 19 |
+| Comparison/nested/masq | 11,370.5 | 1,784 | 61 |
+| Comparison/nested/plain | 1,332.5 | 0 | 0 |
+| ComparisonFormatter/clean | 1,218.5 | 0 | 0 |
+| ComparisonFormatter/flat | 1,338.5 | 32 | 2 |
+| ComparisonFormatter/large50 | 16,699.5 | 7,873 | 10 |
+| ComparisonFormatter/map | 969.0 | 0 | 0 |
+| ComparisonFormatter/nested | 987.0 | 0 | 0 |
+| ComparisonStruct/embargo | 4,280.5 | 1,032 | 43 |
+| ComparisonStruct/go_mask | 604.8 | 328 | 7 |
+| ComparisonText/embargo | 4,763.0 | 1,640 | 42 |
+| ComparisonText/godlp | 67,101.0 | 11,714 | 59 |
+| StructuredPath/json_shape | 3,022.0 | 1,032 | 43 |
+| StructuredPath/old_string | 1,492.0 | 752 | 14 |
 
 Measured 2026-11-16 with go version go1.26.11 linux/amd64, Linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S; GOMAXPROCS=1, ten 200 ms samples per case. Construction is outside the timed loop; JSON encoding and masking are included. Source and dependency fingerprints, CPU affinity and command are in [comparison.json](comparison.json).
 
-For these five configured events, embargo/masq median time ranges from 0.36 to 0.77; below 1 means less time for embargo. The structured JSON path uses 3.14 times the old string-only time. These ratios are regenerated from the same samples as the table.
+For these five configured events, embargo/masq median time ranges from 0.36 to 1.29; below 1 means less time for embargo. The structured JSON path uses 2.03 times the old string-only time. These ratios are regenerated from the same samples as the table.
 <!-- comparison:end -->
 
 The five head-to-head events are a flat email/card pair, a nested struct with opaque password and tagged recovery field, a map, a clean event, and 50 attributes (48 clean plus the flat pair). All four paths use the same io.Discard sink. masq uses its documented WithAllowedType for time.Time and slog.Level, matching embargo's decision to preserve that metadata; this avoids charging masq for an unnecessary reflection traversal. Masker/scanner construction and regex compilation are excluded for every path. The tests use prebuilt slog.Attr slices and LogAttrs to avoid attributing caller argument construction to any library.
@@ -142,14 +142,14 @@ All six libraries run the same 13 positive scenarios and two clean controls. The
 
 | Library | Setup used by the executable probe | Measured strengths and limits |
 |---|---|---|
-| embargo | Default kinds, confidence 0.7, slog wrapper | 11/13; masks keys and groups; misses tag-only secrets and US phones |
+| embargo | Default kinds, default confidence 0, slog wrapper | 11/13; masks keys and groups; misses tag-only secrets and US phones |
 | masq v0.2.3 | Two regexes, three field names, one tag; time/level allowed | 6/13; tag-only protection wins; whole-string redaction loses context |
 | go-masker v0.6.1 | Default key policy, Luhn cards, safe types, fixed tag rule | 8/13; faster slog events; tags win and embedded JSON ties; partial display values |
 | slog-formatter v1.3.0 | PIIFormatter on six sensitive field names | 3/13; fixed field transforms are cheaper; arbitrary message text remains |
 | go-mask v0.6.2 | Fixed masker, six registered fields and a fixed struct tag | 3/13; tags win and typed copies aid reuse; message text remains |
 | godlp v1.2.15 | Six built-in rules; apply to string and JSON values | 5/13; US phone wins; email/labeled-card partial masking ties; opaque tokens remain |
 
-The labeled and unlabeled card rows expose a context difference: godlp detects the credit-card-labeled message in this fixture, while the unlabeled charge message remains visible. These setup counts describe this harness, not universal effort. No configuration contains the planted secret values. The timing event selects only email and PAN at confidence 0.7 for embargo; the scenario matrix uses its default detector set at 0.7. Neither changes the library default of zero. go-masker uses its default policy with opt-in Luhn card detection, so the invalid-card control stays visible; its CardRule keeps the last four digits. Its value inspection recognizes credentials inside JSON strings and free text. Its key policies and struct tags offer partial display rules that embargo lacks. TestComparisonMaskerAdapters runs its slog, zap, zerolog and HTTP paths against synthetic credentials; HTTP masks copies of headers and URLs, rather than installing an access logger.
+The labeled and unlabeled card rows expose a context difference: godlp detects the credit-card-labeled message in this fixture, while the unlabeled charge message remains visible. These setup counts describe this harness, not universal effort. No configuration contains the planted secret values. The timing event selects only email and PAN at default confidence 0 for embargo; the scenario matrix uses the default detector set and default confidence 0. The invalid-card control therefore changes, as it does for a new user. go-masker uses its default policy with opt-in Luhn card detection, so the invalid-card control stays visible; its CardRule keeps the last four digits. Its value inspection recognizes credentials inside JSON strings and free text. Its key policies and struct tags offer partial display rules that embargo lacks. TestComparisonMaskerAdapters runs its slog, zap, zerolog and HTTP paths against synthetic credentials; HTTP masks copies of headers and URLs, rather than installing an access logger.
 
 Runtime dependency counts are measured with `go list -deps`, excluding the library's own module and the standard library, and recorded in comparison.json. embargo, masq, go-mask and go-masker have zero external runtime modules on these paths; masq and go-mask declare test dependencies that do not enter an application's binary. slog-formatter reaches four external runtime modules and godlp one. This distinction replaces counts of all go.mod requirements, which unfairly charged test dependencies to consumers.
 

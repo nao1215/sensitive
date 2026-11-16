@@ -145,3 +145,64 @@ func TestCanaryJSONEscapingAndEmptyNeedles(t *testing.T) {
 		t.Fatal("maximum fragment length was not accepted exactly")
 	}
 }
+
+func TestCanaryBase64AlignmentProperty(t *testing.T) {
+	t.Parallel()
+	for n := 16; n <= 40; n++ {
+		canary := append([]byte("opaque-canary-"), bytes.Repeat([]byte{0xfb, 0xff, 0xef}, n)...)
+		needles := representations(canary)
+		for prefix := range 6 {
+			for suffix := range 6 {
+				data := append(bytes.Repeat([]byte("x"), prefix), canary...)
+				data = append(data, bytes.Repeat([]byte("z"), suffix)...)
+				for _, encoding := range []*base64.Encoding{base64.StdEncoding, base64.RawStdEncoding, base64.URLEncoding, base64.RawURLEncoding} {
+					if !containsCanary([]byte(encoding.EncodeToString(data)), needles) {
+						t.Errorf("missed alignment %d/%d at length %d", prefix, suffix, n)
+					}
+				}
+			}
+		}
+	}
+}
+
+func TestCanaryExplicitDecodingBoundaries(t *testing.T) {
+	t.Parallel()
+	canary := []byte("opaque-canary-ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	encoded := base64.StdEncoding.EncodeToString(canary)
+	var wrapped, escaped strings.Builder
+	for i, b := range []byte(encoded) {
+		if err := wrapped.WriteByte(b); err != nil {
+			t.Fatal(err)
+		}
+		if i%12 == 11 {
+			if _, err := wrapped.WriteString("\r\n"); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	for _, b := range canary {
+		if _, err := fmt.Fprintf(&escaped, `\u%04x`, b); err != nil {
+			t.Fatal(err)
+		}
+	}
+	needles := representations(canary)
+	for _, text := range []string{wrapped.String(), escaped.String()} {
+		if containsCanary([]byte(text), needles) {
+			t.Fatal("unsupported encoding contract changed")
+		}
+	}
+	decoded, err := base64.StdEncoding.DecodeString(wrapped.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !containsCanary(decoded, needles) {
+		t.Fatal("decoded MIME canary missed")
+	}
+	var text string
+	if err := json.Unmarshal([]byte(`"`+escaped.String()+`"`), &text); err != nil {
+		t.Fatal(err)
+	}
+	if !containsCanary([]byte(text), needles) {
+		t.Fatal("decoded Unicode canary missed")
+	}
+}

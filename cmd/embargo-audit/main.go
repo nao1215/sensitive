@@ -61,7 +61,11 @@ func run(args []string, input io.Reader, output io.Writer) error {
 	const maximumSamples = 20
 	samples := flags.Int("samples", defaultSamples, "maximum masked locations per kind (0 through 20)")
 	if err := flags.Parse(args); err != nil {
-		return errors.New("embargo-audit: invalid flags; see doc/audit.md")
+		if errors.Is(err, flag.ErrHelp) {
+			_, writeErr := io.WriteString(output, "Usage: embargo-audit [--kinds email,pan] [--all] [--min-confidence 0] [--samples 3] [--compare] [--compare-kinds email] [--compare-all] [--compare-min-confidence 0] < input\n")
+			return writeErr
+		}
+		return errors.New("embargo-audit: invalid flags\nUsage: embargo-audit [--kinds email,pan] [--all] [--compare] < input; use --help for options")
 	}
 	if flags.NArg() != 0 || *samples < 0 || *samples > maximumSamples || (*all && *kinds != "") || math.IsNaN(*minimum) || *minimum < 0 || *minimum > 1 {
 		return errors.New("embargo-audit: invalid selection, confidence or sample limit")

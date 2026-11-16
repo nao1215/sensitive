@@ -112,12 +112,12 @@
 {"id":"phone_jp/positive/0/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-2460-6176&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/0/japanese","kind":"phone_jp","text":"入力〈090-2460-6176〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/0/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-2460-6176\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/0/plain","kind":"private_key_pem","expected":[{"start":10,"end":41}],"parts":["[payload] --","---BEGIN RSA PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/0/log","kind":"private_key_pem","expected":[{"start":14,"end":45}],"parts":["audit: field=(--","---BEGIN RSA PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/0/json","kind":"private_key_pem","expected":[{"start":21,"end":52}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN RSA PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/0/url","kind":"private_key_pem","expected":[{"start":32,"end":69}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20RSA%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/0/japanese","kind":"private_key_pem","expected":[{"start":9,"end":40}],"parts":["入力〈--","---BEGIN RSA PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/0/multiline","kind":"private_key_pem","expected":[{"start":14,"end":45}],"parts":["audit\r\nfield: --","---BEGIN RSA PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/0/plain","kind":"private_key_pem","expected":[{"start":10,"end":52}],"parts":["[payload] --","---BEGIN RSA PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/0/log","kind":"private_key_pem","expected":[{"start":14,"end":52}],"parts":["audit: field=(--","---BEGIN RSA PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/0/json","kind":"private_key_pem","expected":[{"start":21,"end":55}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN RSA PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/0/url","kind":"private_key_pem","expected":[{"start":32,"end":77}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20RSA%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/0/japanese","kind":"private_key_pem","expected":[{"start":9,"end":55}],"parts":["入力〈--","---BEGIN RSA PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/0/multiline","kind":"private_key_pem","expected":[{"start":14,"end":50}],"parts":["audit\r\nfield: --","---BEGIN RSA PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/0/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-826094121484-419916347562-yxutsq2zINyebifRXMFR94sw [/payload]"]}
 {"id":"slack_token/positive/0/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-826094121484-419916347562-yxutsq2zINyebifRXMFR94sw); done"]}
 {"id":"slack_token/positive/0/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-826094121484-419916347562-yxutsq2zINyebifRXMFR94sw\"}}"]}
@@ -250,12 +250,12 @@
 {"id":"phone_jp/positive/1/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-4867-2987&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/1/japanese","kind":"phone_jp","text":"入力〈090-4867-2987〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/1/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-4867-2987\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/1/plain","kind":"private_key_pem","expected":[{"start":10,"end":40}],"parts":["[payload] --","---BEGIN EC PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/1/log","kind":"private_key_pem","expected":[{"start":14,"end":44}],"parts":["audit: field=(--","---BEGIN EC PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/1/json","kind":"private_key_pem","expected":[{"start":21,"end":51}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN EC PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/1/url","kind":"private_key_pem","expected":[{"start":32,"end":68}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20EC%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/1/japanese","kind":"private_key_pem","expected":[{"start":9,"end":39}],"parts":["入力〈--","---BEGIN EC PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/1/multiline","kind":"private_key_pem","expected":[{"start":14,"end":44}],"parts":["audit\r\nfield: --","---BEGIN EC PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/1/plain","kind":"private_key_pem","expected":[{"start":10,"end":51}],"parts":["[payload] --","---BEGIN EC PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/1/log","kind":"private_key_pem","expected":[{"start":14,"end":51}],"parts":["audit: field=(--","---BEGIN EC PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/1/json","kind":"private_key_pem","expected":[{"start":21,"end":54}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN EC PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/1/url","kind":"private_key_pem","expected":[{"start":32,"end":76}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20EC%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/1/japanese","kind":"private_key_pem","expected":[{"start":9,"end":54}],"parts":["入力〈--","---BEGIN EC PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/1/multiline","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit\r\nfield: --","---BEGIN EC PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/1/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-294026632508-747411771834-tl8SliI8j67UBjMS1sEIeYbe [/payload]"]}
 {"id":"slack_token/positive/1/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-294026632508-747411771834-tl8SliI8j67UBjMS1sEIeYbe); done"]}
 {"id":"slack_token/positive/1/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-294026632508-747411771834-tl8SliI8j67UBjMS1sEIeYbe\"}}"]}
@@ -388,12 +388,12 @@
 {"id":"phone_jp/positive/2/url","kind":"phone_jp","text":"https://example.invalid/a?entry=%EF%BC%90%EF%BC%99%EF%BC%90%EF%BC%8D%EF%BC%96%EF%BC%92%EF%BC%91%EF%BC%92%EF%BC%8D%EF%BC%92%EF%BC%98%EF%BC%98%EF%BC%96&ok=true","expected":[{"start":32,"end":149}]}
 {"id":"phone_jp/positive/2/japanese","kind":"phone_jp","text":"入力〈０９０－６２１２－２８８６〉確認済み","expected":[{"start":9,"end":48}]}
 {"id":"phone_jp/positive/2/multiline","kind":"phone_jp","text":"audit\r\nfield: ０９０－６２１２－２８８６\r\nend","expected":[{"start":14,"end":53}]}
-{"id":"private_key_pem/positive/2/plain","kind":"private_key_pem","expected":[{"start":10,"end":45}],"parts":["[payload] --","---BEGIN OPENSSH PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/2/log","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit: field=(--","---BEGIN OPENSSH PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/2/json","kind":"private_key_pem","expected":[{"start":21,"end":56}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN OPENSSH PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/2/url","kind":"private_key_pem","expected":[{"start":32,"end":73}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20OPENSSH%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/2/japanese","kind":"private_key_pem","expected":[{"start":9,"end":44}],"parts":["入力〈--","---BEGIN OPENSSH PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/2/multiline","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit\r\nfield: --","---BEGIN OPENSSH PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/2/plain","kind":"private_key_pem","expected":[{"start":10,"end":56}],"parts":["[payload] --","---BEGIN OPENSSH PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/2/log","kind":"private_key_pem","expected":[{"start":14,"end":56}],"parts":["audit: field=(--","---BEGIN OPENSSH PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/2/json","kind":"private_key_pem","expected":[{"start":21,"end":59}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN OPENSSH PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/2/url","kind":"private_key_pem","expected":[{"start":32,"end":81}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20OPENSSH%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/2/japanese","kind":"private_key_pem","expected":[{"start":9,"end":59}],"parts":["入力〈--","---BEGIN OPENSSH PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/2/multiline","kind":"private_key_pem","expected":[{"start":14,"end":54}],"parts":["audit\r\nfield: --","---BEGIN OPENSSH PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/2/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-972023258109-096326816009-uHybMdFStzvnvDWLH4zfWkt0 [/payload]"]}
 {"id":"slack_token/positive/2/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-972023258109-096326816009-uHybMdFStzvnvDWLH4zfWkt0); done"]}
 {"id":"slack_token/positive/2/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-972023258109-096326816009-uHybMdFStzvnvDWLH4zfWkt0\"}}"]}
@@ -526,12 +526,12 @@
 {"id":"phone_jp/positive/3/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-4308-2710&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/3/japanese","kind":"phone_jp","text":"入力〈090-4308-2710〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/3/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-4308-2710\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/3/plain","kind":"private_key_pem","expected":[{"start":10,"end":37}],"parts":["[payload] --","---BEGIN PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/3/log","kind":"private_key_pem","expected":[{"start":14,"end":41}],"parts":["audit: field=(--","---BEGIN PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/3/json","kind":"private_key_pem","expected":[{"start":21,"end":48}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/3/url","kind":"private_key_pem","expected":[{"start":32,"end":63}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/3/japanese","kind":"private_key_pem","expected":[{"start":9,"end":36}],"parts":["入力〈--","---BEGIN PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/3/multiline","kind":"private_key_pem","expected":[{"start":14,"end":41}],"parts":["audit\r\nfield: --","---BEGIN PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/3/plain","kind":"private_key_pem","expected":[{"start":10,"end":48}],"parts":["[payload] --","---BEGIN PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/3/log","kind":"private_key_pem","expected":[{"start":14,"end":48}],"parts":["audit: field=(--","---BEGIN PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/3/json","kind":"private_key_pem","expected":[{"start":21,"end":51}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/3/url","kind":"private_key_pem","expected":[{"start":32,"end":71}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/3/japanese","kind":"private_key_pem","expected":[{"start":9,"end":51}],"parts":["入力〈--","---BEGIN PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/3/multiline","kind":"private_key_pem","expected":[{"start":14,"end":46}],"parts":["audit\r\nfield: --","---BEGIN PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/3/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-161964889545-970090654242-7MAKXgwA0JSIT5n2DaSyuZ6Z [/payload]"]}
 {"id":"slack_token/positive/3/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-161964889545-970090654242-7MAKXgwA0JSIT5n2DaSyuZ6Z); done"]}
 {"id":"slack_token/positive/3/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-161964889545-970090654242-7MAKXgwA0JSIT5n2DaSyuZ6Z\"}}"]}
@@ -664,12 +664,12 @@
 {"id":"phone_jp/positive/4/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-0818-2629&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/4/japanese","kind":"phone_jp","text":"入力〈090-0818-2629〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/4/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-0818-2629\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/4/plain","kind":"private_key_pem","expected":[{"start":10,"end":41}],"parts":["[payload] --","---BEGIN RSA PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/4/log","kind":"private_key_pem","expected":[{"start":14,"end":45}],"parts":["audit: field=(--","---BEGIN RSA PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/4/json","kind":"private_key_pem","expected":[{"start":21,"end":52}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN RSA PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/4/url","kind":"private_key_pem","expected":[{"start":32,"end":69}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20RSA%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/4/japanese","kind":"private_key_pem","expected":[{"start":9,"end":40}],"parts":["入力〈--","---BEGIN RSA PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/4/multiline","kind":"private_key_pem","expected":[{"start":14,"end":45}],"parts":["audit\r\nfield: --","---BEGIN RSA PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/4/plain","kind":"private_key_pem","expected":[{"start":10,"end":52}],"parts":["[payload] --","---BEGIN RSA PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/4/log","kind":"private_key_pem","expected":[{"start":14,"end":52}],"parts":["audit: field=(--","---BEGIN RSA PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/4/json","kind":"private_key_pem","expected":[{"start":21,"end":55}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN RSA PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/4/url","kind":"private_key_pem","expected":[{"start":32,"end":77}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20RSA%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/4/japanese","kind":"private_key_pem","expected":[{"start":9,"end":55}],"parts":["入力〈--","---BEGIN RSA PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/4/multiline","kind":"private_key_pem","expected":[{"start":14,"end":50}],"parts":["audit\r\nfield: --","---BEGIN RSA PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/4/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-311280187383-854464337299-C9K9HfmRYhRKN2OirWzio7XP [/payload]"]}
 {"id":"slack_token/positive/4/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-311280187383-854464337299-C9K9HfmRYhRKN2OirWzio7XP); done"]}
 {"id":"slack_token/positive/4/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-311280187383-854464337299-C9K9HfmRYhRKN2OirWzio7XP\"}}"]}
@@ -802,12 +802,12 @@
 {"id":"phone_jp/positive/5/url","kind":"phone_jp","text":"https://example.invalid/a?entry=%EF%BC%90%EF%BC%99%EF%BC%90%EF%BC%8D%EF%BC%99%EF%BC%99%EF%BC%99%EF%BC%98%EF%BC%8D%EF%BC%90%EF%BC%98%EF%BC%92%EF%BC%95&ok=true","expected":[{"start":32,"end":149}]}
 {"id":"phone_jp/positive/5/japanese","kind":"phone_jp","text":"入力〈０９０－９９９８－０８２５〉確認済み","expected":[{"start":9,"end":48}]}
 {"id":"phone_jp/positive/5/multiline","kind":"phone_jp","text":"audit\r\nfield: ０９０－９９９８－０８２５\r\nend","expected":[{"start":14,"end":53}]}
-{"id":"private_key_pem/positive/5/plain","kind":"private_key_pem","expected":[{"start":10,"end":40}],"parts":["[payload] --","---BEGIN EC PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/5/log","kind":"private_key_pem","expected":[{"start":14,"end":44}],"parts":["audit: field=(--","---BEGIN EC PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/5/json","kind":"private_key_pem","expected":[{"start":21,"end":51}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN EC PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/5/url","kind":"private_key_pem","expected":[{"start":32,"end":68}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20EC%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/5/japanese","kind":"private_key_pem","expected":[{"start":9,"end":39}],"parts":["入力〈--","---BEGIN EC PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/5/multiline","kind":"private_key_pem","expected":[{"start":14,"end":44}],"parts":["audit\r\nfield: --","---BEGIN EC PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/5/plain","kind":"private_key_pem","expected":[{"start":10,"end":51}],"parts":["[payload] --","---BEGIN EC PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/5/log","kind":"private_key_pem","expected":[{"start":14,"end":51}],"parts":["audit: field=(--","---BEGIN EC PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/5/json","kind":"private_key_pem","expected":[{"start":21,"end":54}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN EC PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/5/url","kind":"private_key_pem","expected":[{"start":32,"end":76}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20EC%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/5/japanese","kind":"private_key_pem","expected":[{"start":9,"end":54}],"parts":["入力〈--","---BEGIN EC PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/5/multiline","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit\r\nfield: --","---BEGIN EC PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/5/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-476141014845-194195513617-AIv4ICfoIuqdUFsLCUkKcL5G [/payload]"]}
 {"id":"slack_token/positive/5/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-476141014845-194195513617-AIv4ICfoIuqdUFsLCUkKcL5G); done"]}
 {"id":"slack_token/positive/5/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-476141014845-194195513617-AIv4ICfoIuqdUFsLCUkKcL5G\"}}"]}
@@ -940,12 +940,12 @@
 {"id":"phone_jp/positive/6/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-9250-9811&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/6/japanese","kind":"phone_jp","text":"入力〈090-9250-9811〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/6/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-9250-9811\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/6/plain","kind":"private_key_pem","expected":[{"start":10,"end":45}],"parts":["[payload] --","---BEGIN OPENSSH PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/6/log","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit: field=(--","---BEGIN OPENSSH PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/6/json","kind":"private_key_pem","expected":[{"start":21,"end":56}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN OPENSSH PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/6/url","kind":"private_key_pem","expected":[{"start":32,"end":73}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20OPENSSH%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/6/japanese","kind":"private_key_pem","expected":[{"start":9,"end":44}],"parts":["入力〈--","---BEGIN OPENSSH PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/6/multiline","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit\r\nfield: --","---BEGIN OPENSSH PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/6/plain","kind":"private_key_pem","expected":[{"start":10,"end":56}],"parts":["[payload] --","---BEGIN OPENSSH PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/6/log","kind":"private_key_pem","expected":[{"start":14,"end":56}],"parts":["audit: field=(--","---BEGIN OPENSSH PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/6/json","kind":"private_key_pem","expected":[{"start":21,"end":59}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN OPENSSH PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/6/url","kind":"private_key_pem","expected":[{"start":32,"end":81}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20OPENSSH%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/6/japanese","kind":"private_key_pem","expected":[{"start":9,"end":59}],"parts":["入力〈--","---BEGIN OPENSSH PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/6/multiline","kind":"private_key_pem","expected":[{"start":14,"end":54}],"parts":["audit\r\nfield: --","---BEGIN OPENSSH PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/6/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-118080418594-370672477979-4EV4Dbwr2s1MWTiY0DKpXWRG [/payload]"]}
 {"id":"slack_token/positive/6/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-118080418594-370672477979-4EV4Dbwr2s1MWTiY0DKpXWRG); done"]}
 {"id":"slack_token/positive/6/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-118080418594-370672477979-4EV4Dbwr2s1MWTiY0DKpXWRG\"}}"]}
@@ -1078,12 +1078,12 @@
 {"id":"phone_jp/positive/7/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-6960-0578&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/7/japanese","kind":"phone_jp","text":"入力〈090-6960-0578〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/7/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-6960-0578\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/7/plain","kind":"private_key_pem","expected":[{"start":10,"end":37}],"parts":["[payload] --","---BEGIN PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/7/log","kind":"private_key_pem","expected":[{"start":14,"end":41}],"parts":["audit: field=(--","---BEGIN PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/7/json","kind":"private_key_pem","expected":[{"start":21,"end":48}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/7/url","kind":"private_key_pem","expected":[{"start":32,"end":63}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/7/japanese","kind":"private_key_pem","expected":[{"start":9,"end":36}],"parts":["入力〈--","---BEGIN PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/7/multiline","kind":"private_key_pem","expected":[{"start":14,"end":41}],"parts":["audit\r\nfield: --","---BEGIN PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/7/plain","kind":"private_key_pem","expected":[{"start":10,"end":48}],"parts":["[payload] --","---BEGIN PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/7/log","kind":"private_key_pem","expected":[{"start":14,"end":48}],"parts":["audit: field=(--","---BEGIN PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/7/json","kind":"private_key_pem","expected":[{"start":21,"end":51}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/7/url","kind":"private_key_pem","expected":[{"start":32,"end":71}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/7/japanese","kind":"private_key_pem","expected":[{"start":9,"end":51}],"parts":["入力〈--","---BEGIN PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/7/multiline","kind":"private_key_pem","expected":[{"start":14,"end":46}],"parts":["audit\r\nfield: --","---BEGIN PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/7/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-211793946343-197235392748-wECS7oSZJ2488ukL8rRpMScx [/payload]"]}
 {"id":"slack_token/positive/7/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-211793946343-197235392748-wECS7oSZJ2488ukL8rRpMScx); done"]}
 {"id":"slack_token/positive/7/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-211793946343-197235392748-wECS7oSZJ2488ukL8rRpMScx\"}}"]}
@@ -1216,12 +1216,12 @@
 {"id":"phone_jp/positive/8/url","kind":"phone_jp","text":"https://example.invalid/a?entry=%EF%BC%90%EF%BC%99%EF%BC%90%EF%BC%8D%EF%BC%97%EF%BC%95%EF%BC%98%EF%BC%92%EF%BC%8D%EF%BC%96%EF%BC%94%EF%BC%91%EF%BC%90&ok=true","expected":[{"start":32,"end":149}]}
 {"id":"phone_jp/positive/8/japanese","kind":"phone_jp","text":"入力〈０９０－７５８２－６４１０〉確認済み","expected":[{"start":9,"end":48}]}
 {"id":"phone_jp/positive/8/multiline","kind":"phone_jp","text":"audit\r\nfield: ０９０－７５８２－６４１０\r\nend","expected":[{"start":14,"end":53}]}
-{"id":"private_key_pem/positive/8/plain","kind":"private_key_pem","expected":[{"start":10,"end":41}],"parts":["[payload] --","---BEGIN RSA PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/8/log","kind":"private_key_pem","expected":[{"start":14,"end":45}],"parts":["audit: field=(--","---BEGIN RSA PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/8/json","kind":"private_key_pem","expected":[{"start":21,"end":52}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN RSA PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/8/url","kind":"private_key_pem","expected":[{"start":32,"end":69}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20RSA%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/8/japanese","kind":"private_key_pem","expected":[{"start":9,"end":40}],"parts":["入力〈--","---BEGIN RSA PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/8/multiline","kind":"private_key_pem","expected":[{"start":14,"end":45}],"parts":["audit\r\nfield: --","---BEGIN RSA PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/8/plain","kind":"private_key_pem","expected":[{"start":10,"end":52}],"parts":["[payload] --","---BEGIN RSA PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/8/log","kind":"private_key_pem","expected":[{"start":14,"end":52}],"parts":["audit: field=(--","---BEGIN RSA PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/8/json","kind":"private_key_pem","expected":[{"start":21,"end":55}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN RSA PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/8/url","kind":"private_key_pem","expected":[{"start":32,"end":77}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20RSA%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/8/japanese","kind":"private_key_pem","expected":[{"start":9,"end":55}],"parts":["入力〈--","---BEGIN RSA PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/8/multiline","kind":"private_key_pem","expected":[{"start":14,"end":50}],"parts":["audit\r\nfield: --","---BEGIN RSA PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/8/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-699417657242-552985155674-9zqRdFwGPlBoKW2mr6HjUZ75 [/payload]"]}
 {"id":"slack_token/positive/8/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-699417657242-552985155674-9zqRdFwGPlBoKW2mr6HjUZ75); done"]}
 {"id":"slack_token/positive/8/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-699417657242-552985155674-9zqRdFwGPlBoKW2mr6HjUZ75\"}}"]}
@@ -1354,12 +1354,12 @@
 {"id":"phone_jp/positive/9/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-0809-8765&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/9/japanese","kind":"phone_jp","text":"入力〈090-0809-8765〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/9/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-0809-8765\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/9/plain","kind":"private_key_pem","expected":[{"start":10,"end":40}],"parts":["[payload] --","---BEGIN EC PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/9/log","kind":"private_key_pem","expected":[{"start":14,"end":44}],"parts":["audit: field=(--","---BEGIN EC PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/9/json","kind":"private_key_pem","expected":[{"start":21,"end":51}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN EC PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/9/url","kind":"private_key_pem","expected":[{"start":32,"end":68}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20EC%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/9/japanese","kind":"private_key_pem","expected":[{"start":9,"end":39}],"parts":["入力〈--","---BEGIN EC PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/9/multiline","kind":"private_key_pem","expected":[{"start":14,"end":44}],"parts":["audit\r\nfield: --","---BEGIN EC PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/9/plain","kind":"private_key_pem","expected":[{"start":10,"end":51}],"parts":["[payload] --","---BEGIN EC PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/9/log","kind":"private_key_pem","expected":[{"start":14,"end":51}],"parts":["audit: field=(--","---BEGIN EC PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/9/json","kind":"private_key_pem","expected":[{"start":21,"end":54}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN EC PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/9/url","kind":"private_key_pem","expected":[{"start":32,"end":76}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20EC%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/9/japanese","kind":"private_key_pem","expected":[{"start":9,"end":54}],"parts":["入力〈--","---BEGIN EC PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/9/multiline","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit\r\nfield: --","---BEGIN EC PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/9/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-701627152886-182510749817-mM9M3PH3anmG9GeTGxvvSEr1 [/payload]"]}
 {"id":"slack_token/positive/9/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-701627152886-182510749817-mM9M3PH3anmG9GeTGxvvSEr1); done"]}
 {"id":"slack_token/positive/9/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-701627152886-182510749817-mM9M3PH3anmG9GeTGxvvSEr1\"}}"]}
@@ -1492,12 +1492,12 @@
 {"id":"phone_jp/positive/10/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-6792-2571&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/10/japanese","kind":"phone_jp","text":"入力〈090-6792-2571〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/10/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-6792-2571\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/10/plain","kind":"private_key_pem","expected":[{"start":10,"end":45}],"parts":["[payload] --","---BEGIN OPENSSH PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/10/log","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit: field=(--","---BEGIN OPENSSH PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/10/json","kind":"private_key_pem","expected":[{"start":21,"end":56}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN OPENSSH PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/10/url","kind":"private_key_pem","expected":[{"start":32,"end":73}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20OPENSSH%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/10/japanese","kind":"private_key_pem","expected":[{"start":9,"end":44}],"parts":["入力〈--","---BEGIN OPENSSH PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/10/multiline","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit\r\nfield: --","---BEGIN OPENSSH PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/10/plain","kind":"private_key_pem","expected":[{"start":10,"end":56}],"parts":["[payload] --","---BEGIN OPENSSH PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/10/log","kind":"private_key_pem","expected":[{"start":14,"end":56}],"parts":["audit: field=(--","---BEGIN OPENSSH PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/10/json","kind":"private_key_pem","expected":[{"start":21,"end":59}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN OPENSSH PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/10/url","kind":"private_key_pem","expected":[{"start":32,"end":81}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20OPENSSH%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/10/japanese","kind":"private_key_pem","expected":[{"start":9,"end":59}],"parts":["入力〈--","---BEGIN OPENSSH PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/10/multiline","kind":"private_key_pem","expected":[{"start":14,"end":54}],"parts":["audit\r\nfield: --","---BEGIN OPENSSH PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/10/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-273018424346-594112305025-NQMYTmvZXPYPaVx89lq2oCv8 [/payload]"]}
 {"id":"slack_token/positive/10/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-273018424346-594112305025-NQMYTmvZXPYPaVx89lq2oCv8); done"]}
 {"id":"slack_token/positive/10/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-273018424346-594112305025-NQMYTmvZXPYPaVx89lq2oCv8\"}}"]}
@@ -1630,12 +1630,12 @@
 {"id":"phone_jp/positive/11/url","kind":"phone_jp","text":"https://example.invalid/a?entry=%EF%BC%90%EF%BC%99%EF%BC%90%EF%BC%8D%EF%BC%97%EF%BC%90%EF%BC%90%EF%BC%95%EF%BC%8D%EF%BC%94%EF%BC%97%EF%BC%99%EF%BC%92&ok=true","expected":[{"start":32,"end":149}]}
 {"id":"phone_jp/positive/11/japanese","kind":"phone_jp","text":"入力〈０９０－７００５－４７９２〉確認済み","expected":[{"start":9,"end":48}]}
 {"id":"phone_jp/positive/11/multiline","kind":"phone_jp","text":"audit\r\nfield: ０９０－７００５－４７９２\r\nend","expected":[{"start":14,"end":53}]}
-{"id":"private_key_pem/positive/11/plain","kind":"private_key_pem","expected":[{"start":10,"end":37}],"parts":["[payload] --","---BEGIN PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/11/log","kind":"private_key_pem","expected":[{"start":14,"end":41}],"parts":["audit: field=(--","---BEGIN PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/11/json","kind":"private_key_pem","expected":[{"start":21,"end":48}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/11/url","kind":"private_key_pem","expected":[{"start":32,"end":63}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/11/japanese","kind":"private_key_pem","expected":[{"start":9,"end":36}],"parts":["入力〈--","---BEGIN PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/11/multiline","kind":"private_key_pem","expected":[{"start":14,"end":41}],"parts":["audit\r\nfield: --","---BEGIN PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/11/plain","kind":"private_key_pem","expected":[{"start":10,"end":48}],"parts":["[payload] --","---BEGIN PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/11/log","kind":"private_key_pem","expected":[{"start":14,"end":48}],"parts":["audit: field=(--","---BEGIN PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/11/json","kind":"private_key_pem","expected":[{"start":21,"end":51}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/11/url","kind":"private_key_pem","expected":[{"start":32,"end":71}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/11/japanese","kind":"private_key_pem","expected":[{"start":9,"end":51}],"parts":["入力〈--","---BEGIN PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/11/multiline","kind":"private_key_pem","expected":[{"start":14,"end":46}],"parts":["audit\r\nfield: --","---BEGIN PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/11/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-278627116546-891597449389-21cCq6DcKiG1HTpiTzqWkJGg [/payload]"]}
 {"id":"slack_token/positive/11/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-278627116546-891597449389-21cCq6DcKiG1HTpiTzqWkJGg); done"]}
 {"id":"slack_token/positive/11/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-278627116546-891597449389-21cCq6DcKiG1HTpiTzqWkJGg\"}}"]}
@@ -1768,12 +1768,12 @@
 {"id":"phone_jp/positive/12/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-7584-5092&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/12/japanese","kind":"phone_jp","text":"入力〈090-7584-5092〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/12/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-7584-5092\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/12/plain","kind":"private_key_pem","expected":[{"start":10,"end":41}],"parts":["[payload] --","---BEGIN RSA PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/12/log","kind":"private_key_pem","expected":[{"start":14,"end":45}],"parts":["audit: field=(--","---BEGIN RSA PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/12/json","kind":"private_key_pem","expected":[{"start":21,"end":52}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN RSA PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/12/url","kind":"private_key_pem","expected":[{"start":32,"end":69}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20RSA%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/12/japanese","kind":"private_key_pem","expected":[{"start":9,"end":40}],"parts":["入力〈--","---BEGIN RSA PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/12/multiline","kind":"private_key_pem","expected":[{"start":14,"end":45}],"parts":["audit\r\nfield: --","---BEGIN RSA PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/12/plain","kind":"private_key_pem","expected":[{"start":10,"end":52}],"parts":["[payload] --","---BEGIN RSA PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/12/log","kind":"private_key_pem","expected":[{"start":14,"end":52}],"parts":["audit: field=(--","---BEGIN RSA PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/12/json","kind":"private_key_pem","expected":[{"start":21,"end":55}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN RSA PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/12/url","kind":"private_key_pem","expected":[{"start":32,"end":77}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20RSA%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/12/japanese","kind":"private_key_pem","expected":[{"start":9,"end":55}],"parts":["入力〈--","---BEGIN RSA PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/12/multiline","kind":"private_key_pem","expected":[{"start":14,"end":50}],"parts":["audit\r\nfield: --","---BEGIN RSA PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/12/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-482309496457-453200265109-0eMTgjO8KAqpszwhtUERK7LF [/payload]"]}
 {"id":"slack_token/positive/12/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-482309496457-453200265109-0eMTgjO8KAqpszwhtUERK7LF); done"]}
 {"id":"slack_token/positive/12/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-482309496457-453200265109-0eMTgjO8KAqpszwhtUERK7LF\"}}"]}
@@ -1906,12 +1906,12 @@
 {"id":"phone_jp/positive/13/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-3833-5981&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/13/japanese","kind":"phone_jp","text":"入力〈090-3833-5981〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/13/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-3833-5981\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/13/plain","kind":"private_key_pem","expected":[{"start":10,"end":40}],"parts":["[payload] --","---BEGIN EC PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/13/log","kind":"private_key_pem","expected":[{"start":14,"end":44}],"parts":["audit: field=(--","---BEGIN EC PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/13/json","kind":"private_key_pem","expected":[{"start":21,"end":51}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN EC PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/13/url","kind":"private_key_pem","expected":[{"start":32,"end":68}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20EC%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/13/japanese","kind":"private_key_pem","expected":[{"start":9,"end":39}],"parts":["入力〈--","---BEGIN EC PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/13/multiline","kind":"private_key_pem","expected":[{"start":14,"end":44}],"parts":["audit\r\nfield: --","---BEGIN EC PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/13/plain","kind":"private_key_pem","expected":[{"start":10,"end":51}],"parts":["[payload] --","---BEGIN EC PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/13/log","kind":"private_key_pem","expected":[{"start":14,"end":51}],"parts":["audit: field=(--","---BEGIN EC PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/13/json","kind":"private_key_pem","expected":[{"start":21,"end":54}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN EC PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/13/url","kind":"private_key_pem","expected":[{"start":32,"end":76}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20EC%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/13/japanese","kind":"private_key_pem","expected":[{"start":9,"end":54}],"parts":["入力〈--","---BEGIN EC PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/13/multiline","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit\r\nfield: --","---BEGIN EC PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/13/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-756488827685-457705859585-ckdtYvHYwu9svt9YbN4bQjdv [/payload]"]}
 {"id":"slack_token/positive/13/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-756488827685-457705859585-ckdtYvHYwu9svt9YbN4bQjdv); done"]}
 {"id":"slack_token/positive/13/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-756488827685-457705859585-ckdtYvHYwu9svt9YbN4bQjdv\"}}"]}
@@ -2044,12 +2044,12 @@
 {"id":"phone_jp/positive/14/url","kind":"phone_jp","text":"https://example.invalid/a?entry=%EF%BC%90%EF%BC%99%EF%BC%90%EF%BC%8D%EF%BC%93%EF%BC%98%EF%BC%90%EF%BC%94%EF%BC%8D%EF%BC%99%EF%BC%97%EF%BC%93%EF%BC%96&ok=true","expected":[{"start":32,"end":149}]}
 {"id":"phone_jp/positive/14/japanese","kind":"phone_jp","text":"入力〈０９０－３８０４－９７３６〉確認済み","expected":[{"start":9,"end":48}]}
 {"id":"phone_jp/positive/14/multiline","kind":"phone_jp","text":"audit\r\nfield: ０９０－３８０４－９７３６\r\nend","expected":[{"start":14,"end":53}]}
-{"id":"private_key_pem/positive/14/plain","kind":"private_key_pem","expected":[{"start":10,"end":45}],"parts":["[payload] --","---BEGIN OPENSSH PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/14/log","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit: field=(--","---BEGIN OPENSSH PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/14/json","kind":"private_key_pem","expected":[{"start":21,"end":56}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN OPENSSH PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/14/url","kind":"private_key_pem","expected":[{"start":32,"end":73}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20OPENSSH%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/14/japanese","kind":"private_key_pem","expected":[{"start":9,"end":44}],"parts":["入力〈--","---BEGIN OPENSSH PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/14/multiline","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit\r\nfield: --","---BEGIN OPENSSH PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/14/plain","kind":"private_key_pem","expected":[{"start":10,"end":56}],"parts":["[payload] --","---BEGIN OPENSSH PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/14/log","kind":"private_key_pem","expected":[{"start":14,"end":56}],"parts":["audit: field=(--","---BEGIN OPENSSH PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/14/json","kind":"private_key_pem","expected":[{"start":21,"end":59}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN OPENSSH PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/14/url","kind":"private_key_pem","expected":[{"start":32,"end":81}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20OPENSSH%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/14/japanese","kind":"private_key_pem","expected":[{"start":9,"end":59}],"parts":["入力〈--","---BEGIN OPENSSH PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/14/multiline","kind":"private_key_pem","expected":[{"start":14,"end":54}],"parts":["audit\r\nfield: --","---BEGIN OPENSSH PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/14/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-994864177726-744808522805-YurvpfvDwOOzyJaDMcJaBJKB [/payload]"]}
 {"id":"slack_token/positive/14/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-994864177726-744808522805-YurvpfvDwOOzyJaDMcJaBJKB); done"]}
 {"id":"slack_token/positive/14/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-994864177726-744808522805-YurvpfvDwOOzyJaDMcJaBJKB\"}}"]}
@@ -2182,12 +2182,12 @@
 {"id":"phone_jp/positive/15/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-1538-9493&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/15/japanese","kind":"phone_jp","text":"入力〈090-1538-9493〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/15/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-1538-9493\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/15/plain","kind":"private_key_pem","expected":[{"start":10,"end":37}],"parts":["[payload] --","---BEGIN PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/15/log","kind":"private_key_pem","expected":[{"start":14,"end":41}],"parts":["audit: field=(--","---BEGIN PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/15/json","kind":"private_key_pem","expected":[{"start":21,"end":48}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/15/url","kind":"private_key_pem","expected":[{"start":32,"end":63}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/15/japanese","kind":"private_key_pem","expected":[{"start":9,"end":36}],"parts":["入力〈--","---BEGIN PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/15/multiline","kind":"private_key_pem","expected":[{"start":14,"end":41}],"parts":["audit\r\nfield: --","---BEGIN PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/15/plain","kind":"private_key_pem","expected":[{"start":10,"end":48}],"parts":["[payload] --","---BEGIN PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/15/log","kind":"private_key_pem","expected":[{"start":14,"end":48}],"parts":["audit: field=(--","---BEGIN PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/15/json","kind":"private_key_pem","expected":[{"start":21,"end":51}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/15/url","kind":"private_key_pem","expected":[{"start":32,"end":71}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/15/japanese","kind":"private_key_pem","expected":[{"start":9,"end":51}],"parts":["入力〈--","---BEGIN PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/15/multiline","kind":"private_key_pem","expected":[{"start":14,"end":46}],"parts":["audit\r\nfield: --","---BEGIN PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/15/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-698582705933-997214711808-f9Lw3R4TxUjjkf2Nv8JYHTNl [/payload]"]}
 {"id":"slack_token/positive/15/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-698582705933-997214711808-f9Lw3R4TxUjjkf2Nv8JYHTNl); done"]}
 {"id":"slack_token/positive/15/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-698582705933-997214711808-f9Lw3R4TxUjjkf2Nv8JYHTNl\"}}"]}
@@ -2320,12 +2320,12 @@
 {"id":"phone_jp/positive/16/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-5597-3831&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/16/japanese","kind":"phone_jp","text":"入力〈090-5597-3831〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/16/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-5597-3831\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/16/plain","kind":"private_key_pem","expected":[{"start":10,"end":41}],"parts":["[payload] --","---BEGIN RSA PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/16/log","kind":"private_key_pem","expected":[{"start":14,"end":45}],"parts":["audit: field=(--","---BEGIN RSA PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/16/json","kind":"private_key_pem","expected":[{"start":21,"end":52}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN RSA PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/16/url","kind":"private_key_pem","expected":[{"start":32,"end":69}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20RSA%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/16/japanese","kind":"private_key_pem","expected":[{"start":9,"end":40}],"parts":["入力〈--","---BEGIN RSA PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/16/multiline","kind":"private_key_pem","expected":[{"start":14,"end":45}],"parts":["audit\r\nfield: --","---BEGIN RSA PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/16/plain","kind":"private_key_pem","expected":[{"start":10,"end":52}],"parts":["[payload] --","---BEGIN RSA PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/16/log","kind":"private_key_pem","expected":[{"start":14,"end":52}],"parts":["audit: field=(--","---BEGIN RSA PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/16/json","kind":"private_key_pem","expected":[{"start":21,"end":55}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN RSA PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/16/url","kind":"private_key_pem","expected":[{"start":32,"end":77}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20RSA%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/16/japanese","kind":"private_key_pem","expected":[{"start":9,"end":55}],"parts":["入力〈--","---BEGIN RSA PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/16/multiline","kind":"private_key_pem","expected":[{"start":14,"end":50}],"parts":["audit\r\nfield: --","---BEGIN RSA PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/16/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-065045846957-596066140126-2T627tC1bdQABGRzazKEy4zK [/payload]"]}
 {"id":"slack_token/positive/16/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-065045846957-596066140126-2T627tC1bdQABGRzazKEy4zK); done"]}
 {"id":"slack_token/positive/16/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-065045846957-596066140126-2T627tC1bdQABGRzazKEy4zK\"}}"]}
@@ -2458,12 +2458,12 @@
 {"id":"phone_jp/positive/17/url","kind":"phone_jp","text":"https://example.invalid/a?entry=%EF%BC%90%EF%BC%99%EF%BC%90%EF%BC%8D%EF%BC%96%EF%BC%94%EF%BC%99%EF%BC%95%EF%BC%8D%EF%BC%95%EF%BC%98%EF%BC%97%EF%BC%98&ok=true","expected":[{"start":32,"end":149}]}
 {"id":"phone_jp/positive/17/japanese","kind":"phone_jp","text":"入力〈０９０－６４９５－５８７８〉確認済み","expected":[{"start":9,"end":48}]}
 {"id":"phone_jp/positive/17/multiline","kind":"phone_jp","text":"audit\r\nfield: ０９０－６４９５－５８７８\r\nend","expected":[{"start":14,"end":53}]}
-{"id":"private_key_pem/positive/17/plain","kind":"private_key_pem","expected":[{"start":10,"end":40}],"parts":["[payload] --","---BEGIN EC PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/17/log","kind":"private_key_pem","expected":[{"start":14,"end":44}],"parts":["audit: field=(--","---BEGIN EC PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/17/json","kind":"private_key_pem","expected":[{"start":21,"end":51}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN EC PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/17/url","kind":"private_key_pem","expected":[{"start":32,"end":68}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20EC%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/17/japanese","kind":"private_key_pem","expected":[{"start":9,"end":39}],"parts":["入力〈--","---BEGIN EC PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/17/multiline","kind":"private_key_pem","expected":[{"start":14,"end":44}],"parts":["audit\r\nfield: --","---BEGIN EC PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/17/plain","kind":"private_key_pem","expected":[{"start":10,"end":51}],"parts":["[payload] --","---BEGIN EC PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/17/log","kind":"private_key_pem","expected":[{"start":14,"end":51}],"parts":["audit: field=(--","---BEGIN EC PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/17/json","kind":"private_key_pem","expected":[{"start":21,"end":54}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN EC PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/17/url","kind":"private_key_pem","expected":[{"start":32,"end":76}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20EC%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/17/japanese","kind":"private_key_pem","expected":[{"start":9,"end":54}],"parts":["入力〈--","---BEGIN EC PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/17/multiline","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit\r\nfield: --","---BEGIN EC PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/17/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-397120919872-609085412102-sZLHR4mVSQMwTFgwpuHtd0LD [/payload]"]}
 {"id":"slack_token/positive/17/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-397120919872-609085412102-sZLHR4mVSQMwTFgwpuHtd0LD); done"]}
 {"id":"slack_token/positive/17/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-397120919872-609085412102-sZLHR4mVSQMwTFgwpuHtd0LD\"}}"]}
@@ -2596,12 +2596,12 @@
 {"id":"phone_jp/positive/18/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-5500-3749&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/18/japanese","kind":"phone_jp","text":"入力〈090-5500-3749〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/18/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-5500-3749\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/18/plain","kind":"private_key_pem","expected":[{"start":10,"end":45}],"parts":["[payload] --","---BEGIN OPENSSH PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/18/log","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit: field=(--","---BEGIN OPENSSH PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/18/json","kind":"private_key_pem","expected":[{"start":21,"end":56}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN OPENSSH PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/18/url","kind":"private_key_pem","expected":[{"start":32,"end":73}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20OPENSSH%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/18/japanese","kind":"private_key_pem","expected":[{"start":9,"end":44}],"parts":["入力〈--","---BEGIN OPENSSH PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/18/multiline","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit\r\nfield: --","---BEGIN OPENSSH PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/18/plain","kind":"private_key_pem","expected":[{"start":10,"end":56}],"parts":["[payload] --","---BEGIN OPENSSH PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/18/log","kind":"private_key_pem","expected":[{"start":14,"end":56}],"parts":["audit: field=(--","---BEGIN OPENSSH PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/18/json","kind":"private_key_pem","expected":[{"start":21,"end":59}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN OPENSSH PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/18/url","kind":"private_key_pem","expected":[{"start":32,"end":81}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20OPENSSH%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/18/japanese","kind":"private_key_pem","expected":[{"start":9,"end":59}],"parts":["入力〈--","---BEGIN OPENSSH PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/18/multiline","kind":"private_key_pem","expected":[{"start":14,"end":54}],"parts":["audit\r\nfield: --","---BEGIN OPENSSH PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/18/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-790247835430-438720305296-3GKoGACv0DIhyfCJJpevV57I [/payload]"]}
 {"id":"slack_token/positive/18/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-790247835430-438720305296-3GKoGACv0DIhyfCJJpevV57I); done"]}
 {"id":"slack_token/positive/18/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-790247835430-438720305296-3GKoGACv0DIhyfCJJpevV57I\"}}"]}
@@ -2734,12 +2734,12 @@
 {"id":"phone_jp/positive/19/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-2374-7211&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/19/japanese","kind":"phone_jp","text":"入力〈090-2374-7211〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/19/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-2374-7211\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/19/plain","kind":"private_key_pem","expected":[{"start":10,"end":37}],"parts":["[payload] --","---BEGIN PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/19/log","kind":"private_key_pem","expected":[{"start":14,"end":41}],"parts":["audit: field=(--","---BEGIN PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/19/json","kind":"private_key_pem","expected":[{"start":21,"end":48}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/19/url","kind":"private_key_pem","expected":[{"start":32,"end":63}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/19/japanese","kind":"private_key_pem","expected":[{"start":9,"end":36}],"parts":["入力〈--","---BEGIN PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/19/multiline","kind":"private_key_pem","expected":[{"start":14,"end":41}],"parts":["audit\r\nfield: --","---BEGIN PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/19/plain","kind":"private_key_pem","expected":[{"start":10,"end":48}],"parts":["[payload] --","---BEGIN PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/19/log","kind":"private_key_pem","expected":[{"start":14,"end":48}],"parts":["audit: field=(--","---BEGIN PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/19/json","kind":"private_key_pem","expected":[{"start":21,"end":51}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/19/url","kind":"private_key_pem","expected":[{"start":32,"end":71}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/19/japanese","kind":"private_key_pem","expected":[{"start":9,"end":51}],"parts":["入力〈--","---BEGIN PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/19/multiline","kind":"private_key_pem","expected":[{"start":14,"end":46}],"parts":["audit\r\nfield: --","---BEGIN PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/19/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-948318909935-711358360617-kG72OC2kYRqeoy4ESUHyRwr6 [/payload]"]}
 {"id":"slack_token/positive/19/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-948318909935-711358360617-kG72OC2kYRqeoy4ESUHyRwr6); done"]}
 {"id":"slack_token/positive/19/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-948318909935-711358360617-kG72OC2kYRqeoy4ESUHyRwr6\"}}"]}
@@ -2872,12 +2872,12 @@
 {"id":"phone_jp/positive/20/url","kind":"phone_jp","text":"https://example.invalid/a?entry=%EF%BC%90%EF%BC%99%EF%BC%90%EF%BC%8D%EF%BC%92%EF%BC%94%EF%BC%92%EF%BC%90%EF%BC%8D%EF%BC%98%EF%BC%93%EF%BC%92%EF%BC%97&ok=true","expected":[{"start":32,"end":149}]}
 {"id":"phone_jp/positive/20/japanese","kind":"phone_jp","text":"入力〈０９０－２４２０－８３２７〉確認済み","expected":[{"start":9,"end":48}]}
 {"id":"phone_jp/positive/20/multiline","kind":"phone_jp","text":"audit\r\nfield: ０９０－２４２０－８３２７\r\nend","expected":[{"start":14,"end":53}]}
-{"id":"private_key_pem/positive/20/plain","kind":"private_key_pem","expected":[{"start":10,"end":41}],"parts":["[payload] --","---BEGIN RSA PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/20/log","kind":"private_key_pem","expected":[{"start":14,"end":45}],"parts":["audit: field=(--","---BEGIN RSA PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/20/json","kind":"private_key_pem","expected":[{"start":21,"end":52}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN RSA PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/20/url","kind":"private_key_pem","expected":[{"start":32,"end":69}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20RSA%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/20/japanese","kind":"private_key_pem","expected":[{"start":9,"end":40}],"parts":["入力〈--","---BEGIN RSA PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/20/multiline","kind":"private_key_pem","expected":[{"start":14,"end":45}],"parts":["audit\r\nfield: --","---BEGIN RSA PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/20/plain","kind":"private_key_pem","expected":[{"start":10,"end":52}],"parts":["[payload] --","---BEGIN RSA PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/20/log","kind":"private_key_pem","expected":[{"start":14,"end":52}],"parts":["audit: field=(--","---BEGIN RSA PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/20/json","kind":"private_key_pem","expected":[{"start":21,"end":55}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN RSA PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/20/url","kind":"private_key_pem","expected":[{"start":32,"end":77}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20RSA%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/20/japanese","kind":"private_key_pem","expected":[{"start":9,"end":55}],"parts":["入力〈--","---BEGIN RSA PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/20/multiline","kind":"private_key_pem","expected":[{"start":14,"end":50}],"parts":["audit\r\nfield: --","---BEGIN RSA PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/20/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-220776852159-163572812672-DqWWpuOIUZc5hQQk2hs1Juj7 [/payload]"]}
 {"id":"slack_token/positive/20/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-220776852159-163572812672-DqWWpuOIUZc5hQQk2hs1Juj7); done"]}
 {"id":"slack_token/positive/20/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-220776852159-163572812672-DqWWpuOIUZc5hQQk2hs1Juj7\"}}"]}
@@ -3010,12 +3010,12 @@
 {"id":"phone_jp/positive/21/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-9374-9052&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/21/japanese","kind":"phone_jp","text":"入力〈090-9374-9052〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/21/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-9374-9052\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/21/plain","kind":"private_key_pem","expected":[{"start":10,"end":40}],"parts":["[payload] --","---BEGIN EC PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/21/log","kind":"private_key_pem","expected":[{"start":14,"end":44}],"parts":["audit: field=(--","---BEGIN EC PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/21/json","kind":"private_key_pem","expected":[{"start":21,"end":51}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN EC PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/21/url","kind":"private_key_pem","expected":[{"start":32,"end":68}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20EC%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/21/japanese","kind":"private_key_pem","expected":[{"start":9,"end":39}],"parts":["入力〈--","---BEGIN EC PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/21/multiline","kind":"private_key_pem","expected":[{"start":14,"end":44}],"parts":["audit\r\nfield: --","---BEGIN EC PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/21/plain","kind":"private_key_pem","expected":[{"start":10,"end":51}],"parts":["[payload] --","---BEGIN EC PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/21/log","kind":"private_key_pem","expected":[{"start":14,"end":51}],"parts":["audit: field=(--","---BEGIN EC PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/21/json","kind":"private_key_pem","expected":[{"start":21,"end":54}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN EC PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/21/url","kind":"private_key_pem","expected":[{"start":32,"end":76}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20EC%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/21/japanese","kind":"private_key_pem","expected":[{"start":9,"end":54}],"parts":["入力〈--","---BEGIN EC PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/21/multiline","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit\r\nfield: --","---BEGIN EC PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/21/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-359662329404-073024070431-6xY3CSs5ennOR2PAZUiDIumt [/payload]"]}
 {"id":"slack_token/positive/21/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-359662329404-073024070431-6xY3CSs5ennOR2PAZUiDIumt); done"]}
 {"id":"slack_token/positive/21/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-359662329404-073024070431-6xY3CSs5ennOR2PAZUiDIumt\"}}"]}
@@ -3148,12 +3148,12 @@
 {"id":"phone_jp/positive/22/url","kind":"phone_jp","text":"https://example.invalid/a?entry=090-8772-8685&ok=true","expected":[{"start":32,"end":45}]}
 {"id":"phone_jp/positive/22/japanese","kind":"phone_jp","text":"入力〈090-8772-8685〉確認済み","expected":[{"start":9,"end":22}]}
 {"id":"phone_jp/positive/22/multiline","kind":"phone_jp","text":"audit\r\nfield: 090-8772-8685\r\nend","expected":[{"start":14,"end":27}]}
-{"id":"private_key_pem/positive/22/plain","kind":"private_key_pem","expected":[{"start":10,"end":45}],"parts":["[payload] --","---BEGIN OPENSSH PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/22/log","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit: field=(--","---BEGIN OPENSSH PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/22/json","kind":"private_key_pem","expected":[{"start":21,"end":56}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN OPENSSH PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/22/url","kind":"private_key_pem","expected":[{"start":32,"end":73}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20OPENSSH%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/22/japanese","kind":"private_key_pem","expected":[{"start":9,"end":44}],"parts":["入力〈--","---BEGIN OPENSSH PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/22/multiline","kind":"private_key_pem","expected":[{"start":14,"end":49}],"parts":["audit\r\nfield: --","---BEGIN OPENSSH PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/22/plain","kind":"private_key_pem","expected":[{"start":10,"end":56}],"parts":["[payload] --","---BEGIN OPENSSH PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/22/log","kind":"private_key_pem","expected":[{"start":14,"end":56}],"parts":["audit: field=(--","---BEGIN OPENSSH PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/22/json","kind":"private_key_pem","expected":[{"start":21,"end":59}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN OPENSSH PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/22/url","kind":"private_key_pem","expected":[{"start":32,"end":81}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20OPENSSH%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/22/japanese","kind":"private_key_pem","expected":[{"start":9,"end":59}],"parts":["入力〈--","---BEGIN OPENSSH PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/22/multiline","kind":"private_key_pem","expected":[{"start":14,"end":54}],"parts":["audit\r\nfield: --","---BEGIN OPENSSH PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/22/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-938468414816-382092700727-aaAL1Adx6iKjQcroYccGtarx [/payload]"]}
 {"id":"slack_token/positive/22/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-938468414816-382092700727-aaAL1Adx6iKjQcroYccGtarx); done"]}
 {"id":"slack_token/positive/22/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-938468414816-382092700727-aaAL1Adx6iKjQcroYccGtarx\"}}"]}
@@ -3286,12 +3286,12 @@
 {"id":"phone_jp/positive/23/url","kind":"phone_jp","text":"https://example.invalid/a?entry=%EF%BC%90%EF%BC%99%EF%BC%90%EF%BC%8D%EF%BC%96%EF%BC%99%EF%BC%96%EF%BC%99%EF%BC%8D%EF%BC%96%EF%BC%99%EF%BC%99%EF%BC%93&ok=true","expected":[{"start":32,"end":149}]}
 {"id":"phone_jp/positive/23/japanese","kind":"phone_jp","text":"入力〈０９０－６９６９－６９９３〉確認済み","expected":[{"start":9,"end":48}]}
 {"id":"phone_jp/positive/23/multiline","kind":"phone_jp","text":"audit\r\nfield: ０９０－６９６９－６９９３\r\nend","expected":[{"start":14,"end":53}]}
-{"id":"private_key_pem/positive/23/plain","kind":"private_key_pem","expected":[{"start":10,"end":37}],"parts":["[payload] --","---BEGIN PRIVATE KEY----- [/payload]"]}
-{"id":"private_key_pem/positive/23/log","kind":"private_key_pem","expected":[{"start":14,"end":41}],"parts":["audit: field=(--","---BEGIN PRIVATE KEY-----); done"]}
-{"id":"private_key_pem/positive/23/json","kind":"private_key_pem","expected":[{"start":21,"end":48}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN PRIVATE KEY-----\"}}"]}
-{"id":"private_key_pem/positive/23/url","kind":"private_key_pem","expected":[{"start":32,"end":63}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20PRIVATE%20KEY-----&ok=true"]}
-{"id":"private_key_pem/positive/23/japanese","kind":"private_key_pem","expected":[{"start":9,"end":36}],"parts":["入力〈--","---BEGIN PRIVATE KEY-----〉確認済み"]}
-{"id":"private_key_pem/positive/23/multiline","kind":"private_key_pem","expected":[{"start":14,"end":41}],"parts":["audit\r\nfield: --","---BEGIN PRIVATE KEY-----\r\nend"]}
+{"id":"private_key_pem/positive/23/plain","kind":"private_key_pem","expected":[{"start":10,"end":48}],"parts":["[payload] --","---BEGIN PRIVATE KEY----- [/payload]"]}
+{"id":"private_key_pem/positive/23/log","kind":"private_key_pem","expected":[{"start":14,"end":48}],"parts":["audit: field=(--","---BEGIN PRIVATE KEY-----); done"]}
+{"id":"private_key_pem/positive/23/json","kind":"private_key_pem","expected":[{"start":21,"end":51}],"parts":["{\"entry\": {\"value\": \"--","---BEGIN PRIVATE KEY-----\"}}"]}
+{"id":"private_key_pem/positive/23/url","kind":"private_key_pem","expected":[{"start":32,"end":71}],"parts":["https://example.invalid/a?entry=--","---BEGIN%20PRIVATE%20KEY-----&ok=true"]}
+{"id":"private_key_pem/positive/23/japanese","kind":"private_key_pem","expected":[{"start":9,"end":51}],"parts":["入力〈--","---BEGIN PRIVATE KEY-----〉確認済み"]}
+{"id":"private_key_pem/positive/23/multiline","kind":"private_key_pem","expected":[{"start":14,"end":46}],"parts":["audit\r\nfield: --","---BEGIN PRIVATE KEY-----\r\nend"]}
 {"id":"slack_token/positive/23/plain","kind":"slack_token","expected":[{"start":10,"end":65}],"parts":["[payload] xo","xb-270046271817-737371515861-WDO7dEDOMPIg0gSxZW85OWny [/payload]"]}
 {"id":"slack_token/positive/23/log","kind":"slack_token","expected":[{"start":14,"end":69}],"parts":["audit: field=(xo","xb-270046271817-737371515861-WDO7dEDOMPIg0gSxZW85OWny); done"]}
 {"id":"slack_token/positive/23/json","kind":"slack_token","expected":[{"start":21,"end":76}],"parts":["{\"entry\": {\"value\": \"xo","xb-270046271817-737371515861-WDO7dEDOMPIg0gSxZW85OWny\"}}"]}

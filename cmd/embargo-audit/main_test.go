@@ -179,3 +179,19 @@ func TestExitStatusAndSafeDiagnostic(t *testing.T) {
 }
 
 const auditCompareKindsFlag = "--compare-kinds"
+
+func TestAuditHelpAndInvalidFlagUsage(t *testing.T) {
+	t.Parallel()
+	for _, arg := range []string{"-h", "--help", "--unknown=opaqueFixture"} {
+		var out, diagnostics bytes.Buffer
+		code := exitCode([]string{arg}, strings.NewReader(""), &out, &diagnostics)
+		combined := out.String() + diagnostics.String()
+		want := 0
+		if strings.Contains(arg, "unknown") {
+			want = 1
+		}
+		if code != want || !strings.Contains(combined, "Usage:") || !strings.Contains(combined, "--kinds") || strings.Contains(combined, "opaqueFixture") {
+			t.Errorf("%s: status=%d output=%q", arg, code, combined)
+		}
+	}
+}

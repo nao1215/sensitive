@@ -147,7 +147,7 @@ func TestAllBuiltinsHaveSeeds(t *testing.T) {
 }
 
 // FuzzScanLines checks that ScanLines reports, for every line, exactly what
-// Scan reports on that line alone, with 1-based line numbers and the line's
+// Scan reports on that line plus multiline PEM intersections, with the line's
 // own bytes.
 //
 //nolint:gocognit // The line-stream oracle checks content, numbering, and omissions together against independent splitting.
@@ -184,9 +184,18 @@ func FuzzScanLines(f *testing.F) {
 			return
 		}
 		lines := strings.Split(strings.TrimSuffix(text, "\n"), "\n")
+		full := scanner.ScanString(text)
+		offset := 0
 		for i, line := range lines {
+			advance := len(line) + 1
 			line = strings.TrimSuffix(line, "\r")
 			want := scanner.ScanString(line)
+			for _, f := range full {
+				if f.Kind == KindPrivateKeyPEM && f.Start < offset && f.End > offset && line != "" {
+					want = append(want, Finding{Kind: KindPrivateKeyPEM, Start: 0, End: min(len(line), f.End-offset), Confidence: f.Confidence})
+				}
+			}
+			offset += advance
 			res, reported := got[i+1]
 			if len(want) == 0 {
 				if reported {

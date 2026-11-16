@@ -354,7 +354,7 @@ func TestTokens(t *testing.T) {
 				case "pem":
 					d = embargo.NewScanner(embargo.WithKinds(embargo.KindPrivateKeyPEM))
 					kind := rapid.SampledFrom([]string{"PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY", "DSA PRIVATE KEY", "OPENSSH PRIVATE KEY", "ENCRYPTED PRIVATE KEY"}).Draw(t, "kind")
-					raw = "-----BEGIN " + kind + "-----"
+					raw = "-----BEGIN " + kind + "-----fixture-----END " + kind + "-----"
 					bad = strings.Replace(raw, "PRIVATE", "PUBLIC", 1)
 				case "swift":
 					d = embargo.NewScanner(embargo.WithKinds(embargo.KindSWIFTBIC))

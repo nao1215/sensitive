@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Detection changes
+
+- Mask every credential element in Go fmt maps and slices, quoted Bearer/Basic header values, and assignments inside up to two Go/JSON quote and backslash escape layers; findings retain original byte offsets. A marker prefix no longer exempts the rest of a value.
+- Mask embedded IPv4 tails as part of one IPv6 address and extend incomplete PEM private-key blocks to end of input. ScanLines retains PEM state so each material line is reported; truncated blocks can conservatively mask following unrelated text.
+- Add access_token, refresh_token, id_token, x-api-key, DB_PASSWORD, Private-Token, client_secret, auth_token and PGPASSWORD to normalized default credential keys. Use WithSensitiveKeys to select an application's exact key policy.
+- Exclude ARN account fields from MyNumber, git SCP remotes from email, and attached version labels from IPv4 detection. Require whole-word SWIFT context and direct code introduction after swift; genuinely sensitive values in those excluded contexts can be missed. The default confidence remains 0; review the findings snapshot and application-specific logs before upgrading.
+
+### Fixed
+
+- Match embargotest canaries embedded in standard and URL-safe base64 at every byte alignment, with or without padding; MIME line wrapping and full Unicode escaping still require explicit decoding.
+- Print usage and return success for embargo-audit -h and --help, and include short usage for invalid flags without echoing arguments.
+- Measure comparison scenarios at the default confidence, disclose deliberate PAN look-alikes beside real-log false-positive rates, and render time-chart gridlines uniformly.
+
 ## [0.8.1] - 2026-11-16
 
 ### Documentation

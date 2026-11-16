@@ -1275,3 +1275,100 @@ func checkSDKNumberLexeme(t *testing.T, scanner *embargo.Scanner, key, lexeme st
 		t.Fatalf("OTel span retained a number lexeme: %s", lexeme)
 	}
 }
+
+//nolint:gocognit // Keep every real hook in the same generated-input acceptance matrix.
+func TestFreeTextHooksProperty(t *testing.T) {
+	t.Parallel()
+	scanner := embargo.NewScanner()
+	rapid.Check(t, func(rt *rapid.T) {
+		secret := "opaqueHookFixture" + strconv.Itoa(rapid.IntRange(1, 999999).Draw(rt, "secret")) + "Tail"
+		key := rapid.SampledFrom([]string{"password", "token", "access_token", "DB_PASSWORD", "x-api-key", "Private-Token"}).Draw(rt, "key")
+		header := http.Header{freeTextAuthorizationHeader: {"Bearer " + secret, "Basic " + secret}, key: {secret}}
+		body, err := json.Marshal(map[string]string{key: secret})
+		if err != nil {
+			rt.Fatal(err)
+		}
+		address := "::ffff:203.0.113." + strconv.Itoa(rapid.IntRange(1, 254).Draw(rt, "octet"))
+		for _, input := range []string{fmt.Sprintf("headers=%v", header), fmt.Sprintf("headers=%#v", header), fmt.Sprintf("body=%q", body), strconv.Quote(strconv.Quote(string(body))), key + "=[REDACTED]" + secret, "[" + address + "]:51234"} {
+			check := func(name string, raw []byte) {
+				if len(raw) == 0 || bytes.Contains(raw, []byte(secret)) || bytes.Contains(raw, []byte(".0.113.")) || !bytes.Contains(raw, []byte(referenceMarker)) {
+					rt.Fatalf("%s retained text: %q", name, raw)
+				}
+			}
+			for _, name := range []string{loggerSlog, loggerZap, loggerZerolog, loggerLogrus} {
+				check(name, loggerOutput(t, scanner, name, "context", input))
+				check(name+" error", freeTextErrorOutput(t, scanner, name, input))
+			}
+			for _, jsonHandler := range []bool{false, true} {
+				var out bytes.Buffer
+				var next slog.Handler = slog.NewTextHandler(&out, nil)
+				if jsonHandler {
+					next = slog.NewJSONHandler(&out, nil)
+				}
+				slog.New(embargo.NewSlogHandler(next, scanner)).Error(input, slog.Any("error", errors.New(input)))
+				check("slog message", out.Bytes())
+			}
+			event := sentry.NewEvent()
+			event.Message = input
+			event.Exception = []sentry.Exception{{Value: input}}
+			safe := embargosentry.NewBeforeSend(scanner)(event, nil)
+			if safe == nil {
+				rt.Fatal("Sentry dropped normal event")
+			}
+			encoded, e := json.Marshal(safe)
+			if e != nil {
+				rt.Fatal(e)
+			}
+			check("Sentry", encoded)
+			var out bytes.Buffer
+			provider := sdklog.NewLoggerProvider(sdklog.WithProcessor(sdklog.NewSimpleProcessor(embargootel.NewLogExporter(&sdkLogCapture{writer: &out}, scanner))))
+			var record otellog.Record
+			record.SetBody(attribute.StringValue(input))
+			provider.Logger("text-property").Emit(t.Context(), record)
+			if shutdownErr := provider.Shutdown(t.Context()); shutdownErr != nil {
+				rt.Fatal(shutdownErr)
+			}
+			check("OTel log", out.Bytes())
+			sink := tracetest.NewInMemoryExporter()
+			span := tracetest.SpanStub{Name: input, Attributes: []attribute.KeyValue{attribute.String("context", input)}}.Snapshot()
+			if exportErr := embargootel.NewSpanExporter(sink, scanner).ExportSpans(t.Context(), []sdktrace.ReadOnlySpan{span}); exportErr != nil {
+				rt.Fatal(exportErr)
+			}
+			encoded, e = json.Marshal(sink.GetSpans())
+			if e != nil {
+				rt.Fatal(e)
+			}
+			check("OTel span", encoded)
+			out.Reset()
+			request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://service.invalid/", nil)
+			request.RemoteAddr = "[" + address + "]:51234"
+			request.Header.Set("X-Context", input)
+			embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }), slog.New(slog.NewJSONHandler(&out, nil)), scanner).ServeHTTP(httptest.NewRecorder(), request)
+			check("HTTP", out.Bytes())
+		}
+	})
+}
+
+func freeTextErrorOutput(t *testing.T, scanner *embargo.Scanner, name, input string) []byte {
+	t.Helper()
+	var out bytes.Buffer
+	switch name {
+	case loggerZerolog:
+		sink := embargozerolog.NewWriter(&out, scanner)
+		logger := zerolog.New(sink)
+		logger.Error().Err(errors.New(input)).Msg(input)
+		if err := sink.Close(); err != nil {
+			t.Fatal(err)
+		}
+	case loggerLogrus:
+		logger := logrus.New()
+		logger.SetOutput(&out)
+		logger.SetFormatter(embargologrus.NewFormatter(&logrus.JSONFormatter{}, scanner))
+		logger.WithError(errors.New(input)).Error(input)
+	default:
+		return loggerOutput(t, scanner, name, "error", errors.New(input))
+	}
+	return out.Bytes()
+}
+
+const freeTextAuthorizationHeader = "Authorization"
