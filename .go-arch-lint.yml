@@ -6,6 +6,7 @@ allow:
 exclude:
 - tests
 - adapters
+- embargotest/testdata
 excludeFiles:
 - ^.*_test\.go$
 components:

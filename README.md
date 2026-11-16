@@ -224,7 +224,7 @@ Add one line to a package's tests:
 
 `func TestMain(m *testing.M) { os.Exit(embargotest.Guard(m)) }`
 
-Guard reruns the package tests and fails when a canary (a fake secret) or a detected value appears in stdout, stderr, default slog output or child processes. The canary is matched as raw bytes and in hex, base64 and JSON-escaped form, so that check does not depend on the detectors. [ExampleGuard](embargotest/injection_example_test.go)
+Guard reruns the package tests and fails when a canary (a fake secret) or a detected value appears in stdout, stderr, default slog output or child processes. The canary is matched as raw bytes and in hex, base64 and JSON-escaped form, so that check does not depend on the detectors. [ExampleGuard](embargotest/example_test.go)
 
 For one test, a recorder checks both that the expected output exists and that no canary escaped:
 

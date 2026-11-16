@@ -26,8 +26,8 @@ The inventory below translates the owner's active repository instructions into c
 | Tests run on three OSes and minimum/stable Go | CLAUDE; R6 | [macos-latest](../.github/workflows/unit_test.yml) | MultiPlatformUnitTest |
 | BSD builds remain; unknown paths run full CI | R7 | [class](../scripts/test_ci_changes.py) | MultiPlatformUnitTest |
 | State failures clear Input and retain Secret snapshots | R11; M14 | [TestQuintInputReplay](../tests/model_input_test.go) | Verification |
-| Recorder requires observed bytes and checked expectations | R6; M14 | [TestQuintRecorderReplay](../embargotest/model_replay_test.go) | Verification |
-| Guard shares limits and replays only safe complete streams | R12; M14 | [TestQuintGuardReplay](../embargotest/model_replay_test.go) | Verification |
+| Recorder requires observed bytes and checked expectations | R6; M14 | [TestQuintRecorderReplay](../embargotest/recorder_test.go) | Verification |
+| Guard shares limits and replays only safe complete streams | R12; M14 | [TestQuintGuardReplay](../embargotest/guard_test.go) | Verification |
 | Recorder cannot start detached goroutines | R6 | [TestRecorderDoesNotStartDetachedGoroutines](../tests/contracts/policy_test.go) | MultiPlatformUnitTest |
 | Slog failures suppress output and emit fixed errors | R6; R11 | [TestSlogSuppressesNormalizationFailures](../slog_handler_test.go) | MultiPlatformUnitTest |
 | Structured masking preserves shape and bounds its work | R11 | [TestMaskJSONFailureBounds](../json_test.go) | MultiPlatformUnitTest |
@@ -91,7 +91,7 @@ The inventory below translates the owner's active repository instructions into c
 | Adoption cases exercise real outputs and retain declared-policy controls | M21 | [TestAdoptionDeclaredControls](../tests/adoption_cases_test.go) | MultiPlatformUnitTest |
 | Adoption table is generated from executed cases and checked in CI | M21 | [main](../scripts/case_docs.py) | Verification |
 | Output cases isolate detector decisions from canary and fragment matching | M21 | [TestAdoptionCheckIndependence](../tests/check_independence_test.go) | Verification |
-| Canary fragments retain minimum-length and option-order boundaries | M21 | [TestCanaryFragmentBoundsAndOrder](../embargotest/canary_fragment_test.go) | MultiPlatformUnitTest |
+| Canary fragments retain minimum-length and option-order boundaries | M21 | [TestCanaryFragmentBoundsAndOrder](../embargotest/canary_test.go) | MultiPlatformUnitTest |
 | Local log audits count actual findings without echoing source values | M21 | [TestAuditCountsOffsetsAndNeverEchoesInput](../tests/cmd/embargo-audit/main_test.go) | MultiPlatformUnitTest |
 | Diagnostic-preservation recipes retain IDs and expose their recall tradeoff | M21 | [TestAuditDiagnosticRecipe](../tests/audit_recipes_test.go) | MultiPlatformUnitTest |
 | Detector changes enforce frozen per-Kind accuracy and critical exposure floors | M21 | [TestQualityAccuracy](../tests/quality_accuracy_test.go) | Verification |

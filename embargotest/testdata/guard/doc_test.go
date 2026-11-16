@@ -1,16 +1,15 @@
 package guard_test
 
 import (
-	"fmt"
-	"log/slog"
-	"os"
-	"os/exec"
-	"strings"
-	"testing"
-	"time"
-
-	"github.com/nao1215/embargo"
-	"github.com/nao1215/embargo/embargotest"
+ "fmt"
+ "github.com/nao1215/embargo"
+ "github.com/nao1215/embargo/embargotest"
+ "log/slog"
+ "os"
+ "os/exec"
+ "strings"
+ "testing"
+ "time"
 )
 
 func TestMain(m *testing.M) {
@@ -68,7 +67,9 @@ func TestPackageOutput(t *testing.T) {
 		t.Log("safe output")
 	}
 }
+
 func TestParallelPeer(t *testing.T) { t.Parallel(); t.Log("parallel output") }
+
 func TestInheritedChild(t *testing.T) {
 	t.Parallel()
 	if os.Getenv("GUARD_INHERITED") == "1" {

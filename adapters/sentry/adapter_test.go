@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http/httptest"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -24,10 +25,14 @@ const (
 
 type eventTransport struct{ events []*sentry.Event }
 
-func (*eventTransport) Configure(sentry.ClientOptions)        {}
-func (t *eventTransport) SendEvent(event *sentry.Event)       { t.events = append(t.events, event) }
-func (*eventTransport) Flush(time.Duration) bool              { return true }
-func (*eventTransport) Close()                                {}
+func (*eventTransport) Configure(sentry.ClientOptions) {}
+
+func (t *eventTransport) SendEvent(event *sentry.Event) { t.events = append(t.events, event) }
+
+func (*eventTransport) Flush(time.Duration) bool { return true }
+
+func (*eventTransport) Close() {}
+
 func (*eventTransport) FlushWithContext(context.Context) bool { return true }
 
 func TestBeforeSendThroughSentryClient(t *testing.T) {
@@ -206,5 +211,40 @@ func TestBeforeSendMaskedKeyCollision(t *testing.T) {
 	safe := embargosentry.NewBeforeSend(embargo.NewScanner())(event, nil)
 	if safe == nil || safe.Contexts["extra"][sentryMarker] != json.Number("7") || safe.Tags[sentryMarker] != "retained" {
 		t.Fatalf("collision changed safe values: %v", safe)
+	}
+}
+
+func sentryScalingCall(size int) func() {
+	hook := embargosentry.NewBeforeSend(embargo.NewScanner(embargo.WithAll()))
+	event := sentry.NewEvent()
+	event.Message = strings.Repeat("x", size)
+	return func() { hook(event, nil) }
+}
+
+//nolint:paralleltest // Measure the delta without concurrent allocations from other tests.
+func TestHookAllocationBudget(t *testing.T) {
+	const size = 64 << 10
+	call := sentryScalingCall(size)
+	runtime.GC()
+	var before, after runtime.MemStats
+	runtime.ReadMemStats(&before)
+	call()
+	runtime.ReadMemStats(&after)
+	if after.TotalAlloc-before.TotalAlloc > 128*size+1<<20 {
+		t.Fatal("Sentry hook allocation amplification")
+	}
+}
+
+func BenchmarkHookScaling(b *testing.B) {
+	for _, size := range []int{1 << 10, 16 << 10, 256 << 10, 1 << 20, 16 << 20} {
+		b.Run(strconv.Itoa(size), func(b *testing.B) {
+			call := sentryScalingCall(size)
+			b.SetBytes(int64(size))
+			b.ReportAllocs()
+			b.ResetTimer()
+			for b.Loop() {
+				call()
+			}
+		})
 	}
 }
