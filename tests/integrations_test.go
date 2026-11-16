@@ -1398,6 +1398,8 @@ func TestMaskingBoundaryHooks(t *testing.T) {
 			{"swiftCode=DEUTDEFF", boundaryBIC},
 			{"SWIFT number DEUTDEFF", boundaryBIC},
 			{"password := " + secret, secret},
+			{"map[" + strings.Repeat("service_", 32) + "password:head " + secret + " tail public:kept]", secret},
+			{"map[public:" + strings.Repeat("x", 256) + " password:head " + secret + " tail public:kept]", secret},
 			{"password=`head " + secret + " tail`", secret},
 			{"password: |\n  " + secret + "\n  body\npublic: retained", secret},
 			{"q=password%3D" + secret + "%26user%3Dbob", secret},
@@ -1424,8 +1426,11 @@ func TestMaskingBoundaryHooks(t *testing.T) {
 		for _, quote := range []string{`\x22`, `\u0022`} {
 			inputs = append(inputs, struct{ text, needle string }{"{" + quote + "password" + quote + ":" + quote + secret + quote + "}", secret})
 		}
-		for _, form := range []string{`[]interface {}{"%s"}`, `map[string]string{"access":"%s"}`, `sql.NullString{String:"%s", Valid:true}`, `main.Password("%s")`, `struct { Raw string }{Raw:"%s"}`, `[]struct { Raw string }{struct { Raw string }{Raw:"%s"}}`, `head %s tail`} {
-			inputs = append(inputs, struct{ text, needle string }{"{Password:" + fmt.Sprintf(form, secret) + "}", secret})
+		for _, form := range []string{`[]interface {}{"%s"}`, `map[string]string{"access":"%s"}`, `sql.NullString{String:"%s", Valid:true}`, `main.Password("%s")`, `main.Password_Value("%s")`, `main.秘密("%s")`, `struct { Raw string }{Raw:"%s"}`, `[]struct { Raw string }{struct { Raw string }{Raw:"%s"}}`, `head %s tail`} {
+			inputs = append(inputs,
+				struct{ text, needle string }{"{Password:" + fmt.Sprintf(form, secret) + "}", secret},
+				struct{ text, needle string }{"{Authorization:" + fmt.Sprintf(form, secret) + "}", secret},
+			)
 		}
 		byteLiteral := fmt.Sprintf("%#v", []byte(secret))
 		inputs = append(inputs, struct{ text, needle string }{"{Password:" + byteLiteral + "}", strings.TrimSuffix(strings.TrimPrefix(byteLiteral, "[]byte{"), "}")})

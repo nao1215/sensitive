@@ -259,5 +259,17 @@
   },
   {
     "text": "main.Cfg{Password:[]struct { Raw string }{{Raw:\"opaqueFixture\"}}}"
+  },
+  {
+    "text": "password:main.Password_Value(\"opaqueFixture\")"
+  },
+  {
+    "text": "password:main.\u79d8\u5bc6(\"opaqueFixture\")"
+  },
+  {
+    "text": "map[service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_service_password:head opaqueLongFixture tail public:kept]"
+  },
+  {
+    "text": "map[public:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx password:head opaqueLongFixture tail public:kept]"
   }
 ]

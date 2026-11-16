@@ -5,6 +5,7 @@ import (
 	"cmp"
 	"slices"
 	"strings"
+	"unicode/utf8"
 )
 
 const (
@@ -172,6 +173,7 @@ func (d *Credential) scanPlain(data []byte) []Finding {
 	urls := urlPasswords(data)
 	out := slices.Clone(urls)
 	urlIndex := 0
+	contextAt, formatted := 0, false
 	for i := 0; i < len(data); i++ {
 		if data[i] != ':' && data[i] != '=' {
 			continue
@@ -192,7 +194,11 @@ func (d *Credential) scanPlain(data []byte) []Finding {
 		if name == credentialTokenKey && unquotedObjectValue(data, i+1) {
 			continue
 		}
-		start, end := assignmentValue(data, i+1, name)
+		// Visit each context byte once, including values skipped by this loop.
+		// Long keys and preceding fields must not lose their enclosing fmt shape.
+		formatted = fmtCredentialContext(data[contextAt:i], formatted)
+		contextAt = i
+		start, end := assignmentValue(data, i+1, name, data[i] == ':' && formatted)
 		if end > start && !redactedCredentialValue(data[start:end]) && (name != credentialTokenKey || !objectReference(data, start, end)) {
 			out = append(out, credentialFinding(data, start, end))
 			i = end - 1
@@ -272,9 +278,8 @@ func assignmentKey(data []byte, end int) []byte {
 }
 
 // assignmentValue owns boundaries for credential-key values in text and Go fmt output.
-func assignmentValue(data []byte, start int, key string) (valueStart, valueEnd int) {
+func assignmentValue(data []byte, start int, key string, formatted bool) (valueStart, valueEnd int) {
 	fieldStart := start
-	formatted := fmtCredentialField(data, start)
 	if start < len(data) && data[start] == '=' {
 		start++
 	} // Go's := assignment.
@@ -377,7 +382,7 @@ func credentialTypedValue(data []byte, start int) (begin int, closeByte byte) {
 		if c == '(' {
 			return at + 1, ')'
 		}
-		if !isAlphaNum(c) && !strings.ContainsRune("[].*", rune(c)) && (c != ' ' || !credentialTypeSpace(data, at)) {
+		if c < utf8.RuneSelf && !isAlphaNum(c) && !strings.ContainsRune("[]._*", rune(c)) && (c != ' ' || !credentialTypeSpace(data, at)) {
 			break
 		}
 	}
@@ -406,20 +411,16 @@ func credentialStructValue(data []byte, opener int) int {
 	return opener + 1
 }
 
-func fmtCredentialField(data []byte, start int) bool {
-	const fmtContextBytes = 128
-	if start == 0 || data[start-1] != ':' {
-		return false
-	}
-	for at := start - len(": "); at >= 0 && at >= start-fmtContextBytes; at-- {
-		switch data[at] {
+func fmtCredentialContext(data []byte, formatted bool) bool {
+	for _, c := range data {
+		switch c {
 		case '{', '[':
-			return true
+			formatted = true
 		case '\n', '=', '"', '\'':
-			return false
+			formatted = false
 		}
 	}
-	return false
+	return formatted
 }
 
 func nextFmtField(data []byte, start int) bool {

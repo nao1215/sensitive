@@ -2013,6 +2013,58 @@
       ]
     },
     {
+      "source": "synthetic/detection-compatibility.json/87",
+      "input_sha256": "78148f3faa75339bf02b17dcd120c2140de19f33068b62287acb6c9310307816",
+      "masked_sha256": "8f03b22ae2acd32ab827c46aace634f099532fb6d7a6e70d859700cfb0beab69",
+      "findings": [
+        {
+          "Kind": "credential",
+          "Start": 29,
+          "End": 44,
+          "Confidence": 0.95
+        }
+      ]
+    },
+    {
+      "source": "synthetic/detection-compatibility.json/88",
+      "input_sha256": "944d3d7a075d66b0e0d69e29e40e7bdd8b8c0924c84e1ab98d5bd947143327d3",
+      "masked_sha256": "805c61e4fc6dea27c05fb1d8e4ac587593e2281241564330a6d0ea7588ff37ea",
+      "findings": [
+        {
+          "Kind": "credential",
+          "Start": 21,
+          "End": 36,
+          "Confidence": 0.95
+        }
+      ]
+    },
+    {
+      "source": "synthetic/detection-compatibility.json/89",
+      "input_sha256": "cce3436b39a7806eb5b550fe79b9882cf87c48a5daae672adcd57474daf942cc",
+      "masked_sha256": "338e7c6374c59527cfe11c1c6b493100845ba8a6f61480985d0a84a6b2ca2c9d",
+      "findings": [
+        {
+          "Kind": "credential",
+          "Start": 269,
+          "End": 296,
+          "Confidence": 0.95
+        }
+      ]
+    },
+    {
+      "source": "synthetic/detection-compatibility.json/90",
+      "input_sha256": "9a2ac0f075305fce20d0a60a58bf548df89b90a71e5cfda6d38e023baff1f521",
+      "masked_sha256": "abc81f947e0bb72ae0de6150187fb66acd7485ed744adef78f1e3b56b59f944e",
+      "findings": [
+        {
+          "Kind": "credential",
+          "Start": 277,
+          "End": 304,
+          "Confidence": 0.95
+        }
+      ]
+    },
+    {
       "source": "public/Android/1",
       "input_sha256": "b9cd16fab640ecd53773b9ce5a802951d5231b79bbf39ad67444740fd87fb273",
       "masked_sha256": "b9cd16fab640ecd53773b9ce5a802951d5231b79bbf39ad67444740fd87fb273",

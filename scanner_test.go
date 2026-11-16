@@ -889,9 +889,9 @@ func TestCredentialGoRenderingProperty(t *testing.T) {
 		secret := fmt.Sprintf("opaqueGo%02dFixture", n)
 		for _, value := range []any{secret, []byte(secret), []any{secret}, []string{secret}, map[string]string{"access": secret}, sql.NullString{String: secret, Valid: true}, sql.Null[string]{V: secret, Valid: true}, struct{ Raw string }{secret}, []struct{ Raw string }{{secret}}, credentialString(secret)} {
 			for _, verb := range []string{"%v", fmtFieldVerb, fmtGoSyntaxVerb, "%q"} {
-				for _, input := range []string{fmt.Sprintf(verb, map[string]any{credentialFixtureKey: value}), fmt.Sprintf(verb, struct{ Password any }{value})} {
+				for _, input := range []string{fmt.Sprintf(verb, map[string]any{credentialFixtureKey: value}), fmt.Sprintf(verb, map[string]any{authorizationFixtureKey: value}), fmt.Sprintf(verb, struct{ Password any }{value})} {
 					// Plain struct %v and %q omit field names; no credential context survives.
-					if !strings.Contains(strings.ToLower(input), credentialFixtureKey) {
+					if !strings.Contains(strings.ToLower(input), credentialFixtureKey) && !strings.Contains(input, authorizationFixtureKey) {
 						continue
 					}
 					got := Mask(input, scanner.ScanString(input))
@@ -902,7 +902,7 @@ func TestCredentialGoRenderingProperty(t *testing.T) {
 				}
 			}
 		}
-		for _, input := range []string{`password:main.Password("` + secret + `")`, `password:[]interface {}{"` + secret + `"}`, `password:map[string]string{"access":"` + secret + `"}`, `password:sql.NullString{String:"` + secret + `", Valid:true}`} {
+		for _, input := range []string{`password:main.Password("` + secret + `")`, `password:main.Password_Value("` + secret + `")`, `password:main.秘密("` + secret + `")`, `password:[]interface {}{"` + secret + `"}`, `password:map[string]string{"access":"` + secret + `"}`, `password:sql.NullString{String:"` + secret + `", Valid:true}`} {
 			if got := Mask(input, scanner.ScanString(input)); strings.Contains(got, secret) {
 				t.Errorf("typed value visible: %q => %q", input, got)
 			}
@@ -1043,5 +1043,20 @@ func TestKnownLimitGenericCodeKey(t *testing.T) {
 	got, err = NewScanner(WithSensitiveKeys("code")).MaskJSON([]byte(input))
 	if err != nil || strings.Contains(string(got), "opaqueOAuthFixture") {
 		t.Fatal("explicit OAuth key policy failed")
+	}
+}
+
+func TestCredentialLongFmtContextProperty(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindCredential))
+	for _, length := range []int{1, 14, 15, 16, 17, 32, 128} {
+		for _, prefix := range []string{"map[" + strings.Repeat("service_", length) + "password:", "map[public:" + strings.Repeat("x", length*16) + " password:"} {
+			value := "head opaqueLongFixture tail"
+			after := " public:kept]"
+			input := prefix + value + after
+			if got := Mask(input, scanner.ScanString(input)); got != prefix+"[REDACTED]"+after {
+				t.Fatalf("fmt context lost: %q => %q", input, got)
+			}
+		}
 	}
 }

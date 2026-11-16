@@ -197,6 +197,8 @@ func TestCredentialAnonymousTypeBoundaries(t *testing.T) {
 }
 
 // Exercise the public detector entry point independently of root dispatch.
+const authorizationHeaderFixture = "Authorization"
+
 type credentialPropertyString string
 
 func TestDetectorAuthorizationSchemeProperty(t *testing.T) {
@@ -216,7 +218,7 @@ func TestDetectorAuthorizationSchemeProperty(t *testing.T) {
 				value := scheme + space + credential
 				for count := 1; count <= 3; count++ {
 					list := strings.TrimSuffix(strings.Repeat(value+", ", count), ", ")
-					for _, input := range []string{"Authorization: " + list, "Proxy-Authorization: " + list, `{"msg":` + strconv.Quote("Authorization: "+list) + `}`, fmt.Sprintf("%v", http.Header{"Authorization": {list}}), fmt.Sprintf("%#v", http.Header{"Authorization": {list}})} {
+					for _, input := range []string{"Authorization: " + list, "Proxy-Authorization: " + list, `{"msg":` + strconv.Quote("Authorization: "+list) + `}`, fmt.Sprintf("%v", http.Header{authorizationHeaderFixture: {list}}), fmt.Sprintf("%#v", http.Header{authorizationHeaderFixture: {list}})} {
 						got := maskCredentialFindings(input, scanner.Scan([]byte(input)))
 						if strings.Contains(got, secret) {
 							t.Fatalf("credential visible: %q => %q", input, got)
@@ -272,9 +274,9 @@ func TestDetectorCredentialGoRenderingProperty(t *testing.T) {
 		secret := fmt.Sprintf("opaqueGo%02dFixture", n)
 		for _, value := range []any{secret, []byte(secret), []any{secret}, []string{secret}, map[string]string{"access": secret}, sql.NullString{String: secret, Valid: true}, sql.Null[string]{V: secret, Valid: true}, struct{ Raw string }{secret}, []struct{ Raw string }{{secret}}, credentialPropertyString(secret)} {
 			for _, verb := range []string{"%v", "%+v", "%#v", "%q"} {
-				for _, input := range []string{fmt.Sprintf(verb, map[string]any{"password": value}), fmt.Sprintf(verb, struct{ Password any }{value})} {
+				for _, input := range []string{fmt.Sprintf(verb, map[string]any{"password": value}), fmt.Sprintf(verb, map[string]any{authorizationHeaderFixture: value}), fmt.Sprintf(verb, struct{ Password any }{value})} {
 					// Plain struct %v and %q omit field names; no credential context survives.
-					if !strings.Contains(strings.ToLower(input), "password") {
+					if !strings.Contains(strings.ToLower(input), "password") && !strings.Contains(input, authorizationHeaderFixture) {
 						continue
 					}
 					got := maskCredentialFindings(input, scanner.Scan([]byte(input)))
@@ -341,4 +343,81 @@ func maskCredentialFindings(input string, findings []Finding) string {
 		}
 	}
 	return string(data)
+}
+
+func TestCredentialNamedIdentifierProperty(t *testing.T) {
+	t.Parallel()
+	for n := range 16 {
+		value := strconv.Quote(fmt.Sprintf("opaqueNamed%02dFixture", n))
+		for _, name := range []string{"main.Password", "main.Password_Value", "main.秘密", "example_test.Token_T"} {
+			prefix := "password:" + name + "("
+			input := prefix + value + ") public:kept"
+			got := (&Credential{}).Scan([]byte(input))
+			if len(got) != 1 || got[0].Start != len(prefix) || got[0].End != len(prefix)+len(value) {
+				t.Fatalf("named identifier %s did not isolate its value: %+v", name, got)
+			}
+		}
+	}
+}
+
+func TestCredentialOuterBoundaryProperty(t *testing.T) {
+	t.Parallel()
+	const (
+		assignmentPrefix = "password="
+		scalar           = "fixture"
+		publicLine       = "\npublic=kept"
+		formatted        = "head fixture tail"
+		publicJSON       = `","public":"kept"}`
+	)
+
+	for n := range 16 {
+		secret := fmt.Sprintf("opaqueOuter%02dFixture", n)
+		for _, tc := range []struct{ before, value, after string }{
+			{assignmentPrefix, scalar, " public=kept"},
+			{"password := ", scalar, publicLine},
+			{"map[password:", formatted, " public:kept]"},
+			{"{Password:", formatted, " Public:kept}"},
+			{"password=`", formatted, "`\npublic=kept"},
+			{`{"password":"`, scalar, publicJSON},
+			{`map[string]string{"password":"`, scalar, publicJSON},
+			{`password:[]string{`, `"fixture", "second"`, `} public:kept`},
+			{`password:main.Secret_Value(`, `"fixture"`, `) public:kept`},
+			{`password:struct { Raw string }{`, `Raw:"fixture"`, `} public:kept`},
+			{"Authorization: Token ", "fixture, Basic second", publicLine},
+			{"Authorization: Digest ", `username="fixture", response="second"`, publicLine},
+			{`{"Authorization":"Token `, "fixture, Basic second", publicJSON},
+			{`map[Authorization:[`, "Token fixture, Basic second", `] public:kept]`},
+			{`body={\"password\":\"`, scalar, `\",\"public\":\"kept\"}`},
+			{assignmentPrefix, "[]fixture", publicLine},
+			{assignmentPrefix, "[REDACTED]]fixture", publicLine},
+		} {
+			value := strings.ReplaceAll(tc.value, scalar, secret)
+			input := tc.before + value + tc.after
+			want := tc.before + strings.Repeat("*", len(value)) + tc.after
+			if got := maskCredentialFindings(input, (&Credential{}).Scan([]byte(input))); got != want {
+				t.Fatalf("credential consumed adjacent public context: %q => %q; want %q", input, got, want)
+			}
+		}
+	}
+}
+
+func TestCredentialLongFmtKeyProperty(t *testing.T) {
+	t.Parallel()
+	for _, length := range []int{1, 14, 15, 16, 17, 32, 128} {
+		key := strings.Repeat("service_", length) + "password"
+		for _, value := range []string{"head opaqueLongFixture tail", "opaqueLongFixture with several words"} {
+			for _, before := range []string{"map[" + key + ":", "map[public:" + strings.Repeat("x", length*16) + " password:", "{Token:first Password:", "{Public:kept\nPassword:"} {
+				after := " public:kept]"
+				input := before + value + after
+				end := len(value)
+				if strings.Contains(before, "\n") {
+					end = strings.IndexByte(value, ' ')
+				}
+				want := strings.Replace(before, "Token:first", "Token:*****", 1) + strings.Repeat("*", end) + value[end:] + after
+				if got := maskCredentialFindings(input, (&Credential{}).Scan([]byte(input))); got != want {
+					t.Fatalf("long credential key lost its fmt context: %q => %q; want %q", input, got, want)
+				}
+			}
+		}
+	}
 }
