@@ -1,4 +1,6 @@
 import unittest
+from pathlib import Path
+import ci_benchmark
 from ci_benchmark import default_gate
 
 
@@ -7,6 +9,14 @@ def samples(clean=100, dirty=200, count=10):
 
 
 class DefaultGateTest(unittest.TestCase):
+    def test_shared_fixture_can_compile_as_a_root_external_test(self):
+        source = (Path(__file__).resolve().parents[1]/"tests/benchmarks/benchmark_test.go").read_bytes()
+        converted = ci_benchmark.root_harness(source)
+        self.assertTrue(converted.startswith(b"package embargo_test\n"))
+        self.assertEqual(converted.split(b"\n", 1)[1], source.split(b"\n", 1)[1])
+        with self.assertRaises(ValueError):
+            ci_benchmark.root_harness(b"package unexpected\n")
+
     def test_twenty_percent_boundary_and_loss(self):
         self.assertTrue(default_gate(samples(), samples(120, 240))['passed'])
         self.assertFalse(default_gate(samples(), samples(121, 200))['passed'])

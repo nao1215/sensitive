@@ -36,12 +36,20 @@ def default_gate(base, head):
     return {'maximum_ratio': 1.2, 'samples': 10, 'passed': all(row['ratio'] <= 1.2 for row in rows), 'workloads': rows}
 
 
+def root_harness(source):
+    """Keep the fixture unchanged while adapting its package to the root archive."""
+    converted, count = re.subn(rb"^package benchmarks\n", b"package embargo_test\n", source, count=1)
+    if count != 1:
+        raise ValueError("unexpected benchmark harness package")
+    return converted
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--base',required=True);parser.add_argument('--head',required=True);args=parser.parse_args()
     results=ROOT/'benchmark-results';results.mkdir(exist_ok=True)
     env=dict(os.environ,GOMAXPROCS='1')
     revisions={label:run(['git','rev-parse','--verify',revision+'^{commit}'],cwd=ROOT).strip() for label,revision in [('base',args.base),('head',args.head)]}
-    harness=subprocess.check_output(['git','show',revisions['head']+':tests/benchmarks/benchmark_test.go'],cwd=ROOT)
+    harness=root_harness(subprocess.check_output(['git','show',revisions['head']+':tests/benchmarks/benchmark_test.go'],cwd=ROOT))
     with tempfile.TemporaryDirectory(prefix='embargo-benchmark-') as tmp:
         binaries={}
         for label,sha in revisions.items():
