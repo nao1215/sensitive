@@ -4,32 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.1] - 2026-11-16
+
+This patch release fixes sensitive-data leaks in logging and telemetry boundaries and at inclusive confidence thresholds. Upgrade the root module and every installed adapter module to v0.5.1.
 
 ### Security
 
-- Rebuild OTel float and typed-slice values only from sanitized data after masked-key collisions (R18-02; log body, log attributes and span attributes in v0.5.0). [5b9b76c](https://github.com/nao1215/embargo/commit/5b9b76c91cd7d5684c853e5e1763c263e9fc765b).
+Implementation: [PR #94](https://github.com/nao1215/embargo/pull/94), [299cbe5](https://github.com/nao1215/embargo/commit/299cbe5b2346120545dbb7eadab540ff7f15f12b); [PR #95](https://github.com/nao1215/embargo/pull/95), [7043bb2](https://github.com/nao1215/embargo/commit/7043bb2ac70597458d9d85724469dec0c424eb28); [PR #96](https://github.com/nao1215/embargo/pull/96), [c084990](https://github.com/nao1215/embargo/commit/c08499049f0eed6c82f9655cfd754770659eeefe).
 
-- Prevent email/JWT threshold leaks caused by floating-point addition in the core scanner and all hooks using it (R18-04; released tags v0.0.2–v0.5.0, including the earlier module names). Accumulate integer scores before conversion so the documented inclusive thresholds retain matching values. [PR #95](https://github.com/nao1215/embargo/pull/95), [61a44a5](https://github.com/nao1215/embargo/commit/61a44a5461e0eacfba0b0d9854dd66eda5f9e491).
-
-- Fix original-key context leaks in slog scalars, errors, bound attributes, groups and LogValuer values (R18-01; v0.4.0–v0.5.0), HTTP query and redirect-query logs (v0.5.0), and boolean/null JSON leaves in MaskJSON and encoded adapters (v0.4.0–v0.5.0). [PR #94](https://github.com/nao1215/embargo/pull/94), [9e0e6f0](https://github.com/nao1215/embargo/commit/9e0e6f049fda9a82747a8fbec4cecae32d9723de).
-- Scan both standard slog handler representations, including Duration nanoseconds and TextHandler millisecond timestamps (R18-03; v0.4.0–v0.5.0). A match in either representation masks the forwarded value. [PR #94](https://github.com/nao1215/embargo/pull/94), [9e0e6f0](https://github.com/nao1215/embargo/commit/9e0e6f049fda9a82747a8fbec4cecae32d9723de).
+- Preserve original-key context when scanning slog scalars, errors, bound attributes, groups and LogValuer values, which could expose CVVs, client secrets, bank accounts and expiry values in v0.4.0–v0.5.0. The same omission affected HTTP query and redirect-query access logs in v0.5.0, and sensitive boolean/null JSON leaves in MaskJSON and encoded logger adapters in v0.4.0–v0.5.0. Upgrading the root and installed adapters to v0.5.1 fixes these paths.
+- Scan both standard slog handler representations before forwarding a scalar. In v0.4.0–v0.5.0, Duration nanoseconds could expose a PAN through JSONHandler, and TextHandler timestamp formatting could expose text missed by the alternate representation. Upgrading the root and installed adapters to v0.5.1 masks a value when either representation matches.
+- Rebuild OpenTelemetry float and typed-slice values only from sanitized data after masked-key collisions. The v0.5.0 OTel log and span exporters could restore original PAN values in log bodies, log attributes and span attributes. Upgrading the root and installed adapters to v0.5.1 prevents that restoration.
+- Accumulate email and JWT confidence scores as integers before converting to floating point. Core releases v0.0.2–v0.5.0, including earlier module names, could miss email addresses and JWTs at a threshold exactly equal to the documented score; every hook using an affected scanner inherited the miss. Upgrading the root and installed adapters to v0.5.1 restores inclusive-threshold detection and masking.
 
 ### Fixed
 
-- Honor logrus Entry.Context before formatting and between detector scans, completing the R18-06 hook audit. Keep object framing and event limits in the shared JSON boundary and pin adapters to its context-aware root commit. [0ecd98a](https://github.com/nao1215/embargo/commit/0ecd98a37fabb10fd3bc6a4ae380367f180f38f7).
+Implementation: [PR #94](https://github.com/nao1215/embargo/pull/94), [299cbe5](https://github.com/nao1215/embargo/commit/299cbe5b2346120545dbb7eadab540ff7f15f12b); [PR #96](https://github.com/nao1215/embargo/pull/96), [c084990](https://github.com/nao1215/embargo/commit/c08499049f0eed6c82f9655cfd754770659eeefe); [PR #98](https://github.com/nao1215/embargo/pull/98), [f2acba5](https://github.com/nao1215/embargo/commit/f2acba59e498f3b7867ed672db5b56f1212233f0).
 
-- Preserve OTel log dropped-attribute counts and other telemetry metadata; reject edits the SDK cannot represent without losing counters (R18-05). Add Scanner.MaskJSONContext and stop canceled OTel, slog, HTTP, gRPC and Sentry scans before subsequent detectors or values (R18-06). Pin unreleased adapters to the fixed root commit. [5b9b76c](https://github.com/nao1215/embargo/commit/5b9b76c91cd7d5684c853e5e1763c263e9fc765b).
-
-- Enforce a combined 64-level limit for WithGroup chains and explicit slog groups, including bound attributes (R18-07). [PR #94](https://github.com/nao1215/embargo/pull/94), [9e0e6f0](https://github.com/nao1215/embargo/commit/9e0e6f049fda9a82747a8fbec4cecae32d9723de).
+- Preserve OTel dropped-attribute counts and other telemetry metadata; reject edits the SDK cannot represent without losing counters.
+- Add Scanner.MaskJSONContext and honor cancellation before subsequent detector or value scans in slog, HTTP, gRPC, OTel, Sentry and logrus Entry.Context.
+- Apply the shared 64-level depth limit to both WithGroup chains and explicit slog groups, including bound attributes.
 
 ### Docs
 
-- Correct v0.5 default-selection and raw credential-key guidance (R18-08), and make every README-linked example file runnable in an isolated consumer module (R18-09). Include OTel exporters and Guard fixtures in their own examples; reject missing helpers in doc sync checks. [c8a1cfc](https://github.com/nao1215/embargo/commit/c8a1cfc1dbe74c2a0da7f9da6c2a0737a03fc96e).
+Implementation: [PR #97](https://github.com/nao1215/embargo/pull/97), [2955f9d](https://github.com/nao1215/embargo/commit/2955f9d287afc3b050e3661c4a1756954ddb1ce9).
 
-- Document cancellation boundaries and OTel counter-preserving rejection, and enforce collision and telemetry invariants through repository policies. [5b9b76c](https://github.com/nao1215/embargo/commit/5b9b76c91cd7d5684c853e5e1763c263e9fc765b).
-
-- Describe original-key scanning and scalar representations; retain differential logger and other-hook context checks in the policy inventory. Refresh measured comparison and real-log evidence after their source checks fail. [PR #94](https://github.com/nao1215/embargo/pull/94), [9e0e6f0](https://github.com/nao1215/embargo/commit/9e0e6f049fda9a82747a8fbec4cecae32d9723de).
+- Correct default detector and raw credential-key guidance, and make README-linked examples runnable independently, including OTel exporters and Guard fixtures.
 
 ## [0.5.0] - 2026-11-16
 
@@ -327,6 +327,7 @@ Initial release of the `sensitive` library.
 - Full-width digit normalization: Transparent handling of Japanese full-width digits (U+FF10--U+FF19) for PAN, phone, and My Number detection.
 - Deterministic output: Findings are sorted by confidence (descending), then by byte offset and detector name for fully reproducible results.
 
+[0.5.1]: https://github.com/nao1215/embargo/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/nao1215/embargo/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/nao1215/embargo/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/nao1215/embargo/compare/v0.2.2...v0.3.0
