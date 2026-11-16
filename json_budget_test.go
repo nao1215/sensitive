@@ -10,11 +10,11 @@ func TestScanBudgetBoundary(t *testing.T) {
 	t.Parallel()
 	counter := &measuredJSONDetector{}
 	scanner := &eventScanner{scanner: NewScanner(WithKinds(), WithDetector(counter)), remaining: 6}
-	if got, err := scanner.maskScalar("abc", "k"); err != nil || got != "abc" {
+	if got, err := scanner.maskScalar(t.Context(), "abc", "k"); err != nil || got != "abc" {
 		t.Fatal("exact budget should preserve a clean value")
 	}
 	for _, context := range []string{"", "key"} {
-		if _, err := scanner.maskScalar("x", context); err == nil {
+		if _, err := scanner.maskScalar(t.Context(), "x", context); err == nil {
 			t.Fatal("exhausted budget accepted another scan")
 		}
 	}

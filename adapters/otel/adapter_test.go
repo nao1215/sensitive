@@ -50,12 +50,12 @@ func TestExportersThroughRealProviders(t *testing.T) {
 	provider := sdklog.NewLoggerProvider(sdklog.WithProcessor(sdklog.NewSimpleProcessor(embargootel.NewLogExporter(logs, scanner))))
 	var record apilog.Record
 	record.SetBody(attribute.StringValue("alice@example.com failed"))
-	record.AddAttributes(attribute.String("password", "synthetic-log-password"), attribute.Int64("count", 7), attribute.StringSlice("recipients", []string{"bob@example.com", "public"}))
+	record.AddAttributes(attribute.String("password", "synthetic-log-password"), attribute.Int64("count", 7), attribute.StringSlice("recipients", []string{"bob@example.com", publicText}))
 	provider.Logger("checkout").Emit(t.Context(), record)
 	if err := provider.Shutdown(t.Context()); err != nil {
 		t.Fatal(err)
 	}
-	if len(logs.records) != 1 || strings.Contains(logs.records[0].Body().AsString(), "alice@example.com") {
+	if len(logs.records) != 1 || strings.Contains(logs.records[0].Body().AsString(), exampleEmail) {
 		t.Fatal("log body was not masked")
 	}
 	attrs := map[string]attribute.Value{}
@@ -69,7 +69,7 @@ func TestExportersThroughRealProviders(t *testing.T) {
 	spans := &captureSpan{}
 	tracer := sdktrace.NewTracerProvider(sdktrace.WithSyncer(embargootel.NewSpanExporter(spans, scanner)))
 	_, span := tracer.Tracer("checkout").Start(t.Context(), "payment", trace.WithAttributes(attribute.String("token", "synthetic-span-token"), attribute.Int64("count", 9)))
-	span.AddEvent("alice@example.com", trace.WithAttributes(attribute.String("password", "synthetic-event-password")))
+	span.AddEvent(exampleEmail, trace.WithAttributes(attribute.String("password", "synthetic-event-password")))
 	span.End()
 	if err := tracer.Shutdown(t.Context()); err != nil {
 		t.Fatal(err)
@@ -92,7 +92,7 @@ func TestByteBodyRetainsItsTypeAndMasksText(t *testing.T) {
 	sink := &captureLog{}
 	exporter := embargootel.NewLogExporter(sink, embargo.NewScanner())
 	var record sdklog.Record
-	record.SetBody(attribute.ByteSliceValue([]byte("alice@example.com")))
+	record.SetBody(attribute.ByteSliceValue([]byte(exampleEmail)))
 	if err := exporter.Export(t.Context(), []sdklog.Record{record}); err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +111,7 @@ func TestLogExportFailureDoesNotForwardPartialBatch(t *testing.T) {
 		sink := &captureLog{}
 		exporter := embargootel.NewLogExporter(sink, scanner)
 		var clean, invalid sdklog.Record
-		clean.SetBody(attribute.StringValue("public"))
+		clean.SetBody(attribute.StringValue(publicText))
 		invalid.SetBody(attribute.Float64Value(math.NaN()))
 		err := exporter.Export(t.Context(), []sdklog.Record{clean, invalid})
 		if err == nil || err.Error() != "embargo: telemetry export failed" || len(sink.records) != 0 {
@@ -125,7 +125,7 @@ func TestSensitiveResourceSuppressesLogBatch(t *testing.T) {
 	sink := &captureLog{}
 	provider := sdklog.NewLoggerProvider(sdklog.WithResource(resource.NewWithAttributes("", attribute.String("password", "resource-password"))), sdklog.WithProcessor(sdklog.NewSimpleProcessor(embargootel.NewLogExporter(sink, embargo.NewScanner()))))
 	var record apilog.Record
-	record.SetBody(attribute.StringValue("public"))
+	record.SetBody(attribute.StringValue(publicText))
 	provider.Logger("checkout").Emit(t.Context(), record)
 	if err := provider.Shutdown(t.Context()); err != nil {
 		t.Fatal(err)
@@ -139,7 +139,7 @@ func TestSpanResourceScopeLinksAndStatusAreMasked(t *testing.T) {
 	t.Parallel()
 	sink := &captureSpan{}
 	provider := sdktrace.NewTracerProvider(sdktrace.WithResource(resource.NewWithAttributes("", attribute.String("password", "span-resource-secret"))), sdktrace.WithSyncer(embargootel.NewSpanExporter(sink, embargo.NewScanner())))
-	_, span := provider.Tracer("alice@example.com", trace.WithInstrumentationAttributes(attribute.String("token", "scope-secret"))).Start(t.Context(), "bob@example.com", trace.WithLinks(trace.Link{SpanContext: trace.NewSpanContext(trace.SpanContextConfig{TraceID: trace.TraceID{1}, SpanID: trace.SpanID{1}}), Attributes: []attribute.KeyValue{attribute.String("password", "link-secret")}}))
+	_, span := provider.Tracer(exampleEmail, trace.WithInstrumentationAttributes(attribute.String("token", "scope-secret"))).Start(t.Context(), "bob@example.com", trace.WithLinks(trace.Link{SpanContext: trace.NewSpanContext(trace.SpanContextConfig{TraceID: trace.TraceID{1}, SpanID: trace.SpanID{1}}), Attributes: []attribute.KeyValue{attribute.String("password", "link-secret")}}))
 	span.SetStatus(codes.Error, "password=status-secret")
 	span.End()
 	if err := provider.Shutdown(t.Context()); err != nil {
@@ -168,8 +168,8 @@ func TestLogBodyValueShapes(t *testing.T) {
 		{attribute.BoolSliceValue([]bool{true, false}), attribute.BoolSliceValue([]bool{true, false}), "bools"},
 		{attribute.Float64SliceValue([]float64{3.25, 4.5}), attribute.Float64SliceValue([]float64{3.25, 4.5}), "floats"},
 		{attribute.ByteSliceValue([]byte{0xff, 'x'}), attribute.ByteSliceValue([]byte{0xff, 'x'}), "invalid-utf8-bytes"},
-		{attribute.MapValue(attribute.KeyValue{Key: "items", Value: attribute.SliceValue(attribute.ByteSliceValue([]byte("alice@example.com")), attribute.BoolValue(true))}), attribute.MapValue(attribute.KeyValue{Key: "items", Value: attribute.SliceValue(attribute.ByteSliceValue([]byte(redacted)), attribute.BoolValue(true))}), "nested"},
-		{attribute.MapValue(attribute.KeyValue{Key: "alice@example.com", Value: attribute.ByteSliceValue([]byte("public"))}), attribute.MapValue(attribute.KeyValue{Key: redacted, Value: attribute.ByteSliceValue([]byte("public"))}), "masked-map-key"},
+		{attribute.MapValue(attribute.KeyValue{Key: "items", Value: attribute.SliceValue(attribute.ByteSliceValue([]byte(exampleEmail)), attribute.BoolValue(true))}), attribute.MapValue(attribute.KeyValue{Key: "items", Value: attribute.SliceValue(attribute.ByteSliceValue([]byte(redacted)), attribute.BoolValue(true))}), "nested"},
+		{attribute.MapValue(attribute.KeyValue{Key: exampleEmail, Value: attribute.ByteSliceValue([]byte(publicText))}), attribute.MapValue(attribute.KeyValue{Key: redacted, Value: attribute.ByteSliceValue([]byte(publicText))}), "masked-map-key"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -193,7 +193,7 @@ func TestLogBodyValueShapes(t *testing.T) {
 
 func TestSpanInvalidValuesSuppressWholeBatch(t *testing.T) {
 	t.Parallel()
-	bad := attribute.Float64("public", math.NaN())
+	bad := attribute.Float64(publicText, math.NaN())
 	for index, stub := range []tracetest.SpanStub{
 		{Attributes: []attribute.KeyValue{bad}},
 		{Events: []sdktrace.Event{{Attributes: []attribute.KeyValue{bad}}}},
@@ -206,7 +206,7 @@ func TestSpanInvalidValuesSuppressWholeBatch(t *testing.T) {
 		}
 		sink := &captureSpan{}
 		exporter := embargootel.NewSpanExporter(sink, embargo.NewScanner())
-		clean := tracetest.SpanStub{Name: "public", Resource: resource.Empty()}.Snapshot()
+		clean := tracetest.SpanStub{Name: publicText, Resource: resource.Empty()}.Snapshot()
 		err := exporter.ExportSpans(t.Context(), []sdktrace.ReadOnlySpan{clean, stub.Snapshot()})
 		if err == nil || err.Error() != "embargo: span export failed" || len(sink.spans) != 0 {
 			t.Fatalf("span case %d: error=%v, forwarded=%d", index, err, len(sink.spans))
@@ -246,7 +246,7 @@ func TestExporterFailuresReturnFixedErrors(t *testing.T) {
 
 func TestLogBodyNestingLimitSuppressesOutput(t *testing.T) {
 	t.Parallel()
-	value := attribute.StringValue("public")
+	value := attribute.StringValue(publicText)
 	for range 65 {
 		value = attribute.SliceValue(value)
 	}

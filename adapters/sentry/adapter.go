@@ -2,6 +2,7 @@ package embargosentry
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 
 	"github.com/getsentry/sentry-go"
@@ -17,13 +18,21 @@ import (
 // not Sentry's separate transaction, log or metric callbacks.
 func NewBeforeSend(scanner *embargo.Scanner) func(*sentry.Event, *sentry.EventHint) *sentry.Event {
 	output.Require(scanner)
-	return func(event *sentry.Event, _ *sentry.EventHint) (safe *sentry.Event) {
+	return func(event *sentry.Event, hint *sentry.EventHint) (safe *sentry.Event) {
 		defer func() {
 			if recover() != nil {
 				safe = nil
 			}
 		}()
-		if event == nil {
+		ctx := context.Background()
+		if hint != nil {
+			if hint.Context != nil {
+				ctx = hint.Context
+			} else if hint.Request != nil {
+				ctx = hint.Request.Context()
+			}
+		}
+		if ctx.Err() != nil || event == nil {
 			return nil
 		}
 		raw, err := json.Marshal(struct {
@@ -33,7 +42,7 @@ func NewBeforeSend(scanner *embargo.Scanner) func(*sentry.Event, *sentry.EventHi
 		if err != nil {
 			return nil
 		}
-		masked, err := scanner.MaskJSON(raw)
+		masked, err := scanner.MaskJSONContext(ctx, raw)
 		if err != nil {
 			return nil
 		}
@@ -54,6 +63,9 @@ func NewBeforeSend(scanner *embargo.Scanner) func(*sentry.Event, *sentry.EventHi
 			result.Event.Contexts = nil
 			scope.ApplyToEvent(&result.Event, nil, nil)
 			result.Event.Contexts = contexts
+		}
+		if ctx.Err() != nil {
+			return nil
 		}
 		return &result.Event
 	}

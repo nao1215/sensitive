@@ -91,11 +91,15 @@ func buildHintCache(detectors []detect.Detector) [][]hintEntry {
 // to original bytes. Other encodings are not decoded. Custom detectors receive
 // the original bytes. Invalid custom findings panic with a fixed message.
 func (s *Scanner) Scan(data []byte) []Finding {
-	if len(data) == 0 {
+	return s.scan(data, nil)
+}
+
+func (s *Scanner) scan(data []byte, canceled func() error) []Finding {
+	if scanCanceled(canceled) || len(data) == 0 {
 		return nil
 	}
 	if !s.initialized {
-		return NewScanner().Scan(data)
+		return NewScanner().scan(data, canceled)
 	}
 	scanData := data
 	var positions []int
@@ -106,6 +110,9 @@ func (s *Scanner) Scan(data []byte) []Finding {
 	}
 	var findings []Finding
 	for i, d := range s.detectors {
+		if scanCanceled(canceled) {
+			return nil
+		}
 		if selected&(1<<i) == 0 {
 			continue
 		}
@@ -122,7 +129,13 @@ func (s *Scanner) Scan(data []byte) []Finding {
 		}
 	}
 	for _, d := range s.custom {
+		if scanCanceled(canceled) {
+			return nil
+		}
 		findings = append(findings, d.Scan(data)...)
+	}
+	if scanCanceled(canceled) {
+		return nil
 	}
 	result := findings[:0]
 	for _, f := range findings {
@@ -182,4 +195,8 @@ func defaultKind(kind Kind) bool {
 	default:
 		return true
 	}
+}
+
+func scanCanceled(canceled func() error) bool {
+	return canceled != nil && canceled() != nil
 }

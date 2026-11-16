@@ -442,5 +442,35 @@
     "source": "M19",
     "check": "tests/cmd/detectordocs/scores_test.go#checkScoreThreshold",
     "where": "Verification"
+  },
+  {
+    "rule": "Masked-key collisions never restore original telemetry values",
+    "source": "M19",
+    "check": "adapters/otel/values_test.go#TestMaskedKeyCollisionNeverRestoresOriginal",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Log masking retains dropped counts and metadata",
+    "source": "M19",
+    "check": "adapters/otel/log_test.go#TestLogPreservesDroppedAttributesAndMetadata",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Span masking retains all telemetry counters",
+    "source": "M19",
+    "check": "adapters/otel/span_test.go#TestSpanPreservesTelemetryCounters",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Context cancellation stops subsequent detectors and output",
+    "source": "M19",
+    "check": "structured_test.go#TestMaskJSONContextStopsBetweenDetectors",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Every logger handles colliding masked keys without original values",
+    "source": "M19",
+    "check": "tests/slog_handler_test.go#TestLoggerMaskedKeyCollisions",
+    "where": "MultiPlatformUnitTest"
   }
 ]

@@ -1,6 +1,7 @@
 package embargo_test
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/nao1215/embargo"
@@ -41,4 +42,12 @@ func ExampleInput_Scan() {
 	// Output:
 	// [REDACTED]
 	// true
+}
+
+func ExampleScanner_MaskJSONContext() {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	safe, err := embargo.NewScanner().MaskJSONContext(ctx, []byte(`{"email":"alice@example.com"}`))
+	fmt.Println(len(safe), err != nil)
+	// Output: 0 true
 }

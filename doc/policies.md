@@ -79,6 +79,11 @@ The inventory below translates the owner's active repository instructions into c
 | Slog scans both standard handler representations | M19 | [TestSlogEncodedRepresentations](../slog_handler_test.go) | MultiPlatformUnitTest |
 | Slog explicit groups and WithGroup share a depth bound | M19 | [TestSlogWithGroupDepth](../slog_handler_test.go) | MultiPlatformUnitTest |
 | Every documented Kind score survives its inclusive threshold | M19 | [checkScoreThreshold](../tests/cmd/detectordocs/scores_test.go) | Verification |
+| Masked-key collisions never restore original telemetry values | M19 | [TestMaskedKeyCollisionNeverRestoresOriginal](../adapters/otel/values_test.go) | MultiPlatformUnitTest |
+| Log masking retains dropped counts and metadata | M19 | [TestLogPreservesDroppedAttributesAndMetadata](../adapters/otel/log_test.go) | MultiPlatformUnitTest |
+| Span masking retains all telemetry counters | M19 | [TestSpanPreservesTelemetryCounters](../adapters/otel/span_test.go) | MultiPlatformUnitTest |
+| Context cancellation stops subsequent detectors and output | M19 | [TestMaskJSONContextStopsBetweenDetectors](../structured_test.go) | MultiPlatformUnitTest |
+| Every logger handles colliding masked keys without original values | M19 | [TestLoggerMaskedKeyCollisions](../tests/slog_handler_test.go) | MultiPlatformUnitTest |
 <!-- policy-map:end -->
 
 ## Changing a rule

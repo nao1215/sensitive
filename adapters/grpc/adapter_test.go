@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -21,6 +22,8 @@ import (
 	"github.com/nao1215/embargo"
 	embargogrpc "github.com/nao1215/embargo/adapters/grpc"
 )
+
+const grpcResponse = "response"
 
 type healthServer struct {
 	grpc_health_v1.UnimplementedHealthServer
@@ -98,8 +101,8 @@ func TestLogFormattingFailurePreservesRPCResult(t *testing.T) {
 	logger := slog.New(slog.NewJSONHandler(&output, nil))
 	original := &failingRPCError{}
 	unary := embargogrpc.NewUnaryServerInterceptor(logger, embargo.NewScanner())
-	result, err := unary(t.Context(), nil, &grpc.UnaryServerInfo{FullMethod: "/failure/Unary"}, func(context.Context, any) (any, error) { return "response", original })
-	if result != "response" || !errors.Is(err, original) || output.Len() != 0 {
+	result, err := unary(t.Context(), nil, &grpc.UnaryServerInfo{FullMethod: "/failure/Unary"}, func(context.Context, any) (any, error) { return grpcResponse, original })
+	if result != grpcResponse || !errors.Is(err, original) || output.Len() != 0 {
 		t.Fatal("failed log changed the unary response")
 	}
 	stream := embargogrpc.NewStreamServerInterceptor(logger, embargo.NewScanner())
@@ -167,6 +170,70 @@ func TestMetadataOriginalKeyContext(t *testing.T) {
 		}
 	}
 	if strings.Count(out.String(), "[REDACTED]") != 3 {
+		t.Fatal(out.String())
+	}
+}
+
+type cancelingScan struct {
+	cancel context.CancelFunc
+	calls  int
+}
+
+func (d *cancelingScan) Scan([]byte) []embargo.Finding { d.calls++; d.cancel(); return nil }
+
+func TestGRPCContextCancellation(t *testing.T) {
+	t.Parallel()
+	for _, streaming := range []bool{false, true} {
+		for _, alreadyCanceled := range []bool{true, false} {
+			t.Run(strconv.FormatBool(streaming)+"/"+strconv.FormatBool(alreadyCanceled), func(t *testing.T) {
+				t.Parallel()
+				ctx, cancel := context.WithCancel(t.Context())
+				defer cancel()
+				if alreadyCanceled {
+					cancel()
+				}
+				detector := &cancelingScan{cancel: cancel}
+				scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(detector))
+				var out bytes.Buffer
+				logger := slog.New(slog.NewJSONHandler(&out, nil))
+				response := any(grpcResponse)
+				var err error
+				if streaming {
+					hook := embargogrpc.NewStreamServerInterceptor(logger, scanner)
+					err = hook(nil, &contextStream{getContext: func() context.Context { return ctx }}, &grpc.StreamServerInfo{FullMethod: "/test/Stream"}, func(any, grpc.ServerStream) error { return nil })
+				} else {
+					hook := embargogrpc.NewUnaryServerInterceptor(logger, scanner)
+					response, err = hook(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/test/Method"}, func(context.Context, any) (any, error) { return grpcResponse, nil })
+				}
+				want := 1
+				if alreadyCanceled {
+					want = 0
+				}
+				if response != grpcResponse || err != nil || out.Len() != 0 || detector.calls != want {
+					t.Fatalf("err=%v bytes=%d scans=%d want=%d", err, out.Len(), detector.calls, want)
+				}
+			})
+		}
+	}
+}
+
+type contextStream struct {
+	grpc.ServerStream
+
+	getContext func() context.Context
+}
+
+func (s *contextStream) Context() context.Context { return s.getContext() }
+
+func TestMetadataMaskedKeyCollision(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	ctx := metadata.NewIncomingContext(t.Context(), metadata.Pairs("a@example.com", "4111111111111111", "z@example.com", "retained"))
+	hook := embargogrpc.NewUnaryServerInterceptor(slog.New(slog.NewJSONHandler(&out, nil)), embargo.NewScanner())
+	if _, err := hook(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/collision/Method"}, func(context.Context, any) (any, error) { return grpcResponse, nil }); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(out.String(), "4111111111111111") || !strings.Contains(out.String(), "retained") {
 		t.Fatal(out.String())
 	}
 }

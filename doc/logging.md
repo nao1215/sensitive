@@ -35,7 +35,7 @@ Key rules apply to structured output, not arbitrary text in `Scanner.Scan`. Exis
 
 `ReplaceAttr` is convenient when an application already configures HandlerOptions, and those options can still be set on the downstream handler. However, slog does not pass group attributes through ReplaceAttr, and its `groups` argument cannot rename group names. A Handler can freeze sanitized `WithAttrs` values, sanitize messages and keys, suppress sensitive groups, and return a fixed error when normalization fails. A second callback API would offer weaker guarantees under a similar name, so embargo keeps one Handler API.
 
-Attributes passed through `With` are sanitized and frozen at that call. Context, timestamp, level and source metadata are preserved. Downstream ReplaceAttr callbacks and custom handlers can introduce new data after embargo; test the actual sink when using them.
+Attributes passed through `With` are sanitized and frozen at that call. Handle checks its context before work, between detectors and scalar scans, and before forwarding; cancellation drops the record. An already running detector or user marshaler cannot be interrupted. With has no context parameter, so its eager work cannot observe a later record context. Context, timestamp, level and source metadata are preserved. Downstream ReplaceAttr callbacks and custom handlers can introduce new data after embargo; test the actual sink when using them.
 
 ## Bounds and failures
 

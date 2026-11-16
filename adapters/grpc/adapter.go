@@ -42,6 +42,9 @@ func record(ctx context.Context, logger *slog.Logger, method string, err error) 
 	defer func() {
 		_ = recover() //nolint:errcheck // A failed formatter must not replace the service result.
 	}()
+	if ctx.Err() != nil {
+		return
+	}
 	values, _ := metadata.FromIncomingContext(ctx)
 	message := ""
 	if err != nil {

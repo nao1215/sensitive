@@ -35,7 +35,7 @@ func otelScalingCall(tb testing.TB, size int) func() {
 	spans := embargootel.NewSpanExporter(&discardSpan{}, scanner)
 	var record sdklog.Record
 	record.SetBody(attribute.StringValue(strings.Repeat("x", size)))
-	span := tracetest.SpanStub{Name: "operation", Attributes: []attribute.KeyValue{attribute.String("public", strings.Repeat("x", size))}}.Snapshot()
+	span := tracetest.SpanStub{Name: "operation", Attributes: []attribute.KeyValue{attribute.String(publicText, strings.Repeat("x", size))}}.Snapshot()
 	return func() {
 		if err := logs.Export(tb.Context(), []sdklog.Record{record}); err != nil && size < 1<<20 {
 			tb.Fatal(err)
