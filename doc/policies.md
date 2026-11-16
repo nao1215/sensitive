@@ -92,6 +92,8 @@ The inventory below translates the owner's active repository instructions into c
 | Adoption table is generated from executed cases and checked in CI | M21 | [main](../scripts/case_docs.py) | Verification |
 | Output cases isolate detector decisions from canary and fragment matching | M21 | [TestAdoptionCheckIndependence](../tests/check_independence_test.go) | Verification |
 | Canary fragments retain minimum-length and option-order boundaries | M21 | [TestCanaryFragmentBoundsAndOrder](../embargotest/canary_fragment_test.go) | MultiPlatformUnitTest |
+| Local log audits count actual findings without echoing source values | M21 | [TestAuditCountsOffsetsAndNeverEchoesInput](../tests/cmd/embargo-audit/main_test.go) | MultiPlatformUnitTest |
+| Diagnostic-preservation recipes retain IDs and expose their recall tradeoff | M21 | [TestAuditDiagnosticRecipe](../tests/audit_recipes_test.go) | MultiPlatformUnitTest |
 <!-- policy-map:end -->
 
 ## Changing a rule
