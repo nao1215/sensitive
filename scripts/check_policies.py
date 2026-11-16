@@ -125,7 +125,7 @@ def evidence():
     # ci-timing: values are observations tied to commits, never guessed durations.
     require('Workflow | Base' in read('doc/ci.md') and 'Job | Base' in read('doc/ci.md'), 'missing round CI timing tables')
     # regression-evidence: CI checks retention; the report records red-before-green order.
-    for path in ['internal/detect/ip_policy_test.go','embargotest/guard_adversarial_test.go']:
+    for path in ['internal/detect/ipaddr_test.go','embargotest/guard_adversarial_test.go']:
         require((ROOT/path).is_file(), 'regression removed: '+path)
     # security-scans: do not optimize away security visibility.
     for path in ['codeql.yml','gosec.yml','trivy.yml','govulncheck.yml']:

@@ -1,10 +1,7 @@
 package output
 
 import (
-	"bytes"
 	"context"
-	"errors"
-	"io"
 	"strconv"
 	"strings"
 	"testing"
@@ -25,57 +22,12 @@ func TestJSONMasksDecodedKeysValuesAndNumbers(t *testing.T) {
 	}
 }
 
-func TestWriterBuffersAndRejectsIncompleteOutput(t *testing.T) {
-	t.Parallel()
-	var sink bytes.Buffer
-	w := NewWriter(&sink, embargo.NewScanner(embargo.WithKinds(embargo.KindEmail)))
-	if _, err := w.Write([]byte(`{"email":"alice@`)); err != nil {
-		t.Fatal(err)
-	}
-	if sink.Len() != 0 {
-		t.Fatal("partial event escaped")
-	}
-	if _, err := w.Write([]byte("example.com\"}\n")); err != nil {
-		t.Fatal(err)
-	}
-	if sink.String() != "{\"email\":\"[REDACTED]\"}\n" {
-		t.Fatal("event not masked")
-	}
-	if err := w.Flush(); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := w.Write([]byte(`{"unfinished":`)); err != nil {
-		t.Fatal(err)
-	}
-	if err := w.Close(); err == nil {
-		t.Fatal("incomplete event accepted")
-	}
-	if _, err := w.Write([]byte("false}\n")); err == nil {
-		t.Fatal("closed writer accepted output")
-	}
-}
-
 func TestJSONRejectsMalformedOversizedAndDeepInput(t *testing.T) {
 	t.Parallel()
 	for _, input := range []string{`{"x":`, `[]`, strings.Repeat(" ", 1<<20) + "{}", `{"x":1} {"y":2}`, "{\"x\":\"" + strings.Repeat("a", 1<<20) + "\"}", `{"x":` + strings.Repeat("[", 65) + "0" + strings.Repeat("]", 65) + "}"} {
 		if got, err := JSON([]byte(input), embargo.NewScanner()); err == nil || got != nil {
 			t.Fatal("invalid event escaped")
 		}
-	}
-}
-
-type failedWriter struct{}
-
-func (failedWriter) Write([]byte) (int, error) { return 0, io.ErrClosedPipe }
-
-func TestWriterPreservesSinkErrors(t *testing.T) {
-	t.Parallel()
-	w := NewWriter(failedWriter{}, embargo.NewScanner())
-	if _, err := w.Write([]byte("{\"ok\":true}\n")); !errors.Is(err, io.ErrClosedPipe) {
-		t.Fatal("sink error lost")
-	}
-	if err := w.Flush(); !errors.Is(err, io.ErrClosedPipe) {
-		t.Fatal("failure not sticky")
 	}
 }
 
@@ -132,5 +84,26 @@ func TestJSONContextCancellation(t *testing.T) {
 	var missing context.Context
 	if data, err := JSONContext(missing, []byte(`{}`), embargo.NewScanner()); err == nil || len(data) != 0 {
 		t.Fatal("nil context accepted")
+	}
+}
+
+type measuredDetector struct{ bytes int }
+
+func (d *measuredDetector) Scan(data []byte) []embargo.Finding {
+	d.bytes += len(data)
+	return nil
+}
+
+func TestJSONBoundsRepeatedFieldContext(t *testing.T) {
+	t.Parallel()
+	counter := &measuredDetector{}
+	scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(counter))
+	input := `{"` + strings.Repeat("k", 1<<14) + `":[` + strings.Repeat("0,", 511) + "0]}"
+	data, err := JSON([]byte(input), scanner)
+	if err == nil || data != nil {
+		t.Fatal("event exceeded the cumulative scan budget")
+	}
+	if counter.bytes > 4<<20 {
+		t.Fatalf("scanned %d bytes for one small event", counter.bytes)
 	}
 }

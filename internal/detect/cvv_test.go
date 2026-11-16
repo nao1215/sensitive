@@ -6,7 +6,6 @@ import (
 	"github.com/nao1215/embargo/internal/detect"
 )
 
-//nolint:dupl // Separate detector tables keep their independent acceptance cases readable.
 func TestCVVDetector_Scan(t *testing.T) {
 	t.Parallel()
 

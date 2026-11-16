@@ -1,15 +1,13 @@
-package detect_test
+package detect
 
 import (
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestMyNumberDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewMyNumber()
+	d := NewMyNumber()
 	tests := []struct {
 		name       string
 		input      string
@@ -21,7 +19,7 @@ func TestMyNumberDetector_Scan(t *testing.T) {
 			name:       "valid My Number (check digit 0)",
 			input:      "mynumber: 123456789018",
 			wantLen:    1,
-			wantRaw:    "123456789018",
+			wantRaw:    sampleMyNumber,
 			wantMinCon: 0.9,
 		},
 
@@ -58,8 +56,7 @@ func TestMyNumberDetector_Scan(t *testing.T) {
 			wantLen: 0,
 		},
 		{
-			//nolint:goconst // Each test states its fixture and expected result independently.
-			name:    "empty input",
+			name:    emptyInputCase,
 			input:   "",
 			wantLen: 0,
 		},
@@ -90,7 +87,7 @@ func TestMyNumberDetector_Scan(t *testing.T) {
 func TestMyNumberDetector_FullWidthRawValue(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewMyNumber()
+	d := NewMyNumber()
 	// 123456789018 in full-width digits.
 	input := "１２３４５６７８９０１８"
 	findings := d.Scan([]byte(input))
@@ -109,8 +106,8 @@ func TestMyNumberDetector_FullWidthRawValue(t *testing.T) {
 func TestMyNumberDetector_Detail(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewMyNumber()
-	findings := d.Scan([]byte("123456789018"))
+	d := NewMyNumber()
+	findings := d.Scan([]byte(sampleMyNumber))
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
@@ -126,16 +123,16 @@ func TestMyNumberDetector_Detail(t *testing.T) {
 func TestMyNumberDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewMyNumber()
-	if d.Name() != detect.NameMyNumber {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameMyNumber)
+	d := NewMyNumber()
+	if d.Name() != NameMyNumber {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameMyNumber)
 	}
 }
 
 func TestMyNumberDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewMyNumber()
+	d := NewMyNumber()
 	hints := d.Hints()
 	// Hints returns nil so the Scanner always runs My Number detection.
 	// My Number can start with any digit 0-9, so single-digit hints would
@@ -148,7 +145,7 @@ func TestMyNumberDetector_Hints(t *testing.T) {
 func TestMyNumberDetector_PrecededByAlpha(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewMyNumber()
+	d := NewMyNumber()
 	// Digits preceded by alpha should not match.
 	findings := d.Scan([]byte("x123456789018"))
 	if len(findings) != 0 {
@@ -159,7 +156,7 @@ func TestMyNumberDetector_PrecededByAlpha(t *testing.T) {
 func TestMyNumberDetector_FollowedByDigit(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewMyNumber()
+	d := NewMyNumber()
 	// 13 digits: the 12-digit candidate is followed by another digit.
 	findings := d.Scan([]byte("1234567890189"))
 	if len(findings) != 0 {
@@ -170,7 +167,7 @@ func TestMyNumberDetector_FollowedByDigit(t *testing.T) {
 func TestMyNumberDetector_RemainderZero(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewMyNumber()
+	d := NewMyNumber()
 	// All zeros: sum=0, remainder=0%11=0 (<=1), expected check digit=0.
 	// This exercises the "remainder <= 1" branch in isValidMyNumber.
 	findings := d.Scan([]byte("000000000000"))
@@ -185,7 +182,7 @@ func TestMyNumberDetector_RemainderZero(t *testing.T) {
 func TestMyNumberDetector_RemainderOne(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewMyNumber()
+	d := NewMyNumber()
 	// "100000010000": sum=11, remainder=11%11=0, expected=0, check=0.
 	// Another case exercising remainder <= 1.
 	findings := d.Scan([]byte("100000010000"))
@@ -197,7 +194,7 @@ func TestMyNumberDetector_RemainderOne(t *testing.T) {
 func TestMyNumberDetector_TrailingHyphen(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewMyNumber()
+	d := NewMyNumber()
 	// Trailing hyphen should be trimmed.
 	findings := d.Scan([]byte("1234-5678-9018-"))
 	if len(findings) != 1 {
@@ -205,5 +202,14 @@ func TestMyNumberDetector_TrailingHyphen(t *testing.T) {
 	}
 	if findings[0].RawValue != "1234-5678-9018" {
 		t.Errorf("RawValue = %q, want %q", findings[0].RawValue, "1234-5678-9018")
+	}
+}
+
+func TestMyNumberIdentifierBoundaries(t *testing.T) {
+	t.Parallel()
+	for _, text := range []string{"_123456789018", "123456789018_suffix", "123456789018x", "x123456789018"} {
+		if got := NewMyNumber().Scan([]byte(text)); len(got) != 0 {
+			t.Errorf("identifier fragment %q: %+v", text, got)
+		}
 	}
 }

@@ -1,42 +1,40 @@
-package detect_test
+package detect
 
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestBTCDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewBTC()
+	d := NewBTC()
 
 	tests := []struct {
 		name        string
 		input       string
-		wantType    detect.BTCAddressType
+		wantType    BTCAddressType
 		wantRaw     string
 		wantLen     int
 		wantMinConf float64
 	}{
 		// P2PKH (prefix '1')
 		{
-			name:     "P2PKH genesis block address",
-			input:    "send to 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa please",
-			wantLen:  1,
-			wantType: detect.BTCAddressP2PKH,
-			//nolint:goconst // Each test states its fixture and expected result independently.
-			wantRaw:     "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+			name:        "P2PKH genesis block address",
+			input:       "send to 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa please",
+			wantLen:     1,
+			wantType:    BTCAddressP2PKH,
+			wantRaw:     sampleBase58,
 			wantMinConf: 0.9,
 		},
 		{
 			name:        "P2PKH at start of input",
-			input:       "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+			input:       sampleBase58,
 			wantLen:     1,
-			wantType:    detect.BTCAddressP2PKH,
-			wantRaw:     "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+			wantType:    BTCAddressP2PKH,
+			wantRaw:     sampleBase58,
 			wantMinConf: 0.9,
 		},
 		// P2SH (prefix '3')
@@ -44,25 +42,24 @@ func TestBTCDetector_Scan(t *testing.T) {
 			name:        "P2SH address",
 			input:       "addr: 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
 			wantLen:     1,
-			wantType:    detect.BTCAddressP2SH,
+			wantType:    BTCAddressP2SH,
 			wantRaw:     "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
 			wantMinConf: 0.9,
 		},
 		// Bech32 SegWit v0 (prefix 'bc1q')
 		{
-			name:     "Bech32 P2WPKH (42 chars)",
-			input:    "segwit: bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
-			wantLen:  1,
-			wantType: detect.BTCAddressBech32,
-			//nolint:goconst // Each test states its fixture and expected result independently.
-			wantRaw:     "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+			name:        "Bech32 P2WPKH (42 chars)",
+			input:       "segwit: bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+			wantLen:     1,
+			wantType:    BTCAddressBech32,
+			wantRaw:     sampleBech32,
 			wantMinConf: 0.9,
 		},
 		{
 			name:        "Bech32 P2WPKH uppercase",
 			input:       "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4",
 			wantLen:     1,
-			wantType:    detect.BTCAddressBech32,
+			wantType:    BTCAddressBech32,
 			wantRaw:     "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4",
 			wantMinConf: 0.9,
 		},
@@ -71,7 +68,7 @@ func TestBTCDetector_Scan(t *testing.T) {
 			name:        "Bech32m P2TR (62 chars)",
 			input:       "taproot: bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0",
 			wantLen:     1,
-			wantType:    detect.BTCAddressBech32m,
+			wantType:    BTCAddressBech32m,
 			wantRaw:     "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0",
 			wantMinConf: 0.9,
 		},
@@ -98,8 +95,8 @@ func TestBTCDetector_Scan(t *testing.T) {
 				return
 			}
 			f := findings[0]
-			if f.DetectorName != detect.NameBTC {
-				t.Errorf("DetectorName = %q, want %q", f.DetectorName, detect.NameBTC)
+			if f.DetectorName != NameBTC {
+				t.Errorf("DetectorName = %q, want %q", f.DetectorName, NameBTC)
 			}
 			if tt.wantRaw != "" && f.RawValue != tt.wantRaw {
 				t.Errorf("RawValue = %q, want %q", f.RawValue, tt.wantRaw)
@@ -123,14 +120,13 @@ func TestBTCDetector_Scan(t *testing.T) {
 func TestBTCDetector_Scan_NoMatch(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewBTC()
+	d := NewBTC()
 
 	tests := []struct {
 		name  string
 		input string
 	}{
-		//nolint:goconst // Each test states its fixture and expected result independently.
-		{name: "empty input", input: ""},
+		{name: emptyInputCase, input: ""},
 		{name: "plain text", input: "hello world no bitcoin here"},
 		{name: "short string starting with 1", input: "1abc"},
 		{name: "number starting with 3", input: "3.14159"},
@@ -168,16 +164,16 @@ func TestBTCDetector_Scan_NoMatch(t *testing.T) {
 func TestBTCDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewBTC()
-	if d.Name() != detect.NameBTC {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameBTC)
+	d := NewBTC()
+	if d.Name() != NameBTC {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameBTC)
 	}
 }
 
 func TestBTCDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewBTC()
+	d := NewBTC()
 	if d.Hints() != nil {
 		t.Error("Hints() should return nil for BTC detector")
 	}
@@ -186,7 +182,7 @@ func TestBTCDetector_Hints(t *testing.T) {
 func TestBTCDetector_Scan_BytePositions(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewBTC()
+	d := NewBTC()
 	input := "btc: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa end"
 	findings := d.Scan([]byte(input))
 	if len(findings) != 1 {
@@ -195,7 +191,7 @@ func TestBTCDetector_Scan_BytePositions(t *testing.T) {
 
 	f := findings[0]
 	expectedStart := 5
-	expectedEnd := 5 + 34 // "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" is 34 chars
+	expectedEnd := 5 + 34 // sampleBase58 is 34 chars
 	if f.Start != expectedStart {
 		t.Errorf("Start = %d, want %d", f.Start, expectedStart)
 	}
@@ -210,7 +206,7 @@ func TestBTCDetector_Scan_BytePositions(t *testing.T) {
 func TestBTCDetector_Scan_BoundaryChecks(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewBTC()
+	d := NewBTC()
 
 	tests := []struct {
 		name    string
@@ -223,11 +219,8 @@ func TestBTCDetector_Scan_BoundaryChecks(t *testing.T) {
 		{name: "followed by space", input: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa ", wantLen: 1},
 		{name: "followed by comma", input: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa,", wantLen: 1},
 		{name: "followed by period", input: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa.", wantLen: 1},
-		//nolint:goconst // Each test states its fixture and expected result independently.
 		{name: "preceded by letter", input: "x1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", wantLen: 0},
-		//nolint:goconst // Each test states its fixture and expected result independently.
 		{name: "preceded by underscore", input: "_1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", wantLen: 0},
-		//nolint:goconst // Each test states its fixture and expected result independently.
 		{name: "followed by underscore", input: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa_", wantLen: 0},
 		{name: "preceded by digit", input: "91A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", wantLen: 0},
 		{name: "preceded by zero (non-base58)", input: "01A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", wantLen: 0},
@@ -254,9 +247,9 @@ func TestBase58Decode(t *testing.T) {
 	t.Parallel()
 
 	// Test that a known valid address decodes to 25 bytes.
-	// "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" - genesis block coinbase address.
-	d := detect.NewBTC()
-	findings := d.Scan([]byte("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"))
+	// sampleBase58 - genesis block coinbase address.
+	d := NewBTC()
+	findings := d.Scan([]byte(sampleBase58))
 	if len(findings) != 1 {
 		t.Fatalf("expected 1 finding for genesis address, got %d", len(findings))
 	}
@@ -265,18 +258,18 @@ func TestBase58Decode(t *testing.T) {
 	if !ok {
 		t.Fatal("BTCDetail() returned false")
 	}
-	if detail.AddressType != detect.BTCAddressP2PKH {
-		t.Errorf("AddressType = %q, want %q", detail.AddressType, detect.BTCAddressP2PKH)
+	if detail.AddressType != BTCAddressP2PKH {
+		t.Errorf("AddressType = %q, want %q", detail.AddressType, BTCAddressP2PKH)
 	}
 }
 
 func TestBech32Checksum(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewBTC()
+	d := NewBTC()
 
 	// BIP-173 test vector: valid bech32 P2WPKH address.
-	findings := d.Scan([]byte("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"))
+	findings := d.Scan([]byte(sampleBech32))
 	if len(findings) != 1 {
 		t.Fatalf("expected 1 finding for BIP-173 test vector, got %d", len(findings))
 	}
@@ -285,15 +278,15 @@ func TestBech32Checksum(t *testing.T) {
 	if !ok {
 		t.Fatal("BTCDetail() returned false")
 	}
-	if detail.AddressType != detect.BTCAddressBech32 {
-		t.Errorf("AddressType = %q, want %q", detail.AddressType, detect.BTCAddressBech32)
+	if detail.AddressType != BTCAddressBech32 {
+		t.Errorf("AddressType = %q, want %q", detail.AddressType, BTCAddressBech32)
 	}
 }
 
 func TestBech32mChecksum(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewBTC()
+	d := NewBTC()
 
 	// BIP-350 test vector: valid bech32m P2TR address.
 	findings := d.Scan([]byte("bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0"))
@@ -305,8 +298,8 @@ func TestBech32mChecksum(t *testing.T) {
 	if !ok {
 		t.Fatal("BTCDetail() returned false")
 	}
-	if detail.AddressType != detect.BTCAddressBech32m {
-		t.Errorf("AddressType = %q, want %q", detail.AddressType, detect.BTCAddressBech32m)
+	if detail.AddressType != BTCAddressBech32m {
+		t.Errorf("AddressType = %q, want %q", detail.AddressType, BTCAddressBech32m)
 	}
 }
 
@@ -325,9 +318,37 @@ func TestBTCSpecificationVectors(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, v := range vectors {
-		got := detect.NewBTC().Scan([]byte(v.Raw))
+		got := NewBTC().Scan([]byte(v.Raw))
 		if (len(got) == 1) != v.Valid {
 			t.Errorf("%s %s: valid=%v got %v", v.Source, v.Raw, v.Valid, got)
+		}
+	}
+}
+
+// These finite vectors cover alphabet endpoints that random addresses rarely hit.
+func TestEncodingAlphabetVectors(t *testing.T) {
+	t.Parallel()
+	for n := range 256 {
+		b := byte(n)
+		if got, want := base58CharIndex(b), strings.IndexByte("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz", b); got != want {
+			t.Fatalf("base58 %x: %d != %d", b, got, want)
+		}
+		if got, want := bech32CharIndex(b), strings.IndexByte("qpzry9x8gf2tvdw0s3jn54khce6mua7l", b); got != want {
+			t.Fatalf("bech32 %x: %d != %d", b, got, want)
+		}
+	}
+	for _, s := range []string{"0", "O", "I", "l", "!"} {
+		if _, ok := base58Decode(s); ok {
+			t.Fatalf("invalid base58 %q", s)
+		}
+	}
+	for _, s := range []string{"az", "AZ", "aZ", "Az", "09"} {
+		lower, upper := strings.ToLower(s), strings.ToUpper(s)
+		if isBech32ConsistentCase(s) != (s == lower || s == upper) {
+			t.Fatalf("bech32 case %q", s)
+		}
+		if toLowerString(s) != lower {
+			t.Fatalf("lowercase %q", s)
 		}
 	}
 }

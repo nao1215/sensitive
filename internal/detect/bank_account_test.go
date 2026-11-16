@@ -51,7 +51,7 @@ func TestBankAccountDetector_Scan(t *testing.T) {
 			wantLen: 0,
 		},
 		{
-			name:    "no keyword",
+			name:    noKeywordCase,
 			input:   "12345678",
 			wantLen: 0,
 		},

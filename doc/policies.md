@@ -34,9 +34,9 @@ The inventory below translates the owner's active repository instructions into c
 | HTTP interim responses share the retention budget | R6 | [TestInformationalHeadersConsumeTotalBudget](../embargotest/detector_test.go) | MultiPlatformUnitTest |
 | Hint dispatch agrees with exhaustive scanning | CLAUDE; R9 | [TestDispatchDifferential](../scanner_dispatch_test.go) | MultiPlatformUnitTest |
 | Clean scanning retains deterministic allocation gates | CLAUDE; R9 | [TestCleanScanAllocationBudget](../scanner_dispatch_test.go) | MultiPlatformUnitTest |
-| Full-width numeric positions map to original bytes | CLAUDE; R9 | [TestNormalizationIdentityDifferential](../internal/detect/mutation_round9_test.go) | MultiPlatformUnitTest |
-| Confidence is a score; business labels keep lower-confidence findings | R9 | [TestBusinessLabelsAtFieldBoundaries](../internal/detect/mutation_round9_test.go) | MultiPlatformUnitTest |
-| IP unspecified and loopback addresses are excluded | M14 | [Test](../internal/detect/ip_policy_test.go) | MultiPlatformUnitTest |
+| Full-width numeric positions map to original bytes | CLAUDE; R9 | [TestNormalizationIdentityDifferential](../internal/detect/fullwidth_test.go) | MultiPlatformUnitTest |
+| Confidence is a score; business labels keep lower-confidence findings | R9 | [TestBusinessLabelsAtFieldBoundaries](../internal/detect/label_test.go) | MultiPlatformUnitTest |
+| IP unspecified and loopback addresses are excluded | M14 | [Test](../internal/detect/ipaddr_test.go) | MultiPlatformUnitTest |
 | Adapters stay isolated and work without local replace directives | R7; R11 | [replace](../scripts/check_adapter_dependencies.py) | MultiPlatformUnitTest |
 | Generated documents have semantic and staleness checks | R3; R9; M14 | [class](../scripts/test_doc_figures.py) | MultiPlatformUnitTest |
 | Synthetic corpus is deterministic and exact-span scored | R9; R12 | [TestAccuracyRequiresExactUnusedSpans](../tests/accuracy_test.go) | MultiPlatformUnitTest |

@@ -176,19 +176,19 @@
   {
     "rule": "Full-width numeric positions map to original bytes",
     "source": "CLAUDE; R9",
-    "check": "internal/detect/mutation_round9_test.go#TestNormalizationIdentityDifferential",
+    "check": "internal/detect/fullwidth_test.go#TestNormalizationIdentityDifferential",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Confidence is a score; business labels keep lower-confidence findings",
     "source": "R9",
-    "check": "internal/detect/mutation_round9_test.go#TestBusinessLabelsAtFieldBoundaries",
+    "check": "internal/detect/label_test.go#TestBusinessLabelsAtFieldBoundaries",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "IP unspecified and loopback addresses are excluded",
     "source": "M14",
-    "check": "internal/detect/ip_policy_test.go#Test",
+    "check": "internal/detect/ipaddr_test.go#Test",
     "where": "MultiPlatformUnitTest"
   },
   {

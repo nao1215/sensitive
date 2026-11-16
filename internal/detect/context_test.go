@@ -1,6 +1,9 @@
 package detect
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestFindKeywordPositions(t *testing.T) {
 	t.Parallel()
@@ -170,8 +173,8 @@ func TestExtractAlphaNumNear(t *testing.T) {
 	if len(results) != 1 {
 		t.Fatalf("got %d sequences, want 1", len(results))
 	}
-	if got := string(data[results[0].start:results[0].end]); got != "ABCDE12345FGHI6" {
-		t.Errorf("sequence = %q, want %q", got, "ABCDE12345FGHI6")
+	if got := string(data[results[0].start:results[0].end]); got != sampleMerchantID {
+		t.Errorf("sequence = %q, want %q", got, sampleMerchantID)
 	}
 }
 
@@ -200,13 +203,13 @@ func TestExtractAlphaNumNear_CompleteBoundarySequence(t *testing.T) {
 	// should still be returned.
 	data := []byte("abc ABCDE12345FGHI6 def")
 	// Search from position 19 with radius 16 → searchStart=3, searchEnd=35.
-	// data[3]=' ', data[4..19)="ABCDE12345FGHI6" — starts at 4, not truncated.
+	// data[3]=' ', data[4..19)=sampleMerchantID — starts at 4, not truncated.
 	results := extractAlphaNumNear(data, 19, 16, 15, 15)
 	if len(results) != 1 {
 		t.Fatalf("got %d sequences, want 1", len(results))
 	}
-	if got := string(data[results[0].start:results[0].end]); got != "ABCDE12345FGHI6" {
-		t.Errorf("sequence = %q, want %q", got, "ABCDE12345FGHI6")
+	if got := string(data[results[0].start:results[0].end]); got != sampleMerchantID {
+		t.Errorf("sequence = %q, want %q", got, sampleMerchantID)
 	}
 }
 
@@ -218,10 +221,82 @@ func TestExtractSequencesAfterEncodedSeparators(t *testing.T) {
 		if len(got) != 1 || got[0].start != 3 || got[0].end != 6 {
 			t.Errorf("digit escape %s: %v", escape, got)
 		}
-		token := []byte(escape + "ABCDE12345FGHI6")
+		token := []byte(escape + sampleMerchantID)
 		ids := extractAlphaNumNear(token, 0, 30, 15, 15)
 		if len(ids) != 1 || ids[0].start != 3 || ids[0].end != 18 {
 			t.Errorf("token escape %s: %v", escape, ids)
+		}
+	}
+}
+
+// Compare window extraction to a whole-input token oracle; truncated tokens
+// must never turn into plausible CVVs, account numbers, or merchant IDs.
+//
+//nolint:gocognit // Keep each acceptance table and its assertions together for review.
+func TestContextWindowContract(t *testing.T) {
+	t.Parallel()
+	for _, alpha := range []bool{false, true} {
+		for width := 1; width <= 22; width++ {
+			value := strings.Repeat("7", width)
+			if alpha {
+				value = strings.Repeat("A", width)
+			}
+			data := []byte("...." + value + "....")
+			for pos := 0; pos <= len(data); pos++ {
+				for radius := 0; radius <= len(data); radius++ {
+					lo := max(0, pos-radius)
+					hi := min(len(data), pos+radius)
+					want := width >= 3 && width <= 19 && lo <= 4 && hi >= 4+width
+					if alpha {
+						got := extractAlphaNumNear(data, pos, radius, 3, 19)
+						if (len(got) == 1) != want || len(got) > 1 {
+							t.Fatalf("alpha width=%d pos=%d radius=%d: %+v", width, pos, radius, got)
+						}
+					} else {
+						got := extractDigitsNear(data, pos, radius, 3, 19)
+						if (len(got) == 1) != want || len(got) > 1 {
+							t.Fatalf("digits width=%d pos=%d radius=%d: %+v", width, pos, radius, got)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func TestAdjacentCandidatesAndChecksumRemainder(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		d    Detector
+		text string
+		want int
+	}{
+		{NewABARouting(), "021000021;021000021", 2},
+		{NewABARouting(), "123;021000021", 1},
+		{NewCardExpiry(), "expiry 12/29;01/30", 2},
+		{NewMyNumber(), "000000000060", 1},
+	} {
+		if got := tc.d.Scan([]byte(tc.text)); len(got) != tc.want {
+			t.Fatal(tc.d.Name(), tc.text, got)
+		}
+	}
+}
+
+func TestContextCanFollowSensitiveValue(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		d    Detector
+		text string
+		end  int
+	}{
+		{NewCVV(), "123 CVV", 3},
+		{NewBankAccount(), "12345678 bank account", 8},
+		{NewACHTrace(), "021000021123456 ACH trace", 15},
+		{NewMerchantID(), "ABCDE12345FGHI6 merchant ID", 15},
+	} {
+		got := tc.d.Scan([]byte(tc.text))
+		if len(got) != 1 || got[0].Start != 0 || got[0].End != tc.end {
+			t.Fatal(tc.d.Name(), got)
 		}
 	}
 }

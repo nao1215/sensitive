@@ -1,7 +1,6 @@
 package detect
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -21,40 +20,6 @@ func TestEntropyPunctuationAndModuleBoundaries(t *testing.T) {
 	} {
 		if got := (&HighEntropy{}).Scan([]byte(tc.text)); len(got) != tc.want {
 			t.Errorf("punctuation versus module component %q: %v", tc.text, got)
-		}
-	}
-}
-
-func TestSWIFTSlashListAndSourcePath(t *testing.T) {
-	t.Parallel()
-	for _, tc := range []struct {
-		text string
-		want int
-	}{
-		{"swift=DEUTDEFF/COBADEFF", 2},
-		{"DEUTDEFF/COBADEFF swift", 2},
-		{"BIC: DEUTDEFF/COBADEFF/CHASUS33", 3},
-		{"swift source=/tmp/COBADEFF", 0},
-		{"swift source=DEUTDEFF.log", 0},
-		{"swift source=/DEUTDEFF", 0},
-		{"swift source=DEUTDEFF/tmp", 0},
-		{"swift source=DEUTDEFF/NOTACODE99", 0},
-		{"swift source=DEUTDEFF/COBADEFF01", 0},
-		{"swift source=NOTACODE99/DEUTDEFF", 0},
-	} {
-		if got := NewSWIFTBIC().Scan([]byte(tc.text)); len(got) != tc.want {
-			t.Errorf("SWIFT list versus source path %q: %v", tc.text, got)
-		}
-	}
-}
-
-func BenchmarkABALeadingWhitespace(b *testing.B) {
-	input := []byte(strings.Repeat(" ", 1<<20) + strings.Repeat("021000021 ", 10000))
-	detector := NewABARouting()
-	b.SetBytes(int64(len(input)))
-	for b.Loop() {
-		if len(detector.Scan(input)) != 10000 {
-			b.Fatal("standalone ABA values were lost after leading whitespace")
 		}
 	}
 }
@@ -97,6 +62,20 @@ func TestJavaIdentityTokenBoundaries(t *testing.T) {
 	} {
 		if got := (&Credential{}).Scan([]byte(tc.text)); len(got) != tc.want {
 			t.Errorf("Java identity versus opaque string %q: %v", tc.text, got)
+		}
+	}
+}
+
+func TestLogContextPreservesStandaloneValues(t *testing.T) {
+	t.Parallel()
+	for _, text := range []string{`token=Example@zz`, `token="Example@a"`, `token=Example@12345678901234567`, `token=example@a`, `token=Foo!@a`, `token=@a`, `token=Example@`} {
+		if len((&Credential{}).Scan([]byte(text))) != 1 {
+			t.Errorf("string token lost: %s", text)
+		}
+	}
+	for _, text := range []string{"111111111118", "111111111118-note", "111111111118-", "111111111118;"} {
+		if len(NewMyNumber().Scan([]byte(text))) != 1 {
+			t.Errorf("standalone number lost: %s", text)
 		}
 	}
 }

@@ -1,17 +1,15 @@
-package detect_test
+package detect
 
 import (
 	"encoding/json"
 	"os"
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestIBANDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIBAN()
+	d := NewIBAN()
 	tests := []struct {
 		name       string
 		input      string
@@ -48,8 +46,7 @@ func TestIBANDetector_Scan(t *testing.T) {
 			wantLen: 0,
 		},
 		{
-			//nolint:goconst // Each test states its fixture and expected result independently.
-			name:    "empty input",
+			name:    emptyInputCase,
 			input:   "",
 			wantLen: 0,
 		},
@@ -85,7 +82,7 @@ func TestIBANDetector_Scan(t *testing.T) {
 func TestIBANDetector_Detail(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIBAN()
+	d := NewIBAN()
 	findings := d.Scan([]byte("DE89370400440532013000"))
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
@@ -102,16 +99,16 @@ func TestIBANDetector_Detail(t *testing.T) {
 func TestIBANDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIBAN()
-	if d.Name() != detect.NameIBAN {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameIBAN)
+	d := NewIBAN()
+	if d.Name() != NameIBAN {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameIBAN)
 	}
 }
 
 func TestIBANDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIBAN()
+	d := NewIBAN()
 	hints := d.Hints()
 	// Hints returns nil so the Scanner always runs IBAN detection.
 	// 2-byte country codes match normal text too frequently for effective
@@ -124,7 +121,7 @@ func TestIBANDetector_Hints(t *testing.T) {
 func TestIBANDetector_PrecededByAlpha(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIBAN()
+	d := NewIBAN()
 	// IBAN preceded by alpha should not match.
 	findings := d.Scan([]byte("xDE89370400440532013000"))
 	if len(findings) != 0 {
@@ -135,7 +132,7 @@ func TestIBANDetector_PrecededByAlpha(t *testing.T) {
 func TestIBANDetector_FollowedByAlpha(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIBAN()
+	d := NewIBAN()
 	// IBAN followed by alpha should not match.
 	findings := d.Scan([]byte("DE89370400440532013000x"))
 	if len(findings) != 0 {
@@ -146,7 +143,7 @@ func TestIBANDetector_FollowedByAlpha(t *testing.T) {
 func TestIBANDetector_WrongLength(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIBAN()
+	d := NewIBAN()
 	// DE expects 22 chars; provide only 20 (wrong length after country+check).
 	findings := d.Scan([]byte("DE89370400440532"))
 	if len(findings) != 0 {
@@ -157,7 +154,7 @@ func TestIBANDetector_WrongLength(t *testing.T) {
 func TestIBANDetector_TrailingSpace(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIBAN()
+	d := NewIBAN()
 	// IBAN followed by trailing spaces should still be detected after trimming.
 	findings := d.Scan([]byte("DE89370400440532013000   "))
 	if len(findings) != 1 {
@@ -171,7 +168,7 @@ func TestIBANDetector_TrailingSpace(t *testing.T) {
 func TestIBANDetector_HintsNilAlwaysScan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIBAN()
+	d := NewIBAN()
 	hints := d.Hints()
 	// nil hints means the Scanner always runs IBAN detection,
 	// so no country code can be silently missed.
@@ -183,7 +180,7 @@ func TestIBANDetector_HintsNilAlwaysScan(t *testing.T) {
 func TestIBANDetector_PreviouslyMissedCountry(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIBAN()
+	d := NewIBAN()
 	// Albania (AL) was not in the old Hints() list. Verify it is detected.
 	findings := d.Scan([]byte("AL42000000000000000000000000"))
 	if len(findings) != 1 {
@@ -201,7 +198,7 @@ func TestIBANDetector_PreviouslyMissedCountry(t *testing.T) {
 func TestIBANDetector_LowercaseIBAN(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIBAN()
+	d := NewIBAN()
 	tests := []struct {
 		name            string
 		input           string
@@ -259,7 +256,7 @@ func TestIBANDetector_LowercaseIBAN(t *testing.T) {
 func TestIBANDetector_MultipleIBANs(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIBAN()
+	d := NewIBAN()
 	// Use newline separator; spaces between IBANs would be consumed by the greedy extractor.
 	findings := d.Scan([]byte("DE89370400440532013000\nGB29NWBK60161331926819"))
 	if len(findings) != 2 {
@@ -269,10 +266,9 @@ func TestIBANDetector_MultipleIBANs(t *testing.T) {
 
 func TestIBANFollowingWord(t *testing.T) {
 	t.Parallel()
-	//nolint:goconst // Each test states its fixture and expected result independently.
-	for _, raw := range []string{"GB82WEST12345698765432", "GB82 WEST 1234 5698 7654 32"} {
+	for _, raw := range []string{sampleIBAN, "GB82 WEST 1234 5698 7654 32"} {
 		for _, suffix := range []string{" y", " today", " 123"} {
-			got := detect.NewIBAN().Scan([]byte("to " + raw + suffix))
+			got := NewIBAN().Scan([]byte("to " + raw + suffix))
 			if len(got) != 1 || got[0].RawValue != raw {
 				t.Errorf("%q: got %v", raw+suffix, got)
 			}
@@ -304,9 +300,21 @@ func TestIBANRegistryExamples(t *testing.T) {
 	for _, country := range countries {
 		t.Run(country.Country, func(t *testing.T) {
 			t.Parallel()
-			got := detect.NewIBAN().Scan([]byte(country.Example))
+			got := NewIBAN().Scan([]byte(country.Example))
 			if len(got) != 1 || got[0].RawValue != country.Example || len(country.Example) != country.Length {
 				t.Fatalf("registry example rejected: %s", country.Example)
+			}
+		})
+	}
+}
+
+func TestIBANReservedCheckDigits(t *testing.T) {
+	t.Parallel()
+	for _, value := range []string{"DE00100100100000000067", "DE01100100100000000049", "DE99100100100000000031"} {
+		t.Run(value[:4], func(t *testing.T) {
+			t.Parallel()
+			if got := NewIBAN().Scan([]byte(value)); len(got) != 0 {
+				t.Fatalf("reserved check digits accepted: %v", got)
 			}
 		})
 	}

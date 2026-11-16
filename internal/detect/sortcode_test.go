@@ -1,15 +1,14 @@
-package detect_test
+package detect
 
 import (
+	"fmt"
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestUKSortCodeDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewUKSortCode()
+	d := NewUKSortCode()
 	tests := []struct {
 		name       string
 		input      string
@@ -18,11 +17,10 @@ func TestUKSortCodeDetector_Scan(t *testing.T) {
 		wantMinCon float64
 	}{
 		{
-			name:    "hyphen separated sort code",
-			input:   "sort code: 12-34-56",
-			wantLen: 1,
-			//nolint:goconst // Each test states its fixture and expected result independently.
-			wantRaw:    "12-34-56",
+			name:       "hyphen separated sort code",
+			input:      "sort code: 12-34-56",
+			wantLen:    1,
+			wantRaw:    sampleSortCode,
 			wantMinCon: 0.6,
 		},
 		{
@@ -36,14 +34,14 @@ func TestUKSortCodeDetector_Scan(t *testing.T) {
 			name:       "sort code at start of text",
 			input:      "12-34-56 is the sort code",
 			wantLen:    1,
-			wantRaw:    "12-34-56",
+			wantRaw:    sampleSortCode,
 			wantMinCon: 0.6,
 		},
 		{
 			name:       "sort code at end of text",
 			input:      "sort code is 12-34-56",
 			wantLen:    1,
-			wantRaw:    "12-34-56",
+			wantRaw:    sampleSortCode,
 			wantMinCon: 0.6,
 		},
 		{
@@ -82,8 +80,7 @@ func TestUKSortCodeDetector_Scan(t *testing.T) {
 			wantMinCon: 0,
 		},
 		{
-			//nolint:goconst // Each test states its fixture and expected result independently.
-			name:       "empty input",
+			name:       emptyInputCase,
 			input:      "",
 			wantLen:    0,
 			wantRaw:    "",
@@ -170,7 +167,7 @@ func TestUKSortCodeDetector_Scan(t *testing.T) {
 func TestUKSortCodeDetector_Detail(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewUKSortCode()
+	d := NewUKSortCode()
 	findings := d.Scan([]byte("sort code: 12-34-56"))
 	if len(findings) != 1 {
 		t.Fatalf("expected 1 finding, got %d", len(findings))
@@ -180,24 +177,24 @@ func TestUKSortCodeDetector_Detail(t *testing.T) {
 	if !ok {
 		t.Fatal("UKSortCodeDetail() returned false")
 	}
-	if detail.FormattedValue != "12-34-56" {
-		t.Errorf("FormattedValue = %q, want %q", detail.FormattedValue, "12-34-56")
+	if detail.FormattedValue != sampleSortCode {
+		t.Errorf("FormattedValue = %q, want %q", detail.FormattedValue, sampleSortCode)
 	}
 }
 
 func TestUKSortCodeDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewUKSortCode()
-	if d.Name() != detect.NameUKSortCode {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameUKSortCode)
+	d := NewUKSortCode()
+	if d.Name() != NameUKSortCode {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameUKSortCode)
 	}
 }
 
 func TestUKSortCodeDetector_DateLikeWithContext(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewUKSortCode()
+	d := NewUKSortCode()
 	tests := []struct {
 		name       string
 		input      string
@@ -254,7 +251,7 @@ func TestUKSortCodeDetector_DateLikeWithContext(t *testing.T) {
 func TestUKSortCodeDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewUKSortCode()
+	d := NewUKSortCode()
 	hints := d.Hints()
 	if len(hints) == 0 {
 		t.Error("Hints() returned empty slice, want at least one hint")
@@ -265,12 +262,12 @@ func TestUKSortCodeTrailingSpace(t *testing.T) {
 	t.Parallel()
 	for _, raw := range []string{"01 00 00", "12 34 56"} {
 		for _, suffix := range []string{" ", " today", "  "} {
-			got := detect.NewUKSortCode().Scan([]byte("sort code: " + raw + suffix))
+			got := NewUKSortCode().Scan([]byte("sort code: " + raw + suffix))
 			if len(got) != 1 || got[0].RawValue != raw {
 				t.Errorf("lost %q with suffix %q: %+v", raw, suffix, got)
 			}
 		}
-		if got := detect.NewUKSortCode().Scan([]byte(raw + " 78")); len(got) != 0 {
+		if got := NewUKSortCode().Scan([]byte(raw + " 78")); len(got) != 0 {
 			t.Errorf("long numeric sequence accepted: %+v", got)
 		}
 	}
@@ -279,8 +276,25 @@ func TestUKSortCodeTrailingSpace(t *testing.T) {
 func TestSortCodeAdjacentFormats(t *testing.T) {
 	t.Parallel()
 	input := "sort code: 01 00 00 12-34-56"
-	got := detect.NewUKSortCode().Scan([]byte(input))
-	if len(got) != 2 || got[0].RawValue != "01 00 00" || got[1].RawValue != "12-34-56" {
+	got := NewUKSortCode().Scan([]byte(input))
+	if len(got) != 2 || got[0].RawValue != "01 00 00" || got[1].RawValue != sampleSortCode {
 		t.Fatalf("adjacent formats: %+v", got)
+	}
+}
+
+// Enumerate the date-like ambiguity edges independently as decimal examples.
+func TestSortCodeDateAmbiguityVectors(t *testing.T) {
+	t.Parallel()
+	for _, first := range []int{0, 1, 9, 10, 30, 31, 32, 99} {
+		for _, month := range []int{0, 1, 9, 10, 12, 13, 99} {
+			for _, last := range []int{0, 1, 9, 10, 30, 31, 32, 99} {
+				want := month >= 1 && month <= 12 && (first >= 1 && first <= 31 || last >= 1 && last <= 31)
+				digits := fmt.Sprintf("%02d%02d%02d", first, month, last)
+				got := isSortCodeDateLike(digits[0], digits[1], digits[2], digits[3], digits[4], digits[5])
+				if got != want {
+					t.Fatalf("date ambiguity %02d-%02d-%02d", first, month, last)
+				}
+			}
+		}
 	}
 }

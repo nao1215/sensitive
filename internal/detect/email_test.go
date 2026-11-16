@@ -1,15 +1,16 @@
-package detect_test
+package detect
 
 import (
+	"bytes"
+	"encoding/hex"
+	"strings"
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestEmailDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewEmail()
+	d := NewEmail()
 	tests := []struct {
 		name       string
 		input      string
@@ -75,8 +76,7 @@ func TestEmailDetector_Scan(t *testing.T) {
 			wantLen: 0,
 		},
 		{
-			//nolint:goconst // Each test states its fixture and expected result independently.
-			name:    "empty input",
+			name:    emptyInputCase,
 			input:   "",
 			wantLen: 0,
 		},
@@ -112,7 +112,7 @@ func TestEmailDetector_Scan(t *testing.T) {
 func TestEmailDetector_UppercaseTLD(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewEmail()
+	d := NewEmail()
 	findings := d.Scan([]byte("user@EXAMPLE.COM"))
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
@@ -126,7 +126,7 @@ func TestEmailDetector_UppercaseTLD(t *testing.T) {
 func TestEmailDetector_Detail(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewEmail()
+	d := NewEmail()
 	findings := d.Scan([]byte("tanaka@example.com"))
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
@@ -146,16 +146,16 @@ func TestEmailDetector_Detail(t *testing.T) {
 func TestEmailDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewEmail()
-	if d.Name() != detect.NameEmail {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameEmail)
+	d := NewEmail()
+	if d.Name() != NameEmail {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameEmail)
 	}
 }
 
 func TestEmailDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewEmail()
+	d := NewEmail()
 	hints := d.Hints()
 	if len(hints) != 1 || string(hints[0]) != "@" {
 		t.Errorf("Hints() = %v, want [[@]]", hints)
@@ -165,7 +165,7 @@ func TestEmailDetector_Hints(t *testing.T) {
 func TestEmailDetector_ConsecutiveDots(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewEmail()
+	d := NewEmail()
 	findings := d.Scan([]byte("user@example..com"))
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
@@ -178,7 +178,7 @@ func TestEmailDetector_ConsecutiveDots(t *testing.T) {
 func TestEmailDetector_DotAtLocalEnd(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewEmail()
+	d := NewEmail()
 	findings := d.Scan([]byte("user.@example.com"))
 	if len(findings) != 0 {
 		t.Errorf("got %d findings for dot at end of local part, want 0", len(findings))
@@ -188,7 +188,7 @@ func TestEmailDetector_DotAtLocalEnd(t *testing.T) {
 func TestEmailDetector_DotAtLocalStart(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewEmail()
+	d := NewEmail()
 	findings := d.Scan([]byte(".user@example.com"))
 	if len(findings) != 0 {
 		t.Errorf("got %d findings for dot at start of local part, want 0", len(findings))
@@ -198,7 +198,7 @@ func TestEmailDetector_DotAtLocalStart(t *testing.T) {
 func TestEmailDetector_UnknownTLD(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewEmail()
+	d := NewEmail()
 	findings := d.Scan([]byte("user@example.xyz"))
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
@@ -211,7 +211,7 @@ func TestEmailDetector_UnknownTLD(t *testing.T) {
 func TestEmailDetector_TrailingDotDomain(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewEmail()
+	d := NewEmail()
 	findings := d.Scan([]byte("user@example.com."))
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
@@ -224,7 +224,7 @@ func TestEmailDetector_TrailingDotDomain(t *testing.T) {
 func TestEmailDetector_TrailingDashDomain(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewEmail()
+	d := NewEmail()
 	findings := d.Scan([]byte("user@example.com-"))
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
@@ -237,7 +237,7 @@ func TestEmailDetector_TrailingDashDomain(t *testing.T) {
 func TestEmailDetector_NumericTLD(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewEmail()
+	d := NewEmail()
 	// TLD with digits should not be detected.
 	findings := d.Scan([]byte("user@example.c0m"))
 	if len(findings) != 0 {
@@ -248,7 +248,7 @@ func TestEmailDetector_NumericTLD(t *testing.T) {
 func TestEmailDetector_ConsecutiveDotsLocal(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewEmail()
+	d := NewEmail()
 	// Consecutive dots in local part are forbidden by RFC 5321.
 	findings := d.Scan([]byte("user..name@example.com"))
 	if len(findings) != 0 {
@@ -259,7 +259,7 @@ func TestEmailDetector_ConsecutiveDotsLocal(t *testing.T) {
 func TestEmailDetector_DomainLabelStartsWithDash(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewEmail()
+	d := NewEmail()
 	// Domain label starting with '-' is invalid per RFC 5321.
 	findings := d.Scan([]byte("user@-example.com"))
 	if len(findings) != 0 {
@@ -270,7 +270,7 @@ func TestEmailDetector_DomainLabelStartsWithDash(t *testing.T) {
 func TestEmailDetector_DomainLabelEndsWithDash(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewEmail()
+	d := NewEmail()
 	// Domain label ending with '-' (before dot) is invalid per RFC 5321.
 	findings := d.Scan([]byte("user@example-.com"))
 	if len(findings) != 0 {
@@ -284,7 +284,7 @@ func TestEmailDetector_DomainStartsWithDot(t *testing.T) {
 	// A domain that starts with '.' has an empty first label, so "user@.com"
 	// is not an address: there is no domain name, only a TLD. Rejecting it
 	// mirrors the rule that the local part must not start with '.'.
-	d := detect.NewEmail()
+	d := NewEmail()
 	tests := []struct {
 		name  string
 		input string
@@ -312,7 +312,7 @@ func TestEmailExactDocumentedScores(t *testing.T) {
 	}{{"alice@example.com", 1}, {"alice@example.zzzz", 0.8}, {"alice@ex..ample.com", 0.9}} {
 		t.Run(fixture.text, func(t *testing.T) {
 			t.Parallel()
-			findings := detect.NewEmail().Scan([]byte(fixture.text))
+			findings := NewEmail().Scan([]byte(fixture.text))
 			if len(findings) != 1 || findings[0].Confidence != fixture.score {
 				t.Fatalf("got %v want exact score %.17g", findings, fixture.score)
 			}
@@ -325,7 +325,7 @@ func TestEmailAdjacentMatches(t *testing.T) {
 	for _, input := range []string{"0@0..AA+@0.AA", "a@b..com+c@d.com", "a@b.com+c@d.com+e@f.com"} {
 		t.Run(input, func(t *testing.T) {
 			t.Parallel()
-			findings := detect.NewEmail().Scan([]byte(input))
+			findings := NewEmail().Scan([]byte(input))
 			end := 0
 			for _, finding := range findings {
 				if finding.Start != end {
@@ -337,5 +337,41 @@ func TestEmailAdjacentMatches(t *testing.T) {
 				t.Fatalf("unmasked suffix at %d of %d", end, len(input))
 			}
 		})
+	}
+}
+
+// Independent finite alphabets target boundary mutants missed by ordinary prose.
+func TestDetectorByteAlphabets(t *testing.T) {
+	t.Parallel()
+	for n := range 256 {
+		b := byte(n)
+		alnum := strings.ContainsRune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", rune(b))
+		if isLocalPartChar(b) != (alnum || strings.ContainsRune(".+-_", rune(b))) {
+			t.Fatalf("local alphabet %x", b)
+		}
+		if isDomainChar(b) != (alnum || strings.ContainsRune(".-", rune(b))) {
+			t.Fatalf("domain alphabet %x", b)
+		}
+		_, err := hex.DecodeString("0" + string(b))
+		if isHexChar(b) != (err == nil) {
+			t.Fatalf("hex alphabet %x", b)
+		}
+		if toLowerASCIIString(string(b)) != string(bytes.ToLower([]byte{b})) && b < 128 {
+			t.Fatalf("case endpoint %x", b)
+		}
+	}
+	for _, domain := range []string{"", "a", "-a", "a-b", "a-.b", "a.-b", "a.b", "a..b", ".a", "a."} {
+		want := false
+		for label := range strings.SplitSeq(domain, ".") {
+			want = want || strings.HasPrefix(label, "-") || strings.HasSuffix(label, "-")
+		}
+		// The helper's contract only covers leading '-' and '-' adjacent to dots;
+		// trailing domain hyphens are removed by findDomainEnd.
+		if hasInvalidLabelBoundary([]byte(domain)) != want {
+			t.Fatalf("label boundary %q", domain)
+		}
+		if hasConsecutiveDots([]byte(domain)) != strings.Contains(domain, "..") {
+			t.Fatalf("dots %q", domain)
+		}
 	}
 }

@@ -1,9 +1,9 @@
-package detect_test
+package detect
 
 import (
+	"bytes"
+	"math"
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestNormalizeFullWidthDigits(t *testing.T) {
@@ -30,14 +30,12 @@ func TestNormalizeFullWidthDigits(t *testing.T) {
 			wantNormalized: "card 45320151",
 		},
 		{
-			name:  "full-width hyphen U+FF0D",
-			input: "０９０－１２３４－５６７８",
-			//nolint:goconst // Each test states its fixture and expected result independently.
-			wantNormalized: "090-1234-5678",
+			name:           "full-width hyphen U+FF0D",
+			input:          "０９０－１２３４－５６７８",
+			wantNormalized: sampleMobile,
 		},
 		{
-			//nolint:goconst // Each test states its fixture and expected result independently.
-			name:           "empty input",
+			name:           emptyInputCase,
 			input:          "",
 			wantNormalized: "",
 		},
@@ -47,7 +45,7 @@ func TestNormalizeFullWidthDigits(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			normalized, posMap := detect.NormalizeFullWidthDigits([]byte(tt.input))
+			normalized, posMap := NormalizeFullWidthDigits([]byte(tt.input))
 			if string(normalized) != tt.wantNormalized {
 				t.Errorf("normalized = %q, want %q", string(normalized), tt.wantNormalized)
 			}
@@ -56,5 +54,39 @@ func TestNormalizeFullWidthDigits(t *testing.T) {
 				t.Errorf("posMap length = %d, want %d", len(posMap), len(normalized)+1)
 			}
 		})
+	}
+}
+
+func TestNormalizationMapSizeRejectsOverflow(t *testing.T) {
+	t.Parallel()
+	for _, length := range []int{0, 1, 1024} {
+		if normalizationMapSize(length) != length+1 {
+			t.Fatal("ordinary mapping size changed")
+		}
+	}
+	defer func() {
+		if recover() != "embargo: input too large" {
+			t.Error("mapping sentinel size overflow was not rejected")
+		}
+	}()
+	normalizationMapSize(math.MaxInt)
+}
+
+func TestNormalizationIdentityDifferential(t *testing.T) {
+	t.Parallel()
+	for n := range 256 {
+		input := append([]byte("４２４２ "), byte(n))
+		for _, data := range [][]byte{input, {byte(n)}, []byte(samplePAN), nil} {
+			want, indices := NormalizeFullWidthDigits(data)
+			got, positions := normalizeDigits(data)
+			if !bytes.Equal(got, want) {
+				t.Fatal("normalization differs")
+			}
+			for i := 0; i <= len(got); i++ {
+				if originalPosition(positions, i) != indices[i] {
+					t.Fatal("position differs")
+				}
+			}
+		}
 	}
 }

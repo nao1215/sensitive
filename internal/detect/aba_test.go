@@ -1,15 +1,15 @@
-package detect_test
+package detect
 
 import (
+	"bytes"
+	"strings"
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestABARoutingDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewABARouting()
+	d := NewABARouting()
 	tests := []struct {
 		name       string
 		input      string
@@ -95,8 +95,7 @@ func TestABARoutingDetector_Scan(t *testing.T) {
 			wantMinCon: 0,
 		},
 		{
-			//nolint:goconst // Each test states its fixture and expected result independently.
-			name:       "empty input",
+			name:       emptyInputCase,
 			input:      "",
 			wantLen:    0,
 			wantRaw:    "",
@@ -161,7 +160,7 @@ func TestABARoutingDetector_Scan(t *testing.T) {
 func TestABARoutingDetector_ChecksumFailedAlwaysRejected(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewABARouting()
+	d := NewABARouting()
 	// Even with routing context keyword, checksum failure must be rejected.
 	findings := d.Scan([]byte("routing: 611070545"))
 	if len(findings) != 0 {
@@ -172,7 +171,7 @@ func TestABARoutingDetector_ChecksumFailedAlwaysRejected(t *testing.T) {
 func TestABARoutingDetector_Detail(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewABARouting()
+	d := NewABARouting()
 	findings := d.Scan([]byte("routing: 021000021"))
 	if len(findings) != 1 {
 		t.Fatalf("expected 1 finding, got %d", len(findings))
@@ -190,17 +189,66 @@ func TestABARoutingDetector_Detail(t *testing.T) {
 func TestABARoutingDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewABARouting()
-	if d.Name() != detect.NameABARouting {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameABARouting)
+	d := NewABARouting()
+	if d.Name() != NameABARouting {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameABARouting)
 	}
 }
 
 func TestABARoutingDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewABARouting()
+	d := NewABARouting()
 	if d.Hints() != nil {
 		t.Errorf("Hints() = %v, want nil", d.Hints())
+	}
+}
+
+func TestABADoesNotReadDecimalComponents(t *testing.T) {
+	t.Parallel()
+	for _, text := range []string{"2026-11-15T00:00:00.021000021+09:00", "2026-11-15T00:00:00.021000021-07:00", "0.021000021", "021000021.0"} {
+		if got := NewABARouting().Scan([]byte(text)); len(got) != 0 {
+			t.Errorf("decimal component was accepted as a routing number in %q", text)
+		}
+	}
+	if got := NewABARouting().Scan([]byte("routing: .021000021")); len(got) != 1 {
+		t.Fatal("punctuation-separated routing number was lost")
+	}
+}
+
+func TestABAChecksumAndDistrictContract(t *testing.T) {
+	t.Parallel()
+	for prefix := range 100 {
+		raw := []byte{byte('0' + prefix/10), byte('0' + prefix%10), '1', '2', '3', '4', '5', '6', '0'}
+		sum := 0
+		for i, b := range raw[:8] {
+			sum += int(b-'0') * []int{3, 7, 1}[i%3]
+		}
+		raw[8] = byte('0' + (10-sum%10)%10)
+		valid := prefix >= 1 && prefix <= 12 || prefix >= 21 && prefix <= 32 || prefix >= 61 && prefix <= 72 || prefix == 80
+		if (len(NewABARouting().Scan(raw)) == 1) != valid {
+			t.Fatalf("district %s", raw)
+		}
+		if !valid {
+			continue
+		}
+		for i := range raw {
+			bad := bytes.Clone(raw)
+			bad[i] = '0' + (bad[i]-'0'+1)%10
+			if validateABAChecksum(bad) {
+				t.Fatalf("checksum position %d", i)
+			}
+		}
+	}
+}
+
+func BenchmarkABALeadingWhitespace(b *testing.B) {
+	input := []byte(strings.Repeat(" ", 1<<20) + strings.Repeat("021000021 ", 10000))
+	detector := NewABARouting()
+	b.SetBytes(int64(len(input)))
+	for b.Loop() {
+		if len(detector.Scan(input)) != 10000 {
+			b.Fatal("standalone ABA values were lost after leading whitespace")
+		}
 	}
 }
