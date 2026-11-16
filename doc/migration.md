@@ -33,4 +33,49 @@ Entropy candidates stop at `/` and are rejected next to path separators or dotte
 
 `fmt.Sprintf("%#v", secret)` and `secret.GoString()` now include the instantiated type, such as `embargo.Secret[string]([REDACTED])`. Update exact string assertions; ordinary formatting, JSON and text encoding still write the marker. Input keeps its existing marker-only format.
 
-CheckValue now inspects unexported struct fields through fmt. A defined string with output methods can fail this check because fmt bypasses those methods in that position. Use Secret or an application-owned struct containing an unexported pointer, as shown in [values.md](values.md). All twelve round 11–12 public identifiers remain available; [the API review](api-review.md) records their callers and boundaries.
+CheckValue now inspects unexported struct fields through fmt. A defined string with output methods can fail this check because fmt bypasses those methods in that position. Use Secret or an application-owned struct containing an unexported pointer, as shown in [values.md](values.md). The API boundaries below describe the callers and responsibilities of the public helpers.
+
+## API boundaries
+
+These consumer-facing identifiers have distinct callers. None needs a second option type or a new wrapper. The changes below affect behavior; signatures stay compatible, apart from parameter names recorded by the API golden.
+
+| Identifier | Decision | Use case and boundary |
+|---|---|---|
+| `WithSensitiveKeys` | Keep | [sensitive keys](#sensitive-keys) |
+| `(*Scanner).MaskJSON` | Keep | Sanitize an audit export or HTTP JSON body before sending it; a logger handler cannot cover those outputs. |
+| `(*Input[T]).Scan` | Keep | Receive a database text column through `rows.Scan(&input)` and publish its Secret snapshot after loading. |
+| `KindCredential` | Keep | Find a password in a DSN, assignment or authorization header even when the value has no recognizable format. |
+| `KindServiceToken` | Keep | Recognize provider-prefixed credentials in free text without requiring a sensitive field name. |
+| `KindHighEntropy` | Change selection | [entropy selection](#entropy-selection) |
+| `embargotest.Guard` | Keep | [guard lifecycle](#guard-lifecycle) |
+| `embargotest.CheckValue` | Extend checks | Verify an application-owned secret type across encoders and formatters; now also test fmt inside an unexported field. |
+| `(*Recorder).Setenv` | Keep | Inject the configured canary into an environment-based credential loader and delegate restoration to testing.TB. |
+| `(*Recorder).File` | Keep | [credential files](#credential-files) |
+| `(*Recorder).Header` | Keep | Create independent request-header input to test accidental forwarding or reflection. |
+| `(*Recorder).Reader` | Keep | [credential readers](#credential-readers) |
+
+No consumer-facing identifier was removed or merged: each has a working scenario in [the injection tests](../embargotest/inject_test.go), [SDK tests](../tests/integrations_test.go), [database tests](../input_test.go), [JSON tests](../json_test.go) or [value checks](../embargotest/value_test.go). An application can always construct a header or reader from Canary itself; these methods keep fixture input tied to the Recorder's configured canary and lifecycle. They do not add alternative scanning or masking contracts.
+
+Internal detector implementations and output.JSON are exported only across the module's internal package boundary. They do not add consumer constructors or options. Application-owned secret types can use an unexported pointer to prevent fmt from revealing an underlying string field; see [values.md](values.md).
+
+## Table explanations
+
+<a id="sensitive-keys"></a>
+
+Select application field names for slog, JSON and adapters; the same rule also recognizes text assignments. It replaces the key set, as WithKinds replaces the detector set.
+
+<a id="entropy-selection"></a>
+
+Inspect unlabelled random-looking tokens when explicitly requested by WithAll or WithKinds; NewScanner and its zero value omit it. Confidence remains 0.3.
+
+<a id="guard-lifecycle"></a>
+
+Supervise a whole package from TestMain, including its existing stdout, stderr and default logger. Recorder.Run instead names one isolated child helper. Both share Recorder options.
+
+<a id="credential-files"></a>
+
+Supply a credential-file path with private file permissions and test-owned cleanup. Reader cannot exercise a path-based loader.
+
+<a id="credential-readers"></a>
+
+Feed the configured canary into request bodies or config parsers accepting io.Reader, without mutable sharing with the Recorder.

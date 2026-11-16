@@ -28,7 +28,6 @@ snapshot = {
     "os": re.search(r"^goos: (.+)$", result.stdout, re.M)[1].strip(),
     "arch": re.search(r"^goarch: (.+)$", result.stdout, re.M)[1].strip(),
     "cpu": re.search(r"^cpu: (.+)$", result.stdout, re.M)[1].strip(),
-    "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
     "command": "GOMAXPROCS=1 GOTOOLCHAIN=go1.26.11 " + " ".join(command),
     "samples": 10,
     "cpu_affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,

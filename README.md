@@ -333,7 +333,7 @@ All detectors scan sensitive text at 4.89 MB/s; masking a clean slog event takes
 <!-- benchmarks:end -->
 
 <!-- narrowing-summary:start -->
-Round 13 scanner medians (ten interleaved samples):
+Recorded scanner medians (ten interleaved samples):
 
 | Selection | Clean ns/op | Dirty ns/op | Clean / dirty speedup over WithAll |
 |---|---:|---:|---|

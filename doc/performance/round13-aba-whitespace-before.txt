@@ -1,7 +1,0 @@
-goos: linux
-goarch: amd64
-pkg: github.com/nao1215/embargo/internal/detect
-cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-BenchmarkABALeadingWhitespace 	       1	3462843224 ns/op	   0.33 MB/s
-PASS
-ok  	github.com/nao1215/embargo/internal/detect	3.467s
