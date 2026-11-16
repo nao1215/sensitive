@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [0.8.0] - 2026-11-16
 
-This minor release adds the installable embargo-audit command and broadens normalization and joined-key masking. The default minimum confidence remains 0 and the root module remains dependency-free. Upgrade installed adapters to v0.8.0 after their separate tags are published.
+This minor release adds the installable embargo-audit command and broadens normalization and joined-key masking. The default minimum confidence remains 0 and the root module remains dependency-free. The corresponding adapters are published at v0.8.1 and require root v0.8.1.
 
 ### Detection changes
 
