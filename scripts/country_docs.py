@@ -40,18 +40,18 @@ def render_logs(kinds,manifest,summary):
 
 
 def generate(check=False):
-    rows=json.loads((ROOT/'doc/countries.json').read_text())
-    manifest=json.loads((ROOT/'doc/real-logs-manifest.json').read_text())
-    summary=json.loads((ROOT/'doc/real-logs-summary.json').read_text())
+    rows=json.loads((ROOT/'doc/countries.json').read_text(encoding="utf-8"))
+    manifest=json.loads((ROOT/'doc/real-logs-manifest.json').read_text(encoding="utf-8"))
+    summary=json.loads((ROOT/'doc/real-logs-summary.json').read_text(encoding="utf-8"))
     blocks={'countries':render_accuracy(rows),'country-logs':render_logs({r['kind'] for r in rows},manifest,summary)}
-    page=ROOT/'doc/countries.md';original=page.read_text();updated=original
+    page=ROOT/'doc/countries.md';original=page.read_text(encoding="utf-8");updated=original
     for name,table in blocks.items():
         pattern=r'(?s)(<!-- '+name+r':start -->\n).*?(<!-- '+name+':end -->)'
         if len(re.findall(pattern,updated))!=1:raise ValueError('missing country table marker')
         updated=re.sub(pattern,lambda m:m[1]+table+m[2],updated)
     if check:
         if original!=updated:raise ValueError('country documentation is stale')
-    else:page.write_text(updated)
+    else:page.write_text(updated, encoding="utf-8")
 
 
 if __name__=='__main__':

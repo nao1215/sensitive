@@ -3,6 +3,7 @@ package embargosentry_test
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -73,5 +74,51 @@ func TestBeforeSendSuppressesInvalidEvents(t *testing.T) {
 		if hook(event, nil) != nil {
 			t.Fatal("invalid event reached transport")
 		}
+	}
+}
+
+func TestOversizedEventIsDropped(t *testing.T) {
+	t.Parallel()
+	event := sentry.NewEvent()
+	event.Message = strings.Repeat("x", 1<<20)
+	if safe := embargosentry.NewBeforeSend(embargo.NewScanner())(event, nil); safe != nil {
+		t.Fatal("oversized event reached transport")
+	}
+}
+
+func TestClientPreservesAndMasksDynamicSamplingContext(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ value, want string }{{"cart", "cart"}, {"alice@example.com", "[REDACTED]"}} {
+		t.Run(tc.value, func(t *testing.T) {
+			t.Parallel()
+			transport := &eventTransport{}
+			hook := embargosentry.NewBeforeSend(embargo.NewScanner())
+			var before map[string]string
+			client, err := sentry.NewClient(sentry.ClientOptions{Dsn: "https://public@example.com/1", Transport: transport, BeforeSend: func(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
+				before = event.GetDynamicSamplingContext()
+				return hook(event, hint)
+			}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			scope := sentry.NewScope()
+			entries := map[string]string{"transaction": tc.value, "sample_rate": "0.25"}
+			scope.SetPropagationContext(sentry.PropagationContext{DynamicSamplingContext: sentry.DynamicSamplingContext{Entries: entries, Frozen: true}})
+			event := sentry.NewEvent()
+			event.Message = "password=private-password"
+			event.Attachments = []*sentry.Attachment{{Filename: "private.txt", Payload: []byte("private attachment")}}
+			client.CaptureEvent(event, nil, scope)
+			if len(transport.events) != 1 {
+				t.Fatal("missing event")
+			}
+			got := transport.events[0]
+			want := map[string]string{"transaction": tc.want, "sample_rate": "0.25"}
+			if !reflect.DeepEqual(before, entries) || !reflect.DeepEqual(got.GetDynamicSamplingContext(), want) {
+				t.Fatalf("sampling context before=%v after=%v", before, got.GetDynamicSamplingContext())
+			}
+			if len(got.Attachments) != 0 || got.Message != "password=[REDACTED]" || event.Message != "password=private-password" {
+				t.Fatal("event masking changed attachment or copy behavior")
+			}
+		})
 	}
 }

@@ -258,3 +258,40 @@ func TestLogBodyNestingLimitSuppressesOutput(t *testing.T) {
 		t.Fatal("unbounded nesting was forwarded")
 	}
 }
+
+func TestOversizedLogBodyIsNotExported(t *testing.T) {
+	t.Parallel()
+	sink := &captureLog{}
+	exporter := embargootel.NewLogExporter(sink, embargo.NewScanner())
+	var record sdklog.Record
+	record.SetBody(attribute.StringValue(strings.Repeat("x", 1<<20)))
+	if err := exporter.Export(t.Context(), []sdklog.Record{record}); err == nil || len(sink.records) != 0 {
+		t.Fatal("oversized log body was exported")
+	}
+}
+
+func TestSpanContextsOmitTraceStateWithoutChangingIdentity(t *testing.T) {
+	t.Parallel()
+	state, err := trace.ParseTraceState("tenant=alice@example.com,session=opaque-session")
+	if err != nil {
+		t.Fatal(err)
+	}
+	original := trace.NewSpanContext(trace.SpanContextConfig{TraceID: trace.TraceID{1}, SpanID: trace.SpanID{2}, TraceFlags: trace.FlagsSampled, Remote: true, TraceState: state})
+	span := tracetest.SpanStub{Name: "checkout", Resource: resource.Empty(), SpanContext: original, Parent: original, Links: []sdktrace.Link{{SpanContext: original}}}.Snapshot()
+	next := &captureSpan{}
+	if err := embargootel.NewSpanExporter(next, embargo.NewScanner()).ExportSpans(t.Context(), []sdktrace.ReadOnlySpan{span}); err != nil {
+		t.Fatal(err)
+	}
+	got := next.spans[0]
+	for _, context := range []trace.SpanContext{got.SpanContext(), got.Parent(), got.Links()[0].SpanContext} {
+		if context.TraceState().Len() != 0 {
+			t.Error("exported private TraceState")
+		}
+		if context.TraceID() != original.TraceID() || context.SpanID() != original.SpanID() || context.TraceFlags() != original.TraceFlags() || context.IsRemote() != original.IsRemote() {
+			t.Error("span identity changed")
+		}
+	}
+	if span.SpanContext().TraceState().String() != state.String() || span.Links()[0].SpanContext.TraceState().String() != state.String() {
+		t.Fatal("source span mutated")
+	}
+}

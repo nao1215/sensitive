@@ -47,5 +47,9 @@ func record(ctx context.Context, logger *slog.Logger, method string, err error) 
 	if err != nil {
 		message = err.Error()
 	}
-	logger.LogAttrs(ctx, slog.LevelInfo, "grpc request", slog.String("method", method), slog.Any("metadata", values), slog.String("code", status.Code(err).String()), slog.String("error", message))
+	code, ok := status.FromError(err)
+	if !ok {
+		code = status.FromContextError(err)
+	}
+	logger.LogAttrs(ctx, slog.LevelInfo, "grpc request", slog.String("method", method), slog.Any("metadata", values), slog.String("code", code.Code().String()), slog.String("error", message))
 }

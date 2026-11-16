@@ -104,3 +104,17 @@ func TestCountryRRNEighteenthCenturyAndFullWidth(t *testing.T) {
 		t.Fatal(got)
 	}
 }
+
+func TestCountryOverlappingSIN(t *testing.T) {
+	t.Parallel()
+	input := "123-456-782-002"
+	const want = "[REDACTED]"
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindCanadaSIN))
+	findings := scanner.ScanString(input)
+	if len(findings) != 2 || findings[0].Start != 0 || findings[0].End != 11 || findings[1].Start != 4 || findings[1].End != 15 {
+		t.Fatalf("overlapping SIN ranges: %v", findings)
+	}
+	if got := embargo.Mask(input, findings); got != want {
+		t.Fatalf("overlap left bytes visible: %q", got)
+	}
+}

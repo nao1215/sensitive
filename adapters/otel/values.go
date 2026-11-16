@@ -77,16 +77,17 @@ func attributeValue(scanner *embargo.Scanner, value any, original attribute.Valu
 	case []any:
 		return attributeSlice(scanner, v, original)
 	case map[string]any:
-		fields := make([]attribute.KeyValue, 0, len(v))
-		for key, item := range v {
-			template := attribute.Value{}
-			for _, kv := range original.AsMap() {
-				if string(kv.Key) == key || maskText(scanner, string(kv.Key)) == key {
-					template = kv.Value
-					break
+		templates := make(map[string]attribute.Value)
+		for _, kv := range original.AsMap() {
+			for _, key := range []string{string(kv.Key), maskText(scanner, string(kv.Key))} {
+				if _, exists := templates[key]; !exists {
+					templates[key] = kv.Value
 				}
 			}
-			converted, err := attributeValue(scanner, item, template)
+		}
+		fields := make([]attribute.KeyValue, 0, len(v))
+		for key, item := range v {
+			converted, err := attributeValue(scanner, item, templates[key])
 			if err != nil {
 				return attribute.Value{}, err
 			}
@@ -102,9 +103,10 @@ func attributeSlice(scanner *embargo.Scanner, values []any, original attribute.V
 	result := make([]attribute.Value, 0, len(values))
 	stringsOnly := original.Type() == attribute.STRINGSLICE
 	texts := make([]string, 0, len(values))
+	items := original.AsSlice()
 	for i, value := range values {
 		template := attribute.Value{}
-		if items := original.AsSlice(); i < len(items) {
+		if i < len(items) {
 			template = items[i]
 		}
 		converted, err := attributeValue(scanner, value, template)

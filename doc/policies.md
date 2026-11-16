@@ -68,6 +68,8 @@ The inventory below translates the owner's active repository instructions into c
 | Country precision and residual exposure stay exact-span scored | M15 | [TestCountryAccuracy](../tests/countries_accuracy_test.go) | MultiPlatformUnitTest |
 | New hooks keep allocation budgets and scheduled scaling measurements | M15 | [test_hook_scaling_is_scheduled_for_each_new_module](../scripts/test_production_hooks.py) | Verification |
 | Encoding limits have one current-behavior regression per disguise | M15 | [TestAdversarialEncodingBoundary](../adversarial_test.go) | MultiPlatformUnitTest |
+| Country documentation generation uses UTF-8 independently of the host locale | M15; PR88 review | [test_country_docs_under_ascii_locale](../scripts/test_countries.py) | Verification |
+| Mutation workers and per-test CPUs stay capped at two | M15 | [test_mutation_target_limits_workers_and_test_cpus](../scripts/test_production_hooks.py) | Verification |
 <!-- policy-map:end -->
 
 ## Changing a rule

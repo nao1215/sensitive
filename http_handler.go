@@ -112,18 +112,25 @@ func (w *httpLogWriter) WriteHeader(status int) {
 
 // Write records an implicit 200 before forwarding the body unchanged.
 func (w *httpLogWriter) Write(data []byte) (int, error) {
-	if w.status == 0 {
-		w.WriteHeader(http.StatusOK)
+	if w.status != 0 {
+		return w.ResponseWriter.Write(data)
 	}
-	return w.ResponseWriter.Write(data)
+	w.status = http.StatusOK
+	n, err := w.ResponseWriter.Write(data)
+	w.finalHeader = w.Header().Clone()
+	return n, err
 }
 
 // FlushError sends pending headers and returns the underlying flush result.
 func (w *httpLogWriter) FlushError() error {
-	if w.status == 0 {
-		w.WriteHeader(http.StatusOK)
+	if err := http.NewResponseController(w.ResponseWriter).Flush(); err != nil {
+		return err
 	}
-	return http.NewResponseController(w.ResponseWriter).Flush()
+	if w.status == 0 {
+		w.status = http.StatusOK
+		w.finalHeader = w.Header().Clone()
+	}
+	return nil
 }
 
 // Flush retains a failed flush as a boolean in the access record.

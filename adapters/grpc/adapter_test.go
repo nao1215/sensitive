@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"strings"
@@ -104,5 +105,49 @@ func TestLogFormattingFailurePreservesRPCResult(t *testing.T) {
 	stream := embargogrpc.NewStreamServerInterceptor(logger, embargo.NewScanner())
 	if err := stream(nil, &exampleStream{}, &grpc.StreamServerInfo{FullMethod: "/failure/Stream"}, func(any, grpc.ServerStream) error { return original }); !errors.Is(err, original) || output.Len() != 0 {
 		t.Fatal("failed log changed the stream result")
+	}
+}
+
+func TestOversizedMetadataSuppressesAccessRecord(t *testing.T) {
+	t.Parallel()
+	var output bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&output, nil))
+	interceptor := embargogrpc.NewUnaryServerInterceptor(logger, embargo.NewScanner())
+	ctx := metadata.NewIncomingContext(t.Context(), metadata.Pairs("public", strings.Repeat("x", 1<<20)))
+	_, err := interceptor(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/limit/Unary"}, func(context.Context, any) (any, error) { return "accepted metadata", nil })
+	if err != nil || output.Len() != 0 {
+		t.Fatal("oversized metadata was logged or changed the RPC result")
+	}
+}
+
+func TestContextErrorsUseWireStatusInAccessRecords(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		err  error
+		code codes.Code
+	}{
+		{context.Canceled, codes.Canceled},
+		{context.DeadlineExceeded, codes.DeadlineExceeded},
+		{fmt.Errorf("wrapped: %w", context.Canceled), codes.Canceled},
+		{fmt.Errorf("wrapped: %w", context.DeadlineExceeded), codes.DeadlineExceeded},
+		{status.Error(codes.Unknown, "context canceled"), codes.Unknown},
+	} {
+		t.Run(tc.err.Error(), func(t *testing.T) {
+			t.Parallel()
+			var output bytes.Buffer
+			logger := slog.New(slog.NewJSONHandler(&output, nil))
+			unary := embargogrpc.NewUnaryServerInterceptor(logger, embargo.NewScanner())
+			result, err := unary(t.Context(), nil, &grpc.UnaryServerInfo{FullMethod: "/context/Unary"}, func(context.Context, any) (any, error) { return "kept", tc.err })
+			if result != "kept" || !errors.Is(err, tc.err) {
+				t.Fatal("unary result changed")
+			}
+			stream := embargogrpc.NewStreamServerInterceptor(logger, embargo.NewScanner())
+			if err := stream(nil, &exampleStream{}, &grpc.StreamServerInfo{FullMethod: "/context/Stream"}, func(any, grpc.ServerStream) error { return tc.err }); !errors.Is(err, tc.err) {
+				t.Fatal("stream error changed")
+			}
+			if strings.Count(output.String(), `"code":"`+tc.code.String()+`"`) != 2 {
+				t.Fatal(output.String())
+			}
+		})
 	}
 }

@@ -376,5 +376,17 @@
     "source": "M15",
     "check": "adversarial_test.go#TestAdversarialEncodingBoundary",
     "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Country documentation generation uses UTF-8 independently of the host locale",
+    "source": "M15; PR88 review",
+    "check": "scripts/test_countries.py#test_country_docs_under_ascii_locale",
+    "where": "Verification"
+  },
+  {
+    "rule": "Mutation workers and per-test CPUs stay capped at two",
+    "source": "M15",
+    "check": "scripts/test_production_hooks.py#test_mutation_target_limits_workers_and_test_cpus",
+    "where": "Verification"
   }
 ]

@@ -54,7 +54,7 @@ func countryLayouts(name DetectorName) []string {
 func (d *Country) Scan(data []byte) []Finding {
 	normalized, positions := normalizeDigits(data)
 	var result []Finding
-	for start := 0; start < len(normalized); start++ {
+	for start := range normalized {
 		if start > 0 && isPhoneWordChar(normalized[start-1]) {
 			continue
 		}
@@ -69,7 +69,6 @@ func (d *Country) Scan(data []byte) []Finding {
 			}
 			a, b := mapOriginalRange(positions, start, end)
 			result = append(result, Finding{DetectorName: d.name, Start: a, End: b, RawValue: string(data[a:b]), Confidence: businessConfidence(data, a, score)})
-			start = end - 1
 			break
 		}
 	}

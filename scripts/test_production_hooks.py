@@ -28,3 +28,9 @@ class HookPolicyTests(unittest.TestCase):
             source=(ROOT/'adapters'/module/'scaling_test.go').read_text()
             self.assertIn('TestHookAllocationBudget',source)
             self.assertIn('BenchmarkHookScaling',source)
+
+    def test_mutation_target_limits_workers_and_test_cpus(self):
+        makefile=(ROOT/'Makefile').read_text(encoding='utf-8')
+        command=re.search(r'^mutation:.*?\n\t([^\n]+)',makefile,re.M).group(1)
+        self.assertIn('--workers 2',command)
+        self.assertIn('--test-cpu 2',command)

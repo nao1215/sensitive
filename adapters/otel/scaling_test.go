@@ -2,6 +2,7 @@ package embargootel_test
 
 import (
 	"context"
+	"encoding/json"
 	"runtime"
 	"strconv"
 	"strings"
@@ -70,5 +71,36 @@ func BenchmarkHookScaling(b *testing.B) {
 				call()
 			}
 		})
+	}
+}
+
+//nolint:paralleltest // The budget isolates allocations from one wide SDK value.
+func TestWideAttributeAllocationBudget(t *testing.T) {
+	const count = 256
+	items := make([]attribute.Value, count)
+	fields := make([]attribute.KeyValue, count)
+	for i := range items {
+		items[i] = attribute.Int64Value(int64(i))
+		fields[i] = attribute.Int64("field"+strconv.Itoa(i), int64(i))
+	}
+	for _, value := range []attribute.Value{attribute.SliceValue(items...), attribute.MapValue(fields...)} {
+		raw, err := json.Marshal(value.AsInterface())
+		if err != nil {
+			t.Fatal(err)
+		}
+		var record sdklog.Record
+		record.SetBody(value)
+		exporter := embargootel.NewLogExporter(&discardLog{}, embargo.NewScanner())
+		runtime.GC()
+		var before, after runtime.MemStats
+		runtime.ReadMemStats(&before)
+		err = exporter.Export(t.Context(), []sdklog.Record{record})
+		runtime.ReadMemStats(&after)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if allocated := after.TotalAlloc - before.TotalAlloc; allocated > uint64(128*len(raw)+1<<20) {
+			t.Errorf("%s allocated %d bytes for %d JSON bytes", value.Type(), allocated, len(raw))
+		}
 	}
 }

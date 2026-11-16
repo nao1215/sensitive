@@ -189,7 +189,26 @@ func TestHTTPHandlerImplicitWrite(t *testing.T) {
 	}), slog.New(slog.DiscardHandler), embargo.NewScanner())
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", http.NoBody))
+	if response.Result().Header.Get("Content-Type") != "text/plain; charset=utf-8" {
+		t.Fatal("implicit write lost Content-Type detection")
+	}
 	if response.Code != http.StatusOK || response.Body.String() != "hello" {
 		t.Fatal("implicit status or body changed")
+	}
+}
+
+func TestHTTPUnsupportedFlushLeavesStatusUncommitted(t *testing.T) {
+	t.Parallel()
+	response := httptest.NewRecorder()
+	writer := struct{ http.ResponseWriter }{response}
+	handler := embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if err := http.NewResponseController(w).Flush(); !errors.Is(err, http.ErrNotSupported) {
+			t.Fatal(err)
+		}
+		w.WriteHeader(http.StatusTeapot)
+	}), slog.New(slog.DiscardHandler), embargo.NewScanner())
+	handler.ServeHTTP(writer, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", http.NoBody))
+	if response.Code != http.StatusTeapot {
+		t.Fatalf("unsupported flush committed status %d", response.Code)
 	}
 }

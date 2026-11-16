@@ -1,6 +1,9 @@
 """Keep the pre-implementation fixture freeze and independent checksum definitions reproducible."""
 import hashlib
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 import unittest
 
@@ -37,3 +40,7 @@ class CountryTests(unittest.TestCase):
             self.assertEqual(reference.valid('us_itin',f'912{group:02}1234'),expected)
         for prefix in ('BG','GB','KN','NK','NT','TN','ZZ','AO','DA','AI'):
             self.assertFalse(reference.valid('uk_nino',prefix+'123456A'))
+
+    def test_country_docs_under_ascii_locale(self):
+        env=dict(os.environ, LC_ALL='C', PYTHONUTF8='0', PYTHONCOERCECLOCALE='0')
+        subprocess.run([sys.executable, '-X', 'utf8=0', str(country_docs.ROOT/'scripts/country_docs.py'), '--check'], env=env, check=True, capture_output=True)

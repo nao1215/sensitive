@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/instrumentation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/nao1215/embargo"
 	"github.com/nao1215/embargo/internal/output"
@@ -16,6 +17,7 @@ import (
 
 // NewSpanExporter copies span text and attributes before export, including events and links.
 // Resource and scope attributes are masked too; times, counts and trace identifiers stay intact.
+// Span, parent and link contexts omit vendor TraceState values.
 // Nil dependencies panic. Invalid values and failed exports return a fixed error without a partial batch.
 func NewSpanExporter(next sdktrace.SpanExporter, scanner *embargo.Scanner) sdktrace.SpanExporter {
 	output.Require(next)
@@ -63,7 +65,15 @@ type spanView struct {
 	attrs    []attribute.KeyValue
 	events   []sdktrace.Event
 	links    []sdktrace.Link
+	context  trace.SpanContext
+	parent   trace.SpanContext
 }
+
+// SpanContext keeps the span identity without forwarding vendor TraceState.
+func (s *spanView) SpanContext() trace.SpanContext { return s.context }
+
+// Parent retains the parent reference with its TraceState removed.
+func (s *spanView) Parent() trace.SpanContext { return s.parent }
 
 // Name supplies the sanitized operation name.
 func (s *spanView) Name() string { return s.name }
@@ -90,7 +100,7 @@ func (s *spanView) InstrumentationLibrary() instrumentation.Scope { return s.sco
 func (s *spanView) Resource() *resource.Resource { return s.resource }
 
 func maskSpan(scanner *embargo.Scanner, original sdktrace.ReadOnlySpan) (sdktrace.ReadOnlySpan, error) {
-	view := &spanView{ReadOnlySpan: original, name: maskText(scanner, original.Name()), events: slices.Clone(original.Events()), links: slices.Clone(original.Links()), status: original.Status(), scope: original.InstrumentationScope()}
+	view := &spanView{ReadOnlySpan: original, context: original.SpanContext().WithTraceState(trace.TraceState{}), parent: original.Parent().WithTraceState(trace.TraceState{}), name: maskText(scanner, original.Name()), events: slices.Clone(original.Events()), links: slices.Clone(original.Links()), status: original.Status(), scope: original.InstrumentationScope()}
 	var err error
 	if view.attrs, err = maskAttributes(scanner, original.Attributes()); err != nil {
 		return nil, err
@@ -102,6 +112,7 @@ func maskSpan(scanner *embargo.Scanner, original sdktrace.ReadOnlySpan) (sdktrac
 		}
 	}
 	for i := range view.links {
+		view.links[i].SpanContext = view.links[i].SpanContext.WithTraceState(trace.TraceState{})
 		if view.links[i].Attributes, err = maskAttributes(scanner, view.links[i].Attributes); err != nil {
 			return nil, err
 		}
