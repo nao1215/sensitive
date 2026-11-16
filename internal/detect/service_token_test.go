@@ -47,3 +47,15 @@ func TestEntropyCandidates(t *testing.T) {
 		}
 	}
 }
+
+func TestSendGridInvalidBody(t *testing.T) {
+	t.Parallel()
+	for _, text := range []string{
+		"SG." + strings.Repeat("a", 21) + "!." + strings.Repeat("b", 43),
+		"SG." + strings.Repeat("a", 22) + "." + strings.Repeat("b", 42) + "!",
+	} {
+		if got := (&ServiceToken{}).Scan([]byte(text)); len(got) != 0 {
+			t.Fatal("punctuation accepted as a SendGrid credential byte")
+		}
+	}
+}

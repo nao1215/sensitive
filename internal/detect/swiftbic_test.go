@@ -1,16 +1,13 @@
-package detect_test
+package detect
 
 import (
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
-//nolint:dupl // Separate detector tables keep their independent acceptance cases readable.
 func TestSWIFTBICDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewSWIFTBIC()
+	d := NewSWIFTBIC()
 	tests := []struct {
 		name       string
 		input      string
@@ -110,8 +107,7 @@ func TestSWIFTBICDetector_Scan(t *testing.T) {
 			wantMinCon: 0,
 		},
 		{
-			//nolint:goconst // Each test states its fixture and expected result independently.
-			name:       "empty input",
+			name:       emptyInputCase,
 			input:      "",
 			wantLen:    0,
 			wantRaw:    "",
@@ -152,7 +148,7 @@ func TestSWIFTBICDetector_Scan(t *testing.T) {
 func TestSWIFTBICDetector_Detail(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewSWIFTBIC()
+	d := NewSWIFTBIC()
 	findings := d.Scan([]byte("BIC: BOFAUS3NXXX"))
 	if len(findings) != 1 {
 		t.Fatalf("expected 1 finding, got %d", len(findings))
@@ -179,17 +175,40 @@ func TestSWIFTBICDetector_Detail(t *testing.T) {
 func TestSWIFTBICDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewSWIFTBIC()
-	if d.Name() != detect.NameSWIFTBIC {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameSWIFTBIC)
+	d := NewSWIFTBIC()
+	if d.Name() != NameSWIFTBIC {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameSWIFTBIC)
 	}
 }
 
 func TestSWIFTBICDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewSWIFTBIC()
+	d := NewSWIFTBIC()
 	if d.Hints() != nil {
 		t.Errorf("Hints() = %v, want nil", d.Hints())
+	}
+}
+
+func TestSWIFTSlashListAndSourcePath(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		text string
+		want int
+	}{
+		{"swift=DEUTDEFF/COBADEFF", 2},
+		{"DEUTDEFF/COBADEFF swift", 2},
+		{"BIC: DEUTDEFF/COBADEFF/CHASUS33", 3},
+		{"swift source=/tmp/COBADEFF", 0},
+		{"swift source=DEUTDEFF.log", 0},
+		{"swift source=/DEUTDEFF", 0},
+		{"swift source=DEUTDEFF/tmp", 0},
+		{"swift source=DEUTDEFF/NOTACODE99", 0},
+		{"swift source=DEUTDEFF/COBADEFF01", 0},
+		{"swift source=NOTACODE99/DEUTDEFF", 0},
+	} {
+		if got := NewSWIFTBIC().Scan([]byte(tc.text)); len(got) != tc.want {
+			t.Errorf("SWIFT list versus source path %q: %v", tc.text, got)
+		}
 	}
 }

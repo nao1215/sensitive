@@ -19,10 +19,9 @@ func TestAWSKeyDetector_Scan(t *testing.T) {
 	}{
 		// #nosec G101 -- This public synthetic credential is a positive detection fixture, not an authentication secret.
 		{
-			name:    "AKIA prefix key",
-			input:   "aws_access_key_id = AKIAIOSFODNN7EXAMPLE",
-			wantLen: 1,
-			//nolint:goconst // Each test states its fixture and expected result independently.
+			name:       "AKIA prefix key",
+			input:      "aws_access_key_id = AKIAIOSFODNN7EXAMPLE",
+			wantLen:    1,
 			wantRaw:    "AKIAIOSFODNN7EXAMPLE",
 			wantMinCon: 0.9,
 		},

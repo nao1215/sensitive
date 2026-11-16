@@ -1,6 +1,7 @@
 package detect_test
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/nao1215/embargo/internal/detect"
@@ -27,9 +28,7 @@ func ExamplePAN_Scan() {
 	// Detects PANs with various separators.
 	for _, input := range []string{
 		"4532015112830366",
-		//nolint:goconst // Each Example states its own fixture independently.
 		"4532-0151-1283-0366",
-		//nolint:goconst // Each Example states its own fixture independently.
 		"4532 0151 1283 0366",
 	} {
 		findings := d.Scan([]byte(input))
@@ -90,7 +89,6 @@ func ExampleNewMyNumber() {
 func ExampleNewJWT() {
 	d := detect.NewJWT()
 	// #nosec G101 -- test token for JWT detection
-	//nolint:goconst // Each Example states its own fixture independently.
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
 	findings := d.Scan([]byte("Bearer " + token))
 
@@ -231,4 +229,48 @@ func ExampleFinding_Kind() {
 	// email: "pii"
 	// awskey: "credential"
 	// custom: ""
+}
+
+// markerDetector finds an application's exact internal classification marker.
+type markerDetector struct {
+	marker []byte
+}
+
+// Name returns the name used for scanner registration and findings.
+func (d markerDetector) Name() detect.DetectorName { return "internal_marker" }
+
+// Hints returns a substring present in every match.
+func (d markerDetector) Hints() [][]byte { return [][]byte{d.marker} }
+
+// Scan returns non-overlapping marker occurrences with original byte offsets.
+func (d markerDetector) Scan(data []byte) []detect.Finding {
+	if len(d.marker) == 0 {
+		return nil
+	}
+	var findings []detect.Finding
+	for start := 0; start < len(data); {
+		n := bytes.Index(data[start:], d.marker)
+		if n < 0 {
+			break
+		}
+		start += n
+		end := start + len(d.marker)
+		findings = append(findings, detect.Finding{
+			DetectorName: d.Name(), Start: start, End: end,
+			RawValue: string(data[start:end]), Confidence: 1,
+		})
+		start = end
+	}
+	return findings
+}
+
+func ExampleDetector() {
+	custom := markerDetector{marker: []byte("INTERNAL-ONLY")}
+	scanner := custom
+	for _, f := range scanner.Scan([]byte("scope: INTERNAL-ONLY")) {
+		fmt.Printf("%s [%d:%d]: %s\n", f.DetectorName, f.Start, f.End, f.RawValue)
+	}
+
+	// Output:
+	// internal_marker [7:20]: INTERNAL-ONLY
 }

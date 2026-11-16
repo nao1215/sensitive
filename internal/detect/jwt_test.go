@@ -96,7 +96,6 @@ func TestJWTDetector_Detail(t *testing.T) {
 	d := detect.NewJWT()
 	// Header: {"alg":"HS256","typ":"JWT"}
 	// #nosec G101 -- test token for JWT detection
-	//nolint:goconst // Each test states its fixture and expected result independently.
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
 	findings := d.Scan([]byte(token))
 	if len(findings) != 1 {

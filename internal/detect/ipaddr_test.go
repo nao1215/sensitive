@@ -1,15 +1,13 @@
-package detect_test
+package detect
 
 import (
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestIPAddrDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIPAddr()
+	d := NewIPAddr()
 	tests := []struct {
 		name       string
 		input      string
@@ -26,9 +24,9 @@ func TestIPAddrDetector_Scan(t *testing.T) {
 		},
 		{
 			name:       "IPv4 loopback",
-			input:      "127.0.0.1",
+			input:      loopbackIPv4,
 			wantLen:    0,
-			wantRaw:    "127.0.0.1",
+			wantRaw:    loopbackIPv4,
 			wantMinCon: 0.7,
 		},
 
@@ -39,8 +37,7 @@ func TestIPAddrDetector_Scan(t *testing.T) {
 			wantLen: 0,
 		},
 		{
-			//nolint:goconst // Each test states its fixture and expected result independently.
-			name:    "empty input",
+			name:    emptyInputCase,
 			input:   "",
 			wantLen: 0,
 		},
@@ -106,7 +103,7 @@ func TestIPAddrDetector_Scan(t *testing.T) {
 func TestIPAddrDetector_Detail(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIPAddr()
+	d := NewIPAddr()
 	findings := d.Scan([]byte("192.168.1.1"))
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
@@ -123,16 +120,16 @@ func TestIPAddrDetector_Detail(t *testing.T) {
 func TestIPAddrDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIPAddr()
-	if d.Name() != detect.NameIPAddr {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameIPAddr)
+	d := NewIPAddr()
+	if d.Name() != NameIPAddr {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameIPAddr)
 	}
 }
 
 func TestIPAddrDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIPAddr()
+	d := NewIPAddr()
 	hints := d.Hints()
 	if len(hints) != 2 {
 		t.Errorf("Hints() returned %d hints, want 2", len(hints))
@@ -142,7 +139,7 @@ func TestIPAddrDetector_Hints(t *testing.T) {
 func TestIPAddrDetector_IPv6(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIPAddr()
+	d := NewIPAddr()
 	tests := []struct {
 		name    string
 		input   string
@@ -157,9 +154,9 @@ func TestIPAddrDetector_IPv6(t *testing.T) {
 		},
 		{
 			name:    "IPv6 loopback",
-			input:   "::1",
+			input:   loopbackIPv6,
 			wantLen: 0,
-			wantRaw: "::1",
+			wantRaw: loopbackIPv6,
 		},
 		{
 			name:    "IPv6 shortened",
@@ -206,7 +203,7 @@ func TestIPAddrDetector_IPv6(t *testing.T) {
 func TestIPAddrDetector_IPv4FollowedByDot(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIPAddr()
+	d := NewIPAddr()
 	findings := d.Scan([]byte("192.168.1.1."))
 	if len(findings) != 0 {
 		t.Errorf("got %d findings for IP followed by dot, want 0", len(findings))
@@ -216,7 +213,7 @@ func TestIPAddrDetector_IPv4FollowedByDot(t *testing.T) {
 func TestIPAddrDetector_MultipleIPs(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIPAddr()
+	d := NewIPAddr()
 	findings := d.Scan([]byte("from 10.0.0.1 to 10.0.0.2"))
 	if len(findings) != 2 {
 		t.Fatalf("got %d findings, want 2", len(findings))
@@ -226,7 +223,7 @@ func TestIPAddrDetector_MultipleIPs(t *testing.T) {
 func TestIPAddrDetector_DotPrefixed(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIPAddr()
+	d := NewIPAddr()
 	findings := d.Scan([]byte(".192.168.1.1"))
 	if len(findings) != 0 {
 		t.Errorf("got %d findings for dot-prefixed IP, want 0", len(findings))
@@ -236,7 +233,7 @@ func TestIPAddrDetector_DotPrefixed(t *testing.T) {
 func TestIPAddrDetector_IPv6TrailingBoundary(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewIPAddr()
+	d := NewIPAddr()
 	tests := []struct {
 		name    string
 		input   string
@@ -283,5 +280,22 @@ func TestIPAddrDetector_IPv6TrailingBoundary(t *testing.T) {
 				t.Fatalf("got %d findings, want %d: %+v", len(findings), tt.wantLen, findings)
 			}
 		})
+	}
+}
+
+func TestIPLocalAddressesAreNotPrivateEndpoints(t *testing.T) {
+	t.Parallel()
+	for _, address := range []string{"0.0.0.0", "::", loopbackIPv4, "127.255.255.254", loopbackIPv6} {
+		t.Run(address, func(t *testing.T) {
+			t.Parallel()
+			if got := NewIPAddr().Scan([]byte("listener [" + address + "]")); len(got) != 0 {
+				t.Fatal("host-independent address must not identify a private endpoint")
+			}
+		})
+	}
+	for _, address := range []string{"10.0.0.1", "126.255.255.255", "128.0.0.1", "192.0.2.1", "2001:db8::1"} {
+		if got := NewIPAddr().Scan([]byte(address)); len(got) != 1 || got[0].Start != 0 || got[0].End != len(address) {
+			t.Fatal("endpoint protection changed")
+		}
 	}
 }

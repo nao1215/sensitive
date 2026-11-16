@@ -1,22 +1,20 @@
-package detect_test
+package detect
 
 import (
 	"os"
 	"strings"
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 //nolint:gocognit // Keep each acceptance table and its assertions together for review.
 func TestPANDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
+	d := NewPAN()
 	tests := []struct {
 		name       string
 		input      string
-		wantBrand  detect.CardBrand
+		wantBrand  CardBrand
 		wantRaw    string
 		wantLen    int
 		wantMinCon float64
@@ -26,25 +24,23 @@ func TestPANDetector_Scan(t *testing.T) {
 			name:       "Visa basic 16 digits",
 			input:      "card is 4532015112830366",
 			wantLen:    1,
-			wantBrand:  detect.BrandVisa,
+			wantBrand:  BrandVisa,
 			wantRaw:    "4532015112830366",
 			wantMinCon: 0.9,
 		},
 		{
-			name: "Visa with dashes",
-			//nolint:goconst // Each test states its fixture and expected result independently.
+			name:       "Visa with dashes",
 			input:      "4532-0151-1283-0366",
 			wantLen:    1,
-			wantBrand:  detect.BrandVisa,
+			wantBrand:  BrandVisa,
 			wantRaw:    "4532-0151-1283-0366",
 			wantMinCon: 0.9,
 		},
 		{
-			name: "Visa with spaces",
-			//nolint:goconst // Each test states its fixture and expected result independently.
+			name:       "Visa with spaces",
 			input:      "4532 0151 1283 0366",
 			wantLen:    1,
-			wantBrand:  detect.BrandVisa,
+			wantBrand:  BrandVisa,
 			wantRaw:    "4532 0151 1283 0366",
 			wantMinCon: 0.9,
 		},
@@ -52,7 +48,7 @@ func TestPANDetector_Scan(t *testing.T) {
 			name:       "Mastercard 51-55 range",
 			input:      "5425233430109903",
 			wantLen:    1,
-			wantBrand:  detect.BrandMastercard,
+			wantBrand:  BrandMastercard,
 			wantRaw:    "5425233430109903",
 			wantMinCon: 0.9,
 		},
@@ -60,7 +56,7 @@ func TestPANDetector_Scan(t *testing.T) {
 			name:       "Amex 15 digits",
 			input:      "374245455400126",
 			wantLen:    1,
-			wantBrand:  detect.BrandAmex,
+			wantBrand:  BrandAmex,
 			wantRaw:    "374245455400126",
 			wantMinCon: 0.9,
 		},
@@ -68,7 +64,7 @@ func TestPANDetector_Scan(t *testing.T) {
 			name:       "JCB 3528-3589",
 			input:      "3566002020360505",
 			wantLen:    1,
-			wantBrand:  detect.BrandJCB,
+			wantBrand:  BrandJCB,
 			wantRaw:    "3566002020360505",
 			wantMinCon: 0.9,
 		},
@@ -76,7 +72,7 @@ func TestPANDetector_Scan(t *testing.T) {
 			name:       "Discover 6011 prefix",
 			input:      "6011000400000000",
 			wantLen:    1,
-			wantBrand:  detect.BrandDiscover,
+			wantBrand:  BrandDiscover,
 			wantRaw:    "6011000400000000",
 			wantMinCon: 0.9,
 		},
@@ -84,7 +80,7 @@ func TestPANDetector_Scan(t *testing.T) {
 			name:       "PAN in JSON value",
 			input:      `{"card":"4532015112830366"}`,
 			wantLen:    1,
-			wantBrand:  detect.BrandVisa,
+			wantBrand:  BrandVisa,
 			wantRaw:    "4532015112830366",
 			wantMinCon: 0.9,
 		},
@@ -114,8 +110,7 @@ func TestPANDetector_Scan(t *testing.T) {
 			wantLen: 0,
 		},
 		{
-			//nolint:goconst // Each test states its fixture and expected result independently.
-			name:    "empty input",
+			name:    emptyInputCase,
 			input:   "",
 			wantLen: 0,
 		},
@@ -161,7 +156,7 @@ func TestPANDetector_Scan(t *testing.T) {
 func TestPANDetector_FullWidthRawValue(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
+	d := NewPAN()
 	input := "４５３２０１５１１２８３０３６６"
 	findings := d.Scan([]byte(input))
 	if len(findings) != 1 {
@@ -181,16 +176,16 @@ func TestPANDetector_FullWidthRawValue(t *testing.T) {
 func TestPANDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
-	if d.Name() != detect.NamePAN {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NamePAN)
+	d := NewPAN()
+	if d.Name() != NamePAN {
+		t.Errorf("Name() = %q, want %q", d.Name(), NamePAN)
 	}
 }
 
 func TestPANDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
+	d := NewPAN()
 	hints := d.Hints()
 	if len(hints) == 0 {
 		t.Error("Hints() returned empty slice")
@@ -200,21 +195,21 @@ func TestPANDetector_Hints(t *testing.T) {
 func TestPANDetector_Brands(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
+	d := NewPAN()
 	tests := []struct {
 		name      string
 		input     string
-		wantBrand detect.CardBrand
+		wantBrand CardBrand
 	}{
-		{name: "Mastercard 2-series low", input: "2221000000000009", wantBrand: detect.BrandMastercard},
-		{name: "Mastercard 2-series high", input: "2720990000000007", wantBrand: detect.BrandMastercard},
-		{name: "Discover 65 prefix", input: "6500000000000002", wantBrand: detect.BrandDiscover},
-		{name: "Discover 644 prefix", input: "6440000000000007", wantBrand: detect.BrandDiscover},
-		{name: "UnionPay 62 prefix", input: "6200000000000005", wantBrand: detect.BrandUnionPay},
-		{name: "Diners 300 prefix", input: "30000000000004", wantBrand: detect.BrandDiners},
-		{name: "Diners 36 prefix", input: "36000000000008", wantBrand: detect.BrandDiners},
-		{name: "Diners 38 prefix", input: "38000000000006", wantBrand: detect.BrandDiners},
-		{name: "Amex 34 prefix", input: "340000000000009", wantBrand: detect.BrandAmex},
+		{name: "Mastercard 2-series low", input: "2221000000000009", wantBrand: BrandMastercard},
+		{name: "Mastercard 2-series high", input: "2720990000000007", wantBrand: BrandMastercard},
+		{name: "Discover 65 prefix", input: "6500000000000002", wantBrand: BrandDiscover},
+		{name: "Discover 644 prefix", input: "6440000000000007", wantBrand: BrandDiscover},
+		{name: "UnionPay 62 prefix", input: "6200000000000005", wantBrand: BrandUnionPay},
+		{name: "Diners 300 prefix", input: "30000000000004", wantBrand: BrandDiners},
+		{name: "Diners 36 prefix", input: "36000000000008", wantBrand: BrandDiners},
+		{name: "Diners 38 prefix", input: "38000000000006", wantBrand: BrandDiners},
+		{name: "Amex 34 prefix", input: "340000000000009", wantBrand: BrandAmex},
 	}
 
 	for _, tt := range tests {
@@ -239,7 +234,7 @@ func TestPANDetector_Brands(t *testing.T) {
 func TestPANDetector_UnknownBrandNotDetected(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
+	d := NewPAN()
 	// Prefix '9' has no known brand, should not be reported.
 	findings := d.Scan([]byte("9000000000000001"))
 	if len(findings) != 0 {
@@ -250,7 +245,7 @@ func TestPANDetector_UnknownBrandNotDetected(t *testing.T) {
 func TestPANDetector_LuhnFailLowerConfidence(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
+	d := NewPAN()
 	// Visa-prefixed 16 digits but Luhn fails — still detected with lower confidence.
 	findings := d.Scan([]byte("4532015112830360"))
 	if len(findings) != 1 {
@@ -264,7 +259,7 @@ func TestPANDetector_LuhnFailLowerConfidence(t *testing.T) {
 func TestPANDetector_BrandLengthMismatchRejected(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
+	d := NewPAN()
 	tests := []struct {
 		name  string
 		input string
@@ -303,7 +298,7 @@ func TestPANDetector_BrandLengthMismatchRejected(t *testing.T) {
 func TestPANDetector_Visa13Digits(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
+	d := NewPAN()
 	findings := d.Scan([]byte("4222222222225"))
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
@@ -312,8 +307,8 @@ func TestPANDetector_Visa13Digits(t *testing.T) {
 	if !ok {
 		t.Fatal("PANDetail() returned false")
 	}
-	if detail.Brand != detect.BrandVisa {
-		t.Errorf("Brand = %q, want %q", detail.Brand, detect.BrandVisa)
+	if detail.Brand != BrandVisa {
+		t.Errorf("Brand = %q, want %q", detail.Brand, BrandVisa)
 	}
 	if detail.Length != 13 {
 		t.Errorf("Length = %d, want 13", detail.Length)
@@ -323,7 +318,7 @@ func TestPANDetector_Visa13Digits(t *testing.T) {
 func TestPANDetector_UnionPayLong(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
+	d := NewPAN()
 	findings := d.Scan([]byte("6200000000000000003"))
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
@@ -332,21 +327,21 @@ func TestPANDetector_UnionPayLong(t *testing.T) {
 	if !ok {
 		t.Fatal("PANDetail() returned false")
 	}
-	if detail.Brand != detect.BrandUnionPay {
-		t.Errorf("Brand = %q, want %q", detail.Brand, detect.BrandUnionPay)
+	if detail.Brand != BrandUnionPay {
+		t.Errorf("Brand = %q, want %q", detail.Brand, BrandUnionPay)
 	}
 }
 
 func TestPANDetector_JCBOutOfRange(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
+	d := NewPAN()
 	// 3527 is just below JCB range (3528-3589), prefix '35' with v=27.
 	// This should not match as JCB. It might match as something else or not at all.
 	findings := d.Scan([]byte("3527000000000000"))
 	for _, f := range findings {
 		detail, ok := f.PANDetail()
-		if ok && detail.Brand == detect.BrandJCB {
+		if ok && detail.Brand == BrandJCB {
 			t.Error("3527 prefix should not match as JCB")
 		}
 	}
@@ -355,12 +350,12 @@ func TestPANDetector_JCBOutOfRange(t *testing.T) {
 func TestPANDetector_Mastercard2SeriesOutOfRange(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
+	d := NewPAN()
 	// 2220 is below Mastercard 2-series range (2221-2720).
 	findings := d.Scan([]byte("2220000000000000"))
 	for _, f := range findings {
 		detail, ok := f.PANDetail()
-		if ok && detail.Brand == detect.BrandMastercard {
+		if ok && detail.Brand == BrandMastercard {
 			t.Error("2220 prefix should not match as Mastercard")
 		}
 	}
@@ -369,7 +364,7 @@ func TestPANDetector_Mastercard2SeriesOutOfRange(t *testing.T) {
 func TestPANDetector_UnknownBrand5Prefix(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
+	d := NewPAN()
 	// Prefix '56' is not Mastercard (51-55), so identifyBrand returns "".
 	findings := d.Scan([]byte("5600000000000008"))
 	if len(findings) != 0 {
@@ -380,7 +375,7 @@ func TestPANDetector_UnknownBrand5Prefix(t *testing.T) {
 func TestPANDetector_UnknownBrand6Prefix(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
+	d := NewPAN()
 	// Prefix '63' is not Discover/UnionPay, so identifyBrand returns "".
 	findings := d.Scan([]byte("6300000000000006"))
 	if len(findings) != 0 {
@@ -391,7 +386,7 @@ func TestPANDetector_UnknownBrand6Prefix(t *testing.T) {
 func TestPANDetector_UnknownBrand3Prefix(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
+	d := NewPAN()
 	// Prefix '31' is not Amex/Diners/JCB, so identifyBrand returns "".
 	findings := d.Scan([]byte("3100000000000005"))
 	if len(findings) != 0 {
@@ -402,7 +397,7 @@ func TestPANDetector_UnknownBrand3Prefix(t *testing.T) {
 func TestPANDetector_TrailingSeparator(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPAN()
+	d := NewPAN()
 	// PAN with trailing space should still detect correctly.
 	findings := d.Scan([]byte("4532015112830366 "))
 	if len(findings) != 1 {
@@ -420,9 +415,65 @@ func TestPANSpecificationVectors(t *testing.T) {
 		t.Fatal(err)
 	}
 	for raw := range strings.FieldsSeq(string(data)) {
-		got := detect.NewPAN().Scan([]byte(raw))
+		got := NewPAN().Scan([]byte(raw))
 		if len(got) != 1 || got[0].RawValue != raw || got[0].Confidence < 0.99 {
 			t.Fatalf("Luhn vector rejected: %s", raw)
+		}
+	}
+}
+
+func TestPANRejectsIdentifierFragments(t *testing.T) {
+	t.Parallel()
+	for _, text := range []string{"d55593266701308e", "a4532015112830366", "4532015112830366f", "_4532015112830366", "4532015112830366_", "a４５３２０１５１１２８３０３６６f"} {
+		if got := NewPAN().Scan([]byte(text)); len(got) != 0 {
+			t.Errorf("identifier fragment reported as PAN: %q", text)
+		}
+	}
+	for _, text := range []string{"4532015112830366", "card=4532-0151-1283-0366", "v%3D4532015112830366", "カード４５３２０１５１１２８３０３６６"} {
+		if got := NewPAN().Scan([]byte(text)); len(got) != 1 {
+			t.Errorf("delimited PAN missing: %q", text)
+		}
+	}
+}
+
+func TestPANPrefixAndLengthEdges(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		prefix string
+		brand  CardBrand
+	}{
+		{"51", BrandMastercard},
+		{"55", BrandMastercard},
+		{"50", ""},
+		{"56", ""},
+		{"3527", ""},
+		{"3528", BrandJCB},
+		{"3589", BrandJCB},
+		{"3590", ""},
+		{"643", ""},
+		{"644", BrandDiscover},
+		{"649", BrandDiscover},
+		{"650", BrandDiscover},
+	} {
+		raw := tc.prefix + strings.Repeat("0", 16-len(tc.prefix))
+		got := NewPAN().Scan([]byte(raw))
+		if tc.brand == "" {
+			if len(got) != 0 {
+				t.Fatal(tc.prefix, got)
+			}
+			continue
+		}
+		if len(got) != 1 {
+			t.Fatal(tc.prefix, got)
+		}
+		detail, ok := got[0].Detail.(*PANDetail)
+		if !ok || detail.Brand != tc.brand {
+			t.Fatal(tc.prefix, got)
+		}
+	}
+	for _, n := range []int{15, 16, 19, 20} {
+		if isExpectedLength(BrandUnionPay, n) != (n == 16 || n == 19) {
+			t.Fatal("UnionPay length", n)
 		}
 	}
 }

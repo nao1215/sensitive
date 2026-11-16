@@ -144,3 +144,48 @@ func TestWriterRequiresDependencies(t *testing.T) {
 		})
 	}
 }
+
+func TestWriterBuffersAndRejectsIncompleteOutput(t *testing.T) {
+	t.Parallel()
+	var sink bytes.Buffer
+	w := NewWriter(&sink, embargo.NewScanner(embargo.WithKinds(embargo.KindEmail)))
+	if _, err := w.Write([]byte(`{"email":"alice@`)); err != nil {
+		t.Fatal(err)
+	}
+	if sink.Len() != 0 {
+		t.Fatal("partial event escaped")
+	}
+	if _, err := w.Write([]byte("example.com\"}\n")); err != nil {
+		t.Fatal(err)
+	}
+	if sink.String() != "{\"email\":\"[REDACTED]\"}\n" {
+		t.Fatal("event not masked")
+	}
+	if err := w.Flush(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := w.Write([]byte(`{"unfinished":`)); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Close(); err == nil {
+		t.Fatal("incomplete event accepted")
+	}
+	if _, err := w.Write([]byte("false}\n")); err == nil {
+		t.Fatal("closed writer accepted output")
+	}
+}
+
+type failedWriter struct{}
+
+func (failedWriter) Write([]byte) (int, error) { return 0, io.ErrClosedPipe }
+
+func TestWriterPreservesSinkErrors(t *testing.T) {
+	t.Parallel()
+	w := NewWriter(failedWriter{}, embargo.NewScanner())
+	if _, err := w.Write([]byte("{\"ok\":true}\n")); !errors.Is(err, io.ErrClosedPipe) {
+		t.Fatal("sink error lost")
+	}
+	if err := w.Flush(); !errors.Is(err, io.ErrClosedPipe) {
+		t.Fatal("failure not sticky")
+	}
+}

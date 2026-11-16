@@ -1,6 +1,8 @@
 package detect
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestBusinessIdentifiersHaveLowerConfidence(t *testing.T) {
 	t.Parallel()
@@ -8,7 +10,7 @@ func TestBusinessIdentifiersHaveLowerConfidence(t *testing.T) {
 		d     Detector
 		value string
 	}{
-		{NewPAN(), "4242424242424242"}, {NewMyNumber(), "123456789018"}, {NewJPPhone(), "090-1234-5678"},
+		{NewPAN(), samplePAN}, {NewMyNumber(), sampleMyNumber}, {NewJPPhone(), sampleMobile},
 	} {
 		for _, label := range []string{"Order ID: ", "invoice_ref = ", "tracking_serial = ", "Version: ", "build: ", "Shipment ID: ", "?order=", "&invoice="} {
 			got := tc.d.Scan([]byte(label + tc.value))
@@ -25,11 +27,12 @@ func TestBusinessIdentifiersHaveLowerConfidence(t *testing.T) {
 	}
 }
 
-func TestMyNumberIdentifierBoundaries(t *testing.T) {
+func TestBusinessLabelsAtFieldBoundaries(t *testing.T) {
 	t.Parallel()
-	for _, text := range []string{"_123456789018", "123456789018_suffix", "123456789018x", "x123456789018"} {
-		if got := NewMyNumber().Scan([]byte(text)); len(got) != 0 {
-			t.Errorf("identifier fragment %q: %+v", text, got)
+	for _, prefix := range []string{"[Order ID: ", ";invoice=", "\ntracking: ", "{\"serial\":\""} {
+		got := NewPAN().Scan([]byte(prefix + samplePAN))
+		if len(got) != 1 || got[0].Confidence != .4 {
+			t.Fatal(prefix, got)
 		}
 	}
 }

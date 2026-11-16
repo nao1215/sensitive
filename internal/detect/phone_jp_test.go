@@ -1,15 +1,14 @@
-package detect_test
+package detect
 
 import (
+	"strings"
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestJPPhoneDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJPPhone()
+	d := NewJPPhone()
 	tests := []struct {
 		name       string
 		input      string
@@ -18,11 +17,10 @@ func TestJPPhoneDetector_Scan(t *testing.T) {
 		wantMinCon float64
 	}{
 		{
-			name:    "mobile with dashes",
-			input:   "call 090-1234-5678 now",
-			wantLen: 1,
-			//nolint:goconst // Each test states its fixture and expected result independently.
-			wantRaw:    "090-1234-5678",
+			name:       "mobile with dashes",
+			input:      "call 090-1234-5678 now",
+			wantLen:    1,
+			wantRaw:    sampleMobile,
 			wantMinCon: 0.8,
 		},
 		{
@@ -36,7 +34,7 @@ func TestJPPhoneDetector_Scan(t *testing.T) {
 			name:       "landline Tokyo",
 			input:      "TEL: 03-1234-5678",
 			wantLen:    1,
-			wantRaw:    "03-1234-5678",
+			wantRaw:    sampleLandline,
 			wantMinCon: 0.8,
 		},
 		{
@@ -77,8 +75,7 @@ func TestJPPhoneDetector_Scan(t *testing.T) {
 			wantLen: 0,
 		},
 		{
-			//nolint:goconst // Each test states its fixture and expected result independently.
-			name:    "empty input",
+			name:    emptyInputCase,
 			input:   "",
 			wantLen: 0,
 		},
@@ -156,13 +153,11 @@ func TestJPPhoneDetector_Scan(t *testing.T) {
 
 		// Underscore boundary.
 		{
-			//nolint:goconst // Each test states its fixture and expected result independently.
 			name:    "preceded by underscore",
 			input:   "_09012345678",
 			wantLen: 0,
 		},
 		{
-			//nolint:goconst // Each test states its fixture and expected result independently.
 			name:    "followed by underscore",
 			input:   "09012345678_",
 			wantLen: 0,
@@ -225,7 +220,7 @@ func TestJPPhoneDetector_Scan(t *testing.T) {
 func TestJPPhoneDetector_FullWidthRawValue(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJPPhone()
+	d := NewJPPhone()
 	input := "TEL: ０９０－１２３４－５６７８"
 	findings := d.Scan([]byte(input))
 	if len(findings) != 1 {
@@ -244,17 +239,17 @@ func TestJPPhoneDetector_FullWidthRawValue(t *testing.T) {
 func TestJPPhoneDetector_Detail(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJPPhone()
+	d := NewJPPhone()
 	tests := []struct {
 		input    string
-		wantType detect.JPPhoneType
+		wantType JPPhoneType
 	}{
-		{input: "090-1234-5678", wantType: detect.JPPhoneTypeMobile},
-		{input: "03-1234-5678", wantType: detect.JPPhoneTypeLandline},
-		{input: "050-1234-5678", wantType: detect.JPPhoneTypeIPPhone},
-		{input: "0120-123-456", wantType: detect.JPPhoneTypeTollFree},
-		{input: "020-1234-5678", wantType: detect.JPPhoneTypeM2M},
-		{input: "060-1234-5678", wantType: detect.JPPhoneTypeService},
+		{input: sampleMobile, wantType: JPPhoneTypeMobile},
+		{input: sampleLandline, wantType: JPPhoneTypeLandline},
+		{input: "050-1234-5678", wantType: JPPhoneTypeIPPhone},
+		{input: "0120-123-456", wantType: JPPhoneTypeTollFree},
+		{input: "020-1234-5678", wantType: JPPhoneTypeM2M},
+		{input: "060-1234-5678", wantType: JPPhoneTypeService},
 	}
 	for _, tt := range tests {
 		findings := d.Scan([]byte(tt.input))
@@ -274,16 +269,16 @@ func TestJPPhoneDetector_Detail(t *testing.T) {
 func TestJPPhoneDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJPPhone()
-	if d.Name() != detect.NameJPPhone {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameJPPhone)
+	d := NewJPPhone()
+	if d.Name() != NameJPPhone {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameJPPhone)
 	}
 }
 
 func TestJPPhoneDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJPPhone()
+	d := NewJPPhone()
 	hints := d.Hints()
 	if len(hints) != 2 {
 		t.Fatalf("Hints() returned %d hints, want 2", len(hints))
@@ -300,7 +295,7 @@ func TestJPPhoneDetector_Hints(t *testing.T) {
 func TestJPPhoneDetector_PrecededByAlpha(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJPPhone()
+	d := NewJPPhone()
 	// '0' preceded by alphanumeric should be skipped.
 	findings := d.Scan([]byte("x09012345678"))
 	if len(findings) != 0 {
@@ -311,7 +306,7 @@ func TestJPPhoneDetector_PrecededByAlpha(t *testing.T) {
 func TestJPPhoneDetector_FollowedByAlpha(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJPPhone()
+	d := NewJPPhone()
 	// Phone number followed by alphanumeric should not match.
 	findings := d.Scan([]byte("09012345678x"))
 	if len(findings) != 0 {
@@ -322,7 +317,7 @@ func TestJPPhoneDetector_FollowedByAlpha(t *testing.T) {
 func TestJPPhoneDetector_WithParentheses(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJPPhone()
+	d := NewJPPhone()
 	findings := d.Scan([]byte("03(1234)5678"))
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
@@ -335,7 +330,7 @@ func TestJPPhoneDetector_WithParentheses(t *testing.T) {
 func TestJPPhoneDetector_Landline080Prefix(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJPPhone()
+	d := NewJPPhone()
 	// 080 as 11-digit is mobile.
 	findings := d.Scan([]byte("080-1234-5678"))
 	if len(findings) != 1 {
@@ -345,15 +340,15 @@ func TestJPPhoneDetector_Landline080Prefix(t *testing.T) {
 	if !ok {
 		t.Fatal("JPPhoneDetail() returned false")
 	}
-	if detail.PhoneType != detect.JPPhoneTypeMobile {
-		t.Errorf("PhoneType = %q, want %q", detail.PhoneType, detect.JPPhoneTypeMobile)
+	if detail.PhoneType != JPPhoneTypeMobile {
+		t.Errorf("PhoneType = %q, want %q", detail.PhoneType, JPPhoneTypeMobile)
 	}
 }
 
 func TestJPPhoneDetector_070Mobile(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJPPhone()
+	d := NewJPPhone()
 	findings := d.Scan([]byte("070-1234-5678"))
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
@@ -362,15 +357,15 @@ func TestJPPhoneDetector_070Mobile(t *testing.T) {
 	if !ok {
 		t.Fatal("JPPhoneDetail() returned false")
 	}
-	if detail.PhoneType != detect.JPPhoneTypeMobile {
-		t.Errorf("PhoneType = %q, want %q", detail.PhoneType, detect.JPPhoneTypeMobile)
+	if detail.PhoneType != JPPhoneTypeMobile {
+		t.Errorf("PhoneType = %q, want %q", detail.PhoneType, JPPhoneTypeMobile)
 	}
 }
 
 func TestJPPhoneDetector_0800Classified(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJPPhone()
+	d := NewJPPhone()
 	// 0800 (11 digits) matches the 080 mobile prefix check first.
 	findings := d.Scan([]byte("0800-123-4567"))
 	if len(findings) != 1 {
@@ -380,15 +375,15 @@ func TestJPPhoneDetector_0800Classified(t *testing.T) {
 	if !ok {
 		t.Fatal("JPPhoneDetail() returned false")
 	}
-	if detail.PhoneType != detect.JPPhoneTypeMobile {
-		t.Errorf("PhoneType = %q, want %q", detail.PhoneType, detect.JPPhoneTypeMobile)
+	if detail.PhoneType != JPPhoneTypeMobile {
+		t.Errorf("PhoneType = %q, want %q", detail.PhoneType, JPPhoneTypeMobile)
 	}
 }
 
 func TestJPPhoneDetector_LandlineValid(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJPPhone()
+	d := NewJPPhone()
 	// 06 (Osaka) should be a valid landline prefix.
 	findings := d.Scan([]byte("06-1234-5678"))
 	if len(findings) != 1 {
@@ -398,15 +393,15 @@ func TestJPPhoneDetector_LandlineValid(t *testing.T) {
 	if !ok {
 		t.Fatal("JPPhoneDetail() returned false")
 	}
-	if detail.PhoneType != detect.JPPhoneTypeLandline {
-		t.Errorf("PhoneType = %q, want %q", detail.PhoneType, detect.JPPhoneTypeLandline)
+	if detail.PhoneType != JPPhoneTypeLandline {
+		t.Errorf("PhoneType = %q, want %q", detail.PhoneType, JPPhoneTypeLandline)
 	}
 }
 
 func TestJPPhoneDetector_TooManyDigits(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJPPhone()
+	d := NewJPPhone()
 	// 12 digits should not match.
 	findings := d.Scan([]byte("090123456789"))
 	if len(findings) != 0 {
@@ -417,10 +412,33 @@ func TestJPPhoneDetector_TooManyDigits(t *testing.T) {
 func TestJPPhoneDetector_ShortDigits(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJPPhone()
+	d := NewJPPhone()
 	// 9 digits should not match.
 	findings := d.Scan([]byte("090-123-456"))
 	if len(findings) != 0 {
 		t.Errorf("got %d findings for 9 digits, want 0", len(findings))
+	}
+}
+
+func TestPhoneConfidenceAndContainsEdges(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		raw        string
+		confidence float64
+	}{{sampleMobile, .9}, {sampleLandline, .8}} {
+		got := NewJPPhone().Scan([]byte(tc.raw))
+		if len(got) != 1 || got[0].Confidence != tc.confidence {
+			t.Fatal(tc.raw, got)
+		}
+	}
+	for _, data := range []string{"", "a", "aa", "abc"} {
+		for _, sub := range []string{"", "a", "aa", "abc", "abcd"} {
+			if containsBytes([]byte(data), []byte(sub)) != strings.Contains(data, sub) {
+				t.Fatal("contains", data, sub)
+			}
+		}
+	}
+	if bankAccountKeywordLang(nil) != BankAccountLangEN || bankAccountKeywordLang([]byte{0x80}) != BankAccountLangJA {
+		t.Fatal("keyword language")
 	}
 }
