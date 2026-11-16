@@ -16,7 +16,7 @@ The default minimum confidence remains 0: ambiguous candidates are included. Con
 
 The original 23 built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in the input before detection. Findings map back to original bytes, so masking covers the escaped representation. Literal `+` and malformed percent escapes remain unchanged. Custom detectors receive the original bytes. Base64, hexadecimal, HTML entities, JSON escapes and recursively percent-encoded forms are not decoded by Scanner; decode application fields explicitly when needed. The logger adapters separately decode JSON strings at their output boundary.
 
-[Round-trip and offset properties](../scanner_encoding_test.go) exercise random partial escaping and all byte values. [Regression tests](../tests/accuracy_regression_test.go) reject new mismatches and obsolete exceptions in both sets. Known limits retain reasons in [development](../tests/testdata/accuracy_limits.jsonl) and [held-out](../tests/testdata/accuracy_held_limits.jsonl) fixtures.
+[Round-trip and offset properties](../percent_test.go) exercise random partial escaping and all byte values. [Regression tests](../tests/accuracy_test.go) reject new mismatches and obsolete exceptions in both sets. Known limits retain reasons in [development](../tests/testdata/accuracy_limits.jsonl) and [held-out](../tests/testdata/accuracy_held_limits.jsonl) fixtures.
 
 ## Held-out results: default threshold 0
 
@@ -192,7 +192,7 @@ The original 23 built-in detectors decode exactly one layer of valid `%HH` escap
 
 ![Held-out aba_routing precision and recall](images/accuracy-aba_routing.svg)
 
-Verified by the [aba_routing format tests](../internal/detect/aba_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Independently generated routing checksums, line endings and checksum failures.
+Verified by the [aba_routing format tests](../internal/detect/aba_test.go) and the [corpus regression check](../tests/accuracy_test.go). Independently generated routing checksums, line endings and checksum failures.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -200,7 +200,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out ach_trace precision and recall](images/accuracy-ach_trace.svg)
 
-Verified by the [ach_trace format tests](../internal/detect/ach_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Contextual fifteen-digit traces, line endings and short traces as negatives.
+Verified by the [ach_trace format tests](../internal/detect/ach_test.go) and the [corpus regression check](../tests/accuracy_test.go). Contextual fifteen-digit traces, line endings and short traces as negatives.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -208,7 +208,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out awskey precision and recall](images/accuracy-awskey.svg)
 
-Verified by the [awskey format tests](../internal/detect/awskey_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). AKIA and ASIA prefixes in log, JSON and Japanese text; short tokens as negatives.
+Verified by the [awskey format tests](../internal/detect/awskey_test.go) and the [corpus regression check](../tests/accuracy_test.go). AKIA and ASIA prefixes in log, JSON and Japanese text; short tokens as negatives.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -216,7 +216,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out bank_account precision and recall](images/accuracy-bank_account.svg)
 
-Verified by the [bank_account format tests](../internal/detect/bank_account_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Contextual account numbers in log, JSON and Japanese text; too-short values as negatives.
+Verified by the [bank_account format tests](../internal/detect/bank_account_test.go) and the [corpus regression check](../tests/accuracy_test.go). Contextual account numbers in log, JSON and Japanese text; too-short values as negatives.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -224,7 +224,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out btc precision and recall](images/accuracy-btc.svg)
 
-Verified by the [btc format tests](../internal/detect/btc_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Independently generated Base58Check P2PKH addresses and invalid checksum look-alikes.
+Verified by the [btc format tests](../internal/detect/btc_test.go) and the [corpus regression check](../tests/accuracy_test.go). Independently generated Base58Check P2PKH addresses and invalid checksum look-alikes.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -232,7 +232,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out card_expiry precision and recall](images/accuracy-card_expiry.svg)
 
-Verified by the [card_expiry format tests](../internal/detect/card_expiry_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Month/year dates near expiry context in log, JSON and Japanese text; invalid months as negatives.
+Verified by the [card_expiry format tests](../internal/detect/card_expiry_test.go) and the [corpus regression check](../tests/accuracy_test.go). Month/year dates near expiry context in log, JSON and Japanese text; invalid months as negatives.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -240,7 +240,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out cvv precision and recall](images/accuracy-cvv.svg)
 
-Verified by the [cvv format tests](../internal/detect/cvv_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Three-digit values near CVV context in log, JSON and Japanese text; two-digit values as negatives.
+Verified by the [cvv format tests](../internal/detect/cvv_test.go) and the [corpus regression check](../tests/accuracy_test.go). Three-digit values near CVV context in log, JSON and Japanese text; two-digit values as negatives.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -248,7 +248,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out email precision and recall](images/accuracy-email.svg)
 
-Verified by the [email format tests](../internal/detect/email_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Plus-addressing, JSON fields, Japanese boundaries and doubled-at-sign negatives.
+Verified by the [email format tests](../internal/detect/email_test.go) and the [corpus regression check](../tests/accuracy_test.go). Plus-addressing, JSON fields, Japanese boundaries and doubled-at-sign negatives.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -256,7 +256,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out eth precision and recall](images/accuracy-eth.svg)
 
-Verified by the [eth format tests](../internal/detect/eth_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Lowercase hexadecimal addresses and malformed non-hexadecimal look-alikes.
+Verified by the [eth format tests](../internal/detect/eth_test.go) and the [corpus regression check](../tests/accuracy_test.go). Lowercase hexadecimal addresses and malformed non-hexadecimal look-alikes.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -264,7 +264,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out github_token precision and recall](images/accuracy-github_token.svg)
 
-Verified by the [github_token format tests](../internal/detect/github_token_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Four classic token prefixes in log, JSON and Japanese text; short tokens as negatives.
+Verified by the [github_token format tests](../internal/detect/github_token_test.go) and the [corpus regression check](../tests/accuracy_test.go). Four classic token prefixes in log, JSON and Japanese text; short tokens as negatives.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -272,7 +272,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out google_api_key precision and recall](images/accuracy-google_api_key.svg)
 
-Verified by the [google_api_key format tests](../internal/detect/google_apikey_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). AIza-prefixed keys in log, JSON and Japanese text; short bodies as negatives.
+Verified by the [google_api_key format tests](../internal/detect/google_apikey_test.go) and the [corpus regression check](../tests/accuracy_test.go). AIza-prefixed keys in log, JSON and Japanese text; short bodies as negatives.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -280,7 +280,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out iban precision and recall](images/accuracy-iban.svg)
 
-Verified by the [iban format tests](../internal/detect/iban_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Independently generated German MOD 97 check digits and surrounding JSON or log text.
+Verified by the [iban format tests](../internal/detect/iban_test.go) and the [corpus regression check](../tests/accuracy_test.go). Independently generated German MOD 97 check digits and surrounding JSON or log text.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -288,7 +288,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out ipaddr precision and recall](images/accuracy-ipaddr.svg)
 
-Verified by the [ipaddr format tests](../internal/detect/ipaddr_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Documentation-range IPv4 and IPv6 addresses, Japanese boundaries and invalid octets.
+Verified by the [ipaddr format tests](../internal/detect/ipaddr_test.go) and the [corpus regression check](../tests/accuracy_test.go). Documentation-range IPv4 and IPv6 addresses, Japanese boundaries and invalid octets.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -296,7 +296,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out jwt precision and recall](images/accuracy-jwt.svg)
 
-Verified by the [jwt format tests](../internal/detect/jwt_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Base64url header, payload and signature fields; malformed payload look-alikes.
+Verified by the [jwt format tests](../internal/detect/jwt_test.go) and the [corpus regression check](../tests/accuracy_test.go). Base64url header, payload and signature fields; malformed payload look-alikes.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -304,7 +304,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out merchant_id precision and recall](images/accuracy-merchant_id.svg)
 
-Verified by the [merchant_id format tests](../internal/detect/merchant_id_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Contextual merchant IDs in log, JSON and Japanese text; short IDs as negatives.
+Verified by the [merchant_id format tests](../internal/detect/merchant_id_test.go) and the [corpus regression check](../tests/accuracy_test.go). Contextual merchant IDs in log, JSON and Japanese text; short IDs as negatives.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -312,7 +312,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out mynumber precision and recall](images/accuracy-mynumber.svg)
 
-Verified by the [mynumber format tests](../internal/detect/mynumber_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Independently generated MOD 11 check digits, full-width digits and Japanese text boundaries.
+Verified by the [mynumber format tests](../internal/detect/mynumber_test.go) and the [corpus regression check](../tests/accuracy_test.go). Independently generated MOD 11 check digits, full-width digits and Japanese text boundaries.
 
 | Set / observed limit | Input example | Why it remains |
 |---|---|---|
@@ -324,7 +324,7 @@ Verified by the [mynumber format tests](../internal/detect/mynumber_test.go) and
 
 ![Held-out pan precision and recall](images/accuracy-pan.svg)
 
-Verified by the [pan format tests](../internal/detect/pan_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Luhn-valid Visa, Mastercard, Amex and JCB shapes, hyphen-separated groups and full-width digits.
+Verified by the [pan format tests](../internal/detect/pan_test.go) and the [corpus regression check](../tests/accuracy_test.go). Luhn-valid Visa, Mastercard, Amex and JCB shapes, hyphen-separated groups and full-width digits.
 
 | Set / observed limit | Input example | Why it remains |
 |---|---|---|
@@ -339,7 +339,7 @@ Verified by the [pan format tests](../internal/detect/pan_test.go) and the [corp
 
 ![Held-out payment_token precision and recall](images/accuracy-payment_token.svg)
 
-Verified by the [payment_token format tests](../internal/detect/payment_token_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Five payment-token prefixes in log, JSON and Japanese text; short bodies as negatives.
+Verified by the [payment_token format tests](../internal/detect/payment_token_test.go) and the [corpus regression check](../tests/accuracy_test.go). Five payment-token prefixes in log, JSON and Japanese text; short bodies as negatives.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -347,7 +347,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out phone_jp precision and recall](images/accuracy-phone_jp.svg)
 
-Verified by the [phone_jp format tests](../internal/detect/phone_jp_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Hyphenated mobile numbers, full-width digits and Japanese text boundaries.
+Verified by the [phone_jp format tests](../internal/detect/phone_jp_test.go) and the [corpus regression check](../tests/accuracy_test.go). Hyphenated mobile numbers, full-width digits and Japanese text boundaries.
 
 | Set / observed limit | Input example | Why it remains |
 |---|---|---|
@@ -359,7 +359,7 @@ Verified by the [phone_jp format tests](../internal/detect/phone_jp_test.go) and
 
 ![Held-out private_key_pem precision and recall](images/accuracy-private_key_pem.svg)
 
-Verified by the [private_key_pem format tests](../internal/detect/private_key_pem_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). RSA, EC, OpenSSH and PKCS#8 private-key headers; public-key and certificate headers as negatives.
+Verified by the [private_key_pem format tests](../internal/detect/private_key_pem_test.go) and the [corpus regression check](../tests/accuracy_test.go). RSA, EC, OpenSSH and PKCS#8 private-key headers; public-key and certificate headers as negatives.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -367,7 +367,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out slack_token precision and recall](images/accuracy-slack_token.svg)
 
-Verified by the [slack_token format tests](../internal/detect/slack_token_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Multi-part xoxb shapes in log, JSON and Japanese text; an unsupported type letter as a negative.
+Verified by the [slack_token format tests](../internal/detect/slack_token_test.go) and the [corpus regression check](../tests/accuracy_test.go). Multi-part xoxb shapes in log, JSON and Japanese text; an unsupported type letter as a negative.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -375,7 +375,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 ![Held-out swiftbic precision and recall](images/accuracy-swiftbic.svg)
 
-Verified by the [swiftbic format tests](../internal/detect/swiftbic_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Eight- and eleven-character shapes near SWIFT context, with invalid country-code look-alikes.
+Verified by the [swiftbic format tests](../internal/detect/swiftbic_test.go) and the [corpus regression check](../tests/accuracy_test.go). Eight- and eleven-character shapes near SWIFT context, with invalid country-code look-alikes.
 
 | Set / observed limit | Input example | Why it remains |
 |---|---|---|
@@ -387,7 +387,7 @@ Verified by the [swiftbic format tests](../internal/detect/swiftbic_test.go) and
 
 ![Held-out uk_sortcode precision and recall](images/accuracy-uk_sortcode.svg)
 
-Verified by the [uk_sortcode format tests](../internal/detect/sortcode_test.go) and the [corpus regression check](../tests/accuracy_regression_test.go). Separated sort codes, context words, and overlong sequences as negatives.
+Verified by the [uk_sortcode format tests](../internal/detect/sortcode_test.go) and the [corpus regression check](../tests/accuracy_test.go). Separated sort codes, context words, and overlong sequences as negatives.
 
 At the default threshold, no misses or false alarms appeared in either set.
 
@@ -400,7 +400,7 @@ python3 scripts/accuracy_figures.py --check
 go -C tests test -run "Test(Accuracy|GeneratedAccuracy)" .
 ```
 
-The 0.7 results improve PAN, My Number and phone precision on both sets without losing recall in these samples; the default retains their ambiguous business identifiers. Email and encoded-form recall improve on both sets. SWIFT word false positives remain: the rejected attachment rule improved development precision but failed held-out evaluation. Round 12 adds development regressions for reserved IBAN check digits 00, 01 and 99 and rejects them before MOD 97. The four formerly held-out false positives are fixed; this historical set is now regression evidence, not unseen evaluation.
+The 0.7 results improve PAN, My Number and phone precision on both sets without losing recall in these samples; the default retains their ambiguous business identifiers. Email and encoded-form recall improve on both sets. SWIFT word false positives remain: the rejected attachment rule improved development precision but failed held-out evaluation. The development suite includes regressions for reserved IBAN check digits 00, 01 and 99 and the detector rejects them before MOD 97. The four formerly held-out false positives are fixed; this historical set is now regression evidence, not unseen evaluation.
 
 PEM samples test headers, not full private keys. Generated service tokens test syntax, not authentication. Do not use synthetic identities, account or phone values for transactions or contacting people.
 
@@ -484,7 +484,7 @@ The default confidence decision is 0 for every tier. Critical precision improves
 | Spark | held | official 2,000-line sample | 196,268 | 2,000 | [LogHub research/academic use](https://github.com/logpai/loghub/blob/dd61d0952749ee7963bde24220d1be5ede023033/LICENSE); [provenance](https://github.com/logpai/loghub/blob/dd61d0952749ee7963bde24220d1be5ede023033/Spark/README.md) |
 | Zookeeper | held | complete | 10,426,438 | 74,380 | [LogHub research/academic use](https://github.com/logpai/loghub/blob/dd61d0952749ee7963bde24220d1be5ede023033/LICENSE); [provenance](https://github.com/logpai/loghub/blob/dd61d0952749ee7963bde24220d1be5ede023033/Zookeeper/README.md) |
 
-Before retains b8290bc, the input to round 13; after uses the round-15 policy with opt-in country identifiers. These columns include the earlier round-13 fixes. The held split has now been seen and serves as regression data, not an independent evaluation of this change.
+Before is the retained baseline aggregate; after is the measured current policy, including opt-in country identifiers. The held split has now been seen and serves as regression data, not an independent evaluation of this change.
 
 Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), not counts of affected lines. IP addresses and published user/contact identities are sensitive references under this evaluation policy; the unspecified listener address 0.0.0.0 is an FP. Checksums do not establish a real account. A hostname fragment is an FP for MyNumber even if the hostname itself identifies a machine.
 
@@ -545,7 +545,7 @@ The handler receives each raw line as its message and no attributes; its encoded
 Each dataset/kind stratum uses the 40 lowest SHA-256 finding IDs, or every finding if there are fewer. Review labels are in [real-logs-labels.json](real-logs-labels.json); counts and sampled FP fractions are in [real-logs-summary.json](real-logs-summary.json). The estimate sums count × sampled FP fraction across datasets. Zero observed sample FPs does not establish zero population FPs. Small samples, repeated templates and this 92.4 MB source mix cannot predict a deployment’s rate. No recall estimate is possible without labeling undetected secrets.
 <!-- real-logs:end -->
 
-The split and download checksums were fixed before round-13 held-out results were inspected. Apache, Linux, Android and HDFS supplied development examples; OpenSSH, ZooKeeper, BGL and Spark formed the original held partition. Round 14 retains that partition label for comparison, while treating its already-inspected contents as regression data. Four sources are complete datasets and four are LogHub's official 2,000-line samples. LogHub permits research and academic use with attribution and a retained license notice; its license is not the license of the software producing the logs. This study uses the datasets under that research permission and distributes only aggregates and hash-addressed review labels. Downloads, the license notice and sampled excerpts stay outside this repository.
+The split and download checksums were fixed before held-out results were inspected. Apache, Linux, Android and HDFS supplied development examples; OpenSSH, ZooKeeper, BGL and Spark formed the original held partition. The partition label is retained for comparison; its already-inspected contents are regression data. Four sources are complete datasets and four are LogHub's official 2,000-line samples. LogHub permits research and academic use with attribution and a retained license notice; its license is not the license of the software producing the logs. This study uses the datasets under that research permission and distributes only aggregates and hash-addressed review labels. Downloads, the license notice and sampled excerpts stay outside this repository.
 
 Jieming Zhu, Shilin He, Pinjia He, Jinyang Liu and Michael R. Lyu, [Loghub: A Large Collection of System Log Datasets for AI-driven Log Analytics](https://arxiv.org/abs/2008.06448), ISSRE 2023. HDFS provenance also credits Xu et al., SOSP 2009; BGL credits Oliner and Stearley, DSN 2007, as linked in the manifest.
 
@@ -553,7 +553,7 @@ Run `make real-log-accuracy LOG_CACHE=/path/outside/the/repository` to verify ca
 
 Classification is kind-specific: an actual contact or network endpoint is a sensitive reference even when published intentionally, while a block ID is not a payment card and a pathname is not an entropy token. The wildcard listener address is valid IP syntax but not a private endpoint, so it counts as an FP for this privacy policy. LogHub logs do not establish that any credential is active, and no authentication was attempted. Uncertain cases must remain unclassified until reviewed rather than being silently counted as true negatives.
 
-The remaining held-partition errors include ABA-shaped counters and log file suffixes, plus SWIFT-shaped usernames and words near “wire”. Round 14 did not tune those rules from held data. Its IP policy change removes unspecified and loopback addresses: held ipaddr FP/GB changes from the round-13 final 144,062.1 to 0.0, while ABA stays at 83.0 and SWIFT at 320.1. These are sample estimates on seen data. Path filtering can miss a secret placed in a URL path or a filename; use key-context detection or explicit Secret values there. Numeric fragment checks also exclude decimal tails and hostname components, and the unquoted token rule omits Java object references. Quoted tokens and password/secret fields retain credential masking.
+The remaining held-partition errors include ABA-shaped counters and log file suffixes, plus SWIFT-shaped usernames and words near “wire”. Those rules were not tuned from held data. The IP policy excludes unspecified and loopback addresses; measured held ipaddr FP/GB is 0.0, ABA is 83.0 and SWIFT is 320.1. These are sample estimates on seen data. Path filtering can miss a secret placed in a URL path or a filename; use key-context detection or explicit Secret values there. Numeric fragment checks also exclude decimal tails and hostname components, and the unquoted token rule omits Java object references. Quoted tokens and password/secret fields retain credential masking.
 
 ## Your application logs
 

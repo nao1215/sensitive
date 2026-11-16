@@ -1,6 +1,5 @@
 {
   "prepared_at": "2026-11-15T23:14:08.289136+00:00",
-  "production_head": "5468cb0895bc4235ab334687c88fbff846113c23",
   "implementation_started": false,
   "files": {
     "country_reference.py": "f85f6a2e219b031d019d0589335f63ad926b1a7ec0a146a659c2d3ab2049da7a",

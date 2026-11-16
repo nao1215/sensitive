@@ -1,6 +1,6 @@
 # Where a logging policy stops
 
-Each case is a small Go program that writes a planted secret through one application path: a struct field added after its masking rules were written, an error from an HTTP client, a database DSN, a dumped header and eight others. The [runnable cases](../tests/adoption_cases_test.go) apply four approaches to the same output and record, per approach, whether the secret was masked, caught by the output test, or missed.
+Each case is a small Go program that writes a planted secret through one application path: a struct field added after its masking rules were written, an error from an HTTP client, a database DSN, a dumped header and eight others. The [runnable cases](../tests/cases_test.go) apply four approaches to the same output and record, per approach, whether the secret was masked, caught by the output test, or missed.
 
 ## Measured output
 

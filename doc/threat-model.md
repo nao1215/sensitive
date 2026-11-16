@@ -6,7 +6,7 @@ Embargo inspects bytes at an output boundary. The application chooses kinds, sen
 |---|---|---|
 | User: text, keys, JSON strings | Unmasked recognized value or destroyed audit context | Encoding and scoping cases in json_test.go |
 | Dependency: formatter and LogValuer results | Panic text echoed, invalid JSON or partial record | slog_handler_test.go and json_test.go |
-| Child: stdout, stderr, test-start frames | Secret replay, forged test name in diagnostics, unbounded retention | Guard model, guard_adversarial_test.go and guard_fuzz_test.go |
+| Child: stdout, stderr, test-start frames | Secret replay, forged test name in diagnostics, unbounded retention | Guard model, embargotest/guard_test.go and embargotest/fuzz_test.go |
 | Application: detector, limits, policy | Silent scanner failure or unexpected cross-policy findings | scanner_test.go, model replay and metamorphic tests |
 | User: very large or nested input | Superlinear work, stack exhaustion or memory amplification | Adversarial budget tests and scheduled scaling matrix |
 
@@ -33,7 +33,7 @@ The same built-in inventory now includes all eleven country detectors in allocat
 | Secret split across writes | Caught after complete stream assembly | Guard model and framing fuzz target |
 | Secret split across logical fields or lines | Limit: no reconstruction across semantic fields | Caller must mark the owning value or key |
 | Fake Go test framing | Names checked for canaries, findings, length and permitted characters | TestGuardForgedTestNamesNeverReachDiagnostics |
-| Output flood or inherited pipes | Bounded retention and process timeout | guard_capture_test.go and lifecycle tests |
+| Output flood or inherited pipes | Bounded retention and process timeout | embargotest/guard_test.go and lifecycle tests |
 
 An attacker can choose a username that looks like an email, PAN or national identifier. Masking that field can remove useful audit context even though the value is not private. Select WithKinds for the data present at the boundary, or disable content detectors with WithKinds() and declare only secret fields through WithSensitiveKeys. Keep an application-generated opaque audit identifier when correlation matters. An existing literal redaction marker is indistinguishable from one produced by masking; neither a marker nor a printed finding is an authenticity signal.
 

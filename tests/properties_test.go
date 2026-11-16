@@ -659,7 +659,7 @@ func checkJSONPaths(t relationTB, value map[string]any) {
 func TestMetamorphicRealLogs(t *testing.T) {
 	cache := os.Getenv("EMBARGO_LOG_CACHE")
 	if cache == "" {
-		t.Skip("set EMBARGO_LOG_CACHE to the verified round-13 cache")
+		t.Skip("set EMBARGO_LOG_CACHE to the verified public-log cache")
 	}
 	scanner := embargo.NewScanner(embargo.WithAll())
 	kinds := []embargo.Kind{

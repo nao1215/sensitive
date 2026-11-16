@@ -29,7 +29,7 @@ scanner := embargo.NewScanner(
 )
 ```
 
-The [executable recipe](../tests/audit_recipes_test.go) checks this JSON output, including the retained values:
+The [executable recipe](../tests/cases_test.go) checks this JSON output, including the retained values:
 
 ```json
 {"order_id":"4111111111111111","request_id":"DEUTDEFF","card":"[REDACTED]","authorization":"[REDACTED]"}

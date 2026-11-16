@@ -33,7 +33,7 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/nao1215/embargo/adapters/logrus v0.5.0
-	github.com/nao1215/embargo/adapters/zap v0.0.0-20261115132333-97a0585e4bbe
+	github.com/nao1215/embargo/adapters/zap v0.5.1
 	github.com/nao1215/embargo/adapters/zerolog v0.5.0
 	github.com/samber/lo v1.53.0 // indirect
 	github.com/samber/slog-common v0.21.0 // indirect

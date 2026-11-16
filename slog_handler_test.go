@@ -244,7 +244,7 @@ func TestSlogNilPanicCompatibility(t *testing.T) {
 	}
 }
 
-// TestSlogOriginalKeyContext ports R18-01 and the review's five binding variants.
+// TestSlogOriginalKeyContext ports original-key scalar context and the review's five binding variants.
 func TestSlogOriginalKeyContext(t *testing.T) {
 	t.Parallel()
 	for _, fixture := range []struct {
