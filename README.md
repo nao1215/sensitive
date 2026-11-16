@@ -33,7 +33,7 @@ Redaction in a log pipeline can still run after it; embargo stops the leak where
 Requires Go 1.26.11 or later.
 
 ```sh
-go get github.com/nao1215/embargo@v0.9.0
+go get github.com/nao1215/embargo@v0.10.0
 ```
 
 <!-- example: example_test.go:Example -->
