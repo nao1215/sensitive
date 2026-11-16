@@ -340,5 +340,53 @@
     "source": "M15",
     "check": "scripts/test_install_quint_evaluator.py#test_changed_expected_version_fails_before_cached_install",
     "where": "Verification"
+  },
+  {
+    "rule": "Production SDK hooks retain real-library integration tests",
+    "source": "M15",
+    "check": "scripts/test_production_hooks.py#test_sdk_modules_keep_unit_lint_security_and_dependency_checks",
+    "where": "Verification"
+  },
+  {
+    "rule": "Country corpora are frozen before implementation and remain reproducible",
+    "source": "M15",
+    "check": "scripts/test_countries.py#test_frozen_corpus_still_matches_definition",
+    "where": "Verification"
+  },
+  {
+    "rule": "Country checksum references are compiled and compared with Go",
+    "source": "M15",
+    "check": "tests/lean_vectors_test.go#TestLeanReferenceVectors",
+    "where": "Verification"
+  },
+  {
+    "rule": "Country precision and residual exposure stay exact-span scored",
+    "source": "M15",
+    "check": "tests/countries_accuracy_test.go#TestCountryAccuracy",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "New hooks keep allocation budgets and scheduled scaling measurements",
+    "source": "M15",
+    "check": "scripts/test_production_hooks.py#test_hook_scaling_is_scheduled_for_each_new_module",
+    "where": "Verification"
+  },
+  {
+    "rule": "Encoding limits have one current-behavior regression per disguise",
+    "source": "M15",
+    "check": "adversarial_test.go#TestAdversarialEncodingBoundary",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Country documentation generation uses UTF-8 independently of the host locale",
+    "source": "M15; PR88 review",
+    "check": "scripts/test_countries.py#test_country_docs_under_ascii_locale",
+    "where": "Verification"
+  },
+  {
+    "rule": "Mutation workers and per-test CPUs stay capped at two",
+    "source": "M15",
+    "check": "scripts/test_production_hooks.py#test_mutation_target_limits_workers_and_test_cpus",
+    "where": "Verification"
   }
 ]

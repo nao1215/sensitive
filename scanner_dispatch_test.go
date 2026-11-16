@@ -84,7 +84,7 @@ func TestDispatchExhaustiveNumericAndTerminalHints(t *testing.T) {
 		{KindACHTrace, "021000021123456 ACH trace", 15},
 	} {
 		for _, scanner := range []*Scanner{NewScanner(WithKinds(tc.kind)), NewScanner(WithAll())} {
-			got := scanner.ScanString(tc.input)
+			got := slices.DeleteFunc(scanner.ScanString(tc.input), func(f Finding) bool { return f.Kind != tc.kind })
 			if len(got) != 1 || got[0].Kind != tc.kind || got[0].Start != 0 || got[0].End != tc.end {
 				t.Fatal(tc.kind, got)
 			}

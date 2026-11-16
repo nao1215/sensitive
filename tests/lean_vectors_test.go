@@ -32,7 +32,7 @@ func TestLeanReferenceVectors(t *testing.T) {
 		t.Fatal("reference vector set is incomplete")
 	}
 	scanners := map[string]*embargo.Scanner{}
-	for _, kind := range []embargo.Kind{embargo.KindPAN, embargo.KindIBAN, embargo.KindMyNumber, embargo.KindEmail} {
+	for _, kind := range []embargo.Kind{embargo.KindPAN, embargo.KindIBAN, embargo.KindMyNumber, embargo.KindEmail, embargo.KindCanadaSIN, embargo.KindUKNHS, embargo.KindIndiaAadhaar, embargo.KindKoreaRRN, embargo.KindChinaResidentID, embargo.KindBrazilCPF, embargo.KindBrazilCNPJ} {
 		scanners[string(kind)] = embargo.NewScanner(embargo.WithKinds(kind), embargo.WithMinConfidence(0.9))
 	}
 	number := func(raw string) int {
@@ -44,7 +44,7 @@ func TestLeanReferenceVectors(t *testing.T) {
 	}
 	for i, row := range rows {
 		switch row[0] {
-		case "pan", referenceIBANKind, "mynumber":
+		case "pan", referenceIBANKind, "mynumber", "ca_sin", "uk_nhs", "in_aadhaar", "kr_rrn", "cn_resident_id", "br_cpf", "br_cnpj":
 			got := scanners[row[0]].ScanString(row[1])
 			valid := len(got) == 1 && got[0].Start == 0 && got[0].End == len(row[1])
 			if valid != (row[2] == "true") {

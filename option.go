@@ -33,7 +33,7 @@ func WithKinds(kinds ...Kind) ScannerOption {
 	return scannerOption(func(s *Scanner) { s.kinds = selected; s.allKinds = false })
 }
 
-// WithAll opts into every built-in, including low-confidence unlabelled entropy tokens.
+// WithAll enables national identifiers from every supported country and unlabelled entropy candidates.
 // WithKinds avoids scanning for formats the application never handles and usually costs less.
 // Measurements and the recall tradeoff are in https://github.com/nao1215/embargo/blob/main/doc/benchmarks.md.
 func WithAll() ScannerOption {

@@ -496,5 +496,115 @@
     "detector": "high_entropy",
     "text": "550e8400-e29b-41d4-a716-446655440000",
     "positive": false
+  },
+  {
+    "detector": "us_ssn",
+    "text": "identity=663271262; result=ok",
+    "positive": true
+  },
+  {
+    "detector": "us_ssn",
+    "text": "identity=663-27-126A; result=ok",
+    "positive": false
+  },
+  {
+    "detector": "us_itin",
+    "text": "identity=984735739; result=ok",
+    "positive": true
+  },
+  {
+    "detector": "us_itin",
+    "text": "identity=984-73-573A; result=ok",
+    "positive": false
+  },
+  {
+    "detector": "uk_nino",
+    "text": "identity=ZM888570B; result=ok",
+    "positive": true
+  },
+  {
+    "detector": "uk_nino",
+    "text": "identity=ZM 88 85 70 0; result=ok",
+    "positive": false
+  },
+  {
+    "detector": "uk_nhs",
+    "text": "identity=7694617519; result=ok",
+    "positive": true
+  },
+  {
+    "detector": "uk_nhs",
+    "text": "identity=769 461 7510; result=ok",
+    "positive": false
+  },
+  {
+    "detector": "in_aadhaar",
+    "text": "identity=258726398415; result=ok",
+    "positive": true
+  },
+  {
+    "detector": "in_aadhaar",
+    "text": "identity=2587 2639 8410; result=ok",
+    "positive": false
+  },
+  {
+    "detector": "in_pan",
+    "text": "identity=ATTJE9054P; result=ok",
+    "positive": true
+  },
+  {
+    "detector": "in_pan",
+    "text": "identity=ATTJE90540; result=ok",
+    "positive": false
+  },
+  {
+    "detector": "br_cpf",
+    "text": "identity=86017494961; result=ok",
+    "positive": true
+  },
+  {
+    "detector": "br_cpf",
+    "text": "identity=860.174.949-60; result=ok",
+    "positive": false
+  },
+  {
+    "detector": "br_cnpj",
+    "text": "identity=40771605520366; result=ok",
+    "positive": true
+  },
+  {
+    "detector": "br_cnpj",
+    "text": "identity=40.771.605/5203-60; result=ok",
+    "positive": false
+  },
+  {
+    "detector": "cn_resident_id",
+    "text": "identity=510104199602017742; result=ok",
+    "positive": true
+  },
+  {
+    "detector": "cn_resident_id",
+    "text": "identity=510104199602017740; result=ok",
+    "positive": false
+  },
+  {
+    "detector": "kr_rrn",
+    "text": "identity=2203292878073; result=ok",
+    "positive": true
+  },
+  {
+    "detector": "kr_rrn",
+    "text": "identity=221929-2878073; result=ok",
+    "positive": false
+  },
+  {
+    "detector": "ca_sin",
+    "text": "identity=413643081; result=ok",
+    "positive": true
+  },
+  {
+    "detector": "ca_sin",
+    "text": "identity=413-643-080; result=ok",
+    "positive": false
   }
 ]

@@ -81,7 +81,7 @@ func severity(kind embargo.Kind) string {
 	switch kind {
 	case embargo.KindCredential, embargo.KindServiceToken, embargo.KindAWSKey, embargo.KindGitHubToken, embargo.KindGoogleAPIKey, embargo.KindSlackToken, embargo.KindPaymentToken, embargo.KindPrivateKeyPEM, embargo.KindPAN, embargo.KindJWT:
 		return criticalTier
-	case embargo.KindMyNumber, embargo.KindBankAccount, embargo.KindIBAN, embargo.KindABARouting, embargo.KindUKSortCode:
+	case embargo.KindUSSSN, embargo.KindUSITIN, embargo.KindUKNINO, embargo.KindUKNHS, embargo.KindIndiaAadhaar, embargo.KindIndiaPAN, embargo.KindBrazilCPF, embargo.KindBrazilCNPJ, embargo.KindChinaResidentID, embargo.KindKoreaRRN, embargo.KindCanadaSIN, embargo.KindMyNumber, embargo.KindBankAccount, embargo.KindIBAN, embargo.KindABARouting, embargo.KindUKSortCode:
 		return "high"
 	case embargo.KindHighEntropy, embargo.KindEmail, embargo.KindJPPhone, embargo.KindIPAddr, embargo.KindSWIFTBIC, embargo.KindCVV, embargo.KindCardExpiry, embargo.KindACHTrace, embargo.KindMerchantID, embargo.KindBTC, embargo.KindETH:
 		return "standard"
@@ -121,6 +121,7 @@ func TestSeverityAccuracy(t *testing.T) {
 			credentials[i].ID = "credentials/" + credentials[i].ID
 		}
 		samples = append(samples, credentials...)
+		samples = append(samples, countrySamples(t, set)...)
 		for _, threshold := range []float64{0, .5, .7} {
 			scanners := map[embargo.Kind]*embargo.Scanner{}
 			counts := map[string]severityResult{}

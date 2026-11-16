@@ -1,0 +1,17 @@
+{
+  "seeds": {
+    "development": 2026111601,
+    "held": 2026111602
+  },
+  "rule": "Freeze before implementation; public-ID negatives intentionally share valid identity syntax; held results cannot tune the retained parser.",
+  "files": {
+    "countries-development.jsonl": {
+      "sha256": "e2d8f00f089fa277a04fde68e55128c6738b38303b125a22f13a1b67b9d3c069",
+      "rows": 6720
+    },
+    "countries-held.jsonl": {
+      "sha256": "b446ccc364957bfd58d9fbaee7915fdd1f4aa1a746d1eaf9ea2b7a3cabcb10ea",
+      "rows": 6720
+    }
+  }
+}

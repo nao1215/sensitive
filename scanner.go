@@ -19,7 +19,7 @@ type Scanner struct {
 	custom        []Detector
 	hintIndex     [256][]dispatchHint
 	minConfidence float64
-	unconditional uint32
+	unconditional uint64
 	initialized   bool
 	allKinds      bool
 }
@@ -34,7 +34,8 @@ type hintEntry struct {
 	needFold bool
 }
 
-// NewScanner starts with every built-in except KindHighEntropy; WithAll opts into that heuristic.
+// NewScanner starts with 25 built-ins; the additional country families and KindHighEntropy are opt-in.
+// WithAll enables all 37 families; WithKinds selects the regions and formats an application handles.
 // Minimum confidence defaults to 0, so ambiguous numeric and contextual candidates remain.
 // Select WithKinds when the application knows which data it handles; fewer detectors reduce work and unrelated findings.
 // See https://github.com/nao1215/embargo/blob/main/doc/benchmarks.md for measured kind sets.
@@ -47,7 +48,7 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 		}
 	}
 	for _, d := range builtins() {
-		if (s.kinds == nil && (s.allKinds || Kind(d.Name()) != KindHighEntropy)) || s.kinds[Kind(d.Name())] {
+		if (s.kinds == nil && (s.allKinds || defaultKind(Kind(d.Name())))) || s.kinds[Kind(d.Name())] {
 			if credential, ok := d.(*detect.Credential); ok && s.sensitiveKeys != nil {
 				credential.MatchKey = s.sensitiveKey
 			}
@@ -98,7 +99,7 @@ func (s *Scanner) Scan(data []byte) []Finding {
 	}
 	scanData := data
 	var positions []int
-	var selected uint32
+	var selected uint64
 	if len(s.detectors) > 0 {
 		scanData, positions = decodePercent(data)
 		selected = s.selectDetectors(scanData)
@@ -172,4 +173,13 @@ func matchesAnyHint(entries []hintEntry, data []byte, foldedData *[]byte, folded
 		}
 	}
 	return false
+}
+
+func defaultKind(kind Kind) bool {
+	switch kind { //nolint:exhaustive // Explicit opt-in families; the remaining built-ins retain their defaults.
+	case KindHighEntropy, KindUSSSN, KindUSITIN, KindUKNINO, KindUKNHS, KindIndiaAadhaar, KindIndiaPAN, KindBrazilCPF, KindBrazilCNPJ, KindChinaResidentID, KindKoreaRRN, KindCanadaSIN:
+		return false
+	default:
+		return true
+	}
 }

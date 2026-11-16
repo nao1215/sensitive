@@ -14,6 +14,18 @@ import (
 
 func fuzzSeeds() []string {
 	return []string{
+		"us_ssn=663-27-1262",
+		"us_itin=984-73-5739",
+		"uk_nino=ZM 88 85 70 B",
+		"uk_nhs=769 461 7519",
+		"in_aadhaar=2587 2639 8415",
+		"in_pan=ATTJE9054P",
+		"br_cpf=860.174.949-61",
+		"br_cnpj=40.771.605/5203-66",
+		"cn_resident_id=510104199602017742",
+		"kr_rrn=220329-2878073",
+		"ca_sin=413-643-081",
+
 		"password=forgotten", "sk-proj-" + strings.Repeat("Fake0", 8), "q8V2m0NxK7bJ3wTaZ9cF6rHsL5dY1pUg",
 		"v%20021000021", "v%20123456789018", "v%0909012345678", "v%3A2001:db8::1", "v%３D021000021",
 		"",
@@ -52,7 +64,7 @@ func fuzzSeeds() []string {
 }
 
 func builtinDetectors() []detect.Detector {
-	return []detect.Detector{&detect.Credential{}, &detect.ServiceToken{}, &detect.HighEntropy{}, detect.NewPAN(), detect.NewEmail(), detect.NewJPPhone(), detect.NewMyNumber(), detect.NewJWT(), detect.NewAWSKey(), detect.NewIBAN(), detect.NewIPAddr(), detect.NewSWIFTBIC(), detect.NewABARouting(), detect.NewUKSortCode(), detect.NewCVV(), detect.NewCardExpiry(), detect.NewPaymentToken(), detect.NewBankAccount(), detect.NewACHTrace(), detect.NewMerchantID(), detect.NewBTC(), detect.NewETH(), detect.NewGitHubToken(), detect.NewSlackToken(), detect.NewGoogleAPIKey(), detect.NewPrivateKeyPEM()}
+	return []detect.Detector{&detect.Credential{}, &detect.ServiceToken{}, &detect.HighEntropy{}, detect.NewPAN(), detect.NewEmail(), detect.NewJPPhone(), detect.NewMyNumber(), detect.NewJWT(), detect.NewAWSKey(), detect.NewIBAN(), detect.NewIPAddr(), detect.NewSWIFTBIC(), detect.NewABARouting(), detect.NewUKSortCode(), detect.NewCVV(), detect.NewCardExpiry(), detect.NewPaymentToken(), detect.NewBankAccount(), detect.NewACHTrace(), detect.NewMerchantID(), detect.NewBTC(), detect.NewETH(), detect.NewGitHubToken(), detect.NewSlackToken(), detect.NewGoogleAPIKey(), detect.NewPrivateKeyPEM(), detect.NewCountry("us_ssn"), detect.NewCountry("us_itin"), detect.NewCountry("uk_nino"), detect.NewCountry("uk_nhs"), detect.NewCountry("in_aadhaar"), detect.NewCountry("in_pan"), detect.NewCountry("br_cpf"), detect.NewCountry("br_cnpj"), detect.NewCountry("cn_resident_id"), detect.NewCountry("kr_rrn"), detect.NewCountry("ca_sin")}
 }
 
 type findingKey struct {
@@ -116,6 +128,9 @@ func FuzzScanner(f *testing.F) {
 
 func TestAllBuiltinsHaveSeeds(t *testing.T) {
 	t.Parallel()
+	if got := len(builtinDetectors()); got != 37 {
+		t.Fatalf("reference recognizers: got %d, want 37", got)
+	}
 	seen := map[embargo.Kind]bool{}
 	for _, s := range fuzzSeeds() {
 		for _, f := range embargo.NewScanner(embargo.WithAll()).ScanString(s) {

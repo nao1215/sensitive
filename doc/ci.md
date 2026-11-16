@@ -78,8 +78,6 @@ CodeRabbit is configured to review the Lean and Quint source, generators and rep
 
 [Run 43769588959](https://github.com/nao1215/embargo/actions/runs/43769588959) compared base 83e325c with head aee3d60 on one Intel Xeon Platinum 8573C runner using Go 1.26.11 and GOMAXPROCS=1. Each binary ran ten 100ms samples in alternating order; the [conditions](performance/round14-paired-conditions.json), [base samples](performance/round14-paired-base.txt), [head samples](performance/round14-paired-head.txt) and [benchstat output](performance/round14-paired-benchstat.txt) retain the evidence. The time geomean changed by +0.63%; the statistically distinguishable changes were all/clean -1.02%, kinds3/clean +6.63% and kinds8/clean +2.17%. Allocation counts matched in every case. These are runner observations, including regressions, without a wall-time gate or a claim about the cause of small deltas.
 
-[Support maintenance](https://github.com/sponsors/nao1215).
-
 ## Round 15 PR A timings
 
 The base is main d369f0934571b30901f9a4ec4dd4c26db1f65d2a; head is PR #86 implementation 5468cb0895bc4235ab334687c88fbff846113c23. [Base timestamps](performance/round15-a-ci-base.json) and [head timestamps](performance/round15-a-ci-head.json) retain every workflow, job and step. Workflow time includes queueing. Reviewdog has no main-push baseline; its round-14 PR comparison is given separately. Scorecard runs on main rather than this pull request.
@@ -157,5 +155,86 @@ The round-14 reviewdog log shows a cache miss under a key derived from an absent
 In run 43771109571 attempt 1, macOS job 132987100957 passed setup-go and local adapter tests, then failed to verify embargo v0.4.0 because sum.golang.org hit a TLS handshake timeout. Optional-module cache keys now include adapters/*/go.sum. A separate module-download step makes at most three attempts with one- and two-second backoffs; test execution itself is never retried. Published dependency verification still removes local replacements and checks the real declared root module.
 
 The Quint release-download installer from PR #85 remains in the formal job immediately after npm ci. Its version check runs before the cached executable is accepted. Python tests exercise a mismatched expected version with an existing cached executable and check the workflow ordering; a tests/models npm bump is classified as code and must pass the formal job.
+
+## Round 15 production-hook CI
+
+PR B compares main 780b634915d21ff1782ecd5cde6e1956fb10f949 with implementation head 63f0b3161ca0f82df3914f1310ae79755224b592. The [base observations](performance/round15-b-ci-base.json) and [head observations](performance/round15-b-ci-head.json) retain workflow and job timestamps. Seconds are rounded elapsed wall time; workflow duration includes scheduling. n/a means the workflow did not run for that event, or the skipped job has no valid duration. These records pin this measured code revision; the PR and round report retain the final documentation head's times separately.
+
+| Workflow | Base seconds | Head seconds |
+|---|---:|---:|
+| CodeQL | 79 | 81 |
+| Coverage | 106 | 114 |
+| Gosec | 67 | 73 |
+| MultiPlatformUnitTest | 194 | 179 |
+| Scorecard | 32 | n/a |
+| Trivy | 25 | 36 |
+| Verification | 88 | 81 |
+| golangci-lint | 89 | 94 |
+| govulncheck | 57 | 54 |
+| reviewdog | n/a | 31 |
+
+| Job | Base seconds | Head seconds |
+|---|---:|---:|
+| CodeQL: Analyze (go) | 75 | 77 |
+| Coverage: Unit test (linux) (ubuntu-latest) | 79 | 103 |
+| Coverage: changes / changes | 11 | 5 |
+| Gosec: scan (.) | 59 | 70 |
+| Gosec: scan (adapters/grpc) | n/a | 34 |
+| Gosec: scan (adapters/logrus) | 30 | 29 |
+| Gosec: scan (adapters/otel) | n/a | 33 |
+| Gosec: scan (adapters/sentry) | n/a | 26 |
+| Gosec: scan (adapters/zap) | 25 | 28 |
+| Gosec: scan (adapters/zerolog) | 24 | 29 |
+| Gosec: scan (tests) | 62 | 52 |
+| MultiPlatformUnitTest: Cross build (freebsd) | 31 | 21 |
+| MultiPlatformUnitTest: Cross build (netbsd) | 14 | 20 |
+| MultiPlatformUnitTest: Cross build (openbsd) | 22 | 26 |
+| MultiPlatformUnitTest: Property tests (macos-latest, Go 1.26.11) | 44 | 59 |
+| MultiPlatformUnitTest: Property tests (macos-latest, Go stable) | 82 | 115 |
+| MultiPlatformUnitTest: Property tests (ubuntu-latest, Go 1.26.11) | 18 | 21 |
+| MultiPlatformUnitTest: Property tests (ubuntu-latest, Go stable) | 87 | 73 |
+| MultiPlatformUnitTest: Property tests (windows-latest, Go 1.26.11) | 72 | 69 |
+| MultiPlatformUnitTest: Property tests (windows-latest, Go stable) | 143 | 141 |
+| MultiPlatformUnitTest: README and runnable Examples | 20 | 27 |
+| MultiPlatformUnitTest: Unit test (macos-latest, 1.26.11) | 63 | 68 |
+| MultiPlatformUnitTest: Unit test (macos-latest, stable) | 119 | 120 |
+| MultiPlatformUnitTest: Unit test (ubuntu-latest, 1.26.11) | 32 | 24 |
+| MultiPlatformUnitTest: Unit test (ubuntu-latest, stable) | 87 | 79 |
+| MultiPlatformUnitTest: Unit test (windows-latest, 1.26.11) | 64 | 72 |
+| MultiPlatformUnitTest: Unit test (windows-latest, stable) | 140 | 145 |
+| MultiPlatformUnitTest: changes / changes | 5 | 10 |
+| Scorecard: Scorecard analysis | 29 | n/a |
+| Trivy: scan | 21 | 32 |
+| Verification: benchmark | n/a | 38 |
+| Verification: changes / changes | 5 | 6 |
+| Verification: formal | 68 | 69 |
+| Verification: policies | 20 | 25 |
+| golangci-lint: changes / changes | 5 | 11 |
+| golangci-lint: golangci-lint | 72 | 56 |
+| golangci-lint: golangci-lint (adapters) | 39 | 44 |
+| golangci-lint: golangci-lint (tests module) | 25 | 26 |
+| govulncheck: changes / changes | 4 | 4 |
+| govulncheck: govulncheck (., Go 1.26.11) | 34 | 33 |
+| govulncheck: govulncheck (., Go stable) | 33 | 42 |
+| govulncheck: govulncheck (adapters/grpc, Go 1.26.11) | n/a | 35 |
+| govulncheck: govulncheck (adapters/grpc, Go stable) | n/a | 31 |
+| govulncheck: govulncheck (adapters/logrus, Go 1.26.11) | 40 | 37 |
+| govulncheck: govulncheck (adapters/logrus, Go stable) | 31 | 36 |
+| govulncheck: govulncheck (adapters/otel, Go 1.26.11) | n/a | 44 |
+| govulncheck: govulncheck (adapters/otel, Go stable) | n/a | 40 |
+| govulncheck: govulncheck (adapters/sentry, Go 1.26.11) | n/a | 43 |
+| govulncheck: govulncheck (adapters/sentry, Go stable) | n/a | 36 |
+| govulncheck: govulncheck (adapters/zap, Go 1.26.11) | 41 | 40 |
+| govulncheck: govulncheck (adapters/zap, Go stable) | 40 | 33 |
+| govulncheck: govulncheck (adapters/zerolog, Go 1.26.11) | 35 | 42 |
+| govulncheck: govulncheck (adapters/zerolog, Go stable) | 30 | 31 |
+| govulncheck: govulncheck (tests, Go 1.26) | 47 | 33 |
+| govulncheck: govulncheck (tests, Go stable) | 32 | 37 |
+| reviewdog: actionlint | n/a | 9 |
+| reviewdog: changes / changes | n/a | 6 |
+| reviewdog: golangci-lint | n/a | 19 |
+| reviewdog: misspell | n/a | 11 |
+
+The unit workflow changed from 194 to 179 seconds while adding the three SDK modules to the existing OS and Go-version matrix. Windows stable unit time was 140 versus 145 seconds; Linux pinned unit time was 32 versus 24 seconds. These single shared-runner observations do not isolate a performance effect. The preceding head took 228 seconds, illustrating the scheduling and cache variation. reviewdog took 31 seconds, with 19 seconds in its lint job; the round-14 observation was 51 seconds. The baseline is a main push and therefore has no reviewdog run. All existing checks remain, and the new SDK modules also reach lint, gosec, govulncheck and declared-root verification.
 
 [Support maintenance](https://github.com/sponsors/nao1215).

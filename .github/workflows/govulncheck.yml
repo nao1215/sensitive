@@ -72,6 +72,24 @@ jobs:
           - go: "stable"
             stdlib: fail
             module: adapters/logrus
+          - go: "1.26.11"
+            stdlib: fail
+            module: adapters/grpc
+          - go: "stable"
+            stdlib: fail
+            module: adapters/grpc
+          - go: "1.26.11"
+            stdlib: fail
+            module: adapters/otel
+          - go: "stable"
+            stdlib: fail
+            module: adapters/otel
+          - go: "1.26.11"
+            stdlib: fail
+            module: adapters/sentry
+          - go: "stable"
+            stdlib: fail
+            module: adapters/sentry
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

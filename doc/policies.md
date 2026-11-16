@@ -62,6 +62,14 @@ The inventory below translates the owner's active repository instructions into c
 | README techniques link bug classes to individual sections | M15 | [test_readme_links_each_bug_to_its_section](../scripts/test_testing_techniques.py) | Verification |
 | Module downloads retry without retrying failed tests | M15 | [test_persistent_failure_is_not_swallowed](../scripts/test_download_modules.py) | Verification |
 | Quint npm bumps must match the pinned release evaluator | M15 | [test_changed_expected_version_fails_before_cached_install](../scripts/test_install_quint_evaluator.py) | Verification |
+| Production SDK hooks retain real-library integration tests | M15 | [test_sdk_modules_keep_unit_lint_security_and_dependency_checks](../scripts/test_production_hooks.py) | Verification |
+| Country corpora are frozen before implementation and remain reproducible | M15 | [test_frozen_corpus_still_matches_definition](../scripts/test_countries.py) | Verification |
+| Country checksum references are compiled and compared with Go | M15 | [TestLeanReferenceVectors](../tests/lean_vectors_test.go) | Verification |
+| Country precision and residual exposure stay exact-span scored | M15 | [TestCountryAccuracy](../tests/countries_accuracy_test.go) | MultiPlatformUnitTest |
+| New hooks keep allocation budgets and scheduled scaling measurements | M15 | [test_hook_scaling_is_scheduled_for_each_new_module](../scripts/test_production_hooks.py) | Verification |
+| Encoding limits have one current-behavior regression per disguise | M15 | [TestAdversarialEncodingBoundary](../adversarial_test.go) | MultiPlatformUnitTest |
+| Country documentation generation uses UTF-8 independently of the host locale | M15; PR88 review | [test_country_docs_under_ascii_locale](../scripts/test_countries.py) | Verification |
+| Mutation workers and per-test CPUs stay capped at two | M15 | [test_mutation_target_limits_workers_and_test_cpus](../scripts/test_production_hooks.py) | Verification |
 <!-- policy-map:end -->
 
 ## Changing a rule

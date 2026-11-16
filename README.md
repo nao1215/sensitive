@@ -71,7 +71,7 @@ fmt.Println(key)
 
 ## Find and mask sensitive text
 
-embargo has 26 built-in detectors (25 run by default). `NewScanner()` runs all of them except the entropy heuristic; `WithKinds` picks a subset and `WithAll` adds the heuristic. The scanner reads the text itself, so no field has to be listed first.
+embargo has 37 built-in detectors (25 run by default). `NewScanner()` keeps the established 25-family default; `WithKinds` selects formats and `WithAll` also enables the 11 new country kinds and entropy heuristic. The scanner reads the text itself, so no field has to be listed first.
 
 <!-- example: credential_example_test.go:ExampleKindCredential -->
 ```go
@@ -88,6 +88,7 @@ fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
 | Bank | 6 | IBAN, SWIFT/BIC, ABA routing, UK sort code, bank account, ACH trace |
 | Crypto | 2 | Bitcoin and Ethereum addresses |
 | Personal | 4 | Email, IP address, Japanese phone numbers and My Number, including full-width digits |
+| National IDs | 11 | Opt-in US, UK, Indian, Brazilian, Chinese, Korean and Canadian identifiers; [rules and measured limits](doc/countries.md) |
 
 [Every detector and how it validates](doc/detectors.md) · [Provider token formats](doc/credentials.md)
 
@@ -238,7 +239,7 @@ Held-out synthetic set, default minimum confidence 0. [Generation, test cases an
 <!-- real-logs-summary:start -->
 ![Estimated false positives on public logs](doc/images/real-logs.svg)
 
-Round 14: 8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.
+Round 15: 8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.
 <!-- real-logs-summary:end -->
 
 ## Testing

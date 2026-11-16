@@ -94,9 +94,7 @@ linters:
           - '!$test'
           - '!**/embargotest/**'
           - '!**/tests/**'
-          - '!**/adapters/zap/**'
-          - '!**/adapters/zerolog/**'
-          - '!**/adapters/logrus/**'
+          - '!**/adapters/**'
           - '!**/internal/output/**'
           allow:
           - $gostd
@@ -141,9 +139,7 @@ linters:
           files:
           - $test
           - '!**/tests/**'
-          - '!**/adapters/zap/**'
-          - '!**/adapters/zerolog/**'
-          - '!**/adapters/logrus/**'
+          - '!**/adapters/**'
           allow:
           - $gostd
           - github.com/nao1215/embargo$
@@ -152,9 +148,7 @@ linters:
         logger-adapters:
           list-mode: strict
           files:
-          - '**/adapters/zap/*.go'
-          - '**/adapters/zerolog/*.go'
-          - '**/adapters/logrus/*.go'
+          - '**/adapters/**/*.go'
           allow:
           - $gostd
           - github.com/nao1215/embargo$
@@ -164,6 +158,9 @@ linters:
           - go.uber.org/zap
           - github.com/rs/zerolog$
           - github.com/sirupsen/logrus$
+          - google.golang.org/grpc
+          - go.opentelemetry.io/otel
+          - github.com/getsentry/sentry-go$
         sdk-tests:
           list-mode: strict
           files:
@@ -178,6 +175,7 @@ linters:
           - go.uber.org/zap
           - github.com/rs/zerolog
           - github.com/sirupsen/logrus$
+          - google.golang.org/grpc
           - go.opentelemetry.io/otel
           - github.com/getsentry/sentry-go
           - github.com/m-mizutani/masq$

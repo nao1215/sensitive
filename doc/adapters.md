@@ -60,3 +60,44 @@ A Hook cannot remove fields already encoded in an Event. The writer buffers spli
 <a id="table-explanation-3"></a>
 
 Wraps JSONFormatter after it formats the Entry, without modifying caller-owned fields or trusting a second serialization of an arbitrary value.
+
+
+## Service and telemetry hooks
+
+The HTTP hook lives in the root module and uses only the standard library. gRPC, OpenTelemetry and Sentry are separate Go modules, with declared root dependency checks that run both with and without local replacements. Install only the module the application uses. Constructor dependencies are required; nil and typed-nil dependencies are rejected. Each linked Example runs as a test, and the integration tests use the actual SDK or net/http server.
+
+| Boundary | Constructor | Runnable Example | Integration test |
+|---|---|---|---|
+| HTTP access logs | NewHTTPHandler | [request and status](../http_example_test.go) | [httptest server and client](../http_handler_test.go) |
+| gRPC unary access logs | NewUnaryServerInterceptor | [unary status and masked metadata](../adapters/grpc/example_test.go) | [health RPC over bufconn](../adapters/grpc/adapter_test.go) |
+| gRPC stream access logs | NewStreamServerInterceptor | [stream failure record](../adapters/grpc/example_test.go) | [real Health Watch stream](../adapters/grpc/adapter_test.go) |
+| OpenTelemetry log export | NewLogExporter | [masked log body](../adapters/otel/example_test.go) | [LoggerProvider and exporter](../adapters/otel/adapter_test.go) |
+| OpenTelemetry span export | NewSpanExporter | [email span attribute](../adapters/otel/example_test.go) | [TracerProvider and exporter](../adapters/otel/adapter_test.go) |
+| Sentry error events | NewBeforeSend | [message and context](../adapters/sentry/example_test.go) | [Client.CaptureEvent](../adapters/sentry/adapter_test.go) |
+
+NewHTTPHandler always hides Authorization, Cookie and Set-Cookie in its access record. Additional headers and parsed query keys use the scanner's WithSensitiveKeys policy. It checks redirect Location values as URLs, including their parsed query keys, and scans other header values. It preserves request inputs, response status, body and wire headers; it is an access-log boundary, so a redirect sent to a browser is not sanitized by this middleware. Bodies are not recorded. The writer supports ResponseController, Flush, Hijack and Push; unsupported operations return the underlying error. A final header snapshot prevents later header-map changes from rewriting the logged response.
+
+The gRPC server interceptors record incoming metadata, the method, final status code and error text. They preserve the returned error, including its status details, and never buffer request or response messages. Outgoing headers and trailers are not logged. Install them with grpc.UnaryInterceptor and grpc.StreamInterceptor; client logging and additional interceptors remain separate boundaries.
+
+The OpenTelemetry exporter wrappers mask copied bodies, attributes, span names, events, links and status descriptions. Byte values are checked as text and retain their byte type; an already-base64-encoded secret is still subject to the encoding limit. Clean scalar types remain intact. Log resource and scope fields are immutable through the SDK record API: a batch requiring changes there is rejected in full. Spans instead expose copied resource and scope values. TraceState is omitted from span, parent and link contexts, since vendor values can carry arbitrary secrets. IDs, trace flags, times and counters remain intact. Export errors are fixed messages, with no partially forwarded batch after a masking failure. Lifecycle calls delegate to the supplied exporter.
+
+Sentry BeforeSend masks the serialized error-event fields and reconstructs a fresh event, keeping the original event unchanged. Attachments are omitted. Dynamic sampling context is masked alongside event content, then restored through a fresh SDK scope; clean sampling fields survive, and no private serialization cache is copied. Trace context in serialized fields remains subject to the masking policy. The helper is for ClientOptions.BeforeSend, not the separate BeforeSendTransaction, BeforeSendLog or BeforeSendMetric callbacks. A serialization or scanner failure returns nil, asking Sentry to drop the event. Downstream envelope additions and independently configured uploads need their own boundary.
+
+## Production leak scenarios
+
+| Scenario | Checked output | Expected result | Executable evidence |
+|---|---|---|---|
+| HTTP auth, cookies, custom header and query | Access record from a real request | Opaque values hidden; public field and status retained | TestHTTPHandlerMasksLogsAndPreservesExchange |
+| Redirect containing a custom query secret | Logged Location | Hidden in log; original Location reaches the client | TestHTTPHandlerMasksLogsAndPreservesExchange |
+| Unary RPC denied with a password in its error | gRPC access record | Error text and metadata masked; client code preserved | TestInterceptorsWithRealGRPC |
+| Streaming RPC fails after starting | Final stream access record | One masked record; client receives original status | TestInterceptorsWithRealGRPC |
+| OTel body, secret-key attribute and string slice | Exported log record | Text hidden; count stays an integer; input unchanged | TestExportersThroughRealProviders |
+| Span resource, scope, link and error description | Exported ReadOnlySpan | All recorded text paths masked | TestSpanResourceScopeLinksAndStatusAreMasked |
+| Log resource contains an opaque password | Export batch | Nothing forwarded | TestSensitiveResourceSuppressesLogBatch |
+| Sentry request, context and breadcrumb contain secrets | Event delivered by the SDK | Serialized values hidden; public count retained | TestBeforeSendThroughSentryClient |
+| Vendor TraceState contains email or an opaque session | Span, parent and link contexts | TraceState omitted; IDs and flags retained | TestSpanContextsOmitTraceStateWithoutChangingIdentity |
+| Sentry sampling context contains a customer email | SDK envelope sampling context | Email masked; public sampling fields retained | TestClientPreservesAndMasksDynamicSamplingContext |
+
+The [comparison matrix](comparison.md#service-leak-scenarios) measures older application-emission paths. These rows cover the added hooks and distinguish access logs from service wire output. Allocation gates and the scheduled five-size matrix include each new hook; the [threat model](threat-model.md) records what those measurements establish.
+
+[Support maintenance](https://github.com/sponsors/nao1215).
