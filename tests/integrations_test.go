@@ -1398,6 +1398,8 @@ func TestMaskingBoundaryHooks(t *testing.T) {
 			{"swiftCode=DEUTDEFF", boundaryBIC},
 			{"SWIFT number DEUTDEFF", boundaryBIC},
 			{"password := " + secret, secret},
+			{"Authorization: `Token " + secret + "` public=kept", secret},
+			{"Authorization: 'Token " + secret + "' public=kept", secret},
 			{"map[" + strings.Repeat("service_", 32) + "password:head " + secret + " tail public:kept]", secret},
 			{"map[public:" + strings.Repeat("x", 256) + " password:head " + secret + " tail public:kept]", secret},
 			{"password=`head " + secret + " tail`", secret},
@@ -1412,7 +1414,7 @@ func TestMaskingBoundaryHooks(t *testing.T) {
 				inputs = append(inputs, struct{ text, needle string }{header + "\n" + secret + "\n-----END " + label + "-----", secret})
 			}
 		}
-		for _, scheme := range []string{"Bearer\t", "Token ", "Negotiate ", "Digest response=", "AWS4-HMAC-SHA256 Signature="} {
+		for _, scheme := range []string{"Bearer\t", "Token ", "Negotiate ", "Digest response=", "AWS4-HMAC-SHA256 Signature=", "'Quoted' ", "`Wrapped` ", "'\t", "`Leading\t"} {
 			inputs = append(inputs, struct{ text, needle string }{"Authorization: " + scheme + secret + ", Basic " + secret, secret})
 		}
 		for _, prefix := range []string{"[]", "[abc]", ",", ")", "[REDACTED]]", "[REDACTED][REDACTED]"} {

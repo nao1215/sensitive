@@ -332,9 +332,29 @@ func credentialEnclosedValue(data []byte, start int, key string) (begin, end int
 	}
 	if data[start] == '"' || data[start] == '\'' || data[start] == '`' {
 		end = credentialQuoteEnd(data, start+1, data[start])
+		if authorizationSchemeQuote(data, start, end, key) {
+			return start, start, false
+		}
 		return authorizationValueStart(data, start+1, end, key), end, true
 	}
 	return start, start, false
+}
+
+// Apostrophes and backticks can belong to an RFC auth-scheme rather than
+// enclose a value. A quote inside that token or at the next list scheme must
+// not terminate the credentials that follow it.
+func authorizationSchemeQuote(data []byte, start, end int, key string) bool {
+	value := authorizationValueStart(data, start, len(data), key)
+	if value == start {
+		// Let the decoded view own a scheme separated by a serialized tab.
+		return (key == authorizationKey || key == proxyAuthorizationKey) && hasASCIIPrefix(data, authSchemeEnd(data, start, len(data)), `\t`)
+	}
+	if end == len(data) || end < value {
+		return true
+	}
+	before := bytes.TrimRight(data[start:end], " \t")
+	// The non-whitespace scheme starts before value, so trimming cannot empty it.
+	return before[len(before)-1] == ',' && authorizationValueStart(data, end, len(data), key) > end
 }
 
 func credentialScalarEnd(data []byte, start, end int, key string, formatted bool) int {
@@ -553,10 +573,7 @@ func authorizationValueStart(data []byte, start, end int, key string) int {
 	if key != authorizationKey && key != proxyAuthorizationKey {
 		return start
 	}
-	at := start
-	for at < end && authSchemeByte(data[at]) {
-		at++
-	}
+	at := authSchemeEnd(data, start, end)
 	if at == start || at == end || data[at] != ' ' && data[at] != '\t' {
 		return start
 	}
@@ -564,6 +581,13 @@ func authorizationValueStart(data []byte, start, end int, key string) int {
 		at++
 	}
 	return at
+}
+
+func authSchemeEnd(data []byte, start, end int) int {
+	for start < end && authSchemeByte(data[start]) {
+		start++
+	}
+	return start
 }
 
 // RFC 9110 auth-scheme uses the HTTP token alphabet.

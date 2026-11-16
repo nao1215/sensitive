@@ -201,6 +201,7 @@ func TestCredentialAnonymousTypeBoundaries(t *testing.T) {
 const (
 	authorizationHeaderFixture  = "Authorization"
 	passwordKeyFixture          = "password"
+	bearerSchemeFixture         = "Bearer"
 	credentialAssignmentFixture = "password="
 )
 
@@ -211,7 +212,7 @@ func TestDetectorAuthorizationSchemeProperty(t *testing.T) {
 	scanner := &Credential{}
 	for n := range 24 {
 		secret := fmt.Sprintf("opaqueAuth%02dFixture", n)
-		for _, scheme := range []string{"Token", "Negotiate", "Digest", "AWS4-HMAC-SHA256", "Bearer", "Basic", fmt.Sprintf("Scheme%d!#$%%&'*+-.^_`|~", n)} {
+		for _, scheme := range []string{"Token", "Negotiate", "Digest", "AWS4-HMAC-SHA256", bearerSchemeFixture, "Basic", "'", "'Quoted'", "`", "`Wrapped`", "'Leading", "`Leading", fmt.Sprintf("Scheme%d!#$%%&'*+-.^_`|~", n)} {
 			for _, space := range []string{" ", "\t", "   "} {
 				credential := secret
 				if scheme == "Digest" {
@@ -667,7 +668,7 @@ func TestCredentialRawAndNormalizedOwnership(t *testing.T) {
 
 func TestCredentialShortAndEmptyValues(t *testing.T) {
 	t.Parallel()
-	for _, prefix := range []string{credentialAssignmentFixture, "password : ", "'password':", `"password":`, "Authorization: Token "} {
+	for _, prefix := range []string{credentialAssignmentFixture, "token=", "token: ", "password : ", "'password':", `"password":`, "Authorization: Token "} {
 		for _, quote := range []string{"", "\"", "'", "`"} {
 			if strings.HasPrefix(prefix, "Authorization:") && quote != "" {
 				continue
@@ -718,7 +719,7 @@ func TestCredentialBlockSpanProperty(t *testing.T) {
 
 func TestQuotedAuthorizationExactSpans(t *testing.T) {
 	t.Parallel()
-	for _, scheme := range []string{"Bearer", "bEaReR", "Basic", "basic"} {
+	for _, scheme := range []string{bearerSchemeFixture, "bEaReR", "Basic", "basic"} {
 		for _, space := range []string{" ", "   "} {
 			for _, quote := range []string{"\"", "'"} {
 				for _, secret := range []string{"x", "opaqueHeaderFixture"} {
@@ -744,6 +745,45 @@ func TestFormattedURLExactPasswordSpans(t *testing.T) {
 				got := (&Credential{}).Scan([]byte(input))
 				if len(got) != 1 || got[0].Start != len(before) || got[0].End != len(before)+len(secret) || got[0].RawValue != secret {
 					t.Fatalf("formatted URL boundary: %q: %+v", input, got)
+				}
+			}
+		}
+	}
+}
+
+func TestCredentialCamelAcronymBoundaries(t *testing.T) {
+	t.Parallel()
+	keys := make([]string, 0, 17)
+	for _, prefix := range []string{"a", "z"} {
+		for _, word := range []string{"PASSWORD", "PASSWD", "SECRET", "TOKEN", "CREDENTIAL", "AUTH"} {
+			keys = append(keys, prefix+word)
+		}
+	}
+	keys = append(keys, "CLIENTApiKey", "APIPrivateKey", "PROJECTSecretKey", "APIAccountKey", "tenantAccessKey")
+	for _, key := range keys {
+		input := key + "=opaqueAcronymFixture"
+		got := (&Credential{}).Scan([]byte(input))
+		if !SensitiveCredentialKey(key) || len(got) != 1 || got[0].Start != len(key)+1 || got[0].RawValue != "opaqueAcronymFixture" {
+			t.Fatalf("credential acronym boundary %q: %+v", key, got)
+		}
+	}
+	for _, key := range []string{"APASSWORD", "ZPASSWORD", "0PASSWORD", "9PASSWORD", "aKEY", "zpassword", "akey", "clientPublicKey", "clientPrimaryKey", "clientSortKey"} {
+		if got := (&Credential{}).Scan([]byte(key + "=public")); SensitiveCredentialKey(key) || len(got) != 0 {
+			t.Fatalf("ordinary key became credential: %s %+v", key, got)
+		}
+	}
+}
+
+func TestAuthorizationQuotedValueSpans(t *testing.T) {
+	t.Parallel()
+	for _, quote := range []string{"\"", "'", "`"} {
+		for _, scheme := range []string{bearerSchemeFixture, "Token"} {
+			for _, value := range []string{"opaqueQuotedFixture", "firstFixture, Basic secondFixture"} {
+				before := "Authorization: " + quote + scheme + " "
+				input := before + value + quote + " public=kept"
+				got := (&Credential{}).Scan([]byte(input))
+				if len(got) != 1 || got[0].Start != len(before) || got[0].End != len(before)+len(value) || got[0].RawValue != value {
+					t.Fatalf("quoted authorization consumed public suffix: %q: %+v", input, got)
 				}
 			}
 		}

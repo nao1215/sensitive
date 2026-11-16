@@ -819,7 +819,7 @@ func TestAuthorizationSchemeProperty(t *testing.T) {
 	scanner := NewScanner(WithKinds(KindCredential))
 	for n := range 24 {
 		secret := fmt.Sprintf("opaqueAuth%02dFixture", n)
-		for _, scheme := range []string{"Token", "Negotiate", "Digest", "AWS4-HMAC-SHA256", "Bearer", "Basic", fmt.Sprintf("Scheme%d!#$%%&'*+-.^_`|~", n)} {
+		for _, scheme := range []string{"Token", "Negotiate", "Digest", "AWS4-HMAC-SHA256", "Bearer", "Basic", "'", "'Quoted'", "`", "`Wrapped`", "'Leading", "`Leading", fmt.Sprintf("Scheme%d!#$%%&'*+-.^_`|~", n)} {
 			for _, space := range []string{" ", "\t", "   "} {
 				credential := secret
 				if scheme == "Digest" {

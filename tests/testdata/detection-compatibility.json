@@ -271,5 +271,14 @@
   },
   {
     "text": "map[public:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx password:head opaqueLongFixture tail public:kept]"
+  },
+  {
+    "text": "Authorization: 'Quoted' opaqueFirstFixture, 'Quoted' opaqueSecondFixture"
+  },
+  {
+    "text": "Authorization: `Wrapped` opaqueFirstFixture, `Wrapped` opaqueSecondFixture"
+  },
+  {
+    "text": "Authorization: '\topaqueFirstFixture, '\topaqueSecondFixture"
   }
 ]
