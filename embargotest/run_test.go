@@ -362,3 +362,30 @@ func receivedDescriptor(t *testing.T, data []byte) uintptr {
 	}
 	return uintptr(binary.NativeEndian.Uint32(data[header:]))
 }
+
+//nolint:paralleltest // The parent sets an isolated child environment.
+func TestRunPreservesSystemRoot(t *testing.T) {
+	if os.Getenv("SystemRoot") == "" {
+		t.Setenv("SystemRoot", t.TempDir())
+	}
+	r := New(t)
+	r.Expect("stdout", func(data []byte) bool { return bytes.Contains(data, []byte("system root retained")) })
+	r.Expect("stderr", func(data []byte) bool { return len(data) == 0 })
+	if err := r.Run(t.Context(), "TestChildSystemRoot", 0); err != nil || !r.Check() {
+		t.Fatal("required child environment was lost")
+	}
+}
+
+func TestChildSystemRoot(t *testing.T) {
+	t.Parallel()
+	if os.Getenv("EMBARGO_TEST_CHILD") != "TestChildSystemRoot" {
+		return
+	}
+	if os.Getenv("SystemRoot") == "" {
+		t.Fatal("system root missing in child")
+	}
+	//nolint:forbidigo // The isolated child deliberately emits the observed result.
+	if _, err := fmt.Println("system root retained"); err != nil {
+		t.Fatal(err)
+	}
+}

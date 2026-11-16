@@ -1,15 +1,13 @@
-package detect_test
+package detect
 
 import (
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestCardExpiryDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewCardExpiry()
+	d := NewCardExpiry()
 	tests := []struct {
 		name       string
 		input      string
@@ -132,7 +130,7 @@ func TestCardExpiryDetector_Scan(t *testing.T) {
 func TestCardExpiryDetector_Detail(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewCardExpiry()
+	d := NewCardExpiry()
 	findings := d.Scan([]byte("exp: 12/25"))
 	if len(findings) != 1 {
 		t.Fatalf("expected 1 finding, got %d", len(findings))
@@ -153,7 +151,7 @@ func TestCardExpiryDetector_Detail(t *testing.T) {
 func TestCardExpiryDetector_Detail_4digitYear(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewCardExpiry()
+	d := NewCardExpiry()
 	findings := d.Scan([]byte("expiry: 01/2030"))
 	if len(findings) != 1 {
 		t.Fatalf("expected 1 finding, got %d", len(findings))
@@ -174,16 +172,16 @@ func TestCardExpiryDetector_Detail_4digitYear(t *testing.T) {
 func TestCardExpiryDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewCardExpiry()
-	if d.Name() != detect.NameCardExpiry {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameCardExpiry)
+	d := NewCardExpiry()
+	if d.Name() != NameCardExpiry {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameCardExpiry)
 	}
 }
 
 func TestCardExpiryDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewCardExpiry()
+	d := NewCardExpiry()
 	hints := d.Hints()
 	if len(hints) == 0 {
 		t.Error("Hints() returned empty slice, want at least one hint")
@@ -193,7 +191,7 @@ func TestCardExpiryDetector_Hints(t *testing.T) {
 func TestCardExpiryDetector_DateBeforeKeyword(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewCardExpiry()
+	d := NewCardExpiry()
 	tests := []struct {
 		name    string
 		input   string
@@ -241,7 +239,7 @@ func TestCardExpiryDetector_NoFalsePositiveFromExample(t *testing.T) {
 	// Regression: "exp" keyword matched inside "example", causing false
 	// detection of date patterns near "example". Word boundary checking
 	// in findKeywordPositions prevents this.
-	d := detect.NewCardExpiry()
+	d := NewCardExpiry()
 	findings := d.Scan([]byte("see example 01/25 for details"))
 	if len(findings) != 0 {
 		t.Errorf("got %d findings, want 0; 'exp' inside 'example' should not trigger detection", len(findings))
@@ -257,7 +255,7 @@ func TestCardExpiryDetector_NoOverlapFromRepeatedKeywordMatches(t *testing.T) {
 	// on how many times a keyword is matched: "01/01/00" has to yield the
 	// same single finding as with a keyword that matches once (有効期限),
 	// never a second, overlapping "01/00".
-	d := detect.NewCardExpiry()
+	d := NewCardExpiry()
 	tests := []struct {
 		name    string
 		input   string
@@ -299,9 +297,26 @@ func TestCardExpiryDetector_NoOverlapFromRepeatedKeywordMatches(t *testing.T) {
 func TestCardExpiryEncodedSeparators(t *testing.T) {
 	t.Parallel()
 	for _, escape := range []string{"%20", "%09", "%3D"} {
-		got := detect.NewCardExpiry().Scan([]byte("expiry " + escape + "12/28"))
+		got := NewCardExpiry().Scan([]byte("expiry " + escape + "12/28"))
 		if len(got) != 1 || got[0].RawValue != "12/28" {
 			t.Fatalf("%s: lost expiry: %v", escape, got)
 		}
+	}
+}
+
+func TestCardExpiryRejectedBoundaries(t *testing.T) {
+	t.Parallel()
+	if _, ok := parseExpiryCandidate([]byte("12/"), 0); ok {
+		t.Fatal("truncated expiry accepted")
+	}
+	if got := NewCardExpiry().Scan([]byte("expiry 112/29")); len(got) != 0 {
+		t.Fatal("digit-prefixed expiry accepted")
+	}
+}
+
+func TestExpiryRejectsNonDigitYear(t *testing.T) {
+	t.Parallel()
+	if _, ok := parseExpiryCandidate([]byte("12/xx"), 0); ok {
+		t.Fatal("invalid year accepted")
 	}
 }

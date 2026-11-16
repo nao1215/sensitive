@@ -213,3 +213,10 @@ func TestMyNumberIdentifierBoundaries(t *testing.T) {
 		}
 	}
 }
+
+func TestMynumberRejectedBoundaries(t *testing.T) {
+	t.Parallel()
+	if isValidMyNumber(nil) {
+		t.Fatal("empty national ID accepted")
+	}
+}

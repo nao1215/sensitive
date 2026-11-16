@@ -1,0 +1,69 @@
+{
+  "tool": "github.com/go-gremlins/gremlins/cmd/gremlins@v0.6.0",
+  "workers": 2,
+  "gomaxprocs": 2,
+  "timeout_coefficient": 10,
+  "packages": {
+    ".": {
+      "score": 82.29,
+      "coverage": 96.73,
+      "counts": {
+        "KILLED": 316,
+        "LIVED": 52,
+        "NOT COVERED": 13,
+        "TIMED OUT": 16
+      }
+    },
+    "cmd/embargo-audit": {
+      "score": 82.86,
+      "coverage": 100.0,
+      "counts": {
+        "KILLED": 29,
+        "LIVED": 6
+      }
+    },
+    "embargotest": {
+      "score": 90.64,
+      "coverage": 98.74,
+      "counts": {
+        "KILLED": 213,
+        "LIVED": 19,
+        "NOT COVERED": 3,
+        "TIMED OUT": 3
+      }
+    },
+    "internal/ascii": {
+      "score": 100.0,
+      "coverage": 100.0,
+      "counts": {
+        "KILLED": 15
+      }
+    },
+    "internal/detect": {
+      "score": 86.87,
+      "coverage": 87.35,
+      "counts": {
+        "KILLED": 1548,
+        "LIVED": 203,
+        "NOT COVERED": 258,
+        "TIMED OUT": 31
+      }
+    },
+    "internal/output": {
+      "score": 82.35,
+      "coverage": 100.0,
+      "counts": {
+        "KILLED": 56,
+        "LIVED": 10,
+        "TIMED OUT": 2
+      }
+    },
+    "internal/saferecord": {
+      "score": 100.0,
+      "coverage": 100.0,
+      "counts": {
+        "KILLED": 5
+      }
+    }
+  }
+}

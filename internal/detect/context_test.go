@@ -300,3 +300,11 @@ func TestContextCanFollowSensitiveValue(t *testing.T) {
 		}
 	}
 }
+
+func TestContextRejectedBoundaries(t *testing.T) {
+	t.Parallel()
+	set := newKeywordSet([][]byte{nil, []byte("token")})
+	if got := set.findPositions([]byte("token=public")); len(got) != 1 || got[0].start != 0 || got[0].end != 5 {
+		t.Fatal("empty keyword changed matches")
+	}
+}

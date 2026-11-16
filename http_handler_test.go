@@ -21,6 +21,8 @@ import (
 	"github.com/nao1215/embargo/internal/saferecord"
 )
 
+const httpRequestMessage = "http request"
+
 func TestHTTPHandlerMasksLogsAndPreservesExchange(t *testing.T) {
 	t.Parallel()
 	var output bytes.Buffer
@@ -304,7 +306,7 @@ func assertHTTPAccessRecord(t *testing.T, data []byte, target string) {
 	if err := json.Unmarshal(data, &record); err != nil {
 		t.Fatal(err)
 	}
-	if record.Msg != "http request" || record.Method != http.MethodGet || record.Target != target || record.Status != http.StatusAccepted || record.RequestHeaders["Authorization"] != marker {
+	if record.Msg != httpRequestMessage || record.Method != http.MethodGet || record.Target != target || record.Status != http.StatusAccepted || record.RequestHeaders["Authorization"] != marker {
 		t.Fatalf("wrong access record: %s", data)
 	}
 }
@@ -584,7 +586,7 @@ func TestHTTPPanicStatus(t *testing.T) {
 			if err := json.Unmarshal(out.Bytes(), &record); err != nil {
 				t.Fatal(err)
 			}
-			if record["status"] != float64(status) {
+			if record["status"] != float64(status) || record["response_written"] != (status != 0) {
 				t.Fatalf("panic status=%v, want=%d", record["status"], status)
 			}
 			if strings.Contains(out.String(), "planted") {
@@ -608,7 +610,7 @@ func TestHTTPOrdinaryRequestHasNoDetachedDeadline(t *testing.T) {
 	if err := json.Unmarshal(out.Bytes(), &record); err != nil {
 		t.Fatal(err)
 	}
-	if record["msg"] != "http request" || record["status"] != float64(http.StatusAccepted) {
+	if record["msg"] != httpRequestMessage || record["status"] != float64(http.StatusAccepted) {
 		t.Fatalf("ordinary record lost: %s", out.String())
 	}
 }
@@ -723,5 +725,49 @@ func TestHTTPHeaderSizeBoundaries(t *testing.T) {
 		req.Header = header
 		embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusAccepted) }), slog.New(slog.NewJSONHandler(&out, nil)), embargo.NewScanner()).ServeHTTP(httptest.NewRecorder(), req)
 		assertHTTPWithheld(t, out.Bytes(), sizeReason)
+	}
+}
+
+type valueHTTPHandler struct{}
+
+func (valueHTTPHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func TestHTTPValueHandlerSurvivesLogFailure(t *testing.T) {
+	t.Parallel()
+	sink := &inspectingHandler{enabled: true, err: io.ErrClosedPipe}
+	handler := embargo.NewHTTPHandler(valueHTTPHandler{}, slog.New(sink), embargo.NewScanner())
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/safe", http.NoBody))
+	if response.Code != http.StatusAccepted || sink.handled != 1 || sink.record.Message != httpRequestMessage || sink.record.NumAttrs() != 8 {
+		t.Fatal("log write failure changed the application response or retried the event")
+	}
+}
+
+func TestHTTPFlushFailureIsReported(t *testing.T) {
+	t.Parallel()
+	for _, supported := range []bool{false, true} {
+		var logs bytes.Buffer
+		response := httptest.NewRecorder()
+		var writer http.ResponseWriter = struct{ http.ResponseWriter }{response}
+		if supported {
+			writer = response
+		}
+		handler := embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			flusher, ok := w.(http.Flusher)
+			if !ok {
+				t.Fatal("missing Flush interface")
+			}
+			flusher.Flush()
+		}), slog.New(slog.NewJSONHandler(&logs, nil)), embargo.NewScanner())
+		handler.ServeHTTP(writer, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", http.NoBody))
+		var record map[string]any
+		if err := json.Unmarshal(logs.Bytes(), &record); err != nil {
+			t.Fatal(err)
+		}
+		if record["flush_failed"] != !supported {
+			t.Fatalf("flush support %v produced %s", supported, logs.String())
+		}
 	}
 }

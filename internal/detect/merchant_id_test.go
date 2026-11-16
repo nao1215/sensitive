@@ -35,6 +35,14 @@ func TestMerchantIDDetector_Scan(t *testing.T) {
 			wantIDType: detect.MerchantIDTypeTerminal,
 		},
 		{
+			name:       "repeated terminal keywords do not duplicate a finding",
+			input:      "TID terminal ID 12345678",
+			wantLen:    1,
+			wantRaw:    "12345678",
+			wantMinCon: 0.7,
+			wantIDType: detect.MerchantIDTypeTerminal,
+		},
+		{
 			name:       "digits inside a merchant ID are not reported again as a terminal ID",
 			input:      "Merchant ID A00000000A00000 TID 000",
 			wantLen:    1,

@@ -442,3 +442,10 @@ func TestPhoneConfidenceAndContainsEdges(t *testing.T) {
 		t.Fatal("keyword language")
 	}
 }
+
+func TestPhoneJpRejectedBoundaries(t *testing.T) {
+	t.Parallel()
+	if classifyJPPhone(nil, 0) != "" || isValidLandlinePrefix(nil) {
+		t.Fatal("short phone accepted")
+	}
+}

@@ -120,3 +120,28 @@ func TestCanaryFragmentRepeatedWindowsAreBounded(t *testing.T) {
 		t.Fatalf("repeated fragment retained %d times", count)
 	}
 }
+
+// Independent encoders exercise representations that share no raw or Go-quoted
+// substring, so removing the no-HTML JSON representation must be observable.
+func TestCanaryJSONEscapingAndEmptyNeedles(t *testing.T) {
+	t.Parallel()
+	for _, raw := range []string{"prefix-\x01<&\n-suffix", "prefix-\u2028<&\t-suffix", "prefix-\x02é\"-suffix"} {
+		var encoded bytes.Buffer
+		encoder := json.NewEncoder(&encoded)
+		encoder.SetEscapeHTML(false)
+		if err := encoder.Encode(raw); err != nil {
+			t.Fatal(err)
+		}
+		if !containsCanary(encoded.Bytes(), representations([]byte(raw))) {
+			t.Fatal("unescaped JSON representation missed")
+		}
+	}
+	if containsCanary([]byte("complete"), [][]byte{nil, {}}) {
+		t.Fatal("empty needle matched unrelated output")
+	}
+	const maximum = 1024
+	policy := guardPolicy([]Option{WithCanaryFragments(maximum), WithCanary(bytes.Repeat([]byte("z"), maximum))})
+	if policy.failed || !containsCanary(policy.canary, policy.needles) || containsCanary(policy.canary[:maximum-1], policy.needles) {
+		t.Fatal("maximum fragment length was not accepted exactly")
+	}
+}

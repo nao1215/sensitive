@@ -1,15 +1,13 @@
-package detect_test
+package detect
 
 import (
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestJWTDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJWT()
+	d := NewJWT()
 
 	// A valid JWT with header {"alg":"HS256","typ":"JWT"}
 	validJWT := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
@@ -93,7 +91,7 @@ func TestJWTDetector_Scan(t *testing.T) {
 func TestJWTDetector_Detail(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJWT()
+	d := NewJWT()
 	// Header: {"alg":"HS256","typ":"JWT"}
 	// #nosec G101 -- test token for JWT detection
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
@@ -113,16 +111,16 @@ func TestJWTDetector_Detail(t *testing.T) {
 func TestJWTDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJWT()
-	if d.Name() != detect.NameJWT {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameJWT)
+	d := NewJWT()
+	if d.Name() != NameJWT {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameJWT)
 	}
 }
 
 func TestJWTDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJWT()
+	d := NewJWT()
 	hints := d.Hints()
 	if len(hints) != 1 || string(hints[0]) != "eyJ" {
 		t.Errorf("Hints() = %v, want [[eyJ]]", hints)
@@ -132,7 +130,7 @@ func TestJWTDetector_Hints(t *testing.T) {
 func TestJWTDetector_InvalidJSONHeader(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJWT()
+	d := NewJWT()
 	// Header "eyJaaa" decodes to non-JSON bytes, so JSON parse fails.
 	// This gives base 0.7 confidence only.
 	findings := d.Scan([]byte("eyJaaa.eyJzdWIi.signature"))
@@ -147,7 +145,7 @@ func TestJWTDetector_InvalidJSONHeader(t *testing.T) {
 func TestJWTDetector_UnsignedJWT(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJWT()
+	d := NewJWT()
 	// alg:none JWT has empty signature. Header: {"alg":"none"}
 	// base64url("{"alg":"none"}") = "eyJhbGciOiJub25lIn0"
 	// base64url("{"sub":"1234567890"}") = "eyJzdWIiOiIxMjM0NTY3ODkwIn0"
@@ -178,7 +176,7 @@ func TestJWTDetector_UnsignedJWT(t *testing.T) {
 func TestJWTDetector_EmptyHeaderRejected(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewJWT()
+	d := NewJWT()
 	// Empty header part (starts with dot) should not match — the extraction
 	// loop starts at "eyJ" so this can't occur naturally. But ensure the
 	// len(parts[0]) == 0 guard works.
@@ -198,10 +196,23 @@ func TestJWTExactDocumentedScores(t *testing.T) {
 	}{{"eyJ4IjoxfQ.e30.c2ln", 0.9}} {
 		t.Run(fixture.text, func(t *testing.T) {
 			t.Parallel()
-			findings := detect.NewJWT().Scan([]byte(fixture.text))
+			findings := NewJWT().Scan([]byte(fixture.text))
 			if len(findings) != 1 || findings[0].Confidence != fixture.score {
 				t.Fatalf("got %v want exact score %.17g", findings, fixture.score)
 			}
 		})
+	}
+}
+
+func TestJwtRejectedBoundaries(t *testing.T) {
+	t.Parallel()
+	if alg, boost := decodeJWTHeader([]byte("%%%")); alg != "" || boost != 0 {
+		t.Fatal("invalid base64 accepted")
+	}
+	if alg, boost := decodeJWTHeader([]byte("eyJhbGciOjF9")); alg != "" || boost != 3 {
+		t.Fatal("nonstring algorithm handling changed")
+	}
+	if _, _, ok := extractJWTToken([]byte("eyJ..signature"), 0); ok {
+		t.Fatal("empty payload accepted")
 	}
 }

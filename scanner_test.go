@@ -3,6 +3,7 @@ package embargo
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -659,5 +660,23 @@ func TestUnicodeCategoryMasking(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestScanCanceledBetweenDetectors(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithAll())
+	for checkpoint := 2; checkpoint <= len(scanner.detectors)+1; checkpoint++ {
+		calls := 0
+		findings := scanner.scan([]byte("email alice@example.com card 4111111111111111"), func() error {
+			calls++
+			if calls >= checkpoint {
+				return context.Canceled
+			}
+			return nil
+		})
+		if len(findings) != 0 || calls != checkpoint {
+			t.Fatalf("checkpoint %d returned %d findings after %d cancellation checks", checkpoint, len(findings), calls)
+		}
 	}
 }

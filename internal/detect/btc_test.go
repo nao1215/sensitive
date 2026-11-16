@@ -219,9 +219,9 @@ func TestBTCDetector_Scan_BoundaryChecks(t *testing.T) {
 		{name: "followed by space", input: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa ", wantLen: 1},
 		{name: "followed by comma", input: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa,", wantLen: 1},
 		{name: "followed by period", input: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa.", wantLen: 1},
-		{name: "preceded by letter", input: "x1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", wantLen: 0},
-		{name: "preceded by underscore", input: "_1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", wantLen: 0},
-		{name: "followed by underscore", input: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa_", wantLen: 0},
+		{name: "btc preceded by letter", input: "x1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", wantLen: 0},
+		{name: "btc preceded by underscore", input: "_1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", wantLen: 0},
+		{name: "btc followed by underscore", input: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa_", wantLen: 0},
 		{name: "preceded by digit", input: "91A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", wantLen: 0},
 		{name: "preceded by zero (non-base58)", input: "01A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", wantLen: 0},
 		{name: "preceded by I (non-base58)", input: "I1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", wantLen: 0},
@@ -350,5 +350,15 @@ func TestEncodingAlphabetVectors(t *testing.T) {
 		if toLowerString(s) != lower {
 			t.Fatalf("lowercase %q", s)
 		}
+	}
+}
+
+func TestBtcRejectedBoundaries(t *testing.T) {
+	t.Parallel()
+	if validateBase58Checksum([]byte{1, 2, 3, 4}) {
+		t.Fatal("short checksum accepted")
+	}
+	if _, _, ok := NewBTC().scanLegacy([]byte("mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJRfn"), 0); ok {
+		t.Fatal("unsupported network accepted")
 	}
 }

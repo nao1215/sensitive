@@ -1,18 +1,17 @@
-package detect_test
+package detect
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"strings"
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestETHDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewETH()
+	d := NewETH()
 
 	tests := []struct {
 		name        string
@@ -27,7 +26,7 @@ func TestETHDetector_Scan(t *testing.T) {
 			name:        "EIP-55 test vector 1",
 			input:       "addr: 0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
 			wantLen:     1,
-			wantRaw:     "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+			wantRaw:     ethChecksummedFixture,
 			wantEIP55:   true,
 			wantMinConf: 0.9,
 		},
@@ -114,8 +113,8 @@ func TestETHDetector_Scan(t *testing.T) {
 				return
 			}
 			f := findings[0]
-			if f.DetectorName != detect.NameETH {
-				t.Errorf("DetectorName = %q, want %q", f.DetectorName, detect.NameETH)
+			if f.DetectorName != NameETH {
+				t.Errorf("DetectorName = %q, want %q", f.DetectorName, NameETH)
 			}
 			if tt.wantRaw != "" && f.RawValue != tt.wantRaw {
 				t.Errorf("RawValue = %q, want %q", f.RawValue, tt.wantRaw)
@@ -137,25 +136,23 @@ func TestETHDetector_Scan(t *testing.T) {
 func TestETHDetector_Scan_NoMatch(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewETH()
+	d := NewETH()
 
 	tests := []struct {
 		name  string
 		input string
 	}{
-		//nolint:goconst // Each test states its fixture and expected result independently.
-		{name: "empty input", input: ""},
+		{name: emptyInputCase, input: ""},
 		{name: "plain text", input: "hello world no ethereum here"},
 		{name: "0x too short", input: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAe"},
 		{name: "0x too long", input: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed0"},
 		{name: "non-hex chars", input: "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BzZzz"},
 		{name: "invalid EIP-55 checksum", input: "0x5AAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"},
-		{name: "preceded by letter", input: "x0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed"},
-		//nolint:goconst // Each test states its fixture and expected result independently.
-		{name: "preceded by underscore", input: "_0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed"},
+		{name: "eth preceded by letter", input: "x0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed"},
+		{name: "eth preceded by underscore", input: "_0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed"},
 		{name: "followed by hex char", input: "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed0"},
 		{name: "followed by letter", input: "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaedx"},
-		{name: "followed by underscore", input: "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed_"},
+		{name: "eth followed by underscore", input: "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed_"},
 		{name: "just 0x prefix", input: "0x"},
 		{name: "hex string without 0x", input: "5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"},
 		{name: "log line no eth", input: "2024-01-15T10:30:00Z INFO server started on port 8080"},
@@ -176,16 +173,16 @@ func TestETHDetector_Scan_NoMatch(t *testing.T) {
 func TestETHDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewETH()
-	if d.Name() != detect.NameETH {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameETH)
+	d := NewETH()
+	if d.Name() != NameETH {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameETH)
 	}
 }
 
 func TestETHDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewETH()
+	d := NewETH()
 	hints := d.Hints()
 	if len(hints) != 2 {
 		t.Fatalf("Hints() returned %d hints, want 2", len(hints))
@@ -201,7 +198,7 @@ func TestETHDetector_Hints(t *testing.T) {
 func TestETHDetector_Scan_BytePositions(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewETH()
+	d := NewETH()
 	input := "eth: 0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed end"
 	findings := d.Scan([]byte(input))
 	if len(findings) != 1 {
@@ -225,7 +222,7 @@ func TestETHDetector_Scan_BytePositions(t *testing.T) {
 func TestETHDetector_Scan_BoundaryChecks(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewETH()
+	d := NewETH()
 
 	tests := []struct {
 		name    string
@@ -238,10 +235,10 @@ func TestETHDetector_Scan_BoundaryChecks(t *testing.T) {
 		{name: "followed by space", input: "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed ", wantLen: 1},
 		{name: "followed by comma", input: "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed,", wantLen: 1},
 		{name: "followed by period", input: "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed.", wantLen: 1},
-		{name: "preceded by letter", input: "x0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed", wantLen: 0},
+		{name: "eth preceded by letter", input: "x0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed", wantLen: 0},
 		{name: "preceded by digit", input: "10x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed", wantLen: 0},
-		{name: "preceded by underscore", input: "_0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed", wantLen: 0},
-		{name: "followed by underscore", input: "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed_", wantLen: 0},
+		{name: "eth preceded by underscore", input: "_0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed", wantLen: 0},
+		{name: "eth followed by underscore", input: "0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed_", wantLen: 0},
 	}
 
 	for _, tt := range tests {
@@ -259,7 +256,7 @@ func TestETHDetector_Scan_BoundaryChecks(t *testing.T) {
 func TestETHDetector_EIP55Validation(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewETH()
+	d := NewETH()
 
 	// Test that mixed-case addresses with wrong checksums are rejected.
 	// Take a valid EIP-55 address and change one character's case.
@@ -270,7 +267,7 @@ func TestETHDetector_EIP55Validation(t *testing.T) {
 	}
 
 	// Valid EIP-55 address should match.
-	validEIP55 := "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
+	validEIP55 := ethChecksummedFixture
 	findings = d.Scan([]byte(validEIP55))
 	if len(findings) != 1 {
 		t.Fatalf("valid EIP-55 address should match, got %d findings", len(findings))
@@ -291,7 +288,7 @@ func TestETHSpecificationVectors(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, raw := range vectors {
-		got := detect.NewETH().Scan([]byte(raw))
+		got := NewETH().Scan([]byte(raw))
 		want := 0.95
 		if raw[2:] == strings.ToLower(raw[2:]) || raw[2:] == strings.ToUpper(raw[2:]) {
 			want = 0.80
@@ -299,7 +296,7 @@ func TestETHSpecificationVectors(t *testing.T) {
 		if len(got) != 1 || got[0].RawValue != raw || got[0].Confidence != want {
 			t.Errorf("EIP-55 vector rejected or mis-scored: %s", raw)
 		}
-		if len(detect.NewETH().Scan([]byte(raw+"0"))) != 0 {
+		if len(NewETH().Scan([]byte(raw+"0"))) != 0 {
 			t.Fatal("overlong ETH address accepted")
 		}
 		if want == 0.95 {
@@ -313,10 +310,30 @@ func TestETHSpecificationVectors(t *testing.T) {
 				default:
 					continue
 				}
-				if len(detect.NewETH().Scan(bad)) != 0 {
+				if len(NewETH().Scan(bad)) != 0 {
 					t.Fatalf("one-letter EIP-55 mutation accepted: %s", bad)
 				}
 			}
+		}
+	}
+}
+
+func TestEthRejectedBoundaries(t *testing.T) {
+	t.Parallel()
+	if isHex40([]byte("a")) || validateEIP55("a") {
+		t.Fatal("truncated Ethereum address accepted")
+	}
+}
+
+const ethChecksummedFixture = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
+
+func TestKeccakFullRateVectors(t *testing.T) {
+	t.Parallel()
+	// Independently generated with golang.org/x/crypto/sha3.NewLegacyKeccak256.
+	for n, want := range map[int]string{136: "a6c4d403279fe3e0af03729caada8374b5ca54d8065329a3ebcaeb4b60aa386e", 137: "d869f639c7046b4929fc92a4d988a8b22c55fbadb802c0c66ebcd484f1915f39", 272: "cf7fcd4f705ee749930d19ca84561a9bf62516bd90a471545fa2f49fdc7e63c8"} {
+		got := keccak256Sum([]byte(strings.Repeat("a", n)))
+		if hex.EncodeToString(got[:]) != want {
+			t.Fatal("full-rate Keccak vector mismatch", n)
 		}
 	}
 }

@@ -2,6 +2,7 @@ package ascii_test
 
 import (
 	"testing"
+	"unicode"
 
 	"github.com/nao1215/embargo/internal/ascii"
 )
@@ -87,5 +88,24 @@ func TestToLower(t *testing.T) {
 				t.Errorf("ToLower(%c) = %c, want %c", tt.input, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestEveryByteAgainstUnicodeASCIIOracle(t *testing.T) {
+	t.Parallel()
+	for n := range 256 {
+		// #nosec G115 -- Exhaust the exact byte domain.
+		b := byte(n)
+		wantLetter := n < 128 && unicode.IsLetter(rune(n))
+		if ascii.HasLetter([]byte{b}) != wantLetter {
+			t.Fatalf("letter boundary at byte %d", n)
+		}
+		want := b
+		if n < 128 {
+			want = byte(unicode.ToLower(rune(n)))
+		} // #nosec G115 -- ASCII case conversion stays in the byte domain.
+		if ascii.ToLower(b) != want || ascii.LowerCopy([]byte{b})[0] != want {
+			t.Fatalf("lowercase boundary at byte %d", n)
+		}
 	}
 }

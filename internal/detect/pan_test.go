@@ -477,3 +477,10 @@ func TestPANPrefixAndLengthEdges(t *testing.T) {
 		}
 	}
 }
+
+func TestPanRejectedBoundaries(t *testing.T) {
+	t.Parallel()
+	if identifyBrand(nil) != "" || isExpectedLength("unknown", 16) {
+		t.Fatal("unknown brand accepted")
+	}
+}

@@ -95,3 +95,15 @@ func TestMaskUnion(t *testing.T) {
 	}
 	mustPanic(t, func() { MaskFunc("", nil, nil) })
 }
+
+func TestMaskKindPreferenceAcrossInputOrder(t *testing.T) {
+	t.Parallel()
+	findings := []Finding{{Kind: "z-kind", Start: 0, End: 4, Confidence: .9}, {Kind: "a-kind", Start: 1, End: 3, Confidence: .9}}
+	for range 2 {
+		got := MaskFunc("value!", findings, func(kind Kind, text string) string { return string(kind) + ":" + text })
+		if got != "a-kind:value!" {
+			t.Fatalf("equal-confidence overlapping kinds selected %q", got)
+		}
+		slices.Reverse(findings)
+	}
+}

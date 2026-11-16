@@ -130,3 +130,31 @@ func TestFullwidthRejectedBoundaries(t *testing.T) {
 		}
 	}
 }
+
+func TestTokenSeparatorCategoryProperty(t *testing.T) {
+	t.Parallel()
+	for r := rune(unicode.MaxASCII + 1); r <= unicode.MaxRune; r++ {
+		if !unicode.Is(unicode.Pd, r) && !unicode.Is(unicode.Zs, r) && !unicode.Is(unicode.Cf, r) && (!unicode.Is(unicode.Sm, r) || !unicode.Is(unicode.Dash, r)) {
+			continue
+		}
+		for _, repetitions := range []int{1, 3} {
+			separator := strings.Repeat(string(r), repetitions)
+			raw := "AKIA" + separator + "IOSFODNN7EXAMPLE"
+			got, positions := RemoveTokenSeparators([]byte(raw))
+			if string(got) != sampleAccessKey || len(positions) != len(got)+1 || positions[4] != 4+len(separator) || positions[len(got)] != len(raw) {
+				t.Fatalf("separator %U lost token bytes or offsets", r)
+			}
+			for i, position := range positions[:len(got)] {
+				if raw[position] != got[i] || i > 0 && position <= positions[i-1] {
+					t.Fatal("normalized bytes do not map to their original positions")
+				}
+			}
+			for _, edge := range []string{separator + "public", "public" + separator} {
+				unchanged, mapping := RemoveTokenSeparators([]byte(edge))
+				if string(unchanged) != edge || mapping != nil {
+					t.Fatal("non-interior separator changed")
+				}
+			}
+		}
+	}
+}

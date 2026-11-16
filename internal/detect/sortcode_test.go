@@ -298,3 +298,10 @@ func TestSortCodeDateAmbiguityVectors(t *testing.T) {
 		}
 	}
 }
+
+func TestSortcodeRejectedBoundaries(t *testing.T) {
+	t.Parallel()
+	if _, ok := isSortCodePattern([]byte("12-"), 0); ok {
+		t.Fatal("truncated sort code accepted")
+	}
+}

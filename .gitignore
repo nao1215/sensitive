@@ -42,3 +42,5 @@ __pycache__/
 /_apalache-out/
 /benchmark-results/
 /quality-results/
+
+mutation-results/
