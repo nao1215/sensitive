@@ -165,6 +165,9 @@ func adoptionVerdict(t *testing.T, tc adoptionCase, data []byte) string {
 	passed := r.Check()
 	probe.finish()
 	if !exposed {
+		if !passed {
+			t.Fatal("masked fixture failed its output check", tc.name)
+		}
 		return caseMasked
 	}
 	if !passed {
