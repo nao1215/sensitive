@@ -4,7 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [0.5.2] - 2026-11-16
+
+This patch release masks adjacent email-shaped values in one pass and consolidates tests and documentation. Upgrade the root and every installed adapter to v0.5.2.
+
+### Fixed
+
+- Preserve the end of an accepted email domain as the boundary for the next local part, so adjacent values are masked in one pass and repeated MaskJSON calls are idempotent. The fuzz regression also reproduces in v0.5.0. All-Kind adjacency properties additionally cover complete terminal-ID token boundaries and neighboring sort-code formats ([PR #108](https://github.com/nao1215/embargo/pull/108), [f6fafb9](https://github.com/nao1215/embargo/commit/f6fafb9c8cff4d251a2e61e09d9ca20c5434a84d)).
+
+### Changed
+
+- Consolidate tests beside their sources or by integration subject, enforce the test-file budget, and replace development trace history with current behavior and evidence. This test and documentation reorganization does not change the public API or numeric accuracy/false-positive gates ([PR #113](https://github.com/nao1215/embargo/pull/113), [1d2f374](https://github.com/nao1215/embargo/commit/1d2f374c869132e03a6586c194a51369d0dbe6b3); [PR #114](https://github.com/nao1215/embargo/pull/114), [6fa216c](https://github.com/nao1215/embargo/commit/6fa216c07b4c0859109a9bfe89e41ddd1845a993); [PR #115](https://github.com/nao1215/embargo/pull/115), [7ab6bc0](https://github.com/nao1215/embargo/commit/7ab6bc02392ab95bafa1ce615c4eae2c02d6e069)).
 
 ### Added
 
@@ -337,6 +347,7 @@ Initial release of the `sensitive` library.
 - Full-width digit normalization: Transparent handling of Japanese full-width digits (U+FF10--U+FF19) for PAN, phone, and My Number detection.
 - Deterministic output: Findings are sorted by confidence (descending), then by byte offset and detector name for fully reproducible results.
 
+[0.5.2]: https://github.com/nao1215/embargo/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/nao1215/embargo/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/nao1215/embargo/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/nao1215/embargo/compare/v0.3.0...v0.4.0
