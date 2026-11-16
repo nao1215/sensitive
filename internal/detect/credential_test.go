@@ -2,7 +2,11 @@ package detect
 
 import (
 	"bytes"
+	"database/sql"
+	"fmt"
+	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -190,4 +194,151 @@ func TestCredentialAnonymousTypeBoundaries(t *testing.T) {
 			t.Errorf("anonymous type was mistaken for its value: %+v", got)
 		}
 	}
+}
+
+// Exercise the public detector entry point independently of root dispatch.
+type credentialPropertyString string
+
+func TestDetectorAuthorizationSchemeProperty(t *testing.T) {
+	t.Parallel()
+	scanner := &Credential{}
+	for n := range 24 {
+		secret := fmt.Sprintf("opaqueAuth%02dFixture", n)
+		for _, scheme := range []string{"Token", "Negotiate", "Digest", "AWS4-HMAC-SHA256", "Bearer", "Basic", fmt.Sprintf("Scheme%d!#$%%&'*+-.^_`|~", n)} {
+			for _, space := range []string{" ", "\t", "   "} {
+				credential := secret
+				if scheme == "Digest" {
+					credential = `username="fixture", realm="example", response="` + secret + `"`
+				}
+				if scheme == "AWS4-HMAC-SHA256" {
+					credential = "Credential=fixture, SignedHeaders=host, Signature=" + secret
+				}
+				value := scheme + space + credential
+				for count := 1; count <= 3; count++ {
+					list := strings.TrimSuffix(strings.Repeat(value+", ", count), ", ")
+					for _, input := range []string{"Authorization: " + list, "Proxy-Authorization: " + list, `{"msg":` + strconv.Quote("Authorization: "+list) + `}`, fmt.Sprintf("%v", http.Header{"Authorization": {list}}), fmt.Sprintf("%#v", http.Header{"Authorization": {list}})} {
+						got := maskCredentialFindings(input, scanner.Scan([]byte(input)))
+						if strings.Contains(got, secret) {
+							t.Fatalf("credential visible: %q => %q", input, got)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func TestDetectorDefaultCredentialSegmentsProperty(t *testing.T) {
+	t.Parallel()
+	scanner := &Credential{}
+	for _, prefix := range []string{"SECRET", "POSTGRES", "MYSQL", "GITHUB", "AWS_SESSION", "X-Auth", "spring.datasource", "user", strings.Repeat("component.", 10)} {
+		for _, word := range []string{"password", "passwd", "secret", "token", string(KindCredential), "auth"} {
+			for _, separator := range []string{"_", "-", ".", ""} {
+				suffix := word
+				if separator == "" {
+					suffix = strings.ToUpper(word[:1]) + word[1:]
+				}
+				key := prefix + separator + suffix
+				// #nosec G101 -- Synthetic generated-key fixture, not a credential.
+				secret := "opaqueSegmentFixture"
+				input := key + "=" + secret
+				if got := maskCredentialFindings(input, scanner.Scan([]byte(input))); strings.Contains(got, secret) {
+					t.Errorf("assignment: %q => %q", input, got)
+				}
+				document := []byte(`{"` + key + `":"` + secret + `"}`)
+				if got := maskCredentialFindings(string(document), scanner.Scan(document)); strings.Contains(got, secret) {
+					t.Errorf("JSON key %q: %s", key, got)
+				}
+			}
+		}
+	}
+	for _, key := range []string{"SECRET_KEY", "secretKey", "X-Goog-Api-Key", "AWS_SECRET_ACCESS_KEY"} {
+		if got := maskCredentialFindings(key+"=opaqueSegmentFixture", scanner.Scan([]byte(key+"=opaqueSegmentFixture"))); strings.Contains(got, "opaqueSegmentFixture") {
+			t.Errorf("key %s visible", key)
+		}
+	}
+	for _, key := range []string{"primary_key", "sort_key", "foreign_key", "monkey", "keyboard", "token_count", "password_length", "secret_name", "authentication_status"} {
+		input := key + "=ordinary"
+		if got := maskCredentialFindings(input, scanner.Scan([]byte(input))); got != input {
+			t.Errorf("noncredential key %s masked", key)
+		}
+	}
+}
+
+func TestDetectorCredentialGoRenderingProperty(t *testing.T) {
+	t.Parallel()
+	scanner := &Credential{}
+	for n := range 16 {
+		secret := fmt.Sprintf("opaqueGo%02dFixture", n)
+		for _, value := range []any{secret, []byte(secret), []any{secret}, []string{secret}, map[string]string{"access": secret}, sql.NullString{String: secret, Valid: true}, sql.Null[string]{V: secret, Valid: true}, struct{ Raw string }{secret}, []struct{ Raw string }{{secret}}, credentialPropertyString(secret)} {
+			for _, verb := range []string{"%v", "%+v", "%#v", "%q"} {
+				for _, input := range []string{fmt.Sprintf(verb, map[string]any{"password": value}), fmt.Sprintf(verb, struct{ Password any }{value})} {
+					// Plain struct %v and %q omit field names; no credential context survives.
+					if !strings.Contains(strings.ToLower(input), "password") {
+						continue
+					}
+					got := maskCredentialFindings(input, scanner.Scan([]byte(input)))
+					hexBytes := fmt.Sprintf("%#v", []byte(secret))
+					if strings.Contains(got, secret) || strings.Contains(got, strings.TrimSuffix(strings.TrimPrefix(hexBytes, "[]byte{"), "}")) || strings.Contains(got, fmt.Sprintf("%v", []byte(secret))) {
+						t.Errorf("Go value visible: %q => %q", input, got)
+					}
+				}
+			}
+		}
+		for _, input := range []string{`password:main.Password("` + secret + `")`, `password:[]interface {}{"` + secret + `"}`, `password:map[string]string{"access":"` + secret + `"}`, `password:sql.NullString{String:"` + secret + `", Valid:true}`} {
+			if got := maskCredentialFindings(input, scanner.Scan([]byte(input))); strings.Contains(got, secret) {
+				t.Errorf("typed value visible: %q => %q", input, got)
+			}
+		}
+	}
+}
+
+func TestDetectorCredentialEscapesAndBoundariesProperty(t *testing.T) {
+	t.Parallel()
+	scanner := &Credential{}
+	for n := range 16 {
+		secret := fmt.Sprintf("opaqueBoundary%02dFixture", n)
+		inputs := make([]string, 0, 18)
+		inputs = append(inputs, "map[password:"+secret+" tail user:bob]", "{Password:head "+secret+" tail}", "password=`head "+secret+" tail`", "password := "+secret, "{DSN:{Scheme:https Opaque: User:bob:"+secret+" Host:example.com Path:/x}}")
+		for _, prefix := range []string{"[]", "[abc]", ",", ")", "[REDACTED]]", "[REDACTED][REDACTED]"} {
+			inputs = append(inputs, "password="+prefix+secret)
+		}
+		escaped := `{"password":"` + secret + `"}`
+		for range 4 {
+			inputs = append(inputs, escaped)
+			escaped = strconv.Quote(escaped)
+		}
+		for _, quote := range []string{`\x22`, `\u0022`} {
+			inputs = append(inputs, "{"+quote+"password"+quote+":"+quote+secret+quote+"}")
+		}
+		for _, input := range inputs {
+			if got := maskCredentialFindings(input, scanner.Scan([]byte(input))); strings.Contains(got, secret) {
+				t.Errorf("boundary visible: %q => %q", input, got)
+			}
+		}
+	}
+}
+
+func TestDetectorCredentialYAMLBlockProperty(t *testing.T) {
+	t.Parallel()
+	scanner := &Credential{}
+	for _, indent := range []string{"", "  ", "    "} {
+		for _, indicator := range []string{"|", ">", "|-", ">+", "|2"} {
+			input := indent + "password: " + indicator + "\n" + indent + "  opaqueBlockFixture\n" + indent + "  opaqueBodyFixture\n" + indent + "public: retained\n"
+			got := maskCredentialFindings(input, scanner.Scan([]byte(input)))
+			if strings.Contains(got, "opaque") || !strings.Contains(got, "public: retained") {
+				t.Errorf("block boundary: %q => %q", input, got)
+			}
+		}
+	}
+}
+
+func maskCredentialFindings(input string, findings []Finding) string {
+	data := []byte(input)
+	for _, finding := range findings {
+		for at := finding.Start; at < finding.End; at++ {
+			data[at] = '*'
+		}
+	}
+	return string(data)
 }
