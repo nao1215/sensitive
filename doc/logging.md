@@ -29,7 +29,7 @@ By default, the values of `password`, `passwd`, `secret`, `token`, `api_key`, `a
 
 `WithSensitiveKeys(names...)` replaces that set; include the default names along with additional names to extend it, or pass no names to disable it. Scanner options apply in order and copy the configured names. A matching `WithGroup` replaces the whole group with a marker and suppresses its descendant attributes; attributes attached before that group remain intact. See the [runnable option Example](../structured_example_test.go).
 
-Key rules apply to structured output, not arbitrary text in `Scanner.Scan`. Existing `embargotest.Expect` can compare captured JSON with `scanner.MaskJSON` to enforce the identical policy; `WithScanner` alone checks detector findings. See the [application output regression](../tests/comparison_libraries_test.go).
+Whole-value key replacement applies to structured fields and groups. Credential assignments in raw `Scanner.Scan` text also use WithSensitiveKeys when KindCredential is selected: `WithSensitiveKeys("recovery")` recognizes `recovery=opaque`. Raw scanning returns byte spans and does not replace a whole container. Provider-specific labels and URL/DSN credentials retain their detector rules. Existing `embargotest.Expect` can compare captured JSON with `scanner.MaskJSON` to enforce the identical policy; `WithScanner` alone checks detector findings. See the [application output regression](../tests/comparison_libraries_test.go).
 
 ## Why a Handler, rather than another ReplaceAttr
 

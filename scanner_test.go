@@ -55,3 +55,21 @@ func TestDocumentedConfidenceBoundary(t *testing.T) {
 		})
 	}
 }
+
+func TestDefaultPolicyAndRawSensitiveKeys(t *testing.T) {
+	t.Parallel()
+	for _, value := range []string{"aB3dE5fG7hI9jK1lM3nO5pQ7rS9tU1vW", "123-45-6789"} {
+		if got := embargo.NewScanner().ScanString(value); len(got) != 0 {
+			t.Fatalf("default selected opt-in kind: %v", got)
+		}
+		if got := embargo.NewScanner(embargo.WithAll()).ScanString(value); len(got) == 0 {
+			t.Fatal("WithAll omitted opt-in fixture")
+		}
+	}
+	scanner := embargo.NewScanner(embargo.WithSensitiveKeys("recovery"))
+	value := "recovery=opaque"
+	findings := scanner.ScanString(value)
+	if len(findings) != 1 || findings[0].Kind != embargo.KindCredential || embargo.Mask(value, findings) != "recovery=[REDACTED]" {
+		t.Fatalf("custom key raw scan changed: %v", findings)
+	}
+}

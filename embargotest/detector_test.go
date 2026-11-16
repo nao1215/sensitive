@@ -161,3 +161,22 @@ func TestNilPanicCompatibility(t *testing.T) {
 		})
 	}
 }
+
+func TestDefaultRecorderExcludesOptInKinds(t *testing.T) {
+	t.Parallel()
+	const data = "aB3dE5fG7hI9jK1lM3nO5pQ7rS9tU1vW 123-45-6789"
+	for _, all := range []bool{false, true} {
+		probe := &probeTB{TB: t}
+		var options []Option
+		if all {
+			options = append(options, WithScanner(embargo.NewScanner(embargo.WithAll())))
+		}
+		recorder := New(probe, options...)
+		write(t, recorder, "defaults", []byte(data))
+		recorder.Expect("defaults", func(actual []byte) bool { return string(actual) == data })
+		if recorder.Check() == all {
+			t.Fatalf("all=%t returned the wrong default verdict", all)
+		}
+		probe.finish()
+	}
+}

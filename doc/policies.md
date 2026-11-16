@@ -84,6 +84,9 @@ The inventory below translates the owner's active repository instructions into c
 | Span masking retains all telemetry counters | M19 | [TestSpanPreservesTelemetryCounters](../adapters/otel/span_test.go) | MultiPlatformUnitTest |
 | Context cancellation stops subsequent detectors and output | M19 | [TestMaskJSONContextStopsBetweenDetectors](../structured_test.go) | MultiPlatformUnitTest |
 | Every logger handles colliding masked keys without original values | M19 | [TestLoggerMaskedKeyCollisions](../tests/slog_handler_test.go) | MultiPlatformUnitTest |
+| README-linked examples run alone without private helper files | M19 | [TestReadmeLinkedExamplesStandalone](../doc_sync_test.go) | MultiPlatformUnitTest |
+| Documentation distinguishes default kinds and raw credential keys | M19 | [TestDefaultPolicyDocumentation](../doc_sync_test.go) | MultiPlatformUnitTest |
+| Standalone-example checks reject missing helper definitions | M19 | [TestStandaloneExamplesRejectMissingHelpers](../doc_sync_test.go) | MultiPlatformUnitTest |
 <!-- policy-map:end -->
 
 ## Changing a rule

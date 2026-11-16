@@ -472,5 +472,23 @@
     "source": "M19",
     "check": "tests/slog_handler_test.go#TestLoggerMaskedKeyCollisions",
     "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "README-linked examples run alone without private helper files",
+    "source": "M19",
+    "check": "doc_sync_test.go#TestReadmeLinkedExamplesStandalone",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Documentation distinguishes default kinds and raw credential keys",
+    "source": "M19",
+    "check": "doc_sync_test.go#TestDefaultPolicyDocumentation",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Standalone-example checks reject missing helper definitions",
+    "source": "M19",
+    "check": "doc_sync_test.go#TestStandaloneExamplesRejectMissingHelpers",
+    "where": "MultiPlatformUnitTest"
   }
 ]

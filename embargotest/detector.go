@@ -8,7 +8,9 @@ type (
 	valuesOption  []string
 )
 
-// WithScanner uses scanner instead of the default all-built-in policy. Nil fails the test.
+// WithScanner replaces the default 25 built-ins at minimum confidence 0.
+// National ID kinds and entropy are opt-in; NewScanner(WithAll()) selects all 37.
+// Nil fails the test.
 func WithScanner(scanner *embargo.Scanner) Option { return scannerOption{scanner: scanner} }
 
 func (o scannerOption) apply(r *Recorder) bool {
