@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Security
 
+- Rebuild OTel float and typed-slice values only from sanitized data after masked-key collisions (R18-02; log body, log attributes and span attributes in v0.5.0). [5b9b76c](https://github.com/nao1215/embargo/commit/5b9b76c91cd7d5684c853e5e1763c263e9fc765b).
+
 - Prevent email/JWT threshold leaks caused by floating-point addition in the core scanner and all hooks using it (R18-04; released tags v0.0.2–v0.5.0, including the earlier module names). Accumulate integer scores before conversion so the documented inclusive thresholds retain matching values. [PR #95](https://github.com/nao1215/embargo/pull/95), [61a44a5](https://github.com/nao1215/embargo/commit/61a44a5461e0eacfba0b0d9854dd66eda5f9e491).
 
 - Fix original-key context leaks in slog scalars, errors, bound attributes, groups and LogValuer values (R18-01; v0.4.0–v0.5.0), HTTP query and redirect-query logs (v0.5.0), and boolean/null JSON leaves in MaskJSON and encoded adapters (v0.4.0–v0.5.0). [PR #94](https://github.com/nao1215/embargo/pull/94), [9e0e6f0](https://github.com/nao1215/embargo/commit/9e0e6f049fda9a82747a8fbec4cecae32d9723de).
@@ -15,9 +17,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Preserve OTel log dropped-attribute counts and other telemetry metadata; reject edits the SDK cannot represent without losing counters (R18-05). Add Scanner.MaskJSONContext and stop canceled OTel, slog, HTTP, gRPC and Sentry scans before subsequent detectors or values (R18-06). Pin unreleased adapters to the fixed root commit. [5b9b76c](https://github.com/nao1215/embargo/commit/5b9b76c91cd7d5684c853e5e1763c263e9fc765b).
+
 - Enforce a combined 64-level limit for WithGroup chains and explicit slog groups, including bound attributes (R18-07). [PR #94](https://github.com/nao1215/embargo/pull/94), [9e0e6f0](https://github.com/nao1215/embargo/commit/9e0e6f049fda9a82747a8fbec4cecae32d9723de).
 
 ### Docs
+
+- Document cancellation boundaries and OTel counter-preserving rejection, and enforce collision and telemetry invariants through repository policies. [5b9b76c](https://github.com/nao1215/embargo/commit/5b9b76c91cd7d5684c853e5e1763c263e9fc765b).
 
 - Describe original-key scanning and scalar representations; retain differential logger and other-hook context checks in the policy inventory. Refresh measured comparison and real-log evidence after their source checks fail. [PR #94](https://github.com/nao1215/embargo/pull/94), [9e0e6f0](https://github.com/nao1215/embargo/commit/9e0e6f049fda9a82747a8fbec4cecae32d9723de).
 

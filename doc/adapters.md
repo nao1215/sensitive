@@ -46,7 +46,7 @@ The public Examples run real loggers with Output comments. Tests inspect message
 
 ## Versions
 
-Each adapter is its own module with a tag of the form `adapters/<name>/vX.Y.Z`, where `<name>` is `zap`, `zerolog`, `logrus`, `grpc`, `otel` or `sentry`, and requires the matching root release. The first published gRPC, OpenTelemetry and Sentry adapter versions are v0.5.0. The local replace directives are used only for development and CI; downstream builds ignore them.
+Each adapter is its own module with a tag of the form `adapters/<name>/vX.Y.Z`, where `<name>` is `zap`, `zerolog`, `logrus`, `grpc`, `otel` or `sentry`, and requires the matching root release. The first published gRPC, OpenTelemetry and Sentry adapter versions are v0.5.0. Unreleased adapters pin root commit 5b9b76c91cd7 through its Go pseudo-version to include the Round 19 fixes without a release or tag. The local replace directives are used only for development and CI; downstream builds ignore them.
 
 ## Shared JSON policy
 
