@@ -9,6 +9,9 @@ import (
 	"net/url"
 	"reflect"
 	"strings"
+	"time"
+
+	"github.com/nao1215/embargo/internal/saferecord"
 )
 
 // NewHTTPHandler writes masked access records after next handles each request.
@@ -17,26 +20,40 @@ import (
 // Request and response bytes passed to the service or client remain unchanged.
 // Bodies are not logged. ResponseController, flushing, hijacking and HTTP/2 push
 // delegate to the original writer; unsupported operations return ErrNotSupported.
-// All three arguments are required. Logging failures drop the record, and fields
-// introduced by the downstream logger require its own masking boundary.
+// All three arguments are required. Access logging uses context.WithoutCancel
+// with a 100 ms timeout, including for canceled requests. Masking failures emit a
+// withheld record with time, level, a fixed reason and an attribute count. Running
+// callbacks and sink I/O cannot be forcibly stopped. Fields introduced downstream
+// require their own masking boundary; sink failures cannot change the response.
 func NewHTTPHandler(next http.Handler, logger *slog.Logger, scanner *Scanner) http.Handler {
 	if next == nil || nilHTTPHandler(next) || logger == nil || scanner == nil {
 		panic("embargo: nil HTTP dependency")
 	}
-	safeLogger := slog.New(NewSlogHandler(logger.Handler(), scanner))
+	safeHandler := NewSlogHandler(logger.Handler(), scanner)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		writer := &httpLogWriter{ResponseWriter: w}
-		defer logHTTPExchange(safeLogger, scanner, r, writer)
+		defer logHTTPExchange(logger.Handler(), safeHandler, scanner, r, writer)
 		next.ServeHTTP(writer, r)
 	})
 }
 
-func logHTTPExchange(logger *slog.Logger, scanner *Scanner, r *http.Request, w *httpLogWriter) {
-	// A broken custom detector must not turn an access-log failure into a service failure.
+func logHTTPExchange(next, safe slog.Handler, scanner *Scanner, r *http.Request, w *httpLogWriter) {
+	ctx, cancel := saferecord.Budget(r.Context())
+	defer cancel()
+	const attributeCount = 6
+	when := time.Now()
+	complete := false
+	var cause error
 	defer func() {
-		_ = recover() //nolint:errcheck // Suppress panic values at the logging boundary.
+		_ = recover() //nolint:errcheck // Panic values may contain secrets.
+		if !complete {
+			if err := saferecord.Slog(ctx, next, when, slog.LevelInfo, attributeCount, saferecord.Reason(ctx, cause)); err != nil {
+				return
+			}
+		}
 	}()
-	if r.Context().Err() != nil {
+	if !safe.Enabled(ctx, slog.LevelInfo) {
+		complete = true
 		return
 	}
 	status := w.status
@@ -47,40 +64,62 @@ func logHTTPExchange(logger *slog.Logger, scanner *Scanner, r *http.Request, w *
 	if header == nil {
 		header = w.Header()
 	}
-	logger.LogAttrs(r.Context(), slog.LevelInfo, "http request",
-		slog.String("method", r.Method), slog.String("target", scanner.httpTarget(r.Context(), r.URL)),
-		slog.Any("request_headers", scanner.maskHTTPHeaders(r.Context(), r.Header)), slog.Int("status", status),
-		slog.Any("response_headers", scanner.maskHTTPHeaders(r.Context(), header)), slog.Bool("flush_failed", w.flushFailed))
+	target, err := scanner.httpTarget(ctx, r.URL)
+	if err != nil {
+		cause = err
+		return
+	}
+	requestHeaders, err := scanner.maskHTTPHeaders(ctx, r.Header)
+	if err != nil {
+		cause = err
+		return
+	}
+	responseHeaders, err := scanner.maskHTTPHeaders(ctx, header)
+	if err != nil {
+		cause = err
+		return
+	}
+	record := slog.NewRecord(when, slog.LevelInfo, "http request", 0)
+	record.AddAttrs(slog.String("method", r.Method), slog.String("target", target), slog.Any("request_headers", requestHeaders), slog.Int("status", status), slog.Any("response_headers", responseHeaders), slog.Bool("flush_failed", w.flushFailed))
+	complete = true
+	if err := safe.Handle(ctx, record); err != nil {
+		return
+	}
 }
 
-func (s *Scanner) maskHTTPHeaders(ctx context.Context, header http.Header) http.Header {
+func (s *Scanner) maskHTTPHeaders(ctx context.Context, header http.Header) (http.Header, error) {
 	if ctx.Err() != nil {
-		return nil
+		return nil, saferecord.ErrCanceled
 	}
 	safe := header.Clone()
 	for key, values := range safe {
 		if ctx.Err() != nil {
-			return nil
+			return nil, saferecord.ErrCanceled
 		}
 		if strings.EqualFold(key, "Authorization") || strings.EqualFold(key, "Cookie") || strings.EqualFold(key, "Set-Cookie") || s.sensitiveKey(key) {
 			safe[key] = []string{redactionMarker}
-		} else if strings.EqualFold(key, "Location") {
+			continue
+		}
+		if strings.EqualFold(key, "Location") {
 			for i, value := range values {
 				target, err := url.Parse(value)
 				if err != nil {
-					values[i] = redactionMarker
-				} else {
-					values[i] = s.httpTarget(ctx, target)
+					return nil, saferecord.ErrMasking
 				}
+				masked, scanErr := s.httpTarget(ctx, target)
+				if scanErr != nil {
+					return nil, scanErr
+				}
+				values[i] = masked
 			}
 		}
 	}
-	return safe
+	return safe, nil
 }
 
-func (s *Scanner) httpTarget(ctx context.Context, target *url.URL) string {
+func (s *Scanner) httpTarget(ctx context.Context, target *url.URL) (string, error) {
 	if ctx.Err() != nil {
-		return redactionMarker
+		return "", saferecord.ErrCanceled
 	}
 	copyURL := *target
 	if copyURL.User != nil {
@@ -88,12 +127,12 @@ func (s *Scanner) httpTarget(ctx context.Context, target *url.URL) string {
 	}
 	query, err := url.ParseQuery(copyURL.RawQuery)
 	if err != nil {
-		return redactionMarker
+		return "", saferecord.ErrMasking
 	}
 	scan := eventScanner{scanner: s, remaining: maxScanBytes}
 	for key, values := range query {
 		if ctx.Err() != nil {
-			return redactionMarker
+			return "", saferecord.ErrCanceled
 		}
 		for i, value := range values {
 			if s.sensitiveKey(key) {
@@ -101,7 +140,7 @@ func (s *Scanner) httpTarget(ctx context.Context, target *url.URL) string {
 			} else {
 				masked, scanErr := scan.maskScalar(ctx, value, key)
 				if scanErr != nil {
-					return redactionMarker
+					return "", scanErr
 				}
 				values[i] = masked
 			}
@@ -110,9 +149,9 @@ func (s *Scanner) httpTarget(ctx context.Context, target *url.URL) string {
 	copyURL.RawQuery = query.Encode()
 	masked, err := scan.maskScalar(ctx, copyURL.String(), "")
 	if err != nil {
-		return redactionMarker
+		return "", err
 	}
-	return masked
+	return masked, nil
 }
 
 type httpLogWriter struct {

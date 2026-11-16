@@ -122,7 +122,7 @@ func TestHTTPHandlerEmptyResponseAndInvalidTarget(t *testing.T) {
 	var logs bytes.Buffer
 	handler := embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.Header().Set("Location", "://opaque") }), slog.New(slog.NewJSONHandler(&logs, nil)), embargo.NewScanner())
 	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://reader:opaque@example.com/?bad;query", http.NoBody))
-	if strings.Contains(logs.String(), "opaque") || !strings.Contains(logs.String(), `"status":200`) {
+	if strings.Contains(logs.String(), "opaque") || !strings.Contains(logs.String(), "record withheld (masking error)") {
 		t.Fatal(logs.String())
 	}
 }
@@ -138,8 +138,8 @@ func TestHTTPHandlerScannerFailureDoesNotChangeResponse(t *testing.T) {
 	handler := embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }), slog.New(slog.NewJSONHandler(&logs, nil)), scanner)
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", http.NoBody))
-	if response.Code != http.StatusNoContent || logs.Len() != 0 {
-		t.Fatal("logging failure reached service or output")
+	if response.Code != http.StatusNoContent || !strings.Contains(logs.String(), "record withheld (masking error)") {
+		t.Fatal("logging failure changed service response or lost audit record")
 	}
 }
 
@@ -280,12 +280,8 @@ func TestHTTPContextCancellation(t *testing.T) {
 			handler := embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, nil)), scanner)
 			response := httptest.NewRecorder()
 			handler.ServeHTTP(response, httptest.NewRequestWithContext(ctx, http.MethodGet, "/pay?first=public&second=public", http.NoBody))
-			want := 1
-			if alreadyCanceled {
-				want = 0
-			}
-			if response.Code != http.StatusAccepted || out.Len() != 0 || detector.calls != want {
-				t.Fatalf("status=%d bytes=%d scans=%d want=%d", response.Code, out.Len(), detector.calls, want)
+			if response.Code != http.StatusAccepted || !strings.Contains(out.String(), "http request") || detector.calls == 0 {
+				t.Fatalf("status=%d output=%s scans=%d", response.Code, out.String(), detector.calls)
 			}
 		})
 	}
@@ -325,5 +321,103 @@ func BenchmarkHookScaling(b *testing.B) {
 				call()
 			}
 		})
+	}
+}
+
+//nolint:paralleltest // Isolate reason checks under the real 100 ms masking budget.
+func TestHTTPWithheldRecord(t *testing.T) {
+	for _, reason := range []string{maskingReason, sizeReason, canceledReason} {
+		t.Run(reason, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			scanner := embargo.NewScanner()
+			if reason == maskingReason {
+				scanner = embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(&failingHTTPDetector{}))
+			}
+			var out bytes.Buffer
+			next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { cancel(); w.WriteHeader(http.StatusAccepted) })
+			req := httptest.NewRequestWithContext(ctx, http.MethodGet, "/pay?token=planted-query", http.NoBody)
+			req.Header.Set("Authorization", "planted-header")
+			if reason == sizeReason {
+				req.Header.Set("X-Large", strings.Repeat("x", 1<<20))
+			}
+			embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, nil)), scanner).ServeHTTP(httptest.NewRecorder(), req)
+			if reason == canceledReason {
+				if !strings.Contains(out.String(), "http request") || strings.Contains(out.String(), "planted") {
+					t.Fatalf("missing safe access record: %s", out.String())
+				}
+			} else {
+				assertWithheldJSON(t, out.Bytes(), reason, 6)
+			}
+		})
+	}
+}
+
+type budgetDetector struct{ calls int }
+
+func (d *budgetDetector) Scan([]byte) []embargo.Finding {
+	d.calls++
+	if d.calls == 1 {
+		timer := time.NewTimer(150 * time.Millisecond)
+		defer timer.Stop()
+		<-timer.C
+	}
+	return nil
+}
+
+func TestHTTPMaskingBudgetEmitsFallback(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	detector := &budgetDetector{}
+	scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(detector))
+	var out bytes.Buffer
+	handler := embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusAccepted) }), slog.New(slog.NewJSONHandler(&out, nil)), scanner)
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequestWithContext(ctx, http.MethodGet, "/?token=planted-query", http.NoBody))
+	assertWithheldJSON(t, out.Bytes(), canceledReason, 6)
+	if detector.calls != 1 || response.Code != http.StatusAccepted {
+		t.Fatal("budget did not stop subsequent scans or changed response")
+	}
+}
+
+func TestHTTPMalformedHeaderTargetWithholdsWholeRecord(t *testing.T) {
+	t.Parallel()
+	for _, location := range []string{"://planted-secret", "/?bad;planted-secret"} {
+		for _, responseHeader := range []bool{false, true} {
+			t.Run(location+strconv.FormatBool(responseHeader), func(t *testing.T) {
+				t.Parallel()
+				var out bytes.Buffer
+				next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					if responseHeader {
+						w.Header().Set("Location", location)
+					}
+					w.WriteHeader(http.StatusAccepted)
+				})
+				handler := embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, nil)), embargo.NewScanner())
+				request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", http.NoBody)
+				if !responseHeader {
+					request.Header.Set("Location", location)
+				}
+				response := httptest.NewRecorder()
+				handler.ServeHTTP(response, request)
+				assertWithheldJSON(t, out.Bytes(), maskingReason, 6)
+				if response.Code != http.StatusAccepted {
+					t.Fatal("diagnosing a header changed the service response")
+				}
+			})
+		}
+	}
+}
+
+func TestHTTPDiagnosticSinkFailurePreservesResponse(t *testing.T) {
+	t.Parallel()
+	sink := &inspectingHandler{enabled: true, err: io.ErrClosedPipe}
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusAccepted) })
+	handler := embargo.NewHTTPHandler(next, slog.New(sink), embargo.NewScanner())
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?bad;planted-secret", http.NoBody))
+	if response.Code != http.StatusAccepted || sink.handled != 1 || sink.record.Message != "embargo: record withheld (masking error)" {
+		t.Fatal("sink failure changed the response or prevented the diagnostic attempt")
 	}
 }

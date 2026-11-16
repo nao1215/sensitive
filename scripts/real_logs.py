@@ -71,7 +71,7 @@ def cache_datasets(cache, manifest):
 def summarize(raw, labels):
     rows = []
     for dataset in raw:
-        row = {k:v for k,v in dataset.items() if k != 'samples'}
+        row = {k:v for k,v in dataset.items() if k not in ('samples', 'threshold_samples')}
         row['strata'] = {}
         for kind, samples in dataset['samples'].items():
             ids = [sample['id'] for sample in samples]
@@ -82,8 +82,11 @@ def summarize(raw, labels):
                 raise ValueError('invalid classification')
             fp = sum(labels[key]['classification'] == 'false-positive' for key in ids)
             row['strata'][kind] = {'sample_ids':ids, 'sample_count':len(ids), 'sample_fp':fp}
+        row['threshold_strata'] = {}
+        for config, samples in dataset.get('threshold_samples', {}).items():
+            row['threshold_strata'][config] = summarize([{'samples': samples}], labels)[0]['strata']
         rows.append(row)
-    return sorted(rows, key=lambda row:row['dataset'])
+    return sorted(rows, key=lambda row:row.get('dataset',''))
 
 
 def measure(cache, manifest, labels):
@@ -105,7 +108,7 @@ def measure(cache, manifest, labels):
 
 def validate_strata(rows, labels):
     for row in rows:
-        for s in row['strata'].values():
+        for s in list(row['strata'].values()) + [s for strata in row.get('threshold_strata', {}).values() for s in strata.values()]:
             classes = [labels[key]['classification'] for key in s['sample_ids']]
             if any(value not in ('false-positive', 'sensitive-reference') for value in classes):
                 raise ValueError('invalid classification')
@@ -121,7 +124,7 @@ def estimate(rows, names, config, kind=None):
         for name, total in row['counts'][config].items():
             if kind is not None and name != kind:
                 continue
-            s = row['strata'][name]
+            s = row.get('threshold_strata', {}).get(config, row['strata'])[name]
             count += total
             fp += total * s['sample_fp'] / s['sample_count']
             samples += s['sample_count']

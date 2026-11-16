@@ -79,6 +79,11 @@ func (c canaryOption) apply(r *Recorder) bool {
 }
 
 // WithLimits sets positive bounds for total retained output and each Run.
+// maxBytes bounds bytes retained across sinks, not bytes allocated or produced
+// before a Write. timeout supervises each Run child process, not in-process
+// encoding, input decoding or scanner callbacks. MarshalJSON, LogValue, String
+// and Error can run in an encoder before this limit applies; their time and
+// memory are not bounded. Prefer Secret or a LogValuer returning a bounded value.
 // Neither bound can be disabled. The sink count and WaitDelay stay fixed.
 func WithLimits(maxBytes int64, timeout time.Duration) Option { return limitsOption{maxBytes, timeout} }
 

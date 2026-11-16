@@ -7,7 +7,8 @@ import (
 	"github.com/nao1215/embargo"
 )
 
-// BenchmarkCIDefault is copied unchanged into both archived revisions by CI.
+// BenchmarkCIDefault shares one fixture across both archived revisions in CI.
+// Only its package declaration is adapted for the root external test package.
 func BenchmarkCIDefault(b *testing.B) {
 	scanner := embargo.NewScanner()
 	for _, fixture := range []struct {

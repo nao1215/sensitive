@@ -43,28 +43,22 @@ func TestWriterBoundariesAndLifecycle(t *testing.T) {
 			t.Fatal("closed writer accepted data")
 		}
 	})
-	t.Run("overflow is sticky", func(t *testing.T) {
-		t.Parallel()
-		var sink bytes.Buffer
-		w := NewWriter(&sink, scanner)
-		if _, err := w.Write([]byte(strings.Repeat(" ", maxEventBytes+1))); err == nil {
-			t.Fatal("overflow accepted")
-		}
-		if _, err := w.Write([]byte("{}\n")); err == nil || sink.Len() != 0 {
-			t.Fatal("failed writer forwarded bytes")
-		}
-	})
-	t.Run("malformed is sticky", func(t *testing.T) {
-		t.Parallel()
-		var sink bytes.Buffer
-		w := NewWriter(&sink, scanner)
-		if _, err := w.Write([]byte("invalid\n")); err == nil {
-			t.Fatal("malformed JSON accepted")
-		}
-		if _, err := w.Write([]byte("{}\n")); err == nil || sink.Len() != 0 {
-			t.Fatal("failed writer forwarded bytes")
-		}
-	})
+	for _, input := range []string{strings.Repeat(" ", maxEventBytes+1) + "\n", "invalid\n"} {
+		t.Run("failure retains next record", func(t *testing.T) {
+			t.Parallel()
+			var sink bytes.Buffer
+			w := NewWriter(&sink, scanner)
+			if _, err := w.Write([]byte(input)); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := w.Write([]byte("{}\n")); err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(sink.String(), "record withheld") || !strings.HasSuffix(sink.String(), "{}\n") {
+				t.Fatal("fallback or later record missing")
+			}
+		})
+	}
 	t.Run("short downstream write", func(t *testing.T) {
 		t.Parallel()
 		w := NewWriter(shortWriter{}, scanner)
@@ -187,5 +181,27 @@ func TestWriterPreservesSinkErrors(t *testing.T) {
 	}
 	if err := w.Flush(); !errors.Is(err, io.ErrClosedPipe) {
 		t.Fatal("failure not sticky")
+	}
+}
+
+func TestDiagnosticFlushPreservesSinkFailure(t *testing.T) {
+	t.Parallel()
+	for _, input := range []string{`{"planted-key":"planted-value`, strings.Repeat("x", maxEventBytes+1)} {
+		t.Run("pending diagnostic fails at sink", func(t *testing.T) {
+			t.Parallel()
+			writer := NewWriter(failedWriter{}, embargo.NewScanner())
+			if _, err := writer.Write([]byte(input)); err != nil {
+				t.Fatal(err)
+			}
+			if err := writer.Flush(); !errors.Is(err, io.ErrClosedPipe) {
+				t.Fatalf("diagnostic sink failure lost: %v", err)
+			}
+			if n, err := writer.Write([]byte("{}\n")); n != 0 || !errors.Is(err, io.ErrClosedPipe) {
+				t.Fatal("sink failure did not stop later writes")
+			}
+			if err := writer.Close(); !errors.Is(err, io.ErrClosedPipe) {
+				t.Fatal("close lost diagnostic sink failure")
+			}
+		})
 	}
 }

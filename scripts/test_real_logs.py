@@ -62,6 +62,17 @@ class RealLogEvidenceTests(unittest.TestCase):
         self.assertEqual(real_logs.estimate(rows, ['a','b'], 'all'), (120,40.0,8,4))
         self.assertEqual(real_logs.estimate(rows, ['a'], 'all'), (100,25.0,4,1))
 
+    def test_threshold_uses_its_own_reviewed_sample(self):
+        rows = [{'dataset':'a','counts':{'default70':{'pan':10}},
+                 'strata':{'pan':{'sample_fp':2,'sample_count':4}},
+                 'threshold_strata':{'default70':{'pan':{'sample_fp':0,'sample_count':2}}}}]
+        self.assertEqual(real_logs.estimate(rows,['a'],'default70'),(10,0.0,2,0))
+
+    def test_threshold_sample_requires_review(self):
+        raw = [{'dataset':'test','samples':{},'threshold_samples':{'default70':{'pan':[{'id':'missing'}]}}}]
+        with self.assertRaisesRegex(ValueError,'unreviewed samples'):
+            real_logs.summarize(raw,{})
+
     def test_narrowing_check_uses_utf8_on_windows(self):
         original = pathlib.Path.read_text
         def legacy_read(path, encoding=None, **kwargs):

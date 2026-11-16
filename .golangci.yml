@@ -111,6 +111,7 @@ linters:
           allow:
           - $gostd
           - github.com/nao1215/embargo$
+          - github.com/nao1215/embargo/internal/saferecord$
         detectors:
           list-mode: strict
           files:
@@ -153,6 +154,7 @@ linters:
           - $gostd
           - github.com/nao1215/embargo$
           - github.com/nao1215/embargo/internal/output$
+          - github.com/nao1215/embargo/internal/saferecord$
           - github.com/nao1215/embargo/embargotest$
           - github.com/nao1215/embargo/adapters/
           - go.uber.org/zap

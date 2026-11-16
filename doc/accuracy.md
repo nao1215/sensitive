@@ -436,6 +436,19 @@ Negative controls are reported by category in the verbose test output. Public ra
 Scanner, slog, adapters and embargotest keep threshold 0. NewScanner and the zero Scanner now omit KindHighEntropy; WithAll or WithKinds(KindHighEntropy) enables it. The historical credential held set gave entropy 50.0% precision and 98.3% recall: public random IDs share the token distribution. The real-log study removed 273 path findings but cannot establish that a bare random token is a secret. Opt-in keeps that trade-off visible instead of disguising it with a confidence adjustment. Slog and adapters honor the explicit Scanner supplied by the caller, while embargotest favors finding forgotten values. Threshold 0.5 removes business-label candidates but retains PAN checksum failures and loses every unlabeled entropy finding. Threshold 0.7 additionally loses bank-account and some sort-code findings. Neither becomes a hidden default. Choose a threshold explicitly for the selected kinds; confidence is not probability. SWIFT development precision remains 54.9%; changing the global threshold does not repair ambiguous alphabetic bank codes.
 
 
+## Choosing a threshold
+
+The default remains 0 for all 25 default kinds. Public-log rates are sample estimates on 92,409,848 bytes; precision treats published contacts/endpoints as sensitive references. Absolute public-log misses are unknown because undetected secrets are not labeled. Synthetic precision and misses use each default kind alone with the existing exact-span labels, including the credential sets; opt-in entropy and country kinds are excluded. Both previously inspected splits are regression evidence.
+
+| Minimum confidence | Public FP/GB | Public precision | Development precision / misses | Held precision / misses |
+|---|---:|---:|---:|---:|
+| 0.0 | 378.7 | 99.9943% | 93.16% / 0 | 95.95% / 0 |
+| 0.5 | 378.7 | 99.9943% | 95.43% / 0 | 98.34% / 0 |
+| 0.7 | 378.7 | 99.9943% | 96.85% / 152 | 100.00% / 150 |
+
+Choose 0 when retaining ambiguous secrets is the priority. On these synthetic sets, 0.5 removes business-label false positives without additional misses; validate it against your own mislabeled secrets before opting in. A global 0.7 loses bank-account and sort-code positives. These thresholds do not fix the remaining public-log ABA/SWIFT false positives. Select relevant kinds and sensitive keys before raising the global cutoff; confidence is not a probability. Regenerate with make accuracy-doc and make real-log-accuracy; python3 scripts/accuracy_figures.py --check verifies this table.
+
+
 ## Severity and residual exposure
 
 These evaluation tiers are private to the test suite. Critical covers credentials, service and payment tokens, cloud and VCS tokens, private keys, PAN and JWT. High covers national IDs, bank accounts, IBAN and routing numbers, including UK sort codes. Email, phone, IP, crypto addresses and the remaining kinds are standard. Tier labels do not change the public Scanner API.

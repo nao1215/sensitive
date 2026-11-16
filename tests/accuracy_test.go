@@ -590,3 +590,56 @@ func TestCountryAccuracy(t *testing.T) {
 	}
 	syncSeverityJSON(t, "../doc/countries.json", results)
 }
+
+// Each default kind is evaluated against its existing exact-span labels; the
+// byte denominator counts these per-kind evaluations, including repeated controls.
+type defaultThresholdResult struct {
+	Set       string       `json:"set"`
+	Kind      embargo.Kind `json:"kind"`
+	Threshold float64      `json:"threshold"`
+	Bytes     int          `json:"bytes"`
+	TP        int          `json:"tp"`
+	FP        int          `json:"fp"`
+	FN        int          `json:"fn"`
+}
+
+func TestDefaultThresholdAccuracy(t *testing.T) {
+	t.Parallel()
+	const defaultKinds = 25
+	results := make([]defaultThresholdResult, 0, defaultKinds*6)
+	for _, set := range []string{developmentAccuracySet, heldAccuracySet} {
+		samples := allAccuracySamples(t, set)
+		samples = append(samples, readGeneratedAccuracy[labeledAccuracySample](t, "testdata/credentials-"+set+".jsonl")...)
+		for _, threshold := range []float64{0, .5, .7} {
+			counts := map[embargo.Kind]defaultThresholdResult{}
+			scanners := map[embargo.Kind]*embargo.Scanner{}
+			for _, sample := range samples {
+				if sample.Kind == embargo.KindHighEntropy {
+					continue
+				}
+				score := scoreAccuracy(sample.Kind, accuracyScanner(scanners, sample.Kind, threshold).ScanString(sample.Text), sample.Expected)
+				count := counts[sample.Kind]
+				count.Set = set
+				count.Kind = sample.Kind
+				count.Threshold = threshold
+				count.Bytes += len(sample.Text)
+				count.TP += score.tp
+				count.FP += score.fp
+				count.FN += score.fn
+				counts[sample.Kind] = count
+			}
+			if len(counts) != defaultKinds {
+				t.Fatalf("default kind inventory changed: %d", len(counts))
+			}
+			names := make([]string, 0, len(counts))
+			for kind := range counts {
+				names = append(names, string(kind))
+			}
+			slices.Sort(names)
+			for _, kind := range names {
+				results = append(results, counts[embargo.Kind(kind)])
+			}
+		}
+	}
+	syncSeverityJSON(t, "../doc/default-thresholds.json", results)
+}
