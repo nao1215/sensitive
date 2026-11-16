@@ -151,3 +151,22 @@ func TestContextErrorsUseWireStatusInAccessRecords(t *testing.T) {
 		})
 	}
 }
+
+func TestMetadataOriginalKeyContext(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	ctx := metadata.NewIncomingContext(t.Context(), metadata.Pairs("cvv", "731", "client_secret", "opaque-client-value", "expiry", "12/29"))
+	interceptor := embargogrpc.NewUnaryServerInterceptor(slog.New(slog.NewJSONHandler(&out, nil)), embargo.NewScanner())
+	response, err := interceptor(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/checkout/Pay"}, func(context.Context, any) (any, error) { return "ok", nil })
+	if err != nil || response != "ok" {
+		t.Fatal("service changed")
+	}
+	for _, value := range []string{"731", "opaque-client-value", "12/29"} {
+		if strings.Contains(out.String(), `"`+value+`"`) {
+			t.Fatalf("metadata leaked: %s", out.String())
+		}
+	}
+	if strings.Count(out.String(), "[REDACTED]") != 3 {
+		t.Fatal(out.String())
+	}
+}

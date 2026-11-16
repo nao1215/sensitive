@@ -30,6 +30,10 @@ func jsonFailure() error { return errors.New("embargo: invalid or unmaskable JSO
 // fixed error without input data. It does not modify the source document.
 // Use it before sending JSON API responses, exports or audit records.
 func (scanner *Scanner) MaskJSON(data []byte) (masked []byte, err error) {
+	return scanner.maskJSON(data, "")
+}
+
+func (scanner *Scanner) maskJSON(data []byte, key string) (masked []byte, err error) {
 	complete := false
 	defer func() {
 		_ = recover() //nolint:errcheck // Discard panic values, including panic(nil) compatibility mode.
@@ -47,7 +51,7 @@ func (scanner *Scanner) MaskJSON(data []byte) (masked []byte, err error) {
 
 	data = bytes.TrimSpace(data)
 	walker := jsonWalker{data: data, result: make([]byte, 0, len(data)), scanner: eventScanner{scanner: scanner, remaining: maxScanBytes}}
-	if err := walker.value(0, "", false); err != nil {
+	if err := walker.value(0, key, false); err != nil {
 		return nil, jsonFailure()
 	}
 	complete = true
@@ -118,10 +122,6 @@ func (w *jsonWalker) value(depth int, context string, hidden bool) error {
 }
 
 func (w *jsonWalker) scalar(raw []byte, context string) error {
-	if raw[0] == 't' || raw[0] == 'f' || raw[0] == 'n' {
-		w.result = append(w.result, raw...)
-		return nil
-	}
 	masked, err := w.scanner.maskScalar(string(raw), context)
 	if err != nil {
 		return err

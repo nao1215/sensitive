@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -227,5 +228,30 @@ func TestHTTPImplicitFlushSnapshotsCommittedHeaders(t *testing.T) {
 	handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", http.NoBody))
 	if !response.Flushed || response.Code != http.StatusOK || !strings.Contains(logs.String(), `"X-Phase":["flushed"]`) || !strings.Contains(logs.String(), `"status":200`) {
 		t.Fatal("implicit flush lost the committed response snapshot")
+	}
+}
+
+func TestHTTPOriginalKeyContext(t *testing.T) {
+	t.Parallel()
+	for _, fixture := range []struct{ key, value string }{{"cvv", "731"}, {"client_secret", "opaque-client-value"}, {"bank account", "12345678"}, {"expiry", "12/29"}} {
+		t.Run(fixture.key, func(t *testing.T) {
+			t.Parallel()
+			var out bytes.Buffer
+			query := url.Values{fixture.key: {fixture.value}}.Encode()
+			request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/pay?"+query, http.NoBody)
+			request.Header[fixture.key] = []string{fixture.value}
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Query().Get(fixture.key) != fixture.value || r.Header[fixture.key][0] != fixture.value {
+					t.Error("input changed")
+				}
+				w.Header().Set("Location", "/return?"+query)
+				w.Header()[fixture.key] = []string{fixture.value}
+				w.WriteHeader(http.StatusFound)
+			})
+			embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: omitRecordTime})), embargo.NewScanner()).ServeHTTP(httptest.NewRecorder(), request)
+			if out.Len() == 0 || strings.Contains(out.String(), fixture.value) || strings.Contains(out.String(), url.QueryEscape(fixture.value)) {
+				t.Fatalf("context lost: %s", out.String())
+			}
+		})
 	}
 }

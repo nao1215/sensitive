@@ -243,3 +243,16 @@ func TestSensitiveKeysCopyAndValidation(t *testing.T) {
 		t.Fatal("nil policy accepted")
 	}
 }
+
+func TestMaskJSONBooleanAndNullContext(t *testing.T) {
+	t.Parallel()
+	scanner := embargo.NewScanner()
+	got, err := scanner.MaskJSON([]byte(`{"client_secret":true,"client_secret":null,"clean":true,"empty":null}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `{"client_secret":"[REDACTED]","client_secret":"[REDACTED]","clean":true,"empty":null}`
+	if string(got) != want {
+		t.Fatalf("got %s want %s", got, want)
+	}
+}
