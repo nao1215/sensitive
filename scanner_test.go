@@ -830,15 +830,23 @@ func TestAuthorizationSchemeProperty(t *testing.T) {
 				}
 				value := scheme + space + credential
 				for count := 1; count <= 3; count++ {
-					list := strings.TrimSuffix(strings.Repeat(value+", ", count), ", ")
-					for _, input := range []string{"Authorization: " + list, "Proxy-Authorization: " + list, `{"msg":` + strconv.Quote("Authorization: "+list) + `}`, fmt.Sprintf("%v", http.Header{authorizationFixtureKey: {list}}), fmt.Sprintf(fmtGoSyntaxVerb, http.Header{authorizationFixtureKey: {list}})} {
-						got := Mask(input, scanner.ScanString(input))
-						if strings.Contains(got, secret) {
-							t.Fatalf("credential visible: %q => %q", input, got)
-						}
+					baseList := strings.TrimSuffix(strings.Repeat(value+", ", count), ", ")
+					for _, prefix := range []string{"", "Token [REDACTED], "} {
+						list := prefix + baseList
+						checkAuthorizationInputs(t, scanner, secret, []string{"Authorization: " + list, "Proxy-Authorization: " + list, `{"msg":` + strconv.Quote("Authorization: "+list) + `}`, fmt.Sprintf("%v", http.Header{authorizationFixtureKey: {list}}), fmt.Sprintf(fmtGoSyntaxVerb, http.Header{authorizationFixtureKey: {list}})})
 					}
 				}
 			}
+		}
+	}
+}
+
+func checkAuthorizationInputs(t *testing.T, scanner *Scanner, secret string, inputs []string) {
+	t.Helper()
+	for _, input := range inputs {
+		got := Mask(input, scanner.ScanString(input))
+		if strings.Contains(got, secret) {
+			t.Fatalf("credential visible: %q => %q", input, got)
 		}
 	}
 }

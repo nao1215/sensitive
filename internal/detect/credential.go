@@ -457,6 +457,12 @@ func nextFmtField(data []byte, start int) bool {
 // belong to the same value; an outer quote or container still bounds the field.
 func authorizationValueEnd(data []byte, start int) int {
 	for end := start; end < len(data); end++ {
+		// A reserved marker is one value inside a partially masked auth list;
+		// its closing bracket must not hide credentials in later elements.
+		if hasASCIIPrefix(data, end, credentialMarker) {
+			end += len(credentialMarker) - 1
+			continue
+		}
 		c := data[end]
 		if c == '\\' && end+1 < len(data) && (data[end+1] == '\\' || data[end+1] == '"' || data[end+1] == 't') {
 			return start
@@ -465,11 +471,10 @@ func authorizationValueEnd(data []byte, start int) int {
 			return end
 		}
 		if c == ',' {
-			next := end + 1
-			for next < len(data) && (data[next] == ' ' || data[next] == '\t') {
-				next++
-			}
-			if value := authorizationValueStart(data, next, len(data), authorizationKey); value > next {
+			if value := authorizationListValue(data, end+1); value != 0 {
+				if value < 0 {
+					return start // The decoded view owns this scheme separator.
+				}
 				end = value - 1
 				continue
 			}
@@ -486,6 +491,21 @@ func authorizationValueEnd(data []byte, start int) int {
 		}
 	}
 	return len(data)
+}
+
+// Return the next list credential offset, zero for an auth-param, or -1 when
+// a serialized separator requires the decoded view to own the entire value.
+func authorizationListValue(data []byte, next int) int {
+	for next < len(data) && (data[next] == ' ' || data[next] == '\t') {
+		next++
+	}
+	if hasASCIIPrefix(data, authSchemeEnd(data, next, len(data)), `\t`) {
+		return -1
+	}
+	if value := authorizationValueStart(data, next, len(data), authorizationKey); value > next {
+		return value
+	}
+	return 0
 }
 
 func credentialFinding(data []byte, start, end int) Finding {

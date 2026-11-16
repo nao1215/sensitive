@@ -158,7 +158,7 @@ func TestMixedCredentialEscapeLayers(t *testing.T) {
 	t.Parallel()
 	input := `password=firstFixture body={\"token\":\"secondFixture\"}`
 	findings := (&Credential{}).Scan([]byte(input))
-	if len(findings) != 2 || findings[0].RawValue != "firstFixture" || findings[1].RawValue != "secondFixture" {
+	if len(findings) != 2 || findings[0].RawValue != firstCredentialFixture || findings[1].RawValue != "secondFixture" {
 		t.Fatalf("mixed layers lost or duplicated a value: %+v", findings)
 	}
 }
@@ -202,6 +202,9 @@ const (
 	authorizationHeaderFixture  = "Authorization"
 	passwordKeyFixture          = "password"
 	bearerSchemeFixture         = "Bearer"
+	tokenSchemeFixture          = "Token"
+	basicSchemeFixture          = "Basic"
+	firstCredentialFixture      = "firstFixture"
 	credentialAssignmentFixture = "password="
 )
 
@@ -212,7 +215,7 @@ func TestDetectorAuthorizationSchemeProperty(t *testing.T) {
 	scanner := &Credential{}
 	for n := range 24 {
 		secret := fmt.Sprintf("opaqueAuth%02dFixture", n)
-		for _, scheme := range []string{"Token", "Negotiate", "Digest", "AWS4-HMAC-SHA256", bearerSchemeFixture, "Basic", "'", "'Quoted'", "`", "`Wrapped`", "'Leading", "`Leading", fmt.Sprintf("Scheme%d!#$%%&'*+-.^_`|~", n)} {
+		for _, scheme := range []string{tokenSchemeFixture, "Negotiate", "Digest", "AWS4-HMAC-SHA256", bearerSchemeFixture, basicSchemeFixture, "'", "'Quoted'", "`", "`Wrapped`", "'Leading", "`Leading", fmt.Sprintf("Scheme%d!#$%%&'*+-.^_`|~", n)} {
 			for _, space := range []string{" ", "\t", "   "} {
 				credential := secret
 				if scheme == "Digest" {
@@ -223,15 +226,23 @@ func TestDetectorAuthorizationSchemeProperty(t *testing.T) {
 				}
 				value := scheme + space + credential
 				for count := 1; count <= 3; count++ {
-					list := strings.TrimSuffix(strings.Repeat(value+", ", count), ", ")
-					for _, input := range []string{"Authorization: " + list, "Proxy-Authorization: " + list, `{"msg":` + strconv.Quote("Authorization: "+list) + `}`, fmt.Sprintf("%v", http.Header{authorizationHeaderFixture: {list}}), fmt.Sprintf("%#v", http.Header{authorizationHeaderFixture: {list}})} {
-						got := maskCredentialFindings(input, scanner.Scan([]byte(input)))
-						if strings.Contains(got, secret) {
-							t.Fatalf("credential visible: %q => %q", input, got)
-						}
+					baseList := strings.TrimSuffix(strings.Repeat(value+", ", count), ", ")
+					for _, prefix := range []string{"", "Token [REDACTED], "} {
+						list := prefix + baseList
+						checkAuthorizationInputs(t, scanner, secret, []string{"Authorization: " + list, "Proxy-Authorization: " + list, `{"msg":` + strconv.Quote("Authorization: "+list) + `}`, fmt.Sprintf("%v", http.Header{authorizationHeaderFixture: {list}}), fmt.Sprintf("%#v", http.Header{authorizationHeaderFixture: {list}})})
 					}
 				}
 			}
+		}
+	}
+}
+
+func checkAuthorizationInputs(t *testing.T, scanner *Credential, secret string, inputs []string) {
+	t.Helper()
+	for _, input := range inputs {
+		got := maskCredentialFindings(input, scanner.Scan([]byte(input)))
+		if strings.Contains(got, secret) {
+			t.Fatalf("credential visible: %q => %q", input, got)
 		}
 	}
 }
@@ -644,7 +655,7 @@ func TestCredentialRawAndNormalizedOwnership(t *testing.T) {
 		}
 		positions = append(positions, len(raw))
 		findings := (&Credential{}).ScanViews([]byte(raw), []byte(decoded), positions)
-		first := "firstFixture"
+		first := firstCredentialFixture
 		if strings.Contains(prefix, "%20") {
 			first = "first%20Fixture"
 		}
@@ -719,7 +730,7 @@ func TestCredentialBlockSpanProperty(t *testing.T) {
 
 func TestQuotedAuthorizationExactSpans(t *testing.T) {
 	t.Parallel()
-	for _, scheme := range []string{bearerSchemeFixture, "bEaReR", "Basic", "basic"} {
+	for _, scheme := range []string{bearerSchemeFixture, "bEaReR", basicSchemeFixture, "basic"} {
 		for _, space := range []string{" ", "   "} {
 			for _, quote := range []string{"\"", "'"} {
 				for _, secret := range []string{"x", "opaqueHeaderFixture"} {
@@ -777,13 +788,65 @@ func TestCredentialCamelAcronymBoundaries(t *testing.T) {
 func TestAuthorizationQuotedValueSpans(t *testing.T) {
 	t.Parallel()
 	for _, quote := range []string{"\"", "'", "`"} {
-		for _, scheme := range []string{bearerSchemeFixture, "Token"} {
+		for _, scheme := range []string{bearerSchemeFixture, tokenSchemeFixture} {
 			for _, value := range []string{"opaqueQuotedFixture", "firstFixture, Basic secondFixture"} {
 				before := "Authorization: " + quote + scheme + " "
 				input := before + value + quote + " public=kept"
 				got := (&Credential{}).Scan([]byte(input))
 				if len(got) != 1 || got[0].Start != len(before) || got[0].End != len(before)+len(value) || got[0].RawValue != value {
 					t.Fatalf("quoted authorization consumed public suffix: %q: %+v", input, got)
+				}
+			}
+		}
+	}
+}
+
+func TestCredentialTruncatedRenderingProperty(t *testing.T) {
+	t.Parallel()
+	const secret = "opaqueTruncationFixture"
+	forms := []string{
+		`password="` + secret + `\"tail\\" public=kept`,
+		`password='` + secret + `\'tail\\' public=kept`,
+		"password=`" + secret + "\\` public=kept",
+		"map[password:" + secret + " public:retained]",
+		"map[password:" + secret + " \t public:retained]",
+		`password:struct { Value string }{"` + secret + `"}`,
+		`password:[]interface {}{"` + secret + `"}`,
+		"Authorization: Token " + secret + "\\",
+		`Authorization: Digest response="` + secret + `\"tail\\"`,
+		"Authorization: Token " + secret + ", \t Basic anotherFixture",
+		"password: |\n  " + secret + "\n   \npublic: kept",
+		"password: |\r\n  " + secret + "\r\n   \r\npublic: kept",
+	}
+	for _, form := range forms {
+		for end := 0; end <= len(form); end++ {
+			input := form[:end]
+			findings := (&Credential{}).Scan([]byte(input))
+			for _, finding := range findings {
+				if finding.Start < 0 || finding.End > len(input) || finding.Start >= finding.End || finding.RawValue != input[finding.Start:finding.End] {
+					t.Fatalf("truncated rendering has invalid original offsets: %q %+v", input, findings)
+				}
+			}
+			if strings.Contains(input, secret) && strings.Contains(maskCredentialFindings(input, findings), secret) {
+				t.Fatalf("truncated rendering exposed complete value: %q %+v", input, findings)
+			}
+		}
+	}
+}
+
+func TestAuthorizationMixedSchemeLists(t *testing.T) {
+	t.Parallel()
+	for _, first := range []string{tokenSchemeFixture, bearerSchemeFixture, "Negotiate"} {
+		for _, next := range []string{"'", "'Quoted'", "`", "`Wrapped`", basicSchemeFixture} {
+			for _, separator := range []string{",", ", ", ",\t", ",  \t"} {
+				for _, initial := range []string{firstCredentialFixture, credentialMarker} {
+					before := "Authorization: " + first + " "
+					value := initial + separator + next + " secondFixture"
+					input := before + value
+					got := (&Credential{}).Scan([]byte(input))
+					if len(got) != 1 || got[0].Start != len(before) || got[0].End != len(input) || got[0].RawValue != value {
+						t.Fatalf("mixed authorization list: %q: %+v", input, got)
+					}
 				}
 			}
 		}

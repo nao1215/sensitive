@@ -280,5 +280,14 @@
   },
   {
     "text": "Authorization: '\topaqueFirstFixture, '\topaqueSecondFixture"
+  },
+  {
+    "text": "Authorization: Token [REDACTED], Basic opaqueRemainingFixture"
+  },
+  {
+    "text": "Authorization: Token firstFixture, 'Quoted' secondFixture"
+  },
+  {
+    "text": "{\"msg\":\"Authorization: Token [REDACTED], Scheme!#$%&'*+-.^_`|~\\topaqueRemainingFixture\"}"
   }
 ]

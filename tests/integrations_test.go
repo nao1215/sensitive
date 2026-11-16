@@ -1417,6 +1417,9 @@ func TestMaskingBoundaryHooks(t *testing.T) {
 		for _, scheme := range []string{"Bearer\t", "Token ", "Negotiate ", "Digest response=", "AWS4-HMAC-SHA256 Signature=", "'Quoted' ", "`Wrapped` ", "'\t", "`Leading\t"} {
 			inputs = append(inputs, struct{ text, needle string }{"Authorization: " + scheme + secret + ", Basic " + secret, secret})
 		}
+		for _, scheme := range []string{"Basic ", "'Quoted' ", "`Wrapped` ", "Scheme!#$%&'*+-.^_`|~\t"} {
+			inputs = append(inputs, struct{ text, needle string }{"Authorization: Token [REDACTED], " + scheme + secret, secret})
+		}
 		for _, prefix := range []string{"[]", "[abc]", ",", ")", "[REDACTED]]", "[REDACTED][REDACTED]"} {
 			inputs = append(inputs, struct{ text, needle string }{"password=" + prefix + secret, secret})
 		}
