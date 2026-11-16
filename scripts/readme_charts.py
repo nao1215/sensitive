@@ -87,13 +87,13 @@ def scenario_chart(measurement):
 
 def generate(check=False):
     for name, render, source in [('log-event-time', event_chart, 'comparison.json'), ('scenario-catch', scenario_chart, 'comparison-scenarios.json')]:
-        expected = render(json.loads((ROOT/'doc'/source).read_text()))
+        expected = render(json.loads((ROOT/'doc'/source).read_text(encoding="utf-8")))
         path = ROOT/'doc/images'/f'{name}.svg'
         if check:
-            if not path.exists() or path.read_text() != expected:
+            if not path.exists() or path.read_text(encoding="utf-8") != expected:
                 raise ValueError('missing or stale README chart: '+name)
         else:
-            path.write_text(expected)
+            path.write_text(expected, encoding="utf-8")
 
 
 if __name__ == '__main__':
