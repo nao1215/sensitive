@@ -1554,7 +1554,7 @@ func checkGRPCBoundaryHooks(t *testing.T, rows [][]string) {
 		t.Fatal(err)
 	}
 	// #nosec G204 -- Execute only the fixed repository fixture in an isolated consumer.
-	command := exec.CommandContext(t.Context(), "go", "run", "-mod=mod", filepath.Join(root, "tests", "testdata", "grpchooks", "main.go"))
+	command := exec.CommandContext(t.Context(), "go", "run", "-mod=mod", filepath.Join(root, "adapters", "grpc", "testdata", "grpchooks", "main.go"))
 	command.Dir = directory
 	command.Env = append(os.Environ(), "GOWORK=off")
 	command.Stdin = bytes.NewReader(input)
