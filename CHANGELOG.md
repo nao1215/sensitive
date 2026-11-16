@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Audit local logs with the isolated tests/cmd/embargo-audit command, reporting per-Kind counts, masked byte offsets and kind-selection guidance ([349bb11](https://github.com/nao1215/embargo/commit/349bb118791c6916ebd18c288616db4937a7e3f1)).
+
 - Optional WithCanaryFragments checks contiguous raw canary pieces of at least 16 bytes in Recorder and Guard; default whole-value checks are unchanged ([7372eda](https://github.com/nao1215/embargo/commit/7372eda4ab7e4bede24b14d9acfd3a23819cc01d)).
 
 ## [0.5.1] - 2026-11-16
