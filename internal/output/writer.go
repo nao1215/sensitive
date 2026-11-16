@@ -2,23 +2,27 @@ package output
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"reflect"
 	"sync"
 
 	"github.com/nao1215/embargo"
+	"github.com/nao1215/embargo/internal/saferecord"
 )
 
 // Writer buffers newline-delimited JSON records and forwards only masked events.
 // It serializes calls; callers must also serialize writes to the underlying sink
 // made outside this adapter. An event is limited to 1 MiB, including its newline.
 type Writer struct {
-	next    io.Writer
-	err     error
-	scanner *embargo.Scanner
-	pending []byte
-	mu      sync.Mutex
-	closed  bool
+	next      io.Writer
+	err       error
+	scanner   *embargo.Scanner
+	pending   []byte
+	metadata  eventMetadata
+	oversized bool
+	mu        sync.Mutex
+	closed    bool
 }
 
 // Require rejects nil or typed-nil dependencies using a fixed panic message.
@@ -44,8 +48,9 @@ func NewWriter(next io.Writer, scanner *embargo.Scanner) *Writer {
 }
 
 // Write retains split records until a newline and masks each complete JSON event.
-// Invalid input or sink failure is sticky; subsequent writes cannot forward raw
-// data. Successful n counts input bytes, not the length of the masked output.
+// Masking failures emit a fixed diagnostic and processing resumes at the next
+// newline. Only sink failures are sticky. Successful n counts consumed input
+// bytes, including withheld input, not the length of the masked output.
 func (w *Writer) Write(data []byte) (int, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -62,37 +67,55 @@ func (w *Writer) Write(data []byte) (int, error) {
 		if end >= 0 {
 			length = end + 1
 		}
-		if length > maxEventBytes-len(w.pending) {
-			w.err = failure()
+		part := data[:length]
+		if !w.oversized && length > maxEventBytes-len(w.pending) {
+			w.metadata.feed(w.pending)
+			w.oversized = true
 			w.pending = nil
-			return consumed, w.err
 		}
-		w.pending = append(w.pending, data[:length]...)
+		if w.oversized {
+			w.metadata.feed(part)
+		}
+		if !w.oversized {
+			w.pending = append(w.pending, part...)
+		}
 		data = data[length:]
 		consumed += length
 		if end < 0 {
 			continue
 		}
-		masked, err := JSON(w.pending, w.scanner)
-		w.pending = nil
-		if err != nil {
-			w.err = err
-			return consumed, err
-		}
-		n, err := w.next.Write(masked)
-		if err == nil && n != len(masked) {
-			err = io.ErrShortWrite
-		}
-		if err != nil {
-			w.err = err
+		masked := w.event()
+		if err := w.send(masked); err != nil {
 			return consumed, err
 		}
 	}
 	return consumed, nil
 }
 
-// Flush validates that no partial record remains. It never sends an unfinished
-// record and does not close or synchronize the caller-owned underlying sink.
+func (w *Writer) event() []byte {
+	defer func() { w.pending = nil; w.metadata = eventMetadata{}; w.oversized = false }()
+	if w.oversized {
+		return w.metadata.fallback(saferecord.ErrSizeLimit)
+	}
+	masked, err := JSON(w.pending, w.scanner)
+	if err != nil {
+		w.metadata.feed(w.pending)
+		return w.metadata.fallback(saferecord.Reason(context.Background(), err))
+	}
+	return masked
+}
+
+func (w *Writer) send(data []byte) error {
+	n, err := w.next.Write(data)
+	if err == nil && n != len(data) {
+		err = io.ErrShortWrite
+	}
+	w.err = err
+	return err
+}
+
+// Flush replaces a pending fragment with a diagnostic and returns a framing
+// error. It does not close or synchronize the caller-owned underlying sink.
 func (w *Writer) Flush() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -103,15 +126,28 @@ func (w *Writer) flush() error {
 	if w.err != nil {
 		return w.err
 	}
-	if len(w.pending) != 0 {
-		w.err = failure()
+	if len(w.pending) != 0 || w.oversized {
+		reason := saferecord.ErrMasking
+		if w.oversized {
+			reason = saferecord.ErrSizeLimit
+		}
+		if !w.oversized {
+			w.metadata.feed(w.pending)
+		}
+		data := w.metadata.fallback(reason)
 		w.pending = nil
+		w.metadata = eventMetadata{}
+		w.oversized = false
+		if err := w.send(data); err != nil {
+			return err
+		}
+		return failure()
 	}
 	return w.err
 }
 
-// Close rejects pending partial records and seals the adapter, leaving its sink
-// open. It is safe to repeat; the first sticky failure remains observable.
+// Close diagnoses pending partial records and seals the adapter, leaving its sink
+// open. It is safe to repeat; sink failures remain observable.
 func (w *Writer) Close() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()

@@ -10,6 +10,8 @@ exclude:
 excludeFiles:
 - ^.*_test\.go$
 components:
+  saferecord:
+    in: internal/saferecord
   output:
     in: internal/output
   recorder:
@@ -24,11 +26,13 @@ deps:
   output:
     mayDependOn:
     - runtime
+    - saferecord
   recorder:
     mayDependOn:
     - runtime
   runtime:
     mayDependOn:
+    - saferecord
     - detectors
     - ascii
   detectors:

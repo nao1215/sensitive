@@ -163,7 +163,7 @@ func TestStructuredFailuresNeverForward(t *testing.T) {
 		// RawMessage and containers go through the bounded JSON path.
 		record := slog.NewRecord(time.Time{}, slog.LevelInfo, "request", 0)
 		record.AddAttrs(slog.Any("data", []any{value}))
-		if err := handler.Handle(t.Context(), record); err == nil || out.Len() != 0 {
+		if err := handler.Handle(t.Context(), record); err == nil || !strings.Contains(out.String(), "record withheld") {
 			t.Fatal("invalid structured data reached sink")
 		}
 	}
@@ -487,6 +487,40 @@ func benchmarkAdversarialMaskRanges(b *testing.B) {
 					Mask(text, findings)
 				}
 			})
+		}
+	}
+}
+
+func TestJSONExpansionStopsBeforeRetainingPastLimit(t *testing.T) {
+	t.Parallel()
+	input := []byte("[" + strings.Repeat(`"x",`, 100000) + `"x"]`)
+	scanner := NewScanner(WithKinds(), WithSensitiveKeys(), WithDetector(expandingDetector{}))
+	walker := jsonWalker{data: input, scanner: eventScanner{scanner: scanner, remaining: maxScanBytes}}
+	if err := walker.value(t.Context(), 0, "", false); err == nil {
+		t.Fatal("expanded output accepted")
+	}
+	if len(walker.result) > maxEventBytes {
+		t.Fatalf("retained %d bytes past output limit", len(walker.result))
+	}
+}
+
+type expandingDetector struct{}
+
+func (expandingDetector) Scan(data []byte) []Finding {
+	if string(data) == "x" {
+		return []Finding{{Kind: "synthetic", Start: 0, End: 1, Confidence: 1}}
+	}
+	return nil
+}
+
+func BenchmarkJSONExpansionLimit(b *testing.B) {
+	input := []byte("[" + strings.Repeat(`"x",`, 100000) + `"x"]`)
+	scanner := NewScanner(WithKinds(), WithSensitiveKeys(), WithDetector(expandingDetector{}))
+	b.ReportAllocs()
+	b.ResetTimer()
+	for b.Loop() {
+		if _, err := scanner.MaskJSON(input); err == nil {
+			b.Fatal("expanded output accepted")
 		}
 	}
 }

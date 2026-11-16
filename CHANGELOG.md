@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Emit safe diagnostic records when logging cannot mask an event, and retain masked HTTP/gRPC access logs after request cancellation.
+- Reject oversized plain byte slices before slog JSON encoding and clarify which encoder work remains unbounded.
+
 ## [0.5.2] - 2026-11-16
 
 This patch release masks adjacent email-shaped values in one pass and consolidates tests and documentation. Upgrade the root and every installed adapter to v0.5.2.

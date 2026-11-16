@@ -1,0 +1,1352 @@
+[
+  {
+    "set": "development",
+    "kind": "aba_routing",
+    "threshold": 0,
+    "bytes": 19588,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "ach_trace",
+    "threshold": 0,
+    "bytes": 23012,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "awskey",
+    "threshold": 0,
+    "bytes": 21856,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "bank_account",
+    "threshold": 0,
+    "bytes": 21853,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "btc",
+    "threshold": 0,
+    "bytes": 24880,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "card_expiry",
+    "threshold": 0,
+    "bytes": 20319,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "credential",
+    "threshold": 0,
+    "bytes": 65058,
+    "tp": 360,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "cvv",
+    "threshold": 0,
+    "bytes": 19420,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "email",
+    "threshold": 0,
+    "bytes": 22801,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "eth",
+    "threshold": 0,
+    "bytes": 26585,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "github_token",
+    "threshold": 0,
+    "bytes": 26089,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "google_api_key",
+    "threshold": 0,
+    "bytes": 25884,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "iban",
+    "threshold": 0,
+    "bytes": 22343,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "ipaddr",
+    "threshold": 0,
+    "bytes": 19834,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "jwt",
+    "threshold": 0,
+    "bytes": 34423,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "merchant_id",
+    "threshold": 0,
+    "bytes": 22619,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "mynumber",
+    "threshold": 0,
+    "bytes": 21975,
+    "tp": 146,
+    "fp": 33,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "pan",
+    "threshold": 0,
+    "bytes": 24080,
+    "tp": 146,
+    "fp": 97,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "payment_token",
+    "threshold": 0,
+    "bytes": 23001,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "phone_jp",
+    "threshold": 0,
+    "bytes": 22306,
+    "tp": 146,
+    "fp": 32,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "private_key_pem",
+    "threshold": 0,
+    "bytes": 24055,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "service_token",
+    "threshold": 0,
+    "bytes": 46890,
+    "tp": 120,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "slack_token",
+    "threshold": 0,
+    "bytes": 27535,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "swiftbic",
+    "threshold": 0,
+    "bytes": 20702,
+    "tp": 146,
+    "fp": 120,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "uk_sortcode",
+    "threshold": 0,
+    "bytes": 21311,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "aba_routing",
+    "threshold": 0.5,
+    "bytes": 19588,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "ach_trace",
+    "threshold": 0.5,
+    "bytes": 23012,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "awskey",
+    "threshold": 0.5,
+    "bytes": 21856,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "bank_account",
+    "threshold": 0.5,
+    "bytes": 21853,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "btc",
+    "threshold": 0.5,
+    "bytes": 24880,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "card_expiry",
+    "threshold": 0.5,
+    "bytes": 20319,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "credential",
+    "threshold": 0.5,
+    "bytes": 65058,
+    "tp": 360,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "cvv",
+    "threshold": 0.5,
+    "bytes": 19420,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "email",
+    "threshold": 0.5,
+    "bytes": 22801,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "eth",
+    "threshold": 0.5,
+    "bytes": 26585,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "github_token",
+    "threshold": 0.5,
+    "bytes": 26089,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "google_api_key",
+    "threshold": 0.5,
+    "bytes": 25884,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "iban",
+    "threshold": 0.5,
+    "bytes": 22343,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "ipaddr",
+    "threshold": 0.5,
+    "bytes": 19834,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "jwt",
+    "threshold": 0.5,
+    "bytes": 34423,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "merchant_id",
+    "threshold": 0.5,
+    "bytes": 22619,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "mynumber",
+    "threshold": 0.5,
+    "bytes": 21975,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "pan",
+    "threshold": 0.5,
+    "bytes": 24080,
+    "tp": 146,
+    "fp": 64,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "payment_token",
+    "threshold": 0.5,
+    "bytes": 23001,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "phone_jp",
+    "threshold": 0.5,
+    "bytes": 22306,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "private_key_pem",
+    "threshold": 0.5,
+    "bytes": 24055,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "service_token",
+    "threshold": 0.5,
+    "bytes": 46890,
+    "tp": 120,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "slack_token",
+    "threshold": 0.5,
+    "bytes": 27535,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "swiftbic",
+    "threshold": 0.5,
+    "bytes": 20702,
+    "tp": 146,
+    "fp": 120,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "uk_sortcode",
+    "threshold": 0.5,
+    "bytes": 21311,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "aba_routing",
+    "threshold": 0.7,
+    "bytes": 19588,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "ach_trace",
+    "threshold": 0.7,
+    "bytes": 23012,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "awskey",
+    "threshold": 0.7,
+    "bytes": 21856,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "bank_account",
+    "threshold": 0.7,
+    "bytes": 21853,
+    "tp": 0,
+    "fp": 0,
+    "fn": 146
+  },
+  {
+    "set": "development",
+    "kind": "btc",
+    "threshold": 0.7,
+    "bytes": 24880,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "card_expiry",
+    "threshold": 0.7,
+    "bytes": 20319,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "credential",
+    "threshold": 0.7,
+    "bytes": 65058,
+    "tp": 360,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "cvv",
+    "threshold": 0.7,
+    "bytes": 19420,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "email",
+    "threshold": 0.7,
+    "bytes": 22801,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "eth",
+    "threshold": 0.7,
+    "bytes": 26585,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "github_token",
+    "threshold": 0.7,
+    "bytes": 26089,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "google_api_key",
+    "threshold": 0.7,
+    "bytes": 25884,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "iban",
+    "threshold": 0.7,
+    "bytes": 22343,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "ipaddr",
+    "threshold": 0.7,
+    "bytes": 19834,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "jwt",
+    "threshold": 0.7,
+    "bytes": 34423,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "merchant_id",
+    "threshold": 0.7,
+    "bytes": 22619,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "mynumber",
+    "threshold": 0.7,
+    "bytes": 21975,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "pan",
+    "threshold": 0.7,
+    "bytes": 24080,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "payment_token",
+    "threshold": 0.7,
+    "bytes": 23001,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "phone_jp",
+    "threshold": 0.7,
+    "bytes": 22306,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "private_key_pem",
+    "threshold": 0.7,
+    "bytes": 24055,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "service_token",
+    "threshold": 0.7,
+    "bytes": 46890,
+    "tp": 120,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "slack_token",
+    "threshold": 0.7,
+    "bytes": 27535,
+    "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "swiftbic",
+    "threshold": 0.7,
+    "bytes": 20702,
+    "tp": 146,
+    "fp": 120,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "uk_sortcode",
+    "threshold": 0.7,
+    "bytes": 21311,
+    "tp": 140,
+    "fp": 0,
+    "fn": 6
+  },
+  {
+    "set": "held",
+    "kind": "aba_routing",
+    "threshold": 0,
+    "bytes": 18869,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "ach_trace",
+    "threshold": 0,
+    "bytes": 22229,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "awskey",
+    "threshold": 0,
+    "bytes": 21093,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "bank_account",
+    "threshold": 0,
+    "bytes": 21077,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "btc",
+    "threshold": 0,
+    "bytes": 24059,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "card_expiry",
+    "threshold": 0,
+    "bytes": 19589,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "credential",
+    "threshold": 0,
+    "bytes": 78461,
+    "tp": 360,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "cvv",
+    "threshold": 0,
+    "bytes": 18693,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "email",
+    "threshold": 0,
+    "bytes": 22049,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "eth",
+    "threshold": 0,
+    "bytes": 25733,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "github_token",
+    "threshold": 0,
+    "bytes": 25253,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "google_api_key",
+    "threshold": 0,
+    "bytes": 25045,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "iban",
+    "threshold": 0,
+    "bytes": 21573,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "ipaddr",
+    "threshold": 0,
+    "bytes": 19113,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "jwt",
+    "threshold": 0,
+    "bytes": 33609,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "merchant_id",
+    "threshold": 0,
+    "bytes": 21877,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "mynumber",
+    "threshold": 0,
+    "bytes": 21221,
+    "tp": 144,
+    "fp": 32,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "pan",
+    "threshold": 0,
+    "bytes": 23341,
+    "tp": 144,
+    "fp": 96,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "payment_token",
+    "threshold": 0,
+    "bytes": 22233,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "phone_jp",
+    "threshold": 0,
+    "bytes": 21573,
+    "tp": 144,
+    "fp": 32,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "private_key_pem",
+    "threshold": 0,
+    "bytes": 23253,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "service_token",
+    "threshold": 0,
+    "bytes": 57427,
+    "tp": 120,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "slack_token",
+    "threshold": 0,
+    "bytes": 26773,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "swiftbic",
+    "threshold": 0,
+    "bytes": 19981,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "uk_sortcode",
+    "threshold": 0,
+    "bytes": 20581,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "aba_routing",
+    "threshold": 0.5,
+    "bytes": 18869,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "ach_trace",
+    "threshold": 0.5,
+    "bytes": 22229,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "awskey",
+    "threshold": 0.5,
+    "bytes": 21093,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "bank_account",
+    "threshold": 0.5,
+    "bytes": 21077,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "btc",
+    "threshold": 0.5,
+    "bytes": 24059,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "card_expiry",
+    "threshold": 0.5,
+    "bytes": 19589,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "credential",
+    "threshold": 0.5,
+    "bytes": 78461,
+    "tp": 360,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "cvv",
+    "threshold": 0.5,
+    "bytes": 18693,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "email",
+    "threshold": 0.5,
+    "bytes": 22049,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "eth",
+    "threshold": 0.5,
+    "bytes": 25733,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "github_token",
+    "threshold": 0.5,
+    "bytes": 25253,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "google_api_key",
+    "threshold": 0.5,
+    "bytes": 25045,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "iban",
+    "threshold": 0.5,
+    "bytes": 21573,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "ipaddr",
+    "threshold": 0.5,
+    "bytes": 19113,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "jwt",
+    "threshold": 0.5,
+    "bytes": 33609,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "merchant_id",
+    "threshold": 0.5,
+    "bytes": 21877,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "mynumber",
+    "threshold": 0.5,
+    "bytes": 21221,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "pan",
+    "threshold": 0.5,
+    "bytes": 23341,
+    "tp": 144,
+    "fp": 64,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "payment_token",
+    "threshold": 0.5,
+    "bytes": 22233,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "phone_jp",
+    "threshold": 0.5,
+    "bytes": 21573,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "private_key_pem",
+    "threshold": 0.5,
+    "bytes": 23253,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "service_token",
+    "threshold": 0.5,
+    "bytes": 57427,
+    "tp": 120,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "slack_token",
+    "threshold": 0.5,
+    "bytes": 26773,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "swiftbic",
+    "threshold": 0.5,
+    "bytes": 19981,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "uk_sortcode",
+    "threshold": 0.5,
+    "bytes": 20581,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "aba_routing",
+    "threshold": 0.7,
+    "bytes": 18869,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "ach_trace",
+    "threshold": 0.7,
+    "bytes": 22229,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "awskey",
+    "threshold": 0.7,
+    "bytes": 21093,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "bank_account",
+    "threshold": 0.7,
+    "bytes": 21077,
+    "tp": 0,
+    "fp": 0,
+    "fn": 144
+  },
+  {
+    "set": "held",
+    "kind": "btc",
+    "threshold": 0.7,
+    "bytes": 24059,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "card_expiry",
+    "threshold": 0.7,
+    "bytes": 19589,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "credential",
+    "threshold": 0.7,
+    "bytes": 78461,
+    "tp": 360,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "cvv",
+    "threshold": 0.7,
+    "bytes": 18693,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "email",
+    "threshold": 0.7,
+    "bytes": 22049,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "eth",
+    "threshold": 0.7,
+    "bytes": 25733,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "github_token",
+    "threshold": 0.7,
+    "bytes": 25253,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "google_api_key",
+    "threshold": 0.7,
+    "bytes": 25045,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "iban",
+    "threshold": 0.7,
+    "bytes": 21573,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "ipaddr",
+    "threshold": 0.7,
+    "bytes": 19113,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "jwt",
+    "threshold": 0.7,
+    "bytes": 33609,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "merchant_id",
+    "threshold": 0.7,
+    "bytes": 21877,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "mynumber",
+    "threshold": 0.7,
+    "bytes": 21221,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "pan",
+    "threshold": 0.7,
+    "bytes": 23341,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "payment_token",
+    "threshold": 0.7,
+    "bytes": 22233,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "phone_jp",
+    "threshold": 0.7,
+    "bytes": 21573,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "private_key_pem",
+    "threshold": 0.7,
+    "bytes": 23253,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "service_token",
+    "threshold": 0.7,
+    "bytes": 57427,
+    "tp": 120,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "slack_token",
+    "threshold": 0.7,
+    "bytes": 26773,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "swiftbic",
+    "threshold": 0.7,
+    "bytes": 19981,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "uk_sortcode",
+    "threshold": 0.7,
+    "bytes": 20581,
+    "tp": 138,
+    "fp": 0,
+    "fn": 6
+  }
+]

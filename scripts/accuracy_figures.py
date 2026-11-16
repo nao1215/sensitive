@@ -111,6 +111,29 @@ def severity_section():
     return out
 
 
+def threshold_section():
+    import real_logs
+    synthetic = json.loads((ROOT/'doc/default-thresholds.json').read_text(encoding='utf-8'))
+    public = json.loads((ROOT/'doc/real-logs-summary.json').read_text(encoding='utf-8'))['datasets']
+    names = [row['dataset'] for row in public]
+    size = sum(row['bytes'] for row in public)
+    out = ['## Choosing a threshold', '',
+           'The default remains 0 for all 25 default kinds. Public-log rates are sample estimates on 92,409,848 bytes; precision treats published contacts/endpoints as sensitive references. Absolute public-log misses are unknown because undetected secrets are not labeled. Synthetic precision and misses use each default kind alone with the existing exact-span labels, including the credential sets; opt-in entropy and country kinds are excluded. Both previously inspected splits are regression evidence.', '',
+           '| Minimum confidence | Public FP/GB | Public precision | Development precision / misses | Held precision / misses |',
+           '|---|---:|---:|---:|---:|']
+    for threshold, config in ((0,'default'),(.5,'default50'),(.7,'default70')):
+        count, fp, _, _ = real_logs.estimate(public, names, config)
+        precision = f'{100*(count-fp)/count:.4f}%' if count else 'n/a'
+        cells = [f'{threshold:.1f}', f'{fp/size*1e9:.1f}', precision]
+        for split in ('development','held'):
+            rows = [row for row in synthetic if row['set']==split and row['threshold']==threshold]
+            tp, alarms, missed = (sum(row[key] for row in rows) for key in ('tp','fp','fn'))
+            cells.append(f'{100*tp/(tp+alarms):.2f}% / {missed}')
+        out.append('| '+' | '.join(cells)+' |')
+    out += ['', 'Choose 0 when retaining ambiguous secrets is the priority. On these synthetic sets, 0.5 removes business-label false positives without additional misses; validate it against your own mislabeled secrets before opting in. A global 0.7 loses bank-account and sort-code positives. These thresholds do not fix the remaining public-log ABA/SWIFT false positives. Select relevant kinds and sensitive keys before raising the global cutoff; confidence is not a probability. Regenerate with make accuracy-doc and make real-log-accuracy; python3 scripts/accuracy_figures.py --check verifies this table.', '']
+    return out
+
+
 def page(rows):
     development = json.loads((ROOT/'doc/accuracy.json').read_text())
     dev50 = json.loads((ROOT/'doc/accuracy-50.json').read_text())
@@ -162,6 +185,7 @@ def page(rows):
             'The 0.7 results improve PAN, My Number and phone precision on both sets without losing recall in these samples; the default retains their ambiguous business identifiers. Email and encoded-form recall improve on both sets. SWIFT word false positives remain: the rejected attachment rule improved development precision but failed held-out evaluation. The development suite includes regressions for reserved IBAN check digits 00, 01 and 99 and the detector rejects them before MOD 97. The four formerly held-out false positives are fixed; this historical set is now regression evidence, not unseen evaluation.', '',
             'PEM samples test headers, not full private keys. Generated service tokens test syntax, not authentication. Do not use synthetic identities, account or phone values for transactions or contacting people.', '', '[Support maintenance](https://github.com/sponsors/nao1215).', '']
     out += ['', (ROOT/'doc/credentials-accuracy.md').read_text(), '', '## Default policy decision', '', 'Scanner, slog, adapters and embargotest keep threshold 0. NewScanner and the zero Scanner now omit KindHighEntropy; WithAll or WithKinds(KindHighEntropy) enables it. The historical credential held set gave entropy 50.0% precision and 98.3% recall: public random IDs share the token distribution. The real-log study removed 273 path findings but cannot establish that a bare random token is a secret. Opt-in keeps that trade-off visible instead of disguising it with a confidence adjustment. Slog and adapters honor the explicit Scanner supplied by the caller, while embargotest favors finding forgotten values. Threshold 0.5 removes business-label candidates but retains PAN checksum failures and loses every unlabeled entropy finding. Threshold 0.7 additionally loses bank-account and some sort-code findings. Neither becomes a hidden default. Choose a threshold explicitly for the selected kinds; confidence is not probability. SWIFT development precision remains 54.9%; changing the global threshold does not repair ambiguous alphabetic bank codes.', '']
+    out += ['', *threshold_section()]
     out += ['', *severity_section()]
     out += ['', (ROOT/'doc/real-logs.md').read_text(encoding='utf-8')]
     return '\n'.join(out)

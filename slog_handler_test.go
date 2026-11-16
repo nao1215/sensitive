@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -16,6 +17,12 @@ import (
 
 	"github.com/nao1215/embargo"
 	"github.com/nao1215/embargo/embargotest"
+)
+
+const (
+	canceledReason = "canceled"
+	maskingReason  = "masking error"
+	sizeReason     = "size limit"
 )
 
 type canaryDetector string
@@ -188,15 +195,15 @@ func TestSlogSuppressesNormalizationFailures(t *testing.T) {
 				record.AddAttrs(slog.Any("value", value))
 			}
 			err := handler.Handle(t.Context(), record)
-			if err == nil || err.Error() != "embargo: slog record could not be sanitized" || next.handled != 0 {
-				t.Fatal("failed normalization reached downstream")
+			if err == nil || err.Error() != "embargo: slog record could not be sanitized" || next.handled != 1 {
+				t.Fatal("failed normalization did not produce a fallback")
 			}
 		}
 	}
 	next := &inspectingHandler{}
 	handler := embargo.NewSlogHandler(next, embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(panicDetector{})))
 	err := handler.WithGroup("private").Handle(t.Context(), slog.NewRecord(time.Time{}, slog.LevelInfo, "message", 0))
-	if err == nil || err.Error() != "embargo: slog record could not be sanitized" || next.handled != 0 {
+	if err == nil || err.Error() != "embargo: slog record could not be sanitized" || next.handled != 1 {
 		t.Fatal("scanner panic reached downstream")
 	}
 }
@@ -238,7 +245,7 @@ func TestSlogNilPanicCompatibility(t *testing.T) {
 		} else {
 			record.AddAttrs(slog.Any("value", panicNilLogValue{}))
 		}
-		if err := handler.Handle(t.Context(), record); err == nil || next.handled != 0 {
+		if err := handler.Handle(t.Context(), record); err == nil || next.handled != 1 {
 			t.Fatal("nil panic reached downstream")
 		}
 	}
@@ -342,13 +349,13 @@ func TestSlogWithGroupDepth(t *testing.T) {
 			r := slog.NewRecord(time.Time{}, slog.LevelInfo, "event", 0)
 			r.AddAttrs(attr)
 			err := h.Handle(t.Context(), r)
-			if (err != nil) != fixture.rejected || (fixture.rejected && out.Len() != 0) {
+			if (err != nil) != fixture.rejected || (fixture.rejected && !strings.Contains(out.String(), "record withheld (size limit)")) {
 				t.Fatalf("err=%v output=%s", err, out.String())
 			}
 			bound := h.WithAttrs([]slog.Attr{attr})
 			out.Reset()
 			err = bound.Handle(t.Context(), slog.NewRecord(time.Time{}, slog.LevelInfo, "event", 0))
-			if (err != nil) != fixture.rejected || (fixture.rejected && out.Len() != 0) {
+			if (err != nil) != fixture.rejected || (fixture.rejected && !strings.Contains(out.String(), "record withheld (size limit)")) {
 				t.Fatalf("bound err=%v output=%s", err, out.String())
 			}
 		})
@@ -371,7 +378,7 @@ func TestSlogScalarScanBudget(t *testing.T) {
 	h := embargo.NewSlogHandler(slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: omitRecordTime}), embargo.NewScanner())
 	r := slog.NewRecord(time.Time{}, slog.LevelInfo, "event", 0)
 	r.AddAttrs(slog.String("large", strings.Repeat("x", 4<<20)))
-	if err := h.Handle(t.Context(), r); err == nil || out.Len() != 0 {
+	if err := h.Handle(t.Context(), r); err == nil || !strings.Contains(out.String(), "record withheld") {
 		t.Fatal("oversized scalar was forwarded")
 	}
 }
@@ -411,8 +418,102 @@ func TestSlogContextCancellation(t *testing.T) {
 			if alreadyCanceled {
 				want = 0
 			}
-			if err == nil || out.Len() != 0 || detector.calls != want {
+			if err == nil || !strings.Contains(out.String(), "record withheld") || detector.calls != want {
 				t.Fatalf("err=%v bytes=%d scans=%d want=%d", err, out.Len(), detector.calls, want)
+			}
+		})
+	}
+}
+
+func TestSlogWithheldRecord(t *testing.T) {
+	t.Parallel()
+	for _, reason := range []string{maskingReason, sizeReason, canceledReason} {
+		t.Run(reason, func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			scanner := embargo.NewScanner()
+			var value any = "planted-value"
+			switch reason {
+			case maskingReason:
+				value = panicLogValue{}
+			case sizeReason:
+				value = strings.Repeat("x", 1<<20)
+			case canceledReason:
+				cancel()
+			}
+			var out bytes.Buffer
+			handler := embargo.NewSlogHandler(slog.NewJSONHandler(&out, nil), scanner).WithAttrs([]slog.Attr{slog.String("planted-bound-key", "planted-bound-value")}).WithGroup("planted-group")
+			record := slog.NewRecord(time.Unix(7, 0).UTC(), slog.LevelWarn, "planted-message", 123)
+			record.AddAttrs(slog.Any("planted-key", struct{ Value any }{value}))
+			if reason == maskingReason {
+				record = slog.NewRecord(time.Unix(7, 0).UTC(), slog.LevelWarn, "planted-message", 123)
+				record.AddAttrs(slog.Any("planted-key", value))
+			}
+			if !handler.Enabled(ctx, slog.LevelWarn) {
+				t.Error("canceled record disabled before fallback")
+			}
+			if err := handler.Handle(ctx, record); err == nil {
+				t.Fatal("missing handler error")
+			}
+			assertWithheldJSON(t, out.Bytes(), reason, 2)
+			var got map[string]any
+			if err := json.Unmarshal(out.Bytes(), &got); err != nil {
+				t.Fatal(err)
+			}
+			if got["time"] != "1970-01-01T00:00:07Z" || got["level"] != "WARN" {
+				t.Fatal("time or level changed", got)
+			}
+		})
+	}
+}
+
+func assertWithheldJSON(t *testing.T, data []byte, reason string, count int) {
+	t.Helper()
+	var got map[string]any
+	if err := json.Unmarshal(data, &got); err != nil {
+		t.Fatalf("missing fallback: %v, bytes=%d", err, len(data))
+	}
+	if got["msg"] != "embargo: record withheld ("+reason+")" || got["withheld_attributes"] != float64(count) {
+		t.Fatalf("wrong fallback: %s", data)
+	}
+	if bytes.Contains(data, []byte("planted")) || bytes.Contains(data, []byte("synthetic panic")) {
+		t.Fatalf("fallback leaked: %s", data)
+	}
+}
+
+//nolint:paralleltest // Isolate allocation accounting for the oversized scalar boundary.
+func TestSlogRejectsLargePlainValuesBeforeEncoding(t *testing.T) {
+	for _, value := range []any{strings.Repeat("x", 8<<20), bytes.Repeat([]byte("x"), 8<<20)} {
+		handler := embargo.NewSlogHandler(slog.DiscardHandler, embargo.NewScanner())
+		record := slog.NewRecord(time.Time{}, slog.LevelInfo, "event", 0)
+		record.AddAttrs(slog.Any("large", value))
+		runtime.GC()
+		var before, after runtime.MemStats
+		runtime.ReadMemStats(&before)
+		err := handler.Handle(t.Context(), record)
+		runtime.ReadMemStats(&after)
+		if err == nil {
+			t.Fatal("oversized input accepted")
+		}
+		if after.TotalAlloc-before.TotalAlloc > 2<<20 {
+			t.Fatalf("encoded oversized plain value: %d bytes allocated", after.TotalAlloc-before.TotalAlloc)
+		}
+	}
+}
+
+func BenchmarkSlogOversizedPlainValue(b *testing.B) {
+	for _, size := range []int{1 << 20, 16 << 20} {
+		b.Run(strconv.Itoa(size), func(b *testing.B) {
+			handler := embargo.NewSlogHandler(slog.DiscardHandler, embargo.NewScanner())
+			record := slog.NewRecord(time.Time{}, slog.LevelInfo, "event", 0)
+			record.AddAttrs(slog.Any("large", bytes.Repeat([]byte("x"), size)))
+			b.ReportAllocs()
+			b.ResetTimer()
+			for b.Loop() {
+				if err := handler.Handle(b.Context(), record); err == nil {
+					b.Fatal("oversized value accepted")
+				}
 			}
 		})
 	}

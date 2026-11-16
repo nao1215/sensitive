@@ -58,7 +58,7 @@ compatibility-doc: ## Regenerate the table from real output tests
 .PHONY: accuracy accuracy-doc
 accuracy accuracy-doc: credential-accuracy ## Regenerate precision and recall from the labeled corpus
 	python3 scripts/generate_accuracy.py
-	UPDATE_DOCS=1 go -C tests test -run '^Test(AccuracyTable|SeverityAccuracy)$$' -count=1 .
+	UPDATE_DOCS=1 go -C tests test -run '^Test(AccuracyTable|SeverityAccuracy|DefaultThresholdAccuracy)$$' -count=1 .
 	python3 scripts/accuracy_figures.py
 
 .PHONY: benchmark-doc

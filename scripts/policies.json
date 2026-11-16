@@ -144,7 +144,7 @@
     "where": "MultiPlatformUnitTest"
   },
   {
-    "rule": "Slog failures suppress output and emit fixed errors",
+    "rule": "Slog failures emit safe diagnostics and fixed errors",
     "source": "Repository maintenance policy",
     "check": "slog_handler_test.go#TestSlogSuppressesNormalizationFailures",
     "where": "MultiPlatformUnitTest"
@@ -462,7 +462,7 @@
     "where": "MultiPlatformUnitTest"
   },
   {
-    "rule": "Context cancellation stops subsequent detectors and output",
+    "rule": "Context cancellation stops subsequent detectors and raw output",
     "source": "Repository maintenance policy",
     "check": "json_test.go#TestMaskJSONContextStopsBetweenDetectors",
     "where": "MultiPlatformUnitTest"

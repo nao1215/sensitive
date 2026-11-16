@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"strconv"
 	"time"
+
+	"github.com/nao1215/embargo/internal/saferecord"
 )
 
 // NewSlogHandler scans messages, keys, groups and values before forwarding to next.
@@ -18,7 +20,9 @@ import (
 // Any values keep their encoded JSON shape; errors keep their Error text.
 // Clean scalars and record metadata keep their types; WithAttrs freezes values.
 //
-// Scanner or normalization failures drop the record and return a fixed error.
+// Masking errors, size limits and cancellation emit a withheld record with the
+// same time and level, a fixed reason and withheld_attributes; no original fields
+// or groups survive. Handle also returns a fixed error, which slog.Logger ignores.
 // Values added by downstream handlers need their own output check.
 // See the [logging guide] for value handling and error observation.
 //
@@ -37,34 +41,47 @@ func NewSlogHandler(next slog.Handler, scanner *Scanner) slog.Handler {
 	if scanner == nil {
 		panic("embargo: nil scanner")
 	}
-	return &slogHandler{next: next, scanner: scanner, failed: false, hidden: false, depth: 0}
+	return &slogHandler{next: next, scanner: scanner, base: next, failed: nil, hidden: false, depth: 0, bound: 0}
 }
 
 type slogHandler struct {
 	next    slog.Handler
 	scanner *Scanner
-	failed  bool
+	base    slog.Handler
+	failed  error
+	bound   int
 	hidden  bool
 	depth   int
 }
 
 // Enabled asks the downstream handler whether this level is enabled.
 func (h *slogHandler) Enabled(ctx context.Context, level slog.Level) bool {
-	return ctx.Err() == nil && h.next.Enabled(ctx, level)
+	if ctx.Err() != nil {
+		ctx = context.WithoutCancel(ctx)
+	}
+	return h.next.Enabled(ctx, level)
 }
 
 // Handle masks a copied record before passing it to the downstream handler.
 //
 //nolint:gocritic // slog.Handler requires the record by value.
 func (h *slogHandler) Handle(ctx context.Context, record slog.Record) error {
-	if ctx.Err() != nil || h.failed {
-		return slogSanitizationError()
+	var safe slog.Record
+	err := h.failed
+	if ctx.Err() != nil {
+		err = saferecord.ErrCanceled
 	}
-	safe, err := h.sanitizeRecord(ctx, &record)
-	if err != nil {
-		return err
+	if err == nil {
+		safe, err = h.sanitizeRecord(ctx, &record)
 	}
 	if ctx.Err() != nil {
+		err = saferecord.ErrCanceled
+	}
+	if err != nil {
+		sinkErr := saferecord.Slog(ctx, h.base, record.Time, record.Level, h.bound+record.NumAttrs(), saferecord.Reason(ctx, err))
+		if sinkErr != nil {
+			return errors.Join(slogSanitizationError(), sinkErr)
+		}
 		return slogSanitizationError()
 	}
 	return h.next.Handle(ctx, safe)
@@ -72,29 +89,41 @@ func (h *slogHandler) Handle(ctx context.Context, record slog.Record) error {
 
 // WithAttrs freezes masked attributes for subsequent records.
 func (h *slogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	if h.hidden {
-		return h
+	copyOf := *h
+	copyOf.bound += len(attrs)
+	if h.hidden || h.failed != nil {
+		return &copyOf
 	}
 	safe, err := h.sanitizeAttrs(attrs)
-	if h.failed || err != nil {
-		return &slogHandler{next: h.next, scanner: h.scanner, failed: true, hidden: h.hidden, depth: h.depth}
+	copyOf.failed = err
+	if err == nil {
+		copyOf.next = h.next.WithAttrs(safe)
 	}
-	return &slogHandler{next: h.next.WithAttrs(safe), scanner: h.scanner, failed: false, hidden: false, depth: h.depth}
+	return &copyOf
 }
 
-// WithGroup retains the downstream grouping contract.
+// WithGroup retains grouping for safe records; fallback records have no groups.
 func (h *slogHandler) WithGroup(name string) slog.Handler {
-	if name == "" || h.hidden {
+	if name == "" || h.hidden || h.failed != nil {
 		return h
 	}
+	copyOf := *h
 	safe, err := h.sanitizeAttrs([]slog.Attr{slog.String(name, "")})
-	if h.failed || err != nil || h.depth >= maxDepth {
-		return &slogHandler{next: h.next, scanner: h.scanner, failed: true, hidden: h.hidden, depth: h.depth}
+	if h.depth >= maxDepth {
+		err = saferecord.ErrSizeLimit
+	}
+	if err != nil {
+		copyOf.failed = err
+		return &copyOf
 	}
 	if h.scanner.sensitiveKey(name) {
-		return &slogHandler{next: h.next.WithAttrs([]slog.Attr{slog.String(safe[0].Key, redactionMarker)}), scanner: h.scanner, failed: false, hidden: true, depth: h.depth}
+		copyOf.next = h.next.WithAttrs([]slog.Attr{slog.String(safe[0].Key, redactionMarker)})
+		copyOf.hidden = true
+	} else {
+		copyOf.next = h.next.WithGroup(safe[0].Key)
+		copyOf.depth++
 	}
-	return &slogHandler{next: h.next.WithGroup(safe[0].Key), scanner: h.scanner, failed: false, hidden: false, depth: h.depth + 1}
+	return &copyOf
 }
 
 func slogSanitizationError() error { return errors.New("embargo: slog record could not be sanitized") }
@@ -105,10 +134,16 @@ func (h *slogHandler) sanitizeRecord(ctx context.Context, record *slog.Record) (
 		if !completed {
 			_ = recover() //nolint:errcheck // Discard panic values, including panic(nil) compatibility mode.
 			safe = slog.Record{}
-			err = slogSanitizationError()
+			if err == nil {
+				err = saferecord.ErrMasking
+			}
 		}
 	}()
-	safe = slog.NewRecord(record.Time, record.Level, h.mask(ctx, record.Message), record.PC)
+	message, err := h.mask(ctx, record.Message)
+	if err != nil {
+		return slog.Record{}, err
+	}
+	safe = slog.NewRecord(record.Time, record.Level, message, record.PC)
 	if h.hidden {
 		completed = true
 		return safe, nil
@@ -132,7 +167,9 @@ func (h *slogHandler) sanitizeAttrs(attrs []slog.Attr) (safe []slog.Attr, err er
 		if !completed {
 			_ = recover() //nolint:errcheck // Discard panic values, including panic(nil) compatibility mode.
 			safe = nil
-			err = slogSanitizationError()
+			if err == nil {
+				err = saferecord.ErrMasking
+			}
 		}
 	}()
 	safe = make([]slog.Attr, 0, len(attrs))
@@ -147,17 +184,24 @@ func (h *slogHandler) sanitizeAttrs(attrs []slog.Attr) (safe []slog.Attr, err er
 	return safe, nil
 }
 
-func (h *slogHandler) mask(ctx context.Context, text string) string {
-	return Mask(text, h.scanner.scan([]byte(text), ctx.Err))
+func (h *slogHandler) mask(ctx context.Context, text string) (string, error) {
+	scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
+	return scan.maskScalar(ctx, text, "")
 }
 
 func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth int) (slog.Attr, error) {
 	const maxDepth = 64
 	const maxLogValues = 100
-	if ctx.Err() != nil || depth > maxDepth {
-		return slog.Attr{}, slogSanitizationError()
+	if ctx.Err() != nil {
+		return slog.Attr{}, saferecord.ErrCanceled
 	}
-	key := h.mask(ctx, attr.Key)
+	if depth > maxDepth {
+		return slog.Attr{}, saferecord.ErrSizeLimit
+	}
+	key, err := h.mask(ctx, attr.Key)
+	if err != nil {
+		return slog.Attr{}, err
+	}
 	if ctx.Err() != nil {
 		return slog.Attr{}, slogSanitizationError()
 	}
@@ -168,8 +212,11 @@ func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth in
 	// Calling LogValue directly lets the outer boundary discard panic values.
 	// Value.Resolve converts panic contents to an error, which could reveal them.
 	for count := 0; value.Kind() == slog.KindLogValuer; count++ {
-		if ctx.Err() != nil || count == maxLogValues {
-			return slog.Attr{}, slogSanitizationError()
+		if ctx.Err() != nil {
+			return slog.Attr{}, saferecord.ErrCanceled
+		}
+		if count == maxLogValues {
+			return slog.Attr{}, saferecord.ErrSizeLimit
 		}
 		value = value.LogValuer().LogValue()
 	}
@@ -210,13 +257,19 @@ func (h *slogHandler) sanitizeAny(ctx context.Context, key, originalKey string, 
 	if errValue, ok := value.(error); ok {
 		return h.sanitizeScalar(ctx, key, originalKey, slog.StringValue(errValue.Error()))
 	}
+	// Plain byte slices have a known base64 size and no user marshaler to invoke.
+	// Reject before encoding; arbitrary MarshalJSON implementations remain unbounded.
+	const jsonQuotes, base64Block, rawBlock = 2, 4, 3
+	if raw, ok := value.([]byte); ok && len(raw) > (maxEventBytes-jsonQuotes)/base64Block*rawBlock {
+		return slog.Attr{}, saferecord.ErrSizeLimit
+	}
 	encoded, err := json.Marshal(value)
 	if err != nil {
 		return slog.Attr{}, slogSanitizationError()
 	}
 	safe, err := h.scanner.maskJSON(ctx, encoded, originalKey)
 	if err != nil {
-		return slog.Attr{}, slogSanitizationError()
+		return slog.Attr{}, err
 	}
 	return slog.Any(key, maskedJSON(safe)), nil
 }
@@ -244,7 +297,7 @@ func (h *slogHandler) sanitizeScalar(ctx context.Context, key, originalKey strin
 	for _, text := range representations {
 		masked, err := scan.maskScalar(ctx, text, originalKey)
 		if err != nil {
-			return slog.Attr{}, slogSanitizationError()
+			return slog.Attr{}, err
 		}
 		if masked != text {
 			return slog.String(key, masked), nil

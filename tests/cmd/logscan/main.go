@@ -43,12 +43,13 @@ type sample struct {
 	Line    int             `json:"line"`
 }
 type result struct {
-	Counts         map[string]map[embargo.Kind]int `json:"counts"`
-	Samples        map[embargo.Kind][]sample       `json:"samples"`
-	Dataset        string                          `json:"dataset"`
-	FindingsSHA256 string                          `json:"findings_sha256"`
-	Bytes          int64                           `json:"bytes"`
-	Lines          int                             `json:"lines"`
+	ThresholdSamples map[string]map[embargo.Kind][]sample `json:"threshold_samples"`
+	Counts           map[string]map[embargo.Kind]int      `json:"counts"`
+	Samples          map[embargo.Kind][]sample            `json:"samples"`
+	Dataset          string                               `json:"dataset"`
+	FindingsSHA256   string                               `json:"findings_sha256"`
+	Bytes            int64                                `json:"bytes"`
+	Lines            int                                  `json:"lines"`
 }
 
 func main() {
@@ -77,7 +78,8 @@ func run() error {
 	if decodeErr := json.Unmarshal(data, &m); decodeErr != nil {
 		return decodeErr
 	}
-	scanners := map[string]*embargo.Scanner{"all": embargo.NewScanner(embargo.WithAll()), "default": embargo.NewScanner()}
+	const mediumThreshold, strictThreshold = .5, .7
+	scanners := map[string]*embargo.Scanner{"all": embargo.NewScanner(embargo.WithAll()), "default": embargo.NewScanner(), "default50": embargo.NewScanner(embargo.WithMinConfidence(mediumThreshold)), "default70": embargo.NewScanner(embargo.WithMinConfidence(strictThreshold))}
 	for name, kinds := range m.Configurations {
 		scanners[name] = embargo.NewScanner(embargo.WithKinds(kinds...))
 	}
@@ -106,7 +108,7 @@ func run() error {
 
 //nolint:gocognit // Keep the independent scanner and actual handler checks next to the measured line.
 func measure(d *dataset, cache string, scanners map[string]*embargo.Scanner, singles map[embargo.Kind]*embargo.Scanner) (r result, err error) {
-	r = result{Dataset: d.Name, Counts: map[string]map[embargo.Kind]int{}, Samples: map[embargo.Kind][]sample{}}
+	r = result{Dataset: d.Name, Counts: map[string]map[embargo.Kind]int{}, Samples: map[embargo.Kind][]sample{}, ThresholdSamples: map[string]map[embargo.Kind][]sample{"default50": {}, "default70": {}}}
 	path, err := filepath.Localize(d.Path)
 	if err != nil {
 		return r, err
@@ -150,6 +152,9 @@ func measure(d *dataset, cache string, scanners map[string]*embargo.Scanner, sin
 			}
 			for _, f := range findings {
 				r.Counts[name][f.Kind]++
+				if samples, ok := r.ThresholdSamples[name]; ok {
+					sampleFinding(samples, d.Name, r.Lines, text, f)
+				}
 			}
 			if name == "default" {
 				output.Reset()
@@ -169,20 +174,7 @@ func measure(d *dataset, cache string, scanners map[string]*embargo.Scanner, sin
 			}
 		}
 		for _, f := range all {
-			id := fmt.Sprintf("%s:%d:%s:%d:%d", d.Name, r.Lines, f.Kind, f.Start, f.End)
-			sum := sha256.Sum256([]byte(id))
-			pick := sample{ID: hex.EncodeToString(sum[:]), Line: r.Lines, Finding: f, Text: text, Value: text[f.Start:f.End]}
-			values := r.Samples[f.Kind]
-			const sampleSize = 40
-			if len(values) == sampleSize && pick.ID >= values[len(values)-1].ID {
-				continue
-			}
-			values = append(values, pick)
-			slices.SortFunc(values, func(a, b sample) int { return strings.Compare(a.ID, b.ID) })
-			if len(values) > sampleSize {
-				values = values[:sampleSize]
-			}
-			r.Samples[f.Kind] = values
+			sampleFinding(r.Samples, d.Name, r.Lines, text, f)
 		}
 	}
 	if scanErr := lines.Err(); scanErr != nil {
@@ -198,4 +190,21 @@ func measure(d *dataset, cache string, scanners map[string]*embargo.Scanner, sin
 	}
 	r.FindingsSHA256 = hex.EncodeToString(findingsDigest.Sum(nil))
 	return r, nil
+}
+
+func sampleFinding(samples map[embargo.Kind][]sample, dataset string, line int, text string, f embargo.Finding) {
+	id := fmt.Sprintf("%s:%d:%s:%d:%d", dataset, line, f.Kind, f.Start, f.End)
+	sum := sha256.Sum256([]byte(id))
+	pick := sample{ID: hex.EncodeToString(sum[:]), Line: line, Finding: f, Text: text, Value: text[f.Start:f.End]}
+	values := samples[f.Kind]
+	const sampleSize = 40
+	if len(values) == sampleSize && pick.ID >= values[len(values)-1].ID {
+		return
+	}
+	values = append(values, pick)
+	slices.SortFunc(values, func(a, b sample) int { return strings.Compare(a.ID, b.ID) })
+	if len(values) > sampleSize {
+		values = values[:sampleSize]
+	}
+	samples[f.Kind] = values
 }

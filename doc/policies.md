@@ -29,7 +29,7 @@ This inventory states the owner's active maintenance policy and maps each rule t
 | Recorder requires observed bytes and checked expectations | Repository maintenance policy | [TestQuintRecorderReplay](../embargotest/recorder_test.go) | Verification |
 | Guard shares limits and replays only safe complete streams | Repository maintenance policy | [TestQuintGuardReplay](../embargotest/guard_test.go) | Verification |
 | Recorder cannot start detached goroutines | Repository maintenance policy | [TestRecorderDoesNotStartDetachedGoroutines](../tests/contracts/policy_test.go) | MultiPlatformUnitTest |
-| Slog failures suppress output and emit fixed errors | Repository maintenance policy | [TestSlogSuppressesNormalizationFailures](../slog_handler_test.go) | MultiPlatformUnitTest |
+| Slog failures emit safe diagnostics and fixed errors | Repository maintenance policy | [TestSlogSuppressesNormalizationFailures](../slog_handler_test.go) | MultiPlatformUnitTest |
 | Structured masking preserves shape and bounds its work | Repository maintenance policy | [TestMaskJSONFailureBounds](../json_test.go) | MultiPlatformUnitTest |
 | HTTP interim responses share the retention budget | Repository maintenance policy | [TestInformationalHeadersConsumeTotalBudget](../embargotest/detector_test.go) | MultiPlatformUnitTest |
 | Hint dispatch agrees with exhaustive scanning | CLAUDE.md | [TestDispatchDifferential](../scanner_dispatch_test.go) | MultiPlatformUnitTest |
@@ -82,7 +82,7 @@ This inventory states the owner's active maintenance policy and maps each rule t
 | Masked-key collisions never restore original telemetry values | Repository maintenance policy | [TestMaskedKeyCollisionNeverRestoresOriginal](../adapters/otel/values_test.go) | MultiPlatformUnitTest |
 | Log masking retains dropped counts and metadata | Repository maintenance policy | [TestLogPreservesDroppedAttributesAndMetadata](../adapters/otel/log_test.go) | MultiPlatformUnitTest |
 | Span masking retains all telemetry counters | Repository maintenance policy | [TestSpanPreservesTelemetryCounters](../adapters/otel/span_test.go) | MultiPlatformUnitTest |
-| Context cancellation stops subsequent detectors and output | Repository maintenance policy | [TestMaskJSONContextStopsBetweenDetectors](../json_test.go) | MultiPlatformUnitTest |
+| Context cancellation stops subsequent detectors and raw output | Repository maintenance policy | [TestMaskJSONContextStopsBetweenDetectors](../json_test.go) | MultiPlatformUnitTest |
 | Every logger handles colliding masked keys without original values | Repository maintenance policy | [TestLoggerMaskedKeyCollisions](../tests/integrations_test.go) | MultiPlatformUnitTest |
 | README-linked examples run alone without private helper files | Repository maintenance policy | [TestReadmeLinkedExamplesStandalone](../doc_test.go) | MultiPlatformUnitTest |
 | Documentation distinguishes default kinds and raw credential keys | Repository maintenance policy | [TestDefaultPolicyDocumentation](../doc_test.go) | MultiPlatformUnitTest |

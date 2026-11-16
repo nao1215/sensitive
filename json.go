@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"unicode/utf8"
+
+	"github.com/nao1215/embargo/internal/saferecord"
 )
 
 const (
@@ -19,7 +20,7 @@ type eventScanner struct {
 	remaining int
 }
 
-func jsonFailure() error { return errors.New("embargo: invalid or unmaskable JSON") }
+func jsonFailure() error { return saferecord.ErrMasking }
 
 // MaskJSON masks one JSON document using this scanner's detectors and sensitive
 // key policy. It preserves object order, duplicate keys, arrays, nulls, booleans
@@ -29,6 +30,10 @@ func jsonFailure() error { return errors.New("embargo: invalid or unmaskable JSO
 // Input and output are limited to 1 MiB, nesting to 64, and cumulative detector
 // input to 4 MiB. Invalid input, exceeded limits and panics return no bytes and a
 // fixed error without input data. It does not modify the source document.
+// These bounds apply to already encoded bytes, not the caller's encoder or
+// upstream reader. MarshalJSON, LogValue, String and Error may run before this
+// boundary; their execution time and memory are not bounded. Use Secret or a
+// LogValuer returning a bounded value for such types.
 // Use it before sending JSON API responses, exports or audit records.
 func (scanner *Scanner) MaskJSON(data []byte) (masked []byte, err error) {
 	return scanner.MaskJSONContext(context.Background(), data)
@@ -48,11 +53,16 @@ func (scanner *Scanner) maskJSON(ctx context.Context, data []byte, key string) (
 		_ = recover() //nolint:errcheck // Discard panic values, including panic(nil) compatibility mode.
 		if !complete {
 			masked = nil
-			err = jsonFailure()
+			if err == nil {
+				err = jsonFailure()
+			}
 		}
 	}()
-	if ctx == nil || ctx.Err() != nil || len(data) > maxEventBytes {
-		return nil, jsonFailure()
+	if ctx == nil || ctx.Err() != nil {
+		return nil, saferecord.ErrCanceled
+	}
+	if len(data) > maxEventBytes {
+		return nil, saferecord.ErrSizeLimit
 	}
 	if scanner == nil || len(data) == 0 || !json.Valid(data) {
 		return nil, jsonFailure()
@@ -61,7 +71,7 @@ func (scanner *Scanner) maskJSON(ctx context.Context, data []byte, key string) (
 	data = bytes.TrimSpace(data)
 	walker := jsonWalker{data: data, result: make([]byte, 0, len(data)), scanner: eventScanner{scanner: scanner, remaining: maxScanBytes}}
 	if err := walker.value(ctx, 0, key, false); err != nil {
-		return nil, jsonFailure()
+		return nil, err
 	}
 	complete = true
 	return walker.result, nil
@@ -71,6 +81,7 @@ func (scanner *Scanner) maskJSON(ctx context.Context, data []byte, key string) (
 // Original numeric lexemes are retained, equivalent to decoding with UseNumber.
 // Unlike a map tree, the walk retains every duplicate key and its value.
 type jsonWalker struct {
+	err     error
 	scanner eventScanner
 	data    []byte
 	result  []byte
@@ -89,12 +100,18 @@ func (w *jsonWalker) space() {
 }
 
 func (w *jsonWalker) value(ctx context.Context, depth int, key string, hidden bool) error {
-	if ctx.Err() != nil || depth > maxDepth {
-		return jsonFailure()
+	if w.err != nil {
+		return w.err
+	}
+	if ctx.Err() != nil {
+		return saferecord.ErrCanceled
+	}
+	if depth > maxDepth {
+		return saferecord.ErrSizeLimit
 	}
 	w.space()
 	if !hidden && key != "" && w.scanner.scanner.sensitiveKey(key) {
-		w.result = append(w.result, `"`+redactionMarker+`"`...)
+		w.appendResult([]byte(`"` + redactionMarker + `"`))
 		hidden = true
 	}
 	switch w.data[w.pos] {
@@ -124,10 +141,7 @@ func (w *jsonWalker) value(ctx context.Context, depth int, key string, hidden bo
 			}
 		}
 	}
-	if len(w.result) > maxEventBytes {
-		return jsonFailure()
-	}
-	return nil
+	return w.err
 }
 
 func (w *jsonWalker) scalar(ctx context.Context, raw []byte, key string) error {
@@ -136,7 +150,7 @@ func (w *jsonWalker) scalar(ctx context.Context, raw []byte, key string) error {
 		return err
 	}
 	if masked == string(raw) {
-		w.result = append(w.result, raw...)
+		w.appendResult(raw)
 	} else {
 		w.appendString(masked)
 	}
@@ -151,7 +165,10 @@ func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidde
 		closeByte = '}'
 	}
 	if !hidden {
-		w.result = append(w.result, open)
+		w.appendResult([]byte{open})
+		if w.err != nil {
+			return w.err
+		}
 	}
 	w.space()
 	for w.data[w.pos] != closeByte {
@@ -164,7 +181,7 @@ func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidde
 				if err != nil {
 					return err
 				}
-				w.result = append(w.result, ':')
+				w.appendResult([]byte{':'})
 			}
 			w.space()
 			w.pos++ // Colon, already checked by json.Valid.
@@ -176,14 +193,14 @@ func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidde
 		if w.data[w.pos] == ',' {
 			w.pos++
 			if !hidden {
-				w.result = append(w.result, ',')
+				w.appendResult([]byte{','})
 			}
 			w.space()
 		}
 	}
 	w.pos++
 	if !hidden {
-		w.result = append(w.result, closeByte)
+		w.appendResult([]byte{closeByte})
 	}
 	return nil
 }
@@ -206,7 +223,7 @@ func (w *jsonWalker) stringValue(ctx context.Context, raw []byte, key string) (s
 	text := string(raw[1 : len(raw)-1])
 	if bytes.IndexByte(raw, '\\') >= 0 || !utf8.ValidString(text) {
 		if err := json.Unmarshal(raw, &text); err != nil {
-			return "", jsonFailure()
+			return "", saferecord.ErrMasking
 		}
 	}
 	masked, err := w.scanner.maskScalar(ctx, text, key)
@@ -216,11 +233,11 @@ func (w *jsonWalker) stringValue(ctx context.Context, raw []byte, key string) (s
 	// Reuse unchanged JSON lexemes. Escape changed strings with encoding/json;
 	// invalid UTF-8 is normalized by the decoder before it reaches the output.
 	if masked == text && utf8.Valid(raw) {
-		w.result = append(w.result, raw...)
+		w.appendResult(raw)
 	} else {
 		w.appendString(masked)
 	}
-	return text, nil
+	return text, w.err
 }
 
 func (w *jsonWalker) appendString(text string) {
@@ -230,14 +247,14 @@ func (w *jsonWalker) appendString(text string) {
 	if err != nil {
 		panic("embargo: JSON string encoding failed")
 	}
-	w.result = append(w.result, encoded...)
+	w.appendResult(encoded)
 }
 
 // Include the field name so context-based detectors can recognize, for example,
 // {"cvv":123}. Translate findings back to value bytes before replacing them.
 func (s *eventScanner) maskScalar(ctx context.Context, value, key string) (string, error) {
 	if ctx.Err() != nil {
-		return "", jsonFailure()
+		return "", saferecord.ErrCanceled
 	}
 	// Charge before allocating the prefix or invoking any detector.
 	prefixBytes := 0
@@ -245,19 +262,19 @@ func (s *eventScanner) maskScalar(ctx context.Context, value, key string) (strin
 		prefixBytes = len(key) + len(": ")
 	}
 	if prefixBytes > s.remaining || len(value) > s.remaining-prefixBytes {
-		return "", jsonFailure()
+		return "", saferecord.ErrSizeLimit
 	}
 	s.remaining -= prefixBytes + len(value)
 	if prefixBytes == 0 {
 		findings := s.scanner.scan([]byte(value), ctx.Err)
 		if ctx.Err() != nil {
-			return "", jsonFailure()
+			return "", saferecord.ErrCanceled
 		}
 		return Mask(value, findings), nil
 	}
 	findings := s.scanner.scan([]byte(key+": "+value), ctx.Err)
 	if ctx.Err() != nil {
-		return "", jsonFailure()
+		return "", saferecord.ErrCanceled
 	}
 	spans := make([]Finding, 0, len(findings))
 	for _, finding := range findings {
@@ -269,4 +286,17 @@ func (s *eventScanner) maskScalar(ctx context.Context, value, key string) (strin
 		spans = append(spans, finding)
 	}
 	return Mask(value, spans), nil
+}
+
+// Stop before retaining bytes beyond the output limit, including a token that
+// expands during masking. Callers check the failure before scanning another value.
+func (w *jsonWalker) appendResult(data []byte) {
+	if w.err != nil {
+		return
+	}
+	if len(data) > maxEventBytes-len(w.result) {
+		w.err = saferecord.ErrSizeLimit
+		return
+	}
+	w.result = append(w.result, data...)
 }
