@@ -5,7 +5,7 @@ go 1.26.11
 replace github.com/nao1215/embargo => ../..
 
 require (
-	github.com/nao1215/embargo v0.9.0
+	github.com/nao1215/embargo v0.10.0
 	go.uber.org/zap v1.28.0
 )
 
