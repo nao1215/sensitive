@@ -369,10 +369,10 @@ The same service logs a planted password and token through each library, configu
 | Password under the key `password` | caught | caught | caught | caught | caught |
 | Config struct holding a database DSN | caught | caught | caught | leaked | leaked |
 | DSN inside a wrapped error | caught | caught | caught | leaked | leaked |
-| DSN and token in errors.Join | caught | caught | leaked | leaked | leaked |
-| Bearer token in a log message | caught | caught | leaked | leaked | leaked |
-| API token in a log message | caught | caught | leaked | leaked | leaked |
-| Token in a redirect URL, never logged | leaked | leaked | leaked | leaked | leaked |
+| DSN and an API key joined with errors.Join | caught | caught | leaked | leaked | leaked |
+| Bearer header value in a log message | caught | caught | leaked | leaked | leaked |
+| Third-party API key in a log message | caught | caught | leaked | leaked | leaked |
+| Redirect URL query, never logged | leaked | leaked | leaked | leaked | leaked |
 <!-- leak-scenarios:end -->
 
 The redirect row leaks for every library because the token never passes a logger; `embargotest.HTTP` catches it in tests. On the same slog events embargo is also faster than masq ([Benchmarks](#benchmarks)). Configurations, exact outputs, [twelve more leak cases](doc/cases.md) and where the other libraries fit better are in [doc/comparison.md](doc/comparison.md).

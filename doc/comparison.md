@@ -103,10 +103,10 @@ The runnable `scenarioService` handles HTTP requests using a database DSN, an op
 | Password under the key `password` | caught | caught | caught | caught | caught |
 | Config struct holding a database DSN | caught | caught | caught | leaked | leaked |
 | DSN inside a wrapped error | caught | caught | caught | leaked | leaked |
-| DSN and token in errors.Join | caught | caught | leaked | leaked | leaked |
-| Bearer token in a log message | caught | caught | leaked | leaked | leaked |
-| API token in a log message | caught | caught | leaked | leaked | leaked |
-| Token in a redirect URL, never logged | leaked | leaked | leaked | leaked | leaked |
+| DSN and an API key joined with errors.Join | caught | caught | leaked | leaked | leaked |
+| Bearer header value in a log message | caught | caught | leaked | leaked | leaked |
+| Third-party API key in a log message | caught | caught | leaked | leaked | leaked |
+| Redirect URL query, never logged | leaked | leaked | leaked | leaked | leaked |
 <!-- leak-scenarios:end -->
 
 Run `make leak-scenarios` to regenerate this table. `TestLeakScenarios` checks it for staleness, and `TestLeakScenarioGuard` verifies that a real recorder rejects the planted logs and accepts the masked slog and zap variants. Caught means the entire planted value disappeared from the observed output; it does not imply arbitrary secrets are detected. SDK serialization and unrelated output paths require their own checks.
