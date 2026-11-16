@@ -31,7 +31,7 @@ Masking libraries such as masq hide what you configure: the fields and keys you 
 Requires Go 1.26.11 or later.
 
 ```sh
-go get github.com/nao1215/embargo@v0.8.1
+go get github.com/nao1215/embargo@v0.9.0
 ```
 
 <!-- example: example_test.go:Example -->
