@@ -15,16 +15,18 @@
   <img src="doc/images/logo-small.png" alt="Go gopher peeking over the embargo title, with email and token values blacked out" width="320">
 </p>
 
-embargo finds secrets and personal data in what a Go program logs, replaces them with `[REDACTED]`, and fails your tests when a fake secret reaches the output.
+embargo keeps secrets and personal data out of what a Go program writes: logs, error reports, HTTP access logs and traces. It works inside the application, where the value is written, and the root module has no dependencies outside the standard library.
 
-Masking libraries such as masq hide what you configure: the fields and keys you list, or values that match patterns you write. embargo ships [37 built-in detectors](#find-and-mask-sensitive-text) that check the values themselves, so a card number in a field nobody listed, or a token inside an error message, is masked without writing a rule. The root module has no dependencies.
+It exists for four jobs:
 
-- [Mask a string](#quick-start): `card=4111111111111111` becomes `card=[REDACTED]`
-- [Wrap slog, zap, zerolog or logrus](#loggers-and-services) without changing the structs you log
-- Mask net/http, gRPC, OpenTelemetry and Sentry output with [one hook each](#loggers-and-services)
-- Keep API keys in a [`Secret`](#values-that-must-never-print) that prints `[REDACTED]` through fmt, JSON and loggers
-- [Fail tests](#fail-tests-on-leaks) when a fake secret reaches stdout, logs or a child process
-- See [what it misses](doc/cases.md), its [accuracy](#accuracy) and [benchmarks](#benchmarks)
+| You need to | embargo provides |
+|---|---|
+| Keep a known secret, such as an API key, from ever printing | [`Secret`](#values-that-must-never-print), which prints `[REDACTED]` through fmt, JSON, XML, templates and loggers |
+| Log the structs, errors and JSON you already have | [A slog handler and `MaskJSON`](#mask-structs-without-changing-their-types) that keep keys, types and nesting, plus [adapters](#loggers-and-services) for other loggers and SDKs |
+| Catch secrets nobody declared, such as a card number inside an error message | [37 built-in detectors](#find-and-mask-sensitive-text) that check the values: tokens, URL passwords, cards, bank numbers, email, IPs |
+| Prove in CI that no secret reaches the output | [`embargotest`](#fail-tests-on-leaks), which fails a test when a fake secret appears in stdout, logs, HTTP responses or child processes |
+
+Redaction in a log pipeline can still run after it; embargo stops the leak where it is written. See [what it misses](doc/cases.md), its [accuracy](#accuracy) and [speed](#benchmarks).
 
 ## Quick start
 
