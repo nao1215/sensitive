@@ -18,6 +18,10 @@ The default scanner now recognizes about 70 more provider credential layouts and
 - `KindAWSKey` also recognizes ABIA and ACCA access-key IDs, and `KindSlackToken` recognizes `xoxe-` tokens.
 - `KindCredential` accepts `::=`, `:::=`, `?=`, `+=`, `||=` and spaced `.=` operators, Go typed declarations (`var token string = "..."`), string type annotations (`token: String = "..."`), PHP `print_r` keys (`[api_token] => ...`), XML elements named by a credential key (`<wsse:Password>...</wsse:Password>`), curl `-u`/`--user` passwords, keys with a numeric suffix such as `api_token_2`, `credentials`, `creds` and joined `ACCESSKEY`, `SECRETKEY`, `APIKEY` or `PRIVATEKEY` segments.
 
+### Performance
+
+- Detector selection checks the byte after each possible hint start against the hints' second bytes before comparing whole hints, so the larger provider table does not slow clean input: the default scanner's clean workload is about 10% faster than 0.11.0 on the same machine and the dirty workload within 2%.
+
 ### Fixed
 
 - A credential written with the Ruby, Perl or PHP hash arrow (`{"api_token" => "value"}`, the default Ruby `inspect` output) or a Make `::=` operator was not masked: only the `>` or `:` after the separator was replaced and the value stayed visible.

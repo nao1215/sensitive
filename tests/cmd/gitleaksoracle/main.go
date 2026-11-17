@@ -36,15 +36,15 @@ type ruleResult struct {
 
 // summary aggregates rules and examples; a rule is covered when every example is.
 type summary struct {
-	Rules             int          `json:"rules"`
-	Lines             int          `json:"lines"`
-	MaskedLines       int          `json:"masked_lines"`
-	RulesAllLines     int          `json:"rules_all_lines"`
-	Secrets           int          `json:"secrets"`
-	MaskedBare        int          `json:"masked_bare"`
-	RulesAllBare      int          `json:"rules_all_bare"`
-	PerRule           []ruleResult `json:"per_rule"`
-	BareContext       string       `json:"bare_context"`
+	BareContext   string       `json:"bare_context"`
+	PerRule       []ruleResult `json:"per_rule"`
+	Rules         int          `json:"rules"`
+	Lines         int          `json:"lines"`
+	MaskedLines   int          `json:"masked_lines"`
+	RulesAllLines int          `json:"rules_all_lines"`
+	Secrets       int          `json:"secrets"`
+	MaskedBare    int          `json:"masked_bare"`
+	RulesAllBare  int          `json:"rules_all_bare"`
 }
 
 // bareContext surrounds a bare secret with words that carry no credential key.
@@ -54,12 +54,14 @@ func main() {
 	samples := flag.String("samples", "", "JSON Lines file written by scripts/gitleaks_oracle.py")
 	flag.Parse()
 	if err := run(*samples, os.Stdout); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		if _, writeErr := fmt.Fprintln(os.Stderr, err); writeErr != nil {
+			os.Exit(1)
+		}
 		os.Exit(1)
 	}
 }
 
-func run(path string, out io.Writer) error {
+func run(path string, out io.Writer) (err error) {
 	if path == "" {
 		return errors.New("--samples is required")
 	}
@@ -67,7 +69,7 @@ func run(path string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { err = errors.Join(err, file.Close()) }()
 	samples, err := readSamples(file)
 	if err != nil {
 		return err
@@ -80,7 +82,8 @@ func run(path string, out io.Writer) error {
 func readSamples(r io.Reader) ([]sample, error) {
 	var samples []sample
 	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 0, 64*1024), 16*1024*1024)
+	const initialBuffer, maxLine = 64 << 10, 16 << 20
+	scanner.Buffer(make([]byte, 0, initialBuffer), maxLine)
 	for scanner.Scan() {
 		var s sample
 		if err := json.Unmarshal(scanner.Bytes(), &s); err != nil {
@@ -119,25 +122,33 @@ func measure(scanner *embargo.Scanner, samples []sample) summary {
 	}
 	result := summary{BareContext: bareContext}
 	for _, r := range rules {
-		for _, ok := range bare[r.Rule] {
-			r.Secrets++
-			if ok {
-				r.MaskedBare++
-			}
-		}
-		result.Rules++
-		result.Lines += r.Lines
-		result.MaskedLines += r.MaskedLines
-		result.Secrets += r.Secrets
-		result.MaskedBare += r.MaskedBare
-		if r.MaskedLines == r.Lines {
-			result.RulesAllLines++
-		}
-		if r.MaskedBare == r.Secrets {
-			result.RulesAllBare++
-		}
-		result.PerRule = append(result.PerRule, *r)
+		countBare(r, bare[r.Rule])
+		result.add(*r)
 	}
 	slices.SortFunc(result.PerRule, func(a, b ruleResult) int { return strings.Compare(a.Rule, b.Rule) })
 	return result
+}
+
+func countBare(r *ruleResult, secrets map[string]bool) {
+	for _, ok := range secrets {
+		r.Secrets++
+		if ok {
+			r.MaskedBare++
+		}
+	}
+}
+
+func (s *summary) add(r ruleResult) {
+	s.Rules++
+	s.Lines += r.Lines
+	s.MaskedLines += r.MaskedLines
+	s.Secrets += r.Secrets
+	s.MaskedBare += r.MaskedBare
+	if r.MaskedLines == r.Lines {
+		s.RulesAllLines++
+	}
+	if r.MaskedBare == r.Secrets {
+		s.RulesAllBare++
+	}
+	s.PerRule = append(s.PerRule, r)
 }

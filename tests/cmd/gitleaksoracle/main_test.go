@@ -13,12 +13,14 @@ import (
 
 func TestMeasureSeparatesLinesAndBareSecrets(t *testing.T) {
 	t.Parallel()
+	const prefixed, keyword = "pulumi", "keyword-only"
 	secret := "pul-" + strings.Repeat("0123456789", 4)
+	// #nosec G101 -- Synthetic fixture values, not credentials.
 	samples := []sample{
-		{Rule: "pulumi", Line: "token = " + secret, Secret: secret},
-		{Rule: "pulumi", Line: "x " + secret, Secret: secret},
-		{Rule: "keyword-only", Line: "password = opaque-value", Secret: "opaque-value"},
-		{Rule: "keyword-only", Line: "note opaque-value", Secret: "opaque-value"},
+		{Rule: prefixed, Line: "token = " + secret, Secret: secret},
+		{Rule: prefixed, Line: "x " + secret, Secret: secret},
+		{Rule: keyword, Line: "password = opaque-value", Secret: "opaque-value"},
+		{Rule: keyword, Line: "note opaque-value", Secret: "opaque-value"},
 	}
 	got := measure(embargo.NewScanner(), samples)
 	if got.Rules != 2 || got.Lines != 4 || got.MaskedLines != 3 || got.RulesAllLines != 1 {
@@ -27,7 +29,7 @@ func TestMeasureSeparatesLinesAndBareSecrets(t *testing.T) {
 	if got.Secrets != 2 || got.MaskedBare != 1 || got.RulesAllBare != 1 {
 		t.Fatalf("bare counts = %+v", got)
 	}
-	if got.PerRule[0].Rule != "keyword-only" || got.PerRule[1].Rule != "pulumi" {
+	if got.PerRule[0].Rule != keyword || got.PerRule[1].Rule != prefixed {
 		t.Fatalf("rules are not sorted: %+v", got.PerRule)
 	}
 }

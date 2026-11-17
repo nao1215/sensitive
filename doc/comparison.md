@@ -55,51 +55,51 @@ The invalid-Luhn row is a deliberate negative example. embargo uses its default 
 <!-- comparison:start -->
 | Benchmark | ns/op | B/op | allocs/op |
 |---|---:|---:|---:|
-| Comparison/clean/embargo | 1,004.0 | 32 | 4 |
-| Comparison/clean/ferret-scan | 549,780.5 | 102,636 | 691 |
-| Comparison/clean/go-masker | 1,312.0 | 8 | 1 |
-| Comparison/clean/masq | 2,773.5 | 792 | 50 |
-| Comparison/clean/pii-shield | 4,529.0 | 488 | 4 |
-| Comparison/clean/plain | 409.0 | 0 | 0 |
-| Comparison/flat/embargo | 1,303.5 | 96 | 2 |
-| Comparison/flat/ferret-scan | 610,650.5 | 142,240 | 756 |
-| Comparison/flat/go-masker | 1,380.5 | 48 | 3 |
-| Comparison/flat/masq | 3,085.0 | 672 | 32 |
-| Comparison/flat/pii-shield | 4,602.5 | 702 | 11 |
-| Comparison/flat/plain | 391.9 | 0 | 0 |
-| Comparison/large50/embargo | 13,055.5 | 6,241 | 5 |
-| Comparison/large50/ferret-scan | 6,473,383.5 | 382,808 | 856 |
-| Comparison/large50/go-masker | 14,170.5 | 2,096 | 4 |
-| Comparison/large50/masq | 58,270.5 | 12,707 | 561 |
-| Comparison/large50/pii-shield | 65,379.5 | 8,369 | 12 |
-| Comparison/large50/plain | 3,736.5 | 2,048 | 1 |
-| Comparison/map/embargo | 3,107.5 | 674 | 18 |
-| Comparison/map/ferret-scan | 788,157.0 | 146,811 | 730 |
-| Comparison/map/go-masker | 3,419.5 | 1,448 | 29 |
-| Comparison/map/masq | 5,386.5 | 1,744 | 63 |
-| Comparison/map/pii-shield | 6,879.5 | 1,184 | 22 |
-| Comparison/map/plain | 1,165.0 | 288 | 9 |
-| Comparison/nested/embargo | 2,261.5 | 354 | 7 |
-| Comparison/nested/ferret-scan | 712,865.5 | 159,253 | 775 |
-| Comparison/nested/go-masker | 2,891.5 | 800 | 19 |
-| Comparison/nested/masq | 5,329.0 | 1,784 | 61 |
-| Comparison/nested/pii-shield | 7,552.5 | 960 | 18 |
-| Comparison/nested/plain | 571.1 | 0 | 0 |
-| ComparisonFormatter/clean | 541.2 | 0 | 0 |
-| ComparisonFormatter/flat | 602.2 | 32 | 2 |
-| ComparisonFormatter/large50 | 7,493.5 | 7,872 | 10 |
-| ComparisonFormatter/map | 442.4 | 0 | 0 |
-| ComparisonFormatter/nested | 442.9 | 0 | 0 |
-| ComparisonStruct/embargo | 1,485.5 | 410 | 7 |
-| ComparisonStruct/go_mask | 548.9 | 328 | 7 |
-| ComparisonText/embargo | 1,773.5 | 1,184 | 26 |
-| ComparisonText/godlp | 29,909.0 | 11,713 | 59 |
-| StructuredPath/json_shape | 1,496.0 | 410 | 7 |
-| StructuredPath/old_string | 592.3 | 576 | 7 |
+| Comparison/clean/embargo | 2,104.0 | 32 | 4 |
+| Comparison/clean/ferret-scan | 1,143,867.5 | 103,128 | 692 |
+| Comparison/clean/go-masker | 2,854.0 | 8 | 1 |
+| Comparison/clean/masq | 5,797.0 | 792 | 50 |
+| Comparison/clean/pii-shield | 9,272.5 | 488 | 4 |
+| Comparison/clean/plain | 871.2 | 0 | 0 |
+| Comparison/flat/embargo | 2,774.0 | 96 | 2 |
+| Comparison/flat/ferret-scan | 1,281,496.5 | 143,306 | 766 |
+| Comparison/flat/go-masker | 2,955.5 | 48 | 3 |
+| Comparison/flat/masq | 6,354.5 | 672 | 32 |
+| Comparison/flat/pii-shield | 9,897.0 | 702 | 11 |
+| Comparison/flat/plain | 820.2 | 0 | 0 |
+| Comparison/large50/embargo | 27,196.0 | 6,242 | 5 |
+| Comparison/large50/ferret-scan | 6,919,763.5 | 401,052 | 886 |
+| Comparison/large50/go-masker | 28,945.0 | 2,096 | 4 |
+| Comparison/large50/masq | 119,604.0 | 12,707 | 561 |
+| Comparison/large50/pii-shield | 82,969.5 | 8,370 | 12 |
+| Comparison/large50/plain | 7,657.0 | 2,048 | 1 |
+| Comparison/map/embargo | 6,366.5 | 674 | 18 |
+| Comparison/map/ferret-scan | 1,647,775.0 | 150,434 | 746 |
+| Comparison/map/go-masker | 7,107.5 | 1,448 | 29 |
+| Comparison/map/masq | 11,414.0 | 1,744 | 63 |
+| Comparison/map/pii-shield | 14,410.5 | 1,184 | 22 |
+| Comparison/map/plain | 2,308.5 | 288 | 9 |
+| Comparison/nested/embargo | 4,639.5 | 354 | 7 |
+| Comparison/nested/ferret-scan | 1,750,713.5 | 151,912 | 734 |
+| Comparison/nested/go-masker | 6,053.0 | 800 | 19 |
+| Comparison/nested/masq | 10,354.5 | 1,784 | 61 |
+| Comparison/nested/pii-shield | 15,790.5 | 960 | 18 |
+| Comparison/nested/plain | 1,162.5 | 0 | 0 |
+| ComparisonFormatter/clean | 1,152.5 | 0 | 0 |
+| ComparisonFormatter/flat | 1,244.5 | 32 | 2 |
+| ComparisonFormatter/large50 | 15,433.0 | 7,872 | 10 |
+| ComparisonFormatter/map | 900.0 | 0 | 0 |
+| ComparisonFormatter/nested | 904.1 | 0 | 0 |
+| ComparisonStruct/embargo | 3,223.5 | 410 | 7 |
+| ComparisonStruct/go_mask | 1,115.0 | 328 | 7 |
+| ComparisonText/embargo | 3,805.5 | 1,184 | 26 |
+| ComparisonText/godlp | 60,772.5 | 11,713 | 59 |
+| StructuredPath/json_shape | 3,233.0 | 410 | 7 |
+| StructuredPath/old_string | 1,232.5 | 576 | 7 |
 
 Measured 2026-11-17 with go version go1.26.11 linux/amd64, Linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S; GOMAXPROCS=1, ten 200 ms samples per case. Construction is outside the timed loop; JSON encoding and masking are included. Source and dependency fingerprints, CPU affinity and command are in [comparison.json](comparison.json).
 
-For these five configured events the median time ratio embargo/pii-shield ranges from 0.20 to 0.45, embargo/go-masker from 0.77 to 0.94, embargo/masq from 0.22 to 0.58 and embargo/ferret-scan from 0.00 to 0.00; below 1 means less time for embargo. The structured JSON path uses 2.53 times the old string-only time. These ratios are regenerated from the same samples as the table.
+For these five configured events the median time ratio embargo/pii-shield ranges from 0.23 to 0.44, embargo/go-masker from 0.74 to 0.94, embargo/masq from 0.23 to 0.56 and embargo/ferret-scan from 0.00 to 0.00; below 1 means less time for embargo. The structured JSON path uses 2.62 times the old string-only time. These ratios are regenerated from the same samples as the table.
 <!-- comparison:end -->
 
 The five head-to-head events are a flat email/card pair, a nested struct with opaque password and tagged recovery field, a map, a clean event, and 50 attributes (48 clean plus the flat pair). All four paths use the same io.Discard sink. masq uses its documented WithAllowedType for time.Time and slog.Level, matching embargo's decision to preserve that metadata; this avoids charging masq for an unnecessary reflection traversal. Masker/scanner construction and regex compilation are excluded for every path. The tests use prebuilt slog.Attr slices and LogAttrs to avoid attributing caller argument construction to any library.

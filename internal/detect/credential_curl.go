@@ -1,5 +1,7 @@
 package detect
 
+import "bytes"
+
 // curlUserPasswords finds the password in curl -u or --user arguments written
 // as user:password, including quoted words and backslash-continued command
 // lines. The username stays visible, as in URL userinfo; when the password is
@@ -9,22 +11,33 @@ package detect
 func curlUserPasswords(data []byte) []Finding {
 	var out []Finding
 	for i := 0; i+len("curl") <= len(data); i++ {
-		if !hasASCIIPrefix(data, i, "curl") || (i > 0 && isIdentifierByte(data[i-1])) || (i+len("curl") < len(data) && isIdentifierByte(data[i+len("curl")])) {
+		next := bytes.Index(data[i:], []byte("curl"))
+		if next < 0 {
+			break
+		}
+		i += next
+		if (i > 0 && isIdentifierByte(data[i-1])) || (i+len("curl") < len(data) && isIdentifierByte(data[i+len("curl")])) {
 			continue
 		}
 		end := shellCommandEnd(data, i)
-		for at := i + len("curl"); at < end; at++ {
-			argument, ok := curlUserArgument(data, at, end)
-			if !ok {
-				continue
-			}
-			argEnd := shellWordEnd(data, argument, end)
-			if start, stop, found := userinfoSecret(data, argument, argEnd); found {
-				out = append(out, credentialFinding(start, stop))
-			}
-			at = argEnd
-		}
+		out = appendCurlCommandPasswords(out, data, i+len("curl"), end)
 		i = end
+	}
+	return out
+}
+
+// appendCurlCommandPasswords adds the user arguments of one curl command.
+func appendCurlCommandPasswords(out []Finding, data []byte, start, end int) []Finding {
+	for at := start; at < end; at++ {
+		argument, ok := curlUserArgument(data, at, end)
+		if !ok {
+			continue
+		}
+		argEnd := shellWordEnd(data, argument, end)
+		if secretStart, secretEnd, found := userinfoSecret(data, argument, argEnd); found {
+			out = append(out, credentialFinding(secretStart, secretEnd))
+		}
+		at = argEnd
 	}
 	return out
 }
