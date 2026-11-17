@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-18
+
 The default scanner now recognizes about 70 more provider credential layouts and more assignment syntax, measured against the true-positive examples of the gitleaks v8.30.0 rules: it masks 5930 of 6368 generated lines (4349 before) and 321 of 539 bare secrets (105 before). The eight pinned public log datasets produce exactly the same findings as before.
 
 ### Added
