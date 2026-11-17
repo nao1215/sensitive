@@ -49,10 +49,7 @@ func (m *eventMetadata) byte(c byte) {
 	}
 
 	if c == '"' {
-		m.quoted = true
-		m.readingKey = m.depth == 1 && m.wantKey
-		m.token = nil
-		m.capture(c)
+		m.startString(c)
 		return
 	}
 	switch c {
@@ -62,29 +59,14 @@ func (m *eventMetadata) byte(c byte) {
 			m.wantKey = true
 		}
 	case '}', ']':
-		if m.depth == 1 {
-			m.value()
-		}
-		m.depth--
+		m.closeContainer()
 	case ':':
 		if m.depth == 1 {
-			m.wantKey = false
-			m.token = nil
-			switch m.key {
-			case "time", "ts", "timestamp", "level", "msg", messageField:
-			default:
-				m.count++
-			}
-			if m.key == messageField {
-				m.messageKey = messageField
-			}
+			m.endKey()
 		}
 	case ',':
 		if m.depth == 1 {
-			m.value()
-			m.wantKey = true
-			m.key = ""
-			m.token = nil
+			m.nextField()
 		}
 	case ' ', '\t', '\r', '\n':
 	default:
@@ -92,6 +74,47 @@ func (m *eventMetadata) byte(c byte) {
 			m.capture(c)
 		}
 	}
+}
+
+// startString opens a string token; at the top level it is the next key only
+// while a key is expected.
+func (m *eventMetadata) startString(c byte) {
+	m.quoted = true
+	m.readingKey = m.depth == 1 && m.wantKey
+	m.token = nil
+	m.capture(c)
+}
+
+// closeContainer leaves one nesting level; closing the top-level object also
+// finishes its last value.
+func (m *eventMetadata) closeContainer() {
+	if m.depth == 1 {
+		m.value()
+	}
+	m.depth--
+}
+
+// endKey starts a top-level value. Fixed time, level and message keys are not
+// counted as withheld attributes; a "message" key selects that diagnostic field.
+func (m *eventMetadata) endKey() {
+	m.wantKey = false
+	m.token = nil
+	switch m.key {
+	case "time", "ts", "timestamp", "level", "msg", messageField:
+	default:
+		m.count++
+	}
+	if m.key == messageField {
+		m.messageKey = messageField
+	}
+}
+
+// nextField finishes a top-level value at a comma and expects the next key.
+func (m *eventMetadata) nextField() {
+	m.value()
+	m.wantKey = true
+	m.key = ""
+	m.token = nil
 }
 
 func (m *eventMetadata) stringByte(c byte) {

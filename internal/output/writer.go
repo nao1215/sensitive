@@ -67,18 +67,7 @@ func (w *Writer) Write(data []byte) (int, error) {
 		if end >= 0 {
 			length = end + 1
 		}
-		part := data[:length]
-		if !w.oversized && length > maxEventBytes-len(w.pending) {
-			w.metadata.feed(w.pending)
-			w.oversized = true
-			w.pending = nil
-		}
-		if w.oversized {
-			w.metadata.feed(part)
-		}
-		if !w.oversized {
-			w.pending = append(w.pending, part...)
-		}
+		w.retain(data[:length])
 		data = data[length:]
 		consumed += length
 		if end < 0 {
@@ -90,6 +79,22 @@ func (w *Writer) Write(data []byte) (int, error) {
 		}
 	}
 	return consumed, nil
+}
+
+// retain buffers part of the current record. A record that would exceed the
+// event limit switches to metadata observation and keeps no further bytes.
+func (w *Writer) retain(part []byte) {
+	if !w.oversized && len(part) > maxEventBytes-len(w.pending) {
+		w.metadata.feed(w.pending)
+		w.oversized = true
+		w.pending = nil
+	}
+	if w.oversized {
+		w.metadata.feed(part)
+	}
+	if !w.oversized {
+		w.pending = append(w.pending, part...)
+	}
 }
 
 func (w *Writer) event() []byte {
