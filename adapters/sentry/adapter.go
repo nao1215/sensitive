@@ -27,14 +27,7 @@ func NewBeforeSend(scanner *embargo.Scanner) func(*sentry.Event, *sentry.EventHi
 		if event == nil {
 			return nil
 		}
-		ctx := context.Background()
-		if hint != nil {
-			if hint.Context != nil {
-				ctx = hint.Context
-			} else if hint.Request != nil {
-				ctx = hint.Request.Context()
-			}
-		}
+		ctx := hintContext(hint)
 		var cause error
 		complete := false
 		defer func() {
@@ -67,20 +60,41 @@ func NewBeforeSend(scanner *embargo.Scanner) func(*sentry.Event, *sentry.EventHi
 		if err := decoder.Decode(&result); err != nil {
 			return nil
 		}
-		if len(result.Sampling) != 0 {
-			// A fresh scope restores only the copied sampling context, with no event processors.
-			var scope sentry.Scope
-			scope.SetPropagationContext(sentry.PropagationContext{DynamicSamplingContext: sentry.DynamicSamplingContext{Entries: result.Sampling, Frozen: true}})
-			contexts := result.Event.Contexts
-			result.Event.Contexts = nil
-			scope.ApplyToEvent(&result.Event, nil, nil)
-			result.Event.Contexts = contexts
-		}
+		restoreSampling(&result.Event, result.Sampling)
 		if ctx.Err() != nil {
 			return nil
 		}
 		complete = true
 		return &result.Event
+	}
+}
+
+// hintContext selects the hint's explicit context, then its request context,
+// and otherwise a background context.
+func hintContext(hint *sentry.EventHint) context.Context {
+	switch {
+	case hint == nil:
+		return context.Background()
+	case hint.Context != nil:
+		return hint.Context
+	case hint.Request != nil:
+		return hint.Request.Context()
+	default:
+		return context.Background()
+	}
+}
+
+// restoreSampling reattaches masked dynamic sampling entries to event while
+// keeping the event's masked contexts out of the scope application.
+func restoreSampling(event *sentry.Event, sampling map[string]string) {
+	if len(sampling) != 0 {
+		// A fresh scope restores only the copied sampling context, with no event processors.
+		var scope sentry.Scope
+		scope.SetPropagationContext(sentry.PropagationContext{DynamicSamplingContext: sentry.DynamicSamplingContext{Entries: sampling, Frozen: true}})
+		contexts := event.Contexts
+		event.Contexts = nil
+		scope.ApplyToEvent(event, nil, nil)
+		event.Contexts = contexts
 	}
 }
 

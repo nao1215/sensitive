@@ -50,22 +50,8 @@ func maskAttributes(ctx context.Context, scanner *embargo.Scanner, attrs []attri
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
-		input, err := attributeInput(ctx, kv.Value, 0)
+		fields, err := maskedAttributeFields(ctx, scanner, kv)
 		if err != nil {
-			return nil, err
-		}
-		raw, err := json.Marshal(map[string]any{string(kv.Key): input})
-		if err != nil {
-			return nil, err
-		}
-		masked, err := scanner.MaskJSONContext(ctx, raw)
-		if err != nil {
-			return nil, err
-		}
-		decoder := json.NewDecoder(bytes.NewReader(masked))
-		decoder.UseNumber()
-		var fields map[string]any
-		if err := decoder.Decode(&fields); err != nil {
 			return nil, err
 		}
 		for key, value := range fields {
@@ -77,6 +63,30 @@ func maskAttributes(ctx context.Context, scanner *embargo.Scanner, attrs []attri
 		}
 	}
 	return result, nil
+}
+
+// maskedAttributeFields masks one attribute as a single-field JSON object, so
+// key and value share key context, and decodes it keeping exact numbers.
+func maskedAttributeFields(ctx context.Context, scanner *embargo.Scanner, kv attribute.KeyValue) (map[string]any, error) {
+	input, err := attributeInput(ctx, kv.Value, 0)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := json.Marshal(map[string]any{string(kv.Key): input})
+	if err != nil {
+		return nil, err
+	}
+	masked, err := scanner.MaskJSONContext(ctx, raw)
+	if err != nil {
+		return nil, err
+	}
+	decoder := json.NewDecoder(bytes.NewReader(masked))
+	decoder.UseNumber()
+	var fields map[string]any
+	if err := decoder.Decode(&fields); err != nil {
+		return nil, err
+	}
+	return fields, nil
 }
 
 func attributeValue(ctx context.Context, scanner *embargo.Scanner, value any, original attribute.Value) (attribute.Value, error) {
@@ -166,32 +176,43 @@ func attributeSlice(ctx context.Context, scanner *embargo.Scanner, values []any,
 	if stringsOnly {
 		return attribute.StringSliceValue(texts), nil
 	}
-	// Rebuild typed slices only from sanitized values; colliding keys can select another template.
-	if original.Type() == attribute.INT64SLICE && allType(result, attribute.INT64) {
+	return typedSlice(original.Type(), result), nil
+}
+
+// typedSlice rebuilds the original typed slice only from sanitized values;
+// colliding keys can select another template, which falls back to a generic slice.
+func typedSlice(kind attribute.Type, result []attribute.Value) attribute.Value {
+	if kind == attribute.INT64SLICE && allType(result, attribute.INT64) {
 		numbers := make([]int64, len(result))
 		for i, item := range result {
 			numbers[i] = item.AsInt64()
 		}
-		return attribute.Int64SliceValue(numbers), nil
+		return attribute.Int64SliceValue(numbers)
 	}
-	if original.Type() == attribute.BOOLSLICE && allType(result, attribute.BOOL) {
+	if kind == attribute.BOOLSLICE && allType(result, attribute.BOOL) {
 		flags := make([]bool, len(result))
 		for i, item := range result {
 			flags[i] = item.AsBool()
 		}
-		return attribute.BoolSliceValue(flags), nil
+		return attribute.BoolSliceValue(flags)
 	}
-	if original.Type() == attribute.FLOAT64SLICE && allNumbers(result) {
-		numbers := make([]float64, len(result))
-		for i, item := range result {
-			numbers[i] = item.AsFloat64()
-			if item.Type() == attribute.INT64 {
-				numbers[i] = float64(item.AsInt64())
-			}
+	if kind == attribute.FLOAT64SLICE && allNumbers(result) {
+		return attribute.Float64SliceValue(float64Values(result))
+	}
+	return attribute.SliceValue(result...)
+}
+
+// float64Values widens integer items so that a float slice keeps whole
+// numbers that JSON decoding returned as integers.
+func float64Values(result []attribute.Value) []float64 {
+	numbers := make([]float64, len(result))
+	for i, item := range result {
+		numbers[i] = item.AsFloat64()
+		if item.Type() == attribute.INT64 {
+			numbers[i] = float64(item.AsInt64())
 		}
-		return attribute.Float64SliceValue(numbers), nil
 	}
-	return attribute.SliceValue(result...), nil
+	return numbers
 }
 
 func allType(values []attribute.Value, kind attribute.Type) bool {
