@@ -21,35 +21,42 @@ func (r *Recorder) ExpectJSON(name string, path []string, fields map[string]stri
 		if count <= 0 || len(want) == 0 {
 			return false
 		}
-		decoder := json.NewDecoder(bytes.NewReader(data))
-		decoder.UseNumber()
-		matches := 0
-		for {
-			before := decoder.InputOffset()
-			value, err := jsonValue(decoder, 0)
-			if errors.Is(err, io.EOF) {
-				if len(bytes.TrimSpace(data[before:])) != 0 {
-					return false
-				}
-				break
-			}
-			if err != nil {
-				return false
-			}
-			for _, part := range copiedPath {
-				object, ok := value.(map[string]any)
-				if !ok {
-					value = nil
-					break
-				}
-				value = object[part]
-			}
-			if object, ok := value.(map[string]any); ok && hasFields(object, want) {
-				matches++
-			}
-		}
-		return matches == count
+		matches, valid := jsonMatches(data, copiedPath, want)
+		return valid && matches == count
 	})
+}
+
+// jsonMatches counts the JSON or NDJSON documents whose object at path has
+// every wanted field. Any invalid document makes the whole input invalid.
+func jsonMatches(data []byte, path []string, want map[string]string) (matches int, valid bool) {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	for {
+		before := decoder.InputOffset()
+		value, err := jsonValue(decoder, 0)
+		if errors.Is(err, io.EOF) {
+			return matches, len(bytes.TrimSpace(data[before:])) == 0
+		}
+		if err != nil {
+			return 0, false
+		}
+		if object, ok := jsonAtPath(value, path).(map[string]any); ok && hasFields(object, want) {
+			matches++
+		}
+	}
+}
+
+// jsonAtPath follows object keys from value; a non-object along the way
+// yields nil, which no field expectation can match.
+func jsonAtPath(value any, path []string) any {
+	for _, part := range path {
+		object, ok := value.(map[string]any)
+		if !ok {
+			return nil
+		}
+		value = object[part]
+	}
+	return value
 }
 
 func hasFields(object map[string]any, want map[string]string) bool {
@@ -81,42 +88,54 @@ func jsonValue(decoder *json.Decoder, depth int) (any, error) {
 	}
 	switch delimiter {
 	case '{':
-		object := make(map[string]any)
-		for decoder.More() {
-			token, err := decoder.Token()
-			if err != nil {
-				return nil, err
-			}
-			key, ok := token.(string)
-			if !ok {
-				return nil, jsonError{}
-			}
-			if _, exists := object[key]; exists {
-				return nil, jsonError{}
-			}
-			child, err := jsonValue(decoder, depth+1)
-			if err != nil {
-				return nil, err
-			}
-			object[key] = child
-		}
-		if _, err := decoder.Token(); err != nil {
-			return nil, err
-		}
-		return object, nil
+		return jsonObject(decoder, depth)
 	case '[':
-		for decoder.More() {
-			if _, err := jsonValue(decoder, depth+1); err != nil {
-				return nil, err
-			}
-		}
-		if _, err := decoder.Token(); err != nil {
-			return nil, err
-		}
-
-		//nolint:nilnil // A validated array is consumed but cannot satisfy object-field expectations.
-		return nil, nil
+		return jsonArray(decoder, depth)
 	default:
 		return nil, jsonError{}
 	}
+}
+
+// jsonObject decodes object members after the opening brace, rejecting
+// duplicate keys so that a later value cannot shadow an expected field.
+func jsonObject(decoder *json.Decoder, depth int) (any, error) {
+	object := make(map[string]any)
+	for decoder.More() {
+		token, err := decoder.Token()
+		if err != nil {
+			return nil, err
+		}
+		key, ok := token.(string)
+		if !ok {
+			return nil, jsonError{}
+		}
+		if _, exists := object[key]; exists {
+			return nil, jsonError{}
+		}
+		child, err := jsonValue(decoder, depth+1)
+		if err != nil {
+			return nil, err
+		}
+		object[key] = child
+	}
+	if _, err := decoder.Token(); err != nil {
+		return nil, err
+	}
+	return object, nil
+}
+
+// jsonArray validates array elements after the opening bracket without
+// retaining them.
+func jsonArray(decoder *json.Decoder, depth int) (any, error) {
+	for decoder.More() {
+		if _, err := jsonValue(decoder, depth+1); err != nil {
+			return nil, err
+		}
+	}
+	if _, err := decoder.Token(); err != nil {
+		return nil, err
+	}
+
+	//nolint:nilnil // A validated array is consumed but cannot satisfy object-field expectations.
+	return nil, nil
 }

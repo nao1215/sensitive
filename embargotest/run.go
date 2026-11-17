@@ -26,7 +26,7 @@ func (r *Recorder) Run(ctx context.Context, helper string, wantExit int) error {
 }
 
 func (r *Recorder) run(ctx context.Context, executable, helper string, wantExit int) error {
-	if ctx == nil || !validHelper(helper) || wantExit < 0 || wantExit > 255 || os.Getenv("EMBARGO_TEST_CHILD") != "" {
+	if !validChildRequest(ctx, helper, wantExit) {
 		return r.runFailure("embargotest: invalid child request")
 	}
 	r.mu.Lock()
@@ -101,6 +101,12 @@ func (c *childOutput) ReadFrom(src io.Reader) (int64, error) {
 			return total, err
 		}
 	}
+}
+
+// validChildRequest rejects a nil context, an unsafe helper name, an exit code
+// outside 0-255 and nested execution from inside a child helper.
+func validChildRequest(ctx context.Context, helper string, wantExit int) bool {
+	return ctx != nil && validHelper(helper) && wantExit >= 0 && wantExit <= 255 && os.Getenv("EMBARGO_TEST_CHILD") == ""
 }
 
 func validHelper(name string) bool {
