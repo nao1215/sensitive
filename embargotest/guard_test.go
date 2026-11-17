@@ -291,7 +291,12 @@ func TestGuardModelChild(t *testing.T) {
 			}
 		}
 		if state.Op == "timeout" {
-			select {}
+			// Far beyond the parent's 100 ms deadline, but bounded, so a child
+			// whose parent was killed (for example by a mutation timeout) exits.
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			<-ctx.Done()
+			cancel()
+			os.Exit(7)
 		}
 		if state.Op == "exitFailure" {
 			os.Exit(2)

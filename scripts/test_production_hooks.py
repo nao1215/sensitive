@@ -32,5 +32,7 @@ class HookPolicyTests(unittest.TestCase):
     def test_mutation_target_limits_workers_and_test_cpus(self):
         makefile=(ROOT/'Makefile').read_text(encoding='utf-8')
         command=re.search(r'^mutation:.*?\n\t([^\n]+)',makefile,re.M).group(1)
-        self.assertIn('--workers 2',command)
+        self.assertIn('--workers $(MUTATION_WORKERS)',command)
         self.assertIn('--test-cpu 2',command)
+        workers=re.search(r'^MUTATION_WORKERS \?= (.+)$',makefile,re.M).group(1)
+        self.assertIn('min(4, max(1, os.cpu_count()//2))',workers)
