@@ -35,6 +35,7 @@ func TestUSPhoneDetector_Scan(t *testing.T) {
 		{name: "IPv4 address", input: "203.0.113.7", wantLen: 0},
 		{name: "too short", input: "202-555-012", wantLen: 0},
 		{name: "no four-digit line", input: "202-555-012 345-678", wantLen: 0},
+		{name: "area code starting with 9", input: "phone 917-555-0123", wantRaw: "917-555-0123", wantLen: 1, wantMinCon: 0.9},
 		{name: "unclosed parenthesis", input: "(212 555-0100", wantLen: 0},
 		{name: "parenthesized with dot", input: "(212) 555.0100", wantLen: 0},
 		{name: "sentence end", input: "Call 202-555-0123.", wantRaw: usPhoneFixture, wantLen: 1, wantMinCon: 0.9},
@@ -64,5 +65,14 @@ func TestUSPhoneScoresAndName(t *testing.T) {
 	}
 	if got := d.Scan([]byte("tel 1-202-555-0123")); len(got) != 1 || got[0].Start != len("tel ") {
 		t.Errorf("country code start: %+v", got)
+	}
+}
+
+func TestHasDigitRunNeedsConsecutiveDigits(t *testing.T) {
+	t.Parallel()
+	for input, want := range map[string]bool{"1234": true, "a12b34": false, "12 3456": true, "123": false} {
+		if got := hasDigitRun([]byte(input), 4); got != want {
+			t.Errorf("hasDigitRun(%q, 4) = %v, want %v", input, got, want)
+		}
 	}
 }
