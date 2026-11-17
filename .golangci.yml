@@ -219,8 +219,10 @@ linters:
       require-explanation: true
       require-specific: true
       allow-unused: false
+    # Lowest threshold with no duplicate in any module when it was set; below it
+    # the matches are explicit table-test cases.
     dupl:
-      threshold: 150
+      threshold: 100
     # Production limits; test functions keep the earlier 30 and 25 through the
     # exclusion rules below, since table cases read best kept together.
     gocognit:

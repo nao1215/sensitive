@@ -141,3 +141,37 @@ func assertDetectorScan(t *testing.T, d Detector, input string, count int, match
 		t.Errorf("Confidence = %f, want >= %f", findings[0].Confidence, confidence)
 	}
 }
+
+// assertScanCase checks a table case: the finding count, the first match when
+// matched is set, and that every finding reaches the minimum confidence.
+func assertScanCase(t *testing.T, d Detector, input string, count int, matched string, minimum float64) {
+	t.Helper()
+	findings := d.Scan([]byte(input))
+	if len(findings) != count {
+		t.Fatalf("got %d findings, want %d; findings=%+v", len(findings), count, findings)
+	}
+	if count == 0 {
+		return
+	}
+	if matched != "" && input[findings[0].Start:findings[0].End] != matched {
+		t.Errorf("matched text = %q, want %q", input[findings[0].Start:findings[0].End], matched)
+	}
+	for _, f := range findings {
+		if f.Confidence < minimum {
+			t.Errorf("Confidence = %f, want >= %f", f.Confidence, minimum)
+		}
+	}
+}
+
+// assertScanMatch checks a table case whose first finding, when any, must
+// cover exactly matched, including an empty matched text.
+func assertScanMatch(t *testing.T, d Detector, input string, count int, matched string) {
+	t.Helper()
+	findings := d.Scan([]byte(input))
+	if len(findings) != count {
+		t.Fatalf("got %d findings, want %d: %+v", len(findings), count, findings)
+	}
+	if count > 0 && input[findings[0].Start:findings[0].End] != matched {
+		t.Errorf("matched text = %q, want %q", input[findings[0].Start:findings[0].End], matched)
+	}
+}

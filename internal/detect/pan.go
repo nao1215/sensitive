@@ -129,7 +129,7 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		start := i
 		// Card digits fit the array; a longer run grows past it and is rejected by length.
 		var stack [panMaxDigits + 1]byte
-		digits, end := extractPANDigits(data, start, stack[:0])
+		digits, end := extractSeparatedDigits(data, start, stack[:0])
 
 		// Check digit count: valid PANs are 13-19 digits.
 		digitLen := len(digits)
@@ -145,9 +145,10 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	return findings
 }
 
-// extractPANDigits appends the digits of the run at start to digits, allowing
-// '-' and ' ' separators, and returns the end trimmed to the last digit.
-func extractPANDigits(data []byte, start int, digits []byte) (run []byte, end int) {
+// extractSeparatedDigits appends the digits of the run at start to digits,
+// allowing '-' and ' ' separators, and returns the end trimmed to the last
+// digit. Card numbers and My Number share this run grammar.
+func extractSeparatedDigits(data []byte, start int, digits []byte) (run []byte, end int) {
 	j := start
 	for j < len(data) && (ascii.IsDigit(data[j]) || data[j] == '-' || data[j] == ' ') {
 		if ascii.IsDigit(data[j]) {

@@ -70,13 +70,7 @@ func TestGitHubTokenDetector_Scan(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			findings := d.Scan([]byte(tt.input))
-			if len(findings) != tt.wantLen {
-				t.Fatalf("got %d findings, want %d: %+v", len(findings), tt.wantLen, findings)
-			}
-			if tt.wantLen == 1 && tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
-				t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
-			}
+			assertScanMatch(t, d, tt.input, tt.wantLen, tt.wantRaw)
 		})
 	}
 }

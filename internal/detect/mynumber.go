@@ -54,7 +54,7 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 
 		// Extract digits, allowing '-' and ' ' as separators.
 		start := i
-		digits, end := extractMyNumberDigits(data, start)
+		digits, end := extractSeparatedDigits(data, start, nil)
 
 		// Must be exactly 12 digits, not followed by more digits.
 		if !myNumberWhole(data, digits, end) {
@@ -94,24 +94,6 @@ func myNumberWhole(data, digits []byte, end int) bool {
 		return false
 	}
 	return end >= len(data) || !isIdentifierByte(data[end])
-}
-
-// extractMyNumberDigits extracts digits from data[start:], allowing '-' and ' '
-// as separators. Returns the extracted digits and the end position trimmed to
-// the last digit (trailing separators are excluded).
-func extractMyNumberDigits(data []byte, start int) (digits []byte, end int) {
-	j := start
-	for j < len(data) && (ascii.IsDigit(data[j]) || data[j] == '-' || data[j] == ' ') {
-		if ascii.IsDigit(data[j]) {
-			digits = append(digits, data[j])
-		}
-		j++
-	}
-	end = j
-	for end > start && !ascii.IsDigit(data[end-1]) {
-		end--
-	}
-	return digits, end
 }
 
 // isValidMyNumber validates a 12-digit My Number using the check digit algorithm.

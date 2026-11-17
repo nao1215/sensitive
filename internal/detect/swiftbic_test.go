@@ -148,21 +148,7 @@ func TestSWIFTBICDetector_Scan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			findings := d.Scan([]byte(tt.input))
-			if len(findings) != tt.wantLen {
-				t.Fatalf("got %d findings, want %d; findings=%+v", len(findings), tt.wantLen, findings)
-			}
-			if tt.wantLen == 0 {
-				return
-			}
-			if tt.wantRaw != "" && tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
-				t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
-			}
-			for _, f := range findings {
-				if f.Confidence < tt.wantMinCon {
-					t.Errorf("Confidence = %f, want >= %f", f.Confidence, tt.wantMinCon)
-				}
-			}
+			assertScanCase(t, d, tt.input, tt.wantLen, tt.wantRaw, tt.wantMinCon)
 		})
 	}
 }
@@ -279,66 +265,22 @@ func TestSWIFTLanguageWordShapeProperty(t *testing.T) {
 
 func TestSWIFTRegisterProperty(t *testing.T) {
 	t.Parallel()
-	d := NewSWIFTBIC()
-	for n := range 100 {
-		code := fmt.Sprintf("fefbAE%02x", n)
-		if got := d.Scan([]byte("syscall=42 a0=" + code)); len(got) != 0 {
-			t.Errorf("context accepted: %s: %+v", code, got)
-		}
-		for _, positive := range []string{"BIC: " + code, swiftWireFixture, "swift " + strings.ToLower(code)} {
-			if got := d.Scan([]byte(positive)); len(got) != 1 {
-				t.Errorf("positive lost: %s: %+v", positive, got)
-			}
-		}
-	}
+	assertSWIFTContextProperty(t, func(code string) string { return "syscall=42 a0=" + code })
 }
 
 func TestSWIFTUserSlotProperty(t *testing.T) {
 	t.Parallel()
-	d := NewSWIFTBIC()
-	for n := range 100 {
-		code := fmt.Sprintf("fefbAE%02x", n)
-		if got := d.Scan([]byte("Invalid user " + code + " from host")); len(got) != 0 {
-			t.Errorf("context accepted: %s: %+v", code, got)
-		}
-		for _, positive := range []string{"BIC: " + code, swiftWireFixture, "swift " + strings.ToLower(code)} {
-			if got := d.Scan([]byte(positive)); len(got) != 1 {
-				t.Errorf("positive lost: %s: %+v", positive, got)
-			}
-		}
-	}
+	assertSWIFTContextProperty(t, func(code string) string { return "Invalid user " + code + " from host" })
 }
 
 func TestSWIFTIdentifierProperty(t *testing.T) {
 	t.Parallel()
-	d := NewSWIFTBIC()
-	for n := range 100 {
-		code := fmt.Sprintf("fefbAE%02x", n)
-		if got := d.Scan([]byte("input_" + code + "_request swift")); len(got) != 0 {
-			t.Errorf("context accepted: %s: %+v", code, got)
-		}
-		for _, positive := range []string{"BIC: " + code, swiftWireFixture, "swift " + strings.ToLower(code)} {
-			if got := d.Scan([]byte(positive)); len(got) != 1 {
-				t.Errorf("positive lost: %s: %+v", positive, got)
-			}
-		}
-	}
+	assertSWIFTContextProperty(t, func(code string) string { return "input_" + code + "_request swift" })
 }
 
 func TestSWIFTHardwareWireProperty(t *testing.T) {
 	t.Parallel()
-	d := NewSWIFTBIC()
-	for n := range 100 {
-		code := fmt.Sprintf("fefbAE%02x", n)
-		if got := d.Scan([]byte("warning for node wire, " + code)); len(got) != 0 {
-			t.Errorf("context accepted: %s: %+v", code, got)
-		}
-		for _, positive := range []string{"BIC: " + code, swiftWireFixture, "swift " + strings.ToLower(code)} {
-			if got := d.Scan([]byte(positive)); len(got) != 1 {
-				t.Errorf("positive lost: %s: %+v", positive, got)
-			}
-		}
-	}
+	assertSWIFTContextProperty(t, func(code string) string { return "warning for node wire, " + code })
 }
 
 func TestSWIFTKeySpellingProperty(t *testing.T) {
@@ -358,6 +300,24 @@ func TestSWIFTKeySpellingProperty(t *testing.T) {
 				if input[got.Start:got.End] == code {
 					t.Errorf("build context %q: %+v", input, got)
 				}
+			}
+		}
+	}
+}
+
+// assertSWIFTContextProperty checks 100 BIC-shaped codes: each is rejected in
+// the excluded context built by excluded and still found in positive contexts.
+func assertSWIFTContextProperty(t *testing.T, excluded func(code string) string) {
+	t.Helper()
+	d := NewSWIFTBIC()
+	for n := range 100 {
+		code := fmt.Sprintf("fefbAE%02x", n)
+		if got := d.Scan([]byte(excluded(code))); len(got) != 0 {
+			t.Errorf("context accepted: %s: %+v", code, got)
+		}
+		for _, positive := range []string{"BIC: " + code, swiftWireFixture, "swift " + strings.ToLower(code)} {
+			if got := d.Scan([]byte(positive)); len(got) != 1 {
+				t.Errorf("positive lost: %s: %+v", positive, got)
 			}
 		}
 	}
