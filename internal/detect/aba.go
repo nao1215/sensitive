@@ -33,8 +33,7 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 
 	for i := 0; i < len(data); i++ {
 		// Escape bytes cannot become part of a numeric candidate.
-		//nolint:mnd // A percent escape occupies three bytes.
-		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(orig, originalPosition(posMap, i+3)) {
+		if data[i] == '%' && normalizedEscapeSeparator(orig, posMap, len(data), i) {
 			i += 2
 			continue
 		}
@@ -43,7 +42,7 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		}
 
 		// Word boundary: preceding character must not be alphanumeric.
-		if i > 0 && ascii.IsAlphaNum(data[i-1]) && !encodedSeparatorBefore(orig, originalPosition(posMap, i)) {
+		if !abaWordStart(orig, data, posMap, i) {
 			continue
 		}
 
@@ -77,6 +76,20 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	}
 
 	return findings
+}
+
+// normalizedEscapeSeparator reports whether the percent escape at i of a
+// normalized view of length n decodes to a documented separator, so its three
+// bytes are skipped as a unit. Callers test the '%' byte first.
+func normalizedEscapeSeparator(orig []byte, posMap []int, n, i int) bool {
+	//nolint:mnd // A percent escape occupies three bytes.
+	return i+3 <= n && encodedSeparatorBefore(orig, originalPosition(posMap, i+3))
+}
+
+// abaWordStart reports whether a digit at i begins a word: the preceding byte
+// is not alphanumeric unless an encoded separator precedes the original byte.
+func abaWordStart(orig, data []byte, posMap []int, i int) bool {
+	return i == 0 || !ascii.IsAlphaNum(data[i-1]) || encodedSeparatorBefore(orig, originalPosition(posMap, i))
 }
 
 // validateABAChecksum validates the ABA routing number checksum.
