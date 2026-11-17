@@ -27,6 +27,7 @@ type kindReport struct {
 	Samples    []location   `json:"samples"`
 	Count      int64        `json:"count"`
 }
+
 const (
 	auditName  = "embargo audit"
 	auditUsage = "Usage: embargo audit [--kinds email,pan] [--all] [--min-confidence 0] [--samples 3] [--compare] [--compare-kinds email] [--compare-all] [--compare-min-confidence 0] [file ...]\n\nReports per-kind finding counts and masked byte locations as JSON; input bytes are never echoed.\n"
