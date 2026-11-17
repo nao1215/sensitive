@@ -54,7 +54,7 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 
 		// Extract digits, allowing '-' and ' ' as separators.
 		start := i
-		digits, end := extractSeparatedDigits(data, start, nil)
+		digits, end := extractSeparatedDigits(data, start, make([]byte, 0, phoneDigitCapacity))
 
 		// Must be exactly 12 digits, not followed by more digits.
 		if !myNumberWhole(data, digits, end) {

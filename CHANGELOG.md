@@ -14,6 +14,12 @@ The public-log evaluation adds seven operations logs that LogHub lacks: Nginx an
 - `KindIPAddr` skips IPv4 addresses whose first octet is zero. That block is never a host address; the 0.0.0.0 listener was already skipped, and other members appeared as version strings such as `Debian APT-HTTP/1.3 (0.9.7.9)`.
 - `KindCredential` leaves a canonical UUID under `clientToken` or `idempotencyToken` visible. CloudTrail records these EC2 request deduplication keys, which authenticate nothing; other token keys holding a UUID are still masked.
 - `KindHighEntropy` (opt-in) skips lowercase Kubernetes generated names such as `my-vault-agent-injector-9d457c8b-5pqfx`, whose five-character suffix uses the Kubernetes random alphabet.
+- `KindUSPhone` treats an opening parenthesis as its own boundary. `x(212) 555-0100` and a number glued to the previous one, as in `202-555-0108(212) 555-0118`, were left visible because a letter or digit came right before the parenthesis; the second number then appeared only after a second masking pass. A parenthesis after `/` or `+` still does not start a number.
+
+### Performance
+
+- The zap and zerolog writers mask a whole event outside their lock and only serialize the sink write, so goroutines that log at the same time mask in parallel. Before, every event went through one lock: on 16 CPUs a zap logger shared by 16 goroutines took as long per event as on one CPU. doc/benchmarks.md has a parallel table for the scanner, the slog handler and the zap writer. Output is byte-identical.
+- The IP address, MyNumber and Japanese phone detectors no longer allocate on candidates that cannot match: a digit run with fewer than three dots or a hex run with fewer than two colons skips the address parse, and digit runs go into a stack buffer. A default-scanner pass over a short JSON log line went from 30 to 3 allocations, and a clean line from 21 to 0.
 
 ### Added
 

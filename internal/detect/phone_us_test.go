@@ -39,6 +39,9 @@ func TestUSPhoneDetector_Scan(t *testing.T) {
 		{name: "unclosed parenthesis", input: "(212 555-0100", wantLen: 0},
 		{name: "parenthesized with dot", input: "(212) 555.0100", wantLen: 0},
 		{name: "sentence end", input: "Call 202-555-0123.", wantRaw: usPhoneFixture, wantLen: 1, wantMinCon: 0.9},
+		{name: "parenthesis is its own boundary after a digit", input: "202-555-0108(212) 555-0118", wantLen: 2},
+		{name: "parenthesis is its own boundary after a letter", input: "x(212) 555-0118", wantRaw: "(212) 555-0118", wantLen: 1, wantMinCon: 0.7},
+		{name: "parenthesis after a plus has no country code", input: "+(212) 555-0118", wantLen: 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

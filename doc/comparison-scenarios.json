@@ -1,7 +1,7 @@
 {
   "versions": {
     "embargo": "working source",
-    "ferret-scan": "v1.10.0",
+    "ferret-scan": "v2.4.3",
     "go-mask": "v0.6.2",
     "go-masker": "v0.6.1",
     "godlp": "v1.2.15",

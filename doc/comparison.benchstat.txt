@@ -4,12 +4,12 @@ pkg: github.com/nao1215/embargo/tests
 cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
                    │  masq.txt   │             embargo.txt             │
                    │   sec/op    │   sec/op     vs base                │
-Comparison/flat      3.088µ ± 0%   1.356µ ± 1%  -56.08% (p=0.000 n=10)
-Comparison/nested    5.428µ ± 0%   2.270µ ± 2%  -58.19% (p=0.000 n=10)
-Comparison/map       5.432µ ± 2%   3.161µ ± 0%  -41.80% (p=0.000 n=10)
-Comparison/clean     2.840µ ± 1%   1.039µ ± 2%  -63.42% (p=0.000 n=10)
-Comparison/large50   59.19µ ± 1%   13.91µ ± 0%  -76.51% (p=0.000 n=10)
-geomean              6.870µ        2.689µ       -60.86%
+Comparison/flat      3.095µ ± 0%   1.345µ ± 3%  -56.54% (p=0.000 n=10)
+Comparison/nested    5.065µ ± 1%   2.282µ ± 2%  -54.94% (p=0.000 n=10)
+Comparison/map       5.440µ ± 0%   3.099µ ± 0%  -43.03% (p=0.000 n=10)
+Comparison/clean     2.808µ ± 2%   1.024µ ± 1%  -63.53% (p=0.000 n=10)
+Comparison/large50   59.17µ ± 2%   14.05µ ± 1%  -76.25% (p=0.000 n=10)
+geomean              6.765µ        2.675µ       -60.46%
 
                    │   masq.txt    │             embargo.txt              │
                    │     B/op      │     B/op      vs base                │
@@ -17,7 +17,7 @@ Comparison/flat        672.00 ± 0%     96.00 ± 0%  -85.71% (p=0.000 n=10)
 Comparison/nested      1784.0 ± 0%     354.0 ± 0%  -80.16% (p=0.000 n=10)
 Comparison/map         1744.0 ± 0%     674.0 ± 0%  -61.35% (p=0.000 n=10)
 Comparison/clean       792.00 ± 0%     32.00 ± 0%  -95.96% (p=0.000 n=10)
-Comparison/large50   12.409Ki ± 0%   6.095Ki ± 0%  -50.89% (p=0.000 n=10)
+Comparison/large50   12.409Ki ± 0%   6.096Ki ± 0%  -50.88% (p=0.000 n=10)
 geomean               1.796Ki          340.5       -81.49%
 
                    │   masq.txt   │            embargo.txt             │

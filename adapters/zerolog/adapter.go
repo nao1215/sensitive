@@ -8,7 +8,8 @@ import (
 )
 
 // NewWriter masks complete JSON events after zerolog encodes their fields.
-// Both dependencies are required; nil dependencies panic.
+// Both dependencies are required; nil dependencies panic. Writes to next are
+// serialized, and whole events from concurrent goroutines are masked in parallel.
 // Close rejects incomplete events and seals the adapter without closing next.
 // Masking failures emit a diagnostic retaining recognized level metadata,
 // a fixed reason and withheld_attributes, never original fields. Input timestamps

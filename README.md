@@ -150,7 +150,7 @@ fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
 ```
 
 <!-- speed-summary:start -->
-On the same five JSON slog events, go-masker takes 1.01 to 1.33 times and pii-shield 2.2 to 4.8 times embargo's time per event. [Time per event](doc/comparison.md#time-and-allocations)
+On the same five JSON slog events, go-masker takes 1.04 to 1.33 times the time of embargo given the same email and card rules. With its default scanner, embargo takes 0.59 to 0.99 times the time of pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
 <!-- speed-summary:end -->
 
 ## Find and mask sensitive text
@@ -372,7 +372,7 @@ Coverage 99.4% · mutation score 89.18% · 13 fuzz targets, 2208636 executions.
 <!-- benchmarks:start -->
 ![Time per log event](doc/images/log-event-time.svg)
 
-The same event through slog alone, embargo, masq and go-masker. [Configurations, medians and allocations](doc/comparison.md) · [Full scanner benchmark plot](doc/benchmarks.md).
+The same event through slog alone, embargo with the email and card rules masq and go-masker are given, embargo's default scanner against pii-shield's default policy, masq and go-masker. [Configurations, medians and allocations](doc/comparison.md) · [Full scanner benchmark plot](doc/benchmarks.md).
 <!-- benchmarks:end -->
 
 <!-- narrowing-summary:start -->
@@ -408,7 +408,7 @@ pii-shield also runs as a Kubernetes sidecar outside the process, and ferret-sca
 The service probe below also checks a redirect that bypasses every logger. `embargotest.HTTP` catches that response leak:
 
 <!-- leak-scenarios:start -->
-| Service output | embargo slog | embargo zap | pii-shield v3.0.0 | ferret-scan v1.10.0 | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |
+| Service output | embargo slog | embargo zap | pii-shield v3.0.0 | ferret-scan v2.4.3 | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |
 |---|---|---|---|---|---|---|---|---|---|
 | Password under the key `password` | caught | caught | caught | caught | caught | caught | caught | caught | leaked |
 | Config struct holding a database DSN | caught | caught | caught | leaked | caught | leaked | leaked | caught | leaked |

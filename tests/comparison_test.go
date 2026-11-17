@@ -21,7 +21,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/awslabs/ferret-scan/pkg/redact"
+	"github.com/awslabs/ferret-scan/v2/pkg/redact"
 	dlp "github.com/bytedance/godlp"
 	"github.com/bytedance/godlp/dlpheader"
 	gomasker "github.com/ggwhite/go-masker/v3"
@@ -44,23 +44,26 @@ import (
 )
 
 const (
-	comparisonFlat           = "flat"
-	comparisonDLPName        = "godlp"
-	comparisonFormatterName  = "slog-formatter"
-	comparisonCopyName       = "go-mask"
-	comparisonNested         = "nested"
-	comparisonLarge          = "large50"
-	comparisonPasswordKey    = "password"
-	comparisonID             = "u123"
-	comparisonOpaque         = "opaque-value"
-	comparisonEmailKey       = "email"
-	comparisonClean          = "clean"
-	comparisonEmail          = "alice@example.com"
-	comparisonMaskerName     = "go-masker"
-	comparisonPIIShieldName  = "pii-shield"
-	comparisonFerretName     = "ferret-scan"
-	comparisonMasqName       = "masq"
-	comparisonEmbargoName    = "embargo"
+	comparisonFlat          = "flat"
+	comparisonDLPName       = "godlp"
+	comparisonFormatterName = "slog-formatter"
+	comparisonCopyName      = "go-mask"
+	comparisonNested        = "nested"
+	comparisonLarge         = "large50"
+	comparisonPasswordKey   = "password"
+	comparisonID            = "u123"
+	comparisonOpaque        = "opaque-value"
+	comparisonEmailKey      = "email"
+	comparisonClean         = "clean"
+	comparisonEmail         = "alice@example.com"
+	comparisonMaskerName    = "go-masker"
+	comparisonPIIShieldName = "pii-shield"
+	comparisonFerretName    = "ferret-scan"
+	comparisonMasqName      = "masq"
+	comparisonEmbargoName   = "embargo"
+	// comparisonEmbargoDefault is the default scanner, whose detection breadth
+	// matches pii-shield's and ferret-scan's default policies.
+	comparisonEmbargoDefault = "embargo-default"
 	comparisonMap            = "map"
 	comparisonPassword       = "opaque-password"
 	comparisonRecovery       = "opaque-recovery"
@@ -81,8 +84,15 @@ type comparisonUser struct {
 	Count    int
 }
 
+// comparisonSensitiveKeys are the key names every keyed library is given.
+func comparisonSensitiveKeys() []string {
+	return []string{comparisonPasswordKey, "passwd", "secret", scenarioTokenKey, "api_key", "authorization", "cookie", "set-cookie", "recovery"}
+}
+
+// comparisonScanner selects email and card, the content rules masq and
+// go-masker are given here.
 func comparisonScanner() *embargo.Scanner {
-	return embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN), embargo.WithSensitiveKeys(comparisonPasswordKey, "passwd", "secret", "token", "api_key", "authorization", "cookie", "set-cookie", "recovery"))
+	return embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN), embargo.WithSensitiveKeys(comparisonSensitiveKeys()...))
 }
 
 func comparisonMasq() func([]string, slog.Attr) slog.Attr {
@@ -114,8 +124,8 @@ func (w piiShieldWriter) Write(line []byte) (int, error) {
 
 // comparisonFerret is ferret-scan's in-process engine with every default
 // check and its Simple strategy, which replaces each match with a marker.
-func comparisonFerret() *redact.Engine {
-	engine, err := redact.NewEngine(redact.EngineOptions{Strategy: redact.Simple})
+func comparisonFerret(checks ...string) *redact.Engine {
+	engine, err := redact.NewEngine(redact.EngineOptions{Checks: checks, Strategy: redact.Simple})
 	if err != nil {
 		panic(err)
 	}
@@ -155,10 +165,25 @@ func comparisonHandler(mode string, out io.Writer) slog.Handler {
 		options.ReplaceAttr = comparisonMasq()
 	}
 	h := slog.NewJSONHandler(out, options)
-	if mode == comparisonEmbargoName {
+	switch mode {
+	case comparisonEmbargoName:
 		return embargo.NewSlogHandler(h, comparisonScanner())
+	case comparisonEmbargoDefault:
+		return embargo.NewSlogHandler(h, embargo.NewScanner(embargo.WithSensitiveKeys(comparisonSensitiveKeys()...)))
 	}
 	return h
+}
+
+// speedHandler gives each library detection of similar breadth to the embargo
+// configuration it is timed against. masq and go-masker have email and card
+// rules and ferret-scan is narrowed to its EMAIL and CREDIT_CARD checks, all
+// against embargo with KindEmail and KindPAN. pii-shield cannot turn its
+// built-in detectors off, so it is timed against embargo's default scanner.
+func speedHandler(mode string, out io.Writer) slog.Handler {
+	if mode == comparisonFerretName {
+		return slog.NewJSONHandler(ferretWriter{engine: comparisonFerret("EMAIL", "CREDIT_CARD"), out: out}, &slog.HandlerOptions{})
+	}
+	return comparisonHandler(mode, out)
 }
 
 type comparisonCase struct {
@@ -251,9 +276,9 @@ func BenchmarkComparison(b *testing.B) {
 	for _, name := range []string{comparisonFlat, comparisonNested, comparisonMap, comparisonClean, comparisonLarge} {
 		attrs := events[name]
 		b.Run(name, func(b *testing.B) {
-			for _, mode := range []string{scenarioPlain, comparisonMasqName, comparisonEmbargoName, comparisonMaskerName, comparisonPIIShieldName, comparisonFerretName} {
+			for _, mode := range []string{scenarioPlain, comparisonMasqName, comparisonEmbargoName, comparisonEmbargoDefault, comparisonMaskerName, comparisonPIIShieldName, comparisonFerretName} {
 				b.Run(mode, func(b *testing.B) {
-					logger := slog.New(comparisonHandler(mode, io.Discard))
+					logger := slog.New(speedHandler(mode, io.Discard))
 					ctx := context.Background()
 					b.ReportAllocs()
 					b.ResetTimer()
@@ -626,7 +651,7 @@ func scenarioEmit(t *testing.T, mode string, out io.Writer) func(string, ...slog
 func TestLeakScenarios(t *testing.T) {
 	modes := []string{scenarioSlog, scenarioZap, comparisonPIIShieldName, comparisonFerretName, comparisonMasqName, comparisonFormatterName, comparisonCopyName, comparisonMaskerName, comparisonDLPName}
 	var table strings.Builder
-	writeComparisonTable(t, &table, "| Service output | embargo slog | embargo zap | pii-shield v3.0.0 | ferret-scan v1.10.0 | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |\n|---|---|---|---|---|---|---|---|---|---|\n")
+	writeComparisonTable(t, &table, "| Service output | embargo slog | embargo zap | pii-shield v3.0.0 | ferret-scan v2.4.3 | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |\n|---|---|---|---|---|---|---|---|---|---|\n")
 	rows := []struct{ path, label string }{
 		{"declared", "Password under the key `password`"},
 		{"config", "Config struct holding a database DSN"},
@@ -794,7 +819,7 @@ func catchHandler(t *testing.T, mode string, out io.Writer, engine dlpheader.Eng
 //nolint:paralleltest // godlp initializes package globals; use the same serial setup as its other probes.
 func TestComparisonScenarios(t *testing.T) {
 	engine := godlpEngine(t)
-	report := catchReport{Versions: map[string]string{"embargo": "working source", "masq": "v0.2.3", comparisonFormatterName: "v1.3.0", comparisonCopyName: "v0.6.2", comparisonDLPName: "v1.2.15", "go-masker": "v0.6.1", comparisonPIIShieldName: "v3.0.0", comparisonFerretName: "v1.10.0"}}
+	report := catchReport{Versions: map[string]string{"embargo": "working source", "masq": "v0.2.3", comparisonFormatterName: "v1.3.0", comparisonCopyName: "v0.6.2", comparisonDLPName: "v1.2.15", "go-masker": "v0.6.1", comparisonPIIShieldName: "v3.0.0", comparisonFerretName: "v2.4.3"}}
 	for _, scenario := range catchScenarios() {
 		row := catchRow{Name: scenario.name, Label: scenario.label, Positive: scenario.positive, Results: map[string]catchObservation{}}
 		for _, mode := range []string{comparisonEmbargoName, comparisonPIIShieldName, comparisonFerretName, comparisonMasqName, comparisonMaskerName, comparisonFormatterName, comparisonCopyName, comparisonDLPName} {

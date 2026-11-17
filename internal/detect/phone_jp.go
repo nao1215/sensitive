@@ -107,7 +107,7 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		}
 
 		start := i
-		digits, end := phoneDigits(data, start)
+		digits, end := phoneDigits(data, start, make([]byte, 0, phoneDigitCapacity))
 		if !jpPhoneWhole(data, digits, end) {
 			i = end
 			continue
@@ -210,7 +210,11 @@ func isValidLandlinePrefix(digits []byte) bool {
 }
 
 // phoneDigits retains separator grammar and stops the span at the final digit.
-func phoneDigits(data []byte, start int) (digits []byte, end int) {
+// phoneDigitCapacity sizes the digit buffer of a phone or MyNumber candidate,
+// so a run of typical length stays on the stack.
+const phoneDigitCapacity = 32
+
+func phoneDigits(data []byte, start int, digits []byte) (run []byte, end int) {
 	// Extract digit sequence with separators.
 	j := start
 	for j < len(data) && isPhoneSepChar(data[j]) {
