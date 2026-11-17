@@ -40,11 +40,11 @@ The generator rejects incomplete mutation/fuzz runs and records source-log hashe
 <!-- mutation-baseline:start -->
 | Package | Score floor | Mutation coverage floor | Killed | Lived | Timed out | Uncovered |
 |---|---:|---:|---:|---:|---:|---:|
-| . | 82.97% | 99.73% | 302 | 46 | 16 | 1 |
-| cmd/embargo | 91.67% | 100.00% | 33 | 3 | 0 | 0 |
+| . | 83.33% | 99.78% | 370 | 58 | 16 | 1 |
+| cmd/embargo | 96.92% | 100.00% | 63 | 1 | 1 | 0 |
 | embargotest | 90.98% | 98.79% | 222 | 19 | 3 | 3 |
 | internal/ascii | 100.00% | 100.00% | 58 | 0 | 0 | 0 |
-| internal/detect | 87.31% | 92.17% | 1769 | 221 | 36 | 172 |
+| internal/detect | 87.56% | 92.35% | 1872 | 233 | 33 | 177 |
 | internal/output | 82.35% | 100.00% | 56 | 10 | 2 | 0 |
 | internal/saferecord | 100.00% | 100.00% | 5 | 0 | 0 | 0 |
 <!-- mutation-baseline:end -->

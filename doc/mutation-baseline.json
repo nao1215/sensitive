@@ -1,15 +1,15 @@
 {
   "tool": "github.com/go-gremlins/gremlins/cmd/gremlins@v0.6.0",
-  "workers": 2,
+  "workers": 4,
   "gomaxprocs": 2,
   "timeout_coefficient": 10,
   "packages": {
     ".": {
-      "score": 82.97,
-      "coverage": 99.73,
+      "score": 83.33,
+      "coverage": 99.78,
       "counts": {
-        "KILLED": 302,
-        "LIVED": 46,
+        "KILLED": 370,
+        "LIVED": 58,
         "NOT COVERED": 1,
         "TIMED OUT": 16
       }
@@ -32,13 +32,13 @@
       }
     },
     "internal/detect": {
-      "score": 87.31,
-      "coverage": 92.17,
+      "score": 87.56,
+      "coverage": 92.35,
       "counts": {
-        "KILLED": 1769,
-        "LIVED": 221,
-        "NOT COVERED": 172,
-        "TIMED OUT": 36
+        "KILLED": 1872,
+        "LIVED": 233,
+        "NOT COVERED": 177,
+        "TIMED OUT": 33
       }
     },
     "internal/output": {
@@ -58,11 +58,12 @@
       }
     },
     "cmd/embargo": {
-      "score": 91.67,
+      "score": 96.92,
       "coverage": 100.0,
       "counts": {
-        "KILLED": 33,
-        "LIVED": 3
+        "KILLED": 63,
+        "LIVED": 1,
+        "TIMED OUT": 1
       }
     }
   }
