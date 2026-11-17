@@ -1,4 +1,6 @@
 """Mutation infrastructure and package floors must fail closed."""
+import subprocess
+import sys
 import unittest
 import json
 from pathlib import Path
@@ -21,6 +23,16 @@ class MutationGateTests(unittest.TestCase):
         self.assertEqual(measured['efficacy'], 95)
         with self.assertRaises(ValueError):
             gate.measurement_from_log(log+summary+summary)
+
+    def test_every_root_package_is_mutated_in_its_own_run(self):
+        listed = subprocess.check_output(['go', 'list', '-f', '{{.Dir}}', './...'], cwd=gate.ROOT, text=True).split()
+        listed = {Path(path).relative_to(gate.ROOT).as_posix() for path in listed} - {'.', 'cmd/embargo-audit'}
+        self.assertEqual(set(gate.PACKAGES), listed)
+
+    def test_memory_cap_applies_to_child_processes(self):
+        script = 'import resource; print(resource.getrlimit(resource.RLIMIT_AS)[0])'
+        out = subprocess.check_output([sys.executable, '-c', script], preexec_fn=gate.limit_memory, text=True)
+        self.assertEqual(int(out), gate.ADDRESS_SPACE)
 
     def test_timeout_is_not_a_kill(self):
         report = {'files': [{'file_name': 'embargotest/run.go', 'mutations': [{'status': value} for value in ['KILLED', 'LIVED', 'TIMED OUT', 'NOT COVERED', 'NOT VIABLE']]}]}

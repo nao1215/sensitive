@@ -340,6 +340,12 @@ func readmeExampleFiles(t *testing.T) []string {
 
 func TestReadmeLinkedExamplesStandalone(t *testing.T) {
 	t.Parallel()
+	if os.Getenv("EMBARGO_MUTATION") != "" {
+		// Compiling every linked file takes most of the package's test time and
+		// checks the documentation, not the mutated library; the Output
+		// assertions of the same examples still run in the ordinary suite.
+		t.Skip("documentation compile check is not a mutation assertion")
+	}
 	var compiler sync.Mutex
 	// Compile one linked file at a time, without package peers or private helpers.
 	for _, path := range readmeExampleFiles(t) {

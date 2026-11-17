@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import re
+import resource
 from pathlib import Path
 import shutil
 import subprocess
@@ -15,6 +16,11 @@ TOOL = 'github.com/go-gremlins/gremlins/cmd/gremlins@v0.6.0'
 BASELINE = ROOT/'doc/mutation-baseline.json'
 EVIDENCE = ROOT/'doc/performance/mutation-baseline.json'
 DOCUMENT = ROOT/'doc/testing.md'
+# A mutant that turns a loop into unbounded growth used to be killed only after
+# it exhausted tens of gigabytes. Capping the address space of the tool, the go
+# command and every test binary makes it fail fast as out of memory instead.
+ADDRESS_SPACE = 4 << 30
+PACKAGES = ('embargotest', 'internal/ascii', 'internal/detect', 'internal/output', 'internal/saferecord')
 STATUSES = {'KILLED', 'LIVED', 'NOT COVERED', 'NOT VIABLE', 'TIMED OUT'}
 
 
@@ -122,6 +128,10 @@ def check_recorded_evidence():
     print('Recorded per-package mutation baseline agrees with all expression results.')
 
 
+def limit_memory():
+    resource.setrlimit(resource.RLIMIT_AS, (ADDRESS_SPACE, ADDRESS_SPACE))
+
+
 def run_tool(target, destination, workers, env, exclude=None):
     command = ['go', '-C', str(ROOT/'tests/tools'), 'run', TOOL, 'unleash', '--workers', str(workers), '--timeout-coefficient', '10', '--output', str(destination)]
     if exclude:
@@ -137,7 +147,7 @@ def run_tool(target, destination, workers, env, exclude=None):
     # The inventory run populates Go's test cache. A cached timing would give
     # the real campaign a timeout shorter than an ordinary uncached test run.
     subprocess.run(['go', 'clean', '-testcache'], cwd=target, env=env, check=True)
-    subprocess.run(command, env=env, check=True)
+    subprocess.run(command, env=env, check=True, preexec_fn=limit_memory)
     report = json.loads(destination.read_text(encoding='utf-8'))
     validate_inventory(report, inventory)
     return report
@@ -167,9 +177,9 @@ def main():
     if args.check_evidence:
         check_recorded_evidence()
         return
-    if not 1 <= args.workers <= 2 or not 1 <= args.test_cpu <= 4:
-        parser.error('use at most two mutation workers and four CPUs per test')
-    env = dict(os.environ, GOMAXPROCS=str(args.test_cpu), GOWORK='off')
+    if not 1 <= args.workers <= 4 or not 1 <= args.test_cpu <= 2:
+        parser.error('use at most four mutation workers and two CPUs per test')
+    env = dict(os.environ, GOMAXPROCS=str(args.test_cpu), GOWORK='off', EMBARGO_MUTATION='1')
     args.output.mkdir(parents=True, exist_ok=True)
     output = args.output.resolve()
     print('EMBARGO_MUTATION_START', flush=True)
@@ -182,8 +192,20 @@ def main():
             return
         snapshot = temporary/'source'
         shutil.copytree(ROOT, snapshot, ignore=shutil.ignore_patterns('.git', 'node_modules', '.lake', '__pycache__', 'mutation-results', 'benchmark-results', 'quality-results', '_apalache-out'))
-        subprocess.run(['go', 'test', './...'], cwd=snapshot, env=env, check=True)
-        root_report = run_tool(snapshot, output/'root.json', args.workers, env, r'(^|/)(adapters|tests|cmd)/')
+        subprocess.run(['go', 'test', './...'], cwd=snapshot, env=env, check=True, preexec_fn=limit_memory)
+        listed = subprocess.check_output(['go', 'list', '-f', '{{.Dir}}', './...'], cwd=snapshot, env=env, text=True).split()
+        listed = {Path(path).relative_to(snapshot).as_posix() for path in listed} - {'.', 'cmd/embargo-audit'}
+        if listed != set(PACKAGES):
+            raise ValueError('root packages changed; list every package in PACKAGES')
+        # One run per package: gremlins derives every mutant's timeout from the
+        # coverage run of its target, so a whole-module target made a 0.2 s
+        # package wait for ten times the module's test time.
+        root_report = run_tool(snapshot, output/'root.json', args.workers, env, '/')
+        files = list(root_report['files'])
+        for package in PACKAGES:
+            report = run_tool(snapshot/package, output/(package.replace('/', '-')+'.json'), args.workers, env, '/')
+            files += [dict(file, file_name=package+'/'+file['file_name']) for file in report['files']]
+        root_report = {'files': files}
         scores = package_scores(root_report)
         # gremlins infers package paths from package names; nested package main
         # is mapped incorrectly. A temporary module makes the command its root.
