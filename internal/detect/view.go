@@ -72,30 +72,14 @@ func decodePercent(data []byte) (decoded []byte, positions []int) {
 			continue
 		}
 		if decoded == nil {
-			decoded = make([]byte, 0, len(data))
-			decoded = append(decoded, data[:i]...)
 			// The first escape removes two bytes, leaving room for the sentinel
 			// within len(data) and avoiding overflow from adding capacity.
-			positions = make([]int, i, len(data))
-			for j := range positions {
-				positions[j] = j
-			}
+			decoded, positions = identityPrefix(data, i, len(data))
 		}
 		decoded = append(decoded, hi<<4|lo)
 		positions = append(positions, i)
 		i += 3
-		for i < len(data) {
-			if data[i] == '%' && i+2 < len(data) {
-				_, ok = ascii.DecodeHex(data[i+1])
-				_, ok2 = ascii.DecodeHex(data[i+2])
-				if ok && ok2 {
-					break
-				}
-			}
-			decoded = append(decoded, data[i])
-			positions = append(positions, i)
-			i++
-		}
+		i, decoded, positions = copyPercentLiteral(data, i, decoded, positions)
 		i--
 	}
 	if decoded == nil {
@@ -103,6 +87,35 @@ func decodePercent(data []byte) (decoded []byte, positions []int) {
 	}
 	positions = append(positions, len(data))
 	return decoded, positions
+}
+
+// copyPercentLiteral copies bytes from i up to the next valid %HH escape,
+// keeping literal plus and malformed escapes, and returns where it stopped.
+func copyPercentLiteral(data []byte, i int, decoded []byte, positions []int) (next int, decodedOut []byte, positionsOut []int) {
+	for i < len(data) {
+		if data[i] == '%' && i+2 < len(data) {
+			_, ok := ascii.DecodeHex(data[i+1])
+			_, ok2 := ascii.DecodeHex(data[i+2])
+			if ok && ok2 {
+				break
+			}
+		}
+		decoded = append(decoded, data[i])
+		positions = append(positions, i)
+		i++
+	}
+	return i, decoded, positions
+}
+
+// identityPrefix starts a rewritten view whose first n bytes are unchanged,
+// with an identity map of capacity positionCap for the remaining offsets.
+func identityPrefix(data []byte, n, positionCap int) (rewritten []byte, positions []int) {
+	rewritten = append(make([]byte, 0, len(data)), data[:n]...)
+	positions = make([]int, n, positionCap)
+	for j := range positions {
+		positions[j] = j
+	}
+	return rewritten, positions
 }
 
 // mapOriginalRange converts a normalized byte range [start, end) back to the
@@ -141,13 +154,7 @@ func originalPosition(positions []int, index int) int {
 // Other whitespace, invalid UTF-8 and marks outside tokens remain unchanged.
 func removeTokenSeparators(data []byte) (normalized []byte, positions []int) {
 	// Keep ordinary ASCII scans allocation-free, including delimiters.
-	first := -1
-	for i, b := range data {
-		if b >= utf8.RuneSelf {
-			first = i
-			break
-		}
-	}
+	first := firstNonASCII(data)
 	if first < 0 {
 		return data, nil
 	}
@@ -155,11 +162,7 @@ func removeTokenSeparators(data []byte) (normalized []byte, positions []int) {
 		r, size := normalizationRune(data, i)
 		remove := ignoredTokenSeparator(r) && tokenInterior(data, i, size)
 		if remove && normalized == nil {
-			normalized = append(make([]byte, 0, len(data)), data[:i]...)
-			positions = make([]int, i, normalizationMapSize(len(data)))
-			for j := range positions {
-				positions[j] = j
-			}
+			normalized, positions = identityPrefix(data, i, normalizationMapSize(len(data)))
 		}
 		if normalized != nil && !remove {
 			normalized = append(normalized, data[i:i+size]...)
@@ -173,6 +176,17 @@ func removeTokenSeparators(data []byte) (normalized []byte, positions []int) {
 		return data, nil
 	}
 	return normalized, append(positions, len(data))
+}
+
+// firstNonASCII returns the index of the first non-ASCII byte, or -1 when
+// data is pure ASCII and needs no Unicode normalization.
+func firstNonASCII(data []byte) int {
+	for i, b := range data {
+		if b >= utf8.RuneSelf {
+			return i
+		}
+	}
+	return -1
 }
 
 func ignoredTokenSeparator(r rune) bool {

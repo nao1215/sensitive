@@ -9,20 +9,8 @@ import (
 // ASCII-only input is returned unchanged with an allocated identity map; input containing non-ASCII bytes uses a new buffer. U+30FC remains a legacy numeric hyphen. Other bytes are preserved.
 func NormalizeFullWidthDigits(data []byte) (normalizedData []byte, positions []int) {
 	// Quick check: if no multi-byte characters, return as-is.
-	hasMultiByte := false
-	for _, b := range data {
-		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		if b >= 0x80 {
-			hasMultiByte = true
-			break
-		}
-	}
-	if !hasMultiByte {
-		posMap := make([]int, normalizationMapSize(len(data)))
-		for i := range posMap {
-			posMap[i] = i
-		}
-		return data, posMap
+	if firstNonASCII(data) < 0 {
+		return data, identityPositions(len(data))
 	}
 
 	normalized := make([]byte, 0, len(data))
@@ -60,6 +48,16 @@ func NormalizeFullWidthDigits(data []byte) (normalizedData []byte, positions []i
 	posMap = append(posMap, len(data))
 
 	return normalized, posMap
+}
+
+// identityPositions allocates the identity map for n unchanged bytes,
+// including the end sentinel.
+func identityPositions(n int) []int {
+	posMap := make([]int, normalizationMapSize(n))
+	for i := range posMap {
+		posMap[i] = i
+	}
+	return posMap
 }
 
 // normalizeDigits uses a nil identity map when no byte can change.

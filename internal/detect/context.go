@@ -168,16 +168,7 @@ func extractNear(data []byte, pos, radius, minLen, maxLen int, accept func(byte)
 		}
 		seqEnd := i
 
-		// Skip sequences truncated at the search boundary. If a digit
-		// sequence touches the boundary edge and continues beyond it,
-		// the captured portion is a fragment of a longer number — not
-		// a standalone sequence. Including it would cause false positives
-		// (e.g., the tail of a 20-digit number appearing as an 8-digit
-		// bank account number).
-		if seqStart == searchStart && searchStart > 0 && accept(data[searchStart-1]) && !encodedSeparatorBefore(data, searchStart) {
-			continue
-		}
-		if seqEnd == searchEnd && searchEnd < len(data) && accept(data[searchEnd]) {
+		if truncatedAtSearchEdge(data, seqStart, seqEnd, searchStart, searchEnd, accept) {
 			continue
 		}
 
@@ -188,4 +179,19 @@ func extractNear(data []byte, pos, radius, minLen, maxLen int, accept func(byte)
 	}
 
 	return results
+}
+
+// truncatedAtSearchEdge reports whether a sequence touches the search window
+// edge and continues beyond it, making it a fragment of a longer value.
+func truncatedAtSearchEdge(data []byte, seqStart, seqEnd, searchStart, searchEnd int, accept func(byte) bool) bool {
+	// Skip sequences truncated at the search boundary. If a digit
+	// sequence touches the boundary edge and continues beyond it,
+	// the captured portion is a fragment of a longer number — not
+	// a standalone sequence. Including it would cause false positives
+	// (e.g., the tail of a 20-digit number appearing as an 8-digit
+	// bank account number).
+	if seqStart == searchStart && searchStart > 0 && accept(data[searchStart-1]) && !encodedSeparatorBefore(data, searchStart) {
+		return true
+	}
+	return seqEnd == searchEnd && searchEnd < len(data) && accept(data[searchEnd])
 }
