@@ -1,10 +1,12 @@
 {
   "versions": {
     "embargo": "working source",
+    "ferret-scan": "v1.10.0",
     "go-mask": "v0.6.2",
     "go-masker": "v0.6.1",
     "godlp": "v1.2.15",
     "masq": "v0.2.3",
+    "pii-shield": "v3.0.0",
     "slog-formatter": "v1.3.0"
   },
   "rows": [
@@ -12,6 +14,10 @@
       "results": {
         "embargo": {
           "output": "{\"level\":\"INFO\",\"msg\":\"login [REDACTED]\"}",
+          "removed": true
+        },
+        "ferret-scan": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"login [EMAIL-REDACTED]\"}",
           "removed": true
         },
         "go-mask": {
@@ -30,6 +36,10 @@
           "output": "{\"level\":\"INFO\",\"msg\":\"[REDACTED]\"}",
           "removed": true
         },
+        "pii-shield": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"login [HIDDEN:b13ce2]\"}",
+          "removed": true
+        },
         "slog-formatter": {
           "output": "{\"level\":\"INFO\",\"msg\":\"login alice@example.com\"}",
           "removed": false
@@ -43,6 +53,10 @@
       "results": {
         "embargo": {
           "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"user\":{\"Email\":\"[REDACTED]\"}}",
+          "removed": true
+        },
+        "ferret-scan": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"user\":{\"Email\":\"[EMAIL-REDACTED]\"}}",
           "removed": true
         },
         "go-mask": {
@@ -61,6 +75,10 @@
           "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"user\":{\"Email\":\"[REDACTED]\"}}",
           "removed": true
         },
+        "pii-shield": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"user\":{\"Email\":\"[HIDDEN:b13ce2]\"}}",
+          "removed": true
+        },
         "slog-formatter": {
           "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"user\":\"*******\"}",
           "removed": true
@@ -76,6 +94,10 @@
           "output": "{\"[REDACTED]\":\"ok\",\"level\":\"INFO\",\"msg\":\"event\"}",
           "removed": true
         },
+        "ferret-scan": {
+          "output": "{\"[EMAIL-REDACTED]\":\"ok\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": true
+        },
         "go-mask": {
           "output": "{\"alice@example.com\":\"ok\",\"level\":\"INFO\",\"msg\":\"event\"}",
           "removed": false
@@ -89,6 +111,10 @@
           "removed": false
         },
         "masq": {
+          "output": "{\"alice@example.com\":\"ok\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
+        },
+        "pii-shield": {
           "output": "{\"alice@example.com\":\"ok\",\"level\":\"INFO\",\"msg\":\"event\"}",
           "removed": false
         },
@@ -107,6 +133,10 @@
           "output": "{\"[REDACTED]\":{\"status\":\"ok\"},\"level\":\"INFO\",\"msg\":\"event\"}",
           "removed": true
         },
+        "ferret-scan": {
+          "output": "{\"[EMAIL-REDACTED]\":{\"status\":\"ok\"},\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": true
+        },
         "go-mask": {
           "output": "{\"alice@example.com\":{\"status\":\"ok\"},\"level\":\"INFO\",\"msg\":\"event\"}",
           "removed": false
@@ -123,6 +153,10 @@
           "output": "{\"alice@example.com\":{\"status\":\"ok\"},\"level\":\"INFO\",\"msg\":\"event\"}",
           "removed": false
         },
+        "pii-shield": {
+          "output": "{\"[HIDDEN:b13ce2]\":{\"status\":\"ok\"},\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": true
+        },
         "slog-formatter": {
           "output": "{\"alice@example.com\":{\"status\":\"ok\"},\"level\":\"INFO\",\"msg\":\"event\"}",
           "removed": false
@@ -136,6 +170,10 @@
       "results": {
         "embargo": {
           "output": "{\"data\":{\"email\":\"[REDACTED]\"},\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": true
+        },
+        "ferret-scan": {
+          "output": "{\"data\":{\"email\":\"[EMAIL-REDACTED]\"},\"level\":\"INFO\",\"msg\":\"event\"}",
           "removed": true
         },
         "go-mask": {
@@ -154,6 +192,10 @@
           "output": "{\"data\":{\"email\":\"alice@example.com\"},\"level\":\"INFO\",\"msg\":\"event\"}",
           "removed": false
         },
+        "pii-shield": {
+          "output": "{\"data\":{\"email\":\"[HIDDEN:b13ce2]\"},\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": true
+        },
         "slog-formatter": {
           "output": "{\"data\":\"*******\",\"level\":\"INFO\",\"msg\":\"event\"}",
           "removed": true
@@ -167,6 +209,10 @@
       "results": {
         "embargo": {
           "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"password\":\"[REDACTED]\"}",
+          "removed": true
+        },
+        "ferret-scan": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"password\":\"[API_KEY_OR_SECRET-REDACTED]\"}",
           "removed": true
         },
         "go-mask": {
@@ -185,6 +231,10 @@
           "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"password\":\"[REDACTED]\"}",
           "removed": true
         },
+        "pii-shield": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"password\":\"[HIDDEN:857046]\"}",
+          "removed": true
+        },
         "slog-formatter": {
           "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"password\":\"opaq*******\"}",
           "removed": true
@@ -197,6 +247,10 @@
     {
       "results": {
         "embargo": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"payload\":{\"Value\":\"opaque-value\"}}",
+          "removed": false
+        },
+        "ferret-scan": {
           "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"payload\":{\"Value\":\"opaque-value\"}}",
           "removed": false
         },
@@ -216,6 +270,10 @@
           "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"payload\":{\"Value\":\"[REDACTED]\"}}",
           "removed": true
         },
+        "pii-shield": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"payload\":{\"Value\":\"opaque-value\"}}",
+          "removed": false
+        },
         "slog-formatter": {
           "output": "{\"level\":\"INFO\",\"msg\":\"event\",\"payload\":{\"Value\":\"opaque-value\"}}",
           "removed": false
@@ -229,6 +287,10 @@
       "results": {
         "embargo": {
           "output": "{\"level\":\"INFO\",\"msg\":\"charge [REDACTED]\"}",
+          "removed": true
+        },
+        "ferret-scan": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"charge [CREDIT-CARD-REDACTED]\"}",
           "removed": true
         },
         "go-mask": {
@@ -247,6 +309,10 @@
           "output": "{\"level\":\"INFO\",\"msg\":\"[REDACTED]\"}",
           "removed": true
         },
+        "pii-shield": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"charge [HIDDEN:a079f5]\"}",
+          "removed": true
+        },
         "slog-formatter": {
           "output": "{\"level\":\"INFO\",\"msg\":\"charge 4111111111111111\"}",
           "removed": false
@@ -260,6 +326,10 @@
       "results": {
         "embargo": {
           "output": "{\"level\":\"INFO\",\"msg\":\"credit card [REDACTED]\"}",
+          "removed": true
+        },
+        "ferret-scan": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"credit card [CREDIT-CARD-REDACTED]\"}",
           "removed": true
         },
         "go-mask": {
@@ -278,6 +348,10 @@
           "output": "{\"level\":\"INFO\",\"msg\":\"[REDACTED]\"}",
           "removed": true
         },
+        "pii-shield": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"credit card [HIDDEN:a079f5]\"}",
+          "removed": true
+        },
         "slog-formatter": {
           "output": "{\"level\":\"INFO\",\"msg\":\"credit card 4111111111111111\"}",
           "removed": false
@@ -292,6 +366,10 @@
         "embargo": {
           "output": "{\"detail\":\"{\\\"token\\\":\\\"[REDACTED]\\\"}\",\"level\":\"INFO\",\"msg\":\"event\"}",
           "removed": true
+        },
+        "ferret-scan": {
+          "output": "{\"detail\":\"{\\\"token\\\":\\\"opaque-value\\\"}\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": false
         },
         "go-mask": {
           "output": "{\"detail\":\"{\\\"token\\\":\\\"opaque-value\\\"}\",\"level\":\"INFO\",\"msg\":\"event\"}",
@@ -308,6 +386,10 @@
         "masq": {
           "output": "{\"detail\":\"{\\\"token\\\":\\\"opaque-value\\\"}\",\"level\":\"INFO\",\"msg\":\"event\"}",
           "removed": false
+        },
+        "pii-shield": {
+          "output": "{\"detail\":\"{\\\"token\\\":\\\"[HIDDEN:857046]\\\"}\",\"level\":\"INFO\",\"msg\":\"event\"}",
+          "removed": true
         },
         "slog-formatter": {
           "output": "{\"detail\":\"{\\\"token\\\":\\\"opaque-value\\\"}\",\"level\":\"INFO\",\"msg\":\"event\"}",
@@ -324,6 +406,10 @@
           "output": "{\"level\":\"INFO\",\"msg\":\"Authorization: Bearer [REDACTED]\"}",
           "removed": true
         },
+        "ferret-scan": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"Authorization: Bearer opaque-value\"}",
+          "removed": false
+        },
         "go-mask": {
           "output": "{\"level\":\"INFO\",\"msg\":\"Authorization: Bearer opaque-value\"}",
           "removed": false
@@ -337,6 +423,10 @@
           "removed": false
         },
         "masq": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"Authorization: Bearer opaque-value\"}",
+          "removed": false
+        },
+        "pii-shield": {
           "output": "{\"level\":\"INFO\",\"msg\":\"Authorization: Bearer opaque-value\"}",
           "removed": false
         },
@@ -355,6 +445,10 @@
           "output": "{\"level\":\"INFO\",\"msg\":\"contact [REDACTED]\"}",
           "removed": true
         },
+        "ferret-scan": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact 03-1234-5678\"}",
+          "removed": false
+        },
         "go-mask": {
           "output": "{\"level\":\"INFO\",\"msg\":\"contact 03-1234-5678\"}",
           "removed": false
@@ -371,6 +465,10 @@
           "output": "{\"level\":\"INFO\",\"msg\":\"contact 03-1234-5678\"}",
           "removed": false
         },
+        "pii-shield": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact [HIDDEN:06ead0]\"}",
+          "removed": true
+        },
         "slog-formatter": {
           "output": "{\"level\":\"INFO\",\"msg\":\"contact 03-1234-5678\"}",
           "removed": false
@@ -385,6 +483,10 @@
         "embargo": {
           "output": "{\"level\":\"INFO\",\"msg\":\"contact 202-555-0123\"}",
           "removed": false
+        },
+        "ferret-scan": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact [PHONE-REDACTED]\"}",
+          "removed": true
         },
         "go-mask": {
           "output": "{\"level\":\"INFO\",\"msg\":\"contact 202-555-0123\"}",
@@ -402,6 +504,10 @@
           "output": "{\"level\":\"INFO\",\"msg\":\"contact 202-555-0123\"}",
           "removed": false
         },
+        "pii-shield": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact [HIDDEN:f91321]\"}",
+          "removed": true
+        },
         "slog-formatter": {
           "output": "{\"level\":\"INFO\",\"msg\":\"contact 202-555-0123\"}",
           "removed": false
@@ -416,6 +522,10 @@
         "embargo": {
           "output": "{\"level\":\"INFO\",\"msg\":\"order [REDACTED]\"}",
           "removed": true
+        },
+        "ferret-scan": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"order 4111111111111112\"}",
+          "removed": false
         },
         "go-mask": {
           "output": "{\"level\":\"INFO\",\"msg\":\"order 4111111111111112\"}",
@@ -433,6 +543,10 @@
           "output": "{\"level\":\"INFO\",\"msg\":\"[REDACTED]\"}",
           "removed": true
         },
+        "pii-shield": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"order 4111111111111112\"}",
+          "removed": false
+        },
         "slog-formatter": {
           "output": "{\"level\":\"INFO\",\"msg\":\"order 4111111111111112\"}",
           "removed": false
@@ -445,6 +559,10 @@
     {
       "results": {
         "embargo": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"completed job-R7\"}",
+          "removed": false
+        },
+        "ferret-scan": {
           "output": "{\"level\":\"INFO\",\"msg\":\"completed job-R7\"}",
           "removed": false
         },
@@ -461,6 +579,10 @@
           "removed": false
         },
         "masq": {
+          "output": "{\"level\":\"INFO\",\"msg\":\"completed job-R7\"}",
+          "removed": false
+        },
+        "pii-shield": {
           "output": "{\"level\":\"INFO\",\"msg\":\"completed job-R7\"}",
           "removed": false
         },

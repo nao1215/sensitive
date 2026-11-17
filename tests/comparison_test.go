@@ -26,6 +26,7 @@ import (
 	"github.com/icntswm/go-masker/zapmask"
 	"github.com/icntswm/go-masker/zerologmask"
 	"github.com/m-mizutani/masq"
+	"github.com/awslabs/ferret-scan/pkg/redact"
 	piishield "github.com/pii-shield/pii-shield/v3/pkg/scanner"
 	"github.com/rs/zerolog"
 	slogformatter "github.com/samber/slog-formatter"
@@ -53,6 +54,7 @@ const (
 	comparisonEmail          = "alice@example.com"
 	comparisonMaskerName     = "go-masker"
 	comparisonPIIShieldName  = "pii-shield"
+	comparisonFerretName     = "ferret-scan"
 	comparisonMasqName       = "masq"
 	comparisonEmbargoName    = "embargo"
 	comparisonMap            = "map"
@@ -106,10 +108,41 @@ func (w piiShieldWriter) Write(line []byte) (int, error) {
 	return len(line), nil
 }
 
+// comparisonFerret is ferret-scan's in-process engine with every default
+// check and its Simple strategy, which replaces each match with a marker.
+func comparisonFerret() *redact.Engine {
+	engine, err := redact.NewEngine(redact.EngineOptions{Strategy: redact.Simple})
+	if err != nil {
+		panic(err)
+	}
+	return engine
+}
+
+// ferretWriter redacts each encoded log line, the position ferret-scan's
+// pkg/redact documents for text it did not produce.
+type ferretWriter struct {
+	engine *redact.Engine
+	out    io.Writer
+}
+
+func (w ferretWriter) Write(line []byte) (int, error) {
+	result, err := w.engine.Redact(context.Background(), redact.Request{Text: string(line)})
+	if err != nil {
+		return 0, err
+	}
+	if _, err := io.WriteString(w.out, result.Redacted); err != nil {
+		return 0, err
+	}
+	return len(line), nil
+}
+
 func comparisonHandler(mode string, out io.Writer) slog.Handler {
 	options := &slog.HandlerOptions{}
-	if mode == comparisonPIIShieldName {
+	switch mode {
+	case comparisonPIIShieldName:
 		return slog.NewJSONHandler(piiShieldWriter{scanner: comparisonPIIShield(), out: out}, options)
+	case comparisonFerretName:
+		return slog.NewJSONHandler(ferretWriter{engine: comparisonFerret(), out: out}, options)
 	}
 	if mode == comparisonMaskerName {
 		options.ReplaceAttr = slogmask.ReplaceAttr(comparisonValueMasker())
@@ -214,7 +247,7 @@ func BenchmarkComparison(b *testing.B) {
 	for _, name := range []string{comparisonFlat, comparisonNested, comparisonMap, comparisonClean, comparisonLarge} {
 		attrs := events[name]
 		b.Run(name, func(b *testing.B) {
-			for _, mode := range []string{scenarioPlain, comparisonMasqName, comparisonEmbargoName, comparisonMaskerName, comparisonPIIShieldName} {
+			for _, mode := range []string{scenarioPlain, comparisonMasqName, comparisonEmbargoName, comparisonMaskerName, comparisonPIIShieldName, comparisonFerretName} {
 				b.Run(mode, func(b *testing.B) {
 					logger := slog.New(comparisonHandler(mode, io.Discard))
 					ctx := context.Background()
@@ -552,8 +585,8 @@ func scenarioEmit(t *testing.T, mode string, out io.Writer) func(string, ...slog
 	switch mode {
 	case scenarioSlog:
 		handler = embargo.NewSlogHandler(handler, scanner)
-	case comparisonMaskerName:
-		handler = comparisonHandler(comparisonMaskerName, out)
+	case comparisonMaskerName, comparisonPIIShieldName, comparisonFerretName:
+		handler = comparisonHandler(mode, out)
 	case comparisonDLPName:
 		handler = catchHandler(t, mode, out, godlpEngine(t))
 	case comparisonMasqName:
@@ -587,9 +620,9 @@ func scenarioEmit(t *testing.T, mode string, out io.Writer) func(string, ...slog
 
 //nolint:paralleltest // The shared scenarios also initialize godlp's package globals.
 func TestLeakScenarios(t *testing.T) {
-	modes := []string{scenarioSlog, scenarioZap, comparisonMasqName, comparisonFormatterName, comparisonCopyName, comparisonMaskerName, comparisonDLPName}
+	modes := []string{scenarioSlog, scenarioZap, comparisonPIIShieldName, comparisonFerretName, comparisonMasqName, comparisonFormatterName, comparisonCopyName, comparisonMaskerName, comparisonDLPName}
 	var table strings.Builder
-	writeComparisonTable(t, &table, "| Service output | embargo slog | embargo zap | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |\n|---|---|---|---|---|---|---|---|\n")
+	writeComparisonTable(t, &table, "| Service output | embargo slog | embargo zap | pii-shield v3.0.0 | ferret-scan v1.10.0 | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |\n|---|---|---|---|---|---|---|---|---|---|\n")
 	rows := []struct{ path, label string }{
 		{"declared", "Password under the key `password`"},
 		{"config", "Config struct holding a database DSN"},
@@ -710,7 +743,7 @@ func catchHandler(t *testing.T, mode string, out io.Writer, engine dlpheader.Eng
 	switch mode {
 	case comparisonEmbargoName:
 		return embargo.NewSlogHandler(slog.NewJSONHandler(out, nil), embargo.NewScanner())
-	case comparisonMasqName, comparisonMaskerName:
+	case comparisonMasqName, comparisonMaskerName, comparisonPIIShieldName, comparisonFerretName:
 		return comparisonHandler(mode, out)
 	case comparisonFormatterName:
 		return formatterHandler(out)
@@ -757,10 +790,10 @@ func catchHandler(t *testing.T, mode string, out io.Writer, engine dlpheader.Eng
 //nolint:paralleltest // godlp initializes package globals; use the same serial setup as its other probes.
 func TestComparisonScenarios(t *testing.T) {
 	engine := godlpEngine(t)
-	report := catchReport{Versions: map[string]string{"embargo": "working source", "masq": "v0.2.3", comparisonFormatterName: "v1.3.0", comparisonCopyName: "v0.6.2", comparisonDLPName: "v1.2.15", "go-masker": "v0.6.1"}}
+	report := catchReport{Versions: map[string]string{"embargo": "working source", "masq": "v0.2.3", comparisonFormatterName: "v1.3.0", comparisonCopyName: "v0.6.2", comparisonDLPName: "v1.2.15", "go-masker": "v0.6.1", comparisonPIIShieldName: "v3.0.0", comparisonFerretName: "v1.10.0"}}
 	for _, scenario := range catchScenarios() {
 		row := catchRow{Name: scenario.name, Label: scenario.label, Positive: scenario.positive, Results: map[string]catchObservation{}}
-		for _, mode := range []string{comparisonEmbargoName, comparisonMasqName, comparisonMaskerName, comparisonFormatterName, comparisonCopyName, comparisonDLPName} {
+		for _, mode := range []string{comparisonEmbargoName, comparisonPIIShieldName, comparisonFerretName, comparisonMasqName, comparisonMaskerName, comparisonFormatterName, comparisonCopyName, comparisonDLPName} {
 			var out bytes.Buffer
 			scenario.emit(slog.New(catchHandler(t, mode, &out, engine)))
 			var event map[string]any

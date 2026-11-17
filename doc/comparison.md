@@ -105,15 +105,15 @@ embargo cannot automatically identify arbitrary unregistered secrets; use Secret
 The runnable `scenarioService` handles HTTP requests using a database DSN, an opaque password, a synthetic third-party token, wrapped and joined errors, and either slog or zap. The comparison configures masq's documented field rules and email/PAN regexes, slog-formatter's documented FormatByKey rules for password/token, and go-mask's registered field masks. No library receives an oracle containing the planted values. Users can extend all of these configurations; this measures the listed configurations, not every possible custom rule. go-mask processes attribute containers before logging; message text is outside that field policy. Redirect responses bypass every logger, so an output guard remains necessary.
 
 <!-- leak-scenarios:start -->
-| Service output | embargo slog | embargo zap | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |
-|---|---|---|---|---|---|---|---|
-| Password under the key `password` | caught | caught | caught | caught | caught | caught | leaked |
-| Config struct holding a database DSN | caught | caught | caught | leaked | leaked | caught | leaked |
-| DSN inside a wrapped error | caught | caught | caught | leaked | leaked | caught | leaked |
-| DSN and an API key joined with errors.Join | caught | caught | leaked | leaked | leaked | caught | leaked |
-| Bearer header value in a log message | caught | caught | leaked | leaked | leaked | caught | leaked |
-| Third-party API key in a log message | caught | caught | leaked | leaked | leaked | leaked | leaked |
-| Redirect URL query, never logged | leaked | leaked | leaked | leaked | leaked | leaked | leaked |
+| Service output | embargo slog | embargo zap | pii-shield v3.0.0 | ferret-scan v1.10.0 | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |
+|---|---|---|---|---|---|---|---|---|---|
+| Password under the key `password` | caught | caught | caught | caught | caught | caught | caught | caught | leaked |
+| Config struct holding a database DSN | caught | caught | caught | leaked | caught | leaked | leaked | caught | leaked |
+| DSN inside a wrapped error | caught | caught | caught | leaked | caught | leaked | leaked | caught | leaked |
+| DSN and an API key joined with errors.Join | caught | caught | caught | leaked | leaked | leaked | leaked | caught | leaked |
+| Bearer header value in a log message | caught | caught | caught | leaked | leaked | leaked | leaked | caught | leaked |
+| Third-party API key in a log message | caught | caught | caught | leaked | leaked | leaked | leaked | leaked | leaked |
+| Redirect URL query, never logged | leaked | leaked | leaked | leaked | leaked | leaked | leaked | leaked | leaked |
 <!-- leak-scenarios:end -->
 
 Run `make leak-scenarios` to regenerate this table. `TestLeakScenarios` checks it for staleness, and `TestLeakScenarioGuard` verifies that a real recorder rejects the planted logs and accepts the masked slog and zap variants. Caught means the entire planted value disappeared from the observed output; it does not imply arbitrary secrets are detected. SDK serialization and unrelated output paths require their own checks.

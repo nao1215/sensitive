@@ -370,15 +370,15 @@ embargo also has no runtime dependencies. go-masker's measured configuration use
 The service probe below also checks a redirect that bypasses every logger. `embargotest.HTTP` catches that response leak:
 
 <!-- leak-scenarios:start -->
-| Service output | embargo slog | embargo zap | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |
-|---|---|---|---|---|---|---|---|
-| Password under the key `password` | caught | caught | caught | caught | caught | caught | leaked |
-| Config struct holding a database DSN | caught | caught | caught | leaked | leaked | caught | leaked |
-| DSN inside a wrapped error | caught | caught | caught | leaked | leaked | caught | leaked |
-| DSN and an API key joined with errors.Join | caught | caught | leaked | leaked | leaked | caught | leaked |
-| Bearer header value in a log message | caught | caught | leaked | leaked | leaked | caught | leaked |
-| Third-party API key in a log message | caught | caught | leaked | leaked | leaked | leaked | leaked |
-| Redirect URL query, never logged | leaked | leaked | leaked | leaked | leaked | leaked | leaked |
+| Service output | embargo slog | embargo zap | pii-shield v3.0.0 | ferret-scan v1.10.0 | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |
+|---|---|---|---|---|---|---|---|---|---|
+| Password under the key `password` | caught | caught | caught | caught | caught | caught | caught | caught | leaked |
+| Config struct holding a database DSN | caught | caught | caught | leaked | caught | leaked | leaked | caught | leaked |
+| DSN inside a wrapped error | caught | caught | caught | leaked | caught | leaked | leaked | caught | leaked |
+| DSN and an API key joined with errors.Join | caught | caught | caught | leaked | leaked | leaked | leaked | caught | leaked |
+| Bearer header value in a log message | caught | caught | caught | leaked | leaked | leaked | leaked | caught | leaked |
+| Third-party API key in a log message | caught | caught | caught | leaked | leaked | leaked | leaked | leaked | leaked |
+| Redirect URL query, never logged | leaked | leaked | leaked | leaked | leaked | leaked | leaked | leaked | leaked |
 <!-- leak-scenarios:end -->
 
 [Service setup and full results](doc/comparison.md#service-leak-scenarios).

@@ -27,7 +27,17 @@ require (
 
 require github.com/icntswm/go-masker v0.6.1
 
-require github.com/pii-shield/pii-shield/v3 v3.0.0
+require (
+	github.com/awslabs/ferret-scan v1.10.0
+	github.com/pii-shield/pii-shield/v3 v3.0.0
+)
+
+require (
+	github.com/fatih/color v1.19.0 // indirect
+	github.com/ledongthuc/pdf v0.0.0-20250511090121-5959a4027728 // indirect
+	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -35,7 +45,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/nao1215/embargo/adapters/logrus v0.10.0
 	github.com/nao1215/embargo/adapters/otel v0.10.0
 	github.com/nao1215/embargo/adapters/sentry v0.10.0
