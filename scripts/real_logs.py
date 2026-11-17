@@ -48,6 +48,8 @@ def cache_datasets(cache, manifest):
     rev = manifest['upstream_commit']
     download(f'https://raw.githubusercontent.com/logpai/loghub/{rev}/LICENSE', cache/'LICENSE', manifest['datasets'][0]['license_sha256'])
     for item in manifest['datasets']:
+        if 'license_file_url' in item:
+            download(item['license_file_url'], cache/item['license_path'], item['license_sha256'])
         path = cache/item['path']
         if 'archive_sha256' in item:
             archive = cache/'archives'/item['url'].split('/files/')[1].split('?')[0]
@@ -132,19 +134,56 @@ def estimate(rows, names, config, kind=None):
     return count, fp, samples, sample_fp
 
 
+LOGHUB = 'system (LogHub)'
+
+
+def family(dataset):
+    return dataset.get('family', LOGHUB)
+
+
+def license_link(dataset):
+    label = 'LogHub research/academic use' if family(dataset) == LOGHUB else dataset['license']
+    return f"[{label}]({dataset['license_url']}); [provenance]({dataset['readme_url']})"
+
+
+def corpus_size(datasets):
+    total = sum(d['bytes'] for d in datasets)
+    return len(datasets), total, sum(d['lines'] for d in datasets), f'{total/1e6:.1f} MB'
+
+
+def family_table(datasets, after):
+    """Current FP/GB per log family and split, over every dataset."""
+    families = list(dict.fromkeys(family(d) for d in datasets))
+    out = '\nThe operations-log families were added after the LogHub baseline, so they have current rates only. Their split was frozen by source before any finding was inspected: Nginx access, Nginx JSON access, Kubernetes audit and CloudTrail ACL are development; Apache access, CloudTrail instances and CloudTrail KMS are held. The CloudTrail files come from an attack-simulation corpus with placeholder account IDs, and the Kubernetes audit log from a research cluster, so they show log shapes rather than production traffic. The UUID-group and this-network IPv4 rules were chosen from development findings; held samples were labeled after the same review pass and were not used to choose rules, but they have been seen and are not an untouched evaluation.\n\n'
+    out += '| Family | Split | Datasets | Bytes | WithAll FP / GB | Default FP / GB | Kinds with sampled FPs |\n|---|---|---:|---:|---:|---:|---|\n'
+    for name in families:
+        for split in ('development', 'held'):
+            members = [d for d in datasets if family(d) == name and d['split'] == split]
+            if not members:
+                continue
+            names = [d['name'] for d in members]
+            size = sum(d['bytes'] for d in members)
+            kinds = sorted({kind for row in after if row['dataset'] in names for kind, s in row['strata'].items() if s['sample_fp']})
+            rates = [estimate(after, names, config)[1]/size*1e9 for config in ('all', 'default')]
+            out += f"| {name} | {split} | {len(members)} | {size:,} | {rates[0]:,.1f} | {rates[1]:,.1f} | {', '.join(kinds) or 'none'} |\n"
+    return out
+
+
 def render(manifest, before, after):
     datasets = manifest['datasets']
-    groups = {split:[d['name'] for d in datasets if d['split']==split] for split in ('development','held')}
-    table = '| Dataset | Split | Scope | Bytes | Lines | License / source |\n|---|---|---|---:|---:|---|\n'
+    loghub = [d for d in datasets if family(d) == LOGHUB]
+    groups = {split:[d['name'] for d in loghub if d['split']==split] for split in ('development','held')}
+    count, total, lines, mb = corpus_size(datasets)
+    table = '| Dataset | Family | Split | Scope | Bytes | Lines | License / source |\n|---|---|---|---|---:|---:|---|\n'
     for d in datasets:
-        table += f"| {d['name']} | {d['split']} | {d['scope']} | {d['bytes']:,} | {d['lines']:,} | [LogHub research/academic use]({d['license_url']}); [provenance]({d['readme_url']}) |\n"
-    table += '\nBefore is the retained baseline aggregate; after is the measured current policy, including opt-in country identifiers. The held split has now been seen and serves as regression data, not an independent evaluation of this change.\n\nRates below are estimated false-positive findings per decimal GB (10⁹ bytes), not counts of affected lines. IP addresses and published user/contact identities are sensitive references under this evaluation policy; the unspecified listener address 0.0.0.0 is an FP. Checksums do not establish a real account. A hostname fragment is an FP for MyNumber even if the hostname itself identifies a machine.\n\n'
+        table += f"| {d['name']} | {family(d)} | {d['split']} | {d['scope']} | {d['bytes']:,} | {d['lines']:,} | {license_link(d)} |\n"
+    table += f'\n{count} datasets, {total:,} bytes, {lines:,} lines. Before is the retained baseline aggregate, which covers only the LogHub family; after is the measured current policy, including opt-in country identifiers. The two before/after tables therefore cover LogHub only, and the family table below covers every dataset. The LogHub held split has now been seen and serves as regression data, not an independent evaluation of this change.\n\nRates below are estimated false-positive findings per decimal GB (10⁹ bytes), not counts of affected lines. IP addresses and published user/contact identities are sensitive references under this evaluation policy; the unspecified listener address 0.0.0.0 is an FP. Checksums do not establish a real account. A hostname fragment is an FP for MyNumber even if the hostname itself identifies a machine.\n\n'
     table += '| Detector | Development before / GB | Development after / GB | Held before / GB | Held after / GB |\n|---|---:|---:|---:|---:|\n'
     active=[]
     for kind in manifest['kinds']:
         values=[]
         for split in ('development','held'):
-            size=sum(d['bytes'] for d in datasets if d['split']==split)
+            size=sum(d['bytes'] for d in loghub if d['split']==split)
             for rows in (before,after):
                 values.append(estimate(rows,groups[split],'all',kind)[1]/size*1e9)
         table+='| '+kind+' | '+' | '.join(f'{n:,.1f}' for n in values)+' |\n'
@@ -153,12 +192,13 @@ def render(manifest, before, after):
     for config in ('all','default','kinds1','kinds3','kinds8'):
         values=[]
         for split in ('development','held'):
-            size=sum(d['bytes'] for d in datasets if d['split']==split)
+            size=sum(d['bytes'] for d in loghub if d['split']==split)
             for rows in (before,after):values.append(estimate(rows,groups[split],config)[1]/size*1e9)
         table+='| '+{'all':'WithAll','default':'Default slog handler'}.get(config,config)+' | '+' | '.join(f'{n:,.1f}' for n in values)+' |\n'
     table+='\nThe handler receives each raw line as its message and no attributes; its encoded message is checked against the scanner mask after JSON UTF-8 replacement. These numbers do not measure application-specific field-key policies. All 37 detectors also run separately, with exact findings compared to WithAll.\n\n'
     for name,kinds in manifest['configurations'].items():table+=f"- {name}: "+', '.join(kinds)+'.\n'
-    table+='\nEach dataset/kind stratum uses the 40 lowest SHA-256 finding IDs, or every finding if there are fewer. Review labels are in [real-logs-labels.json](real-logs-labels.json); counts and sampled FP fractions are in [real-logs-summary.json](real-logs-summary.json). The estimate sums count × sampled FP fraction across datasets. Zero observed sample FPs does not establish zero population FPs. Small samples, repeated templates and this 92.4 MB source mix cannot predict a deployment’s rate. No recall estimate is possible without labeling undetected secrets.\n'
+    table+=family_table(datasets, after)
+    table+=f'\nEach dataset/kind stratum uses the 40 lowest SHA-256 finding IDs, or every finding if there are fewer. Review labels are in [real-logs-labels.json](real-logs-labels.json); counts and sampled FP fractions are in [real-logs-summary.json](real-logs-summary.json). The estimate sums count × sampled FP fraction across datasets. Zero observed sample FPs does not establish zero population FPs. Small samples, repeated templates and this {mb} source mix cannot predict a deployment’s rate. No recall estimate is possible without labeling undetected secrets.\n'
     height=160+len(active)*112
     maximum=max(max(v) for _,v in active)
     svg=[f'<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="{height}" viewBox="0 0 1100 {height}" role="img" aria-labelledby="title desc">',
@@ -167,7 +207,7 @@ def render(manifest, before, after):
          f'<rect width="1100" height="{height}" fill="#101923"/>',
          '<g font-family="sans-serif" fill="#eff6ff"><text x="24" y="30" font-size="22">Public logs: estimated false positives per gigabyte</text>',
          '<text x="24" y="55" font-size="14">Lower is better. Linear axis; one gigabyte = 1,000,000,000 bytes.</text>',
-         '<text x="24" y="78" font-size="13">8 datasets · 819,576 lines · 92.4 MB · at most 40 sampled findings per stratum</text>']
+         f'<text x="24" y="78" font-size="13">LogHub before/after: {len(loghub)} datasets · {sum(d["lines"] for d in loghub):,} lines · {corpus_size(loghub)[3]} · at most 40 sampled findings per stratum</text>']
     for i,(kind,values) in enumerate(active):
         y=105+i*112
         svg.append(f'<text x="24" y="{y+18}" font-size="15">{html.escape(kind)}</text>')
@@ -207,7 +247,8 @@ def main():
     updated=re.sub(pattern,lambda m:m[1]+table+m[2],text)
     readme = ROOT/'README.md'
     original = readme.read_text(encoding='utf-8')
-    synopsis = '[Public-log chart and measured results](doc/real-logs.md).\n\n8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.\n'
+    count, _, lines, mb = corpus_size(manifest['datasets'])
+    synopsis = f'[Public-log chart and measured results](doc/real-logs.md).\n\n{count} public datasets, {mb}, {lines:,} lines: LogHub system logs plus web access, Kubernetes audit and CloudTrail logs. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.\n'
     readme_pattern = r'(?s)(<!-- real-logs-summary:start -->\n).*?(<!-- real-logs-summary:end -->)'
     if len(re.findall(readme_pattern,original)) != 1:
         raise ValueError('expected one README real-log block')

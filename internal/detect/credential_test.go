@@ -237,3 +237,21 @@ func TestCredentialRawAndNormalizedOwnership(t *testing.T) {
 		}
 	}
 }
+
+func TestCredentialSkipsUUIDIdempotencyTokens(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		text string
+		want int
+	}{
+		{`"clientToken": "129CAF40-59BF-4E49-8324-ED4F25010DCC"`, 0},
+		{`"ClientToken": "129caf40-59bf-4e49-8324-ed4f25010dcc"`, 0},
+		{`idempotency_token=129caf40-59bf-4e49-8324-ed4f25010dcc`, 0},
+		{`"clientToken": "129CAF40-59BF-4E49-8324-ED4F25010DCCX"`, 1},
+		{`"authToken": "129CAF40-59BF-4E49-8324-ED4F25010DCC"`, 1},
+	} {
+		if got := (&Credential{}).Scan([]byte(tc.text)); len(got) != tc.want {
+			t.Errorf("%q: got %v, want %d findings", tc.text, got, tc.want)
+		}
+	}
+}

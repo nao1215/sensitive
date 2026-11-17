@@ -192,9 +192,9 @@
     {
       "file": "internal/detect/log_context.go",
       "name": "numericLogContext.fragment",
-      "statements": 7,
-      "cyclomatic": 13,
-      "lines": 12
+      "statements": 9,
+      "cyclomatic": 14,
+      "lines": 15
     },
     {
       "file": "internal/detect/log_context.go",

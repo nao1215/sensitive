@@ -79,3 +79,53 @@ func TestLogContextPreservesStandaloneValues(t *testing.T) {
 		}
 	}
 }
+
+func TestUUIDGroupsAreNotIdentifiers(t *testing.T) {
+	t.Parallel()
+	const aadhaar DetectorName = "in_aadhaar"
+	detectors := map[DetectorName]Detector{NamePAN: NewPAN(), NameMyNumber: NewMyNumber(), aadhaar: NewCountry(aadhaar), NameSWIFTBIC: NewSWIFTBIC()}
+	for _, tc := range []struct {
+		detector DetectorName
+		text     string
+		want     int
+	}{
+		{NamePAN, `"auditID":"41111111-1111-1111-a8d9-745602ee7096"`, 0},
+		{NamePAN, `"auditID":"41111111-1111-1111"`, 1},
+		{NameMyNumber, `"eventID":"ea7648f5-850d-44c4-8e60-111111111118"`, 0},
+		{NameMyNumber, `"eventID":"508C931C-1111-1111-1118-E2B14B46B2F7"`, 0},
+		{NameMyNumber, `req-ea7648f5-850d-44c4-8e60-111111111118-retry`, 0},
+		{NameMyNumber, `"eventID":"ea7648f-850d-44c4-8e60-111111111118"`, 1},
+		{NameMyNumber, `"eventID":"8e60-111111111118"`, 1},
+		{aadhaar, `"requestID":"1f41f897-dafe-427b-af4e-234567890124"`, 0},
+		{aadhaar, `"requestID":"234567890124"`, 1},
+		{NameSWIFTBIC, `"auditID":"abcdca12-5186-4865-bead-87b827e025f7"`, 0},
+		{NameSWIFTBIC, `"auditID":"abcdca12-5186"`, 1},
+	} {
+		if got := detectors[tc.detector].Scan([]byte(tc.text)); len(got) != tc.want {
+			t.Errorf("%s %q: got %v, want %d findings", tc.detector, tc.text, got, tc.want)
+		}
+	}
+}
+
+func TestCanonicalUUIDLayout(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		text string
+		want bool
+	}{
+		{"ea7648f5-850d-44c4-8e60-111111111118", true},
+		{"ea7648f5-850d-44c4-8e60-11111111111", false},
+		{"xea7648f5-850d-44c4-8e60-111111111118", false},
+		{"ea7648f5-850d-44c4-8e60-111111111118x", false},
+		{"ea7648f5x850d-44c4-8e60-111111111118", false},
+		{"ea7648g5-850d-44c4-8e60-111111111118", false},
+	} {
+		at := 0
+		if tc.text[0] == 'x' {
+			at = 1
+		}
+		if got := canonicalUUID([]byte(tc.text), at); got != tc.want {
+			t.Errorf("%q at %d: got %v, want %v", tc.text, at, got, tc.want)
+		}
+	}
+}

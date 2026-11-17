@@ -150,7 +150,7 @@ fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
 ```
 
 <!-- speed-summary:start -->
-On the same five JSON slog events, go-masker takes 0.96 to 1.31 times and pii-shield 2.2 to 8.7 times embargo's time per event. [Time per event](doc/comparison.md#time-and-allocations)
+On the same five JSON slog events, go-masker takes 1.01 to 1.33 times and pii-shield 2.2 to 4.8 times embargo's time per event. [Time per event](doc/comparison.md#time-and-allocations)
 <!-- speed-summary:end -->
 
 ## Find and mask sensitive text
@@ -193,7 +193,7 @@ The cells excerpt each constant's godoc; follow the Kind link for the full rule 
 | [KindJWT](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJWT) | parses eyJ-prefixed base64url text with exactly two dots and nonempty header and payload segments | header checks yield 0.5, 0.7 or 0.8 with an empty signature, and 0.7, 0.9 or 1.0 otherwise | on |
 | [KindAWSKey](https://pkg.go.dev/github.com/nao1215/embargo@main#KindAWSKey) | identifies AKIA (long-term), ASIA (temporary), ABIA (STS service bearer) or ACCA (context-specific) followed by … | length, alphabet and alphanumeric boundary checks give 0.95 without a context keyword or authentication | on |
 | [KindIBAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIBAN) | accepts two ASCII country letters, two digits and an alphanumeric BBAN with optional internal spaces | country length and MOD 97 checks give 0.95, rejecting check digits 00, 01 and 99 without requiring a keyword | on |
-| [KindIPAddr](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIPAddr) | extracts dotted IPv4 decimal octets and colon-separated IPv6 hexadecimal text, including :: shorthand | net.ParseIP validation gives 0.8, excluding unspecified and loopback addresses with no keyword needed | on |
+| [KindIPAddr](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIPAddr) | extracts dotted IPv4 decimal octets and colon-separated IPv6 hexadecimal text, including :: shorthand | net.ParseIP validation gives 0.8, excluding IPv4 addresses whose first octet is zero (the this-network block, which … | on |
 | [KindSWIFTBIC](https://pkg.go.dev/github.com/nao1215/embargo@main#KindSWIFTBIC) | accepts 8 or 11 ASCII alphanumerics as four bank letters, two country letters, location and optional branch | country and structure checks give 0.85, with case ignored and no institution lookup | on |
 | [KindABARouting](https://pkg.go.dev/github.com/nao1215/embargo@main#KindABARouting) | selects 9 consecutive digits beginning 01–12, 21–32, 61–72 or 80 as US routing candidates | the repeating 3,7,1 weighted MOD 10 checksum must pass, giving 0.85 without a keyword | on |
 | [KindUKSortCode](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKSortCode) | picks six digits in three pairs separated consistently by hyphens or spaces with matching separators, excluding … | structure checks give 0.7, or 0.55 for contextual date-like candidates, without a checksum | on |
@@ -337,7 +337,7 @@ Held-out synthetic set, default minimum confidence 0. [Generation, test cases an
 <!-- real-logs-summary:start -->
 [Public-log chart and measured results](doc/real-logs.md).
 
-8 public datasets, 92.4 MB, 819,576 lines. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.
+15 public datasets, 239.9 MB, 1,048,835 lines: LogHub system logs plus web access, Kubernetes audit and CloudTrail logs. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.
 <!-- real-logs-summary:end -->
 
 ## Testing

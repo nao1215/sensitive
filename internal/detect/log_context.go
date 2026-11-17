@@ -12,9 +12,12 @@ import (
 // Every suffix is traversed once, even when many numeric candidates share it.
 type numericLogContext struct{ end, lastDot int }
 
-// fragment rejects decimal tails, signed identifier suffixes, and
-// numeric components of hostnames. Checksums alone cannot distinguish these.
+// fragment rejects decimal tails, signed identifier suffixes, groups of
+// canonical UUIDs, and numeric components of hostnames. Checksums alone cannot distinguish these.
 func (c *numericLogContext) fragment(data []byte, start, end int) bool {
+	if uuidComponent(data, start, end) {
+		return true
+	}
 	if start >= 2 && ((data[start-1] == '.' && ascii.IsDigit(data[start-2])) || (data[start-1] == '-' && data[start-2] == '_')) {
 		return true
 	}
@@ -173,4 +176,51 @@ func awsPartition(field []byte) bool {
 		return true
 	}
 	return false
+}
+
+// uuidLength is the length of the canonical 8-4-4-4-12 UUID rendering.
+const uuidLength = 36
+
+// uuidComponent reports whether data[start:end] lies inside a canonical UUID
+// (8-4-4-4-12 hex digits) delimited by non-identifier bytes. Request, event and
+// audit IDs in Kubernetes and cloud audit logs are UUIDs whose decimal-only
+// groups can pass identity-number checksums by chance.
+func uuidComponent(data []byte, start, end int) bool {
+	first := start
+	for first > 0 && start-first < uuidLength && (ascii.IsHexDigit(data[first-1]) || data[first-1] == '-') {
+		first--
+	}
+	last := end
+	for last < len(data) && last-end < uuidLength && (ascii.IsHexDigit(data[last]) || data[last] == '-') {
+		last++
+	}
+	for at := first; at <= start && at+uuidLength <= last; at++ {
+		if at+uuidLength >= end && canonicalUUID(data, at) {
+			return true
+		}
+	}
+	return false
+}
+
+// canonicalUUID reports whether a bounded canonical UUID starts at data[at].
+func canonicalUUID(data []byte, at int) bool {
+	if at+uuidLength > len(data) || (at > 0 && isIdentifierByte(data[at-1])) {
+		return false
+	}
+	if at+uuidLength < len(data) && isIdentifierByte(data[at+uuidLength]) {
+		return false
+	}
+	for i, b := range data[at : at+uuidLength] {
+		switch i {
+		case 8, 13, 18, 23: //nolint:mnd // Hyphen offsets of the canonical 8-4-4-4-12 layout.
+			if b != '-' {
+				return false
+			}
+		default:
+			if !ascii.IsHexDigit(b) {
+				return false
+			}
+		}
+	}
+	return true
 }

@@ -64,6 +64,9 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 // swiftExcluded reports whether a structurally valid code at [i, end) is a
 // token, register, user, identifier or hardware fragment rather than a BIC.
 func swiftExcluded(data []byte, i, end int) bool {
+	if uuidComponent(data, i, end) {
+		return true
+	}
 	if entropyLocation(data, i, end) && !swiftSlashList(data, i, end) {
 		return true
 	}

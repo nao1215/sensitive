@@ -11,7 +11,9 @@ import (
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindIPAddr.
 type IPAddr struct{}
 
-// NewIPAddr excludes unspecified and loopback addresses while retaining other valid endpoints.
+// NewIPAddr excludes loopback addresses and IPv4 addresses whose first octet is
+// zero (the this-network block, including the unspecified address), while
+// retaining other valid endpoints.
 func NewIPAddr() *IPAddr {
 	return &IPAddr{}
 }
@@ -83,7 +85,7 @@ func (d *IPAddr) tryIPv4(data []byte, i int) (Finding, int, bool) {
 
 	candidate, ip := parseIPSentence(string(data[i:j]))
 	end := i + len(candidate)
-	if ip == nil || ip.To4() == nil || ip.IsUnspecified() || ip.IsLoopback() || versionLabel(data, i) {
+	if ip == nil || ip.To4() == nil || ip.To4()[0] == 0 || ip.IsLoopback() || versionLabel(data, i) {
 		return Finding{}, j, false
 	}
 
