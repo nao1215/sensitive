@@ -16,3 +16,6 @@ doc/*.json text eol=lf
 
 # Preserve Go benchmark CPU headers exactly, including padded processor names.
 doc/performance/*-bench*.txt whitespace=-blank-at-eol
+
+# The README command example is compared with the atago spec line by line.
+e2e/atago/*.yaml text eol=lf
