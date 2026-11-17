@@ -96,6 +96,12 @@ func credentialSuffix(key string) bool {
 	default:
 		return false
 	}
+	return credentialSuffixMatch(key, candidates)
+}
+
+// credentialSuffixMatch reports whether key ends with one of the candidate
+// words as its own segment; a bare "key" suffix also needs a credential qualifier.
+func credentialSuffixMatch(key string, candidates []string) bool {
 	for _, word := range candidates {
 		start := len(key) - len(word)
 		if start < 0 || !strings.EqualFold(key[start:], word) || credentialSegmentStart(key) != start {
@@ -107,12 +113,21 @@ func credentialSuffix(key string) bool {
 		if start == 0 {
 			return false
 		}
-		prefix := strings.TrimRight(key[:start], "_.- ")
-		previous := prefix[credentialSegmentStart(prefix):]
-		for _, credential := range []string{"api", credentialSecretKey, "private", "access", "account"} {
-			if strings.EqualFold(previous, credential) {
-				return true
-			}
+		if qualifiedKeySuffix(key[:start]) {
+			return true
+		}
+	}
+	return false
+}
+
+// qualifiedKeySuffix reports whether the segment before a "key" suffix names
+// a credential, so api_key matches while primary_key does not.
+func qualifiedKeySuffix(head string) bool {
+	prefix := strings.TrimRight(head, "_.- ")
+	previous := prefix[credentialSegmentStart(prefix):]
+	for _, credential := range []string{"api", credentialSecretKey, "private", "access", "account"} {
+		if strings.EqualFold(previous, credential) {
+			return true
 		}
 	}
 	return false

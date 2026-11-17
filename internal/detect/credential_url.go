@@ -19,31 +19,53 @@ func urlPasswords(data []byte) []Finding {
 		for end < len(data) && !urlDelimiter(data[end]) {
 			end++
 		}
-		segment := data[start:end]
-		if scheme := bytes.Index(segment, []byte("://")); scheme >= 0 {
-			start += scheme + len("://")
-			segment = data[start:end]
-			if tail := bytes.IndexAny(segment, "/?#"); tail >= 0 {
-				segment = segment[:tail]
-			}
-		} else if !bytes.Contains(segment, []byte("@tcp(")) && !bytes.Contains(segment, []byte("@unix(")) {
-			start = end
-			continue
-		}
-		at := bytes.LastIndexByte(segment, '@')
-		if at >= 0 {
-			colon := bytes.IndexByte(segment[:at], ':')
-			if colon >= 0 && !bytes.ContainsAny(segment[:colon], "/?#@") {
-				secret := start + colon + 1
-				stop := start + at
-				if secret < stop && string(data[secret:stop]) != credentialMarker {
-					out = append(out, credentialFinding(secret, stop))
-				}
-			}
+		if f, ok := urlSegmentPassword(data, start, end); ok {
+			out = append(out, f)
 		}
 		start = end
 	}
 	return out
+}
+
+// urlSegmentPassword returns the password between the userinfo colon and the
+// last at-sign of a URL or DSN segment, skipping an already masked marker.
+func urlSegmentPassword(data []byte, start, end int) (Finding, bool) {
+	start, segment, ok := urlAuthority(data, start, end)
+	if !ok {
+		return Finding{}, false
+	}
+	at := bytes.LastIndexByte(segment, '@')
+	if at < 0 {
+		return Finding{}, false
+	}
+	colon := bytes.IndexByte(segment[:at], ':')
+	if colon < 0 || bytes.ContainsAny(segment[:colon], "/?#@") {
+		return Finding{}, false
+	}
+	secret := start + colon + 1
+	stop := start + at
+	if secret < stop && string(data[secret:stop]) != credentialMarker {
+		return credentialFinding(secret, stop), true
+	}
+	return Finding{}, false
+}
+
+// urlAuthority narrows a delimited segment to the URI authority after its
+// scheme, or keeps a whole Go MySQL DSN; other segments carry no userinfo.
+func urlAuthority(data []byte, start, end int) (authorityStart int, segment []byte, ok bool) {
+	segment = data[start:end]
+	if scheme := bytes.Index(segment, []byte("://")); scheme >= 0 {
+		start += scheme + len("://")
+		segment = data[start:end]
+		if tail := bytes.IndexAny(segment, "/?#"); tail >= 0 {
+			segment = segment[:tail]
+		}
+		return start, segment, true
+	}
+	if !bytes.Contains(segment, []byte("@tcp(")) && !bytes.Contains(segment, []byte("@unix(")) {
+		return start, segment, false
+	}
+	return start, segment, true
 }
 
 func urlDelimiter(b byte) bool {

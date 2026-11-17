@@ -34,34 +34,55 @@ func authorizationValueEnd(data []byte, start int) int {
 			end += len(credentialMarker) - 1
 			continue
 		}
-		c := data[end]
-		if c == '\\' && end+1 < len(data) && (data[end+1] == '\\' || data[end+1] == '"' || data[end+1] == 't') {
-			return start
-		} // Decoded params own their quotes.
-		if c == '\r' || c == '\n' {
-			return end
+		next, stop := authorizationValueByte(data, start, end)
+		if stop {
+			return next
 		}
-		if c == ',' {
-			if value := authorizationListValue(data, end+1); value != 0 {
-				if value < 0 {
-					return start // The decoded view owns this scheme separator.
-				}
-				end = value - 1
-				continue
-			}
-		}
-		if c == '"' || c == '\'' {
-			if end == start || data[end-1] != '=' {
-				return end
-			}
-			end = credentialQuoteEnd(data, end+1, c)
-			continue
-		}
-		if (c == '}' || c == ']' || c == ')' || c == '>') && !credentialAttachedTail(data, end) {
-			return end
-		}
+		end = next
 	}
 	return len(data)
+}
+
+// authorizationValueByte classifies the byte at end of an Authorization value.
+// It returns the value end and true when the byte stops the value, otherwise
+// the last consumed offset and false.
+func authorizationValueByte(data []byte, start, end int) (int, bool) {
+	c := data[end]
+	switch {
+	case serializedAuthorizationEscape(data, end):
+		return start, true // Decoded params own their quotes.
+	case c == '\r' || c == '\n':
+		return end, true
+	case c == ',':
+		return authorizationValueComma(data, start, end)
+	case c == '"' || c == '\'':
+		if end == start || data[end-1] != '=' {
+			return end, true
+		}
+		return credentialQuoteEnd(data, end+1, c), false
+	case (c == '}' || c == ']' || c == ')' || c == '>') && !credentialAttachedTail(data, end):
+		return end, true
+	}
+	return end, false
+}
+
+// serializedAuthorizationEscape reports a serialized backslash, quote or tab
+// escape at end, which makes the decoded view own the whole value.
+func serializedAuthorizationEscape(data []byte, end int) bool {
+	return data[end] == '\\' && end+1 < len(data) && (data[end+1] == '\\' || data[end+1] == '"' || data[end+1] == 't')
+}
+
+// authorizationValueComma decides whether a comma starts another list
+// credential, which the value then skips to, or hands the value to the decoded view.
+func authorizationValueComma(data []byte, start, end int) (int, bool) {
+	value := authorizationListValue(data, end+1)
+	if value == 0 {
+		return end, false
+	}
+	if value < 0 {
+		return start, true // The decoded view owns this scheme separator.
+	}
+	return value - 1, false
 }
 
 // Return the next list credential offset, zero for an auth-param, or -1 when
