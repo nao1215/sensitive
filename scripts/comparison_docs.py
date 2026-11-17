@@ -31,7 +31,7 @@ def full_source_hash():
 # change here invalidates timings; unrelated SDK/test dependencies do not.
 MEASURED_MODULES = (
     "github.com/bytedance/godlp", "github.com/m-mizutani/masq", "github.com/icntswm/go-masker",
-    "github.com/pii-shield/pii-shield/v3", "github.com/awslabs/ferret-scan", "gopkg.in/yaml.v3",
+    "github.com/pii-shield/pii-shield/v3", "github.com/awslabs/ferret-scan/v2", "gopkg.in/yaml.v3",
     "github.com/samber/lo", "github.com/samber/slog-common",
     "github.com/samber/slog-formatter", "github.com/samber/slog-multi",
     "github.com/showa-93/go-mask", "golang.org/x/text", "gopkg.in/yaml.v2",
@@ -66,7 +66,7 @@ def parse(raw):
 
 
 def runtime_modules(env):
-    packages = {"embargo": "github.com/nao1215/embargo", "masq": "github.com/m-mizutani/masq", "go-masker": "github.com/icntswm/go-masker/slogmask", "slog-formatter": "github.com/samber/slog-formatter", "go-mask": "github.com/showa-93/go-mask", "godlp": "github.com/bytedance/godlp", "pii-shield": "github.com/pii-shield/pii-shield/v3/pkg/scanner", "ferret-scan": "github.com/awslabs/ferret-scan/pkg/redact"}
+    packages = {"embargo": "github.com/nao1215/embargo", "masq": "github.com/m-mizutani/masq", "go-masker": "github.com/icntswm/go-masker/slogmask", "slog-formatter": "github.com/samber/slog-formatter", "go-mask": "github.com/showa-93/go-mask", "godlp": "github.com/bytedance/godlp", "pii-shield": "github.com/pii-shield/pii-shield/v3/pkg/scanner", "ferret-scan": "github.com/awslabs/ferret-scan/v2/pkg/redact"}
     result = {}
     for name, package in packages.items():
         own = package.removesuffix('/slogmask').removesuffix('/pkg/scanner').removesuffix('/pkg/redact')
@@ -112,7 +112,7 @@ def measure():
         "cpu": re.search(r"^cpu: (.+)$", raw, re.M)[1].strip(),
         "affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
         "background_load": "no intentional concurrent workload",
-        "versions": {"go-masker": "v0.6.1", "masq": "v0.2.3", "slog-formatter": "v1.3.0", "godlp": "v1.2.15", "go-mask": "v0.6.2", "pii-shield": "v3.0.0", "ferret-scan": "v1.10.0"},
+        "versions": {"go-masker": "v0.6.1", "masq": "v0.2.3", "slog-formatter": "v1.3.0", "godlp": "v1.2.15", "go-mask": "v0.6.2", "pii-shield": "v3.0.0", "ferret-scan": "v2.4.3"},
     }
     (DOC / "comparison.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
 

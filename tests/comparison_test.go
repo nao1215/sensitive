@@ -21,7 +21,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/awslabs/ferret-scan/pkg/redact"
+	"github.com/awslabs/ferret-scan/v2/pkg/redact"
 	dlp "github.com/bytedance/godlp"
 	"github.com/bytedance/godlp/dlpheader"
 	gomasker "github.com/ggwhite/go-masker/v3"
@@ -626,7 +626,7 @@ func scenarioEmit(t *testing.T, mode string, out io.Writer) func(string, ...slog
 func TestLeakScenarios(t *testing.T) {
 	modes := []string{scenarioSlog, scenarioZap, comparisonPIIShieldName, comparisonFerretName, comparisonMasqName, comparisonFormatterName, comparisonCopyName, comparisonMaskerName, comparisonDLPName}
 	var table strings.Builder
-	writeComparisonTable(t, &table, "| Service output | embargo slog | embargo zap | pii-shield v3.0.0 | ferret-scan v1.10.0 | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |\n|---|---|---|---|---|---|---|---|---|---|\n")
+	writeComparisonTable(t, &table, "| Service output | embargo slog | embargo zap | pii-shield v3.0.0 | ferret-scan v2.4.3 | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |\n|---|---|---|---|---|---|---|---|---|---|\n")
 	rows := []struct{ path, label string }{
 		{"declared", "Password under the key `password`"},
 		{"config", "Config struct holding a database DSN"},
@@ -794,7 +794,7 @@ func catchHandler(t *testing.T, mode string, out io.Writer, engine dlpheader.Eng
 //nolint:paralleltest // godlp initializes package globals; use the same serial setup as its other probes.
 func TestComparisonScenarios(t *testing.T) {
 	engine := godlpEngine(t)
-	report := catchReport{Versions: map[string]string{"embargo": "working source", "masq": "v0.2.3", comparisonFormatterName: "v1.3.0", comparisonCopyName: "v0.6.2", comparisonDLPName: "v1.2.15", "go-masker": "v0.6.1", comparisonPIIShieldName: "v3.0.0", comparisonFerretName: "v1.10.0"}}
+	report := catchReport{Versions: map[string]string{"embargo": "working source", "masq": "v0.2.3", comparisonFormatterName: "v1.3.0", comparisonCopyName: "v0.6.2", comparisonDLPName: "v1.2.15", "go-masker": "v0.6.1", comparisonPIIShieldName: "v3.0.0", comparisonFerretName: "v2.4.3"}}
 	for _, scenario := range catchScenarios() {
 		row := catchRow{Name: scenario.name, Label: scenario.label, Positive: scenario.positive, Results: map[string]catchObservation{}}
 		for _, mode := range []string{comparisonEmbargoName, comparisonPIIShieldName, comparisonFerretName, comparisonMasqName, comparisonMaskerName, comparisonFormatterName, comparisonCopyName, comparisonDLPName} {
