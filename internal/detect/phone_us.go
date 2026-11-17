@@ -22,8 +22,15 @@ func (d *USPhone) Hints() [][]byte {
 	return [][]byte{[]byte("2"), []byte("3"), []byte("4"), []byte("5"), []byte("6"), []byte("7"), []byte("8"), []byte("9"), []byte("(")}
 }
 
-// usPhoneDigits is the length of a number without the country code.
-const usPhoneDigits = 10
+// Layout of a separated number: a three-digit code, one separator, and a
+// four-digit line; a parenthesized area code spans five bytes.
+const (
+	usPhoneDigits     = 10
+	usPhoneCodeLength = 3
+	usPhoneLineEnd    = usPhoneCodeLength + 1 + 4
+	usPhoneParenArea  = usPhoneCodeLength + 2
+	usPhoneCountry    = len("1 ")
+)
 
 // Scan returns matches in data using the rules documented on [USPhone].
 func (d *USPhone) Scan(data []byte) []Finding {
@@ -48,22 +55,22 @@ func (d *USPhone) Scan(data []byte) []Finding {
 	return findings
 }
 
-// usPhoneAt matches (NXX) NXX-XXXX, NXX-NXX-XXXX, NXX.NXX.XXXX or NXX NXX XXXX
-// starting at i and returns its end. Separators are required, so bare digit
+// usPhoneAt matches (202) 555-0123, 202-555-0123, 202.555.0123 or 202 555 0123
+// shapes starting at i and returns its end. Separators are required, so bare digit
 // runs such as IDs and timestamps are not phone numbers.
 func usPhoneAt(data []byte, i int) (int, bool) {
 	if !usPhoneLeadingBoundary(data, i) {
 		return 0, false
 	}
 	exchange, ok := usPhoneAreaCode(data, i)
-	if !ok || exchange+8 > len(data) {
+	if !ok || exchange+usPhoneLineEnd > len(data) {
 		return 0, false
 	}
-	separator := data[exchange+3]
-	if !usPhoneExchange(data[exchange:exchange+3]) || (separator != '-' && separator != '.' && separator != ' ') || !allDigits(data[exchange+4:exchange+8]) {
+	separator := data[exchange+usPhoneCodeLength]
+	if !usPhoneExchange(data[exchange:exchange+usPhoneCodeLength]) || (separator != '-' && separator != '.' && separator != ' ') || !allDigits(data[exchange+usPhoneCodeLength+1:exchange+usPhoneLineEnd]) {
 		return 0, false
 	}
-	end := exchange + 8
+	end := exchange + usPhoneLineEnd
 	return end, usPhoneTrailingBoundary(data, end)
 }
 
@@ -72,24 +79,24 @@ func usPhoneAt(data []byte, i int) (int, bool) {
 // the exchange, so 202-555.0123 is rejected.
 func usPhoneAreaCode(data []byte, i int) (int, bool) {
 	if data[i] == '(' {
-		if i+5 > len(data) || !usPhoneArea(data[i+1:i+4]) || data[i+4] != ')' {
+		if i+usPhoneParenArea > len(data) || !usPhoneArea(data[i+1:i+1+usPhoneCodeLength]) || data[i+usPhoneParenArea-1] != ')' {
 			return 0, false
 		}
-		next := i + 5
+		next := i + usPhoneParenArea
 		if next < len(data) && data[next] == ' ' {
 			next++
 		}
-		return next, next+3 < len(data) && data[next+3] == '-'
+		return next, next+usPhoneCodeLength < len(data) && data[next+usPhoneCodeLength] == '-'
 	}
-	if i+4 > len(data) || !usPhoneArea(data[i:i+3]) {
+	if i+usPhoneCodeLength >= len(data) || !usPhoneArea(data[i:i+usPhoneCodeLength]) {
 		return 0, false
 	}
-	separator := data[i+3]
+	separator := data[i+usPhoneCodeLength]
 	if separator != '-' && separator != '.' && separator != ' ' {
 		return 0, false
 	}
-	next := i + 4
-	return next, next+3 < len(data) && data[next+3] == separator
+	next := i + usPhoneCodeLength + 1
+	return next, next+usPhoneCodeLength < len(data) && data[next+usPhoneCodeLength] == separator
 }
 
 // usPhoneArea checks a North American area code: 2–9, then 0–8, then a digit.
@@ -143,10 +150,10 @@ func usPhoneTrailingBoundary(data []byte, end int) bool {
 // usPhoneCountryCode extends the start over a preceding +1 or 1 with a
 // separator, so the country code is masked with the number.
 func usPhoneCountryCode(data []byte, start int) int {
-	if start < 2 || (data[start-1] != ' ' && data[start-1] != '-' && data[start-1] != '.') || data[start-2] != '1' {
+	if start < usPhoneCountry || (data[start-1] != ' ' && data[start-1] != '-' && data[start-1] != '.') || data[start-usPhoneCountry] != '1' {
 		return start
 	}
-	code := start - 2
+	code := start - usPhoneCountry
 	if code > 0 && data[code-1] == '+' {
 		code--
 	}

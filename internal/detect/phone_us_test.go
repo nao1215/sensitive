@@ -2,6 +2,8 @@ package detect
 
 import "testing"
 
+const usPhoneFixture = "202-555-0123"
+
 func TestUSPhoneDetector_Scan(t *testing.T) {
 	t.Parallel()
 	d := NewUSPhone()
@@ -10,15 +12,15 @@ func TestUSPhoneDetector_Scan(t *testing.T) {
 		wantLen              int
 		wantMinCon           float64
 	}{
-		{name: "hyphenated", input: "contact 202-555-0123", wantRaw: "202-555-0123", wantLen: 1, wantMinCon: 0.9},
+		{name: "hyphenated", input: "contact 202-555-0123", wantRaw: usPhoneFixture, wantLen: 1, wantMinCon: 0.9},
 		{name: "dotted", input: "call 415.555.0199 now", wantRaw: "415.555.0199", wantLen: 1, wantMinCon: 0.9},
 		{name: "spaced", input: "number 312 555 0142", wantRaw: "312 555 0142", wantLen: 1, wantMinCon: 0.7},
 		{name: "parenthesized area code", input: "tel: (212) 555-0100", wantRaw: "(212) 555-0100", wantLen: 1, wantMinCon: 0.9},
 		{name: "parenthesized without space", input: "(212)555-0100", wantRaw: "(212)555-0100", wantLen: 1, wantMinCon: 0.7},
 		{name: "country code is masked with the number", input: "phone +1 202-555-0123", wantRaw: "+1 202-555-0123", wantLen: 1, wantMinCon: 0.9},
 		{name: "bare country code", input: "1-800-555-0199", wantRaw: "1-800-555-0199", wantLen: 1, wantMinCon: 0.7},
-		{name: "two numbers", input: "202-555-0123 or 303-555-0145", wantRaw: "202-555-0123", wantLen: 2, wantMinCon: 0.7},
-		{name: "business label lowers the score", input: "order 202-555-0123", wantRaw: "202-555-0123", wantLen: 1, wantMinCon: 0.4},
+		{name: "two numbers", input: "202-555-0123 or 303-555-0145", wantRaw: usPhoneFixture, wantLen: 2, wantMinCon: 0.7},
+		{name: "business label lowers the score", input: "order 202-555-0123", wantRaw: usPhoneFixture, wantLen: 1, wantMinCon: 0.4},
 		{name: "bare digit run", input: "id 2025550123", wantLen: 0},
 		{name: "mixed separators", input: "202-555.0123", wantLen: 0},
 		{name: "area code starting with 1", input: "102-555-0123", wantLen: 0},
@@ -34,7 +36,7 @@ func TestUSPhoneDetector_Scan(t *testing.T) {
 		{name: "too short", input: "202-555-012", wantLen: 0},
 		{name: "unclosed parenthesis", input: "(212 555-0100", wantLen: 0},
 		{name: "parenthesized with dot", input: "(212) 555.0100", wantLen: 0},
-		{name: "sentence end", input: "Call 202-555-0123.", wantRaw: "202-555-0123", wantLen: 1, wantMinCon: 0.9},
+		{name: "sentence end", input: "Call 202-555-0123.", wantRaw: usPhoneFixture, wantLen: 1, wantMinCon: 0.9},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -50,7 +52,7 @@ func TestUSPhoneScoresAndName(t *testing.T) {
 	if d.Name() != NameUSPhone || len(d.Hints()) == 0 {
 		t.Fatal("name or hints missing")
 	}
-	for input, want := range map[string]float64{"202-555-0123": 0.7, "mobile 202-555-0123": 0.9, "invoice 202-555-0123": 0.4, "fax: +1 (212) 555-0100": 0.9} {
+	for input, want := range map[string]float64{usPhoneFixture: 0.7, "mobile 202-555-0123": 0.9, "invoice 202-555-0123": 0.4, "fax: +1 (212) 555-0100": 0.9} {
 		findings := d.Scan([]byte(input))
 		if len(findings) != 1 || findings[0].Confidence != want {
 			t.Errorf("%q: %+v, want confidence %v", input, findings, want)

@@ -606,6 +606,7 @@ func TestReadmeCLIExampleIsPinnedByE2E(t *testing.T) {
 	if block == nil {
 		t.Fatal("README needs one cli-example block piping one printf line into embargo, then the output line")
 	}
+	// #nosec G304,G703 -- The path is a repository file named by the README marker.
 	spec, err := os.ReadFile(string(block[1]))
 	if err != nil {
 		t.Fatal(err)

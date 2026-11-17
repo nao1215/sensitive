@@ -115,6 +115,7 @@ func openInputs(names []string, stdin io.Reader) (source io.Reader, closeAll fun
 // file name or operating-system detail, so it is shown as is.
 type inputError string
 
+// Error returns the fixed message.
 func (e inputError) Error() string { return string(e) }
 
 // safeInputError returns err's own message when it is an inputError and
@@ -132,6 +133,7 @@ type fileSequence struct {
 	names    []string
 }
 
+// Read reads the files in order and reports io.EOF after the last one.
 func (f *fileSequence) Read(p []byte) (int, error) {
 	for {
 		if err := f.advance(); err != nil {
