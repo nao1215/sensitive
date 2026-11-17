@@ -167,7 +167,8 @@ func countryFormatScore(name, value string) (score float64, ok bool) {
 }
 
 // validCountryChecksum validates identifiers whose check digit earns the
-// checksum score; unknown names are not valid.
+// checksum score. countryScore calls it only for the checksum families, so the
+// last of them, ca_sin, is the default case.
 func validCountryChecksum(name, value string) bool {
 	switch name {
 	case "uk_nhs":
@@ -180,10 +181,9 @@ func validCountryChecksum(name, value string) bool {
 		return validCNPJ(value)
 	case "cn_resident_id":
 		return validChinaID(value)
-	case "ca_sin":
+	default:
 		return value[0] != '0' && value[0] != '8' && !sameCountryDigits(value) && countryLuhn(value)
 	}
-	return false
 }
 
 func sameCountryDigits(value string) bool { return strings.Count(value, value[:1]) == len(value) }

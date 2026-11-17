@@ -140,16 +140,17 @@ func (f *fileSequence) Read(p []byte) (int, error) {
 			return 0, err
 		}
 		n, err := f.current.Read(p)
-		if !errors.Is(err, io.EOF) {
-			if err != nil {
-				return n, inputError("embargo: an input file cannot be read")
+		if errors.Is(err, io.EOF) {
+			f.close()
+			if n == 0 {
+				continue
 			}
-			return n, nil
+			err = nil
 		}
-		f.close()
-		if n > 0 {
-			return n, nil
+		if err != nil {
+			return n, inputError("embargo: an input file cannot be read")
 		}
+		return n, nil
 	}
 }
 

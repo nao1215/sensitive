@@ -723,3 +723,29 @@ func TestPlainJSONTextMatchesEncodingJSON(t *testing.T) {
 		t.Fatalf("appendString at the limit: err %v, length %d", exact.err, len(exact.result))
 	}
 }
+
+func TestJSONFastPathsStopOnBudgetCancellationAndOutputLimit(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindEmail))
+	warm := eventScanner{scanner: scanner, remaining: maxScanBytes}
+	if _, err := warm.maskCached(t.Context(), "status"); err != nil {
+		t.Fatal(err)
+	}
+	walker := func(remaining int, result []byte) *jsonWalker {
+		return &jsonWalker{data: nil, result: result, scanner: eventScanner{scanner: scanner, remaining: remaining}}
+	}
+	// A cached key still pays its budget, so an exhausted budget stops the key.
+	if _, err := walker(len("status")-1, nil).objectKey(t.Context(), []byte(`"status"`)); !errors.Is(err, saferecord.ErrSizeLimit) {
+		t.Fatalf("cached key beyond the budget: %v", err)
+	}
+	// A cached key that would overflow the output stops before it is copied.
+	full := walker(maxScanBytes, make([]byte, maxEventBytes-len(`"status"`)+1))
+	if _, err := full.objectKey(t.Context(), []byte(`"status"`)); !errors.Is(err, saferecord.ErrSizeLimit) || len(full.result) != maxEventBytes-len(`"status"`)+1 {
+		t.Fatalf("cached key past the output limit: %v", err)
+	}
+	canceled, cancel := context.WithCancel(t.Context())
+	cancel()
+	if err := walker(maxScanBytes, nil).stringElement(canceled, []byte(`"plain value"`), "note"); !errors.Is(err, saferecord.ErrCanceled) {
+		t.Fatalf("plain string after cancellation: %v", err)
+	}
+}
