@@ -103,7 +103,7 @@ func TestJSONDepthBoundary(t *testing.T) {
 
 func TestJSONErrorPaths(t *testing.T) {
 	t.Parallel()
-	for _, input := range []string{`{"private":1,"private":2}`, `{1:2}`, `{"bad`, strings.Repeat("[", 66) + strings.Repeat("]", 66)} {
+	for _, input := range []string{`{"private":1,"private":2}`, `{1:2}`, `{"bad`, `{"a":1]`, `[1}`, strings.Repeat("[", 66) + strings.Repeat("]", 66)} {
 		_, err := jsonValue(json.NewDecoder(strings.NewReader(input)), 0)
 		if err == nil {
 			t.Fatalf("invalid input accepted: %q", input)
