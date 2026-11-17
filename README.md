@@ -362,7 +362,7 @@ Held-out synthetic set, default minimum confidence 0. [Generation, test cases an
 <!-- techniques:end -->
 
 <!-- testing-metrics:start -->
-Coverage 97.1% · mutation score 88.37% · 13 fuzz targets, 3354049 executions.
+Coverage 99.4% · mutation score 89.18% · 13 fuzz targets, 2208636 executions.
 <!-- testing-metrics:end -->
 
 [Commands, measurement scope and conditions](doc/testing.md).

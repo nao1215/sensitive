@@ -158,15 +158,15 @@ Resource amplification, framing spoofing and ambiguous encodings. Tests: [json_t
 ## Measured results
 
 <!-- testing-metrics:start -->
-Measured 2026-11-15; retained snapshot with source-log hashes.
+Measured 2026-11-17; retained snapshot with source-log hashes.
 
 | Measurement | Result | Conditions |
 |---|---|---|
-| Statement coverage | 97.1% (3026/3115) | Root and integration suites combined |
-| Mutation score | 88.37% | gremlins v0.6.0, root tests, 2 workers, 10x timeout |
-| Mutations | 1869 killed, 246 lived, 243 uncovered, 38 timed out | Timeouts do not count as killed |
-| Mutation coverage | 89.69% | Mutated statements exercised by root tests |
-| Fuzzing | 13 targets, 3354049 executions | 10 seconds per target |
+| Statement coverage | 99.4% (4809/4837) | Root and integration suites combined |
+| Mutation score | 89.18% | gremlins v0.6.0, root tests, 2 workers, 10x timeout |
+| Mutations | 2646 killed, 321 lived, 181 uncovered, 55 timed out | Timeouts do not count as killed |
+| Mutation coverage | 94.35% | Mutated statements exercised by root tests |
+| Fuzzing | 13 targets, 2208636 executions | 10 seconds per target |
 <!-- testing-metrics:end -->
 
 ## Measurement scope and limits

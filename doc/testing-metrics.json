@@ -1,89 +1,89 @@
 {
-  "date": "2026-11-15",
-  "covered_statements": 3026,
-  "total_statements": 3115,
+  "date": "2026-11-17",
+  "covered_statements": 4809,
+  "total_statements": 4837,
   "mutation": {
-    "killed": 1869,
-    "lived": 246,
-    "uncovered": 243,
-    "timed_out": 38,
+    "killed": 2646,
+    "lived": 321,
+    "uncovered": 181,
+    "timed_out": 55,
     "not_viable": 0,
     "skipped": 0
   },
-  "efficacy": 88.37,
+  "efficacy": 89.18,
   "mutation_timeout_coefficient": 10,
   "mutation_workers": 2,
-  "mutator_coverage": 89.69,
+  "mutator_coverage": 94.35,
   "fuzz": [
     {
       "target": "FuzzCanary",
-      "executions": 16219,
+      "executions": 15759,
       "seconds_requested": 10
     },
     {
       "target": "FuzzJSONStream",
-      "executions": 64686,
+      "executions": 40607,
       "seconds_requested": 10
     },
     {
       "target": "FuzzGuardFraming",
-      "executions": 464832,
+      "executions": 198695,
       "seconds_requested": 10
     },
     {
       "target": "FuzzScanner",
-      "executions": 117359,
+      "executions": 39283,
       "seconds_requested": 10
     },
     {
       "target": "FuzzScanLines",
-      "executions": 146933,
-      "seconds_requested": 10
-    },
-    {
-      "target": "FuzzInput",
-      "executions": 514518,
-      "seconds_requested": 10
-    },
-    {
-      "target": "FuzzOutputJSON",
-      "executions": 1025922,
+      "executions": 6633,
       "seconds_requested": 10
     },
     {
       "target": "FuzzMask",
-      "executions": 616650,
+      "executions": 386913,
       "seconds_requested": 10
     },
     {
       "target": "FuzzJSONPaths",
-      "executions": 152660,
+      "executions": 211181,
       "seconds_requested": 10
     },
     {
       "target": "FuzzAdversarialBudgets",
-      "executions": 42235,
+      "executions": 14148,
       "seconds_requested": 10
     },
     {
       "target": "FuzzCredentialGrammar",
-      "executions": 26005,
+      "executions": 55352,
+      "seconds_requested": 10
+    },
+    {
+      "target": "FuzzInput",
+      "executions": 296390,
+      "seconds_requested": 10
+    },
+    {
+      "target": "FuzzOutputJSON",
+      "executions": 699467,
       "seconds_requested": 10
     },
     {
       "target": "FuzzMaskJSON",
-      "executions": 114754,
+      "executions": 154745,
       "seconds_requested": 10
     },
     {
       "target": "FuzzJSONShape",
-      "executions": 51276,
+      "executions": 89463,
       "seconds_requested": 10
     }
   ],
   "source_sha256": {
-    "coverage": "51b9c9db096017c500d3c69c5ad356e574df3b1881c634a041fec35076277d3d",
-    "mutation": "0efb3d1f63f7d9a90262a9c751020dd540f90295e1257c1243957b463ff1d7ef",
-    "fuzz": "64686c1dbe7599e2c44917e207f811a0a0b72a293cf72b0a294a237d4eb1e94a"
+    "coverage": "f799db0a0dcf7908bddbebdb320cf563abc710976891a20beeadb490fed38f03",
+    "mutation": "c10275b25b976a966deb7fbe5535a35b8112400018be13a88b3829a597b2b7db",
+    "fuzz": "d5db1302cf86b36111c2a2582c2b430dc9da8290905f65bd2204e1bfa0330dbe"
   }
 }
