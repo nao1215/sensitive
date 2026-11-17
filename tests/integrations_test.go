@@ -913,7 +913,13 @@ func loggerOutput(t *testing.T, scanner *embargo.Scanner, name, key string, valu
 	case loggerZap:
 		sink := embargozap.NewWriteSyncer(zapcore.AddSync(&out), scanner)
 		logger := zap.New(zapcore.NewCore(zapcore.NewJSONEncoder(zapcore.EncoderConfig{MessageKey: "msg"}), sink, zap.InfoLevel))
-		logger.Info("event", zap.Any(key, value))
+		field := zap.Any(key, value)
+		if raw, ok := value.(json.RawMessage); ok {
+			// Since Go 1.27 json.RawMessage is a fmt.Stringer, which zap.Any logs
+			// as a string; Reflect keeps the encoded JSON value in the record.
+			field = zap.Reflect(key, raw)
+		}
+		logger.Info("event", field)
 		if err := logger.Sync(); err != nil {
 			t.Fatal(err)
 		}

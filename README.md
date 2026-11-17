@@ -305,7 +305,7 @@ Each link opens the test that produces and checks the shown output.
 | [zap JSON core](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L171-L177) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
 | [zerolog JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L178-L182) | `{"level":"info","token":"[REDACTED]","message":"event"}` |
 | [logrus JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L183-L189) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
-| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L980-L1068) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
+| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L986-L1074) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
 | [Sentry](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L650-L733) | `"signing":{"key":"[REDACTED]"}` |
 | [HTTP](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L230-L252) | `[REDACTED]` |
 | [Child panic](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L254-L264) | `panic: [REDACTED]` |
