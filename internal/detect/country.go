@@ -106,9 +106,9 @@ func countryLayoutMatch(format, c byte) (keep, ok bool) {
 	case '#':
 		return true, ascii.IsDigit(c)
 	case 'A':
-		return true, c >= 'A' && c <= 'Z'
+		return true, ascii.IsUpper(c)
 	case 'C':
-		return true, ascii.IsDigit(c) || (c >= 'A' && c <= 'Z')
+		return true, ascii.IsDigit(c) || ascii.IsUpper(c)
 	case 'X':
 		return true, ascii.IsDigit(c) || c == 'X'
 	default:

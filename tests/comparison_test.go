@@ -18,6 +18,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/awslabs/ferret-scan/pkg/redact"
 	dlp "github.com/bytedance/godlp"
 	"github.com/bytedance/godlp/dlpheader"
 	masker "github.com/icntswm/go-masker"
@@ -26,7 +27,6 @@ import (
 	"github.com/icntswm/go-masker/zapmask"
 	"github.com/icntswm/go-masker/zerologmask"
 	"github.com/m-mizutani/masq"
-	"github.com/awslabs/ferret-scan/pkg/redact"
 	piishield "github.com/pii-shield/pii-shield/v3/pkg/scanner"
 	"github.com/rs/zerolog"
 	slogformatter "github.com/samber/slog-formatter"

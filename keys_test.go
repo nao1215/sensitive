@@ -98,3 +98,30 @@ func TestMaskKeyHitStillChecksCancellationAndBudget(t *testing.T) {
 		t.Fatalf("hit at the budget = %v, remaining %d", err, exact.remaining)
 	}
 }
+
+func TestKeyCachePublishesPendingKeysInDoublingBatches(t *testing.T) {
+	t.Parallel()
+	var cache keyCache
+	cache.store("a", keyResult{masked: "a"})
+	if _, ok := cache.load("a"); !ok {
+		t.Fatal("the first key must be published at once")
+	}
+	cache.store("b", keyResult{masked: "b"})
+	cache.store("c", keyResult{masked: "c"})
+	if _, ok := cache.load("c"); ok {
+		t.Fatal("a pending key smaller than the published set must wait")
+	}
+	if got := cache.size(); got != 3 {
+		t.Fatalf("size = %d, want 3", got)
+	}
+	cache.store("c", keyResult{masked: "again"})
+	cache.store("d", keyResult{masked: "d"})
+	for _, key := range []string{"a", "b", "c", "d"} {
+		if _, ok := cache.load(key); !ok {
+			t.Fatalf("%q was not published with its batch", key)
+		}
+	}
+	if result, _ := cache.loadBytes([]byte("c")); result.masked != "c" || result.key != "c" {
+		t.Fatalf("a repeated store replaced the pending result: %+v", result)
+	}
+}

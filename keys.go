@@ -6,6 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/nao1215/embargo/internal/ascii"
 	"github.com/nao1215/embargo/internal/detect"
 	"github.com/nao1215/embargo/internal/saferecord"
 )
@@ -67,59 +68,67 @@ type keyResult struct {
 }
 
 // keyCache publishes an immutable map, so lookups take no lock and a lookup by
-// bytes allocates nothing. Stores copy the map; there are at most
-// maxCachedKeys of them over a scanner's life.
+// bytes allocates nothing. New keys wait in a pending map under a mutex and are
+// published together once the pending set is as large as the published one, so
+// the copies over a scanner's life total about twice the admitted keys. Until
+// then a pending key is scanned again, which returns the same result.
 type keyCache struct {
 	entries atomic.Pointer[map[string]keyResult]
+	pending map[string]keyResult
 	mu      sync.Mutex
 }
 
-func (c *keyCache) load(key string) (keyResult, bool) {
-	entries := c.entries.Load()
-	if entries == nil {
-		return keyResult{}, false
+func (c *keyCache) published() map[string]keyResult {
+	if entries := c.entries.Load(); entries != nil {
+		return *entries
 	}
-	result, ok := (*entries)[key]
+	return nil
+}
+
+func (c *keyCache) load(key string) (keyResult, bool) {
+	result, ok := c.published()[key]
 	return result, ok
 }
 
 func (c *keyCache) loadBytes(key []byte) (keyResult, bool) {
-	entries := c.entries.Load()
-	if entries == nil {
-		return keyResult{}, false
-	}
-	result, ok := (*entries)[string(key)]
+	result, ok := c.published()[string(key)]
 	return result, ok
 }
 
 func (c *keyCache) size() int {
-	if entries := c.entries.Load(); entries != nil {
-		return len(*entries)
-	}
-	return 0
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return len(c.published()) + len(c.pending)
 }
 
 func (c *keyCache) store(key string, result keyResult) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	var current map[string]keyResult
-	if entries := c.entries.Load(); entries != nil {
-		current = *entries
-	}
-	if _, ok := current[key]; ok || len(current) >= maxCachedKeys {
+	current := c.published()
+	_, published := current[key]
+	_, waiting := c.pending[key]
+	if published || waiting || len(current)+len(c.pending) >= maxCachedKeys {
 		return
 	}
-	next := make(map[string]keyResult, len(current)+1)
-	maps.Copy(next, current)
+	if c.pending == nil {
+		c.pending = make(map[string]keyResult)
+	}
 	result.key = key
-	next[key] = result
+	c.pending[key] = result
+	if len(c.pending) < len(current) {
+		return
+	}
+	next := make(map[string]keyResult, len(current)+len(c.pending))
+	maps.Copy(next, current)
+	maps.Copy(next, c.pending)
 	c.entries.Store(&next)
+	c.pending = nil
 }
 
 // cacheableKey excludes numeric-looking keys, which maskScalar also checks as
 // exact integers with a second budget charge, and keys too long to keep.
 func cacheableKey[T string | []byte](s *Scanner, key T) bool {
-	return s.keys != nil && len(key) > 0 && len(key) <= maxCachedKeyBytes && key[0] != '-' && (key[0] < '0' || key[0] > '9')
+	return s.keys != nil && len(key) > 0 && len(key) <= maxCachedKeyBytes && key[0] != '-' && !ascii.IsDigit(key[0])
 }
 
 // cachedKey returns a cached result for key after the cancellation and budget

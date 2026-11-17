@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/nao1215/embargo/internal/ascii"
 	"github.com/nao1215/embargo/internal/saferecord"
 )
 
@@ -66,7 +67,7 @@ func canonicalInteger(text string) bool {
 		return false
 	}
 	for i := range len(digits) {
-		if digits[i] < '0' || digits[i] > '9' {
+		if !ascii.IsDigit(digits[i]) {
 			return false
 		}
 	}
@@ -87,7 +88,7 @@ func (s *eventScanner) scanScalar(ctx context.Context, value, key string) (strin
 // becomes a string only when it is numeric-looking or has findings. A false
 // changed result means value itself is the masked output.
 func (s *eventScanner) maskBytes(ctx context.Context, value []byte, key string) (masked string, changed bool, err error) {
-	if len(value) > 0 && (value[0] == '-' || (value[0] >= '0' && value[0] <= '9')) {
+	if len(value) > 0 && (value[0] == '-' || ascii.IsDigit(value[0])) {
 		text := string(value)
 		masked, err = s.maskScalar(ctx, text, key)
 		return masked, masked != text, err
