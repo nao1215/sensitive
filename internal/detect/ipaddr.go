@@ -1,8 +1,8 @@
 package detect
 
 import (
+	"bytes"
 	"net"
-	"slices"
 
 	"github.com/nao1215/embargo/internal/ascii"
 )
@@ -83,7 +83,7 @@ func (d *IPAddr) tryIPv4(data []byte, i int) (Finding, int, bool) {
 		j++
 	}
 
-	candidate, ip := parseIPSentence(string(data[i:j]))
+	candidate, ip := parseIPv4Run(data[i:j])
 	end := i + len(candidate)
 	if ip == nil || ip.To4() == nil || ip.To4()[0] == 0 || ip.IsLoopback() || versionLabel(data, i) {
 		return Finding{}, j, false
@@ -133,8 +133,8 @@ func (d *IPAddr) tryIPv6(data []byte, i int) (Finding, int, bool) {
 		j++
 	}
 
-	// IPv6 must contain at least one ':'.
-	if !containsColon(data[i:j]) {
+	// The colon of a JSON key such as "level":"info" ends here.
+	if bytes.Count(data[i:j], []byte{':'}) < minIPv6Colons {
 		return Finding{}, j, false
 	}
 
@@ -158,9 +158,20 @@ func (d *IPAddr) tryIPv6(data []byte, i int) (Finding, int, bool) {
 	}, j, true
 }
 
-// containsColon reports whether data contains at least one ':'.
-func containsColon(data []byte) bool {
-	return slices.Contains(data, ':')
+// Every IPv4 address has three dots and every IPv6 address at least two
+// colons, even after parseIPSentence trims sentence punctuation.
+const (
+	minIPv4Dots   = 3
+	minIPv6Colons = 2
+)
+
+// parseIPv4Run skips the address parse for a timestamp, a port or a counter,
+// whose digit run has fewer than three dots, so clean lines do not allocate.
+func parseIPv4Run(run []byte) (string, net.IP) {
+	if bytes.Count(run, []byte{'.'}) < minIPv4Dots {
+		return "", nil
+	}
+	return parseIPSentence(string(run))
 }
 
 func versionLabel(data []byte, start int) bool {

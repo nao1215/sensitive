@@ -15,6 +15,11 @@ The public-log evaluation adds seven operations logs that LogHub lacks: Nginx an
 - `KindCredential` leaves a canonical UUID under `clientToken` or `idempotencyToken` visible. CloudTrail records these EC2 request deduplication keys, which authenticate nothing; other token keys holding a UUID are still masked.
 - `KindHighEntropy` (opt-in) skips lowercase Kubernetes generated names such as `my-vault-agent-injector-9d457c8b-5pqfx`, whose five-character suffix uses the Kubernetes random alphabet.
 
+### Performance
+
+- The zap and zerolog writers mask a whole event outside their lock and only serialize the sink write, so goroutines that log at the same time mask in parallel. Before, every event went through one lock: on 16 CPUs a zap logger shared by 16 goroutines took as long per event as on one CPU. doc/benchmarks.md has a parallel table for the scanner, the slog handler and the zap writer. Output is byte-identical.
+- The IP address, MyNumber and Japanese phone detectors no longer allocate on candidates that cannot match: a digit run with fewer than three dots or a hex run with fewer than two colons skips the address parse, and digit runs go into a stack buffer. A default-scanner pass over a short JSON log line went from 30 to 3 allocations, and a clean line from 21 to 0.
+
 ### Added
 
 - doc/real-logs.md has a per-family table (system, web access, Kubernetes audit, cloud audit) with current FP/GB for WithAll and the default scanner.
