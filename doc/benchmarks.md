@@ -24,60 +24,60 @@ Background load: no intentional concurrent workload.
 
 | Operation | ns/op | MB/s | B/op | allocs/op |
 |---|---:|---:|---:|---:|
-| Scanner WithAll, clean | 64694.5 | 42.54 | 0 | 0 |
-| Scanner WithAll, dirty | 6927204.0 | 9.18 | 1431824 | 11824 |
-| Mask | 3317.5 | 887.66 | 8448 | 2 |
-| Writer only | 5.7 | 94907.39 | 0 | 0 |
-| Recorder + Check | 50541.0 | 10.76 | 45900 | 686 |
-| Plain slog, clean | 430.0 | — | 16 | 1 |
-| Masked slog, clean | 1453.5 | — | 16 | 1 |
-| Plain slog, dirty | 424.1 | — | 16 | 1 |
-| Masked slog, dirty | 1738.0 | — | 64 | 2 |
+| Scanner WithAll, clean | 62241.5 | 44.21 | 0 | 0 |
+| Scanner WithAll, dirty | 6963340.0 | 9.14 | 1431824 | 11824 |
+| Mask | 3188.5 | 923.39 | 8448 | 2 |
+| Writer only | 5.7 | 95223.85 | 0 | 0 |
+| Recorder + Check | 48863.0 | 11.13 | 45899 | 686 |
+| Plain slog, clean | 433.0 | — | 16 | 1 |
+| Masked slog, clean | 1424.5 | — | 16 | 1 |
+| Plain slog, dirty | 432.8 | — | 16 | 1 |
+| Masked slog, dirty | 1673.0 | — | 64 | 2 |
 
 <details>
 <summary>Per-detector Scanner throughput</summary>
 
 | Detector | Clean MB/s | Dirty MB/s |
 |---|---:|---:|
-| aba_routing | 884.43 | 119.20 |
-| ach_trace | 937.54 | 9.71 |
-| all | 42.54 | 9.18 |
-| awskey | 1069.07 | 265.07 |
-| bank_account | 906.08 | 12.93 |
-| br_cnpj | 874.26 | 161.18 |
-| br_cpf | 867.84 | 161.83 |
-| btc | 1206.04 | 103.44 |
-| ca_sin | 857.37 | 155.72 |
-| card_expiry | 1385.98 | 7.70 |
-| cn_resident_id | 1101.72 | 69.85 |
-| credential | 362.55 | 71.31 |
-| cvv | 642.57 | 9.82 |
-| email | 4182.23 | 181.48 |
-| eth | 1525.26 | 318.53 |
-| github_token | 1454.76 | 359.96 |
-| google_api_key | 1298.53 | 412.38 |
-| high_entropy | 1216.20 | 110.26 |
-| iban | 434.47 | 127.07 |
-| in_aadhaar | 881.13 | 156.55 |
-| in_pan | 1115.72 | 183.28 |
-| ipaddr | 4014.06 | 70.69 |
-| jwt | 1426.62 | 58.28 |
-| kr_rrn | 886.89 | 130.75 |
-| merchant_id | 588.03 | 27.05 |
-| mynumber | 991.82 | 115.86 |
-| pan | 3110.60 | 150.54 |
-| payment_token | 273.13 | 351.73 |
-| phone_jp | 3912.62 | 121.97 |
-| phone_us | 3131.45 | 119.07 |
-| private_key_pem | 1114.80 | 1138.87 |
-| service_token | 430.77 | 443.19 |
-| slack_token | 1256.15 | 188.98 |
-| swiftbic | 352.22 | 109.35 |
-| uk_nhs | 914.43 | 164.74 |
-| uk_nino | 859.23 | 151.24 |
-| uk_sortcode | 619.88 | 137.25 |
-| us_itin | 864.94 | 166.93 |
-| us_ssn | 864.40 | 166.54 |
+| aba_routing | 1093.43 | 122.59 |
+| ach_trace | 1208.40 | 10.50 |
+| all | 44.21 | 9.14 |
+| awskey | 1408.92 | 280.17 |
+| bank_account | 1123.44 | 12.76 |
+| br_cnpj | 1059.66 | 165.84 |
+| br_cpf | 1057.92 | 167.66 |
+| btc | 1585.49 | 105.07 |
+| ca_sin | 1041.91 | 163.05 |
+| card_expiry | 1960.53 | 7.51 |
+| cn_resident_id | 1414.99 | 69.40 |
+| credential | 387.08 | 72.19 |
+| cvv | 745.46 | 9.79 |
+| email | 28164.93 | 187.88 |
+| eth | 2332.98 | 347.99 |
+| github_token | 2115.89 | 395.15 |
+| google_api_key | 1819.28 | 460.87 |
+| high_entropy | 1604.89 | 112.28 |
+| iban | 520.04 | 129.75 |
+| in_aadhaar | 1073.12 | 162.93 |
+| in_pan | 1435.17 | 188.60 |
+| ipaddr | 22860.57 | 71.85 |
+| jwt | 2032.79 | 58.69 |
+| kr_rrn | 1071.76 | 136.11 |
+| merchant_id | 669.42 | 27.23 |
+| mynumber | 1108.85 | 120.18 |
+| pan | 8469.68 | 157.08 |
+| payment_token | 288.12 | 391.79 |
+| phone_jp | 22292.28 | 127.23 |
+| phone_us | 9825.12 | 122.93 |
+| private_key_pem | 1487.45 | 1580.54 |
+| service_token | 482.39 | 506.63 |
+| slack_token | 1822.32 | 213.50 |
+| swiftbic | 367.07 | 111.48 |
+| uk_nhs | 1119.26 | 170.91 |
+| uk_nino | 1028.53 | 155.11 |
+| uk_sortcode | 803.50 | 140.27 |
+| us_itin | 1041.16 | 173.36 |
+| us_ssn | 1043.66 | 177.29 |
 
 </details>
 <!-- benchmarks:end -->
@@ -95,10 +95,10 @@ WithKinds avoids running irrelevant detectors and removes their false-positive f
 <!-- narrowing:start -->
 | Selection | Clean ns/op | Dirty ns/op | Clean / dirty speedup over WithAll |
 |---|---:|---:|---|
-| all | 65,366.500 | 6,681,389.0 | 1.00× / 1.00× |
-| kinds1 | 664.550 | 34,136.5 | 98.36× / 195.73× |
-| kinds3 | 9,140.500 | 510,352.5 | 7.15× / 13.09× |
-| kinds8 | 10,751.000 | 1,556,919.0 | 6.08× / 4.29× |
+| all | 64,763.000 | 6,837,398.5 | 1.00× / 1.00× |
+| kinds1 | 101.000 | 22,310.0 | 641.22× / 306.47× |
+| kinds3 | 8,648.500 | 496,620.0 | 7.49× / 13.77× |
+| kinds8 | 10,173.500 | 1,541,041.5 | 6.37× / 4.44× |
 <!-- narrowing:end -->
 
 The one-kind set is email; three kinds add PAN and credential; eight add Japanese phone, IP address, GitHub token, service token and private-key PEM. Omitting kinds gives up their recall. Select kinds according to the application's output policy and inspect the [real-log false-positive estimates](accuracy.md#public-system-logs).
