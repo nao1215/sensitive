@@ -20,6 +20,7 @@ func fuzzSeeds() []string {
 	return []string{
 		"password%3DopaqueFixture%26public%3Dvalue", `Authorization: Digest response="opaqueFixture"`, `Password:[]uint8{0x61, 0x62}`, `password=\x22opaqueFixture\x22`,
 		"us_ssn=663-27-1262",
+		"phone (202) 555-0123",
 		"us_itin=984-73-5739",
 		"uk_nino=ZM 88 85 70 B",
 		"uk_nhs=769 461 7519",
@@ -130,8 +131,8 @@ func FuzzScanner(f *testing.F) {
 
 func TestAllBuiltinsHaveSeeds(t *testing.T) {
 	t.Parallel()
-	if got := len(builtinDetectors()); got != 37 {
-		t.Fatalf("reference recognizers: got %d, want 37", got)
+	if got := len(builtinDetectors()); got != 38 {
+		t.Fatalf("reference recognizers: got %d, want 38", got)
 	}
 	seen := map[Kind]bool{}
 	for _, s := range fuzzSeeds() {

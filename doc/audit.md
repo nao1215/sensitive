@@ -24,7 +24,7 @@ embargo --report --kinds all app.log
 embargo --report --kinds pan,credential --min-confidence 0.7 app.log
 ```
 
-The default is NewScanner's 25 kinds at minimum confidence 0. `--kinds all` includes the national identifiers and entropy heuristic; a list replaces the selection. `--samples` bounds locations per kind (default 3, range 0–20) and requires `--report`; counts still cover the complete input. Lines must be shorter than 4 MiB; read failures and oversized lines exit nonzero without a partial report.
+The default is NewScanner's 26 kinds at minimum confidence 0. `--kinds all` includes the national identifiers and entropy heuristic; a list replaces the selection. `--samples` bounds locations per kind (default 3, range 0–20) and requires `--report`; counts still cover the complete input. Lines must be shorter than 4 MiB; read failures and oversized lines exit nonzero without a partial report.
 
 For a log containing `card=4111111111111111`, a pan finding has start 5, end 21, line 1, column 5 and value `[REDACTED]`. Start/end are zero-based byte offsets in the original input, end-exclusive; line is one-based and column is a zero-based byte offset in that line. UTF-8 and CRLF offsets are tested. Multiple overlapping kinds can count the same bytes. Only matched spans are represented, with their values replaced; neither matched values nor surrounding log text are printed.
 

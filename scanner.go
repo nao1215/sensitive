@@ -38,8 +38,8 @@ type hintEntry struct {
 	needFold bool
 }
 
-// NewScanner starts with 25 built-ins; the additional country families and KindHighEntropy are opt-in.
-// WithAll enables all 37 families; WithKinds selects the regions and formats an application handles.
+// NewScanner starts with 26 built-ins; the additional country families and KindHighEntropy are opt-in.
+// WithAll enables all 38 families; WithKinds selects the regions and formats an application handles.
 // Minimum confidence defaults to 0, so ambiguous numeric and contextual candidates remain.
 // Select WithKinds when the application knows which data it handles; fewer detectors reduce work and unrelated findings.
 // See https://github.com/nao1215/embargo/blob/main/doc/benchmarks.md for measured kind sets.

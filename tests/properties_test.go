@@ -749,7 +749,7 @@ func TestMaskIdempotentAllKinds(t *testing.T) {
 			byKind[sample.Kind] = append(byKind[sample.Kind], sample.Text)
 		}
 	}
-	if len(byKind) != 37 {
+	if len(byKind) != 38 {
 		t.Fatal("every Kind needs positive adjacency fixtures")
 	}
 	for kind, inputs := range byKind {

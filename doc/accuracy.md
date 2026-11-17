@@ -4,7 +4,7 @@
 
 The development set uses Python `random.Random(20261115)`; the held-out set uses `random.Random(20270129)` and six different surrounding templates. Original inputs were fixed before detector changes. Added ARN, build-language, SSH-remote and version controls are regression evidence; incomplete PEM expected spans now include the existing suffix through end of input, retaining every previously expected byte. Tuning used development failures and independent code-review regressions; the held-out evaluation rejected a stricter SWIFT context rule because it reduced recall. We treated this as overfitting and reverted the rule; no held-out failure was used to tune the retained changes.
 
-Development contains 16,284 evaluations; held-out contains 15,824. The [generator](../scripts/generate_accuracy.py) constructs values and original byte ranges without invoking embargo. Development includes hand-written controls; held-out includes only independently generated values and controls. Repeated surroundings reuse values, and deterministic format examples such as email names and date cycles occur in both sets. Counts are not independent statistical trials. This is synthetic evaluation, not evidence of production accuracy or credential validity.
+Development contains 16,492 evaluations; held-out contains 16,032. The [generator](../scripts/generate_accuracy.py) constructs values and original byte ranges without invoking embargo. Development includes hand-written controls; held-out includes only independently generated values and controls. Repeated surroundings reuse values, and deterministic format examples such as email names and date cycles occur in both sets. Counts are not independent statistical trials. This is synthetic evaluation, not evidence of production accuracy or credential validity.
 
 Surroundings include logs, JSON, URLs, line endings and Japanese text. Negative controls include hashes, UUIDs, timestamps, order/invoice/tracking identifiers, versions, invalid checksums and malformed credentials. Labels and templates are not a substitute for a real-world corpus.
 
@@ -43,6 +43,7 @@ The original 23 built-in detectors decode exactly one layer of valid `%HH` escap
 | [pan](#pan) | 144 / 544 | 144 / 96 / 0 | 60.0% | 100.0% |
 | [payment_token](#payment-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 144 / 544 | 144 / 32 / 0 | 81.8% | 100.0% |
+| [phone_us](#phone-us) | 144 / 64 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [private_key_pem](#private-key-pem) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [slack_token](#slack-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [swiftbic](#swiftbic) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
@@ -73,6 +74,7 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [pan](#pan) | 146 / 562 | 146 / 97 / 0 | 60.1% | 100.0% |
 | [payment_token](#payment-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 146 / 562 | 146 / 32 / 0 | 82.0% | 100.0% |
+| [phone_us](#phone-us) | 144 / 64 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [private_key_pem](#private-key-pem) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [slack_token](#slack-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [swiftbic](#swiftbic) | 146 / 562 | 146 / 24 / 0 | 85.9% | 100.0% |
@@ -103,6 +105,7 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [pan](#pan) | 144 / 544 | 144 / 64 / 0 | 69.2% | 100.0% |
 | [payment_token](#payment-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [phone_us](#phone-us) | 144 / 64 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [private_key_pem](#private-key-pem) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [slack_token](#slack-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [swiftbic](#swiftbic) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
@@ -133,6 +136,7 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [pan](#pan) | 146 / 562 | 146 / 64 / 0 | 69.5% | 100.0% |
 | [payment_token](#payment-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [phone_us](#phone-us) | 144 / 64 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [private_key_pem](#private-key-pem) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [slack_token](#slack-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [swiftbic](#swiftbic) | 146 / 562 | 146 / 24 / 0 | 85.9% | 100.0% |
@@ -163,10 +167,11 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [pan](#pan) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [payment_token](#payment-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
+| [phone_us](#phone-us) | 144 / 64 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [private_key_pem](#private-key-pem) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [slack_token](#slack-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [swiftbic](#swiftbic) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [uk_sortcode](#uk-sortcode) | 144 / 544 | 138 / 0 / 6 | 100.0% | 95.8% |
+| [uk_sortcode](#uk-sortcode) | 144 / 544 | 132 / 0 / 12 | 100.0% | 91.7% |
 
 PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 development, 0.0 held. See [public-log sampling and classification](real-logs.md).
 
@@ -193,10 +198,11 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [pan](#pan) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [payment_token](#payment-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
+| [phone_us](#phone-us) | 144 / 64 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [private_key_pem](#private-key-pem) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [slack_token](#slack-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [swiftbic](#swiftbic) | 146 / 562 | 146 / 24 / 0 | 85.9% | 100.0% |
-| [uk_sortcode](#uk-sortcode) | 146 / 562 | 140 / 0 / 6 | 100.0% | 95.9% |
+| [uk_sortcode](#uk-sortcode) | 146 / 562 | 134 / 0 / 12 | 100.0% | 91.8% |
 
 PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 development, 0.0 held. See [public-log sampling and classification](real-logs.md).
 
@@ -328,7 +334,7 @@ Verified by the [mynumber format tests](../internal/detect/mynumber_test.go) and
 
 | Set / observed limit | Input example | Why it remains |
 |---|---|---|
-| development: `mynumber/control/invoice/0` | `Invoice: 100042543904` | Explanation 1 below. |
+| development: `mynumber/control/invoice/0` | `Invoice: 004254390645` | Explanation 1 below. |
 
 1. Business identifiers can satisfy sensitive-number shapes and checksums. Attached business labels lower confidence to 0.4, but the default threshold of 0 preserves ambiguous candidates.
 
@@ -340,8 +346,8 @@ Verified by the [pan format tests](../internal/detect/pan_test.go) and the [corp
 
 | Set / observed limit | Input example | Why it remains |
 |---|---|---|
-| development: `pan/control/order/0` | `Order ID: 4763270889822167` | Explanation 1 below. |
-| development: `pan/negative/0/japanese` | `処理結果【card-like 4033438821713084】を記録しました` | Explanation 2 below. |
+| development: `pan/control/order/0` | `Order ID: 4327088982216106` | Explanation 1 below. |
+| development: `pan/negative/0/japanese` | `処理結果【card-like 4865015899549583】を記録しました` | Explanation 2 below. |
 
 1. Business identifiers can satisfy sensitive-number shapes and checksums. Attached business labels lower confidence to 0.4, but the default threshold of 0 preserves ambiguous candidates.
 
@@ -366,6 +372,14 @@ Verified by the [phone_jp format tests](../internal/detect/phone_jp_test.go) and
 | development: `phone_jp/control/phone-shaped serial/0` | `Serial: 090-1000-2000` | Explanation 1 below. |
 
 1. Business identifiers can satisfy sensitive-number shapes and checksums. Attached business labels lower confidence to 0.4, but the default threshold of 0 preserves ambiguous candidates.
+
+## phone us
+
+![Held-out phone_us precision and recall](images/accuracy-phone_us.svg)
+
+Verified by the [phone_us format tests](../internal/detect/phone_us_test.go) and the [corpus regression check](../tests/accuracy_test.go). Hyphenated, dotted and parenthesized fictional 555-01xx numbers.
+
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## private key pem
 
@@ -450,13 +464,13 @@ Scanner, slog, adapters and embargotest keep threshold 0. NewScanner and the zer
 
 ## Choosing a threshold
 
-The default remains 0 for all 25 default kinds. Public-log rates are sample estimates on 92,409,848 bytes; precision treats published contacts/endpoints as sensitive references. Absolute public-log misses are unknown because undetected secrets are not labeled. Synthetic precision and misses use each default kind alone with the existing exact-span labels, including the credential sets; opt-in entropy and country kinds are excluded. Both previously inspected splits are regression evidence.
+The default remains 0 for all 26 default kinds. Public-log rates are sample estimates on 92,409,848 bytes; precision treats published contacts/endpoints as sensitive references. Absolute public-log misses are unknown because undetected secrets are not labeled. Synthetic precision and misses use each default kind alone with the existing exact-span labels, including the credential sets; opt-in entropy and country kinds are excluded. Both previously inspected splits are regression evidence.
 
 | Minimum confidence | Public FP/GB | Public precision | Development precision / misses | Held precision / misses |
 |---|---:|---:|---:|---:|
-| 0.0 | 0.0 | 100.0000% | 95.38% / 0 | 95.95% / 0 |
-| 0.5 | 0.0 | 100.0000% | 97.76% / 0 | 98.34% / 0 |
-| 0.7 | 0.0 | 100.0000% | 99.35% / 152 | 100.00% / 150 |
+| 0.0 | 0.0 | 100.0000% | 95.54% / 0 | 96.09% / 0 |
+| 0.5 | 0.0 | 100.0000% | 97.84% / 0 | 98.40% / 0 |
+| 0.7 | 0.0 | 100.0000% | 99.38% / 158 | 100.00% / 156 |
 
 Choose 0 when retaining ambiguous secrets is the priority. On these synthetic sets, 0.5 removes business-label false positives without additional misses; validate it against your own mislabeled secrets before opting in. A global 0.7 loses bank-account and sort-code positives. These thresholds do not fix the remaining public-log ABA/SWIFT false positives. Select relevant kinds and sensitive keys before raising the global cutoff; confidence is not a probability. Regenerate with make accuracy-doc and make real-log-accuracy; python3 scripts/accuracy_figures.py --check verifies this table.
 
@@ -471,22 +485,22 @@ Each split combines the original synthetic corpus, credentials and the frozen co
 |---|---|---:|---:|---:|---:|
 | development | critical | 0.0 | 1648 / 97 / 0 | 100.00% | 0 / 0 |
 | development | high | 0.0 | 3930 / 1089 / 0 | 100.00% | 0 / 0 |
-| development | standard | 0.0 | 1580 / 176 / 0 | 100.00% | 0 / 0 |
+| development | standard | 0.0 | 1724 / 176 / 0 | 100.00% | 0 / 0 |
 | development | critical | 0.5 | 1648 / 64 / 0 | 100.00% | 0 / 0 |
 | development | high | 0.5 | 3930 / 0 / 0 | 100.00% | 0 / 0 |
-| development | standard | 0.5 | 1460 / 24 / 120 | 92.41% | 120 / 4800 |
+| development | standard | 0.5 | 1604 / 24 / 120 | 93.04% | 120 / 4800 |
 | development | critical | 0.7 | 1648 / 0 / 0 | 100.00% | 0 / 0 |
-| development | high | 0.7 | 3170 / 0 / 760 | 80.66% | 760 / 10687 |
-| development | standard | 0.7 | 1460 / 24 / 120 | 92.41% | 120 / 4800 |
+| development | high | 0.7 | 3164 / 0 / 766 | 80.51% | 766 / 10735 |
+| development | standard | 0.7 | 1604 / 24 / 120 | 93.04% | 120 / 4800 |
 | held | critical | 0.0 | 1632 / 96 / 0 | 100.00% | 0 / 0 |
 | held | high | 0.0 | 3920 / 1088 / 0 | 100.00% | 0 / 0 |
-| held | standard | 0.0 | 1558 / 150 / 2 | 99.87% | 2 / 80 |
+| held | standard | 0.0 | 1702 / 150 / 2 | 99.88% | 2 / 80 |
 | held | critical | 0.5 | 1632 / 64 / 0 | 100.00% | 0 / 0 |
 | held | high | 0.5 | 3920 / 0 / 0 | 100.00% | 0 / 0 |
-| held | standard | 0.5 | 1440 / 0 / 120 | 92.31% | 120 / 4800 |
+| held | standard | 0.5 | 1584 / 0 / 120 | 92.96% | 120 / 4800 |
 | held | critical | 0.7 | 1632 / 0 / 0 | 100.00% | 0 / 0 |
-| held | high | 0.7 | 3162 / 0 / 758 | 80.66% | 758 / 10672 |
-| held | standard | 0.7 | 1440 / 0 / 120 | 92.31% | 120 / 4800 |
+| held | high | 0.7 | 3156 / 0 / 764 | 80.51% | 764 / 10720 |
+| held | standard | 0.7 | 1584 / 0 / 120 | 92.96% | 120 / 4800 |
 
 The critical gate requires the current 100% exact-span recall and zero residual bytes in each split at threshold zero. Updating a snapshot cannot relax this assertion. Unit tests inject a partial mask, overlapping ranges, missing findings and an empty corpus to check the gate and exposure calculation.
 

@@ -20,8 +20,8 @@ func repositoryKinds(t *testing.T) []kindDoc {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(kinds) != 37 {
-		t.Fatalf("got %d kinds, want 37", len(kinds))
+	if len(kinds) != 38 {
+		t.Fatalf("got %d kinds, want 38", len(kinds))
 	}
 	return kinds
 }
@@ -137,6 +137,7 @@ func scoreCases() map[embargo.Kind][]scoreCase {
 		embargo.KindPAN:             {{"Luhn", "4111111111111111", 1}, {"checksum failure", "4111111111111112", .6}, {businessLabelCase, "order_id=4111111111111111", .4}},
 		embargo.KindEmail:           {{"known TLD", "alice@example.com", 1}, {"unknown TLD", "alice@example.zzzz", .8}, {"known TLD doubled dot", "alice@ex..ample.com", .9}, {"unknown TLD doubled dot", "alice@ex..ample.zzzz", .7}},
 		embargo.KindJPPhone:         {{"mobile", "09012345678", .9}, {"landline", "0312345678", .8}, {businessLabelCase, "order_id=09012345678", .4}},
+		embargo.KindUSPhone:         {{"unlabeled", "202-555-0123", .7}, {"phone label", "phone: (202) 555-0123", .9}, {businessLabelCase, "order_id=202-555-0123", .4}},
 		embargo.KindMyNumber:        {{checksumCase, "123456789018", .95}, {businessLabelCase, "order_id=123456789018", .4}},
 		embargo.KindJWT:             {{"invalid unsigned header", "eyJ.e30.", .5}, {"invalid signed header", "eyJ.e30.sig", .7}, {"unsigned object", "eyJ4IjoxfQ.e30.", .7}, {"signed object", "eyJ4IjoxfQ.e30.sig", .9}, {"unsigned alg", "eyJhbGciOiJub25lIn0.e30.", .8}, {"signed alg", "eyJhbGciOiJIUzI1NiJ9.e30.sig", 1}},
 		embargo.KindAWSKey:          {{"access key ID", "AKIAIOSFODNN7EXAMPLE", .95}},

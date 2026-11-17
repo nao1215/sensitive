@@ -190,6 +190,16 @@
     "fn": 0
   },
   {
+    "detector": "phone_us",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 64,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
     "detector": "private_key_pem",
     "precision": "100.0%",
     "recall": "100.0%",
@@ -222,11 +232,11 @@
   {
     "detector": "uk_sortcode",
     "precision": "100.0%",
-    "recall": "95.8%",
+    "recall": "91.7%",
     "positive": 144,
     "negative": 544,
-    "tp": 138,
+    "tp": 132,
     "fp": 0,
-    "fn": 6
+    "fn": 12
   }
 ]

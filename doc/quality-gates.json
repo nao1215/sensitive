@@ -208,6 +208,13 @@
     },
     {
       "set": "development",
+      "kind": "phone_us",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "development",
       "kind": "private_key_pem",
       "tp": 146,
       "fp": 0,
@@ -467,6 +474,13 @@
     },
     {
       "set": "held",
+      "kind": "phone_us",
+      "tp": 144,
+      "fp": 0,
+      "fn": 0
+    },
+    {
+      "set": "held",
       "kind": "private_key_pem",
       "tp": 144,
       "fp": 0,
@@ -701,6 +715,12 @@
     },
     {
       "set": "development",
+      "kind": "phone_us",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "development",
       "kind": "private_key_pem",
       "numerator": 0,
       "denominator": 1
@@ -918,6 +938,12 @@
     {
       "set": "held",
       "kind": "phone_jp",
+      "numerator": 0,
+      "denominator": 1
+    },
+    {
+      "set": "held",
+      "kind": "phone_us",
       "numerator": 0,
       "denominator": 1
     },

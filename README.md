@@ -23,7 +23,7 @@ It exists for four jobs:
 |---|---|
 | Keep a known secret, such as an API key, from ever printing | [`Secret`](#values-that-must-never-print), which prints `[REDACTED]` through fmt, JSON, XML, templates and loggers |
 | Log the structs, errors and JSON you already have | [A slog handler and `MaskJSON`](#mask-structs-without-changing-their-types) that keep keys, types and nesting, plus [adapters](#loggers-and-services) for other loggers and SDKs |
-| Catch secrets nobody declared, such as a card number inside an error message | [37 built-in detectors](#find-and-mask-sensitive-text) that check the values: tokens, URL passwords, cards, bank numbers, email, IPs |
+| Catch secrets nobody declared, such as a card number inside an error message | [38 built-in detectors](#find-and-mask-sensitive-text) that check the values: tokens, URL passwords, cards, bank numbers, email, IPs |
 | Prove in CI that no secret reaches the output | [`embargotest`](#fail-tests-on-leaks), which fails a test when a fake secret appears in stdout, logs, HTTP responses or child processes |
 
 Redaction in a log pipeline can still run after it; embargo stops the leak where it is written. See [what it misses](doc/cases.md), its [accuracy](#accuracy) and [speed](#benchmarks).
@@ -155,7 +155,7 @@ On the same five JSON slog events, the wrapped handler is at or ahead of the fas
 
 ## Find and mask sensitive text
 
-embargo has 37 built-in detectors (25 run by default). `NewScanner()` runs the first five groups below except the entropy heuristic. The national IDs and the heuristic are opt-in: name them in `WithKinds`, or turn on everything with `WithAll`. The scanner reads the text itself, so no field has to be listed first.
+embargo has 38 built-in detectors (26 run by default). `NewScanner()` runs the first five groups below except the entropy heuristic. The national IDs and the heuristic are opt-in: name them in `WithKinds`, or turn on everything with `WithAll`. The scanner reads the text itself, so no field has to be listed first.
 
 <!-- example: example_test.go:ExampleKindCredential -->
 ```go
@@ -171,11 +171,11 @@ fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
 | Cards | 5 | Card numbers (Luhn), CVV, expiry, payment tokens, merchant ID |
 | Bank | 6 | IBAN, SWIFT/BIC, ABA routing, UK sort code, bank account, ACH trace |
 | Crypto | 2 | Bitcoin and Ethereum addresses |
-| Personal | 4 | Email, IP address, Japanese phone numbers and My Number, including full-width digits |
+| Personal | 5 | Email, IP address, US and Japanese phone numbers, and My Number, including full-width digits |
 | National IDs | 11 | Opt-in US, UK, Indian, Brazilian, Chinese, Korean and Canadian identifiers; [rules and measured limits](doc/countries.md) |
 
 <details>
-<summary>Matching rules and validation for all 37 kinds</summary>
+<summary>Matching rules and validation for all 38 kinds</summary>
 
 The cells excerpt each constant's godoc; follow the Kind link for the full rule and confidence tiers. Default refers to `NewScanner()` without options.
 
@@ -188,6 +188,7 @@ The cells excerpt each constant's godoc; follow the Kind link for the full rule 
 | [KindPAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN) | finds 13–19 digits with Visa, Mastercard, Amex, JCB, Discover, Diners or UnionPay prefixes | Luhn plus issuer length scores 1.0, a failed checksum 0.6, and an attached business label 0.4 | on |
 | [KindEmail](https://pkg.go.dev/github.com/nao1215/embargo@main#KindEmail) | extracts ASCII local parts using letters, digits and .+-_ before @ and dotted domains using letters, digits and .- | structure checks score 0.7 or 0.8 for an unknown TLD and 0.9 or 1.0 for a known TLD | on |
 | [KindJPPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJPPhone) | recognizes 10- or 11-digit Japanese numbers beginning with 0, allowing spaces, hyphens and parentheses | prefix/length checks score landlines 0.8, other accepted types 0.9, and business labels 0.4 | on |
+| [KindUSPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSPhone) | recognizes separated ten-digit North American numbers, (NXX) NXX-XXXX, NXX-NXX-XXXX, NXX.NXX.XXXX or NXX NXX XXXX … | area and exchange codes are checked against the numbering plan (area 2–9 then 0–8, exchange 2–9 and not N11) and the … | on |
 | [KindMyNumber](https://pkg.go.dev/github.com/nao1215/embargo@main#KindMyNumber) | recognizes 12 digits with optional spaces or hyphens as Japanese individual-number candidates | the weighted MOD 11 check gives 0.95, or 0.4 under a business label, without requiring a keyword; only a contiguous … | on |
 | [KindJWT](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJWT) | parses eyJ-prefixed base64url text with exactly two dots and nonempty header and payload segments | header checks yield 0.5, 0.7 or 0.8 with an empty signature, and 0.7, 0.9 or 1.0 otherwise | on |
 | [KindAWSKey](https://pkg.go.dev/github.com/nao1215/embargo@main#KindAWSKey) | identifies AKIA or ASIA followed by exactly 16 uppercase ASCII letters or digits (20 characters total) | length, alphabet and alphanumeric boundary checks give 0.95 without a context keyword or authentication | on |
@@ -329,8 +330,8 @@ Held-out synthetic set, default minimum confidence 0. [Generation, test cases an
 | [github_token](doc/accuracy.md#github-token) | [google_api_key](doc/accuracy.md#google-api-key) | [iban](doc/accuracy.md#iban) |
 | [ipaddr](doc/accuracy.md#ipaddr) | [jwt](doc/accuracy.md#jwt) | [merchant_id](doc/accuracy.md#merchant-id) |
 | [mynumber](doc/accuracy.md#mynumber) | [pan](doc/accuracy.md#pan) | [payment_token](doc/accuracy.md#payment-token) |
-| [phone_jp](doc/accuracy.md#phone-jp) | [private_key_pem](doc/accuracy.md#private-key-pem) | [slack_token](doc/accuracy.md#slack-token) |
-| [swiftbic](doc/accuracy.md#swiftbic) | [uk_sortcode](doc/accuracy.md#uk-sortcode) | |
+| [phone_jp](doc/accuracy.md#phone-jp) | [phone_us](doc/accuracy.md#phone-us) | [private_key_pem](doc/accuracy.md#private-key-pem) |
+| [slack_token](doc/accuracy.md#slack-token) | [swiftbic](doc/accuracy.md#swiftbic) | [uk_sortcode](doc/accuracy.md#uk-sortcode) |
 <!-- accuracy:end -->
 
 <!-- real-logs-summary:start -->

@@ -811,3 +811,11 @@ func ExampleWithKinds_accessLog() {
 	fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
 	// Output: 203.0.113.7 - - [17/Nov/2026:10:00:00 +0000] "GET /reset?email=[REDACTED]&token=[REDACTED] HTTP/1.1" 302 0
 }
+
+func ExampleKindUSPhone() {
+	text := "contact (202) 555-0123 or 202-555-0145"
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindUSPhone))
+	fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+
+	// Output: contact [REDACTED] or [REDACTED]
+}

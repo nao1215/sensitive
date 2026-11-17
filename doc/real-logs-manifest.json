@@ -31,6 +31,7 @@
     "pan",
     "payment_token",
     "phone_jp",
+    "phone_us",
     "private_key_pem",
     "service_token",
     "slack_token",

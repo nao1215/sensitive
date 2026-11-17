@@ -14,7 +14,7 @@ Masks secrets and personal data in each line of the files, or of stdin, and writ
 A line holding one JSON object or array keeps its keys, types and nesting and is written compact.
 Lines keep their endings. A read failure or a line longer than 4 MiB stops the output with an error.
 
-  --kinds KIND,...      detect only these kinds; all selects every kind (default: the 25 default kinds)
+  --kinds KIND,...      detect only these kinds; all selects every kind (default: the 26 default kinds)
   --min-confidence N    drop findings below N, from 0 to 1 (default 0)
   --report              print per-kind counts and masked byte locations as JSON instead of masked lines
   --samples N           locations per kind in the report, from 0 to 20 (default 3; needs --report)

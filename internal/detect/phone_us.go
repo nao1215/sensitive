@@ -1,0 +1,176 @@
+package detect
+
+import "github.com/nao1215/embargo/internal/ascii"
+
+// USPhone implements the public matching contract at
+// https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSPhone.
+type USPhone struct{}
+
+// NewUSPhone recognizes separated ten-digit North American numbers.
+func NewUSPhone() *USPhone {
+	return &USPhone{}
+}
+
+// Name returns "phone_us".
+func (d *USPhone) Name() DetectorName {
+	return NameUSPhone
+}
+
+// Hints returns the pre-filter substrings for [USPhone]: an area code starts
+// with 2 through 9 or an opening parenthesis.
+func (d *USPhone) Hints() [][]byte {
+	return [][]byte{[]byte("2"), []byte("3"), []byte("4"), []byte("5"), []byte("6"), []byte("7"), []byte("8"), []byte("9"), []byte("(")}
+}
+
+// usPhoneDigits is the length of a number without the country code.
+const usPhoneDigits = 10
+
+// Scan returns matches in data using the rules documented on [USPhone].
+func (d *USPhone) Scan(data []byte) []Finding {
+	if !hasDigits(data, usPhoneDigits) {
+		return nil
+	}
+	var findings []Finding
+	for i := 0; i < len(data); i++ {
+		end, ok := usPhoneAt(data, i)
+		if !ok {
+			continue
+		}
+		start := usPhoneCountryCode(data, i)
+		findings = append(findings, Finding{
+			DetectorName: d.Name(),
+			Start:        start,
+			End:          end,
+			Confidence:   businessConfidence(data, start, usPhoneConfidence(data, start)),
+		})
+		i = end - 1
+	}
+	return findings
+}
+
+// usPhoneAt matches (NXX) NXX-XXXX, NXX-NXX-XXXX, NXX.NXX.XXXX or NXX NXX XXXX
+// starting at i and returns its end. Separators are required, so bare digit
+// runs such as IDs and timestamps are not phone numbers.
+func usPhoneAt(data []byte, i int) (int, bool) {
+	if !usPhoneLeadingBoundary(data, i) {
+		return 0, false
+	}
+	exchange, ok := usPhoneAreaCode(data, i)
+	if !ok || exchange+8 > len(data) {
+		return 0, false
+	}
+	separator := data[exchange+3]
+	if !usPhoneExchange(data[exchange:exchange+3]) || (separator != '-' && separator != '.' && separator != ' ') || !allDigits(data[exchange+4:exchange+8]) {
+		return 0, false
+	}
+	end := exchange + 8
+	return end, usPhoneTrailingBoundary(data, end)
+}
+
+// usPhoneAreaCode accepts a parenthesized or plain area code at i and returns
+// where the exchange starts. A plain area code must use the same separator as
+// the exchange, so 202-555.0123 is rejected.
+func usPhoneAreaCode(data []byte, i int) (int, bool) {
+	if data[i] == '(' {
+		if i+5 > len(data) || !usPhoneArea(data[i+1:i+4]) || data[i+4] != ')' {
+			return 0, false
+		}
+		next := i + 5
+		if next < len(data) && data[next] == ' ' {
+			next++
+		}
+		return next, next+3 < len(data) && data[next+3] == '-'
+	}
+	if i+4 > len(data) || !usPhoneArea(data[i:i+3]) {
+		return 0, false
+	}
+	separator := data[i+3]
+	if separator != '-' && separator != '.' && separator != ' ' {
+		return 0, false
+	}
+	next := i + 4
+	return next, next+3 < len(data) && data[next+3] == separator
+}
+
+// usPhoneArea checks a North American area code: 2–9, then 0–8, then a digit.
+func usPhoneArea(code []byte) bool {
+	return allDigits(code) && code[0] >= '2' && code[1] != '9'
+}
+
+// usPhoneExchange checks a central office code: 2–9 first and not an N11
+// service code such as 911.
+func usPhoneExchange(code []byte) bool {
+	return allDigits(code) && code[0] >= '2' && (code[1] != '1' || code[2] != '1')
+}
+
+func allDigits(data []byte) bool {
+	for _, b := range data {
+		if !ascii.IsDigit(b) {
+			return false
+		}
+	}
+	return true
+}
+
+// usPhoneLeadingBoundary rejects a candidate inside an identifier, a longer
+// number, a dotted version or a path.
+func usPhoneLeadingBoundary(data []byte, i int) bool {
+	if i == 0 {
+		return true
+	}
+	previous := data[i-1]
+	if previous == '-' || previous == '.' {
+		// Only a 1 or +1 country code may join the number with these separators.
+		return usPhoneCountryCode(data, i) != i
+	}
+	return !isIdentifierByte(previous) && previous != '/' && previous != '+'
+}
+
+// usPhoneTrailingBoundary rejects a candidate followed by more digits or a
+// separator that continues the number.
+func usPhoneTrailingBoundary(data []byte, end int) bool {
+	if end == len(data) {
+		return true
+	}
+	next := data[end]
+	if isIdentifierByte(next) {
+		return false
+	}
+	continues := next == '-' || next == '.' || next == '/'
+	return !continues || end+1 == len(data) || !ascii.IsDigit(data[end+1])
+}
+
+// usPhoneCountryCode extends the start over a preceding +1 or 1 with a
+// separator, so the country code is masked with the number.
+func usPhoneCountryCode(data []byte, start int) int {
+	if start < 2 || (data[start-1] != ' ' && data[start-1] != '-' && data[start-1] != '.') || data[start-2] != '1' {
+		return start
+	}
+	code := start - 2
+	if code > 0 && data[code-1] == '+' {
+		code--
+	}
+	if code > 0 && (isIdentifierByte(data[code-1]) || data[code-1] == '.' || data[code-1] == '-') {
+		return start
+	}
+	return code
+}
+
+// usPhoneConfidence scores a number 0.7, or 0.9 after a phone label such as
+// phone, tel, mobile or fax.
+func usPhoneConfidence(data []byte, start int) float64 {
+	prefix := labelPrefix(data, start)
+	for range 3 {
+		var word []byte
+		prefix, word = previousLabelWord(prefix)
+		if labelIs(word, "phone", "tel", "telephone", "mobile", "cell", "fax", "call", "contact") {
+			//nolint:mnd // Labeled phone numbers carry the documented higher score.
+			return 0.9
+		}
+		if len(prefix) == 0 {
+			break
+		}
+	}
+	//nolint:mnd // Unlabeled separated numbers carry the documented base score.
+	return 0.7
+}
