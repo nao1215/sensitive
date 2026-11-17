@@ -1274,3 +1274,16 @@ func TestScanBuffersAreNotReusedForCustomDetectors(t *testing.T) {
 	}
 	zero.returnScratch(&scanScratch{text: []byte("x"), findings: nil})
 }
+
+func TestDefaultScannerKeepsDSNUserAndHost(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner()
+	for input, want := range map[string]string{
+		"postgres://app:s3cr3t@db.example/orders":     "postgres://app:[REDACTED]@db.example/orders",
+		"dial redis://:s3cr3t@cache.example.com:6379": "dial redis://:[REDACTED]@cache.example.com:6379",
+	} {
+		if got := Mask(input, scanner.ScanString(input)); got != want {
+			t.Errorf("Mask(%q) = %q, want %q", input, got, want)
+		}
+	}
+}

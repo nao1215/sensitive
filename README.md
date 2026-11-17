@@ -156,7 +156,9 @@ Mask everything a scanner finds, or keep part of a value:
 
 `Scanner.ScanLines` reads files and streams line by line. [Scanner options and custom replacements](doc/masking.md)
 
-Pick the kinds you need: on 2.7 KB of log lines with no secret, `WithKinds(KindEmail)` returns in 0.11 µs because there is no `@` to inspect, while `WithAll()` takes 85 µs. [Per-detector benchmarks](doc/benchmarks.md)
+<!-- narrowing-line:start -->
+Pick the kinds you need: on 2.7 KB of log lines with no secret, `WithKinds(KindEmail)` returns in 0.10 µs because there is no `@` to inspect, while `WithAll()` takes 60 µs. [Per-detector benchmarks](doc/benchmarks.md)
+<!-- narrowing-line:end -->
 
 ## Mask structs without changing their types
 

@@ -50,7 +50,7 @@ func (d *Email) Scan(data []byte) []Finding {
 			continue
 		}
 
-		if isSCPRemote(data, localStart, i, domainEnd) {
+		if isSCPRemote(data, localStart, i, domainEnd) || isURLUserinfo(data, localStart) {
 			continue
 		}
 
@@ -75,6 +75,26 @@ func (d *Email) Scan(data []byte) []Finding {
 // remote rather than an email address.
 func isSCPRemote(data []byte, localStart, at, domainEnd int) bool {
 	return string(data[localStart:at]) == "git" && domainEnd+1 < len(data) && data[domainEnd] == ':' && !urlDelimiter(data[domainEnd+1])
+}
+
+// isURLUserinfo reports whether the local part starts the userinfo of a URL,
+// scheme://user@host or scheme://user:password@host. The part before @ is then
+// a user name or password and the part after it a host, not an address:
+// credential rules own the password, and the host stays readable.
+func isURLUserinfo(data []byte, localStart int) bool {
+	start := localStart
+	if start > 0 && data[start-1] == ':' {
+		start--
+		for start > 0 && !userinfoBoundary(data[start-1]) {
+			start--
+		}
+	}
+	return start >= len("x://") && string(data[start-len("://"):start]) == "://" && ascii.IsAlphaNum(data[start-len("x://")])
+}
+
+// userinfoBoundary ends a URL user name when scanning back from its colon.
+func userinfoBoundary(b byte) bool {
+	return b == '/' || b == '@' || b == ':' || b <= ' ' || b == '"' || b == '\'' || b == '<' || b == '>'
 }
 
 // emailConfidence scores an accepted address from a base, a known TLD and a
