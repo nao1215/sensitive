@@ -8,8 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 The command-line tool is now `embargo`: by default it masks each line of files or stdin, keeping JSON lines' shape, and `embargo --report` replaces `embargo-audit`. Masking is faster with fewer allocations and unchanged output. The public library API is unchanged and the root module remains dependency-free.
 
+### Added
+
+- `KindUSPhone` detects separated ten-digit North American numbers, `(NXX) NXX-XXXX`, `NXX-NXX-XXXX`, `NXX.NXX.XXXX` and `NXX NXX XXXX` with an optional `+1` or `1`, checked against the numbering plan. It runs by default, so NewScanner now selects 26 of 38 kinds; it found nothing on the eight pinned public log datasets. Unseparated digit runs are not matched.
+
 ### Detection changes
 
+- The default scanner now masks separated North American phone numbers (`KindUSPhone`). Select kinds without it to keep them.
 - Email no longer matches the userinfo of a URL (`scheme://user@host`, `scheme://user:password@host`), the same exclusion SCP-style Git remotes already had. With the default kinds, `postgres://app:s3cr3t@db.example/orders` now masks to `postgres://app:[REDACTED]@db.example/orders`: the credential rule still masks the password and the host stays readable, where the overlapping email span used to hide the host as well. Text in that position is read as a user name and host even when it looks like an address, so `https://alice@example.com/` is no longer reported as an email.
 
 ### Changed
