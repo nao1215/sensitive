@@ -39,7 +39,7 @@ import (
 	"connectrpc.com/connect"
 
 	"github.com/gin-gonic/gin"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/rs/zerolog"
@@ -1656,7 +1656,7 @@ func TestWebFrameworkAccessLogs(t *testing.T) {
 		},
 		"echo": func(logger *slog.Logger) http.Handler {
 			server := echo.New()
-			server.GET("/login", func(c echo.Context) error {
+			server.GET("/login", func(c *echo.Context) error {
 				logger.Info("login", "email", c.QueryParam("email"))
 				return c.NoContent(http.StatusNoContent)
 			})

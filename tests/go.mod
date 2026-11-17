@@ -32,7 +32,7 @@ require (
 	github.com/awslabs/ferret-scan/v2 v2.4.3
 	github.com/ggwhite/go-masker/v3 v3.3.0
 	github.com/gin-gonic/gin v1.12.0
-	github.com/labstack/echo/v4 v4.16.3
+	github.com/labstack/echo/v5 v5.4.6
 	github.com/pii-shield/pii-shield/v3 v3.0.0
 )
 
@@ -53,7 +53,6 @@ require (
 	github.com/hhrutter/tiff v1.0.6 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
-	github.com/labstack/gommon v0.5.0 // indirect
 	github.com/ledongthuc/pdf v0.0.0-20250511090121-5959a4027728 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-runewidth v0.0.27 // indirect
@@ -68,8 +67,6 @@ require (
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.1 // indirect
-	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasttemplate v1.2.2 // indirect
 	go.mongodb.org/mongo-driver/v2 v2.5.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/arch v0.22.0 // indirect
