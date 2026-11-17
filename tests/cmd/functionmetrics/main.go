@@ -87,43 +87,62 @@ func writeBaseline(path string, value baseline) error {
 func functionMetric(set *token.FileSet, file string, decl *ast.FuncDecl) metric {
 	name := decl.Name.Name
 	if decl.Recv != nil {
-		receiver := ""
-		ast.Inspect(decl.Recv.List[0].Type, func(node ast.Node) bool {
-			if id, ok := node.(*ast.Ident); ok && receiver == "" {
-				receiver = id.Name
-			}
-			return true
-		})
-		name = receiver + "." + name
+		name = receiverName(decl.Recv.List[0].Type) + "." + name
 	}
 	result := metric{File: file, Name: name, Statements: 0, Cyclomatic: 1, Lines: set.Position(decl.End()).Line - set.Position(decl.Pos()).Line + 1}
 	ast.Inspect(decl.Body, func(node ast.Node) bool {
-		switch node.(type) {
-		case *ast.BlockStmt, *ast.CaseClause, *ast.CommClause, *ast.EmptyStmt:
-		default:
-			if _, ok := node.(ast.Stmt); ok {
-				result.Statements++
-			}
-		}
-		switch value := node.(type) {
-		case *ast.IfStmt, *ast.ForStmt, *ast.RangeStmt:
-			result.Cyclomatic++
-		case *ast.CaseClause:
-			if value.List != nil {
-				result.Cyclomatic++
-			}
-		case *ast.CommClause:
-			if value.Comm != nil {
-				result.Cyclomatic++
-			}
-		case *ast.BinaryExpr:
-			if value.Op == token.LAND || value.Op == token.LOR {
-				result.Cyclomatic++
-			}
-		}
+		result.Statements += statementCount(node)
+		result.Cyclomatic += decisionCount(node)
 		return true
 	})
 	return result
+}
+
+// receiverName is the first identifier in a receiver type, so pointer and
+// generic receivers share the base type name.
+func receiverName(receiver ast.Expr) string {
+	name := ""
+	ast.Inspect(receiver, func(node ast.Node) bool {
+		if id, ok := node.(*ast.Ident); ok && name == "" {
+			name = id.Name
+		}
+		return true
+	})
+	return name
+}
+
+// statementCount is 1 for a statement node other than a block, case,
+// communication or empty statement.
+func statementCount(node ast.Node) int {
+	switch node.(type) {
+	case *ast.BlockStmt, *ast.CaseClause, *ast.CommClause, *ast.EmptyStmt:
+	default:
+		if _, ok := node.(ast.Stmt); ok {
+			return 1
+		}
+	}
+	return 0
+}
+
+// decisionCount is 1 for a branch, loop, non-default case or logical operator.
+func decisionCount(node ast.Node) int {
+	switch value := node.(type) {
+	case *ast.IfStmt, *ast.ForStmt, *ast.RangeStmt:
+		return 1
+	case *ast.CaseClause:
+		if value.List != nil {
+			return 1
+		}
+	case *ast.CommClause:
+		if value.Comm != nil {
+			return 1
+		}
+	case *ast.BinaryExpr:
+		if value.Op == token.LAND || value.Op == token.LOR {
+			return 1
+		}
+	}
+	return 0
 }
 
 func measure(root string) ([]metric, error) {
@@ -138,26 +157,39 @@ func measure(root string) ([]metric, error) {
 			return err
 		}
 		if entry.IsDir() {
-			if entry.Name() == ".git" || relative == "tests" || entry.Name() == "testdata" {
-				return filepath.SkipDir
-			}
-			return nil
+			return directoryAction(entry.Name(), relative)
 		}
 		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 			return nil
 		}
-		parsed, err := parser.ParseFile(set, path, nil, 0)
-		if err != nil {
-			return err
-		}
-		for _, decl := range parsed.Decls {
-			if function, ok := decl.(*ast.FuncDecl); ok && function.Body != nil {
-				result = append(result, functionMetric(set, filepath.ToSlash(relative), function))
-			}
-		}
-		return nil
+		result, err = appendFileMetrics(result, set, path, filepath.ToSlash(relative))
+		return err
 	})
 	return result, err
+}
+
+// directoryAction skips version control, the separate tests module and
+// fixture directories; every other directory is walked.
+func directoryAction(name, relative string) error {
+	if name == ".git" || relative == "tests" || name == "testdata" {
+		return filepath.SkipDir
+	}
+	return nil
+}
+
+// appendFileMetrics parses one production file and appends a metric for each
+// function with a body; declarations without bodies are skipped.
+func appendFileMetrics(result []metric, set *token.FileSet, path, file string) ([]metric, error) {
+	parsed, err := parser.ParseFile(set, path, nil, 0)
+	if err != nil {
+		return result, err
+	}
+	for _, decl := range parsed.Decls {
+		if function, ok := decl.(*ast.FuncDecl); ok && function.Body != nil {
+			result = append(result, functionMetric(set, file, function))
+		}
+	}
+	return result, nil
 }
 
 func key(m metric) string { return m.File + ":" + m.Name }

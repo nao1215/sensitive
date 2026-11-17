@@ -106,7 +106,8 @@ func run() error {
 	return os.WriteFile(*output, append(out, '\n'), privateMode)
 }
 
-//nolint:gocognit // Keep the independent scanner and actual handler checks next to the measured line.
+// measure checks every line of one cached dataset and verifies its size, line
+// count and checksum against the manifest after reading it.
 func measure(d *dataset, cache string, scanners map[string]*embargo.Scanner, singles map[embargo.Kind]*embargo.Scanner) (r result, err error) {
 	r = result{Dataset: d.Name, Counts: map[string]map[embargo.Kind]int{}, Samples: map[embargo.Kind][]sample{}, ThresholdSamples: map[string]map[embargo.Kind][]sample{"default50": {}, "default70": {}}}
 	path, err := filepath.Localize(d.Path)
@@ -125,56 +126,15 @@ func measure(d *dataset, cache string, scanners map[string]*embargo.Scanner, sin
 	const maxLogLine = 4 << 20
 	lines.Buffer(make([]byte, bufio.MaxScanTokenSize), maxLogLine)
 	findingsDigest := sha256.New()
-	encoder := json.NewEncoder(findingsDigest)
-	var output bytes.Buffer
-	handler := embargo.NewSlogHandler(slog.NewJSONHandler(&output, nil), scanners["default"])
+	check := &lineCheck{dataset: d.Name, encoder: json.NewEncoder(findingsDigest), scanners: scanners, singles: singles, handler: nil, output: bytes.Buffer{}}
+	check.handler = embargo.NewSlogHandler(slog.NewJSONHandler(&check.output, nil), scanners["default"])
 	for name := range scanners {
 		r.Counts[name] = map[embargo.Kind]int{}
 	}
 	for lines.Scan() {
 		r.Lines++
-		text := lines.Text()
-		all := scanners["all"].ScanString(text)
-		if encodeErr := encoder.Encode(all); encodeErr != nil {
-			return r, encodeErr
-		}
-		for kind, scanner := range singles {
-			individual := scanner.ScanString(text)
-			selected := slices.DeleteFunc(slices.Clone(all), func(f embargo.Finding) bool { return f.Kind != kind })
-			if !slices.Equal(individual, selected) {
-				return r, fmt.Errorf("single/all mismatch: %s line %d kind %s", d.Name, r.Lines, kind)
-			}
-		}
-		for name, scanner := range scanners {
-			findings := all
-			if name != "all" {
-				findings = scanner.ScanString(text)
-			}
-			for _, f := range findings {
-				r.Counts[name][f.Kind]++
-				if samples, ok := r.ThresholdSamples[name]; ok {
-					sampleFinding(samples, d.Name, r.Lines, text, f)
-				}
-			}
-			if name == "default" {
-				output.Reset()
-				record := slog.NewRecord(time.Time{}, slog.LevelInfo, text, 0)
-				if handleErr := handler.Handle(context.Background(), record); handleErr != nil {
-					return r, handleErr
-				}
-				var decoded struct {
-					Msg string `json:"msg"`
-				}
-				if decodeErr := json.Unmarshal(output.Bytes(), &decoded); decodeErr != nil {
-					return r, decodeErr
-				}
-				if decoded.Msg != string([]rune(embargo.Mask(text, findings))) {
-					return r, fmt.Errorf("handler mismatch: %s line %d", d.Name, r.Lines)
-				}
-			}
-		}
-		for _, f := range all {
-			sampleFinding(r.Samples, d.Name, r.Lines, text, f)
+		if lineErr := check.line(&r, lines.Text()); lineErr != nil {
+			return r, lineErr
 		}
 	}
 	if scanErr := lines.Err(); scanErr != nil {
@@ -190,6 +150,82 @@ func measure(d *dataset, cache string, scanners map[string]*embargo.Scanner, sin
 	}
 	r.FindingsSHA256 = hex.EncodeToString(findingsDigest.Sum(nil))
 	return r, nil
+}
+
+// lineCheck holds the scanners and the actual slog handler that every line of
+// one dataset is measured against.
+type lineCheck struct {
+	encoder  *json.Encoder
+	scanners map[string]*embargo.Scanner
+	singles  map[embargo.Kind]*embargo.Scanner
+	handler  slog.Handler
+	dataset  string
+	output   bytes.Buffer
+}
+
+// line records the all-detector findings digest, requires each single-kind
+// scanner to agree with the all-detector scan, counts every configuration and
+// samples the line's findings.
+func (c *lineCheck) line(r *result, text string) error {
+	all := c.scanners["all"].ScanString(text)
+	if err := c.encoder.Encode(all); err != nil {
+		return err
+	}
+	for kind, scanner := range c.singles {
+		individual := scanner.ScanString(text)
+		selected := slices.DeleteFunc(slices.Clone(all), func(f embargo.Finding) bool { return f.Kind != kind })
+		if !slices.Equal(individual, selected) {
+			return fmt.Errorf("single/all mismatch: %s line %d kind %s", c.dataset, r.Lines, kind)
+		}
+	}
+	for name, scanner := range c.scanners {
+		if err := c.configuration(r, name, scanner, text, all); err != nil {
+			return err
+		}
+	}
+	for _, f := range all {
+		sampleFinding(r.Samples, c.dataset, r.Lines, text, f)
+	}
+	return nil
+}
+
+// configuration counts one scanner configuration's findings and, for the
+// default policy, compares them with the message the slog handler wrote.
+func (c *lineCheck) configuration(r *result, name string, scanner *embargo.Scanner, text string, all []embargo.Finding) error {
+	findings := all
+	if name != "all" {
+		findings = scanner.ScanString(text)
+	}
+	for _, f := range findings {
+		r.Counts[name][f.Kind]++
+		if samples, ok := r.ThresholdSamples[name]; ok {
+			sampleFinding(samples, c.dataset, r.Lines, text, f)
+		}
+	}
+	if name != "default" {
+		return nil
+	}
+	return c.handlerMessage(r.Lines, text, findings)
+}
+
+// handlerMessage requires the actual handler's message to equal Mask applied
+// to the default scanner's findings.
+func (c *lineCheck) handlerMessage(line int, text string, findings []embargo.Finding) error {
+	c.output.Reset()
+	record := slog.NewRecord(time.Time{}, slog.LevelInfo, text, 0)
+	if err := c.handler.Handle(context.Background(), record); err != nil {
+		return err
+	}
+	var decoded struct {
+		Msg string `json:"msg"`
+	}
+	if err := json.Unmarshal(c.output.Bytes(), &decoded); err != nil {
+		return err
+	}
+	if decoded.Msg != string([]rune(embargo.Mask(text, findings))) {
+		return fmt.Errorf("handler mismatch: %s line %d", c.dataset, line)
+	}
+	return nil
 }
 
 func sampleFinding(samples map[embargo.Kind][]sample, dataset string, line int, text string, f embargo.Finding) {
