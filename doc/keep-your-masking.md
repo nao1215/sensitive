@@ -2,7 +2,7 @@
 
 You can keep masq, another masking library, or an application-owned masking function and use embargotest only in tests. A recorder observes the bytes your existing logger emits; it does not mask them. A planted canary catches leaks independently of the detector rules, and an output expectation prevents an empty logger from passing.
 
-Add the test dependency with `go get github.com/nao1215/embargo/embargotest@v0.10.0`. The package adds no external dependencies. Paste this into an existing package's test file; production code needs no embargo import:
+Add the test dependency with `go get github.com/nao1215/embargo/embargotest@v0.11.0`. The package adds no external dependencies. Paste this into an existing package's test file; production code needs no embargo import:
 
 ```go
 package example
