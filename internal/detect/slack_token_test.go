@@ -1,15 +1,13 @@
-package detect_test
+package detect
 
 import (
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestSlackTokenDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewSlackToken()
+	d := NewSlackToken()
 	tests := []struct {
 		name    string
 		input   string
@@ -60,39 +58,34 @@ func TestSlackTokenDetector_Scan(t *testing.T) {
 			if len(findings) != tt.wantLen {
 				t.Fatalf("got %d findings, want %d: %+v", len(findings), tt.wantLen, findings)
 			}
-			if tt.wantLen == 1 && findings[0].RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
+			if tt.wantLen == 1 && tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
 			}
 		})
 	}
 }
 
-func TestSlackTokenDetector_Detail(t *testing.T) {
+func TestSlackTokenDetector_Validation(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewSlackToken()
+	d := NewSlackToken()
 	tests := []struct {
-		input    string
-		wantType detect.SlackTokenType
+		input string
 	}{
-		{input: "xoxb-1234567890-abcdefghijkl", wantType: detect.SlackTokenBot},
-		{input: "xoxp-1234567890-abcdefghijkl", wantType: detect.SlackTokenUser},
-		{input: "xoxa-1234567890-abcdefghijkl", wantType: detect.SlackTokenApp},
-		{input: "xoxr-1234567890-abcdefghijkl", wantType: detect.SlackTokenRefresh},
+		{input: "xoxb-1234567890-abcdefghijkl"},
+		{input: "xoxp-1234567890-abcdefghijkl"},
+		{input: "xoxa-1234567890-abcdefghijkl"},
+		{input: "xoxr-1234567890-abcdefghijkl"},
 	}
 	for _, tt := range tests {
-		t.Run(string(tt.wantType), func(t *testing.T) {
+		t.Run(tt.input, func(t *testing.T) {
 			t.Parallel()
 			findings := d.Scan([]byte(tt.input))
 			if len(findings) != 1 {
 				t.Fatalf("input=%q: got %d findings, want 1", tt.input, len(findings))
 			}
-			detail, ok := findings[0].SlackTokenDetail()
-			if !ok {
-				t.Fatalf("SlackTokenDetail() ok = false")
-			}
-			if detail.TokenType != tt.wantType {
-				t.Errorf("TokenType = %q, want %q", detail.TokenType, tt.wantType)
+			if !slackTokenPrefix([]byte(tt.input), 0) || findings[0].Start != 0 || findings[0].End != len(tt.input) {
+				t.Fatal(findings)
 			}
 		})
 	}

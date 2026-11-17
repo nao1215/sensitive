@@ -19,24 +19,6 @@ func hasASCIIPrefix(data []byte, i int, p string) bool {
 	return true
 }
 
-// isTokenByte reports whether b is a character that can appear inside a
-// developer token body: an ASCII letter, digit, '_' or '-'. It is used for word
-// boundary checks so a token embedded in a longer identifier is not matched.
-func isTokenByte(b byte) bool {
-	switch {
-	case b >= 'A' && b <= 'Z':
-		return true
-	case b >= 'a' && b <= 'z':
-		return true
-	case b >= '0' && b <= '9':
-		return true
-	case b == '_' || b == '-':
-		return true
-	default:
-		return false
-	}
-}
-
 // credBoundary reports whether data[start:end] is delimited by non-token bytes on
 // both sides, so a credential is not matched as a substring of a longer word.
 func credBoundary(data []byte, start, end int) bool {
@@ -62,4 +44,14 @@ func scanCharset(data []byte, start int, allow func(byte) bool) (end, n int) {
 // credStartBoundary rejects impossible prefixes before traversing a token body.
 func credStartBoundary(data []byte, start int) bool {
 	return start == 0 || !isTokenByte(data[start-1]) || encodedSeparatorBefore(data, start)
+}
+
+// allBytes reports whether every byte in data[start:end] satisfies allow.
+func allBytes(data []byte, start, end int, allow func(byte) bool) bool {
+	for k := start; k < end; k++ {
+		if !allow(data[k]) {
+			return false
+		}
+	}
+	return true
 }

@@ -6,34 +6,24 @@ import (
 )
 
 // decodeJWTHeader attempts to base64-decode and JSON-parse the JWT header.
-// Returns the algorithm string and a confidence boost in integer tenths (0 to 3).
-func decodeJWTHeader(headerPart []byte) (algorithm string, boost int) {
+// Returns a confidence boost in integer tenths (0 to 3).
+func decodeJWTHeader(headerPart []byte) (boost int) {
 	headerJSON, err := base64.RawURLEncoding.DecodeString(string(headerPart))
 	if err != nil {
-		return "", 0
+		return 0
 	}
 	var header map[string]any
 	if json.Unmarshal(headerJSON, &header) != nil {
-		return "", 0
+		return 0
 	}
 	const objectPoints, algorithmPoints = 2, 1
 	boost = objectPoints
-	alg, ok := header["alg"]
+	_, ok := header["alg"]
 	if !ok {
-		return "", boost
+		return boost
 	}
 	boost += algorithmPoints
-	if s, ok := alg.(string); ok {
-		return s, boost
-	}
-	return "", boost
-}
-
-// JWTDetail holds JWT-specific detail information.
-type JWTDetail struct {
-	// Algorithm is the signing algorithm from the JWT header (e.g., "HS256", "RS256").
-	// Empty if the header could not be decoded.
-	Algorithm string
+	return boost
 }
 
 // JWT implements the public matching contract at
@@ -78,7 +68,7 @@ func (d *JWT) Scan(data []byte) []Finding {
 			// but use lower base confidence since they may also be malformed strings.
 			points = unsignedPoints
 		}
-		algorithm, boost := decodeJWTHeader(parts[0])
+		boost := decodeJWTHeader(parts[0])
 		points += boost
 
 		findings = append(findings, Finding{
@@ -86,8 +76,6 @@ func (d *JWT) Scan(data []byte) []Finding {
 			Start:        i,
 			End:          end,
 			Confidence:   float64(points) / scoreScale,
-			RawValue:     string(data[i:end]),
-			Detail:       &JWTDetail{Algorithm: algorithm},
 		})
 
 		i = end
@@ -108,7 +96,7 @@ func extractJWTToken(data []byte, i int) (end int, parts [][]byte, ok bool) {
 	// Leading boundary: reject if preceded by a base64url character
 	// (alphanumeric, '-', or '_'). This prevents false positives when
 	// "eyJ" appears inside a longer base64url-encoded string.
-	if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '-' || data[i-1] == '_') && !encodedSeparatorBefore(data, i) {
+	if i > 0 && isTokenByte(data[i-1]) && !encodedSeparatorBefore(data, i) {
 		return i + 1, nil, false
 	}
 
@@ -140,7 +128,7 @@ func extractJWTToken(data []byte, i int) (end int, parts [][]byte, ok bool) {
 // isJWTChar reports whether b is a valid character in a JWT token.
 // JWT uses base64url encoding (A-Z, a-z, 0-9, '-', '_') with '.' as separator.
 func isJWTChar(b byte) bool {
-	return isAlphaNum(b) || b == '-' || b == '_' || b == '.'
+	return isTokenByte(b) || b == '.'
 }
 
 // splitJWT splits a JWT token into its three parts at the '.' separators.

@@ -1,10 +1,8 @@
-package detect_test
+package detect
 
 import (
 	"strings"
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestGitHubTokenDetector_Scan(t *testing.T) {
@@ -14,7 +12,7 @@ func TestGitHubTokenDetector_Scan(t *testing.T) {
 	oauth := "gho_" + strings.Repeat("B", 36)
 	fineGrained := "github_pat_11ABCDE0000aaaaaAAAAAa_abcdefghij"
 
-	d := detect.NewGitHubToken()
+	d := NewGitHubToken()
 	tests := []struct {
 		name    string
 		input   string
@@ -76,24 +74,23 @@ func TestGitHubTokenDetector_Scan(t *testing.T) {
 			if len(findings) != tt.wantLen {
 				t.Fatalf("got %d findings, want %d: %+v", len(findings), tt.wantLen, findings)
 			}
-			if tt.wantLen == 1 && findings[0].RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
+			if tt.wantLen == 1 && tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
 			}
 		})
 	}
 }
 
-func TestGitHubTokenDetector_Detail(t *testing.T) {
+func TestGitHubTokenDetector_Validation(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewGitHubToken()
+	d := NewGitHubToken()
 	tests := []struct {
-		name     string
-		input    string
-		wantType detect.GitHubTokenType
+		name  string
+		input string
 	}{
-		{name: "classic", input: "ghp_" + strings.Repeat("a", 36), wantType: detect.GitHubTokenClassic},
-		{name: "fine-grained", input: "github_pat_11ABCDE0000aaaaaAAAAAa_abcdefghij", wantType: detect.GitHubTokenFineGrained},
+		{name: "classic", input: "ghp_" + strings.Repeat("a", 36)},
+		{name: "fine-grained", input: "github_pat_11ABCDE0000aaaaaAAAAAa_abcdefghij"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -102,15 +99,8 @@ func TestGitHubTokenDetector_Detail(t *testing.T) {
 			if len(findings) != 1 {
 				t.Fatalf("got %d findings, want 1", len(findings))
 			}
-			detail, ok := findings[0].GitHubTokenDetail()
-			if !ok {
-				t.Fatalf("GitHubTokenDetail() ok = false")
-			}
-			if detail.TokenType != tt.wantType {
-				t.Errorf("TokenType = %q, want %q", detail.TokenType, tt.wantType)
-			}
-			if findings[0].Kind() != detect.KindCredential {
-				t.Errorf("Kind = %q, want credential", findings[0].Kind())
+			if findings[0].DetectorName != NameGitHubToken || findings[0].Start != 0 || findings[0].End != len(tt.input) {
+				t.Fatal(findings)
 			}
 		})
 	}

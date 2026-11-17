@@ -30,27 +30,27 @@ func (d *HighEntropy) Scan(data []byte) []Finding {
 		}
 		if !entropyLocation(data, start, end) && entropyCandidate(data[start:end]) && !ordinaryIDContext(data, start) {
 			//nolint:mnd // Uncontextualized entropy is deliberately below masking precision thresholds.
-			out = append(out, Finding{DetectorName: d.Name(), Start: start, End: end, Confidence: 0.3, RawValue: string(data[start:end])})
+			out = append(out, Finding{DetectorName: d.Name(), Start: start, End: end, Confidence: 0.3})
 		}
 		start = end
 	}
 	return out
 }
 
-func entropyByte(b byte) bool { return tokenByte(b) || b == '+' }
+func entropyByte(b byte) bool { return isTokenByte(b) || b == '+' }
 
 // A slash ends a candidate. Adjacent path separators or dotted components are
 // locations, even when a single component has enough entropy to look random.
 func entropyLocation(data []byte, start, end int) bool {
 	if start > 0 {
 		b := data[start-1]
-		if b == '/' || b == '\\' || (b == '.' && start > 1 && tokenByte(data[start-2])) {
+		if b == '/' || b == '\\' || (b == '.' && start > 1 && isTokenByte(data[start-2])) {
 			return true
 		}
 	}
 	if end < len(data) {
 		b := data[end]
-		if b == '/' || b == '\\' || (b == '.' && end+1 < len(data) && tokenByte(data[end+1])) {
+		if b == '/' || b == '\\' || (b == '.' && end+1 < len(data) && isTokenByte(data[end+1])) {
 			return true
 		}
 	}

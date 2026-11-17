@@ -18,12 +18,6 @@ const (
 	JPPhoneTypeService JPPhoneType = "service"
 )
 
-// JPPhoneDetail holds Japanese phone number-specific detail information.
-type JPPhoneDetail struct {
-	// PhoneType is the prefix-based phone classification.
-	PhoneType JPPhoneType
-}
-
 // jpPhoneRule defines a prefix-based classification rule for Japanese phone numbers.
 // Each rule matches a specific digit length and a prefix (starting at digits[1])
 // to produce a JPPhoneType.
@@ -85,7 +79,7 @@ func (d *JPPhone) Scan(data []byte) []Finding {
 }
 
 // scanNormalized performs phone number detection on normalized data.
-// orig is the original (possibly full-width) input used for RawValue.
+// orig is the original (possibly full-width) input used for matched text.
 func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	var findings []Finding
 	var logContext numericLogContext
@@ -106,31 +100,15 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		// Check that '0' is not part of a longer word-like token.
 		// Underscores are treated as word characters to prevent matching
 		// identifiers like _09012345678.
-		if i > 0 && isPhoneWordChar(data[i-1]) && !encodedSeparatorBefore(orig, originalPosition(posMap, i)) {
+		if i > 0 && isIdentifierByte(data[i-1]) && !encodedSeparatorBefore(orig, originalPosition(posMap, i)) {
 			i++
 			continue
 		}
 
-		// Extract digit sequence with separators.
 		start := i
-		var digits []byte
-		j := i
-		for j < len(data) && isPhoneSepChar(data[j]) {
-			if isDigit(data[j]) {
-				digits = append(digits, data[j])
-			}
-			j++
-		}
-		end := j
-
-		// Trim trailing non-digit separators (e.g., trailing spaces) so that
-		// the boundary check and RawValue do not include them.
-		for end > start && !isDigit(data[end-1]) {
-			end--
-		}
-
+		digits, end := phoneDigits(data, start)
 		// Check that the sequence doesn't continue with word characters.
-		if end < len(data) && isPhoneWordChar(data[end]) {
+		if end < len(data) && isIdentifierByte(data[end]) {
 			i = end
 			continue
 		}
@@ -160,8 +138,6 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			Start:        origStart,
 			End:          origEnd,
 			Confidence:   businessConfidence(orig, origStart, confidence),
-			RawValue:     string(orig[origStart:origEnd]),
-			Detail:       &JPPhoneDetail{PhoneType: phoneType},
 		})
 		i = end
 	}
@@ -173,13 +149,6 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 // Space is included to support formats like "090 1234 5678".
 func isPhoneSepChar(b byte) bool {
 	return isDigit(b) || b == '-' || b == '(' || b == ')' || b == ' '
-}
-
-// isPhoneWordChar reports whether b is a character that forms part of a
-// word-like token. Phone numbers adjacent to these characters are rejected
-// to avoid matching identifiers (e.g., _09012345678 or var09012345678).
-func isPhoneWordChar(b byte) bool {
-	return isAlphaNum(b) || b == '_'
 }
 
 // classifyJPPhone returns the phone type based on the prefix and digit count,
@@ -228,4 +197,24 @@ func isValidLandlinePrefix(digits []byte) bool {
 	default:
 		return true
 	}
+}
+
+// phoneDigits retains separator grammar and stops the span at the final digit.
+func phoneDigits(data []byte, start int) (digits []byte, end int) {
+	// Extract digit sequence with separators.
+	j := start
+	for j < len(data) && isPhoneSepChar(data[j]) {
+		if isDigit(data[j]) {
+			digits = append(digits, data[j])
+		}
+		j++
+	}
+	end = j
+
+	// Trim trailing non-digit separators (e.g., trailing spaces) so that
+	// the boundary check and matched text do not include them.
+	for end > start && !isDigit(data[end-1]) {
+		end--
+	}
+	return digits, end
 }

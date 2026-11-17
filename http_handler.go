@@ -67,33 +67,13 @@ func logHTTPExchange(next slog.Handler, scanner *Scanner, r *http.Request, w *ht
 		complete = true
 		return
 	}
-	header := w.finalHeader
-	if header == nil {
-		header = w.Header()
-	}
 	scan := eventScanner{scanner: scanner, remaining: maxScanBytes}
-	target, err := scan.httpTarget(ctx, r.URL)
+	record, err := scan.httpRecord(ctx, r, w, when, duration, status)
 	if err != nil {
 		cause = err
 		return
 	}
-	requestHeaders, err := scan.maskHTTPHeaders(ctx, r.Header)
-	if err != nil {
-		cause = err
-		return
-	}
-	responseHeaders, err := scan.maskHTTPHeaders(ctx, header)
-	if err != nil {
-		cause = err
-		return
-	}
-	method, err := scan.maskScalar(ctx, r.Method, "method")
-	if err != nil {
-		cause = err
-		return
-	}
-	record := slog.NewRecord(when, slog.LevelInfo, "http request", 0)
-	record.AddAttrs(slog.String("method", method), slog.String("target", target), slog.Any("request_headers", requestHeaders), slog.Int("status", status), slog.Any("response_headers", responseHeaders), slog.Bool("flush_failed", w.flushFailed), slog.Bool("response_written", status != 0), slog.Duration("duration", duration))
+
 	// All input-bearing values have been scanned once. Forward directly so a
 	// shortened replacement cannot move public text into another detector's window.
 	complete = true
@@ -308,4 +288,31 @@ func nilHTTPHandler(next http.Handler) bool {
 	default:
 		return false
 	}
+}
+
+// httpRecord owns access-field sanitization; logHTTPExchange owns outcomes and recovery.
+func (scan *eventScanner) httpRecord(ctx context.Context, r *http.Request, w *httpLogWriter, when time.Time, duration time.Duration, status int) (slog.Record, error) {
+	header := w.finalHeader
+	if header == nil {
+		header = w.Header()
+	}
+	target, err := scan.httpTarget(ctx, r.URL)
+	if err != nil {
+		return slog.Record{}, err
+	}
+	requestHeaders, err := scan.maskHTTPHeaders(ctx, r.Header)
+	if err != nil {
+		return slog.Record{}, err
+	}
+	responseHeaders, err := scan.maskHTTPHeaders(ctx, header)
+	if err != nil {
+		return slog.Record{}, err
+	}
+	method, err := scan.maskScalar(ctx, r.Method, "method")
+	if err != nil {
+		return slog.Record{}, err
+	}
+	record := slog.NewRecord(when, slog.LevelInfo, "http request", 0)
+	record.AddAttrs(slog.String("method", method), slog.String("target", target), slog.Any("request_headers", requestHeaders), slog.Int("status", status), slog.Any("response_headers", responseHeaders), slog.Bool("flush_failed", w.flushFailed), slog.Bool("response_written", status != 0), slog.Duration("duration", duration))
+	return record, nil
 }

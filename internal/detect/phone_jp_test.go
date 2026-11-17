@@ -199,25 +199,12 @@ func TestJPPhoneDetector_Scan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			findings := d.Scan([]byte(tt.input))
-			if len(findings) != tt.wantLen {
-				t.Fatalf("got %d findings, want %d: %+v", len(findings), tt.wantLen, findings)
-			}
-			if tt.wantLen > 0 && tt.wantRaw != "" {
-				if findings[0].RawValue != tt.wantRaw {
-					t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
-				}
-			}
-			if tt.wantLen > 0 && tt.wantMinCon > 0 {
-				if findings[0].Confidence < tt.wantMinCon {
-					t.Errorf("Confidence = %f, want >= %f", findings[0].Confidence, tt.wantMinCon)
-				}
-			}
+			assertDetectorScan(t, d, tt.input, tt.wantLen, tt.wantRaw, tt.wantMinCon)
 		})
 	}
 }
 
-func TestJPPhoneDetector_FullWidthRawValue(t *testing.T) {
+func TestJPPhoneDetector_FullWidthSpan(t *testing.T) {
 	t.Parallel()
 
 	d := NewJPPhone()
@@ -228,15 +215,12 @@ func TestJPPhoneDetector_FullWidthRawValue(t *testing.T) {
 	}
 	f := findings[0]
 	want := "０９０－１２３４－５６７８"
-	if f.RawValue != want {
-		t.Errorf("RawValue = %q, want %q", f.RawValue, want)
-	}
-	if input[f.Start:f.End] != f.RawValue {
-		t.Errorf("input[Start:End] = %q, RawValue = %q", input[f.Start:f.End], f.RawValue)
+	if input[f.Start:f.End] != want {
+		t.Errorf("matched text = %q, want %q", input[f.Start:f.End], want)
 	}
 }
 
-func TestJPPhoneDetector_Detail(t *testing.T) {
+func TestJPPhoneDetector_Validation(t *testing.T) {
 	t.Parallel()
 
 	d := NewJPPhone()
@@ -256,12 +240,9 @@ func TestJPPhoneDetector_Detail(t *testing.T) {
 		if len(findings) != 1 {
 			t.Fatalf("input=%q: got %d findings, want 1", tt.input, len(findings))
 		}
-		detail, ok := findings[0].JPPhoneDetail()
-		if !ok {
-			t.Fatalf("input=%q: JPPhoneDetail() returned false", tt.input)
-		}
-		if detail.PhoneType != tt.wantType {
-			t.Errorf("input=%q: PhoneType = %q, want %q", tt.input, detail.PhoneType, tt.wantType)
+		digits := testDigits([]byte(tt.input[findings[0].Start:findings[0].End]))
+		if classifyJPPhone(digits, len(digits)) != tt.wantType {
+			t.Errorf("input=%q: PhoneType = %q, want %q", tt.input, classifyJPPhone(digits, len(digits)), tt.wantType)
 		}
 	}
 }
@@ -322,8 +303,8 @@ func TestJPPhoneDetector_WithParentheses(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	if findings[0].RawValue != "03(1234)5678" {
-		t.Errorf("RawValue = %q, want %q", findings[0].RawValue, "03(1234)5678")
+	if "03(1234)5678"[findings[0].Start:findings[0].End] != "03(1234)5678" {
+		t.Errorf("matched text = %q, want %q", "03(1234)5678"[findings[0].Start:findings[0].End], "03(1234)5678")
 	}
 }
 
@@ -336,12 +317,9 @@ func TestJPPhoneDetector_Landline080Prefix(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	detail, ok := findings[0].JPPhoneDetail()
-	if !ok {
-		t.Fatal("JPPhoneDetail() returned false")
-	}
-	if detail.PhoneType != JPPhoneTypeMobile {
-		t.Errorf("PhoneType = %q, want %q", detail.PhoneType, JPPhoneTypeMobile)
+	digits := testDigits([]byte("080-1234-5678"[findings[0].Start:findings[0].End]))
+	if classifyJPPhone(digits, len(digits)) != JPPhoneTypeMobile {
+		t.Errorf("PhoneType = %q, want %q", classifyJPPhone(digits, len(digits)), JPPhoneTypeMobile)
 	}
 }
 
@@ -353,12 +331,9 @@ func TestJPPhoneDetector_070Mobile(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	detail, ok := findings[0].JPPhoneDetail()
-	if !ok {
-		t.Fatal("JPPhoneDetail() returned false")
-	}
-	if detail.PhoneType != JPPhoneTypeMobile {
-		t.Errorf("PhoneType = %q, want %q", detail.PhoneType, JPPhoneTypeMobile)
+	digits := testDigits([]byte("070-1234-5678"[findings[0].Start:findings[0].End]))
+	if classifyJPPhone(digits, len(digits)) != JPPhoneTypeMobile {
+		t.Errorf("PhoneType = %q, want %q", classifyJPPhone(digits, len(digits)), JPPhoneTypeMobile)
 	}
 }
 
@@ -371,12 +346,9 @@ func TestJPPhoneDetector_0800Classified(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	detail, ok := findings[0].JPPhoneDetail()
-	if !ok {
-		t.Fatal("JPPhoneDetail() returned false")
-	}
-	if detail.PhoneType != JPPhoneTypeMobile {
-		t.Errorf("PhoneType = %q, want %q", detail.PhoneType, JPPhoneTypeMobile)
+	digits := testDigits([]byte("0800-123-4567"[findings[0].Start:findings[0].End]))
+	if classifyJPPhone(digits, len(digits)) != JPPhoneTypeMobile {
+		t.Errorf("PhoneType = %q, want %q", classifyJPPhone(digits, len(digits)), JPPhoneTypeMobile)
 	}
 }
 
@@ -389,12 +361,9 @@ func TestJPPhoneDetector_LandlineValid(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	detail, ok := findings[0].JPPhoneDetail()
-	if !ok {
-		t.Fatal("JPPhoneDetail() returned false")
-	}
-	if detail.PhoneType != JPPhoneTypeLandline {
-		t.Errorf("PhoneType = %q, want %q", detail.PhoneType, JPPhoneTypeLandline)
+	digits := testDigits([]byte("06-1234-5678"[findings[0].Start:findings[0].End]))
+	if classifyJPPhone(digits, len(digits)) != JPPhoneTypeLandline {
+		t.Errorf("PhoneType = %q, want %q", classifyJPPhone(digits, len(digits)), JPPhoneTypeLandline)
 	}
 }
 
@@ -437,9 +406,6 @@ func TestPhoneConfidenceAndContainsEdges(t *testing.T) {
 				t.Fatal("contains", data, sub)
 			}
 		}
-	}
-	if bankAccountKeywordLang(nil) != BankAccountLangEN || bankAccountKeywordLang([]byte{0x80}) != BankAccountLangJA {
-		t.Fatal("keyword language")
 	}
 }
 

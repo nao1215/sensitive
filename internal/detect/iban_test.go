@@ -3,6 +3,7 @@ package detect
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -61,25 +62,12 @@ func TestIBANDetector_Scan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			findings := d.Scan([]byte(tt.input))
-			if len(findings) != tt.wantLen {
-				t.Fatalf("got %d findings, want %d: %+v", len(findings), tt.wantLen, findings)
-			}
-			if tt.wantLen > 0 && tt.wantRaw != "" {
-				if findings[0].RawValue != tt.wantRaw {
-					t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
-				}
-			}
-			if tt.wantLen > 0 && tt.wantMinCon > 0 {
-				if findings[0].Confidence < tt.wantMinCon {
-					t.Errorf("Confidence = %f, want >= %f", findings[0].Confidence, tt.wantMinCon)
-				}
-			}
+			assertDetectorScan(t, d, tt.input, tt.wantLen, tt.wantRaw, tt.wantMinCon)
 		})
 	}
 }
 
-func TestIBANDetector_Detail(t *testing.T) {
+func TestIBANDetector_Validation(t *testing.T) {
 	t.Parallel()
 
 	d := NewIBAN()
@@ -87,12 +75,9 @@ func TestIBANDetector_Detail(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	detail, ok := findings[0].IBANDetail()
-	if !ok {
-		t.Fatal("IBANDetail() returned false")
-	}
-	if detail.CountryCode != "DE" {
-		t.Errorf("CountryCode = %q, want %q", detail.CountryCode, "DE")
+	matched := "DE89370400440532013000"[findings[0].Start:findings[0].End]
+	if strings.ToUpper(matched[:2]) != "DE" {
+		t.Errorf("CountryCode = %q, want %q", strings.ToUpper(matched[:2]), "DE")
 	}
 }
 
@@ -160,8 +145,8 @@ func TestIBANDetector_TrailingSpace(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	if findings[0].RawValue != "DE89370400440532013000" {
-		t.Errorf("RawValue = %q, want %q", findings[0].RawValue, "DE89370400440532013000")
+	if "DE89370400440532013000   "[findings[0].Start:findings[0].End] != "DE89370400440532013000" {
+		t.Errorf("matched text = %q, want %q", "DE89370400440532013000   "[findings[0].Start:findings[0].End], "DE89370400440532013000")
 	}
 }
 
@@ -186,12 +171,9 @@ func TestIBANDetector_PreviouslyMissedCountry(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings for Albanian IBAN, want 1", len(findings))
 	}
-	detail, ok := findings[0].IBANDetail()
-	if !ok {
-		t.Fatal("IBANDetail() returned false")
-	}
-	if detail.CountryCode != "AL" {
-		t.Errorf("CountryCode = %q, want AL", detail.CountryCode)
+	matched := "AL42000000000000000000000000"[findings[0].Start:findings[0].End]
+	if strings.ToUpper(matched[:2]) != "AL" {
+		t.Errorf("CountryCode = %q, want AL", strings.ToUpper(matched[:2]))
 	}
 }
 
@@ -238,15 +220,12 @@ func TestIBANDetector_LowercaseIBAN(t *testing.T) {
 				t.Fatalf("got %d findings, want %d: %+v", len(findings), tt.wantLen, findings)
 			}
 			if tt.wantLen > 0 {
-				if findings[0].RawValue != tt.wantRaw {
-					t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
+				if tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
+					t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
 				}
-				detail, ok := findings[0].IBANDetail()
-				if !ok {
-					t.Fatal("IBANDetail() returned false")
-				}
-				if detail.CountryCode != tt.wantCountryCode {
-					t.Errorf("CountryCode = %q, want %q", detail.CountryCode, tt.wantCountryCode)
+				matched := tt.input[findings[0].Start:findings[0].End]
+				if strings.ToUpper(matched[:2]) != tt.wantCountryCode {
+					t.Errorf("CountryCode = %q, want %q", strings.ToUpper(matched[:2]), tt.wantCountryCode)
 				}
 			}
 		})
@@ -269,7 +248,7 @@ func TestIBANFollowingWord(t *testing.T) {
 	for _, raw := range []string{sampleIBAN, "GB82 WEST 1234 5698 7654 32"} {
 		for _, suffix := range []string{" y", " today", " 123"} {
 			got := NewIBAN().Scan([]byte("to " + raw + suffix))
-			if len(got) != 1 || got[0].RawValue != raw {
+			if len(got) != 1 || ("to " + raw + suffix)[got[0].Start:got[0].End] != raw {
 				t.Errorf("%q: got %v", raw+suffix, got)
 			}
 		}
@@ -301,7 +280,7 @@ func TestIBANRegistryExamples(t *testing.T) {
 		t.Run(country.Country, func(t *testing.T) {
 			t.Parallel()
 			got := NewIBAN().Scan([]byte(country.Example))
-			if len(got) != 1 || got[0].RawValue != country.Example || len(country.Example) != country.Length {
+			if len(got) != 1 || country.Example[got[0].Start:got[0].End] != country.Example || len(country.Example) != country.Length {
 				t.Fatalf("registry example rejected: %s", country.Example)
 			}
 		})

@@ -64,7 +64,7 @@ func objectReference(data []byte, start, end int) bool {
 	}
 	upper := false
 	for _, b := range []byte(value[:split]) {
-		if !isAlphaNum(b) && b != '.' && b != '_' && b != '$' {
+		if !isIdentifierByte(b) && b != '.' && b != '$' {
 			return false
 		}
 		upper = upper || b >= 'A' && b <= 'Z'

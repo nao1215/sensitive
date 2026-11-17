@@ -5,12 +5,6 @@ import (
 	"slices"
 )
 
-// IPAddrDetail holds IP address-specific detail information.
-type IPAddrDetail struct {
-	// Version is the IP version: 4 for IPv4, 6 for IPv6.
-	Version int
-}
-
 // IPAddr implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindIPAddr.
 type IPAddr struct{}
@@ -75,7 +69,7 @@ func (d *IPAddr) Scan(data []byte) []Finding {
 // Returns the finding, the advance position, and whether a valid IPv4 was found.
 func (d *IPAddr) tryIPv4(data []byte, i int) (Finding, int, bool) {
 	// Word boundary: reject if preceded by alphanumeric, '.', or '_'.
-	if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '.' || data[i-1] == '_') && !encodedSeparatorBefore(data, i) {
+	if i > 0 && (isIdentifierByte(data[i-1]) || data[i-1] == '.') && !encodedSeparatorBefore(data, i) {
 		return Finding{}, i + 1, false
 	}
 
@@ -103,9 +97,6 @@ func (d *IPAddr) tryIPv4(data []byte, i int) (Finding, int, bool) {
 		End:          end,
 		//nolint:mnd // The detector contract documents this heuristic score.
 		Confidence: 0.8,
-		RawValue:   candidate,
-		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		Detail: &IPAddrDetail{Version: 4},
 	}, j, true
 }
 
@@ -128,7 +119,7 @@ func isIPTokenSuffix(data []byte, at int) bool {
 // Returns the finding, the advance position, and whether a valid IPv6 was found.
 func (d *IPAddr) tryIPv6(data []byte, i int) (Finding, int, bool) {
 	// Word boundary: reject if preceded by alphanumeric or '_'.
-	if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '_') && !encodedSeparatorBefore(data, i) {
+	if i > 0 && isIdentifierByte(data[i-1]) && !encodedSeparatorBefore(data, i) {
 		return Finding{}, i + 1, false
 	}
 
@@ -160,20 +151,12 @@ func (d *IPAddr) tryIPv6(data []byte, i int) (Finding, int, bool) {
 		End:          end,
 		//nolint:mnd // The detector contract documents this heuristic score.
 		Confidence: 0.8,
-		RawValue:   candidate,
-		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		Detail: &IPAddrDetail{Version: 6},
 	}, j, true
 }
 
 // containsColon reports whether data contains at least one ':'.
 func containsColon(data []byte) bool {
 	return slices.Contains(data, ':')
-}
-
-// isHexDigit reports whether b is a hexadecimal digit.
-func isHexDigit(b byte) bool {
-	return isDigit(b) || (b >= 'a' && b <= 'f') || (b >= 'A' && b <= 'F')
 }
 
 func versionLabel(data []byte, start int) bool {

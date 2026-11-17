@@ -49,19 +49,8 @@ func exitCode(args []string, input io.Reader, output, diagnostics io.Writer) int
 }
 
 func run(args []string, input io.Reader, output io.Writer) error {
-	flags := flag.NewFlagSet("embargo-audit", flag.ContinueOnError)
-	flags.SetOutput(io.Discard)
-	kinds := flags.String("kinds", "", "comma-separated kinds; default scanner if omitted")
-	all := flags.Bool("all", false, "include opt-in country and entropy kinds")
-	compare := flags.Bool("compare", false, "compare the base and second settings on the same input")
-	compareKinds := flags.String("compare-kinds", "", "second comma-separated kind set")
-	compareAll := flags.Bool("compare-all", false, "include every kind in the second setting")
-	compareMinimumText := flags.String("compare-min-confidence", "0", "second inclusive minimum confidence")
-	minimumText := flags.String("min-confidence", "0", "inclusive minimum detector confidence")
-	const defaultSamples = "3"
-	const maximumSamples = 20
-	samplesText := flags.String("samples", defaultSamples, "maximum masked locations per kind (0 through 20)")
-	if err := flags.Parse(args); err != nil {
+	options, err := parseAuditOptions(args)
+	if err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			_, writeErr := io.WriteString(output, "Usage: embargo-audit [--kinds email,pan] [--all] [--min-confidence 0] [--samples 3] [--compare] [--compare-kinds email] [--compare-all] [--compare-min-confidence 0] < input\n")
 			if writeErr != nil {
@@ -70,52 +59,22 @@ func run(args []string, input io.Reader, output io.Writer) error {
 			_, writeErr = io.WriteString(output, "Kinds and matching rules: https://pkg.go.dev/github.com/nao1215/embargo#Kind\n")
 			return writeErr
 		}
-		return errors.New("embargo-audit: invalid flags\nUsage: embargo-audit [--kinds email,pan] [--all] [--compare] < input; use --help for options")
-	}
-	minimum, validMinimum := parseConfidence(*minimumText)
-	if !validMinimum {
-		return errors.New("embargo-audit: --min-confidence must be between 0 and 1")
-	}
-	samples, sampleErr := strconv.Atoi(*samplesText)
-	if sampleErr != nil || samples < 0 || samples > maximumSamples {
-		return errors.New("embargo-audit: --samples must be between 0 and 20")
-	}
-	compareMinimum, validCompare := parseConfidence(*compareMinimumText)
-	if !validCompare {
-		return errors.New("embargo-audit: --compare-min-confidence must be between 0 and 1")
-	}
-	if flags.NArg() != 0 {
-		return errors.New("embargo-audit: input must come from stdin; use --help")
-	}
-	if *all && *kinds != "" {
-		return errors.New("embargo-audit: --all and --kinds cannot be combined")
-	}
-	if *compareAll && *compareKinds != "" {
-		return errors.New("embargo-audit: --compare-all and --compare-kinds cannot be combined")
+		return err
 	}
 
-	invalidCompare := false
-	flags.Visit(func(f *flag.Flag) {
-		if strings.HasPrefix(f.Name, "compare-") && !*compare {
-			invalidCompare = true
-		}
-	})
-	if invalidCompare {
-		return errors.New("embargo-audit: comparison flags require --compare")
-	}
-	scanner, err := selectedScanner(*kinds, *all, minimum)
+	scanner, err := selectedScanner(options.kinds, options.all, options.minimum)
 	if err != nil {
 		return err
 	}
 	var result any
-	if *compare {
-		second, selectErr := selectedScanner(*compareKinds, *compareAll, compareMinimum)
+	if options.compare {
+		second, selectErr := selectedScanner(options.compareKinds, options.compareAll, options.compareMinimum)
 		if selectErr != nil {
 			return errors.New("embargo-audit: --compare-kinds contains an unknown kind; use --help for kinds")
 		}
-		result, err = auditPair(input, scanner, second, samples)
+		result, err = auditPair(input, scanner, second, options.samples)
 	} else {
-		result, err = audit(input, scanner, samples)
+		result, err = audit(input, scanner, options.samples)
 	}
 	if err != nil {
 		return err
@@ -249,4 +208,74 @@ func sortedKinds(groups map[embargo.Kind]*kindReport) []kindReport {
 func parseConfidence(text string) (float64, bool) {
 	value, err := strconv.ParseFloat(text, 64)
 	return value, err == nil && !math.IsNaN(value) && value >= 0 && value <= 1
+}
+
+// auditOptions separates flag decoding and validation from scanning and encoding.
+type auditOptions struct {
+	kinds, compareKinds, minimumText, compareMinimumText, samplesText string
+	all, compare, compareAll                                          bool
+	minimum, compareMinimum                                           float64
+	samples                                                           int
+}
+
+func parseAuditOptions(args []string) (*auditOptions, error) {
+	options := &auditOptions{}
+	flags := flag.NewFlagSet("embargo-audit", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+	flags.StringVar(&options.kinds, "kinds", "", "comma-separated kinds; default scanner if omitted")
+	flags.BoolVar(&options.all, "all", false, "include opt-in country and entropy kinds")
+	flags.BoolVar(&options.compare, "compare", false, "compare the base and second settings on the same input")
+	flags.StringVar(&options.compareKinds, "compare-kinds", "", "second comma-separated kind set")
+	flags.BoolVar(&options.compareAll, "compare-all", false, "include every kind in the second setting")
+	flags.StringVar(&options.compareMinimumText, "compare-min-confidence", "0", "second inclusive minimum confidence")
+	flags.StringVar(&options.minimumText, "min-confidence", "0", "inclusive minimum detector confidence")
+	const defaultSamples = "3"
+	flags.StringVar(&options.samplesText, "samples", defaultSamples, "maximum masked locations per kind (0 through 20)")
+	if err := flags.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil, err
+		}
+		return nil, errors.New("embargo-audit: invalid flags\nUsage: embargo-audit [--kinds email,pan] [--all] [--compare] < input; use --help for options")
+	}
+	if err := options.validate(flags); err != nil {
+		return nil, err
+	}
+	return options, nil
+}
+
+func (options *auditOptions) validate(flags *flag.FlagSet) error {
+	const maximumSamples = 20
+	minimum, validMinimum := parseConfidence(options.minimumText)
+	if !validMinimum {
+		return errors.New("embargo-audit: --min-confidence must be between 0 and 1")
+	}
+	samples, sampleErr := strconv.Atoi(options.samplesText)
+	if sampleErr != nil || samples < 0 || samples > maximumSamples {
+		return errors.New("embargo-audit: --samples must be between 0 and 20")
+	}
+	compareMinimum, validCompare := parseConfidence(options.compareMinimumText)
+	if !validCompare {
+		return errors.New("embargo-audit: --compare-min-confidence must be between 0 and 1")
+	}
+	if flags.NArg() != 0 {
+		return errors.New("embargo-audit: input must come from stdin; use --help")
+	}
+	if options.all && options.kinds != "" {
+		return errors.New("embargo-audit: --all and --kinds cannot be combined")
+	}
+	if options.compareAll && options.compareKinds != "" {
+		return errors.New("embargo-audit: --compare-all and --compare-kinds cannot be combined")
+	}
+
+	invalidCompare := false
+	flags.Visit(func(f *flag.Flag) {
+		if strings.HasPrefix(f.Name, "compare-") && !options.compare {
+			invalidCompare = true
+		}
+	})
+	if invalidCompare {
+		return errors.New("embargo-audit: comparison flags require --compare")
+	}
+	options.minimum, options.compareMinimum, options.samples = minimum, compareMinimum, samples
+	return nil
 }

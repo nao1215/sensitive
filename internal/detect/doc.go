@@ -6,7 +6,5 @@
 //
 // Leading percent-encoded log/query separators (whitespace, quotes, brackets, colon, comma, semicolon, equals, ampersand, and question mark) delimit values like literal separators. Encoded word characters and malformed escapes do not relax boundary checks.
 //
-// # Finding Details
-//
-// [Finding.Detail] holds different detail types in one result slice. Its typed accessor methods avoid direct type assertions; [Finding.Is] and the Is* methods check detector names, while [Finding.Kind] supplies a broad category. Runnable examples show classification, confidence levels, and detail access.
+// Findings contain only a detector name, original byte span and confidence. Validation helpers own checksum and issuer decisions; no raw value or diagnostic detail is retained.
 package detect

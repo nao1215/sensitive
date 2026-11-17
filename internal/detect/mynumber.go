@@ -2,13 +2,6 @@ package detect
 
 import "bytes"
 
-// MyNumberDetail holds My Number-specific detail information.
-type MyNumberDetail struct {
-	// CheckDigitValid indicates whether the check digit (12th digit) is valid
-	// according to the MOD 11 algorithm.
-	CheckDigitValid bool
-}
-
 // MyNumber implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindMyNumber.
 type MyNumber struct{}
@@ -35,7 +28,7 @@ func (d *MyNumber) Scan(data []byte) []Finding {
 }
 
 // scanNormalized performs My Number detection on normalized data.
-// orig is the original (possibly full-width) input used for RawValue.
+// orig is the original (possibly full-width) input used for matched text.
 func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	var findings []Finding
 	var logContext numericLogContext
@@ -53,7 +46,7 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		}
 
 		// Check that this digit is not part of a longer alphanumeric token.
-		if i > 0 && isPhoneWordChar(data[i-1]) && !encodedSeparatorBefore(orig, originalPosition(posMap, i)) {
+		if i > 0 && isIdentifierByte(data[i-1]) && !encodedSeparatorBefore(orig, originalPosition(posMap, i)) {
 			i++
 			continue
 		}
@@ -68,7 +61,7 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			i = end
 			continue
 		}
-		if end < len(data) && isPhoneWordChar(data[end]) {
+		if end < len(data) && isIdentifierByte(data[end]) {
 			i = end
 			continue
 		}
@@ -82,8 +75,6 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 				End:          origEnd,
 				//nolint:mnd // The detector contract documents this heuristic score.
 				Confidence: businessConfidence(orig, origStart, 0.95),
-				RawValue:   string(orig[origStart:origEnd]),
-				Detail:     &MyNumberDetail{CheckDigitValid: true},
 			})
 		}
 		i = end

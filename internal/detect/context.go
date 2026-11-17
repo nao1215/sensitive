@@ -127,27 +127,6 @@ func findKeywordPositions(data []byte, keywords [][]byte) []keywordMatch {
 	return newKeywordSet(keywords).findPositions(data)
 }
 
-// isWordBoundary reports whether the keyword match at data[pos:end] sits at
-// word boundaries. A boundary violation occurs when the keyword edge byte is
-// ASCII alphanumeric and the adjacent data byte is also ASCII alphanumeric,
-// indicating the keyword is part of a longer word.
-func isWordBoundary(data []byte, pos, end int, kw []byte) bool {
-	// Check leading boundary.
-	if pos > 0 && isASCIIAlphaNum(kw[0]) && isASCIIAlphaNum(data[pos-1]) && !encodedSeparatorBefore(data, pos) {
-		return false
-	}
-	// Check trailing boundary.
-	if end < len(data) && isASCIIAlphaNum(kw[len(kw)-1]) && isASCIIAlphaNum(data[end]) {
-		return false
-	}
-	return true
-}
-
-// isASCIIAlphaNum reports whether b is an ASCII letter or digit.
-func isASCIIAlphaNum(b byte) bool {
-	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9')
-}
-
 // extractDigitsNear finds all digit sequences within the given byte radius
 // of a position. Only sequences with digit count between minDigits and maxDigits
 // (inclusive) are returned. The position is typically the end of a keyword match.

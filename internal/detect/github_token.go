@@ -1,25 +1,5 @@
 package detect
 
-// GitHubTokenType classifies a detected GitHub token by its prefix family.
-// Use the GitHubToken* constants for comparison with [GitHubTokenDetail.TokenType].
-type GitHubTokenType string
-
-const (
-	// GitHubTokenClassic identifies a classic token: a personal access token
-	// (ghp_), OAuth access token (gho_), user-to-server (ghu_), server-to-server
-	// (ghs_), or refresh token (ghr_).
-	GitHubTokenClassic GitHubTokenType = "classic"
-	// GitHubTokenFineGrained identifies a fine-grained personal access token
-	// (github_pat_).
-	GitHubTokenFineGrained GitHubTokenType = "fine_grained"
-)
-
-// GitHubTokenDetail holds GitHub token-specific detail information.
-type GitHubTokenDetail struct {
-	// TokenType is the token family inferred from the prefix.
-	TokenType GitHubTokenType
-}
-
 // GitHubToken implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindGitHubToken.
 type GitHubToken struct{}
@@ -86,11 +66,11 @@ func (d *GitHubToken) matchFineGrained(data []byte, i int) (Finding, int, bool) 
 	if !hasASCIIPrefix(data, i, prefix) {
 		return Finding{}, 0, false
 	}
-	end, n := scanCharset(data, i+len(prefix), isBase62OrUnderscore)
+	end, n := scanCharset(data, i+len(prefix), isIdentifierByte)
 	if n < githubFineGrainedMinBody || !credBoundary(data, i, end) {
 		return Finding{}, 0, false
 	}
-	return d.finding(data, i, end, GitHubTokenFineGrained), end, true
+	return d.finding(i, end), end, true
 }
 
 // matchClassic tries to match a classic token at index i.
@@ -99,33 +79,21 @@ func (d *GitHubToken) matchClassic(data []byte, i int) (Finding, int, bool) {
 		if !hasASCIIPrefix(data, i, prefix) {
 			continue
 		}
-		end, n := scanCharset(data, i+len(prefix), isBase62)
+		end, n := scanCharset(data, i+len(prefix), isAlphaNum)
 		if n != githubClassicBodyLen || !credBoundary(data, i, end) {
 			return Finding{}, 0, false
 		}
-		return d.finding(data, i, end, GitHubTokenClassic), end, true
+		return d.finding(i, end), end, true
 	}
 	return Finding{}, 0, false
 }
 
-func (d *GitHubToken) finding(data []byte, start, end int, kind GitHubTokenType) Finding {
+func (d *GitHubToken) finding(start, end int) Finding {
 	return Finding{
 		DetectorName: d.Name(),
 		Start:        start,
 		End:          end,
 		//nolint:mnd // The detector contract documents this heuristic score.
 		Confidence: 0.95,
-		RawValue:   string(data[start:end]),
-		Detail:     &GitHubTokenDetail{TokenType: kind},
 	}
-}
-
-// isBase62 reports whether b is an ASCII letter or digit.
-func isBase62(b byte) bool {
-	return (b >= 'A' && b <= 'Z') || (b >= 'a' && b <= 'z') || (b >= '0' && b <= '9')
-}
-
-// isBase62OrUnderscore reports whether b is base62 or '_'.
-func isBase62OrUnderscore(b byte) bool {
-	return isBase62(b) || b == '_'
 }

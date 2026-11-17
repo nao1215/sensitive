@@ -5,12 +5,6 @@ import (
 	"math/bits"
 )
 
-// ETHDetail holds Ethereum address-specific detail information.
-type ETHDetail struct {
-	// EIP55 reports successful mixed-case checksum validation; false means uniform-case hex.
-	EIP55 bool
-}
-
 // ETH implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindETH.
 type ETH struct{}
@@ -43,7 +37,7 @@ func (d *ETH) Scan(data []byte) []Finding {
 		}
 
 		// Word boundary: preceding character must not be alphanumeric or underscore.
-		if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '_') && !encodedSeparatorBefore(data, i) {
+		if i > 0 && isIdentifierByte(data[i-1]) && !encodedSeparatorBefore(data, i) {
 			continue
 		}
 
@@ -56,28 +50,25 @@ func (d *ETH) Scan(data []byte) []Finding {
 		end := i + 42
 
 		// Word boundary: following character must not be alphanumeric or underscore.
-		if end < len(data) && (isAlphaNum(data[end]) || data[end] == '_') {
+		if end < len(data) && isIdentifierByte(data[end]) {
 			continue
 		}
 
 		hexPart := string(data[i+2 : end])
 		caseType := hexCaseType(hexPart)
 
-		var eip55Valid bool
 		var confidence float64
 
 		switch caseType {
 		case hexCaseUniform:
 			// All lowercase or all uppercase — valid address, no checksum to verify.
 			confidence = 0.80
-			eip55Valid = false
 		case hexCaseMixed:
 			// Mixed case — must validate EIP-55 checksum.
 			if !validateEIP55(hexPart) {
 				continue // Invalid EIP-55 checksum, reject.
 			}
 			confidence = 0.95
-			eip55Valid = true
 		}
 
 		findings = append(findings, Finding{
@@ -85,8 +76,6 @@ func (d *ETH) Scan(data []byte) []Finding {
 			Start:        i,
 			End:          end,
 			Confidence:   confidence,
-			RawValue:     string(data[i:end]),
-			Detail:       &ETHDetail{EIP55: eip55Valid},
 		})
 
 		i = end - 1
@@ -112,16 +101,11 @@ func isHex40(b []byte) bool {
 		return false
 	}
 	for i := range 40 {
-		if !isHexChar(b[i]) {
+		if !isHexDigit(b[i]) {
 			return false
 		}
 	}
 	return true
-}
-
-// isHexChar reports whether b is a valid hexadecimal character (0-9, a-f, A-F).
-func isHexChar(b byte) bool {
-	return (b >= '0' && b <= '9') || (b >= 'a' && b <= 'f') || (b >= 'A' && b <= 'F')
 }
 
 // hexCaseType determines whether a hex string contains mixed case letters.

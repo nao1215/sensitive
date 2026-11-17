@@ -42,18 +42,7 @@ func (r *Recorder) run(ctx context.Context, executable, helper string, wantExit 
 	defer func() { r.mu.Lock(); r.running--; r.mu.Unlock() }()
 	bounded, cancel := context.WithTimeout(ctx, r.timeout)
 	defer cancel()
-	// The executable comes from os.Executable; the helper is an escaped test name.
-	cmd := exec.CommandContext(bounded, executable, "-test.run=^"+regexp.QuoteMeta(helper)+"$", "-test.v", "-test.count=1") // #nosec G204 -- current test executable, never a shell command.
-	cmd.Env = []string{"EMBARGO_TEST_CHILD=" + helper, "EMBARGO_TEST_CANARY=" + base64.StdEncoding.EncodeToString(r.canary)}
-	if systemRoot := os.Getenv("SystemRoot"); systemRoot != "" {
-		cmd.Env = append(cmd.Env, "SystemRoot="+systemRoot)
-	}
-	cmd.Dir = r.tb.TempDir()
-	cmd.Env = append(cmd.Env, "TMPDIR="+cmd.Dir, "TMP="+cmd.Dir, "TEMP="+cmd.Dir)
-	stdoutCopy, stderrCopy := &childOutput{stream: stdout}, &childOutput{stream: stderr}
-	cmd.Stdout, cmd.Stderr = stdoutCopy, stderrCopy
-	cmd.Cancel = func() error { return cmd.Process.Kill() }
-	cmd.WaitDelay = childWaitDelay
+	cmd, stdoutCopy, stderrCopy := r.childCommand(bounded, executable, helper, stdout, stderr)
 	if err := cmd.Start(); err != nil {
 		if bounded.Err() != nil {
 			r.markFailed()
@@ -127,3 +116,20 @@ func validHelper(name string) bool {
 }
 func (r *Recorder) markFailed()                     { r.mu.Lock(); r.failed = true; r.mu.Unlock() }
 func (r *Recorder) runFailure(message string) error { r.markFailed(); return errors.New(message) }
+
+// childCommand configures isolation and complete-output observers before execution.
+func (r *Recorder) childCommand(ctx context.Context, executable, helper string, stdout, stderr *stream) (cmd *exec.Cmd, stdoutCopy, stderrCopy *childOutput) {
+	// The executable comes from os.Executable; the helper is an escaped test name.
+	cmd = exec.CommandContext(ctx, executable, "-test.run=^"+regexp.QuoteMeta(helper)+"$", "-test.v", "-test.count=1") // #nosec G204 -- current test executable, never a shell command.
+	cmd.Env = []string{"EMBARGO_TEST_CHILD=" + helper, "EMBARGO_TEST_CANARY=" + base64.StdEncoding.EncodeToString(r.canary)}
+	if systemRoot := os.Getenv("SystemRoot"); systemRoot != "" {
+		cmd.Env = append(cmd.Env, "SystemRoot="+systemRoot)
+	}
+	cmd.Dir = r.tb.TempDir()
+	cmd.Env = append(cmd.Env, "TMPDIR="+cmd.Dir, "TMP="+cmd.Dir, "TEMP="+cmd.Dir)
+	stdoutCopy, stderrCopy = &childOutput{stream: stdout}, &childOutput{stream: stderr}
+	cmd.Stdout, cmd.Stderr = stdoutCopy, stderrCopy
+	cmd.Cancel = func() error { return cmd.Process.Kill() }
+	cmd.WaitDelay = childWaitDelay
+	return cmd, stdoutCopy, stderrCopy
+}

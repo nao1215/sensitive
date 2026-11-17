@@ -67,25 +67,12 @@ func TestMyNumberDetector_Scan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			findings := d.Scan([]byte(tt.input))
-			if len(findings) != tt.wantLen {
-				t.Fatalf("got %d findings, want %d: %+v", len(findings), tt.wantLen, findings)
-			}
-			if tt.wantLen > 0 && tt.wantRaw != "" {
-				if findings[0].RawValue != tt.wantRaw {
-					t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
-				}
-			}
-			if tt.wantLen > 0 && tt.wantMinCon > 0 {
-				if findings[0].Confidence < tt.wantMinCon {
-					t.Errorf("Confidence = %f, want >= %f", findings[0].Confidence, tt.wantMinCon)
-				}
-			}
+			assertDetectorScan(t, d, tt.input, tt.wantLen, tt.wantRaw, tt.wantMinCon)
 		})
 	}
 }
 
-func TestMyNumberDetector_FullWidthRawValue(t *testing.T) {
+func TestMyNumberDetector_FullWidthSpan(t *testing.T) {
 	t.Parallel()
 
 	d := NewMyNumber()
@@ -96,15 +83,12 @@ func TestMyNumberDetector_FullWidthRawValue(t *testing.T) {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
 	f := findings[0]
-	if f.RawValue != input {
-		t.Errorf("RawValue = %q, want %q", f.RawValue, input)
-	}
-	if input[f.Start:f.End] != f.RawValue {
-		t.Errorf("input[Start:End] = %q, RawValue = %q", input[f.Start:f.End], f.RawValue)
+	if input[f.Start:f.End] != input {
+		t.Errorf("matched text = %q, want %q", input[f.Start:f.End], input)
 	}
 }
 
-func TestMyNumberDetector_Detail(t *testing.T) {
+func TestMyNumberDetector_Validation(t *testing.T) {
 	t.Parallel()
 
 	d := NewMyNumber()
@@ -112,11 +96,8 @@ func TestMyNumberDetector_Detail(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	detail, ok := findings[0].MyNumberDetail()
-	if !ok {
-		t.Fatal("MyNumberDetail() returned false")
-	}
-	if !detail.CheckDigitValid {
+	matched := sampleMyNumber[findings[0].Start:findings[0].End]
+	if !isValidMyNumber(testDigits([]byte(matched))) {
 		t.Error("CheckDigitValid = false, want true")
 	}
 }
@@ -201,8 +182,8 @@ func TestMyNumberDetector_TrailingHyphen(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	if findings[0].RawValue != "1234-5678-9018" {
-		t.Errorf("RawValue = %q, want %q", findings[0].RawValue, "1234-5678-9018")
+	if "1234-5678-9018-"[findings[0].Start:findings[0].End] != "1234-5678-9018" {
+		t.Errorf("matched text = %q, want %q", "1234-5678-9018-"[findings[0].Start:findings[0].End], "1234-5678-9018")
 	}
 }
 
@@ -239,7 +220,7 @@ func TestARNRequiresCompletePrefix(t *testing.T) {
 	t.Parallel()
 	for _, input := range []string{"barn:aws:iam::123456789018:role/x", "notarn:aws:iam::123456789018:role/x", "arn:aws:iam::000000000001:role/123456789018"} {
 		findings := NewMyNumber().Scan([]byte(input))
-		if len(findings) != 1 || findings[0].RawValue != "123456789018" {
+		if len(findings) != 1 || input[findings[0].Start:findings[0].End] != "123456789018" {
 			t.Fatalf("non-account ID lost: %+v", findings)
 		}
 	}

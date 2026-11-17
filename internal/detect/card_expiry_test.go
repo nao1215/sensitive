@@ -115,8 +115,8 @@ func TestCardExpiryDetector_Scan(t *testing.T) {
 			if tt.wantLen == 0 {
 				return
 			}
-			if tt.wantRaw != "" && findings[0].RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
+			if tt.wantRaw != "" && tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
 			}
 			for _, f := range findings {
 				if f.Confidence < tt.wantMinCon {
@@ -127,7 +127,7 @@ func TestCardExpiryDetector_Scan(t *testing.T) {
 	}
 }
 
-func TestCardExpiryDetector_Detail(t *testing.T) {
+func TestCardExpiryDetector_Validation(t *testing.T) {
 	t.Parallel()
 
 	d := NewCardExpiry()
@@ -136,19 +136,16 @@ func TestCardExpiryDetector_Detail(t *testing.T) {
 		t.Fatalf("expected 1 finding, got %d", len(findings))
 	}
 
-	detail, ok := findings[0].CardExpiryDetail()
-	if !ok {
-		t.Fatal("CardExpiryDetail() returned false")
+	matched := "exp: 12/25"[findings[0].Start:findings[0].End]
+	if matched[:2] != "12" {
+		t.Errorf("Month = %q, want %q", matched[:2], "12")
 	}
-	if detail.Month != "12" {
-		t.Errorf("Month = %q, want %q", detail.Month, "12")
-	}
-	if detail.Year != "25" {
-		t.Errorf("Year = %q, want %q", detail.Year, "25")
+	if matched[3:] != "25" {
+		t.Errorf("Year = %q, want %q", matched[3:], "25")
 	}
 }
 
-func TestCardExpiryDetector_Detail_4digitYear(t *testing.T) {
+func TestCardExpiryDetector_Validation_4digitYear(t *testing.T) {
 	t.Parallel()
 
 	d := NewCardExpiry()
@@ -157,15 +154,12 @@ func TestCardExpiryDetector_Detail_4digitYear(t *testing.T) {
 		t.Fatalf("expected 1 finding, got %d", len(findings))
 	}
 
-	detail, ok := findings[0].CardExpiryDetail()
-	if !ok {
-		t.Fatal("CardExpiryDetail() returned false")
+	matched := "expiry: 01/2030"[findings[0].Start:findings[0].End]
+	if matched[:2] != "01" {
+		t.Errorf("Month = %q, want %q", matched[:2], "01")
 	}
-	if detail.Month != "01" {
-		t.Errorf("Month = %q, want %q", detail.Month, "01")
-	}
-	if detail.Year != "2030" {
-		t.Errorf("Year = %q, want %q", detail.Year, "2030")
+	if matched[3:] != "2030" {
+		t.Errorf("Year = %q, want %q", matched[3:], "2030")
 	}
 }
 
@@ -226,8 +220,8 @@ func TestCardExpiryDetector_DateBeforeKeyword(t *testing.T) {
 			if len(findings) != tt.wantLen {
 				t.Fatalf("got %d findings, want %d; findings=%+v", len(findings), tt.wantLen, findings)
 			}
-			if tt.wantLen > 0 && findings[0].RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
+			if tt.wantLen > 0 && tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
 			}
 		})
 	}
@@ -275,7 +269,7 @@ func TestCardExpiryDetector_NoOverlapFromRepeatedKeywordMatches(t *testing.T) {
 			findings := d.Scan([]byte(tt.input))
 			got := make([]string, 0, len(findings))
 			for _, f := range findings {
-				got = append(got, f.RawValue)
+				got = append(got, tt.input[f.Start:f.End])
 			}
 			if len(got) != len(tt.wantRaw) {
 				t.Fatalf("Scan(%q) = %q, want %q", tt.input, got, tt.wantRaw)
@@ -287,7 +281,7 @@ func TestCardExpiryDetector_NoOverlapFromRepeatedKeywordMatches(t *testing.T) {
 			}
 			for i := 1; i < len(findings); i++ {
 				if findings[i-1].End > findings[i].Start && findings[i].End > findings[i-1].Start {
-					t.Fatalf("Scan(%q) returned overlapping findings %q and %q", tt.input, findings[i-1].RawValue, findings[i].RawValue)
+					t.Fatalf("Scan(%q) returned overlapping findings %q and %q", tt.input, tt.input[findings[i-1].Start:findings[i-1].End], tt.input[findings[i].Start:findings[i].End])
 				}
 			}
 		})
@@ -298,7 +292,7 @@ func TestCardExpiryEncodedSeparators(t *testing.T) {
 	t.Parallel()
 	for _, escape := range []string{"%20", "%09", "%3D"} {
 		got := NewCardExpiry().Scan([]byte("expiry " + escape + "12/28"))
-		if len(got) != 1 || got[0].RawValue != "12/28" {
+		if len(got) != 1 || ("expiry " + escape + "12/28")[got[0].Start:got[0].End] != "12/28" {
 			t.Fatalf("%s: lost expiry: %v", escape, got)
 		}
 	}

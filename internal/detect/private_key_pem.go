@@ -2,15 +2,7 @@ package detect
 
 import (
 	"bytes"
-	"strings"
 )
-
-// PrivateKeyPEMDetail holds PEM private key-specific detail information.
-type PrivateKeyPEMDetail struct {
-	// KeyType is the algorithm/format named in the PEM header (e.g. "RSA", "EC",
-	// "OPENSSH", "DSA", or "" for a bare PKCS#8 "PRIVATE KEY").
-	KeyType string
-}
 
 // PrivateKeyPEM implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindPrivateKeyPEM.
@@ -44,7 +36,6 @@ func (d *PrivateKeyPEM) Scan(data []byte) []Finding {
 		if !complete {
 			end = len(data)
 		}
-		algo := strings.TrimSpace(strings.TrimSuffix(string(label), "PRIVATE KEY"))
 
 		findings = append(findings, Finding{
 			DetectorName: d.Name(),
@@ -52,8 +43,6 @@ func (d *PrivateKeyPEM) Scan(data []byte) []Finding {
 			End:          end,
 			//nolint:mnd // The detector contract documents this heuristic score.
 			Confidence: 0.99,
-			RawValue:   string(data[i:end]),
-			Detail:     &PrivateKeyPEMDetail{KeyType: algo},
 		})
 		i = end
 	}

@@ -125,19 +125,7 @@ func (s *Scanner) scanInput(data, scanData []byte, positions []int, canceled fun
 		if selected&(1<<i) == 0 {
 			continue
 		}
-		raw := d.Name() == "credential"
-		var detected []detect.Finding
-		if credential, ok := d.(*detect.Credential); ok {
-			detected = credential.ScanViews(data, scanData, positions)
-		} else {
-			detected = d.Scan(scanData)
-		}
-		for _, f := range detected {
-			if positions != nil && !raw {
-				f.Start, f.End = positions[f.Start], positions[f.End]
-			}
-			findings = append(findings, Finding{Kind: Kind(f.DetectorName), Start: f.Start, End: f.End, Confidence: f.Confidence})
-		}
+		findings = appendBuiltinFindings(findings, d, data, scanData, positions)
 	}
 	for _, d := range s.custom {
 		if scanCanceled(canceled) {
@@ -148,17 +136,7 @@ func (s *Scanner) scanInput(data, scanData []byte, positions []int, canceled fun
 	if scanCanceled(canceled) {
 		return nil
 	}
-	result := findings[:0]
-	for _, f := range findings {
-		if f.Kind == "" || f.Start < 0 || f.End <= f.Start || f.End > len(data) || !validScore(f.Confidence) {
-			panic("embargo: invalid detector finding")
-		}
-		if f.Confidence >= s.minConfidence {
-			result = append(result, f)
-		}
-	}
-	slices.SortStableFunc(result, compareFindings)
-	return result
+	return s.filterFindings(findings, len(data))
 }
 
 // ScanString scans the bytes of text.
@@ -215,13 +193,38 @@ func scanCanceled(canceled func() error) bool {
 func normalizedScanInput(data []byte) (normalized []byte, positions []int) {
 	decoded, positions := decodePercent(data)
 	normalized, tokenPositions := detect.RemoveTokenSeparators(decoded)
-	if tokenPositions == nil {
-		return decoded, positions
+	return normalized, detect.ComposePositions(tokenPositions, positions)
+}
+
+// appendBuiltinFindings translates one detector result to the caller's original bytes.
+func appendBuiltinFindings(findings []Finding, d detect.Detector, data, scanData []byte, positions []int) []Finding {
+	raw := d.Name() == "credential"
+	var detected []detect.Finding
+	if credential, ok := d.(*detect.Credential); ok {
+		detected = credential.ScanViews(data, scanData, positions)
+	} else {
+		detected = d.Scan(scanData)
 	}
-	if positions != nil {
-		for i, pos := range tokenPositions {
-			tokenPositions[i] = positions[pos]
+	for _, f := range detected {
+		if positions != nil && !raw {
+			f.Start, f.End = positions[f.Start], positions[f.End]
+		}
+		findings = append(findings, Finding{Kind: Kind(f.DetectorName), Start: f.Start, End: f.End, Confidence: f.Confidence})
+	}
+	return findings
+}
+
+// Validate all findings before applying the inclusive confidence threshold and stable ordering.
+func (s *Scanner) filterFindings(findings []Finding, inputLength int) []Finding {
+	result := findings[:0]
+	for _, f := range findings {
+		if f.Kind == "" || f.Start < 0 || f.End <= f.Start || f.End > inputLength || !validScore(f.Confidence) {
+			panic("embargo: invalid detector finding")
+		}
+		if f.Confidence >= s.minConfidence {
+			result = append(result, f)
 		}
 	}
-	return normalized, tokenPositions
+	slices.SortStableFunc(result, compareFindings)
+	return result
 }

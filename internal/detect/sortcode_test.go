@@ -152,8 +152,8 @@ func TestUKSortCodeDetector_Scan(t *testing.T) {
 			if tt.wantLen == 0 {
 				return
 			}
-			if tt.wantRaw != "" && findings[0].RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
+			if tt.wantRaw != "" && tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
 			}
 			for _, f := range findings {
 				if f.Confidence < tt.wantMinCon {
@@ -164,7 +164,7 @@ func TestUKSortCodeDetector_Scan(t *testing.T) {
 	}
 }
 
-func TestUKSortCodeDetector_Detail(t *testing.T) {
+func TestUKSortCodeDetector_Validation(t *testing.T) {
 	t.Parallel()
 
 	d := NewUKSortCode()
@@ -173,12 +173,9 @@ func TestUKSortCodeDetector_Detail(t *testing.T) {
 		t.Fatalf("expected 1 finding, got %d", len(findings))
 	}
 
-	detail, ok := findings[0].UKSortCodeDetail()
-	if !ok {
-		t.Fatal("UKSortCodeDetail() returned false")
-	}
-	if detail.FormattedValue != sampleSortCode {
-		t.Errorf("FormattedValue = %q, want %q", detail.FormattedValue, sampleSortCode)
+	matched := "sort code: 12-34-56"[findings[0].Start:findings[0].End]
+	if matched != sampleSortCode {
+		t.Errorf("FormattedValue = %q, want %q", matched, sampleSortCode)
 	}
 }
 
@@ -263,7 +260,7 @@ func TestUKSortCodeTrailingSpace(t *testing.T) {
 	for _, raw := range []string{"01 00 00", "12 34 56"} {
 		for _, suffix := range []string{" ", " today", "  "} {
 			got := NewUKSortCode().Scan([]byte("sort code: " + raw + suffix))
-			if len(got) != 1 || got[0].RawValue != raw {
+			if len(got) != 1 || ("sort code: " + raw + suffix)[got[0].Start:got[0].End] != raw {
 				t.Errorf("lost %q with suffix %q: %+v", raw, suffix, got)
 			}
 		}
@@ -277,7 +274,7 @@ func TestSortCodeAdjacentFormats(t *testing.T) {
 	t.Parallel()
 	input := "sort code: 01 00 00 12-34-56"
 	got := NewUKSortCode().Scan([]byte(input))
-	if len(got) != 2 || got[0].RawValue != "01 00 00" || got[1].RawValue != sampleSortCode {
+	if len(got) != 2 || input[got[0].Start:got[0].End] != "01 00 00" || input[got[1].Start:got[1].End] != sampleSortCode {
 		t.Fatalf("adjacent formats: %+v", got)
 	}
 }

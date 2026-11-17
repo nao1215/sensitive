@@ -1,15 +1,13 @@
-package detect_test
+package detect
 
 import (
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestCVVDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewCVV()
+	d := NewCVV()
 	tests := []struct {
 		name       string
 		input      string
@@ -137,8 +135,8 @@ func TestCVVDetector_Scan(t *testing.T) {
 			if tt.wantLen == 0 {
 				return
 			}
-			if tt.wantRaw != "" && findings[0].RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
+			if tt.wantRaw != "" && tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
 			}
 			for _, f := range findings {
 				if f.Confidence < tt.wantMinCon {
@@ -149,55 +147,49 @@ func TestCVVDetector_Scan(t *testing.T) {
 	}
 }
 
-func TestCVVDetector_Detail(t *testing.T) {
+func TestCVVDetector_Validation(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewCVV()
+	d := NewCVV()
 	findings := d.Scan([]byte("CVV: 123"))
 	if len(findings) != 1 {
 		t.Fatalf("expected 1 finding, got %d", len(findings))
 	}
 
-	detail, ok := findings[0].CVVDetail()
-	if !ok {
-		t.Fatal("CVVDetail() returned false")
-	}
-	if detail.DigitCount != 3 {
-		t.Errorf("DigitCount = %d, want %d", detail.DigitCount, 3)
+	matched := "CVV: 123"[findings[0].Start:findings[0].End]
+	if len(matched) != 3 {
+		t.Errorf("DigitCount = %d, want %d", len(matched), 3)
 	}
 }
 
-func TestCVVDetector_Detail_4digit(t *testing.T) {
+func TestCVVDetector_Validation_4digit(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewCVV()
+	d := NewCVV()
 	findings := d.Scan([]byte("CVC: 1234"))
 	if len(findings) != 1 {
 		t.Fatalf("expected 1 finding, got %d", len(findings))
 	}
 
-	detail, ok := findings[0].CVVDetail()
-	if !ok {
-		t.Fatal("CVVDetail() returned false")
-	}
-	if detail.DigitCount != 4 {
-		t.Errorf("DigitCount = %d, want %d", detail.DigitCount, 4)
+	matched := "CVC: 1234"[findings[0].Start:findings[0].End]
+	if len(matched) != 4 {
+		t.Errorf("DigitCount = %d, want %d", len(matched), 4)
 	}
 }
 
 func TestCVVDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewCVV()
-	if d.Name() != detect.NameCVV {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameCVV)
+	d := NewCVV()
+	if d.Name() != NameCVV {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameCVV)
 	}
 }
 
 func TestCVVDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewCVV()
+	d := NewCVV()
 	hints := d.Hints()
 	if len(hints) == 0 {
 		t.Error("Hints() returned empty slice, want at least one hint")
@@ -211,7 +203,7 @@ func TestCVVDetector_Hints(t *testing.T) {
 func TestCVVDetector_HintKeywordConsistency(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewCVV()
+	d := NewCVV()
 
 	// Every keyword variant that Scan recognizes must be detectable through
 	// the hint filter. We embed each keyword in a test string and verify

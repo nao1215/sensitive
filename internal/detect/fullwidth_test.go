@@ -3,6 +3,7 @@ package detect
 import (
 	"bytes"
 	"math"
+	"reflect"
 	"strings"
 	"testing"
 	"unicode"
@@ -103,7 +104,7 @@ func TestUnicodeNormalizationOffsets(t *testing.T) {
 		raw := "４１１１" + separator + "１１１１" + separator + "１１１１" + separator + "１１１１"
 		input := "日本語: " + raw + "!"
 		findings := NewPAN().Scan([]byte(input))
-		if len(findings) != 1 || findings[0].Start != len("日本語: ") || findings[0].End != len(input)-1 || findings[0].RawValue != raw {
+		if len(findings) != 1 || findings[0].Start != len("日本語: ") || findings[0].End != len(input)-1 || input[findings[0].Start:findings[0].End] != raw {
 			t.Fatalf("bad original offsets: %q %v", input, findings)
 		}
 		normalized, positions := NormalizeFullWidthDigits([]byte(input))
@@ -156,5 +157,45 @@ func TestTokenSeparatorCategoryProperty(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestComposePositionsIdentity(t *testing.T) {
+	t.Parallel()
+	parent := []int{0, 3, 4}
+	if got := ComposePositions(nil, parent); !reflect.DeepEqual(got, parent) {
+		t.Fatal(got)
+	}
+	child := []int{0, 1, 2}
+	if got := ComposePositions(child, nil); !reflect.DeepEqual(got, child) {
+		t.Fatal(got)
+	}
+	if ComposePositions(nil, nil) != nil {
+		t.Fatal("identity allocated a map")
+	}
+}
+
+func TestComposePositionsSentinel(t *testing.T) {
+	t.Parallel()
+	child := []int{0, 2, 3}
+	got := ComposePositions(child, []int{0, 3, 4, 8})
+	if !reflect.DeepEqual(got, []int{0, 4, 8}) || &got[0] != &child[0] {
+		t.Fatal(got)
+	}
+}
+
+func TestComposePositionsLayers(t *testing.T) {
+	t.Parallel()
+	original := []byte(`password=\x22fixture\x22`)
+	first, a := credentialQuotes(original)
+	second, b := credentialQuotes(first)
+	mapping := ComposePositions(b, a)
+	got := (&Credential{}).Scan(second)
+	if len(got) != 1 {
+		t.Fatal(got)
+	}
+	start, end := mapping[got[0].Start], mapping[got[0].End]
+	if string(original[start:end]) != "fixture" {
+		t.Fatal(start, end)
 	}
 }

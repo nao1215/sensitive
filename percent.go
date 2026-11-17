@@ -1,6 +1,10 @@
 package embargo
 
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/nao1215/embargo/internal/ascii"
+)
 
 // decodePercent decodes one layer of valid %HH escapes, preserving '+' and invalid
 // escapes. A nil map denotes identity; otherwise it includes the end sentinel.
@@ -13,8 +17,8 @@ func decodePercent(data []byte) (decoded []byte, positions []int) {
 		if data[i] != '%' {
 			continue
 		}
-		hi, ok := percentHex(data[i+1])
-		lo, ok2 := percentHex(data[i+2])
+		hi, ok := ascii.DecodeHex(data[i+1])
+		lo, ok2 := ascii.DecodeHex(data[i+2])
 		if !ok || !ok2 {
 			continue
 		}
@@ -33,8 +37,8 @@ func decodePercent(data []byte) (decoded []byte, positions []int) {
 		i += 3
 		for i < len(data) {
 			if data[i] == '%' && i+2 < len(data) {
-				_, ok = percentHex(data[i+1])
-				_, ok2 = percentHex(data[i+2])
+				_, ok = ascii.DecodeHex(data[i+1])
+				_, ok2 = ascii.DecodeHex(data[i+2])
 				if ok && ok2 {
 					break
 				}
@@ -50,18 +54,4 @@ func decodePercent(data []byte) (decoded []byte, positions []int) {
 	}
 	positions = append(positions, len(data))
 	return decoded, positions
-}
-
-//nolint:mnd // Hexadecimal digit values.
-func percentHex(b byte) (byte, bool) {
-	switch {
-	case b >= '0' && b <= '9':
-		return b - '0', true
-	case b >= 'a' && b <= 'f':
-		return b - 'a' + 10, true
-	case b >= 'A' && b <= 'F':
-		return b - 'A' + 10, true
-	default:
-		return 0, false
-	}
 }

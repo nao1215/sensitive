@@ -1,20 +1,17 @@
-package detect_test
+package detect
 
 import (
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestMerchantIDDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewMerchantID()
+	d := NewMerchantID()
 	tests := []struct {
 		name       string
 		input      string
 		wantRaw    string
-		wantIDType detect.MerchantIDType
 		wantLen    int
 		wantMinCon float64
 	}{
@@ -24,7 +21,6 @@ func TestMerchantIDDetector_Scan(t *testing.T) {
 			wantLen:    1,
 			wantRaw:    "ABCDE12345FGHI6",
 			wantMinCon: 0.7,
-			wantIDType: detect.MerchantIDTypeMerchant,
 		},
 		{
 			name:       "terminal ID",
@@ -32,7 +28,6 @@ func TestMerchantIDDetector_Scan(t *testing.T) {
 			wantLen:    1,
 			wantRaw:    "12345678",
 			wantMinCon: 0.7,
-			wantIDType: detect.MerchantIDTypeTerminal,
 		},
 		{
 			name:       "repeated terminal keywords do not duplicate a finding",
@@ -40,7 +35,6 @@ func TestMerchantIDDetector_Scan(t *testing.T) {
 			wantLen:    1,
 			wantRaw:    "12345678",
 			wantMinCon: 0.7,
-			wantIDType: detect.MerchantIDTypeTerminal,
 		},
 		{
 			name:       "digits inside a merchant ID are not reported again as a terminal ID",
@@ -48,7 +42,6 @@ func TestMerchantIDDetector_Scan(t *testing.T) {
 			wantLen:    1,
 			wantRaw:    "A00000000A00000",
 			wantMinCon: 0.7,
-			wantIDType: detect.MerchantIDTypeMerchant,
 		},
 		{
 			name:    "terminal digits inside an alphanumeric token",
@@ -74,19 +67,11 @@ func TestMerchantIDDetector_Scan(t *testing.T) {
 				return
 			}
 			f := findings[0]
-			if tt.wantRaw != "" && f.RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", f.RawValue, tt.wantRaw)
+			if tt.wantRaw != "" && tt.input[f.Start:f.End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[f.Start:f.End], tt.wantRaw)
 			}
 			if f.Confidence < tt.wantMinCon {
 				t.Errorf("Confidence = %f, want >= %f", f.Confidence, tt.wantMinCon)
-			}
-
-			detail, ok := f.MerchantIDDetail()
-			if !ok {
-				t.Fatal("MerchantIDDetail() returned false")
-			}
-			if detail.IDType != tt.wantIDType {
-				t.Errorf("IDType = %q, want %q", detail.IDType, tt.wantIDType)
 			}
 		})
 	}
@@ -95,16 +80,16 @@ func TestMerchantIDDetector_Scan(t *testing.T) {
 func TestMerchantIDDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewMerchantID()
-	if d.Name() != detect.NameMerchantID {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameMerchantID)
+	d := NewMerchantID()
+	if d.Name() != NameMerchantID {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameMerchantID)
 	}
 }
 
 func TestMerchantIDDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewMerchantID()
+	d := NewMerchantID()
 	hints := d.Hints()
 	if len(hints) == 0 {
 		t.Error("Hints() returned empty slice, want at least one hint")

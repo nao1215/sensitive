@@ -2,7 +2,6 @@ package detect
 
 import (
 	"bytes"
-	"encoding/hex"
 	"strings"
 	"testing"
 )
@@ -91,20 +90,7 @@ func TestEmailDetector_Scan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			findings := d.Scan([]byte(tt.input))
-			if len(findings) != tt.wantLen {
-				t.Fatalf("got %d findings, want %d: %+v", len(findings), tt.wantLen, findings)
-			}
-			if tt.wantLen > 0 && tt.wantRaw != "" {
-				if findings[0].RawValue != tt.wantRaw {
-					t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
-				}
-			}
-			if tt.wantLen > 0 && tt.wantMinCon > 0 {
-				if findings[0].Confidence < tt.wantMinCon {
-					t.Errorf("Confidence = %f, want >= %f", findings[0].Confidence, tt.wantMinCon)
-				}
-			}
+			assertDetectorScan(t, d, tt.input, tt.wantLen, tt.wantRaw, tt.wantMinCon)
 		})
 	}
 }
@@ -123,7 +109,7 @@ func TestEmailDetector_UppercaseTLD(t *testing.T) {
 	}
 }
 
-func TestEmailDetector_Detail(t *testing.T) {
+func TestEmailDetector_Validation(t *testing.T) {
 	t.Parallel()
 
 	d := NewEmail()
@@ -131,15 +117,12 @@ func TestEmailDetector_Detail(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	detail, ok := findings[0].EmailDetail()
-	if !ok {
-		t.Fatal("EmailDetail() returned false")
+	matched := "tanaka@example.com"[findings[0].Start:findings[0].End]
+	if strings.Split(matched, "@")[0] != "tanaka" {
+		t.Errorf("Local = %q, want %q", strings.Split(matched, "@")[0], "tanaka")
 	}
-	if detail.Local != "tanaka" {
-		t.Errorf("Local = %q, want %q", detail.Local, "tanaka")
-	}
-	if detail.Domain != "example.com" {
-		t.Errorf("Domain = %q, want %q", detail.Domain, "example.com")
+	if strings.Split(matched, "@")[1] != "example.com" {
+		t.Errorf("Domain = %q, want %q", strings.Split(matched, "@")[1], "example.com")
 	}
 }
 
@@ -216,8 +199,8 @@ func TestEmailDetector_TrailingDotDomain(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	if findings[0].RawValue != "user@example.com" {
-		t.Errorf("RawValue = %q, want %q", findings[0].RawValue, "user@example.com")
+	if "user@example.com."[findings[0].Start:findings[0].End] != "user@example.com" {
+		t.Errorf("matched text = %q, want %q", "user@example.com."[findings[0].Start:findings[0].End], "user@example.com")
 	}
 }
 
@@ -229,8 +212,8 @@ func TestEmailDetector_TrailingDashDomain(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	if findings[0].RawValue != "user@example.com" {
-		t.Errorf("RawValue = %q, want %q", findings[0].RawValue, "user@example.com")
+	if "user@example.com-"[findings[0].Start:findings[0].End] != "user@example.com" {
+		t.Errorf("matched text = %q, want %q", "user@example.com-"[findings[0].Start:findings[0].End], "user@example.com")
 	}
 }
 
@@ -298,7 +281,7 @@ func TestEmailDetector_DomainStartsWithDot(t *testing.T) {
 			t.Parallel()
 
 			if findings := d.Scan([]byte(tt.input)); len(findings) != 0 {
-				t.Errorf("Scan(%q) = %q, want no findings", tt.input, findings[0].RawValue)
+				t.Errorf("Scan(%q) = %q, want no findings", tt.input, tt.input[findings[0].Start:findings[0].End])
 			}
 		})
 	}
@@ -352,10 +335,6 @@ func TestDetectorByteAlphabets(t *testing.T) {
 		if isDomainChar(b) != (alnum || strings.ContainsRune(".-", rune(b))) {
 			t.Fatalf("domain alphabet %x", b)
 		}
-		_, err := hex.DecodeString("0" + string(b))
-		if isHexChar(b) != (err == nil) {
-			t.Fatalf("hex alphabet %x", b)
-		}
 		if toLowerASCIIString(string(b)) != string(bytes.ToLower([]byte{b})) && b < 128 {
 			t.Fatalf("case endpoint %x", b)
 		}
@@ -387,6 +366,19 @@ func TestGitRemoteContexts(t *testing.T) {
 		}
 		if got := NewEmail().Scan([]byte("contact git@" + host)); len(got) != 1 {
 			t.Error("ordinary mailbox lost")
+		}
+	}
+}
+
+func TestEmailDomainValidation(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		domain string
+		valid  bool
+	}{{"example.com", true}, {"example.museum", true}, {"-example.com", false}, {"example-.com", false}, {"example.c", false}, {"example.c0", false}, {".com", false}} {
+		_, valid := validateTLD([]byte(tc.domain))
+		if valid != tc.valid {
+			t.Fatal(tc.domain, valid)
 		}
 	}
 }

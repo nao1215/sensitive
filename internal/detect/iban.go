@@ -1,11 +1,5 @@
 package detect
 
-// IBANDetail holds IBAN-specific detail information.
-type IBANDetail struct {
-	// CountryCode is the uppercase ISO 3166-1 alpha-2 code (e.g., "DE" or "GB").
-	CountryCode string
-}
-
 // IBAN implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindIBAN.
 type IBAN struct{}
@@ -72,8 +66,6 @@ func (d *IBAN) Scan(data []byte) []Finding {
 			End:          end,
 			//nolint:mnd // The detector contract documents this heuristic score.
 			Confidence: 0.95,
-			RawValue:   string(data[start:end]),
-			Detail:     &IBANDetail{CountryCode: countryCode},
 		})
 
 		i = end - 1

@@ -243,7 +243,6 @@ func (h *slogHandler) mask(ctx context.Context, text string) (string, error) {
 
 func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth int, groups string) (slog.Attr, bool, error) {
 	const maxDepth = 64
-	const maxLogValues = 100
 	if ctx.Err() != nil {
 		return slog.Attr{}, false, saferecord.ErrCanceled
 	}
@@ -272,34 +271,13 @@ func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth in
 	if h.scanner.sensitiveKey(attr.Key) {
 		return slog.String(key, redactionMarker), crossed, nil
 	}
-	value := attr.Value
-	// Calling LogValue directly lets the outer boundary discard panic values.
-	// Value.Resolve converts panic contents to an error, which could reveal them.
-	for count := 0; value.Kind() == slog.KindLogValuer; count++ {
-		if ctx.Err() != nil {
-			return slog.Attr{}, false, saferecord.ErrCanceled
-		}
-		if count == maxLogValues {
-			return slog.Attr{}, false, saferecord.ErrSizeLimit
-		}
-		value = value.LogValuer().LogValue()
+	value, err := resolveLogValue(ctx, attr.Value)
+	if err != nil {
+		return slog.Attr{}, false, err
 	}
 	switch value.Kind() {
 	case slog.KindGroup:
-		attrs := value.Group()
-		safe := make([]slog.Attr, 0, len(attrs))
-		for _, child := range attrs {
-			clean, childCrossed, err := h.sanitizeAttr(ctx, child, depth+1, joinedKey(groups, pathKey))
-			crossed = crossed || childCrossed
-			if err != nil {
-				return slog.Attr{}, false, err
-			}
-			safe = append(safe, clean)
-		}
-		if crossed && key != "" {
-			key = redactionMarker
-		}
-		return slog.Attr{Key: key, Value: slog.GroupValue(safe...)}, crossed, nil
+		return h.sanitizeGroup(ctx, key, joinedKey(groups, pathKey), value.Group(), depth, crossed)
 	case slog.KindAny:
 		safe, err := h.sanitizeAny(ctx, key, attr.Key, value.Any())
 		return safe, crossed, err
@@ -407,4 +385,36 @@ func (h *slogHandler) sanitizeBytes(ctx context.Context, key, originalKey string
 		return slog.Attr{}, slogSanitizationError()
 	}
 	return slog.Any(key, maskedJSON(encoded)), nil
+}
+
+func resolveLogValue(ctx context.Context, value slog.Value) (slog.Value, error) {
+	const maxLogValues = 100
+	// Calling LogValue directly lets the outer boundary discard panic values.
+	// Value.Resolve converts panic contents to an error, which could reveal them.
+	for count := 0; value.Kind() == slog.KindLogValuer; count++ {
+		if ctx.Err() != nil {
+			return slog.Value{}, saferecord.ErrCanceled
+		}
+		if count == maxLogValues {
+			return slog.Value{}, saferecord.ErrSizeLimit
+		}
+		value = value.LogValuer().LogValue()
+	}
+	return value, nil
+}
+
+func (h *slogHandler) sanitizeGroup(ctx context.Context, key, path string, attrs []slog.Attr, depth int, crossed bool) (slog.Attr, bool, error) {
+	safe := make([]slog.Attr, 0, len(attrs))
+	for _, child := range attrs {
+		clean, childCrossed, err := h.sanitizeAttr(ctx, child, depth+1, path)
+		crossed = crossed || childCrossed
+		if err != nil {
+			return slog.Attr{}, false, err
+		}
+		safe = append(safe, clean)
+	}
+	if crossed && key != "" {
+		key = redactionMarker
+	}
+	return slog.Attr{Key: key, Value: slog.GroupValue(safe...)}, crossed, nil
 }

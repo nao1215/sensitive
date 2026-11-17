@@ -228,11 +228,7 @@ func (r *Recorder) Check() bool {
 		reasons = append(reasons, "no output or no content expectation was registered")
 	}
 	captures := make(map[string][]byte, len(r.sinks))
-	observed := false
-	for name, s := range r.sinks {
-		captures[name] = append([]byte(nil), s.data...)
-		observed = observed || len(s.data) > 0
-	}
+	observed := r.copyCaptures(captures)
 	if !observed && len(r.sinks) > 0 && len(r.expectations) > 0 {
 		reasons = append(reasons, "no output was captured")
 	}
@@ -245,16 +241,7 @@ func (r *Recorder) Check() bool {
 		reasons = append(reasons, "a content expectation was not met")
 	}
 
-	r.mu.Lock()
-	if len(reasons) > 0 {
-		r.failed = true
-	}
-	valid := !r.failed
-	if !valid && len(reasons) == 0 {
-		reasons = append(reasons, "observation incomplete: output or registration changed during Check")
-	}
-	r.reported = !valid
-	r.mu.Unlock()
+	valid, reasons := r.finishCheck(reasons)
 	for _, reason := range reasons {
 		r.tb.Error("embargotest: " + reason)
 	}
@@ -278,4 +265,29 @@ func expectationsMet(captures map[string][]byte, expectations []expectation) boo
 		}
 	}
 	return true
+}
+
+// finishCheck reconciles observations with writes or registration during validation.
+func (r *Recorder) finishCheck(reasons []string) (valid bool, failures []string) {
+	r.mu.Lock()
+	if len(reasons) > 0 {
+		r.failed = true
+	}
+	valid = !r.failed
+	if !valid && len(reasons) == 0 {
+		reasons = append(reasons, "observation incomplete: output or registration changed during Check")
+	}
+	r.reported = !valid
+	r.mu.Unlock()
+	return valid, reasons
+}
+
+// copyCaptures snapshots each sink while the caller holds r.mu.
+func (r *Recorder) copyCaptures(captures map[string][]byte) bool {
+	observed := false
+	for name, s := range r.sinks {
+		captures[name] = append([]byte(nil), s.data...)
+		observed = observed || len(s.data) > 0
+	}
+	return observed
 }

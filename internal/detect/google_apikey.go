@@ -1,8 +1,5 @@
 package detect
 
-// GoogleAPIKeyDetail marks a Google API key finding and currently has no fields.
-type GoogleAPIKeyDetail struct{}
-
 // GoogleAPIKey implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindGoogleAPIKey.
 type GoogleAPIKey struct{}
@@ -35,7 +32,7 @@ func (d *GoogleAPIKey) Scan(data []byte) []Finding {
 			continue
 		}
 		end := i + prefixLen + googleAPIKeyBodyLen
-		if !allBytes(data, i+prefixLen, end, isGoogleKeyByte) || !credBoundary(data, i, end) {
+		if !allBytes(data, i+prefixLen, end, isTokenByte) || !credBoundary(data, i, end) {
 			i++
 			continue
 		}
@@ -45,25 +42,8 @@ func (d *GoogleAPIKey) Scan(data []byte) []Finding {
 			End:          end,
 			//nolint:mnd // The detector contract documents this heuristic score.
 			Confidence: 0.9,
-			RawValue:   string(data[i:end]),
-			Detail:     &GoogleAPIKeyDetail{},
 		})
 		i = end
 	}
 	return findings
-}
-
-// allBytes reports whether every byte in data[start:end] satisfies allow.
-func allBytes(data []byte, start, end int, allow func(byte) bool) bool {
-	for k := start; k < end; k++ {
-		if !allow(data[k]) {
-			return false
-		}
-	}
-	return true
-}
-
-// isGoogleKeyByte reports whether b can appear in a Google API key body.
-func isGoogleKeyByte(b byte) bool {
-	return isBase62(b) || b == '-' || b == '_'
 }

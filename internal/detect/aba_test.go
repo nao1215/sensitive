@@ -147,8 +147,8 @@ func TestABARoutingDetector_Scan(t *testing.T) {
 			if tt.wantLen == 0 {
 				return
 			}
-			if tt.wantRaw != "" && findings[0].RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
+			if tt.wantRaw != "" && tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
 			}
 			for _, f := range findings {
 				if f.Confidence < tt.wantMinCon {
@@ -170,7 +170,7 @@ func TestABARoutingDetector_ChecksumFailedAlwaysRejected(t *testing.T) {
 	}
 }
 
-func TestABARoutingDetector_Detail(t *testing.T) {
+func TestABARoutingDetector_Validation(t *testing.T) {
 	t.Parallel()
 
 	d := NewABARouting()
@@ -179,12 +179,9 @@ func TestABARoutingDetector_Detail(t *testing.T) {
 		t.Fatalf("expected 1 finding, got %d", len(findings))
 	}
 
-	detail, ok := findings[0].ABARoutingDetail()
-	if !ok {
-		t.Fatal("ABARoutingDetail() returned false")
-	}
-	if detail.FederalReserveDistrict != "02-New York" {
-		t.Errorf("FederalReserveDistrict = %q, want %q", detail.FederalReserveDistrict, "02-New York")
+	matched := "routing: 021000021"[findings[0].Start:findings[0].End]
+	if !validABAPrefix([]byte(matched)) {
+		t.Fatal("valid Federal Reserve routing symbol rejected")
 	}
 }
 
@@ -257,7 +254,7 @@ func BenchmarkABALeadingWhitespace(b *testing.B) {
 
 func TestAbaRejectedBoundaries(t *testing.T) {
 	t.Parallel()
-	if validateABAChecksum(nil) || abaFederalReserveDistrict(nil) != "" || abaDistrictName(0) != "" {
+	if validateABAChecksum(nil) || validABAPrefix(nil) {
 		t.Fatal("invalid routing metadata accepted")
 	}
 	if got := NewABARouting().Scan([]byte("021000021x")); len(got) != 0 {
@@ -303,6 +300,31 @@ func TestABALogSequenceProperty(t *testing.T) {
 			if got := d.Scan([]byte(positive)); len(got) != 1 {
 				t.Errorf("positive lost: %s: %+v", positive, got)
 			}
+		}
+	}
+}
+
+func TestABAChecksumSingleDigitChanges(t *testing.T) {
+	t.Parallel()
+	digits := []byte("021000021")
+	for i, original := range digits {
+		for replacement := byte('0'); replacement <= '9'; replacement++ {
+			digits[i] = replacement
+			if validateABAChecksum(digits) != (replacement == original) {
+				t.Fatal(i, replacement)
+			}
+		}
+		digits[i] = original
+	}
+}
+
+func TestABARoutingSymbolRanges(t *testing.T) {
+	t.Parallel()
+	for value := range 100 {
+		input := []byte{byte('0' + value/10), byte('0' + value%10)}
+		want := value >= 1 && value <= 12 || value >= 21 && value <= 32 || value >= 61 && value <= 72 || value == 80
+		if validABAPrefix(input) != want {
+			t.Fatalf("routing symbol %q: want %v", input, want)
 		}
 	}
 }

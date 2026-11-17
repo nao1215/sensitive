@@ -155,8 +155,8 @@ func TestSWIFTBICDetector_Scan(t *testing.T) {
 			if tt.wantLen == 0 {
 				return
 			}
-			if tt.wantRaw != "" && findings[0].RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
+			if tt.wantRaw != "" && tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
 			}
 			for _, f := range findings {
 				if f.Confidence < tt.wantMinCon {
@@ -167,7 +167,7 @@ func TestSWIFTBICDetector_Scan(t *testing.T) {
 	}
 }
 
-func TestSWIFTBICDetector_Detail(t *testing.T) {
+func TestSWIFTBICDetector_Validation(t *testing.T) {
 	t.Parallel()
 
 	d := NewSWIFTBIC()
@@ -176,21 +176,18 @@ func TestSWIFTBICDetector_Detail(t *testing.T) {
 		t.Fatalf("expected 1 finding, got %d", len(findings))
 	}
 
-	detail, ok := findings[0].SWIFTBICDetail()
-	if !ok {
-		t.Fatal("SWIFTBICDetail() returned false")
+	matched := "BIC: BOFAUS3NXXX"[findings[0].Start:findings[0].End]
+	if matched[:4] != "BOFA" {
+		t.Errorf("BankCode = %q, want %q", matched[:4], "BOFA")
 	}
-	if detail.BankCode != "BOFA" {
-		t.Errorf("BankCode = %q, want %q", detail.BankCode, "BOFA")
+	if matched[4:6] != "US" {
+		t.Errorf("CountryCode = %q, want %q", matched[4:6], "US")
 	}
-	if detail.CountryCode != "US" {
-		t.Errorf("CountryCode = %q, want %q", detail.CountryCode, "US")
+	if matched[6:8] != "3N" {
+		t.Errorf("LocationCode = %q, want %q", matched[6:8], "3N")
 	}
-	if detail.LocationCode != "3N" {
-		t.Errorf("LocationCode = %q, want %q", detail.LocationCode, "3N")
-	}
-	if detail.BranchCode != "XXX" {
-		t.Errorf("BranchCode = %q, want %q", detail.BranchCode, "XXX")
+	if matched[8:] != "XXX" {
+		t.Errorf("BranchCode = %q, want %q", matched[8:], "XXX")
 	}
 }
 
@@ -246,7 +243,7 @@ func TestSWIFTZCountryCodes(t *testing.T) {
 			}
 			continue
 		}
-		if len(findings) != 1 || findings[0].RawValue != raw || findings[0].Start != len("SWIFT: ") || findings[0].End != len("SWIFT: ")+len(raw) {
+		if len(findings) != 1 || ("SWIFT: " + raw)[findings[0].Start:findings[0].End] != raw || findings[0].Start != len("SWIFT: ") || findings[0].End != len("SWIFT: ")+len(raw) {
 			t.Fatalf("valid country %s lost or mislocated: %+v", country, findings)
 		}
 	}
@@ -351,14 +348,14 @@ func TestSWIFTKeySpellingProperty(t *testing.T) {
 		code := string(rune('A'+n)) + "BCDDEFF"
 		for _, key := range []string{"SWIFT-Code:", "swift_code=", "swiftCode=", "SWIFTCODE:", "SWIFT number", "SWIFT No.", "SWIFT address", "Swift/BIC:", "swift_bic=", "swift ("} {
 			input := key + " " + code
-			if got := d.Scan([]byte(input)); len(got) != 1 || got[0].RawValue != code {
+			if got := d.Scan([]byte(input)); len(got) != 1 || input[got[0].Start:got[0].End] != code {
 				t.Errorf("%q: %+v", input, got)
 			}
 		}
 		for _, word := range []string{"package", "dependency", "source", "compiler"} {
 			input := "swift " + word + " " + code
 			for _, got := range d.Scan([]byte(input)) {
-				if got.RawValue == code {
+				if input[got.Start:got.End] == code {
 					t.Errorf("build context %q: %+v", input, got)
 				}
 			}

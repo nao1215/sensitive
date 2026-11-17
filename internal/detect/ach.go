@@ -1,13 +1,5 @@
 package detect
 
-// ACHTraceDetail holds ACH trace number-specific detail information.
-type ACHTraceDetail struct {
-	// ODFIRoutingNumber is the first 8 digits of the trace number,
-	// representing the Originating Depository Financial Institution's
-	// routing number (without the check digit).
-	ODFIRoutingNumber string
-}
-
 // ACHTrace implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindACHTrace.
 type ACHTrace struct {
@@ -54,13 +46,11 @@ func (d *ACHTrace) Scan(data []byte) []Finding {
 
 			// Validate that the first 2 digits are a valid Federal Reserve
 			// routing symbol range.
-			if abaFederalReserveDistrict(digits[:9]) == "" {
+			if !validABAPrefix(digits[:9]) {
 				continue
 			}
 
 			used[seq.start] = struct{}{}
-
-			odfiRouting := string(digits[:8])
 
 			findings = append(findings, Finding{
 				DetectorName: d.Name(),
@@ -68,8 +58,6 @@ func (d *ACHTrace) Scan(data []byte) []Finding {
 				End:          seq.end,
 				//nolint:mnd // The detector contract documents this heuristic score.
 				Confidence: 0.75,
-				RawValue:   string(data[seq.start:seq.end]),
-				Detail:     &ACHTraceDetail{ODFIRoutingNumber: odfiRouting},
 			})
 		}
 	}

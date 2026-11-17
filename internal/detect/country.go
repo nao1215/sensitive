@@ -53,7 +53,7 @@ func (d *Country) Scan(data []byte) []Finding {
 	var result []Finding
 	var logContext numericLogContext
 	for start := range normalized {
-		if start > 0 && isPhoneWordChar(normalized[start-1]) {
+		if start > 0 && isIdentifierByte(normalized[start-1]) {
 			continue
 		}
 		for _, layout := range d.layouts {
@@ -66,7 +66,7 @@ func (d *Country) Scan(data []byte) []Finding {
 				continue
 			}
 			a, b := mapOriginalRange(positions, start, end)
-			result = append(result, Finding{DetectorName: d.name, Start: a, End: b, RawValue: string(data[a:b]), Confidence: businessConfidence(data, a, score)})
+			result = append(result, Finding{DetectorName: d.name, Start: a, End: b, Confidence: businessConfidence(data, a, score)})
 			break
 		}
 	}
@@ -75,7 +75,7 @@ func (d *Country) Scan(data []byte) []Finding {
 
 func countryCandidate(data []byte, start int, layout string) (text string, end int, ok bool) {
 	end = start + len(layout)
-	if end > len(data) || (end < len(data) && isPhoneWordChar(data[end])) {
+	if end > len(data) || (end < len(data) && isIdentifierByte(data[end])) {
 		return "", 0, false
 	}
 	var value [18]byte
@@ -177,7 +177,7 @@ func rrnScore(value string, before []byte) float64 {
 	for _, key := range []string{"rrn", "주민등록번호"} {
 		if strings.HasSuffix(strings.ToLower(label), key) {
 			pos := len(label) - len(key)
-			if pos == 0 || !isPhoneWordChar(label[pos-1]) {
+			if pos == 0 || !isIdentifierByte(label[pos-1]) {
 				return countryStructureScore
 			}
 		}

@@ -61,48 +61,30 @@ func TestAWSKeyDetector_Scan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			findings := d.Scan([]byte(tt.input))
-			if len(findings) != tt.wantLen {
-				t.Fatalf("got %d findings, want %d: %+v", len(findings), tt.wantLen, findings)
-			}
-			if tt.wantLen > 0 && tt.wantRaw != "" {
-				if findings[0].RawValue != tt.wantRaw {
-					t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
-				}
-			}
-			if tt.wantLen > 0 && tt.wantMinCon > 0 {
-				if findings[0].Confidence < tt.wantMinCon {
-					t.Errorf("Confidence = %f, want >= %f", findings[0].Confidence, tt.wantMinCon)
-				}
-			}
+			assertDetectorScan(t, d, tt.input, tt.wantLen, tt.wantRaw, tt.wantMinCon)
 		})
 	}
 }
 
-func TestAWSKeyDetector_Detail(t *testing.T) {
+func TestAWSKeyDetector_Validation(t *testing.T) {
 	t.Parallel()
 
 	d := NewAWSKey()
 	tests := []struct {
-		input    string
-		wantType AWSKeyType
+		input string
 	}{
 		// #nosec G101 -- This public synthetic credential is a positive detection fixture, not an authentication secret.
-		{input: sampleAccessKey, wantType: AWSKeyTypeLongTerm},
+		{input: sampleAccessKey},
 		// #nosec G101 -- This public synthetic credential is a positive detection fixture, not an authentication secret.
-		{input: "ASIAIMOSTEMPKEY12345", wantType: AWSKeyTypeTemporary},
+		{input: "ASIAIMOSTEMPKEY12345"},
 	}
 	for _, tt := range tests {
 		findings := d.Scan([]byte(tt.input))
 		if len(findings) != 1 {
 			t.Fatalf("input=%q: got %d findings, want 1", tt.input, len(findings))
 		}
-		detail, ok := findings[0].AWSKeyDetail()
-		if !ok {
-			t.Fatalf("input=%q: AWSKeyDetail() returned false", tt.input)
-		}
-		if detail.KeyType != tt.wantType {
-			t.Errorf("input=%q: KeyType = %q, want %q", tt.input, detail.KeyType, tt.wantType)
+		if !matchAWSPrefix([]byte(tt.input), 0) || findings[0].Start != 0 || findings[0].End != len(tt.input) {
+			t.Fatal(findings)
 		}
 	}
 }

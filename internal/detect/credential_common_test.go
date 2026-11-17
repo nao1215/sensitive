@@ -2,7 +2,6 @@ package detect
 
 import (
 	"bytes"
-	"encoding/hex"
 	"strings"
 	"testing"
 )
@@ -13,18 +12,14 @@ func TestCredentialAndNetworkAlphabetEdges(t *testing.T) {
 		b := byte(n)
 		upper := strings.ContainsRune("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", rune(b))
 		alnum := strings.ContainsRune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", rune(b))
-		if isUpperAlphaNum(b) != upper || isBase62(b) != alnum {
+		if isUpperAlphaNum(b) != upper || isAlphaNum(b) != alnum {
 			t.Fatalf("credential byte %x", b)
 		}
-		if isTokenChar(b) != (alnum || strings.ContainsRune("_-", rune(b))) {
+		if isTokenByte(b) != (alnum || strings.ContainsRune("_-", rune(b))) {
 			t.Fatalf("payment byte %x", b)
 		}
 		if isBase58Char(b) != strings.ContainsRune("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz", rune(b)) {
 			t.Fatalf("base58 byte %x", b)
-		}
-		_, err := hex.DecodeString("0" + string(b))
-		if isHexDigit(b) != (err == nil) {
-			t.Fatalf("IP hex %x", b)
 		}
 		if toUpperByte(b) != bytes.ToUpper([]byte{b})[0] && b < 128 {
 			t.Fatalf("uppercase %x", b)

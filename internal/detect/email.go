@@ -2,14 +2,6 @@ package detect
 
 import "slices"
 
-// EmailDetail holds email-specific detail information for an email finding.
-type EmailDetail struct {
-	// Local is the local part of the email address (before '@').
-	Local string
-	// Domain is the domain part of the email address (after '@').
-	Domain string
-}
-
 // Email implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindEmail.
 type Email struct{}
@@ -73,18 +65,11 @@ func (d *Email) Scan(data []byte) []Finding {
 		if !hasConsecutiveDots(domain) {
 			points += structurePoints
 		}
-
-		raw := string(data[localStart:domainEnd])
 		findings = append(findings, Finding{
 			DetectorName: d.Name(),
 			Start:        localStart,
 			End:          domainEnd,
 			Confidence:   float64(points) / scoreScale,
-			RawValue:     raw,
-			Detail: &EmailDetail{
-				Local:  string(data[localStart:i]),
-				Domain: string(domain),
-			},
 		})
 		boundary = domainEnd
 	}
@@ -188,23 +173,13 @@ func validateTLD(domain []byte) (tld []byte, ok bool) {
 // isLocalPartChar reports whether b is a valid character in the local part
 // of an email address (before the '@').
 func isLocalPartChar(b byte) bool {
-	return isAlphaNum(b) || b == '.' || b == '+' || b == '-' || b == '_'
+	return isTokenByte(b) || b == '.' || b == '+'
 }
 
 // isDomainChar reports whether b is a valid character in the domain part
 // of an email address (after the '@').
 func isDomainChar(b byte) bool {
 	return isAlphaNum(b) || b == '.' || b == '-'
-}
-
-// isAlpha reports whether b is an ASCII letter.
-func isAlpha(b byte) bool {
-	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z')
-}
-
-// isAlphaNum reports whether b is an ASCII alphanumeric character.
-func isAlphaNum(b byte) bool {
-	return isAlpha(b) || isDigit(b)
 }
 
 // hasConsecutiveDots reports whether data contains "..".
