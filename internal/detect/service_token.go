@@ -42,6 +42,18 @@ func (d *ServiceToken) Scan(data []byte) []Finding {
 }
 
 func serviceTokenEnd(data []byte, start int) int {
+	if end, ok := prefixedServiceTokenEnd(data, start); ok {
+		return end
+	}
+	if end, ok := sendGridKeyEnd(data, start); ok {
+		return end
+	}
+	return slackWebhookEnd(data, start)
+}
+
+// prefixedServiceTokenEnd owns the fixed-prefix tokens: once a prefix matches,
+// it decides the result alone, returning start when the body is too short.
+func prefixedServiceTokenEnd(data []byte, start int) (int, bool) {
 	for _, prefix := range []string{"sk-proj-", "sk-svcacct-", "sk-ant-api03-", "sk-ant-admin01-", "sk_live_", "rk_live_", "whsec_", "glpat-", "npm_", "pypi-", "GOCSPX-"} {
 		if !bytes.HasPrefix(data[start:], []byte(prefix)) {
 			continue
@@ -52,18 +64,31 @@ func serviceTokenEnd(data []byte, start int) int {
 		}
 		const minBody = 16
 		if end-start-len(prefix) >= minBody {
-			return end
+			return end, true
 		}
-		return start
+		return start, true
 	}
-	if bytes.HasPrefix(data[start:], []byte("SG.")) {
-		const firstLen, secondLen = 22, 43
-		middle := start + len("SG.") + firstLen
-		end := middle + 1 + secondLen
-		if end <= len(data) && data[middle] == '.' && allBytes(data, start+len("SG."), middle, isTokenByte) && allBytes(data, middle+1, end, isTokenByte) && (end == len(data) || !isTokenByte(data[end])) {
-			return end
-		}
+	return start, false
+}
+
+// sendGridKeyEnd matches the fixed SG.<22>.<43> SendGrid key layout followed
+// by a token boundary.
+func sendGridKeyEnd(data []byte, start int) (int, bool) {
+	if !bytes.HasPrefix(data[start:], []byte("SG.")) {
+		return start, false
 	}
+	const firstLen, secondLen = 22, 43
+	middle := start + len("SG.") + firstLen
+	end := middle + 1 + secondLen
+	if end <= len(data) && data[middle] == '.' && allBytes(data, start+len("SG."), middle, isTokenByte) && allBytes(data, middle+1, end, isTokenByte) && (end == len(data) || !isTokenByte(data[end])) {
+		return end, true
+	}
+	return start, false
+}
+
+// slackWebhookEnd matches a Slack webhook URL with three path parts and a
+// long enough secret, returning start otherwise.
+func slackWebhookEnd(data []byte, start int) int {
 	for _, prefix := range []string{"https://hooks.slack.com/services/", "https://hooks.slack-gov.com/services/"} {
 		if !bytes.HasPrefix(data[start:], []byte(prefix)) {
 			continue
