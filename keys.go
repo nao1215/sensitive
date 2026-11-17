@@ -69,9 +69,10 @@ type keyResult struct {
 
 // keyCache publishes an immutable map, so lookups take no lock and a lookup by
 // bytes allocates nothing. New keys wait in a pending map under a mutex and are
-// published together once the pending set is as large as the published one, so
-// the copies over a scanner's life total about twice the admitted keys. Until
-// then a pending key is scanned again, which returns the same result.
+// published together once the pending set is as large as the published one or
+// a pending key is stored again, so keys seen once cost no copy and the copies
+// over a scanner's life stay near twice the admitted keys. Until then a
+// pending key is scanned again, which returns the same result.
 type keyCache struct {
 	entries atomic.Pointer[map[string]keyResult]
 	pending map[string]keyResult
@@ -105,18 +106,24 @@ func (c *keyCache) store(key string, result keyResult) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	current := c.published()
-	_, published := current[key]
-	_, waiting := c.pending[key]
-	if published || waiting || len(current)+len(c.pending) >= maxCachedKeys {
+	if _, published := current[key]; published {
 		return
 	}
-	if c.pending == nil {
-		c.pending = make(map[string]keyResult)
-	}
-	result.key = key
-	c.pending[key] = result
-	if len(c.pending) < len(current) {
-		return
+	// A pending key that is scanned again is hot: publish the batch now, so a
+	// small, stable key set never waits for the doubling rule.
+	_, repeated := c.pending[key]
+	if !repeated {
+		if len(current)+len(c.pending) >= maxCachedKeys {
+			return
+		}
+		if c.pending == nil {
+			c.pending = make(map[string]keyResult)
+		}
+		result.key = key
+		c.pending[key] = result
+		if len(c.pending) < len(current) {
+			return
+		}
 	}
 	next := make(map[string]keyResult, len(current)+len(c.pending))
 	maps.Copy(next, current)

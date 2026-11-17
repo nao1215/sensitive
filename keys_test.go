@@ -115,8 +115,13 @@ func TestKeyCachePublishesPendingKeysInDoublingBatches(t *testing.T) {
 		t.Fatalf("size = %d, want 3", got)
 	}
 	cache.store("c", keyResult{masked: "again"})
+	if _, ok := cache.load("c"); !ok {
+		t.Fatal("a pending key stored again must publish its batch")
+	}
 	cache.store("d", keyResult{masked: "d"})
-	for _, key := range []string{"a", "b", "c", "d"} {
+	cache.store("e", keyResult{masked: "e"})
+	cache.store("d", keyResult{masked: "d"})
+	for _, key := range []string{"a", "b", "c", "d", "e"} {
 		if _, ok := cache.load(key); !ok {
 			t.Fatalf("%q was not published with its batch", key)
 		}
