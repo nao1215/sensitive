@@ -26,16 +26,7 @@ func (d *IBAN) Scan(data []byte) []Finding {
 	var findings []Finding
 
 	for i := 0; i < len(data)-4; i++ {
-		// IBAN starts with 2 letters (case-insensitive) + 2 digits.
-		if !ascii.IsAlpha(data[i]) || !ascii.IsAlpha(data[i+1]) {
-			continue
-		}
-		if !ascii.IsDigit(data[i+2]) || !ascii.IsDigit(data[i+3]) {
-			continue
-		}
-
-		// Check that it's not part of a longer word.
-		if i > 0 && ascii.IsAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
+		if !ibanPrefixAt(data, i) {
 			continue
 		}
 
@@ -74,6 +65,21 @@ func (d *IBAN) Scan(data []byte) []Finding {
 	}
 
 	return findings
+}
+
+// ibanPrefixAt reports whether an IBAN prefix of two letters and two check
+// digits starts a word at i.
+func ibanPrefixAt(data []byte, i int) bool {
+	// IBAN starts with 2 letters (case-insensitive) + 2 digits.
+	if !ascii.IsAlpha(data[i]) || !ascii.IsAlpha(data[i+1]) {
+		return false
+	}
+	if !ascii.IsDigit(data[i+2]) || !ascii.IsDigit(data[i+3]) {
+		return false
+	}
+
+	// Check that it's not part of a longer word.
+	return i == 0 || !ascii.IsAlphaNum(data[i-1]) || encodedSeparatorBefore(data, i)
 }
 
 // validateIBANMod97 validates an IBAN using the MOD 97 algorithm (ISO 7064).
@@ -137,6 +143,14 @@ func extractIBANChars(data []byte, start, expectedLen int) (ibanChars []byte, en
 // 103 (September 2026): https://www.swift.com/swift-resource/9606/download .
 // A switch keeps the registry immutable without package-level state.
 func ibanCountryLength(country string) (int, bool) {
+	if n, ok := ibanShortCountryLength(country); ok {
+		return n, true
+	}
+	return ibanLongCountryLength(country)
+}
+
+// ibanShortCountryLength returns registry lengths of 15 to 24 characters.
+func ibanShortCountryLength(country string) (int, bool) {
 	switch country {
 	case "NO":
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
@@ -165,6 +179,14 @@ func ibanCountryLength(country string) (int, bool) {
 	case "AD", "CZ", "ES", "MD", "PK", "RO", "SA", "SE", "SK", "TN", "VG":
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 		return 24, true
+	default:
+		return 0, false
+	}
+}
+
+// ibanLongCountryLength returns registry lengths of 25 to 33 characters.
+func ibanLongCountryLength(country string) (int, bool) {
+	switch country {
 	case "LY", "PT", "ST":
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 		return 25, true
