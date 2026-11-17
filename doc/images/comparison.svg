@@ -7,90 +7,90 @@
 <text x="24" y="84" font-size="14" fill="#172033" text-anchor="start">pii-shield v3.0.0, masq v0.2.3 and go-masker v0.6.1; identical events, sink and ten-sample method. ferret-scan is in the table.</text>
 <text x="24" y="129" font-size="16" fill="#172033" text-anchor="start">Email + card</text>
 <text x="190" y="129" font-size="14" fill="#172033" text-anchor="start">slog alone</text>
-<rect x="350" y="112" width="3.54" height="22" rx="2" fill="#617281"/>
-<text x="363.54" y="129" font-size="14" fill="#172033" text-anchor="start">0.40 µs</text>
+<rect x="350" y="112" width="3.64" height="22" rx="2" fill="#617281"/>
+<text x="363.64" y="129" font-size="14" fill="#172033" text-anchor="start">0.40 µs</text>
 <text x="190" y="157" font-size="14" fill="#172033" text-anchor="start">slog + embargo</text>
-<rect x="350" y="140" width="12.03" height="22" rx="2" fill="#087f75"/>
-<text x="372.03" y="157" font-size="14" fill="#172033" text-anchor="start">1.36 µs</text>
+<rect x="350" y="140" width="12.58" height="22" rx="2" fill="#087f75"/>
+<text x="372.58" y="157" font-size="14" fill="#172033" text-anchor="start">1.39 µs</text>
 <text x="190" y="185" font-size="14" fill="#172033" text-anchor="start">slog + pii-shield</text>
-<rect x="350" y="168" width="41.59" height="22" rx="2" fill="#8a6d00"/>
-<text x="401.59" y="185" font-size="14" fill="#172033" text-anchor="start">4.69 µs</text>
+<rect x="350" y="168" width="43.21" height="22" rx="2" fill="#8a6d00"/>
+<text x="403.21" y="185" font-size="14" fill="#172033" text-anchor="start">4.76 µs</text>
 <text x="190" y="213" font-size="14" fill="#172033" text-anchor="start">slog + masq</text>
-<rect x="350" y="196" width="27.38" height="22" rx="2" fill="#4169b1"/>
-<text x="387.38" y="213" font-size="14" fill="#172033" text-anchor="start">3.09 µs</text>
+<rect x="350" y="196" width="27.12" height="22" rx="2" fill="#4169b1"/>
+<text x="387.12" y="213" font-size="14" fill="#172033" text-anchor="start">2.99 µs</text>
 <text x="190" y="241" font-size="14" fill="#172033" text-anchor="start">slog + go-masker</text>
-<rect x="350" y="224" width="12.66" height="22" rx="2" fill="#9a4814"/>
-<text x="372.66" y="241" font-size="14" fill="#172033" text-anchor="start">1.43 µs</text>
+<rect x="350" y="224" width="13.00" height="22" rx="2" fill="#9a4814"/>
+<text x="373.0" y="241" font-size="14" fill="#172033" text-anchor="start">1.43 µs</text>
 <text x="24" y="275" font-size="16" fill="#172033" text-anchor="start">Nested struct</text>
 <text x="190" y="275" font-size="14" fill="#172033" text-anchor="start">slog alone</text>
-<rect x="350" y="258" width="5.25" height="22" rx="2" fill="#617281"/>
-<text x="365.25" y="275" font-size="14" fill="#172033" text-anchor="start">0.59 µs</text>
+<rect x="350" y="258" width="5.36" height="22" rx="2" fill="#617281"/>
+<text x="365.36" y="275" font-size="14" fill="#172033" text-anchor="start">0.59 µs</text>
 <text x="190" y="303" font-size="14" fill="#172033" text-anchor="start">slog + embargo</text>
-<rect x="350" y="286" width="20.13" height="22" rx="2" fill="#087f75"/>
-<text x="380.13" y="303" font-size="14" fill="#172033" text-anchor="start">2.27 µs</text>
+<rect x="350" y="286" width="20.24" height="22" rx="2" fill="#087f75"/>
+<text x="380.24" y="303" font-size="14" fill="#172033" text-anchor="start">2.23 µs</text>
 <text x="190" y="331" font-size="14" fill="#172033" text-anchor="start">slog + pii-shield</text>
-<rect x="350" y="314" width="67.18" height="22" rx="2" fill="#8a6d00"/>
-<text x="427.18" y="331" font-size="14" fill="#172033" text-anchor="start">7.58 µs</text>
+<rect x="350" y="314" width="69.17" height="22" rx="2" fill="#8a6d00"/>
+<text x="429.17" y="331" font-size="14" fill="#172033" text-anchor="start">7.62 µs</text>
 <text x="190" y="359" font-size="14" fill="#172033" text-anchor="start">slog + masq</text>
-<rect x="350" y="342" width="48.14" height="22" rx="2" fill="#4169b1"/>
-<text x="408.14" y="359" font-size="14" fill="#172033" text-anchor="start">5.43 µs</text>
+<rect x="350" y="342" width="45.14" height="22" rx="2" fill="#4169b1"/>
+<text x="405.14" y="359" font-size="14" fill="#172033" text-anchor="start">4.98 µs</text>
 <text x="190" y="387" font-size="14" fill="#172033" text-anchor="start">slog + go-masker</text>
-<rect x="350" y="370" width="26.22" height="22" rx="2" fill="#9a4814"/>
-<text x="386.22" y="387" font-size="14" fill="#172033" text-anchor="start">2.96 µs</text>
+<rect x="350" y="370" width="26.86" height="22" rx="2" fill="#9a4814"/>
+<text x="386.86" y="387" font-size="14" fill="#172033" text-anchor="start">2.96 µs</text>
 <text x="24" y="421" font-size="16" fill="#172033" text-anchor="start">Map</text>
 <text x="190" y="421" font-size="14" fill="#172033" text-anchor="start">slog alone</text>
-<rect x="350" y="404" width="10.39" height="22" rx="2" fill="#617281"/>
-<text x="370.39" y="421" font-size="14" fill="#172033" text-anchor="start">1.17 µs</text>
+<rect x="350" y="404" width="11.00" height="22" rx="2" fill="#617281"/>
+<text x="371.0" y="421" font-size="14" fill="#172033" text-anchor="start">1.21 µs</text>
 <text x="190" y="449" font-size="14" fill="#172033" text-anchor="start">slog + embargo</text>
-<rect x="350" y="432" width="28.04" height="22" rx="2" fill="#087f75"/>
-<text x="388.04" y="449" font-size="14" fill="#172033" text-anchor="start">3.16 µs</text>
+<rect x="350" y="432" width="28.26" height="22" rx="2" fill="#087f75"/>
+<text x="388.26" y="449" font-size="14" fill="#172033" text-anchor="start">3.12 µs</text>
 <text x="190" y="477" font-size="14" fill="#172033" text-anchor="start">slog + pii-shield</text>
-<rect x="350" y="460" width="60.31" height="22" rx="2" fill="#8a6d00"/>
-<text x="420.31" y="477" font-size="14" fill="#172033" text-anchor="start">6.80 µs</text>
+<rect x="350" y="460" width="61.78" height="22" rx="2" fill="#8a6d00"/>
+<text x="421.78" y="477" font-size="14" fill="#172033" text-anchor="start">6.81 µs</text>
 <text x="190" y="505" font-size="14" fill="#172033" text-anchor="start">slog + masq</text>
-<rect x="350" y="488" width="48.17" height="22" rx="2" fill="#4169b1"/>
-<text x="408.17" y="505" font-size="14" fill="#172033" text-anchor="start">5.43 µs</text>
+<rect x="350" y="488" width="49.16" height="22" rx="2" fill="#4169b1"/>
+<text x="409.16" y="505" font-size="14" fill="#172033" text-anchor="start">5.42 µs</text>
 <text x="190" y="533" font-size="14" fill="#172033" text-anchor="start">slog + go-masker</text>
-<rect x="350" y="516" width="30.74" height="22" rx="2" fill="#9a4814"/>
-<text x="390.74" y="533" font-size="14" fill="#172033" text-anchor="start">3.47 µs</text>
+<rect x="350" y="516" width="31.32" height="22" rx="2" fill="#9a4814"/>
+<text x="391.32" y="533" font-size="14" fill="#172033" text-anchor="start">3.45 µs</text>
 <text x="24" y="567" font-size="16" fill="#172033" text-anchor="start">Clean event</text>
 <text x="190" y="567" font-size="14" fill="#172033" text-anchor="start">slog alone</text>
-<rect x="350" y="550" width="3.69" height="22" rx="2" fill="#617281"/>
-<text x="363.69" y="567" font-size="14" fill="#172033" text-anchor="start">0.42 µs</text>
+<rect x="350" y="550" width="3.81" height="22" rx="2" fill="#617281"/>
+<text x="363.81" y="567" font-size="14" fill="#172033" text-anchor="start">0.42 µs</text>
 <text x="190" y="595" font-size="14" fill="#172033" text-anchor="start">slog + embargo</text>
-<rect x="350" y="578" width="9.22" height="22" rx="2" fill="#087f75"/>
-<text x="369.22" y="595" font-size="14" fill="#172033" text-anchor="start">1.04 µs</text>
+<rect x="350" y="578" width="9.03" height="22" rx="2" fill="#087f75"/>
+<text x="369.03" y="595" font-size="14" fill="#172033" text-anchor="start">0.99 µs</text>
 <text x="190" y="623" font-size="14" fill="#172033" text-anchor="start">slog + pii-shield</text>
-<rect x="350" y="606" width="39.64" height="22" rx="2" fill="#8a6d00"/>
-<text x="399.64" y="623" font-size="14" fill="#172033" text-anchor="start">4.47 µs</text>
+<rect x="350" y="606" width="40.19" height="22" rx="2" fill="#8a6d00"/>
+<text x="400.19" y="623" font-size="14" fill="#172033" text-anchor="start">4.43 µs</text>
 <text x="190" y="651" font-size="14" fill="#172033" text-anchor="start">slog + masq</text>
-<rect x="350" y="634" width="25.19" height="22" rx="2" fill="#4169b1"/>
-<text x="385.19" y="651" font-size="14" fill="#172033" text-anchor="start">2.84 µs</text>
+<rect x="350" y="634" width="25.07" height="22" rx="2" fill="#4169b1"/>
+<text x="385.07" y="651" font-size="14" fill="#172033" text-anchor="start">2.76 µs</text>
 <text x="190" y="679" font-size="14" fill="#172033" text-anchor="start">slog + go-masker</text>
-<rect x="350" y="662" width="12.26" height="22" rx="2" fill="#9a4814"/>
-<text x="372.26" y="679" font-size="14" fill="#172033" text-anchor="start">1.38 µs</text>
+<rect x="350" y="662" width="12.17" height="22" rx="2" fill="#9a4814"/>
+<text x="372.17" y="679" font-size="14" fill="#172033" text-anchor="start">1.34 µs</text>
 <text x="24" y="713" font-size="16" fill="#172033" text-anchor="start">50 attributes</text>
 <text x="190" y="713" font-size="14" fill="#172033" text-anchor="start">slog alone</text>
-<rect x="350" y="696" width="33.71" height="22" rx="2" fill="#617281"/>
-<text x="393.71" y="713" font-size="14" fill="#172033" text-anchor="start">3.80 µs</text>
+<rect x="350" y="696" width="33.73" height="22" rx="2" fill="#617281"/>
+<text x="393.73" y="713" font-size="14" fill="#172033" text-anchor="start">3.72 µs</text>
 <text x="190" y="741" font-size="14" fill="#172033" text-anchor="start">slog + embargo</text>
-<rect x="350" y="724" width="123.33" height="22" rx="2" fill="#087f75"/>
-<text x="483.33" y="741" font-size="14" fill="#172033" text-anchor="start">13.90 µs</text>
+<rect x="350" y="724" width="122.61" height="22" rx="2" fill="#087f75"/>
+<text x="482.61" y="741" font-size="14" fill="#172033" text-anchor="start">13.52 µs</text>
 <text x="190" y="769" font-size="14" fill="#172033" text-anchor="start">slog + pii-shield</text>
 <rect x="350" y="752" width="590.00" height="22" rx="2" fill="#8a6d00"/>
-<text x="950.0" y="769" font-size="14" fill="#172033" text-anchor="start">66.52 µs</text>
+<text x="950.0" y="769" font-size="14" fill="#172033" text-anchor="start">65.03 µs</text>
 <text x="190" y="797" font-size="14" fill="#172033" text-anchor="start">slog + masq</text>
-<rect x="350" y="780" width="524.99" height="22" rx="2" fill="#4169b1"/>
-<text x="884.99" y="797" font-size="14" fill="#172033" text-anchor="start">59.19 µs</text>
+<rect x="350" y="780" width="565.58" height="22" rx="2" fill="#4169b1"/>
+<text x="925.58" y="797" font-size="14" fill="#172033" text-anchor="start">62.34 µs</text>
 <text x="190" y="825" font-size="14" fill="#172033" text-anchor="start">slog + go-masker</text>
-<rect x="350" y="808" width="124.17" height="22" rx="2" fill="#9a4814"/>
-<text x="484.17" y="825" font-size="14" fill="#172033" text-anchor="start">14.00 µs</text>
+<rect x="350" y="808" width="124.22" height="22" rx="2" fill="#9a4814"/>
+<text x="484.22" y="825" font-size="14" fill="#172033" text-anchor="start">13.69 µs</text>
 <path d="M350,833 L940,833" stroke="#e1e5ec"/>
 <text x="350.0" y="857" font-size="12" fill="#172033" text-anchor="middle">0.0</text>
-<text x="497.5" y="857" font-size="12" fill="#172033" text-anchor="middle">16.6</text>
-<text x="645.0" y="857" font-size="12" fill="#172033" text-anchor="middle">33.3</text>
-<text x="792.5" y="857" font-size="12" fill="#172033" text-anchor="middle">49.9</text>
-<text x="940.0" y="857" font-size="12" fill="#172033" text-anchor="middle">66.5</text>
+<text x="497.5" y="857" font-size="12" fill="#172033" text-anchor="middle">16.3</text>
+<text x="645.0" y="857" font-size="12" fill="#172033" text-anchor="middle">32.5</text>
+<text x="792.5" y="857" font-size="12" fill="#172033" text-anchor="middle">48.8</text>
+<text x="940.0" y="857" font-size="12" fill="#172033" text-anchor="middle">65.0</text>
 <text x="645" y="881" font-size="15" fill="#172033" text-anchor="middle">Time per event (microseconds; linear scale)</text>
 <text x="24" y="907" font-size="13" fill="#172033" text-anchor="start">Encoding and masking included; construction excluded. The scenario matrix shows differing protection and partial masking.</text>
 </g></svg>

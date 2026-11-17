@@ -1,6 +1,6 @@
 # Benchmarks
 
-Run `make benchmark-doc` on an idle machine. It uses Go 1.26.11, GOMAXPROCS=1 and ten 200 ms samples, stores every sample in benchmarks.raw.txt and the medians with machine/source metadata in benchmarks.json, then regenerates the full benchmark plot and this page’s tables. Scanner benchmarks cover clean text and each detector's synthetic positive fixture, plus WithAll over all positive fixtures. Mask uses precomputed findings. Recorder includes creation, a writer, an expectation, Check and testing cleanup registration. The slog comparison uses a real JSONHandler and a counting sink, so encoding work is present in both the plain and wrapped measurements.
+Run `make benchmark-doc` on an idle machine. It uses Go 1.26.11, GOMAXPROCS=1 and ten 200 ms samples, stores every sample in benchmarks.raw.txt and the medians with machine/source metadata in benchmarks.json, then regenerates the full benchmark plot and this page’s tables. Scanner benchmarks cover clean text and each detector's synthetic positive fixture, plus WithAll over all positive fixtures. Mask uses precomputed findings. Recorder includes creation, a writer, an expectation, Check and testing cleanup registration. The slog comparison uses a real JSONHandler and a counting sink, so encoding work is present in both the plain and wrapped measurements. The parallel table shares one scanner, one slog logger and one zap logger among 1, 4 and 16 goroutines with GOMAXPROCS set to the same number, which is how a service uses them.
 
 Shared CI runners have variable load. CI compiles benchmarks and checks the table against its recorded samples; it does not impose a noisy wall-time threshold. Compare base and head manually on the same idle machine and retain both outputs; the comparison should alternate runs to reduce time-order bias:
 
@@ -24,60 +24,68 @@ Background load: no intentional concurrent workload.
 
 | Operation | ns/op | MB/s | B/op | allocs/op |
 |---|---:|---:|---:|---:|
-| Scanner WithAll, clean | 62241.5 | 44.21 | 0 | 0 |
-| Scanner WithAll, dirty | 6963340.0 | 9.14 | 1431824 | 11824 |
-| Mask | 3188.5 | 923.39 | 8448 | 2 |
-| Writer only | 5.7 | 95223.85 | 0 | 0 |
-| Recorder + Check | 48863.0 | 11.13 | 45899 | 686 |
-| Plain slog, clean | 433.0 | — | 16 | 1 |
-| Masked slog, clean | 1424.5 | — | 16 | 1 |
-| Plain slog, dirty | 432.8 | — | 16 | 1 |
-| Masked slog, dirty | 1673.0 | — | 64 | 2 |
+| Scanner WithAll, clean | 56739.5 | 48.50 | 0 | 0 |
+| Scanner WithAll, dirty | 6123671.0 | 10.39 | 1266448 | 4463 |
+| Mask | 3024.5 | 973.41 | 8448 | 2 |
+| Writer only | 5.5 | 99195.07 | 0 | 0 |
+| Recorder + Check | 177317.0 | 3.07 | 229616 | 1678 |
+| Plain slog, clean | 409.2 | — | 16 | 1 |
+| Masked slog, clean | 1356.5 | — | 16 | 1 |
+| Plain slog, dirty | 399.4 | — | 16 | 1 |
+| Masked slog, dirty | 1552.5 | — | 64 | 2 |
+
+Parallel: ns/op is wall time per event across all goroutines.
+
+| Shared value | 1 CPU ns/op | 4 CPU ns/op | 16 CPU ns/op | Speed-up at 16 |
+|---|---:|---:|---:|---:|
+| Scanner.Scan | 3740.5 | 1033.5 | 318.3 | 11.8x |
+| slog handler | 3252.5 | 938.3 | 390.6 | 8.3x |
+| zap WriteSyncer | 6539.0 | 1807.5 | 849.5 | 7.7x |
 
 <details>
 <summary>Per-detector Scanner throughput</summary>
 
 | Detector | Clean MB/s | Dirty MB/s |
 |---|---:|---:|
-| aba_routing | 1093.43 | 122.59 |
-| ach_trace | 1208.40 | 10.50 |
-| all | 44.21 | 9.14 |
-| awskey | 1408.92 | 280.17 |
-| bank_account | 1123.44 | 12.76 |
-| br_cnpj | 1059.66 | 165.84 |
-| br_cpf | 1057.92 | 167.66 |
-| btc | 1585.49 | 105.07 |
-| ca_sin | 1041.91 | 163.05 |
-| card_expiry | 1960.53 | 7.51 |
-| cn_resident_id | 1414.99 | 69.40 |
-| credential | 387.08 | 72.19 |
-| cvv | 745.46 | 9.79 |
-| email | 28164.93 | 187.88 |
-| eth | 2332.98 | 347.99 |
-| github_token | 2115.89 | 395.15 |
-| google_api_key | 1819.28 | 460.87 |
-| high_entropy | 1604.89 | 112.28 |
-| iban | 520.04 | 129.75 |
-| in_aadhaar | 1073.12 | 162.93 |
-| in_pan | 1435.17 | 188.60 |
-| ipaddr | 22860.57 | 71.85 |
-| jwt | 2032.79 | 58.69 |
-| kr_rrn | 1071.76 | 136.11 |
-| merchant_id | 669.42 | 27.23 |
-| mynumber | 1108.85 | 120.18 |
-| pan | 8469.68 | 157.08 |
-| payment_token | 288.12 | 391.79 |
-| phone_jp | 22292.28 | 127.23 |
-| phone_us | 9825.12 | 122.93 |
-| private_key_pem | 1487.45 | 1580.54 |
-| service_token | 482.39 | 506.63 |
-| slack_token | 1822.32 | 213.50 |
-| swiftbic | 367.07 | 111.48 |
-| uk_nhs | 1119.26 | 170.91 |
-| uk_nino | 1028.53 | 155.11 |
-| uk_sortcode | 803.50 | 140.27 |
-| us_itin | 1041.16 | 173.36 |
-| us_ssn | 1043.66 | 177.29 |
+| aba_routing | 1129.43 | 127.22 |
+| ach_trace | 1262.31 | 10.94 |
+| all | 48.50 | 10.39 |
+| awskey | 1055.94 | 293.65 |
+| bank_account | 1175.47 | 13.47 |
+| br_cnpj | 1103.86 | 169.81 |
+| br_cpf | 1104.51 | 160.52 |
+| btc | 1634.20 | 111.30 |
+| ca_sin | 1070.42 | 163.74 |
+| card_expiry | 2005.74 | 7.79 |
+| cn_resident_id | 1512.55 | 71.47 |
+| credential | 359.98 | 71.43 |
+| cvv | 776.72 | 10.05 |
+| email | 26771.50 | 201.24 |
+| eth | 2374.56 | 364.85 |
+| github_token | 2175.48 | 410.10 |
+| google_api_key | 1848.65 | 470.53 |
+| high_entropy | 1535.22 | 116.56 |
+| iban | 538.29 | 138.54 |
+| in_aadhaar | 1124.24 | 163.67 |
+| in_pan | 1517.34 | 188.02 |
+| ipaddr | 22468.53 | 73.00 |
+| jwt | 2097.14 | 60.69 |
+| kr_rrn | 1129.25 | 133.06 |
+| merchant_id | 701.91 | 27.75 |
+| mynumber | 1165.31 | 142.99 |
+| pan | 8563.00 | 161.93 |
+| payment_token | 304.04 | 413.46 |
+| phone_jp | 22388.35 | 151.43 |
+| phone_us | 9831.76 | 146.79 |
+| private_key_pem | 1544.78 | 1512.72 |
+| service_token | 62.09 | 324.88 |
+| slack_token | 1893.07 | 224.47 |
+| swiftbic | 382.43 | 114.82 |
+| uk_nhs | 1167.80 | 173.62 |
+| uk_nino | 1087.68 | 156.14 |
+| uk_sortcode | 756.87 | 147.96 |
+| us_itin | 1102.87 | 165.26 |
+| us_ssn | 1105.20 | 178.66 |
 
 </details>
 <!-- benchmarks:end -->
