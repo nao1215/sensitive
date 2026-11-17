@@ -1,0 +1,47 @@
+name: Release Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Build the release artifacts in snapshot mode (no publishing, signing or SBOM)
+# on every PR and push, so archive and packaging regressions surface before a
+# tag is cut.
+permissions:
+  contents: read
+
+jobs:
+  release-smoke:
+    name: release artifact smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "stable"
+          cache-dependency-path: go.mod
+
+      - name: Install go-licenses
+        run: go install github.com/google/go-licenses/v2@v2.0.1
+
+      - name: Select the latest root module tag
+        run: echo "GORELEASER_CURRENT_TAG=$(git describe --tags --abbrev=0 --match 'v*')" >> "$GITHUB_ENV"
+
+      - name: Build snapshot artifacts
+        uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
+        with:
+          version: "v2.16.0"
+          args: release --snapshot --clean --skip=sign,sbom,publish
+
+      - name: Validate artifacts
+        run: sh scripts/smoke_artifacts.sh

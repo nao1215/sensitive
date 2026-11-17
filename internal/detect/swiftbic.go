@@ -36,23 +36,7 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 		}
 
 		end, ok := determineSWIFTLength(data, i)
-		if !ok || (entropyLocation(data, i, end) && !swiftSlashList(data, i, end)) {
-			continue
-		}
-
-		if registerSlot(data, i, end) {
-			continue
-		}
-
-		if invalidUserSlot(data, i) {
-			continue
-		}
-
-		if (i > 0 && data[i-1] == '_') || (end < len(data) && data[end] == '_') {
-			continue
-		}
-
-		if hardwareWireSlot(data, i) {
+		if !ok || swiftExcluded(data, i, end) {
 			continue
 		}
 
@@ -75,6 +59,28 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 	}
 
 	return findings
+}
+
+// swiftExcluded reports whether a structurally valid code at [i, end) is a
+// token, register, user, identifier or hardware fragment rather than a BIC.
+func swiftExcluded(data []byte, i, end int) bool {
+	if entropyLocation(data, i, end) && !swiftSlashList(data, i, end) {
+		return true
+	}
+
+	if registerSlot(data, i, end) {
+		return true
+	}
+
+	if invalidUserSlot(data, i) {
+		return true
+	}
+
+	if (i > 0 && data[i-1] == '_') || (end < len(data) && data[end] == '_') {
+		return true
+	}
+
+	return hardwareWireSlot(data, i)
 }
 
 // A contextual slash-separated list can contain several bank identifiers.
@@ -167,27 +173,36 @@ func hasSWIFTContext(data []byte, start, end int) bool {
 	window := bytes.ToLower(data[searchStart:searchEnd])
 
 	for _, kw := range swiftContextKeywords() {
-		for offset := 0; offset < len(window); {
-			at := bytes.Index(window[offset:], kw)
-			if at < 0 {
-				break
-			}
-			at += offset
-			after := at + len(kw)
-			offset = after
-			if at > 0 && isTokenByte(window[at-1]) {
-				continue
-			}
-			if string(kw) == "swift" && after <= start-searchStart {
-				if !swiftLabelGap(window[after : start-searchStart]) {
-					continue
-				}
-			} else if after < len(window) && isTokenByte(window[after]) {
-				continue
-			}
-
+		if swiftKeywordInWindow(window, kw, start-searchStart) {
 			return true
 		}
+	}
+	return false
+}
+
+// swiftKeywordInWindow reports whether kw occurs in window as a whole token.
+// "swift" before the candidate at codeStart may instead be followed by a label gap.
+func swiftKeywordInWindow(window, kw []byte, codeStart int) bool {
+	for offset := 0; offset < len(window); {
+		at := bytes.Index(window[offset:], kw)
+		if at < 0 {
+			break
+		}
+		at += offset
+		after := at + len(kw)
+		offset = after
+		if at > 0 && isTokenByte(window[at-1]) {
+			continue
+		}
+		if string(kw) == "swift" && after <= codeStart {
+			if !swiftLabelGap(window[after:codeStart]) {
+				continue
+			}
+		} else if after < len(window) && isTokenByte(window[after]) {
+			continue
+		}
+
+		return true
 	}
 	return false
 }
@@ -204,6 +219,11 @@ func swiftContextKeywords() [][]byte {
 
 // isSWIFTCountry checks the supported ISO 3166-1 alpha-2 country codes.
 func isSWIFTCountry(code string) bool {
+	return isSWIFTCountryADToLA(code) || isSWIFTCountryLBToZW(code)
+}
+
+// isSWIFTCountryADToLA checks the supported codes from AD through LA.
+func isSWIFTCountryADToLA(code string) bool {
 	switch code {
 	case "AD", "AE", "AF", "AG", "AI", "AL", "AM", "AO", "AR", "AS", "AT", "AU", "AW", "AX", "AZ":
 		return true
@@ -221,6 +241,14 @@ func isSWIFTCountry(code string) bool {
 		return true
 	case "JM", "JO", "JP", "KE", "KG", "KH", "KI", "KM", "KN", "KP", "KR", "KW", "KY", "KZ", "LA":
 		return true
+	default:
+		return false
+	}
+}
+
+// isSWIFTCountryLBToZW checks the supported codes from LB through ZW.
+func isSWIFTCountryLBToZW(code string) bool {
+	switch code {
 	case "LB", "LC", "LI", "LK", "LR", "LS", "LT", "LU", "LV", "LY", "MA", "MC", "MD", "ME", "MF":
 		return true
 	case "MG", "MH", "MK", "ML", "MM", "MN", "MO", "MP", "MQ", "MR", "MS", "MT", "MU", "MV", "MW":

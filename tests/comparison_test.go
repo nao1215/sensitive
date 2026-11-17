@@ -3,7 +3,9 @@ package tests
 import (
 	"bytes"
 	"context"
+	"encoding/gob"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -16,16 +18,20 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"text/template"
 	"time"
 
+	"github.com/awslabs/ferret-scan/pkg/redact"
 	dlp "github.com/bytedance/godlp"
 	"github.com/bytedance/godlp/dlpheader"
+	gomasker "github.com/ggwhite/go-masker/v3"
 	masker "github.com/icntswm/go-masker"
 	"github.com/icntswm/go-masker/httpmask"
 	"github.com/icntswm/go-masker/slogmask"
 	"github.com/icntswm/go-masker/zapmask"
 	"github.com/icntswm/go-masker/zerologmask"
 	"github.com/m-mizutani/masq"
+	piishield "github.com/pii-shield/pii-shield/v3/pkg/scanner"
 	"github.com/rs/zerolog"
 	slogformatter "github.com/samber/slog-formatter"
 	mask "github.com/showa-93/go-mask"
@@ -51,6 +57,8 @@ const (
 	comparisonClean          = "clean"
 	comparisonEmail          = "alice@example.com"
 	comparisonMaskerName     = "go-masker"
+	comparisonPIIShieldName  = "pii-shield"
+	comparisonFerretName     = "ferret-scan"
 	comparisonMasqName       = "masq"
 	comparisonEmbargoName    = "embargo"
 	comparisonMap            = "map"
@@ -81,8 +89,65 @@ func comparisonMasq() func([]string, slog.Attr) slog.Attr {
 	return masq.New(masq.WithAllowedType(reflect.TypeFor[time.Time](), reflect.TypeFor[slog.Level]()), masq.WithRegex(regexp.MustCompile(`[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}`)), masq.WithRegex(regexp.MustCompile(`\b(?:\d[ -]?){12,18}\d\b`)), masq.WithFieldName("Password"), masq.WithFieldName(comparisonPasswordKey), masq.WithFieldName("token"), masq.WithTag("secret"))
 }
 
+// comparisonPIIShield is pii-shield's default policy plus the recovery key the
+// other libraries are given, with a fixed salt so its hashed markers repeat.
+func comparisonPIIShield() *piishield.Scanner {
+	config := piishield.DefaultConfig()
+	config.SensitiveKeys = append(config.SensitiveKeys, "recovery")
+	config.Salt = []byte("comparison-fixed-salt")
+	return piishield.NewScanner(config)
+}
+
+// piiShieldWriter applies pii-shield where its documentation places it: on each
+// encoded log line before it reaches the sink.
+type piiShieldWriter struct {
+	scanner *piishield.Scanner
+	out     io.Writer
+}
+
+func (w piiShieldWriter) Write(line []byte) (int, error) {
+	if _, err := io.WriteString(w.out, w.scanner.ScanAndRedact(strings.TrimSuffix(string(line), "\n"))+"\n"); err != nil {
+		return 0, err
+	}
+	return len(line), nil
+}
+
+// comparisonFerret is ferret-scan's in-process engine with every default
+// check and its Simple strategy, which replaces each match with a marker.
+func comparisonFerret() *redact.Engine {
+	engine, err := redact.NewEngine(redact.EngineOptions{Strategy: redact.Simple})
+	if err != nil {
+		panic(err)
+	}
+	return engine
+}
+
+// ferretWriter redacts each encoded log line, the position ferret-scan's
+// pkg/redact documents for text it did not produce.
+type ferretWriter struct {
+	engine *redact.Engine
+	out    io.Writer
+}
+
+func (w ferretWriter) Write(line []byte) (int, error) {
+	result, err := w.engine.Redact(context.Background(), redact.Request{Text: string(line)})
+	if err != nil {
+		return 0, err
+	}
+	if _, err := io.WriteString(w.out, result.Redacted); err != nil {
+		return 0, err
+	}
+	return len(line), nil
+}
+
 func comparisonHandler(mode string, out io.Writer) slog.Handler {
 	options := &slog.HandlerOptions{}
+	switch mode {
+	case comparisonPIIShieldName:
+		return slog.NewJSONHandler(piiShieldWriter{scanner: comparisonPIIShield(), out: out}, options)
+	case comparisonFerretName:
+		return slog.NewJSONHandler(ferretWriter{engine: comparisonFerret(), out: out}, options)
+	}
 	if mode == comparisonMaskerName {
 		options.ReplaceAttr = slogmask.ReplaceAttr(comparisonValueMasker())
 	}
@@ -186,7 +251,7 @@ func BenchmarkComparison(b *testing.B) {
 	for _, name := range []string{comparisonFlat, comparisonNested, comparisonMap, comparisonClean, comparisonLarge} {
 		attrs := events[name]
 		b.Run(name, func(b *testing.B) {
-			for _, mode := range []string{scenarioPlain, comparisonMasqName, comparisonEmbargoName, comparisonMaskerName} {
+			for _, mode := range []string{scenarioPlain, comparisonMasqName, comparisonEmbargoName, comparisonMaskerName, comparisonPIIShieldName, comparisonFerretName} {
 				b.Run(mode, func(b *testing.B) {
 					logger := slog.New(comparisonHandler(mode, io.Discard))
 					ctx := context.Background()
@@ -524,8 +589,8 @@ func scenarioEmit(t *testing.T, mode string, out io.Writer) func(string, ...slog
 	switch mode {
 	case scenarioSlog:
 		handler = embargo.NewSlogHandler(handler, scanner)
-	case comparisonMaskerName:
-		handler = comparisonHandler(comparisonMaskerName, out)
+	case comparisonMaskerName, comparisonPIIShieldName, comparisonFerretName:
+		handler = comparisonHandler(mode, out)
 	case comparisonDLPName:
 		handler = catchHandler(t, mode, out, godlpEngine(t))
 	case comparisonMasqName:
@@ -559,9 +624,9 @@ func scenarioEmit(t *testing.T, mode string, out io.Writer) func(string, ...slog
 
 //nolint:paralleltest // The shared scenarios also initialize godlp's package globals.
 func TestLeakScenarios(t *testing.T) {
-	modes := []string{scenarioSlog, scenarioZap, comparisonMasqName, comparisonFormatterName, comparisonCopyName, comparisonMaskerName, comparisonDLPName}
+	modes := []string{scenarioSlog, scenarioZap, comparisonPIIShieldName, comparisonFerretName, comparisonMasqName, comparisonFormatterName, comparisonCopyName, comparisonMaskerName, comparisonDLPName}
 	var table strings.Builder
-	writeComparisonTable(t, &table, "| Service output | embargo slog | embargo zap | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |\n|---|---|---|---|---|---|---|---|\n")
+	writeComparisonTable(t, &table, "| Service output | embargo slog | embargo zap | pii-shield v3.0.0 | ferret-scan v1.10.0 | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |\n|---|---|---|---|---|---|---|---|---|---|\n")
 	rows := []struct{ path, label string }{
 		{"declared", "Password under the key `password`"},
 		{"config", "Config struct holding a database DSN"},
@@ -682,7 +747,7 @@ func catchHandler(t *testing.T, mode string, out io.Writer, engine dlpheader.Eng
 	switch mode {
 	case comparisonEmbargoName:
 		return embargo.NewSlogHandler(slog.NewJSONHandler(out, nil), embargo.NewScanner())
-	case comparisonMasqName, comparisonMaskerName:
+	case comparisonMasqName, comparisonMaskerName, comparisonPIIShieldName, comparisonFerretName:
 		return comparisonHandler(mode, out)
 	case comparisonFormatterName:
 		return formatterHandler(out)
@@ -729,10 +794,10 @@ func catchHandler(t *testing.T, mode string, out io.Writer, engine dlpheader.Eng
 //nolint:paralleltest // godlp initializes package globals; use the same serial setup as its other probes.
 func TestComparisonScenarios(t *testing.T) {
 	engine := godlpEngine(t)
-	report := catchReport{Versions: map[string]string{"embargo": "working source", "masq": "v0.2.3", comparisonFormatterName: "v1.3.0", comparisonCopyName: "v0.6.2", comparisonDLPName: "v1.2.15", "go-masker": "v0.6.1"}}
+	report := catchReport{Versions: map[string]string{"embargo": "working source", "masq": "v0.2.3", comparisonFormatterName: "v1.3.0", comparisonCopyName: "v0.6.2", comparisonDLPName: "v1.2.15", "go-masker": "v0.6.1", comparisonPIIShieldName: "v3.0.0", comparisonFerretName: "v1.10.0"}}
 	for _, scenario := range catchScenarios() {
 		row := catchRow{Name: scenario.name, Label: scenario.label, Positive: scenario.positive, Results: map[string]catchObservation{}}
-		for _, mode := range []string{comparisonEmbargoName, comparisonMasqName, comparisonMaskerName, comparisonFormatterName, comparisonCopyName, comparisonDLPName} {
+		for _, mode := range []string{comparisonEmbargoName, comparisonPIIShieldName, comparisonFerretName, comparisonMasqName, comparisonMaskerName, comparisonFormatterName, comparisonCopyName, comparisonDLPName} {
 			var out bytes.Buffer
 			scenario.emit(slog.New(catchHandler(t, mode, &out, engine)))
 			var event map[string]any
@@ -812,3 +877,101 @@ func TestComparisonTypedCopy(t *testing.T) {
 }
 
 const comparisonInvalidCard = "invalid_luhn"
+
+// #nosec G101 -- Public synthetic value used only to test wrapper output.
+const secretFixture = "opaque-secret-value"
+
+type secretOutputPath struct {
+	render func(wrapper secretWrapper) (string, error)
+	label  string
+}
+
+// secretWrapper holds one typed wrapper alone, as the exported field of a
+// struct and as an unexported field, which fmt prints without its methods.
+type secretWrapper struct {
+	value, field, hidden any
+	name                 string
+}
+
+func secretOutputPaths() []secretOutputPath {
+	value := func(render func(any) (string, error)) func(secretWrapper) (string, error) {
+		return func(w secretWrapper) (string, error) { return render(w.value) }
+	}
+	return []secretOutputPath{
+		{label: "`fmt` `%v` and `%s`", render: value(func(v any) (string, error) { return fmt.Sprintf("%v %s", v, v), nil })},
+		{label: "`fmt` `%+v` of a struct field", render: func(w secretWrapper) (string, error) { return fmt.Sprintf("%+v", w.field), nil }},
+		{label: "`fmt` `%+v` of an unexported field", render: func(w secretWrapper) (string, error) { return fmt.Sprintf("%+v", w.hidden), nil }},
+		{label: "`fmt` `%#v`", render: value(func(v any) (string, error) { return fmt.Sprintf("%#v", v), nil })},
+		{label: "`fmt` `%x` and `%q`", render: value(func(v any) (string, error) { return fmt.Sprintf("%x %q", v, v), nil })},
+		{label: "error built with `fmt.Errorf`", render: value(func(v any) (string, error) { return fmt.Errorf("login failed: %v", v).Error(), nil })},
+		{label: "`encoding/json` struct field", render: func(w secretWrapper) (string, error) { data, err := json.Marshal(w.field); return string(data), err }},
+		{label: "`encoding/xml` struct field", render: func(w secretWrapper) (string, error) { data, err := xml.Marshal(w.field); return string(data), err }},
+		{label: "`encoding/gob` struct field", render: func(w secretWrapper) (string, error) { return gobRender(w.field) }},
+		{label: "`text/template` value", render: value(templateRender)},
+		{label: "`slog` JSON attribute", render: value(func(v any) (string, error) { return slogRender(v, false), nil })},
+		{label: "`slog` text attribute", render: value(func(v any) (string, error) { return slogRender(v, true), nil })},
+	}
+}
+
+func gobRender(v any) (string, error) {
+	var out bytes.Buffer
+	err := gob.NewEncoder(&out).Encode(v)
+	return out.String(), err
+}
+
+func templateRender(v any) (string, error) {
+	var out strings.Builder
+	err := template.Must(template.New("value").Parse("{{.}}")).Execute(&out, v)
+	return out.String(), err
+}
+
+func slogRender(v any, text bool) string {
+	var out strings.Builder
+	var handler slog.Handler = slog.NewJSONHandler(&out, nil)
+	if text {
+		handler = slog.NewTextHandler(&out, nil)
+	}
+	slog.New(handler).Info("login", "password", v)
+	return out.String()
+}
+
+func secretVerdict(output string, err error) string {
+	switch {
+	case err != nil:
+		return "error"
+	case strings.Contains(output, secretFixture):
+		return "visible"
+	default:
+		return "hidden"
+	}
+}
+
+// TestSecretTypeOutputPaths renders a wrapped password through every standard
+// output path for embargo.Secret and go-masker v3's Sensitive, the two typed
+// wrappers, and publishes which paths keep the value out.
+func TestSecretTypeOutputPaths(t *testing.T) {
+	t.Parallel()
+	secret, sensitive := embargo.NewSecret(secretFixture), gomasker.NewPassword(secretFixture)
+	type embargoField struct{ Field embargo.Secret[string] }
+	type maskerField struct{ Field gomasker.Sensitive[string] }
+	type embargoHidden struct{ field embargo.Secret[string] }
+	type maskerHidden struct{ field gomasker.Sensitive[string] }
+	wrappers := []secretWrapper{
+		{name: "embargo Secret", value: secret, field: embargoField{secret}, hidden: embargoHidden{secret}},
+		{name: "go-masker v3.3.0 Sensitive", value: sensitive, field: maskerField{sensitive}, hidden: maskerHidden{sensitive}},
+	}
+	var table strings.Builder
+	writeComparisonTable(t, &table, "| Output path | embargo Secret | ggwhite/go-masker v3.3.0 Sensitive |\n|---|---|---|\n")
+	for _, path := range secretOutputPaths() {
+		writeComparisonTable(t, &table, "| %s |", path.label)
+		for _, wrapper := range wrappers {
+			verdict := secretVerdict(path.render(wrapper))
+			if wrapper.name == "embargo Secret" && verdict == "visible" {
+				t.Errorf("%s exposed the value on %s", wrapper.name, path.label)
+			}
+			writeComparisonTable(t, &table, " %s |", verdict)
+		}
+		writeComparisonTable(t, &table, "\n")
+	}
+	syncDocTable(t, "../doc/comparison.md", "secret-types", table.String())
+}

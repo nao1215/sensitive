@@ -9,6 +9,8 @@ import (
 	"testing"
 )
 
+const exponentWhitespaceString = "0E00 "
+
 func TestOutputMaskJSONNumberLexemes(t *testing.T) {
 	t.Parallel()
 	s := NewScanner()
@@ -58,6 +60,9 @@ func TestExactIntegerBoundaries(t *testing.T) {
 		failure     bool
 	}{
 		{"-123.00", "-123", false},
+		{"123.00 ", "123", false},
+		{"-123e+00\t", "-123", false},
+		{exponentWhitespaceString, "0", false},
 		{"0.000e100", "0", false},
 		{"1.25", "", false},
 		{"1e-100", "", false},
@@ -88,5 +93,22 @@ func TestJSONNumberWholeSignedString(t *testing.T) {
 		if err != nil || string(got) != `{"value":"[REDACTED]"}` {
 			t.Fatalf("whole numeric string: %s -> %s (%v)", input, got, err)
 		}
+	}
+}
+
+func TestMaskJSONExponentStringWhitespace(t *testing.T) {
+	t.Parallel()
+	for _, value := range []string{exponentWhitespaceString, "1e0 ", "-1E+00\t", "0e-00\r\n"} {
+		t.Run(strconv.Quote(value), func(t *testing.T) {
+			t.Parallel()
+			input, err := json.Marshal(map[string]string{budgetPublicKey: value})
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := NewScanner().MaskJSON(input)
+			if err != nil || !bytes.Equal(got, input) {
+				t.Fatalf("bounded numeric string: got %s, error=%v; want %s", got, err, input)
+			}
+		})
 	}
 }

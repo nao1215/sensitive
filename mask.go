@@ -13,8 +13,10 @@ const redactionMarker = "[REDACTED]"
 // value may move other text into a contextual detector's window. Scan each original
 // value once per output hook; the marker is not a trusted-input bypass.
 func Mask(text string, findings []Finding) string {
-	return MaskFunc(text, findings, func(Kind, string) string { return redactionMarker })
+	return MaskFunc(text, findings, redact)
 }
+
+func redact(Kind, string) string { return redactionMarker }
 
 // MaskFunc replaces each merged span with replace(kind, value), in input order.
 // The kind comes from the highest-confidence finding; ties prefer kind, start, then
@@ -32,31 +34,53 @@ func MaskFunc(text string, findings []Finding, replace func(kind Kind, value str
 			return redactionMarker
 		}
 	}
-	ordered := slices.Clone(findings)
+	return maskOwned(text, slices.Clone(findings), replace)
+}
+
+// maskOwned is MaskFunc for a validated findings slice that the caller owns:
+// it is sorted in place instead of copied.
+func maskOwned(text string, ordered []Finding, replace func(kind Kind, value string) string) string {
+	if len(ordered) == 0 {
+		return text
+	}
 	slices.SortStableFunc(ordered, compareFindings)
+	best, start, end, next := mergeSpan(ordered, 0)
+	if start == 0 && end == len(text) {
+		// One merged span covers the text, so no surrounding bytes are copied.
+		return replace(best.Kind, text)
+	}
 	var out strings.Builder
+	out.Grow(len(text) + len(redactionMarker))
 	position := 0
-	for i := 0; i < len(ordered); {
-		best := ordered[i]
-		start, end := best.Start, best.End
-		i++
-		for i < len(ordered) && ordered[i].Start < end {
-			f := ordered[i]
-			end = max(end, f.End)
-			if preferredKind(f, best) {
-				best = f
-			}
-			i++
-		}
+	for {
 		//nolint:errcheck // strings.Builder writes always succeed.
 		out.WriteString(text[position:start])
 		//nolint:errcheck // strings.Builder writes always succeed.
 		out.WriteString(replace(best.Kind, text[start:end]))
 		position = end
+		if next == len(ordered) {
+			break
+		}
+		best, start, end, next = mergeSpan(ordered, next)
 	}
 	//nolint:errcheck // strings.Builder writes always succeed.
 	out.WriteString(text[position:])
 	return out.String()
+}
+
+// mergeSpan merges sorted findings from i while they overlap the growing span
+// and returns the preferred finding, the span and the index after it.
+func mergeSpan(ordered []Finding, i int) (best Finding, start, end, next int) {
+	best = ordered[i]
+	start, end = best.Start, best.End
+	for i++; i < len(ordered) && ordered[i].Start < end; i++ {
+		f := ordered[i]
+		end = max(end, f.End)
+		if preferredKind(f, best) {
+			best = f
+		}
+	}
+	return best, start, end, i
 }
 
 func preferredKind(a, b Finding) bool {

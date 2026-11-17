@@ -55,6 +55,7 @@ TEST_FILES = {'aba_routing':'aba','ach_trace':'ach','google_api_key':'google_api
 HARD_CASES = {
  'pan':'Luhn-valid Visa, Mastercard, Amex and JCB shapes, hyphen-separated groups and full-width digits.',
  'phone_jp':'Hyphenated mobile numbers, full-width digits and Japanese text boundaries.',
+ 'phone_us':'Hyphenated, dotted and parenthesized fictional 555-01xx numbers.',
  'mynumber':'Independently generated MOD 11 check digits, full-width digits and Japanese text boundaries.',
  'iban':'Independently generated German MOD 97 check digits and surrounding JSON or log text.',
  'btc':'Independently generated Base58Check P2PKH addresses and invalid checksum look-alikes.',
@@ -134,7 +135,7 @@ def threshold_section():
     names = [row['dataset'] for row in public]
     size = sum(row['bytes'] for row in public)
     out = ['## Choosing a threshold', '',
-           'The default remains 0 for all 25 default kinds. Public-log rates are sample estimates on 92,409,848 bytes; precision treats published contacts/endpoints as sensitive references. Absolute public-log misses are unknown because undetected secrets are not labeled. Synthetic precision and misses use each default kind alone with the existing exact-span labels, including the credential sets; opt-in entropy and country kinds are excluded. Both previously inspected splits are regression evidence.', '',
+           'The default remains 0 for all 26 default kinds. Public-log rates are sample estimates on 92,409,848 bytes; precision treats published contacts/endpoints as sensitive references. Absolute public-log misses are unknown because undetected secrets are not labeled. Synthetic precision and misses use each default kind alone with the existing exact-span labels, including the credential sets; opt-in entropy and country kinds are excluded. Both previously inspected splits are regression evidence.', '',
            '| Minimum confidence | Public FP/GB | Public precision | Development precision / misses | Held precision / misses |',
            '|---|---:|---:|---:|---:|']
     for threshold, config in ((0,'default'),(.5,'default50'),(.7,'default70')):

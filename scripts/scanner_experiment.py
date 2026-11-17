@@ -60,6 +60,12 @@ def render(check):
     if len(re.findall(readme_pattern,existing)) != 1:
         raise ValueError('expected one README narrowing block')
     changed = re.sub(readme_pattern,lambda m:m[1]+synopsis+m[2],existing)
+    # The README prose quotes the same medians, so it is generated with the table.
+    line = f"Pick the kinds you need: on 2.7 KB of log lines with no secret, `WithKinds(KindEmail)` returns in {values['kinds1','clean']/1000:.2f} µs because there is no `@` to inspect, while `WithAll()` takes {values['all','clean']/1000:.0f} µs. [Per-detector benchmarks](doc/benchmarks.md)\n"
+    line_pattern = r'(?s)(<!-- narrowing-line:start -->\n).*?(<!-- narrowing-line:end -->)'
+    if len(re.findall(line_pattern,changed)) != 1:
+        raise ValueError('expected one README narrowing sentence')
+    changed = re.sub(line_pattern,lambda m:m[1]+line+m[2],changed)
     if check:
         if existing != changed:
             raise SystemExit('stale README narrowing table')

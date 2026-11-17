@@ -37,8 +37,7 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 
 	i := 0
 	for i < len(data) {
-		//nolint:mnd // A percent escape occupies three bytes.
-		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(orig, originalPosition(posMap, i+3)) {
+		if data[i] == '%' && normalizedEscapeSeparator(orig, posMap, len(data), i) {
 			i += 3
 			continue
 		}
@@ -48,22 +47,17 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		}
 
 		// Check that this digit is not part of a longer alphanumeric token.
-		if i > 0 && isIdentifierByte(data[i-1]) && !encodedSeparatorBefore(orig, originalPosition(posMap, i)) {
+		if !normalizedIdentifierStart(orig, data, posMap, i) {
 			i++
 			continue
 		}
 
 		// Extract digits, allowing '-' and ' ' as separators.
 		start := i
-		digits, end := extractMyNumberDigits(data, start)
+		digits, end := extractSeparatedDigits(data, start, nil)
 
 		// Must be exactly 12 digits, not followed by more digits.
-		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		if len(digits) != 12 {
-			i = end
-			continue
-		}
-		if end < len(data) && isIdentifierByte(data[end]) {
+		if !myNumberWhole(data, digits, end) {
 			i = end
 			continue
 		}
@@ -85,22 +79,21 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	return findings
 }
 
-// extractMyNumberDigits extracts digits from data[start:], allowing '-' and ' '
-// as separators. Returns the extracted digits and the end position trimmed to
-// the last digit (trailing separators are excluded).
-func extractMyNumberDigits(data []byte, start int) (digits []byte, end int) {
-	j := start
-	for j < len(data) && (ascii.IsDigit(data[j]) || data[j] == '-' || data[j] == ' ') {
-		if ascii.IsDigit(data[j]) {
-			digits = append(digits, data[j])
-		}
-		j++
+// normalizedIdentifierStart reports whether position i of a normalized view
+// starts an identifier: the preceding byte is not an identifier byte unless an
+// encoded separator precedes the original byte.
+func normalizedIdentifierStart(orig, data []byte, posMap []int, i int) bool {
+	return i == 0 || !isIdentifierByte(data[i-1]) || encodedSeparatorBefore(orig, originalPosition(posMap, i))
+}
+
+// myNumberWhole reports whether a candidate has exactly 12 digits and is not
+// followed by an identifier byte.
+func myNumberWhole(data, digits []byte, end int) bool {
+	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
+	if len(digits) != 12 {
+		return false
 	}
-	end = j
-	for end > start && !ascii.IsDigit(data[end-1]) {
-		end--
-	}
-	return digits, end
+	return end >= len(data) || !isIdentifierByte(data[end])
 }
 
 // isValidMyNumber validates a 12-digit My Number using the check digit algorithm.

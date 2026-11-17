@@ -89,20 +89,13 @@ func (d *Credential) scanPlain(data []byte) []Finding {
 		if data[i] != ':' && data[i] != '=' {
 			continue
 		}
-		for urlIndex < len(urls) && urls[urlIndex].Start <= i {
-			urlIndex++
-		}
-		// A userinfo username can itself be "token" or "password". Its
-		// colon belongs to the URL, not an assignment extending past the host.
-		if data[i] == ':' && urlIndex < len(urls) && urls[urlIndex].Start == i+1 {
+		var userinfo bool
+		urlIndex, userinfo = urlUserinfoColon(data, urls, urlIndex, i)
+		if userinfo {
 			continue
 		}
-		key := d.credentialKey(data, i)
-		if key == nil {
-			continue
-		}
-		name := NormalizeCredentialKey(string(key))
-		if name == credentialTokenKey && unquotedObjectValue(data, i+1) {
+		name, ok := d.assignmentName(data, i)
+		if !ok {
 			continue
 		}
 		// Visit each context byte once, including values skipped by this loop.
@@ -110,7 +103,7 @@ func (d *Credential) scanPlain(data []byte) []Finding {
 		formatted = fmtCredentialContext(data[contextAt:i], formatted)
 		contextAt = i
 		start, end := assignmentValue(data, i+1, name, data[i] == ':' && formatted)
-		if end > start && !redactedCredentialValue(data[start:end]) && (name != credentialTokenKey || !objectReference(data, start, end)) {
+		if end > start && acceptedAssignmentValue(data, start, end, name) {
 			out = append(out, credentialFinding(start, end))
 			i = end - 1
 		}
@@ -128,6 +121,37 @@ func (d *Credential) scanPlain(data []byte) []Finding {
 	return slices.CompactFunc(out, func(a, b Finding) bool { return a.Start == b.Start && a.End == b.End })
 }
 
+// urlUserinfoColon advances urlIndex past URL findings starting at or before i
+// and reports whether the colon at i separates URL userinfo, not an assignment.
+func urlUserinfoColon(data []byte, urls []Finding, urlIndex, i int) (int, bool) {
+	for urlIndex < len(urls) && urls[urlIndex].Start <= i {
+		urlIndex++
+	}
+	// A userinfo username can itself be "token" or "password". Its
+	// colon belongs to the URL, not an assignment extending past the host.
+	return urlIndex, data[i] == ':' && urlIndex < len(urls) && urls[urlIndex].Start == i+1
+}
+
+// assignmentName returns the normalized credential key ending at the
+// separator i, rejecting a token key whose value is an unquoted object.
+func (d *Credential) assignmentName(data []byte, i int) (string, bool) {
+	key := d.credentialKey(data, i)
+	if key == nil {
+		return "", false
+	}
+	name := NormalizeCredentialKey(string(key))
+	if name == credentialTokenKey && unquotedObjectValue(data, i+1) {
+		return "", false
+	}
+	return name, true
+}
+
+// acceptedAssignmentValue rejects already redacted values and token values
+// that only reference another object.
+func acceptedAssignmentValue(data []byte, start, end int, name string) bool {
+	return !redactedCredentialValue(data[start:end]) && (name != credentialTokenKey || !objectReference(data, start, end))
+}
+
 func credentialFinding(start, end int) Finding {
 	//nolint:mnd // Context identifies a credential; the score is a heuristic, not probability.
 	return Finding{DetectorName: NameCredential, Start: start, End: end, Confidence: 0.95}
@@ -140,20 +164,27 @@ func awsSecretPair(data []byte) []Finding {
 	var out []Finding
 	for _, id := range NewAWSKey().Scan(data) {
 		left, right := max(0, id.Start-awsContextBytes), min(len(data), id.End+awsContextBytes)
-		for i := left; i < right; {
-			if !awsSecretByte(data[i]) {
-				i++
-				continue
-			}
-			end := i + 1
-			for end < right && awsSecretByte(data[end]) {
-				end++
-			}
-			if end-i == 40 && (i == 0 || !awsSecretByte(data[i-1])) && (end == len(data) || !awsSecretByte(data[end])) {
-				out = append(out, credentialFinding(i, end))
-			}
-			i = end
+		out = awsSecretsInWindow(data, left, right, out)
+	}
+	return out
+}
+
+// awsSecretsInWindow appends each standalone 40-byte secret run found in
+// data[left:right]; run boundaries are checked against the whole input.
+func awsSecretsInWindow(data []byte, left, right int, out []Finding) []Finding {
+	for i := left; i < right; {
+		if !awsSecretByte(data[i]) {
+			i++
+			continue
 		}
+		end := i + 1
+		for end < right && awsSecretByte(data[end]) {
+			end++
+		}
+		if end-i == 40 && (i == 0 || !awsSecretByte(data[i-1])) && (end == len(data) || !awsSecretByte(data[end])) {
+			out = append(out, credentialFinding(i, end))
+		}
+		i = end
 	}
 	return out
 }

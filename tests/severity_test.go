@@ -83,7 +83,7 @@ func severity(kind embargo.Kind) string {
 		return criticalTier
 	case embargo.KindUSSSN, embargo.KindUSITIN, embargo.KindUKNINO, embargo.KindUKNHS, embargo.KindIndiaAadhaar, embargo.KindIndiaPAN, embargo.KindBrazilCPF, embargo.KindBrazilCNPJ, embargo.KindChinaResidentID, embargo.KindKoreaRRN, embargo.KindCanadaSIN, embargo.KindMyNumber, embargo.KindBankAccount, embargo.KindIBAN, embargo.KindABARouting, embargo.KindUKSortCode:
 		return "high"
-	case embargo.KindHighEntropy, embargo.KindEmail, embargo.KindJPPhone, embargo.KindIPAddr, embargo.KindSWIFTBIC, embargo.KindCVV, embargo.KindCardExpiry, embargo.KindACHTrace, embargo.KindMerchantID, embargo.KindBTC, embargo.KindETH:
+	case embargo.KindHighEntropy, embargo.KindEmail, embargo.KindJPPhone, embargo.KindUSPhone, embargo.KindIPAddr, embargo.KindSWIFTBIC, embargo.KindCVV, embargo.KindCardExpiry, embargo.KindACHTrace, embargo.KindMerchantID, embargo.KindBTC, embargo.KindETH:
 		return "standard"
 	default:
 		panic("evaluation tier missing for kind")

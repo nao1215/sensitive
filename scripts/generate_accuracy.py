@@ -57,6 +57,11 @@ def bitcoin(payload):
     return '1' * (len(data) - len(data.lstrip(b'\0'))) + result
 
 
+def us_phone(area, line, i):
+    # 555-01xx is the range reserved for fictional North American numbers.
+    return [f'{area}-555-{line}', f'({area}) 555-{line}', f'{area}.555.{line}'][i % 3]
+
+
 def fullwidth(value):
     return value.translate(str.maketrans('0123456789-', '０１２３４５６７８９－'))
 
@@ -89,6 +94,8 @@ def specimens(rng, i):
         'slack_token': ('', 'xoxb-' + digits(rng, 12) + '-' + digits(rng, 12) + '-' + chars(rng, 24)),
         'google_api_key': ('', 'AIza' + chars(rng, 35)),
         'private_key_pem': ('', '-----BEGIN ' + ['RSA ', 'EC ', 'OPENSSH ', ''][i % 4] + 'PRIVATE KEY-----'),
+        # Drawn last so the random values of every earlier kind stay unchanged.
+        'phone_us': ('', us_phone(['202', '212', '303', '415', '617'][i % 5], '01' + digits(rng, 2), i)),
     }
 
 
@@ -111,6 +118,7 @@ def invalids(rng, i):
         'eth': '0x' + chars(rng, 38) + 'gg', 'github_token': 'ghp_' + chars(rng, 35),
         'slack_token': 'xoxz-' + chars(rng, 24), 'google_api_key': 'AIza' + chars(rng, 34),
         'private_key_pem': ['-----BEGIN PUBLIC KEY-----', '-----BEGIN CERTIFICATE-----'][i % 2],
+        'phone_us': ['102-555-01', '202-555.01', '202-911-01'][i % 3] + digits(rng, 2),
     }
 
 

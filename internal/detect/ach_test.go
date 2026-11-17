@@ -100,21 +100,7 @@ func TestACHTraceDetector_Scan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			findings := d.Scan([]byte(tt.input))
-			if len(findings) != tt.wantLen {
-				t.Fatalf("got %d findings, want %d; findings=%+v", len(findings), tt.wantLen, findings)
-			}
-			if tt.wantLen == 0 {
-				return
-			}
-			if tt.wantRaw != "" && tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
-				t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
-			}
-			for _, f := range findings {
-				if f.Confidence < tt.wantMinCon {
-					t.Errorf("Confidence = %f, want >= %f", f.Confidence, tt.wantMinCon)
-				}
-			}
+			assertScanCase(t, d, tt.input, tt.wantLen, tt.wantRaw, tt.wantMinCon)
 		})
 	}
 }

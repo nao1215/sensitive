@@ -749,7 +749,7 @@ func TestMaskIdempotentAllKinds(t *testing.T) {
 			byKind[sample.Kind] = append(byKind[sample.Kind], sample.Text)
 		}
 	}
-	if len(byKind) != 37 {
+	if len(byKind) != 38 {
 		t.Fatal("every Kind needs positive adjacency fixtures")
 	}
 	for kind, inputs := range byKind {
@@ -1097,6 +1097,31 @@ func TestHTTPWithheldSchemaProperty(t *testing.T) {
 		duration, durationOK := record["duration"].(float64)
 		if !stampOK || stamp == "" || !durationOK || duration < 0 || strings.Contains(out.String(), "planted") || strings.Contains(out.String(), "private@example.com") {
 			rt.Fatalf("missing trusted metadata or unsafe field: %s", out.Bytes())
+		}
+	})
+}
+
+// JSON strings may resemble numbers without being JSON number tokens.
+func TestNumericLookingStringGrammar(t *testing.T) {
+	t.Parallel()
+	scanner := embargo.NewScanner(embargo.WithKinds())
+	rapid.Check(t, func(rt *rapid.T) {
+		sign := rapid.SampledFrom([]string{"", "-", "+"}).Draw(rt, "mantissa sign")
+		zeros := strings.Repeat("0", rapid.IntRange(0, 3).Draw(rt, "mantissa leading zeros"))
+		integer := strconv.Itoa(rapid.IntRange(0, 999).Draw(rt, "mantissa"))
+		exp := rapid.SampledFrom([]string{"e", "E"}).Draw(rt, "exponent case")
+		expSign := rapid.SampledFrom([]string{"", "-", "+"}).Draw(rt, "exponent sign")
+		expZeros := strings.Repeat("0", rapid.IntRange(0, 3).Draw(rt, "exponent leading zeros"))
+		exponent := strconv.Itoa(rapid.IntRange(0, 4).Draw(rt, "exponent"))
+		space := rapid.SampledFrom([]string{"", " ", "  ", "\t", "\r\n"}).Draw(rt, "trailing whitespace")
+		value := sign + zeros + integer + exp + expSign + expZeros + exponent + space
+		input, err := json.Marshal(map[string]string{"number": value})
+		if err != nil {
+			rt.Fatal(err)
+		}
+		masked, err := scanner.MaskJSON(input)
+		if err != nil || !bytes.Equal(masked, input) {
+			rt.Fatalf("numeric-looking string changed: %s => %s (%v)", input, masked, err)
 		}
 	})
 }

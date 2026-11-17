@@ -13,6 +13,8 @@ const (
 	NameEmail DetectorName = "email"
 	// NameJPPhone is the detector name for Japanese phone numbers.
 	NameJPPhone DetectorName = "phone_jp"
+	// NameUSPhone is the detector name for North American phone numbers.
+	NameUSPhone DetectorName = "phone_us"
 	// NameMyNumber is the detector name for Japanese My Number (individual number).
 	NameMyNumber DetectorName = "mynumber"
 	// NameJWT is the detector name for JSON Web Tokens.
@@ -84,6 +86,7 @@ var (
 	_ Detector = (*PAN)(nil)
 	_ Detector = (*Email)(nil)
 	_ Detector = (*JPPhone)(nil)
+	_ Detector = (*USPhone)(nil)
 	_ Detector = (*MyNumber)(nil)
 	_ Detector = (*JWT)(nil)
 	_ Detector = (*AWSKey)(nil)

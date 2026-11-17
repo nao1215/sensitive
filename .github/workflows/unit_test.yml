@@ -68,6 +68,36 @@ jobs:
       - name: Verify declared adapter dependencies without local replacements
         run: python3 scripts/check_adapter_dependencies.py
 
+  e2e:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    name: Command E2E (${{ matrix.os }})
+
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "macos-latest"]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+          cache-dependency-path: go.mod
+
+      - name: Install atago
+        uses: nao1215/setup-atago@5c563dcd9d85e114f8abe8bbdcd058e51de09efb # v0.1.3
+        with:
+          version: v0.26.0
+
+      - name: Run atago specs against the built command
+        run: make test-e2e
+
   cross_build:
     needs: changes
     if: needs.changes.outputs.code == 'true'

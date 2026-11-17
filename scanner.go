@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"cmp"
 	"slices"
+	"sync"
 
 	"github.com/nao1215/embargo/internal/ascii"
 	"github.com/nao1215/embargo/internal/detect"
@@ -17,7 +18,10 @@ type Scanner struct {
 	detectors     []detect.Detector
 	hintCache     [][]hintEntry
 	custom        []Detector
+	scratch       *sync.Pool
+	keys          *keyCache
 	hintIndex     [256][]dispatchHint
+	hinted        [256]bool
 	minConfidence float64
 	unconditional uint64
 	initialized   bool
@@ -34,8 +38,8 @@ type hintEntry struct {
 	needFold bool
 }
 
-// NewScanner starts with 25 built-ins; the additional country families and KindHighEntropy are opt-in.
-// WithAll enables all 37 families; WithKinds selects the regions and formats an application handles.
+// NewScanner starts with 26 built-ins; the additional country families and KindHighEntropy are opt-in.
+// WithAll enables all 38 families; WithKinds selects the regions and formats an application handles.
 // Minimum confidence defaults to 0, so ambiguous numeric and contextual candidates remain.
 // Select WithKinds when the application knows which data it handles; fewer detectors reduce work and unrelated findings.
 // See https://github.com/nao1215/embargo/blob/main/doc/benchmarks.md for measured kind sets.
@@ -60,7 +64,50 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 	if len(s.detectors) > 1 {
 		s.buildDispatch()
 	}
+	// Custom detectors receive the scanned bytes and may keep them or answer
+	// differently each time, so only built-in selections, which never retain
+	// input and always return the same findings, reuse buffers and key results.
+	if len(s.custom) == 0 {
+		s.scratch = &sync.Pool{New: func() any { return &scanScratch{text: nil, findings: nil} }}
+		s.keys = &keyCache{}
+	}
 	return s
+}
+
+// scanScratch holds the "key: value" bytes of one scalar scan and the findings
+// the caller consumes before returning it; findings that leave the package are
+// never pooled.
+type scanScratch struct {
+	text     []byte
+	findings []Finding
+}
+
+// Limits that keep one huge or finding-heavy scalar from pinning its storage.
+const (
+	largestPooledBuffer = 64 << 10
+	maxPooledFindings   = 64
+)
+
+// takeScratch returns empty scratch storage. Scanners with custom detectors and
+// zero-value scanners get fresh storage.
+func (s *Scanner) takeScratch() *scanScratch {
+	if s.scratch == nil {
+		return &scanScratch{text: nil, findings: nil}
+	}
+	scratch, ok := s.scratch.Get().(*scanScratch)
+	if !ok {
+		panic("embargo: invalid scan scratch")
+	}
+	return scratch
+}
+
+// returnScratch keeps storage, grown by its last user, for the next scan.
+func (s *Scanner) returnScratch(scratch *scanScratch) {
+	if s.scratch == nil || cap(scratch.text) > largestPooledBuffer || cap(scratch.findings) > maxPooledFindings {
+		return
+	}
+	scratch.text, scratch.findings = scratch.text[:0], scratch.findings[:0]
+	s.scratch.Put(scratch)
 }
 
 // buildHintCache pre-computes lowered hints for each detector so that
@@ -98,26 +145,31 @@ func (s *Scanner) Scan(data []byte) []Finding {
 }
 
 func (s *Scanner) scan(data []byte, canceled func() error) []Finding {
+	return s.scanAppend(nil, data, canceled)
+}
+
+// scanAppend is scan that reuses dst's storage for the findings it returns.
+func (s *Scanner) scanAppend(dst []Finding, data []byte, canceled func() error) []Finding {
 	if scanCanceled(canceled) || len(data) == 0 {
 		return nil
 	}
 	if !s.initialized {
-		return NewScanner().scan(data, canceled)
+		return NewScanner().scanAppend(dst, data, canceled)
 	}
 	view := detect.View{Raw: data, Data: data}
 	if len(s.detectors) > 0 {
 		view = detect.NewView(data)
 	}
-	return s.scanInput(view, canceled)
+	return s.scanInput(dst, view, canceled)
 }
 
 // scanInput shares the normalized view with streaming frame recognition.
-func (s *Scanner) scanInput(view detect.View, canceled func() error) []Finding {
+func (s *Scanner) scanInput(dst []Finding, view detect.View, canceled func() error) []Finding {
 	if len(view.Raw) == 0 || scanCanceled(canceled) {
 		return nil
 	}
 	selected := s.selectDetectors(view.Data)
-	var findings []Finding
+	findings := dst[:0]
 	for i, d := range s.detectors {
 		if scanCanceled(canceled) {
 			return nil

@@ -378,3 +378,29 @@ func TestEmailDomainValidation(t *testing.T) {
 		}
 	}
 }
+
+const emailUserinfoFixture = "alice@example.com"
+
+func TestEmailIgnoresURLUserinfo(t *testing.T) {
+	t.Parallel()
+	d := NewEmail()
+	for _, tc := range []struct {
+		input, matched string
+		count          int
+	}{
+		// #nosec G101 -- Public synthetic DSN used to test URL userinfo handling.
+		{input: "postgres://app:s3cr3t@db.example/orders", count: 0},
+		{input: "dsn=postgres://s3cr3t@db.example:5432/orders", count: 0},
+		{input: "redis://:s3cr3t@cache.example.com:6379", count: 0},
+		{input: "https://user.name@example.com/path", count: 0},
+		{input: "contact alice@example.com about postgres://app:pw@db.example", matched: emailUserinfoFixture, count: 1},
+		{input: "see:alice@example.com", matched: emailUserinfoFixture, count: 1},
+		{input: "mailto:alice@example.com", matched: emailUserinfoFixture, count: 1},
+		{input: "path //alice@example.com", matched: emailUserinfoFixture, count: 1},
+	} {
+		t.Run(tc.input, func(t *testing.T) {
+			t.Parallel()
+			assertScanMatch(t, d, tc.input, tc.count, tc.matched)
+		})
+	}
+}

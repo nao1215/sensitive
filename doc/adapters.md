@@ -110,3 +110,16 @@ The [comparison matrix](comparison.md#service-leak-scenarios) measures older app
 [Support maintenance](https://github.com/sponsors/nao1215).
 
 Masking failures retain an audit diagnostic instead of losing the event. See [failure formats, counts and cancellation budgets](logging.md#bounds-and-failures). Byte limits apply after the SDK encoder; they do not bound MarshalJSON, LogValue, String or Error execution. Use Secret or a LogValuer returning a bounded value for those types.
+
+## Web frameworks
+
+gin, echo and Connect servers are `http.Handler` values, so the access log hook wraps them without a framework adapter:
+
+```go
+scanner := embargo.NewScanner()
+logger := slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(os.Stdout, nil), scanner))
+router := gin.New() // or echo.New(), or an http.ServeMux holding Connect handlers
+http.ListenAndServe(":8080", embargo.NewHTTPHandler(router, logger, scanner))
+```
+
+Handlers log through the same `logger`, so their own events are masked too. [TestWebFrameworkAccessLogs](../tests/integrations_test.go) runs this for gin v1.12.0, echo v4.16.3 and Connect v1.21.1 and checks that a query token and an email in the request never reach the log. The framework's own logger middleware writes outside slog; leave it off or point it at a masked writer.

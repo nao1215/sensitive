@@ -31,20 +31,20 @@ The generator rejects incomplete mutation/fuzz runs and records source-log hashe
 
 ## Package mutation gate
 
-`make mutation` runs [Gremlins v0.6.0](https://github.com/go-gremlins/gremlins/releases/tag/v0.6.0) through the tools module; the root module has no tool dependency. The scheduled/manual heavy workflow checks every root package and the audit command, one gremlins run per package so each timeout is ten times that package's own test time; `make mutation` uses up to four workers (two on a 4-CPU runner) with GOMAXPROCS=2 each, a 4 GiB address-space cap that turns runaway allocation into a fast out-of-memory failure, and EMBARGO_MUTATION=1 to skip the README compile check, whose examples' Output assertions still run. It rejects scores or mutation coverage below [the recorded package floors](mutation-baseline.json). Timeouts count as un-killed executed mutants: score = killed / (killed + lived + timed out). Mutation coverage divides that executed count by executed plus uncovered mutants. The older dated summary below uses the tool's killed / (killed + lived) efficacy; it is not the new gate's denominator.
+`make mutation` runs [Gremlins v0.6.0](https://github.com/go-gremlins/gremlins/releases/tag/v0.6.0) through the tools module; the root module has no tool dependency. The scheduled/manual heavy workflow checks every root package and the audit command, one gremlins run per package so each timeout is ten times that package's own test time; `make mutation` uses up to four workers (two on a 4-CPU runner) with GOMAXPROCS=2 each, a 4 GiB address-space cap that turns runaway allocation into a fast out-of-memory failure, and EMBARGO_MUTATION=1 to skip the README compile check, whose examples' Output assertions still run. It rejects scores or mutation coverage below [the recorded package floors](mutation-baseline.json). gremlins times the build of each mutated package together with its tests, so a mutant compiled while other workers hold the CPU can time out without being slower. The wrapper therefore rebuilds every timed-out mutant alone, with the same operator replacement supplied through a Go build overlay, and times only its test binary against ten times the unmutated binary's run (at least 10 s). A mutant that fails is killed, one that passes lived, and one that still times out, such as a loop whose counter now moves away from its bound, stays timed out. Timeouts that persist count as un-killed executed mutants: score = killed / (killed + lived + timed out). Mutation coverage divides that executed count by executed plus uncovered mutants. The older dated summary below uses the tool's killed / (killed + lived) efficacy; it is not the new gate's denominator.
 
-Every run first verifies a known killed expression and a known surviving expression, then compares all measured expression coordinates with a fresh dry-run inventory. The wrapper clears the Go test cache after inventory collection so the campaign timeout comes from an actual test run. This prevents missing files, truncated reports or a failing test launcher from creating a passing score. v0.6.0 mispasses its own --test-cpu flag, so the wrapper sets GOMAXPROCS instead. Its nested package-main mapping is also incorrect; the audit command runs as a temporary root module with the same command source, tests and scanner snapshot. No third-party source is patched.
+`make mutation-diff BASE=origin/main` mutates only lines changed since BASE and lists surviving, timed-out and uncovered mutants on them; it checks no floors and is meant for work in progress. Every run first verifies a known killed expression and a known surviving expression, then compares all measured expression coordinates with a fresh dry-run inventory. The wrapper clears the Go test cache after inventory collection so the campaign timeout comes from an actual test run. This prevents missing files, truncated reports or a failing test launcher from creating a passing score. v0.6.0 mispasses its own --test-cpu flag, so the wrapper sets GOMAXPROCS instead. Its nested package-main mapping is also incorrect; the audit command runs as a temporary root module with the same command source, tests and scanner snapshot. No third-party source is patched.
 
 [Recorded expression outcomes and source fingerprints](performance/mutation-baseline.json) support the baseline; `python3 scripts/mutation_gate.py --check-evidence` rejects a mismatch between those outcomes and the package scores. Reports from future full runs are uploaded as workflow artifacts. Use `python3 scripts/mutation_gate.py --record` only after reviewing a complete run; it refuses to lower an existing floor. Surviving equivalent comparisons, capacity changes and defensive branches are retained as survivors, never relabeled as kills.
 
 <!-- mutation-baseline:start -->
 | Package | Score floor | Mutation coverage floor | Killed | Lived | Timed out | Uncovered |
 |---|---:|---:|---:|---:|---:|---:|
-| . | 82.97% | 99.73% | 302 | 46 | 16 | 1 |
-| cmd/embargo-audit | 91.67% | 100.00% | 33 | 3 | 0 | 0 |
+| . | 83.33% | 99.78% | 370 | 58 | 16 | 1 |
+| cmd/embargo | 96.92% | 100.00% | 63 | 1 | 1 | 0 |
 | embargotest | 90.98% | 98.79% | 222 | 19 | 3 | 3 |
 | internal/ascii | 100.00% | 100.00% | 58 | 0 | 0 | 0 |
-| internal/detect | 87.31% | 92.17% | 1769 | 221 | 36 | 172 |
+| internal/detect | 87.56% | 92.35% | 1872 | 233 | 33 | 177 |
 | internal/output | 82.35% | 100.00% | 56 | 10 | 2 | 0 |
 | internal/saferecord | 100.00% | 100.00% | 5 | 0 | 0 | 0 |
 <!-- mutation-baseline:end -->
@@ -59,7 +59,7 @@ The remaining exceptions fall into four groups: standard-library encoding failur
 
 | Remaining function | Missing path and disposition |
 |---|---|
-| cmd/embargo-audit.main; embargotest.Guard | Child fixtures assert entry points; run, exitCode and guardParent are measured in-process. |
+| cmd/embargo.main; embargotest.Guard | Child fixtures assert entry points; run, exitCode and guardParent are measured in-process. |
 | embargotest.Run; embargotest.Guard | os.Executable failure is not portable to induce in an already running Go test binary. |
 | embargotest.guardMessage | Replacing process-wide stderr disturbs other tests; replay and child diagnostics are asserted. |
 | embargotest.representations; embargotest.recordHeaders; maskHTTPHeaders; appendString; sanitizeBytes | encoding/json cannot fail for the concrete string, byte slice and string-only map types passed here. |
@@ -158,15 +158,15 @@ Resource amplification, framing spoofing and ambiguous encodings. Tests: [json_t
 ## Measured results
 
 <!-- testing-metrics:start -->
-Measured 2026-11-15; retained snapshot with source-log hashes.
+Measured 2026-11-17; retained snapshot with source-log hashes.
 
 | Measurement | Result | Conditions |
 |---|---|---|
-| Statement coverage | 97.1% (3026/3115) | Root and integration suites combined |
-| Mutation score | 88.37% | gremlins v0.6.0, root tests, 2 workers, 10x timeout |
-| Mutations | 1869 killed, 246 lived, 243 uncovered, 38 timed out | Timeouts do not count as killed |
-| Mutation coverage | 89.69% | Mutated statements exercised by root tests |
-| Fuzzing | 13 targets, 3354049 executions | 10 seconds per target |
+| Statement coverage | 99.4% (4809/4837) | Root and integration suites combined |
+| Mutation score | 89.18% | gremlins v0.6.0, root tests, 2 workers, 10x timeout |
+| Mutations | 2646 killed, 321 lived, 181 uncovered, 55 timed out | Timeouts do not count as killed |
+| Mutation coverage | 94.35% | Mutated statements exercised by root tests |
+| Fuzzing | 13 targets, 2208636 executions | 10 seconds per target |
 <!-- testing-metrics:end -->
 
 ## Measurement scope and limits

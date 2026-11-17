@@ -13,7 +13,8 @@ def workflow_refs(originals):
     for path, data in originals.items():
         refs = set()
         for raw in re.findall(r'^\s*(?:-\s*)?uses:\s*[\'\"]?([^\s\'\"#]+)', data.decode(), re.M):
-            if raw.startswith('./'):
+            # slsa-verifier checks this reusable workflow's tag, so it cannot be SHA-pinned.
+            if raw.startswith('./') or raw.startswith('slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.'):
                 continue
             match = re.fullmatch(r'([^/]+/[^/@]+)(?:/[^@]+)?@([0-9a-f]{40})', raw)
             if not match:

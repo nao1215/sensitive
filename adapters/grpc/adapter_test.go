@@ -580,3 +580,23 @@ func TestFreeTextMetadataProperty(t *testing.T) {
 		}
 	}
 }
+
+func TestMetadataIntegerExpansionFailureIsWithheld(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&out, nil))
+	scanner := embargo.NewScanner()
+	ctx := metadata.NewIncomingContext(t.Context(), metadata.Pairs("email", "alice@example.com", "public", "1e1048576"))
+	unary := embargogrpc.NewUnaryServerInterceptor(logger, scanner)
+	result, err := unary(ctx, nil, &grpc.UnaryServerInfo{FullMethod: publicMethod}, func(context.Context, any) (any, error) { return grpcResponse, nil })
+	if err != nil || result != grpcResponse {
+		t.Fatal("masking failure changed the RPC result")
+	}
+	requireDiagnostic(t, out.Bytes(), "size limit")
+	out.Reset()
+	stream := embargogrpc.NewStreamServerInterceptor(logger, scanner)
+	if err := stream(nil, &contextStream{getContext: func() context.Context { return ctx }}, &grpc.StreamServerInfo{FullMethod: publicMethod}, func(any, grpc.ServerStream) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	requireDiagnostic(t, out.Bytes(), "size limit")
+}

@@ -606,5 +606,45 @@
     "detector": "ca_sin",
     "text": "identity=413-643-080; result=ok",
     "positive": false
+  },
+  {
+    "detector": "phone_us",
+    "text": "contact 202-555-0123",
+    "positive": true
+  },
+  {
+    "detector": "phone_us",
+    "text": "tel: (212) 555-0100",
+    "positive": true
+  },
+  {
+    "detector": "phone_us",
+    "text": "call 415.555.0199",
+    "positive": true
+  },
+  {
+    "detector": "phone_us",
+    "text": "phone +1 303 555 0145",
+    "positive": true
+  },
+  {
+    "detector": "phone_us",
+    "text": "id 2025550123",
+    "positive": false
+  },
+  {
+    "detector": "phone_us",
+    "text": "202-555.0123",
+    "positive": false
+  },
+  {
+    "detector": "phone_us",
+    "text": "192.168.100.1",
+    "positive": false
+  },
+  {
+    "detector": "phone_us",
+    "text": "build v1.202.555.0123",
+    "positive": false
   }
 ]

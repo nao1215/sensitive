@@ -482,3 +482,27 @@ func TestPANChecksumSingleDigitChanges(t *testing.T) {
 		digits[i] = original
 	}
 }
+
+func TestHasDigitsCountsOnlyASCIIDigits(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name  string
+		input string
+		n     int
+		want  bool
+	}{
+		{"twelve digits are fewer than a card", "field 1234-5678-9012", panMinDigits, false},
+		{"thirteen digits reach a card", "4222222222222", panMinDigits, true},
+		{"digits are counted across separators", "a1b2c3", 3, true},
+		{"full-width digits are not ASCII", "４１１１", 1, false},
+		{"empty input has no digits", "", 1, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := hasDigits([]byte(tt.input), tt.n); got != tt.want {
+				t.Errorf("hasDigits(%q, %d) = %v, want %v", tt.input, tt.n, got, tt.want)
+			}
+		})
+	}
+}

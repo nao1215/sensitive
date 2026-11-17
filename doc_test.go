@@ -437,7 +437,7 @@ func TestDefaultPolicyDocumentation(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		for _, required := range []string{"25 built-ins", "37", "WithAll", "opt-in"} {
+		for _, required := range []string{"26 built-ins", "38", "WithAll", "opt-in"} {
 			if !strings.Contains(string(text), required) {
 				t.Errorf("%s omits the v0.5 default contract %q", path, required)
 			}
@@ -590,5 +590,30 @@ func syncVisualDocument(t *testing.T, path, name, content string) {
 		}
 	} else if actual != content {
 		t.Fatal("figure differs from runnable Examples; run make masking-doc")
+	}
+}
+
+// TestReadmeCLIExampleIsPinnedByE2E keeps the README command example in step
+// with the atago spec that runs it: the example's input line must be fed to the
+// built command there and its output line must be what the spec expects.
+func TestReadmeCLIExampleIsPinnedByE2E(t *testing.T) {
+	t.Parallel()
+	readme, err := os.ReadFile("README.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	block := regexp.MustCompile("(?s)<!-- cli-example: ([^ ]+) -->\n```text\n\\$ printf '%s\\\\n' '([^']+)' \\| embargo\n([^\n]+)\n```").FindSubmatch(readme)
+	if block == nil {
+		t.Fatal("README needs one cli-example block piping one printf line into embargo, then the output line")
+	}
+	// #nosec G304,G703 -- The path is a repository file named by the README marker.
+	spec, err := os.ReadFile(string(block[1]))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, line := range [][]byte{block[2], block[3]} {
+		if !regexp.MustCompile(`(?m)^\s+` + regexp.QuoteMeta(string(line)) + `$`).Match(spec) {
+			t.Errorf("%s does not run or expect the README line %q", block[1], line)
+		}
 	}
 }

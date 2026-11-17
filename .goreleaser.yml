@@ -1,0 +1,111 @@
+version: 2
+project_name: embargo
+# Adapter modules are tagged adapters/<name>/vX.Y.Z in the same repository, so
+# the workflows pass the root vX.Y.Z tags in GORELEASER_CURRENT_TAG and
+# GORELEASER_PREVIOUS_TAG (make release-snapshot does the same).
+before:
+  hooks:
+    # The command imports only embargo and the standard library; the saved
+    # license set is checked into each archive and package like the other
+    # nao1215 commands, so a future dependency cannot ship without its notice.
+    - sh -c 'GOROOT="$(go env GOROOT)" CGO_ENABLED=0 GOOS=linux go-licenses save ./cmd/embargo --save_path=third_party_licenses/linux --force'
+    - sh -c 'GOROOT="$(go env GOROOT)" CGO_ENABLED=0 GOOS=windows go-licenses save ./cmd/embargo --save_path=third_party_licenses/windows --force'
+    - sh -c 'GOROOT="$(go env GOROOT)" CGO_ENABLED=0 GOOS=darwin go-licenses save ./cmd/embargo --save_path=third_party_licenses/darwin --force'
+builds:
+  # Go stamps the release tag into the build info, which embargo --version prints.
+  - main: ./cmd/embargo
+    binary: embargo
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+archives:
+  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+      - CHANGELOG.md
+      - src: "third_party_licenses/{{ .Os }}/**/*"
+        dst: THIRD_PARTY_LICENSES
+# Linux system packages for apt/dnf/apk users (the same set gup, sqly and atago ship).
+nfpms:
+  - maintainer: Naohiro CHIKAMATSU <n.chika156@gmail.com>
+    description: "Masks secrets and personal data in log lines from files or a pipe"
+    homepage: https://github.com/nao1215/embargo
+    license: MIT License
+    formats:
+      - deb
+      - rpm
+      - apk
+    contents:
+      - src: ./third_party_licenses/linux
+        dst: /usr/share/doc/embargo/THIRD_PARTY_LICENSES
+        type: tree
+checksum:
+  name_template: "checksums.txt"
+# A cask in the shared nao1215/homebrew-tap (the same tap that ships gup and
+# atago), published with a tap-scoped token. --skip=publish in release-smoke
+# keeps snapshot builds hermetic.
+homebrew_casks:
+  - name: embargo
+    repository:
+      owner: nao1215
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    directory: Casks
+    homepage: "https://github.com/nao1215/embargo"
+    description: "Masks secrets and personal data in log lines from files or a pipe"
+    # The binary is not notarized; strip the quarantine attribute on install, as
+    # GoReleaser documents for unsigned Go binaries.
+    hooks:
+      post:
+        install: |
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/embargo"]
+          end
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+release:
+  prerelease: auto
+  header: |
+    ## embargo {{ .Tag }}
+
+    The library is `go get github.com/nao1215/embargo@{{ .Tag }}`; the archives
+    below hold the embargo command, which masks log lines from files or a pipe.
+
+    Every artifact is signed with cosign and ships with an SBOM, a GitHub build
+    attestation and SLSA provenance.
+  footer: |
+    **Full changelog**: https://github.com/nao1215/embargo/compare/{{ .PreviousTag }}...{{ .Tag }}
+# Release notes come from CHANGELOG.md (--release-notes in release.yml).
+changelog:
+  disable: true
+sboms:
+  - artifacts: archive
+    documents:
+      - "${artifact}.sbom.json"
+# Keyless artifact signing with cosign. Signing the checksums file transitively
+# covers every published artifact.
+signs:
+  - cmd: cosign
+    signature: "${artifact}.sigstore.json"
+    args:
+      - sign-blob
+      - "--bundle=${signature}"
+      - "${artifact}"
+      - "--yes"
+    artifacts: checksum
+    output: true

@@ -3,7 +3,10 @@ package embargo
 import (
 	"context"
 	"encoding/json"
+	"slices"
+	"strings"
 
+	"github.com/nao1215/embargo/internal/ascii"
 	"github.com/nao1215/embargo/internal/saferecord"
 )
 
@@ -25,11 +28,19 @@ func (s *eventScanner) maskScalar(ctx context.Context, value, key string) (strin
 	if err != nil {
 		return masked, err
 	}
-	if value == "" || (value[0] != '-' && (value[0] < '0' || value[0] > '9')) || !json.Valid([]byte(value)) {
+	if value == "" || (value[0] != '-' && (value[0] < '0' || value[0] > '9')) {
+		return masked, nil
+	}
+	canonical := canonicalInteger(value)
+	if !canonical && !json.Valid([]byte(value)) {
 		return masked, nil
 	}
 	if masked != value {
 		return redactionMarker, nil
+	}
+	if canonical {
+		// exactInteger would return the same spelling, which was just scanned.
+		return masked, nil
 	}
 	integer, err := exactInteger(value)
 	if err != nil {
@@ -48,31 +59,81 @@ func (s *eventScanner) maskScalar(ctx context.Context, value, key string) (strin
 	return masked, nil
 }
 
-func (s *eventScanner) scanScalar(ctx context.Context, value, key string) (string, error) {
-	if ctx.Err() != nil {
-		return "", saferecord.ErrCanceled
+// canonicalInteger reports whether text is -?(0|[1-9][0-9]*) other than -0,
+// the spellings that exactInteger returns unchanged.
+func canonicalInteger(text string) bool {
+	digits := strings.TrimPrefix(text, "-")
+	if digits == "" || (digits[0] == '0' && (len(digits) > 1 || len(text) > 1)) {
+		return false
 	}
-	// Charge before allocating the prefix or invoking any detector.
+	for i := range len(digits) {
+		if !ascii.IsDigit(digits[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+func (s *eventScanner) scanScalar(ctx context.Context, value, key string) (string, error) {
+	scratch := s.scanner.takeScratch()
+	defer s.scanner.returnScratch(scratch)
+	findings, err := scalarFindings(ctx, s, scratch, value, key)
+	if err != nil {
+		return "", err
+	}
+	return maskOwned(value, findings, redact), nil
+}
+
+// maskBytes is maskScalar for bytes that usually stay unchanged: the value
+// becomes a string only when it is numeric-looking or has findings. A false
+// changed result means value itself is the masked output.
+func (s *eventScanner) maskBytes(ctx context.Context, value []byte, key string) (masked string, changed bool, err error) {
+	if len(value) > 0 && (value[0] == '-' || ascii.IsDigit(value[0])) {
+		text := string(value)
+		masked, err = s.maskScalar(ctx, text, key)
+		return masked, masked != text, err
+	}
+	scratch := s.scanner.takeScratch()
+	defer s.scanner.returnScratch(scratch)
+	findings, err := scalarFindings(ctx, s, scratch, value, key)
+	if err != nil || len(findings) == 0 {
+		return "", false, err
+	}
+	text := string(value)
+	masked = maskOwned(text, findings, redact)
+	return masked, masked != text, nil
+}
+
+// scalarFindings scans "key: value" and returns the value's findings in value
+// offsets. The budget is charged before any buffer is filled or detector runs.
+func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scratch *scanScratch, value T, key string) ([]Finding, error) {
+	if ctx.Err() != nil {
+		return nil, saferecord.ErrCanceled
+	}
 	prefixBytes := 0
 	if key != "" {
 		prefixBytes = len(key) + len(": ")
 	}
 	if prefixBytes > s.remaining || len(value) > s.remaining-prefixBytes {
-		return "", saferecord.ErrSizeLimit
+		return nil, saferecord.ErrSizeLimit
 	}
 	s.remaining -= prefixBytes + len(value)
-	if prefixBytes == 0 {
-		findings := s.scanner.scan([]byte(value), ctx.Err)
-		if ctx.Err() != nil {
-			return "", saferecord.ErrCanceled
-		}
-		return Mask(value, findings), nil
+	text := slices.Grow(scratch.text[:0], prefixBytes+len(value))
+	if prefixBytes > 0 {
+		text = append(append(text, key...), ": "...)
 	}
-	findings := s.scanner.scan([]byte(key+": "+value), ctx.Err)
+	text = append(text, value...)
+	findings := s.scanner.scanAppend(scratch.findings[:0], text, ctx.Err)
+	// Keep grown storage for the next user; the returned spans alias findings.
+	scratch.text, scratch.findings = text, findings
 	if ctx.Err() != nil {
-		return "", saferecord.ErrCanceled
+		return nil, saferecord.ErrCanceled
 	}
-	spans := make([]Finding, 0, len(findings))
+	if prefixBytes == 0 {
+		return findings, nil
+	}
+	// Findings are fresh validated results; shift the value's spans in place.
+	spans := findings[:0]
 	for _, finding := range findings {
 		if finding.End <= prefixBytes {
 			continue
@@ -81,7 +142,7 @@ func (s *eventScanner) scanScalar(ctx context.Context, value, key string) (strin
 		finding.End -= prefixBytes
 		spans = append(spans, finding)
 	}
-	return Mask(value, spans), nil
+	return spans, nil
 }
 
 // A finding must cross the last join; detecting an ancestor alone does not hide descendants.

@@ -86,33 +86,34 @@ func countryCandidate(data []byte, start int, layout string) (text string, end i
 	n := 0
 	for i, format := range []byte(layout) {
 		c := data[start+i]
-		switch format {
-		case '#':
-			if !ascii.IsDigit(c) {
-				return "", 0, false
-			}
-		case 'A':
-			if c < 'A' || c > 'Z' {
-				return "", 0, false
-			}
-		case 'C':
-			if !ascii.IsDigit(c) && (c < 'A' || c > 'Z') {
-				return "", 0, false
-			}
-		case 'X':
-			if !ascii.IsDigit(c) && c != 'X' {
-				return "", 0, false
-			}
-		default:
-			if c != format {
-				return "", 0, false
-			}
+		keep, ok := countryLayoutMatch(format, c)
+		if !ok {
+			return "", 0, false
+		}
+		if !keep {
 			continue
 		}
 		value[n] = c
 		n++
 	}
 	return string(value[:n]), end, true
+}
+
+// countryLayoutMatch reports whether c fits one layout byte and whether c is part
+// of the value: '#', 'A', 'C' and 'X' are value classes, other bytes are literals.
+func countryLayoutMatch(format, c byte) (keep, ok bool) {
+	switch format {
+	case '#':
+		return true, ascii.IsDigit(c)
+	case 'A':
+		return true, ascii.IsUpper(c)
+	case 'C':
+		return true, ascii.IsDigit(c) || ascii.IsUpper(c)
+	case 'X':
+		return true, ascii.IsDigit(c) || c == 'X'
+	default:
+		return false, c == format
+	}
 }
 
 const (
@@ -128,40 +129,61 @@ const (
 )
 
 func countryScore(name DetectorName, value string, before []byte) float64 {
-	valid := false
-	score := countryChecksumScore
-	switch string(name) {
+	if string(name) == "kr_rrn" {
+		return rrnScore(value, before)
+	}
+	if score, ok := countryFormatScore(string(name), value); ok {
+		return score
+	}
+	if validCountryChecksum(string(name), value) {
+		return countryChecksumScore
+	}
+	return 0
+}
+
+// countryFormatScore scores identifiers without a check digit, whose confidence
+// comes from structure or issuing letters; ok is false for other names.
+func countryFormatScore(name, value string) (score float64, ok bool) {
+	var valid bool
+	score = countryStructureScore
+	switch name {
 	case "us_ssn":
 		valid = validSSN(value)
-		score = countryStructureScore
 	case "us_itin":
 		valid = validITIN(value)
-		score = countryStructureScore
 	case "uk_nino":
 		valid = validNINO(value)
 		score = countryLetterScore
 	case "in_pan":
 		valid = validIndiaPAN(value)
 		score = countryLetterScore
-	case "uk_nhs":
-		valid = validNHS(value)
-	case "in_aadhaar":
-		valid = value[0] >= '2' && !sameCountryDigits(value) && validVerhoeff(value)
-	case "br_cpf":
-		valid = validCPF(value)
-	case "br_cnpj":
-		valid = validCNPJ(value)
-	case "cn_resident_id":
-		valid = validChinaID(value)
-	case "ca_sin":
-		valid = value[0] != '0' && value[0] != '8' && !sameCountryDigits(value) && countryLuhn(value)
-	case "kr_rrn":
-		return rrnScore(value, before)
+	default:
+		return 0, false
 	}
 	if valid {
-		return score
+		return score, true
 	}
-	return 0
+	return 0, true
+}
+
+// validCountryChecksum validates identifiers whose check digit earns the
+// checksum score. countryScore calls it only for the checksum families, so the
+// last of them, ca_sin, is the default case.
+func validCountryChecksum(name, value string) bool {
+	switch name {
+	case "uk_nhs":
+		return validNHS(value)
+	case "in_aadhaar":
+		return value[0] >= '2' && !sameCountryDigits(value) && validVerhoeff(value)
+	case "br_cpf":
+		return validCPF(value)
+	case "br_cnpj":
+		return validCNPJ(value)
+	case "cn_resident_id":
+		return validChinaID(value)
+	default:
+		return value[0] != '0' && value[0] != '8' && !sameCountryDigits(value) && countryLuhn(value)
+	}
 }
 
 func sameCountryDigits(value string) bool { return strings.Count(value, value[:1]) == len(value) }

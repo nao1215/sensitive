@@ -48,6 +48,7 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 | pan | 44,209.9 | 0.0 | 0.0 | 0.0 |
 | payment_token | 0.0 | 0.0 | 0.0 | 0.0 |
 | phone_jp | 2,607.9 | 0.0 | 0.0 | 0.0 |
+| phone_us | 0.0 | 0.0 | 0.0 | 0.0 |
 | private_key_pem | 0.0 | 0.0 | 0.0 | 0.0 |
 | service_token | 0.0 | 0.0 | 0.0 | 0.0 |
 | slack_token | 0.0 | 0.0 | 0.0 | 0.0 |

@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+The command-line tool is now `embargo`: by default it masks each line of files or stdin, keeping JSON lines' shape, and `embargo --report` replaces `embargo-audit`. Masking is faster with fewer allocations and unchanged output. The public library API only adds `KindUSPhone`, and the root module remains dependency-free.
+
+### Added
+
+- `KindUSPhone` detects separated ten-digit North American numbers, `(NXX) NXX-XXXX`, `NXX-NXX-XXXX`, `NXX.NXX.XXXX` and `NXX NXX XXXX` with an optional `+1` or `1`, checked against the numbering plan. It runs by default, so NewScanner now selects 26 of 38 kinds; it found nothing on the eight pinned public log datasets. Unseparated digit runs are not matched.
+
+### Detection changes
+
+- The default scanner now masks separated North American phone numbers (`KindUSPhone`). Select kinds without it to keep them.
+- Email no longer matches the userinfo of a URL (`scheme://user@host`, `scheme://user:password@host`), the same exclusion SCP-style Git remotes already had. With the default kinds, `postgres://app:s3cr3t@db.example/orders` now masks to `postgres://app:[REDACTED]@db.example/orders`: the credential rule still masks the password and the host stays readable, where the overlapping email span used to hide the host as well. Text in that position is read as a user name and host even when it looks like an address, so `https://alice@example.com/` is no longer reported as an email.
+
+### Changed
+
+- The `cmd/embargo-audit` command is replaced by `cmd/embargo` (`go install github.com/nao1215/embargo/cmd/embargo@latest`). `embargo [flags] [file ...]` writes every line masked: JSON object and array lines go through MaskJSON and are written compact, other lines are masked as text, line endings are kept and output is flushed whenever no more input is buffered, so it works behind `tail -f`. Migration: `embargo-audit` becomes `embargo --report`; `--all` becomes `--kinds all`; `--samples` now requires `--report`; the four `--compare` flags are removed, so diff two `--report` runs instead. Both modes read files as well as stdin. Releases now publish signed archives and deb, rpm and apk packages of the command with SBOMs, build attestations and SLSA provenance; `make build` builds it locally.
+
+### Performance
+
+- The slog handler and MaskJSON reuse scan buffers, add all attributes to a record at once, cache the masked spelling and key policy of up to 1024 clean keys and messages of at most 64 bytes per built-in scanner, skip re-validating encoding/json output and copy clean JSON string lexemes without decoding them. Card detection skips text with fewer than 13 digits, and the normalized view tests 32 bytes at a time for non-ASCII input, so clean ASCII text with a narrow kind selection scans about ten times faster. On the comparison events allocations fell from 14–169 to 2–18 per record; output is byte-identical on the full equivalence corpus.
+
+### Fixed
+
+- Numeric-looking JSON strings with trailing JSON whitespace no longer produce a false size-limit error during exact integer expansion. Original clean string bytes and the existing numeric-string masking policy are preserved; genuine expansion limits still fail closed.
+- Scheduled fuzz failures on main maintain one issue with target, run and crasher artifact links, and the next successful main-branch run closes it.
+
 ## [0.10.0] - 2026-11-17
 
 This minor release closes IP punctuation, authorization-list, encoded private-key and Go-value masking gaps, refines measured SWIFT/ABA log contexts, and improves safe input diagnostics. The public API and default minimum confidence of 0 are unchanged, and the root module remains dependency-free. Upgrade every installed adapter to v0.10.0 after the adapter tags are published.

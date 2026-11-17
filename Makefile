@@ -1,4 +1,4 @@
-.PHONY: test clean lint benchmark tools help
+.PHONY: build release-snapshot test clean lint benchmark tools help
 
 export GOMAXPROCS := 4
 
@@ -14,8 +14,15 @@ GO_INSTALL  = $(GO) install
 GO_PKGROOT  = ./...
 GO_PACKAGES = $(shell $(GO_LIST) $(GO_PKGROOT))
 
+build: ## Build the embargo command into the repository root
+	$(GO_BUILD) -trimpath -o $(APP) ./cmd/embargo
+
+release-snapshot: ## Build every release archive locally without publishing
+	GORELEASER_CURRENT_TAG=$$(git describe --tags --abbrev=0 --match 'v*') goreleaser release --snapshot --clean --skip=sign,sbom,publish
+	sh scripts/smoke_artifacts.sh
+
 clean: ## Clean project
-	-rm -rf $(APP) cover.*
+	-rm -rf $(APP) cover.* dist
 
 test: ## Run tests with coverage
 	$(GO_TEST) -cover $(GO_PKGROOT) -coverpkg=./... -coverprofile=cover.out
@@ -36,7 +43,7 @@ help:
 	@grep -E '^[0-9a-zA-Z_-]+[[:blank:]]*:.*?## .*$$' $(MAKEFILE_LIST) | sort \
 	| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[1;32m%-15s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: arch race properties mutation fuzz
+.PHONY: arch race properties mutation mutation-diff fuzz
 arch: ## Check production package boundaries
 	go run github.com/fe3dback/go-arch-lint@v1.19.0 check
 race: ## Run race detection in all modules
@@ -49,9 +56,16 @@ properties: ## Run property and API contract tests
 MUTATION_WORKERS ?= $(shell python3 -c 'import os; print(min(4, max(1, os.cpu_count()//2)))')
 mutation: ## Mutate root module packages with gremlins
 	python3 scripts/mutation_gate.py --workers $(MUTATION_WORKERS) --test-cpu 2
+BASE ?= origin/main
+mutation-diff: ## Mutate lines changed since BASE and list survivors
+	python3 scripts/mutation_gate.py --workers $(MUTATION_WORKERS) --test-cpu 2 --diff $(BASE)
 fuzz: ## Smoke test every root fuzz target
 	python3 scripts/fuzz_targets.py --run 10s
 
+
+.PHONY: test-e2e
+test-e2e: ## Run the atago end-to-end specs against the embargo command
+	./scripts/run_e2e.sh
 
 .PHONY: compatibility-doc
 compatibility-doc: ## Regenerate the table from real output tests

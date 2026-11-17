@@ -190,6 +190,16 @@
     "fn": 0
   },
   {
+    "detector": "phone_us",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 64,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
     "detector": "private_key_pem",
     "precision": "100.0%",
     "recall": "100.0%",

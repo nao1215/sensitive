@@ -70,8 +70,19 @@ func formatValue(path string, value any) (data []byte, ok bool) {
 		data = []byte(fmt.Sprintf(format, struct{ value any }{value: value}))
 		return data, !bytes.Contains(data, []byte("%!"))
 	}
+	data, supported, err := renderValue(path, value)
+	if !supported {
+		return nil, false
+	}
+	// fmt recovers formatter panics internally and emits a diagnostic instead.
+	// Such output is not a successful implementation of the formatting contract.
+	return data, err == nil && !bytes.Contains(data, []byte("%!")) && !bytes.Contains(data, []byte("!ERROR:"))
+}
+
+// renderValue writes value through the named output path. supported is false
+// for an unknown path or a value without the TextMarshaler the path requires.
+func renderValue(path string, value any) (data []byte, supported bool, err error) {
 	var buf bytes.Buffer
-	var err error
 	switch path {
 	case "fmt/%v", "fmt/%+v", "fmt/%#v", "fmt/%s", "fmt/%q", "fmt/%x":
 		data = []byte(fmt.Sprintf(path[len("fmt/"):], value))
@@ -85,7 +96,7 @@ func formatValue(path string, value any) (data []byte, ok bool) {
 	case "text":
 		marshaler, implements := value.(encoding.TextMarshaler)
 		if !implements {
-			return nil, false
+			return nil, false, nil
 		}
 		data, err = marshaler.MarshalText()
 	case "text/template":
@@ -109,11 +120,9 @@ func formatValue(path string, value any) (data []byte, ok bool) {
 		}
 		data = []byte(fmt.Errorf("outer: %w", inner).Error())
 	default:
-		return nil, false
+		return nil, false, nil
 	}
-	// fmt recovers formatter panics internally and emits a diagnostic instead.
-	// Such output is not a successful implementation of the formatting contract.
-	return data, err == nil && !bytes.Contains(data, []byte("%!")) && !bytes.Contains(data, []byte("!ERROR:"))
+	return data, true, err
 }
 
 // Freeze nested LogValuers too: handlers resolve group children themselves and

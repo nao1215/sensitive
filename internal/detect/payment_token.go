@@ -45,49 +45,61 @@ func (d *PaymentToken) Scan(data []byte) []Finding {
 			continue
 		}
 
-		for _, pattern := range patterns {
-			prefix := pattern.prefix
-			if i+len(prefix) > len(data) {
-				continue
-			}
-
-			// Check if the prefix matches at this position.
-			match := true
-			for k := range prefix {
-				if data[i+k] != prefix[k] {
-					match = false
-					break
-				}
-			}
-			if !match {
-				continue
-			}
-
-			// Extract the token body (alphanumeric, underscore, hyphen).
-			end := i + len(prefix)
-			for end < len(data) && isTokenByte(data[end]) {
-				end++
-			}
-
-			tokenLen := end - i - len(prefix)
-			if tokenLen < pattern.minBodyLen {
-				continue
-			}
-
-			findings = append(findings, Finding{
-				DetectorName: d.Name(),
-				Start:        i,
-				End:          end,
-				//nolint:mnd // The detector contract documents this heuristic score.
-				Confidence: 0.9,
-			})
-
-			i = end - 1
-			break // Move to next position after matching.
+		end := paymentTokenEnd(data, i, patterns)
+		if end < 0 {
+			continue
 		}
+		findings = append(findings, Finding{
+			DetectorName: d.Name(),
+			Start:        i,
+			End:          end,
+			//nolint:mnd // The detector contract documents this heuristic score.
+			Confidence: 0.9,
+		})
+
+		i = end - 1 // Move to next position after matching.
 	}
 
 	return findings
+}
+
+// paymentTokenEnd returns the end of the token at i for the first pattern, in
+// list order, whose prefix and minimum body length match, or -1 when none does.
+func paymentTokenEnd(data []byte, i int, patterns []tokenPattern) int {
+	for _, pattern := range patterns {
+		if end := paymentPatternEnd(data, i, pattern); end >= 0 {
+			return end
+		}
+	}
+	return -1
+}
+
+// paymentPatternEnd matches one pattern's prefix at i and returns the end of
+// its token body, or -1 when the prefix differs or the body is too short.
+func paymentPatternEnd(data []byte, i int, pattern tokenPattern) int {
+	prefix := pattern.prefix
+	if i+len(prefix) > len(data) {
+		return -1
+	}
+
+	// Check if the prefix matches at this position.
+	for k := range prefix {
+		if data[i+k] != prefix[k] {
+			return -1
+		}
+	}
+
+	// Extract the token body (alphanumeric, underscore, hyphen).
+	end := i + len(prefix)
+	for end < len(data) && isTokenByte(data[end]) {
+		end++
+	}
+
+	tokenLen := end - i - len(prefix)
+	if tokenLen < pattern.minBodyLen {
+		return -1
+	}
+	return end
 }
 
 // tokenPattern describes a known payment token prefix and its minimum body length.

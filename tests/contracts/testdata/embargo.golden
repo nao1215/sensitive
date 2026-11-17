@@ -38,6 +38,7 @@ const KindUKNHS Kind = "uk_nhs"
 const KindUKNINO Kind = "uk_nino"
 const KindUKSortCode Kind = "uk_sortcode"
 const KindUSITIN Kind = "us_itin"
+const KindUSPhone Kind = "phone_us"
 const KindUSSSN Kind = "us_ssn"
 func (Detector).Scan(data []byte) []Finding
 func Mask(text string, findings []Finding) string

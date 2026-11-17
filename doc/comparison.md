@@ -1,6 +1,27 @@
 # Measured application masking comparison
 
-This compares overlapping use cases, not overall library quality or adoption. masq v0.2.3 offers a convenient slog ReplaceAttr, type/tag/name/prefix rules, allowed types and custom censors/redactors. embargo adds built-in detection, output-safe values, multiple logger adapters and application output assertions. The exact measured production and benchmark source fingerprint is recorded with the results.
+This compares overlapping use cases, not overall library quality or adoption. pii-shield v3.0.0 (default policy plus the recovery key, fixed salt) and ferret-scan v1.10.0 (all default checks, Simple strategy) rewrite each encoded slog line before the sink, the position their documentation gives for in-process use; pii-shield also runs as a sidecar and ferret-scan scans files, which are not measured here. masq v0.2.3 offers a convenient slog ReplaceAttr, type/tag/name/prefix rules, allowed types and custom censors/redactors. embargo adds built-in detection, output-safe values, multiple logger adapters and application output assertions. The exact measured production and benchmark source fingerprint is recorded with the results.
+
+## Keeping a known secret out: typed wrappers
+
+embargo `Secret` and ggwhite/go-masker v3.3.0 `Sensitive` are the two typed wrappers among the measured libraries. The test renders one wrapped password through each standard output path; hidden means the value is absent from the output, and error means the encoder refused the type. go-masker's `Sensitive` also offers partial-display maskers and database `Scan`/`Value`, which this table does not score.
+
+<!-- secret-types:start -->
+| Output path | embargo Secret | ggwhite/go-masker v3.3.0 Sensitive |
+|---|---|---|
+| `fmt` `%v` and `%s` | hidden | hidden |
+| `fmt` `%+v` of a struct field | hidden | hidden |
+| `fmt` `%+v` of an unexported field | hidden | visible |
+| `fmt` `%#v` | hidden | hidden |
+| `fmt` `%x` and `%q` | hidden | hidden |
+| error built with `fmt.Errorf` | hidden | hidden |
+| `encoding/json` struct field | hidden | hidden |
+| `encoding/xml` struct field | hidden | hidden |
+| `encoding/gob` struct field | error | error |
+| `text/template` value | hidden | hidden |
+| `slog` JSON attribute | hidden | hidden |
+| `slog` text attribute | hidden | hidden |
+<!-- secret-types:end -->
 
 ## Correctness before speed
 
@@ -34,41 +55,51 @@ The invalid-Luhn row is a deliberate negative example. embargo uses its default 
 <!-- comparison:start -->
 | Benchmark | ns/op | B/op | allocs/op |
 |---|---:|---:|---:|
-| Comparison/clean/embargo | 3,418.5 | 152 | 14 |
-| Comparison/clean/go-masker | 3,375.0 | 8 | 1 |
-| Comparison/clean/masq | 6,857.0 | 792 | 50 |
-| Comparison/clean/plain | 1,035.5 | 0 | 0 |
-| Comparison/flat/embargo | 2,846.0 | 520 | 17 |
-| Comparison/flat/go-masker | 2,196.5 | 48 | 3 |
-| Comparison/flat/masq | 4,485.5 | 672 | 32 |
-| Comparison/flat/plain | 498.0 | 0 | 0 |
-| Comparison/large50/embargo | 49,631.0 | 11,050 | 169 |
-| Comparison/large50/go-masker | 38,109.5 | 2,096 | 4 |
-| Comparison/large50/masq | 134,895.0 | 12,710 | 561 |
-| Comparison/large50/plain | 8,588.0 | 2,048 | 1 |
-| Comparison/map/embargo | 12,030.0 | 1,296 | 49 |
-| Comparison/map/go-masker | 8,544.5 | 1,448 | 29 |
-| Comparison/map/masq | 14,252.0 | 1,744 | 63 |
-| Comparison/map/plain | 2,962.0 | 288 | 9 |
-| Comparison/nested/embargo | 10,461.0 | 888 | 41 |
-| Comparison/nested/go-masker | 7,773.0 | 800 | 19 |
-| Comparison/nested/masq | 14,060.0 | 1,784 | 61 |
-| Comparison/nested/plain | 1,512.0 | 0 | 0 |
-| ComparisonFormatter/clean | 1,325.0 | 0 | 0 |
-| ComparisonFormatter/flat | 1,431.0 | 32 | 2 |
-| ComparisonFormatter/large50 | 17,176.0 | 7,873 | 10 |
-| ComparisonFormatter/map | 1,070.0 | 0 | 0 |
-| ComparisonFormatter/nested | 1,063.0 | 0 | 0 |
-| ComparisonStruct/embargo | 6,011.5 | 920 | 39 |
-| ComparisonStruct/go_mask | 985.5 | 328 | 7 |
-| ComparisonText/embargo | 4,644.0 | 1,376 | 36 |
-| ComparisonText/godlp | 72,092.0 | 11,714 | 59 |
-| StructuredPath/json_shape | 6,061.5 | 920 | 39 |
-| StructuredPath/old_string | 1,789.0 | 640 | 10 |
+| Comparison/clean/embargo | 1,004.0 | 32 | 4 |
+| Comparison/clean/ferret-scan | 549,780.5 | 102,636 | 691 |
+| Comparison/clean/go-masker | 1,312.0 | 8 | 1 |
+| Comparison/clean/masq | 2,773.5 | 792 | 50 |
+| Comparison/clean/pii-shield | 4,529.0 | 488 | 4 |
+| Comparison/clean/plain | 409.0 | 0 | 0 |
+| Comparison/flat/embargo | 1,303.5 | 96 | 2 |
+| Comparison/flat/ferret-scan | 610,650.5 | 142,240 | 756 |
+| Comparison/flat/go-masker | 1,380.5 | 48 | 3 |
+| Comparison/flat/masq | 3,085.0 | 672 | 32 |
+| Comparison/flat/pii-shield | 4,602.5 | 702 | 11 |
+| Comparison/flat/plain | 391.9 | 0 | 0 |
+| Comparison/large50/embargo | 13,055.5 | 6,241 | 5 |
+| Comparison/large50/ferret-scan | 6,473,383.5 | 382,808 | 856 |
+| Comparison/large50/go-masker | 14,170.5 | 2,096 | 4 |
+| Comparison/large50/masq | 58,270.5 | 12,707 | 561 |
+| Comparison/large50/pii-shield | 65,379.5 | 8,369 | 12 |
+| Comparison/large50/plain | 3,736.5 | 2,048 | 1 |
+| Comparison/map/embargo | 3,107.5 | 674 | 18 |
+| Comparison/map/ferret-scan | 788,157.0 | 146,811 | 730 |
+| Comparison/map/go-masker | 3,419.5 | 1,448 | 29 |
+| Comparison/map/masq | 5,386.5 | 1,744 | 63 |
+| Comparison/map/pii-shield | 6,879.5 | 1,184 | 22 |
+| Comparison/map/plain | 1,165.0 | 288 | 9 |
+| Comparison/nested/embargo | 2,261.5 | 354 | 7 |
+| Comparison/nested/ferret-scan | 712,865.5 | 159,253 | 775 |
+| Comparison/nested/go-masker | 2,891.5 | 800 | 19 |
+| Comparison/nested/masq | 5,329.0 | 1,784 | 61 |
+| Comparison/nested/pii-shield | 7,552.5 | 960 | 18 |
+| Comparison/nested/plain | 571.1 | 0 | 0 |
+| ComparisonFormatter/clean | 541.2 | 0 | 0 |
+| ComparisonFormatter/flat | 602.2 | 32 | 2 |
+| ComparisonFormatter/large50 | 7,493.5 | 7,872 | 10 |
+| ComparisonFormatter/map | 442.4 | 0 | 0 |
+| ComparisonFormatter/nested | 442.9 | 0 | 0 |
+| ComparisonStruct/embargo | 1,485.5 | 410 | 7 |
+| ComparisonStruct/go_mask | 548.9 | 328 | 7 |
+| ComparisonText/embargo | 1,773.5 | 1,184 | 26 |
+| ComparisonText/godlp | 29,909.0 | 11,713 | 59 |
+| StructuredPath/json_shape | 1,496.0 | 410 | 7 |
+| StructuredPath/old_string | 592.3 | 576 | 7 |
 
 Measured 2026-11-17 with go version go1.26.11 linux/amd64, Linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S; GOMAXPROCS=1, ten 200 ms samples per case. Construction is outside the timed loop; JSON encoding and masking are included. Source and dependency fingerprints, CPU affinity and command are in [comparison.json](comparison.json).
 
-For these five configured events, embargo/masq median time ranges from 0.37 to 0.84; below 1 means less time for embargo. The structured JSON path uses 3.39 times the old string-only time. These ratios are regenerated from the same samples as the table.
+For these five configured events the median time ratio embargo/pii-shield ranges from 0.20 to 0.45, embargo/go-masker from 0.77 to 0.94, embargo/masq from 0.22 to 0.58 and embargo/ferret-scan from 0.00 to 0.00; below 1 means less time for embargo. The structured JSON path uses 2.53 times the old string-only time. These ratios are regenerated from the same samples as the table.
 <!-- comparison:end -->
 
 The five head-to-head events are a flat email/card pair, a nested struct with opaque password and tagged recovery field, a map, a clean event, and 50 attributes (48 clean plus the flat pair). All four paths use the same io.Discard sink. masq uses its documented WithAllowedType for time.Time and slog.Level, matching embargo's decision to preserve that metadata; this avoids charging masq for an unnecessary reflection traversal. Masker/scanner construction and regex compilation are excluded for every path. The tests use prebuilt slog.Attr slices and LogAttrs to avoid attributing caller argument construction to any library.
@@ -105,15 +136,15 @@ embargo cannot automatically identify arbitrary unregistered secrets; use Secret
 The runnable `scenarioService` handles HTTP requests using a database DSN, an opaque password, a synthetic third-party token, wrapped and joined errors, and either slog or zap. The comparison configures masq's documented field rules and email/PAN regexes, slog-formatter's documented FormatByKey rules for password/token, and go-mask's registered field masks. No library receives an oracle containing the planted values. Users can extend all of these configurations; this measures the listed configurations, not every possible custom rule. go-mask processes attribute containers before logging; message text is outside that field policy. Redirect responses bypass every logger, so an output guard remains necessary.
 
 <!-- leak-scenarios:start -->
-| Service output | embargo slog | embargo zap | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |
-|---|---|---|---|---|---|---|---|
-| Password under the key `password` | caught | caught | caught | caught | caught | caught | leaked |
-| Config struct holding a database DSN | caught | caught | caught | leaked | leaked | caught | leaked |
-| DSN inside a wrapped error | caught | caught | caught | leaked | leaked | caught | leaked |
-| DSN and an API key joined with errors.Join | caught | caught | leaked | leaked | leaked | caught | leaked |
-| Bearer header value in a log message | caught | caught | leaked | leaked | leaked | caught | leaked |
-| Third-party API key in a log message | caught | caught | leaked | leaked | leaked | leaked | leaked |
-| Redirect URL query, never logged | leaked | leaked | leaked | leaked | leaked | leaked | leaked |
+| Service output | embargo slog | embargo zap | pii-shield v3.0.0 | ferret-scan v1.10.0 | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |
+|---|---|---|---|---|---|---|---|---|---|
+| Password under the key `password` | caught | caught | caught | caught | caught | caught | caught | caught | leaked |
+| Config struct holding a database DSN | caught | caught | caught | leaked | caught | leaked | leaked | caught | leaked |
+| DSN inside a wrapped error | caught | caught | caught | leaked | caught | leaked | leaked | caught | leaked |
+| DSN and an API key joined with errors.Join | caught | caught | caught | leaked | leaked | leaked | leaked | caught | leaked |
+| Bearer header value in a log message | caught | caught | caught | leaked | leaked | leaked | leaked | caught | leaked |
+| Third-party API key in a log message | caught | caught | caught | leaked | leaked | leaked | leaked | leaked | leaked |
+| Redirect URL query, never logged | leaked | leaked | leaked | leaked | leaked | leaked | leaked | leaked | leaked |
 <!-- leak-scenarios:end -->
 
 Run `make leak-scenarios` to regenerate this table. `TestLeakScenarios` checks it for staleness, and `TestLeakScenarioGuard` verifies that a real recorder rejects the planted logs and accepts the masked slog and zap variants. Caught means the entire planted value disappeared from the observed output; it does not imply arbitrary secrets are detected. SDK serialization and unrelated output paths require their own checks.

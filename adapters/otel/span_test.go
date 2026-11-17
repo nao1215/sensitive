@@ -153,3 +153,19 @@ func TestSpanWithheldSchemaProperty(t *testing.T) {
 		}
 	}
 }
+
+func TestSpanIntegerExpansionFailureIsWithheld(t *testing.T) {
+	t.Parallel()
+	before := tracetest.SpanStub{Name: exampleEmail, Attributes: []attribute.KeyValue{attribute.String("public", "1e1048576")}}.Snapshot()
+	sink := &captureSpan{}
+	if err := embargootel.NewSpanExporter(sink, embargo.NewScanner()).ExportSpans(t.Context(), []sdktrace.ReadOnlySpan{before}); err != nil {
+		t.Fatal(err)
+	}
+	if len(sink.spans) != 1 {
+		t.Fatal("missing diagnostic")
+	}
+	after := sink.spans[0]
+	if after.Name() != withheldSizeLimit || len(after.Attributes()) != 1 || string(after.Attributes()[0].Key) != withheldCountKey || len(after.Events()) != 0 || len(after.Links()) != 0 || len(after.Resource().Attributes()) != 0 {
+		t.Fatal("original span fields survived")
+	}
+}

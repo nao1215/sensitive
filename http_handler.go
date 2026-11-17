@@ -87,18 +87,8 @@ func (scan *eventScanner) maskHTTPHeaders(ctx context.Context, header http.Heade
 		return nil, saferecord.ErrCanceled
 	}
 	// Preflight before allocating JSON or scanning any potentially large field.
-	size := 0
-	for key, values := range header {
-		if len(key) > maxEventBytes-size {
-			return nil, saferecord.ErrSizeLimit
-		}
-		size += len(key)
-		for _, value := range values {
-			if len(value) > maxEventBytes-size {
-				return nil, saferecord.ErrSizeLimit
-			}
-			size += len(value)
-		}
+	if !headerWithinLimit(header) {
+		return nil, saferecord.ErrSizeLimit
 	}
 	safe := make(map[string]any, len(header))
 	for key, values := range header {
@@ -110,20 +100,9 @@ func (scan *eventScanner) maskHTTPHeaders(ctx context.Context, header http.Heade
 			safe[name] = redactionMarker
 			continue
 		}
-		masked := make([]string, len(values))
-		for i, value := range values {
-			if strings.EqualFold(key, "Location") {
-				target, parseErr := url.Parse(value)
-				if parseErr != nil {
-					return nil, saferecord.ErrMasking
-				}
-				masked[i], err = scan.httpTarget(ctx, target)
-			} else {
-				masked[i], err = scan.maskScalar(ctx, value, key)
-			}
-			if err != nil {
-				return nil, err
-			}
+		masked, err := scan.maskHeaderValues(ctx, key, values)
+		if err != nil {
+			return nil, err
 		}
 		safe[name] = masked
 	}
@@ -135,6 +114,47 @@ func (scan *eventScanner) maskHTTPHeaders(ctx context.Context, header http.Heade
 		return nil, saferecord.ErrSizeLimit
 	}
 	return safe, nil
+}
+
+// headerWithinLimit reports whether every header name and value together fit
+// in one event, checked without overflow before any scan or allocation.
+func headerWithinLimit(header http.Header) bool {
+	size := 0
+	for key, values := range header {
+		if len(key) > maxEventBytes-size {
+			return false
+		}
+		size += len(key)
+		for _, value := range values {
+			if len(value) > maxEventBytes-size {
+				return false
+			}
+			size += len(value)
+		}
+	}
+	return true
+}
+
+// maskHeaderValues masks one header's values in order. Location values are
+// URLs whose credentials and query are masked by component; others are scalars.
+func (scan *eventScanner) maskHeaderValues(ctx context.Context, key string, values []string) ([]string, error) {
+	masked := make([]string, len(values))
+	for i, value := range values {
+		var err error
+		if strings.EqualFold(key, "Location") {
+			target, parseErr := url.Parse(value)
+			if parseErr != nil {
+				return nil, saferecord.ErrMasking
+			}
+			masked[i], err = scan.httpTarget(ctx, target)
+		} else {
+			masked[i], err = scan.maskScalar(ctx, value, key)
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	return masked, nil
 }
 
 func (scan *eventScanner) httpTarget(ctx context.Context, target *url.URL) (string, error) {
@@ -177,20 +197,12 @@ func (scan *eventScanner) httpTarget(ctx context.Context, target *url.URL) (stri
 func (scan *eventScanner) httpQuery(ctx context.Context, raw string) ([]byte, error) {
 	var result []byte
 	for index, part := range strings.Split(raw, "&") {
-		if strings.Contains(part, ";") {
-			return nil, saferecord.ErrMasking
-		}
 		if index > 0 {
 			result = append(result, '&')
 		}
-		key, value, hasValue := strings.Cut(part, "=")
-		key, err := url.QueryUnescape(key)
+		key, value, hasValue, err := parseQueryPair(part)
 		if err != nil {
-			return nil, saferecord.ErrMasking
-		}
-		value, err = url.QueryUnescape(value)
-		if err != nil {
-			return nil, saferecord.ErrMasking
+			return nil, err
 		}
 		name, err := scan.maskScalar(ctx, key, "")
 		if err != nil {
@@ -198,12 +210,9 @@ func (scan *eventScanner) httpQuery(ctx context.Context, raw string) ([]byte, er
 		}
 		result = append(result, name...)
 		if hasValue {
-			masked := redactionMarker
-			if !scan.scanner.sensitiveKey(key) {
-				masked, err = scan.maskScalar(ctx, value, key)
-				if err != nil {
-					return nil, err
-				}
+			masked, maskErr := scan.queryValue(ctx, key, value)
+			if maskErr != nil {
+				return nil, maskErr
 			}
 			result = append(result, '=')
 			result = append(result, masked...)
@@ -213,6 +222,34 @@ func (scan *eventScanner) httpQuery(ctx context.Context, raw string) ([]byte, er
 		}
 	}
 	return result, nil
+}
+
+// parseQueryPair splits one query parameter at its first equals sign and
+// decodes both sides. A semicolon separator or a malformed escape withholds the
+// whole query.
+func parseQueryPair(part string) (key, value string, hasValue bool, err error) {
+	if strings.Contains(part, ";") {
+		return "", "", false, saferecord.ErrMasking
+	}
+	key, value, hasValue = strings.Cut(part, "=")
+	key, err = url.QueryUnescape(key)
+	if err != nil {
+		return "", "", false, saferecord.ErrMasking
+	}
+	value, err = url.QueryUnescape(value)
+	if err != nil {
+		return "", "", false, saferecord.ErrMasking
+	}
+	return key, value, hasValue, nil
+}
+
+// queryValue replaces the value of a sensitive parameter with the marker and
+// scans any other value with its decoded key as context.
+func (scan *eventScanner) queryValue(ctx context.Context, key, value string) (string, error) {
+	if scan.scanner.sensitiveKey(key) {
+		return redactionMarker, nil
+	}
+	return scan.maskScalar(ctx, value, key)
 }
 
 type httpLogWriter struct {

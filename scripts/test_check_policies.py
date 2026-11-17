@@ -10,6 +10,18 @@ import fuzz_targets
 
 
 class PolicyTests(unittest.TestCase):
+    def test_fuzz_issue_permission_is_limited_to_scheduled_report(self):
+        text = (policies.ROOT/'.github/workflows/fuzz.yml').read_text()
+        policies.fuzz_issue_permissions(text)
+        variants = [text.replace('  contents: read\n', '  contents: read\n  issues: write\n', 1),
+                    text.replace('  fuzz:\n', '  fuzz:\n    permissions:\n      issues: write\n'),
+                    text.replace("(github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')", "true"),
+                    text.replace("github.ref == 'refs/heads/main'", 'true'),
+                    text.replace('    needs: [targets, fuzz]\n', '    needs: [targets]\n')]
+        for variant in variants:
+            with self.assertRaisesRegex(ValueError, 'fuzz issue'):
+                policies.fuzz_issue_permissions(variant)
+
     def test_test_file_budget_rejects_extra_files(self):
         for extra in ('scan_contract_test.go', 'scan_linux_test.go',
                       'adapters/logger/secret_test.go', 'tests/accuracy_extra_test.go',

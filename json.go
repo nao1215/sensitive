@@ -35,10 +35,13 @@ func (scanner *Scanner) MaskJSON(data []byte) (masked []byte, err error) {
 // An already running detector cannot be interrupted.
 // Use it for request-scoped or telemetry work that should stop after cancellation.
 func (scanner *Scanner) MaskJSONContext(ctx context.Context, data []byte) ([]byte, error) {
-	return scanner.maskJSON(ctx, data, "")
+	return scanner.maskJSON(ctx, data, "", false)
 }
 
-func (scanner *Scanner) maskJSON(ctx context.Context, data []byte, key string) (masked []byte, err error) {
+// maskJSON masks one document. encoded is true only for encoding/json output,
+// which that package has already validated and compacted, so json.Valid would
+// repeat its work.
+func (scanner *Scanner) maskJSON(ctx context.Context, data []byte, key string, encoded bool) (masked []byte, err error) {
 	complete := false
 	defer func() {
 		_ = recover() //nolint:errcheck // Discard panic values, including panic(nil) compatibility mode.
@@ -55,7 +58,7 @@ func (scanner *Scanner) maskJSON(ctx context.Context, data []byte, key string) (
 	if len(data) > maxEventBytes {
 		return nil, saferecord.ErrSizeLimit
 	}
-	if scanner == nil || len(data) == 0 || !json.Valid(data) {
+	if scanner == nil || len(data) == 0 || (!encoded && !json.Valid(data)) {
 		return nil, jsonFailure()
 	}
 
@@ -119,7 +122,7 @@ func (w *jsonWalker) value(ctx context.Context, depth int, key string, hidden bo
 		return saferecord.ErrSizeLimit
 	}
 	w.space()
-	if !hidden && key != "" && w.scanner.scanner.sensitiveKey(key) {
+	if !hidden && key != "" && w.scanner.scanner.cachedSensitiveKey(key) {
 		w.appendResult([]byte(`"` + redactionMarker + `"`))
 		hidden = true
 	}
@@ -129,37 +132,50 @@ func (w *jsonWalker) value(ctx context.Context, depth int, key string, hidden bo
 			return err
 		}
 	case '"':
-		raw := w.stringToken()
-		if !hidden {
-			if _, err := w.stringValue(ctx, raw, key); err != nil {
-				return err
-			}
+		if err := w.stringField(ctx, key, hidden); err != nil {
+			return err
 		}
 	default:
-		start := w.pos
-		for w.pos < len(w.data) {
-			c := w.data[w.pos]
-			if c == ',' || c == ']' || c == '}' || c == ' ' || c == '\n' || c == '\r' || c == '\t' {
-				break
-			}
-			w.pos++
-		}
-		if !hidden {
-			if err := w.scalar(ctx, w.data[start:w.pos], key); err != nil {
-				return err
-			}
+		if err := w.literal(ctx, key, hidden); err != nil {
+			return err
 		}
 	}
 	return w.err
 }
 
+// stringField consumes a string value and masks it unless a sensitive key
+// above it already replaced the whole value.
+func (w *jsonWalker) stringField(ctx context.Context, key string, hidden bool) error {
+	raw := w.stringToken()
+	if hidden {
+		return nil
+	}
+	return w.stringElement(ctx, raw, key)
+}
+
+// literal consumes a number, boolean or null lexeme, which ends at the first
+// structural delimiter or whitespace byte, and masks it unless hidden;
+// json.Valid owns its grammar.
+func (w *jsonWalker) literal(ctx context.Context, key string, hidden bool) error {
+	start := w.pos
+	for w.pos < len(w.data) {
+		c := w.data[w.pos]
+		if c == ',' || c == ']' || c == '}' || c == ' ' || c == '\n' || c == '\r' || c == '\t' {
+			break
+		}
+		w.pos++
+	}
+	if hidden {
+		return nil
+	}
+	return w.scalar(ctx, w.data[start:w.pos], key)
+}
+
 func (w *jsonWalker) scalar(ctx context.Context, raw []byte, key string) error {
-	text := string(raw)
-	masked, err := w.scanner.maskScalar(ctx, text, key)
+	_, hidden, err := w.scanner.maskBytes(ctx, raw, key)
 	if err != nil {
 		return err
 	}
-	hidden := masked != text
 	if hidden {
 		w.appendString(redactionMarker)
 	} else {
@@ -186,36 +202,53 @@ func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidde
 		fieldContext := key
 		pathDepth := len(w.path)
 		if open == '{' {
-			raw := w.stringToken()
-			if !hidden {
-				var err error
-				fieldContext, err = w.objectKey(ctx, raw)
-				if err != nil {
-					return err
-				}
-				w.appendResult([]byte{':'})
+			var err error
+			if fieldContext, err = w.memberKey(ctx, key, hidden); err != nil {
+				return err
 			}
-			w.space()
-			w.pos++ // Colon, already checked by json.Valid.
 		}
 		if err := w.value(ctx, depth+1, fieldContext, hidden); err != nil {
 			return err
 		}
 		w.path = w.path[:pathDepth]
 		w.space()
-		if w.data[w.pos] == ',' {
-			w.pos++
-			if !hidden {
-				w.appendResult([]byte{','})
-			}
-			w.space()
-		}
+		w.elementSeparator(hidden)
 	}
 	w.pos++
 	if !hidden {
 		w.appendResult([]byte{closeByte})
 	}
 	return nil
+}
+
+// memberKey consumes an object key and its colon. A visible key is masked and
+// becomes the field context; under a hidden parent the enclosing key stays.
+func (w *jsonWalker) memberKey(ctx context.Context, key string, hidden bool) (string, error) {
+	raw := w.stringToken()
+	fieldContext := key
+	if !hidden {
+		var err error
+		fieldContext, err = w.objectKey(ctx, raw)
+		if err != nil {
+			return "", err
+		}
+		w.appendResult([]byte{':'})
+	}
+	w.space()
+	w.pos++ // Colon, already checked by json.Valid.
+	return fieldContext, nil
+}
+
+// elementSeparator consumes a comma between container elements, copying it
+// only when the container is visible.
+func (w *jsonWalker) elementSeparator(hidden bool) {
+	if w.data[w.pos] == ',' {
+		w.pos++
+		if !hidden {
+			w.appendResult([]byte{','})
+		}
+		w.space()
+	}
 }
 
 func (w *jsonWalker) stringToken() []byte {
@@ -231,15 +264,35 @@ func (w *jsonWalker) stringToken() []byte {
 	return w.data[start:w.pos]
 }
 
+// stringElement masks a string value. A plain UTF-8 lexeme is scanned in place
+// and copied unchanged when clean; others take stringValue's decoding path.
+func (w *jsonWalker) stringElement(ctx context.Context, raw []byte, key string) error {
+	content := raw[1 : len(raw)-1]
+	if bytes.IndexByte(content, '\\') >= 0 || !utf8.Valid(content) {
+		_, err := w.stringValue(ctx, raw, key, false)
+		return err
+	}
+	masked, changed, err := w.scanner.maskBytes(ctx, content, key)
+	if err != nil {
+		return err
+	}
+	if changed {
+		w.appendString(masked)
+	} else {
+		w.appendResult(raw)
+	}
+	return w.err
+}
+
 // Decode escaped strings using encoding/json; plain UTF-8 needs no decoder.
-func (w *jsonWalker) stringValue(ctx context.Context, raw []byte, key string) (string, error) {
+func (w *jsonWalker) stringValue(ctx context.Context, raw []byte, key string, objectKey bool) (string, error) {
 	text := string(raw[1 : len(raw)-1])
 	if bytes.IndexByte(raw, '\\') >= 0 || !utf8.ValidString(text) {
 		if err := json.Unmarshal(raw, &text); err != nil {
 			return "", saferecord.ErrMasking
 		}
 	}
-	masked, err := w.scanner.maskScalar(ctx, text, key)
+	masked, err := w.maskText(ctx, text, key, objectKey)
 	if err != nil {
 		return "", err
 	}
@@ -253,7 +306,27 @@ func (w *jsonWalker) stringValue(ctx context.Context, raw []byte, key string) (s
 	return text, w.err
 }
 
+// maskText masks a decoded string; object keys, scanned without a field
+// context, use the scanner's key cache.
+func (w *jsonWalker) maskText(ctx context.Context, text, key string, objectKey bool) (string, error) {
+	if !objectKey {
+		return w.scanner.maskScalar(ctx, text, key)
+	}
+	result, err := w.scanner.maskCached(ctx, text)
+	return result.masked, err
+}
+
 func (w *jsonWalker) appendString(text string) {
+	if plainJSONText(text) {
+		// Same bytes and limit as appendResult(json.Marshal(text)), without the copy.
+		if w.err == nil && len(text)+len(`""`) > maxEventBytes-len(w.result) {
+			w.err = saferecord.ErrSizeLimit
+		}
+		if w.err == nil {
+			w.result = append(append(append(w.result, '"'), text...), '"')
+		}
+		return
+	}
 	// Marshaling a string cannot fail. Keep the explicit boundary for panics.
 	//nolint:errchkjson // Keep the explicit error check required by strict errcheck.
 	encoded, err := json.Marshal(text)
@@ -261,6 +334,17 @@ func (w *jsonWalker) appendString(text string) {
 		panic("embargo: JSON string encoding failed")
 	}
 	w.appendResult(encoded)
+}
+
+// plainJSONText reports whether encoding/json writes text unchanged between
+// quotes: printable ASCII without quote, backslash or the HTML-escaped <, > and &.
+func plainJSONText(text string) bool {
+	for i := range len(text) {
+		if c := text[i]; c < ' ' || c >= utf8.RuneSelf || c == '"' || c == '\\' || c == '<' || c == '>' || c == '&' {
+			return false
+		}
+	}
+	return true
 }
 
 // Stop before retaining bytes beyond the output limit, including a token that
@@ -304,7 +388,21 @@ func (w *jsonWalker) keyPath(ctx context.Context, key string, start, end int) er
 
 func (w *jsonWalker) objectKey(ctx context.Context, raw []byte) (string, error) {
 	start := len(w.result)
-	original, err := w.stringValue(ctx, raw, "")
+	if content := raw[1 : len(raw)-1]; bytes.IndexByte(content, '\\') < 0 && utf8.Valid(content) {
+		// A cached key had no findings, so its lexeme is copied unchanged.
+		result, ok, err := cachedKey(ctx, &w.scanner, content)
+		if err != nil {
+			return "", err
+		}
+		if ok {
+			w.appendResult(raw)
+			if w.err != nil {
+				return "", w.err
+			}
+			return result.key, w.keyPath(ctx, result.key, start, len(w.result))
+		}
+	}
+	original, err := w.stringValue(ctx, raw, "", true)
 	if err != nil {
 		return "", err
 	}

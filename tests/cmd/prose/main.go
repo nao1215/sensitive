@@ -122,25 +122,26 @@ func declarations(d *ast.GenDecl, add func(string, *ast.CommentGroup, token.Pos)
 			if !ast.IsExported(s.Name.Name) {
 				continue
 			}
-			doc := s.Doc
-			if doc == nil {
-				doc = d.Doc
-			}
-			add(s.Name.Name, doc, s.Pos())
+			add(s.Name.Name, specDoc(s.Doc, d), s.Pos())
 			fields(s, add)
 		case *ast.ValueSpec:
 			for _, name := range s.Names {
 				if !ast.IsExported(name.Name) {
 					continue
 				}
-				doc := s.Doc
-				if doc == nil {
-					doc = d.Doc
-				}
-				add(name.Name, doc, s.Pos())
+				add(name.Name, specDoc(s.Doc, d), s.Pos())
 			}
 		}
 	}
+}
+
+// specDoc is a spec's own documentation, or its declaration group's when the
+// spec has none.
+func specDoc(doc *ast.CommentGroup, d *ast.GenDecl) *ast.CommentGroup {
+	if doc == nil {
+		return d.Doc
+	}
+	return doc
 }
 
 func fields(s *ast.TypeSpec, add func(string, *ast.CommentGroup, token.Pos)) {

@@ -564,13 +564,13 @@ func TestCredentialProtocolBoundaries(t *testing.T) {
 func TestDispatchRetainsMoreThan32Families(t *testing.T) {
 	t.Parallel()
 	scanner := &Scanner{}
-	for range 37 {
+	for range 38 {
 		scanner.detectors = append(scanner.detectors, detect.NewMyNumber())
 	}
 	scanner.hintCache = buildHintCache(scanner.detectors)
 	scanner.buildDispatch()
-	if got := bits.OnesCount64(scanner.selectDetectors([]byte("123456789012"))); got != 37 {
-		t.Fatalf("selected %d families, want 37", got)
+	if got := bits.OnesCount64(scanner.selectDetectors([]byte("123456789012"))); got != 38 {
+		t.Fatalf("selected %d families, want 38", got)
 	}
 }
 
@@ -1226,5 +1226,64 @@ func TestEncodedBuiltinAndRawCustomOffsets(t *testing.T) {
 	}
 	if masked := Mask(text, got); masked != redactionMarker {
 		t.Fatalf("escaped masking: %q", masked)
+	}
+}
+
+type retainingDetector struct{ seen [][]byte }
+
+func (d *retainingDetector) Scan(data []byte) []Finding {
+	d.seen = append(d.seen, data)
+	return nil
+}
+
+func TestScanBuffersAreNotReusedForCustomDetectors(t *testing.T) {
+	t.Parallel()
+	custom := &retainingDetector{}
+	withCustom := NewScanner(WithDetector(custom))
+	if withCustom.scratch != nil {
+		t.Fatal("a scanner with a custom detector must not pool scan buffers")
+	}
+	for _, document := range []string{`{"opening":"aaaa"}`, `{"second":"bbbb"}`} {
+		if _, err := withCustom.MaskJSON([]byte(document)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if got := string(custom.seen[0]); got != "opening" {
+		t.Fatalf("retained input changed to %q", got)
+	}
+	builtin := NewScanner()
+	scratch := builtin.takeScratch()
+	scratch.text = append(scratch.text, "grown"...)
+	scratch.findings = append(scratch.findings, Finding{Kind: KindEmail, Start: 0, End: 1, Confidence: 1})
+	builtin.returnScratch(scratch)
+	if len(scratch.text) != 0 || len(scratch.findings) != 0 {
+		t.Fatal("returned scratch keeps old contents")
+	}
+	huge := builtin.takeScratch()
+	huge.text = make([]byte, 1, largestPooledBuffer+1)
+	builtin.returnScratch(huge)
+	many := builtin.takeScratch()
+	many.findings = make([]Finding, 1, maxPooledFindings+1)
+	builtin.returnScratch(many)
+	if len(huge.text) != 1 || len(many.findings) != 1 {
+		t.Fatal("oversized scratch must be dropped, not reset and pooled")
+	}
+	var zero Scanner
+	if fresh := zero.takeScratch(); fresh == nil || len(fresh.text) != 0 {
+		t.Fatal("zero-value scanner needs fresh scratch")
+	}
+	zero.returnScratch(&scanScratch{text: []byte("x"), findings: nil})
+}
+
+func TestDefaultScannerKeepsDSNUserAndHost(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner()
+	for input, want := range map[string]string{
+		"postgres://app:s3cr3t@db.example/orders":     "postgres://app:[REDACTED]@db.example/orders",
+		"dial redis://:s3cr3t@cache.example.com:6379": "dial redis://:[REDACTED]@cache.example.com:6379",
+	} {
+		if got := Mask(input, scanner.ScanString(input)); got != want {
+			t.Errorf("Mask(%q) = %q, want %q", input, got, want)
+		}
 	}
 }

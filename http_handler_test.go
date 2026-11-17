@@ -771,3 +771,17 @@ func TestHTTPFlushFailureIsReported(t *testing.T) {
 		}
 	}
 }
+
+func TestHTTPIntegerExpansionFailureIsWithheld(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusAccepted) })
+	handler := embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, nil)), embargo.NewScanner())
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?email=alice@example.com&public=1e1048576", http.NoBody)
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	assertHTTPWithheld(t, out.Bytes(), sizeReason)
+	if response.Code != http.StatusAccepted {
+		t.Fatal("masking failure changed the service response")
+	}
+}

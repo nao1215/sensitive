@@ -89,8 +89,7 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	i := 0
 	for i < len(data) {
 		// Escape bytes cannot become part of a numeric candidate.
-		//nolint:mnd // A percent escape occupies three bytes.
-		if data[i] == '%' && i+3 <= len(data) && encodedSeparatorBefore(orig, originalPosition(posMap, i+3)) {
+		if data[i] == '%' && normalizedEscapeSeparator(orig, posMap, len(data), i) {
 			i += 3
 			continue
 		}
@@ -102,35 +101,22 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		// Check that '0' is not part of a longer word-like token.
 		// Underscores are treated as word characters to prevent matching
 		// identifiers like _09012345678.
-		if i > 0 && isIdentifierByte(data[i-1]) && !encodedSeparatorBefore(orig, originalPosition(posMap, i)) {
+		if !normalizedIdentifierStart(orig, data, posMap, i) {
 			i++
 			continue
 		}
 
 		start := i
 		digits, end := phoneDigits(data, start)
-		// Check that the sequence doesn't continue with word characters.
-		if end < len(data) && isIdentifierByte(data[end]) {
+		if !jpPhoneWhole(data, digits, end) {
 			i = end
 			continue
 		}
 
-		digitLen := len(digits)
-		if digitLen < 10 || digitLen > 11 {
-			i = end
-			continue
-		}
-
-		phoneType := classifyJPPhone(digits, digitLen)
+		phoneType := classifyJPPhone(digits, len(digits))
 		if phoneType == "" || logContext.fragment(data, start, end) {
 			i = end
 			continue
-		}
-
-		confidence := 0.8
-		// Higher confidence for mobile and well-known prefixes.
-		if phoneType != JPPhoneTypeLandline {
-			confidence = 0.9
 		}
 
 		origStart, origEnd := mapOriginalRange(posMap, start, end)
@@ -139,12 +125,34 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			DetectorName: d.Name(),
 			Start:        origStart,
 			End:          origEnd,
-			Confidence:   businessConfidence(orig, origStart, confidence),
+			Confidence:   businessConfidence(orig, origStart, jpPhoneConfidence(phoneType)),
 		})
 		i = end
 	}
 
 	return findings
+}
+
+// jpPhoneWhole reports whether a candidate does not continue with word
+// characters and has the 10 or 11 digits of a Japanese number.
+func jpPhoneWhole(data, digits []byte, end int) bool {
+	// Check that the sequence doesn't continue with word characters.
+	if end < len(data) && isIdentifierByte(data[end]) {
+		return false
+	}
+	digitLen := len(digits)
+	return digitLen >= 10 && digitLen <= 11
+}
+
+// jpPhoneConfidence gives mobile and well-known prefixes a higher score than
+// landlines.
+func jpPhoneConfidence(phoneType JPPhoneType) float64 {
+	confidence := 0.8
+	// Higher confidence for mobile and well-known prefixes.
+	if phoneType != JPPhoneTypeLandline {
+		confidence = 0.9
+	}
+	return confidence
 }
 
 // isPhoneSepChar reports whether b is a digit or phone number separator.

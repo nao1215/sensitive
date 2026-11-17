@@ -31,6 +31,7 @@ def full_source_hash():
 # change here invalidates timings; unrelated SDK/test dependencies do not.
 MEASURED_MODULES = (
     "github.com/bytedance/godlp", "github.com/m-mizutani/masq", "github.com/icntswm/go-masker",
+    "github.com/pii-shield/pii-shield/v3", "github.com/awslabs/ferret-scan", "gopkg.in/yaml.v3",
     "github.com/samber/lo", "github.com/samber/slog-common",
     "github.com/samber/slog-formatter", "github.com/samber/slog-multi",
     "github.com/showa-93/go-mask", "golang.org/x/text", "gopkg.in/yaml.v2",
@@ -65,10 +66,10 @@ def parse(raw):
 
 
 def runtime_modules(env):
-    packages = {"embargo": "github.com/nao1215/embargo", "masq": "github.com/m-mizutani/masq", "go-masker": "github.com/icntswm/go-masker/slogmask", "slog-formatter": "github.com/samber/slog-formatter", "go-mask": "github.com/showa-93/go-mask", "godlp": "github.com/bytedance/godlp"}
+    packages = {"embargo": "github.com/nao1215/embargo", "masq": "github.com/m-mizutani/masq", "go-masker": "github.com/icntswm/go-masker/slogmask", "slog-formatter": "github.com/samber/slog-formatter", "go-mask": "github.com/showa-93/go-mask", "godlp": "github.com/bytedance/godlp", "pii-shield": "github.com/pii-shield/pii-shield/v3/pkg/scanner", "ferret-scan": "github.com/awslabs/ferret-scan/pkg/redact"}
     result = {}
     for name, package in packages.items():
-        own = package.removesuffix('/slogmask')
+        own = package.removesuffix('/slogmask').removesuffix('/pkg/scanner').removesuffix('/pkg/redact')
         raw = subprocess.check_output(['go', '-C', 'tests', 'list', '-deps', '-f', '{{if not .Standard}}{{if .Module}}{{.Module.Path}}{{end}}{{end}}', package], cwd=ROOT, env=env, text=True)
         result[name] = sorted(set(raw.split()) - {own})
     return result
@@ -111,7 +112,7 @@ def measure():
         "cpu": re.search(r"^cpu: (.+)$", raw, re.M)[1].strip(),
         "affinity": sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
         "background_load": "no intentional concurrent workload",
-        "versions": {"go-masker": "v0.6.1", "masq": "v0.2.3", "slog-formatter": "v1.3.0", "godlp": "v1.2.15", "go-mask": "v0.6.2"},
+        "versions": {"go-masker": "v0.6.1", "masq": "v0.2.3", "slog-formatter": "v1.3.0", "godlp": "v1.2.15", "go-mask": "v0.6.2", "pii-shield": "v3.0.0", "ferret-scan": "v1.10.0"},
     }
     (DOC / "comparison.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
 
@@ -122,21 +123,23 @@ def rendered(raw, meta):
     for name, values in rows.items():
         text += f"| {name.removeprefix('Benchmark')} | {values['ns/op']:,.1f} | {values['B/op']:,.0f} | {values['allocs/op']:,.0f} |\n"
     text += f"\nMeasured {meta['date']} with {meta['go']}, Linux/amd64, {meta['cpu']}; GOMAXPROCS=1, ten 200 ms samples per case. Construction is outside the timed loop; JSON encoding and masking are included. Source and dependency fingerprints, CPU affinity and command are in [comparison.json](comparison.json).\n"
-    ratios = [rows[f"BenchmarkComparison/{event}/embargo"]["ns/op"] / rows[f"BenchmarkComparison/{event}/masq"]["ns/op"] for event in ("flat", "nested", "map", "clean", "large50")]
+    def ratio_range(other):
+        ratios = [rows[f"BenchmarkComparison/{event}/embargo"]["ns/op"] / rows[f"BenchmarkComparison/{event}/{other}"]["ns/op"] for event in ("flat", "nested", "map", "clean", "large50")]
+        return f"{min(ratios):.2f} to {max(ratios):.2f}"
     shape_ratio = rows["BenchmarkStructuredPath/json_shape"]["ns/op"] / rows["BenchmarkStructuredPath/old_string"]["ns/op"]
-    text += f"\nFor these five configured events, embargo/masq median time ranges from {min(ratios):.2f} to {max(ratios):.2f}; below 1 means less time for embargo. The structured JSON path uses {shape_ratio:.2f} times the old string-only time. These ratios are regenerated from the same samples as the table.\n"
-    modes = ('plain', 'embargo', 'masq', 'go-masker')
+    text += f"\nFor these five configured events the median time ratio embargo/pii-shield ranges from {ratio_range('pii-shield')}, embargo/go-masker from {ratio_range('go-masker')}, embargo/masq from {ratio_range('masq')} and embargo/ferret-scan from {ratio_range('ferret-scan')}; below 1 means less time for embargo. The structured JSON path uses {shape_ratio:.2f} times the old string-only time. These ratios are regenerated from the same samples as the table.\n"
+    modes = ('plain', 'embargo', 'pii-shield', 'masq', 'go-masker')
     events = ('flat', 'nested', 'map', 'clean', 'large50')
     maximum = max(rows[f"BenchmarkComparison/{event}/{mode}"]["ns/op"]/1000 for event in events for mode in modes)
-    chart = SVG(1100, 920, 'JSON slog time by event', 'Identical events through plain slog, embargo, masq and go-masker; median microseconds per event on one linear axis. Lower is faster.')
+    chart = SVG(1100, 920, 'JSON slog time by event', 'Identical events through plain slog, embargo, pii-shield, masq and go-masker; median microseconds per event on one linear axis. Lower is faster.')
     chart.text(24, 34, 'JSON slog time by event', 25)
     chart.text(24, 61, 'Median microseconds per event; same linear axis. Lower is faster.', 16)
-    chart.text(24, 84, 'masq v0.2.3 and go-masker v0.6.1; identical events, sink and ten-sample method.', 14)
-    labels = ('slog alone', 'slog + embargo', 'slog + masq', 'slog + go-masker')
+    chart.text(24, 84, 'pii-shield v3.0.0, masq v0.2.3 and go-masker v0.6.1; identical events, sink and ten-sample method. ferret-scan is in the table.', 14)
+    labels = ('slog alone', 'slog + embargo', 'slog + pii-shield', 'slog + masq', 'slog + go-masker')
     for index, event in enumerate(events):
         y = 112 + index * 146
         chart.text(24, y+17, {'flat':'Email + card', 'nested':'Nested struct', 'map':'Map', 'clean':'Clean event', 'large50':'50 attributes'}[event], 16)
-        for offset, (mode, label, color) in enumerate(zip(modes, labels, ('#617281', '#087f75', '#4169b1', '#9a4814'))):
+        for offset, (mode, label, color) in enumerate(zip(modes, labels, ('#617281', '#087f75', '#8a6d00', '#4169b1', '#9a4814'))):
             value = rows[f"BenchmarkComparison/{event}/{mode}"]["ns/op"]/1000
             width = value/maximum*590
             row = y+offset*28
@@ -150,6 +153,17 @@ def rendered(raw, meta):
     chart.text(24, 907, 'Encoding and masking included; construction excluded. The scenario matrix shows differing protection and partial masking.', 13)
     return text, chart.render()
 
+
+
+def speed_summary(rows):
+    """One README sentence with the measured time ratios, so it cannot go stale."""
+    events = ("flat", "nested", "map", "clean", "large50")
+    def ratios(other):
+        values = [rows[f"BenchmarkComparison/{event}/{other}"]["ns/op"] / rows[f"BenchmarkComparison/{event}/embargo"]["ns/op"] for event in events]
+        return min(values), max(values)
+    masker, shield = ratios("go-masker"), ratios("pii-shield")
+    return (f"On the same five JSON slog events, go-masker takes {masker[0]:.2f} to {masker[1]:.2f} times and pii-shield "
+            f"{shield[0]:.1f} to {shield[1]:.1f} times embargo's time per event. [Time per event](doc/comparison.md#time-and-allocations)\n")
 
 
 def replace_block(text, name, content):
@@ -184,7 +198,9 @@ def main():
     updated = replace_block(original, "comparison", table)
     correctness = (DOC / "comparison-correctness.md").read_text(encoding="utf-8")
     updated = replace_block(updated, "correctness", correctness)
-    for path, content in ((page, updated), (DOC / "images/comparison.svg", svg)):
+    readme_path = ROOT / "README.md"
+    readme = replace_block(readme_path.read_text(encoding="utf-8"), "speed-summary", speed_summary(parse(raw)))
+    for path, content in ((page, updated), (DOC / "images/comparison.svg", svg), (readme_path, readme)):
         if args.check:
             if path.read_text(encoding="utf-8") != content:
                 raise SystemExit("stale generated comparison: " + str(path))

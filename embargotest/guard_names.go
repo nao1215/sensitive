@@ -30,40 +30,7 @@ func guardLeaks(data []byte, policy *Recorder) ([]embargo.Finding, bool) {
 
 // Attribution uses observed pipe order; it cannot establish which parallel test wrote a byte.
 func guardTests(capture *guardCapture, stream int, leaks []embargo.Finding, policy *Recorder) string {
-	positions := make([]int, 0, len(leaks))
-	if stream == 0 {
-		for _, f := range leaks {
-			positions = append(positions, f.Start)
-		}
-	} else {
-		for _, write := range capture.stderrWrites {
-			for _, f := range leaks {
-				if write.start < f.End && f.Start < write.end {
-					positions = append(positions, write.stdout)
-					break
-				}
-			}
-		}
-	}
-	slices.Sort(positions)
-	active := map[string]bool{}
-	observed := map[string]bool{}
-	data := capture.data[0]
-	offset := 0
-	for _, position := range positions {
-		for offset < len(data) {
-			end := bytes.IndexByte(data[offset:], '\n')
-			if end < 0 || offset+end >= position {
-				break
-			}
-			guardFrame(string(bytes.TrimPrefix(data[offset:offset+end], []byte{0x16})), active)
-			offset += end + 1
-		}
-		for name := range active {
-			observed[name] = true
-			delete(active, name)
-		}
-	}
+	observed := guardObservedNames(capture.data[0], guardLeakPositions(capture, stream, leaks))
 	// Names already observed at a leak need no further attribution or validation.
 	selected := make(map[string]bool, len(observed))
 	for name := range observed {
@@ -85,6 +52,58 @@ func guardTests(capture *guardCapture, stream int, leaks []embargo.Finding, poli
 		return "[redacted test name]"
 	}
 	return joined
+}
+
+// guardLeakPositions maps leaks to sorted stdout offsets. Stdout leaks keep
+// their start; a stderr leak uses the stdout offset observed at its write.
+func guardLeakPositions(capture *guardCapture, stream int, leaks []embargo.Finding) []int {
+	positions := make([]int, 0, len(leaks))
+	if stream == 0 {
+		for _, f := range leaks {
+			positions = append(positions, f.Start)
+		}
+	} else {
+		for _, write := range capture.stderrWrites {
+			if guardWriteLeaks(write, leaks) {
+				positions = append(positions, write.stdout)
+			}
+		}
+	}
+	slices.Sort(positions)
+	return positions
+}
+
+// guardWriteLeaks reports whether a stderr write overlaps any leak span.
+func guardWriteLeaks(write guardWrite, leaks []embargo.Finding) bool {
+	for _, f := range leaks {
+		if write.start < f.End && f.Start < write.end {
+			return true
+		}
+	}
+	return false
+}
+
+// guardObservedNames replays complete test frames before each position and
+// collects the tests running there; a name is attributed once per position.
+func guardObservedNames(data []byte, positions []int) map[string]bool {
+	active := map[string]bool{}
+	observed := map[string]bool{}
+	offset := 0
+	for _, position := range positions {
+		for offset < len(data) {
+			end := bytes.IndexByte(data[offset:], '\n')
+			if end < 0 || offset+end >= position {
+				break
+			}
+			guardFrame(string(bytes.TrimPrefix(data[offset:offset+end], []byte{0x16})), active)
+			offset += end + 1
+		}
+		for name := range active {
+			observed[name] = true
+			delete(active, name)
+		}
+	}
+	return observed
 }
 
 func guardFrame(line string, active map[string]bool) {

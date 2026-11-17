@@ -73,3 +73,26 @@ jobs:
         with:
           name: fuzz-crashers-${{ matrix.target.name }}-${{ strategy.job-index }}
           path: ${{ matrix.target.pkg }}/testdata/fuzz/${{ matrix.target.name }}/
+
+  report:
+    needs: [targets, fuzz]
+    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && github.repository == 'nao1215/embargo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: scheduled-fuzz-issue
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Reconcile scheduled fuzz issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_RESULT: ${{ needs.targets.result }}
+          FUZZ_RESULT: ${{ needs.fuzz.result }}
+        run: python3 scripts/fuzz_issue.py

@@ -39,7 +39,7 @@
     "set": "development",
     "kind": "btc",
     "threshold": 0,
-    "bytes": 28737,
+    "bytes": 28725,
     "tp": 146,
     "fp": 0,
     "fn": 0
@@ -181,6 +181,15 @@
   },
   {
     "set": "development",
+    "kind": "phone_us",
+    "threshold": 0,
+    "bytes": 8720,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
     "kind": "private_key_pem",
     "threshold": 0,
     "bytes": 27912,
@@ -264,7 +273,7 @@
     "set": "development",
     "kind": "btc",
     "threshold": 0.5,
-    "bytes": 28737,
+    "bytes": 28725,
     "tp": 146,
     "fp": 0,
     "fn": 0
@@ -406,6 +415,15 @@
   },
   {
     "set": "development",
+    "kind": "phone_us",
+    "threshold": 0.5,
+    "bytes": 8720,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
     "kind": "private_key_pem",
     "threshold": 0.5,
     "bytes": 27912,
@@ -489,7 +507,7 @@
     "set": "development",
     "kind": "btc",
     "threshold": 0.7,
-    "bytes": 28737,
+    "bytes": 28725,
     "tp": 146,
     "fp": 0,
     "fn": 0
@@ -631,6 +649,15 @@
   },
   {
     "set": "development",
+    "kind": "phone_us",
+    "threshold": 0.7,
+    "bytes": 8720,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
     "kind": "private_key_pem",
     "threshold": 0.7,
     "bytes": 27912,
@@ -670,9 +697,9 @@
     "kind": "uk_sortcode",
     "threshold": 0.7,
     "bytes": 25168,
-    "tp": 140,
+    "tp": 134,
     "fp": 0,
-    "fn": 6
+    "fn": 12
   },
   {
     "set": "held",
@@ -714,7 +741,7 @@
     "set": "held",
     "kind": "btc",
     "threshold": 0,
-    "bytes": 27916,
+    "bytes": 27926,
     "tp": 144,
     "fp": 0,
     "fn": 0
@@ -856,6 +883,15 @@
   },
   {
     "set": "held",
+    "kind": "phone_us",
+    "threshold": 0,
+    "bytes": 7656,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
     "kind": "private_key_pem",
     "threshold": 0,
     "bytes": 27110,
@@ -939,7 +975,7 @@
     "set": "held",
     "kind": "btc",
     "threshold": 0.5,
-    "bytes": 27916,
+    "bytes": 27926,
     "tp": 144,
     "fp": 0,
     "fn": 0
@@ -1081,6 +1117,15 @@
   },
   {
     "set": "held",
+    "kind": "phone_us",
+    "threshold": 0.5,
+    "bytes": 7656,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
     "kind": "private_key_pem",
     "threshold": 0.5,
     "bytes": 27110,
@@ -1164,7 +1209,7 @@
     "set": "held",
     "kind": "btc",
     "threshold": 0.7,
-    "bytes": 27916,
+    "bytes": 27926,
     "tp": 144,
     "fp": 0,
     "fn": 0
@@ -1306,6 +1351,15 @@
   },
   {
     "set": "held",
+    "kind": "phone_us",
+    "threshold": 0.7,
+    "bytes": 7656,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
     "kind": "private_key_pem",
     "threshold": 0.7,
     "bytes": 27110,
@@ -1345,8 +1399,8 @@
     "kind": "uk_sortcode",
     "threshold": 0.7,
     "bytes": 24438,
-    "tp": 138,
+    "tp": 132,
     "fp": 0,
-    "fn": 6
+    "fn": 12
   }
 ]

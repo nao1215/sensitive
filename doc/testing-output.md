@@ -60,7 +60,7 @@ Register `Expect` or `ExpectJSON` before `Check`. A recorder with no output, mis
 
 ## Choose detector and fixture policy
 
-The default Recorder and Guard scanners enable 25 built-ins at minimum confidence 0. The 11 national ID kinds and KindHighEntropy are opt-in; `WithScanner(embargo.NewScanner(embargo.WithAll()))` enables all 37. `WithScanner` selects a different policy, while `WithAllowedKinds` and `WithAllowedValues` allow deliberate fixture content. Canary checks remain active even when a detector finding is allowed.
+The default Recorder and Guard scanners enable 26 built-ins at minimum confidence 0. The 11 national ID kinds and KindHighEntropy are opt-in; `WithScanner(embargo.NewScanner(embargo.WithAll()))` enables all 38. `WithScanner` selects a different policy, while `WithAllowedKinds` and `WithAllowedValues` allow deliberate fixture content. Canary checks remain active even when a detector finding is allowed.
 
 [Options and limits](../embargotest/recorder.go), [allowlist tests](../embargotest/recorder_test.go).
 

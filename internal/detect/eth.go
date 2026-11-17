@@ -39,7 +39,7 @@ func (d *ETH) Scan(data []byte) []Finding {
 		}
 
 		// Word boundary: preceding character must not be alphanumeric or underscore.
-		if i > 0 && isIdentifierByte(data[i-1]) && !encodedSeparatorBefore(data, i) {
+		if !ethWordStart(data, i) {
 			continue
 		}
 
@@ -56,21 +56,9 @@ func (d *ETH) Scan(data []byte) []Finding {
 			continue
 		}
 
-		hexPart := string(data[i+2 : end])
-		caseType := hexCaseType(hexPart)
-
-		var confidence float64
-
-		switch caseType {
-		case hexCaseUniform:
-			// All lowercase or all uppercase — valid address, no checksum to verify.
-			confidence = 0.80
-		case hexCaseMixed:
-			// Mixed case — must validate EIP-55 checksum.
-			if !validateEIP55(hexPart) {
-				continue // Invalid EIP-55 checksum, reject.
-			}
-			confidence = 0.95
+		confidence, ok := ethConfidence(string(data[i+2 : end]))
+		if !ok {
+			continue // Invalid EIP-55 checksum, reject.
 		}
 
 		findings = append(findings, Finding{
@@ -84,6 +72,31 @@ func (d *ETH) Scan(data []byte) []Finding {
 	}
 
 	return findings
+}
+
+// ethWordStart reports whether an address may start at i: the preceding byte is
+// not an identifier byte unless an encoded separator precedes the prefix.
+func ethWordStart(data []byte, i int) bool {
+	return i == 0 || !isIdentifierByte(data[i-1]) || encodedSeparatorBefore(data, i)
+}
+
+// ethConfidence scores the 40 hex digits of an address: uniform case has no
+// checksum to verify, while mixed case must satisfy EIP-55 or is rejected.
+func ethConfidence(hexPart string) (float64, bool) {
+	var confidence float64
+
+	switch hexCaseType(hexPart) {
+	case hexCaseUniform:
+		// All lowercase or all uppercase — valid address, no checksum to verify.
+		confidence = 0.80
+	case hexCaseMixed:
+		// Mixed case — must validate EIP-55 checksum.
+		if !validateEIP55(hexPart) {
+			return 0, false
+		}
+		confidence = 0.95
+	}
+	return confidence, true
 }
 
 // hexCaseClass represents the case pattern of a hex string.
@@ -163,31 +176,35 @@ func validateEIP55(hexAddr string) bool {
 			continue // Digits are case-insensitive.
 		}
 
-		// Get the corresponding hash nibble.
-		hashByte := hash[i/2]
-		var nibble byte
-		if i%2 == 0 {
-			//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-			nibble = hashByte >> 4
-		} else {
-			//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-			nibble = hashByte & 0x0f
-		}
-
-		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		if nibble >= 8 {
-			// Should be uppercase.
-			if c >= 'a' && c <= 'f' {
-				return false
-			}
-		} else {
-			// Should be lowercase.
-			if c >= 'A' && c <= 'F' {
-				return false
-			}
+		if !eip55LetterMatches(c, eip55Nibble(hash[i/2], i)) {
+			return false
 		}
 	}
 	return true
+}
+
+// eip55Nibble selects the hash nibble for hex position i: the high nibble for
+// even positions and the low nibble for odd positions.
+func eip55Nibble(hashByte byte, i int) byte {
+	// Get the corresponding hash nibble.
+	if i%2 == 0 {
+		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
+		return hashByte >> 4
+	}
+	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
+	return hashByte & 0x0f
+}
+
+// eip55LetterMatches reports whether hex letter c has the case its nibble
+// requires: uppercase for a nibble of 8 or more, lowercase otherwise.
+func eip55LetterMatches(c, nibble byte) bool {
+	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
+	if nibble >= 8 {
+		// Should be uppercase.
+		return c < 'a' || c > 'f'
+	}
+	// Should be lowercase.
+	return c < 'A' || c > 'F'
 }
 
 // --- Keccak-256 implementation ---

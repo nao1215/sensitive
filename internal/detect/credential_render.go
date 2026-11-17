@@ -79,25 +79,36 @@ func credentialEnclosedValue(data []byte, start int, key string) (begin, end int
 }
 
 func credentialScalarEnd(data []byte, start, end int, key string, formatted bool) int {
-	for end < len(data) {
-		c := data[end]
-		if c == '\r' || c == '\n' || c == '"' || c == '\'' {
-			break
-		}
-		if strings.ContainsRune("},)]>", rune(c)) && end > start && !credentialAttachedTail(data, end) {
-			break
-		}
-		if key != cookieKey && key != setCookieKey {
-			if c == ';' || c == '&' || c == '#' {
-				break
-			}
-			if (c == ' ' || c == '\t') && (!formatted || nextFmtField(data, end)) {
-				break
-			}
-		}
+	for end < len(data) && !credentialScalarStop(data, start, end, key, formatted) {
 		end++
 	}
 	return end
+}
+
+// credentialScalarStop reports whether the byte at end terminates an unquoted
+// scalar; cookie values keep their own field separators.
+func credentialScalarStop(data []byte, start, end int, key string, formatted bool) bool {
+	c := data[end]
+	if c == '\r' || c == '\n' || c == '"' || c == '\'' {
+		return true
+	}
+	if strings.ContainsRune("},)]>", rune(c)) && end > start && !credentialAttachedTail(data, end) {
+		return true
+	}
+	if key == cookieKey || key == setCookieKey {
+		return false
+	}
+	return credentialFieldSeparator(data, end, formatted)
+}
+
+// credentialFieldSeparator reports whether a non-cookie scalar ends at a
+// query, fragment or statement separator, or at whitespace before the next fmt field.
+func credentialFieldSeparator(data []byte, end int, formatted bool) bool {
+	c := data[end]
+	if c == ';' || c == '&' || c == '#' {
+		return true
+	}
+	return (c == ' ' || c == '\t') && (!formatted || nextFmtField(data, end))
 }
 
 // A closing delimiter followed by a contiguous value is not a complete value.
@@ -244,7 +255,12 @@ func credentialBlockEnd(data []byte, fieldStart, start int) int {
 	if end == len(data) || data[end] != '\n' {
 		return start
 	}
-	end++
+	return blockScalarContentEnd(data, end+1, indent)
+}
+
+// blockScalarContentEnd consumes block scalar lines from end until a non-blank
+// line returns to the key's indentation or less.
+func blockScalarContentEnd(data []byte, end, indent int) int {
 	for end < len(data) {
 		next := end
 		for next < len(data) && data[next] == ' ' {
