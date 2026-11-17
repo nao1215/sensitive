@@ -58,6 +58,23 @@ class PolicyTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'shared agent guide'):
                 policies.documentation_contract()
 
+    def test_cohesion_rejects_scattered_owners(self):
+        bad = {'internal/detect/pan.go': "func isDigit(b byte) bool { return b >= '0' && b <= '9' }",
+               'scanner.go': 'if c, ok := d.(*detect.Credential); ok {}',
+               'internal/detect/two.go': 'func (d *A) Scan(data []byte) []Finding {}\nfunc (d *B) Scan(data []byte) []Finding {}',
+               'internal/detect/fullwidth.go': 'func composePositions(child, parent []int) []int {}'}
+        for name, text in bad.items():
+            with self.subTest(name=name):
+                with self.assertRaisesRegex(ValueError, 'cohesion'):
+                    policies.cohesion({name: text})
+
+    def test_cohesion_accepts_owners_and_tests(self):
+        policies.cohesion({'internal/ascii/ascii.go': "func IsDigit(b byte) bool { return b >= '0' && b <= '9' }",
+                           'internal/detect/view.go': 'func composePositions(child, parent []int) []int {}',
+                           'internal/detect/pan.go': 'func (d *PAN) Scan(data []byte) []Finding {}',
+                           'internal/detect/pan_test.go': "b >= '0' && b <= '9'",
+                           'tests/oracle.go': "b >= 'a' && b <= 'z'"})
+
     def test_root_dependencies(self):
         for manifest in ({'Require':[{'Path':'example.com/runtime'}]}, {'Tool':['example.com/tool']}):
             with patch.object(policies.subprocess, 'check_output', return_value=json.dumps(manifest)):

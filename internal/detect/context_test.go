@@ -215,7 +215,7 @@ func TestExtractAlphaNumNear_CompleteBoundarySequence(t *testing.T) {
 
 func TestExtractSequencesAfterEncodedSeparators(t *testing.T) {
 	t.Parallel()
-	for _, escape := range []string{"%20", "%09", "%3D"} {
+	for _, escape := range []string{escapedSpace, "%09", "%3D"} {
 		digits := []byte(escape + "123")
 		got := extractDigitsNear(digits, 0, 30, 3, 3)
 		if len(got) != 1 || got[0].start != 3 || got[0].end != 6 {

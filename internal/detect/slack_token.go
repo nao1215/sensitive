@@ -1,5 +1,7 @@
 package detect
 
+import "github.com/nao1215/embargo/internal/ascii"
+
 // SlackToken implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindSlackToken.
 type SlackToken struct{}
@@ -82,5 +84,5 @@ func slackTokenPrefix(data []byte, i int) bool {
 
 // isSlackBodyByte reports whether b can appear in a Slack token body.
 func isSlackBodyByte(b byte) bool {
-	return isAlphaNum(b) || b == '-'
+	return ascii.IsAlphaNum(b) || b == '-'
 }

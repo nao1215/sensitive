@@ -40,11 +40,11 @@ Every run first verifies a known killed expression and a known surviving express
 <!-- mutation-baseline:start -->
 | Package | Score floor | Mutation coverage floor | Killed | Lived | Timed out | Uncovered |
 |---|---:|---:|---:|---:|---:|---:|
-| . | 82.29% | 96.73% | 316 | 52 | 16 | 13 |
-| cmd/embargo-audit | 82.86% | 100.00% | 29 | 6 | 0 | 0 |
-| embargotest | 90.64% | 98.74% | 213 | 19 | 3 | 3 |
-| internal/ascii | 100.00% | 100.00% | 15 | 0 | 0 | 0 |
-| internal/detect | 86.87% | 87.35% | 1548 | 203 | 31 | 258 |
+| . | 82.97% | 99.73% | 302 | 46 | 16 | 1 |
+| cmd/embargo-audit | 91.67% | 100.00% | 33 | 3 | 0 | 0 |
+| embargotest | 90.98% | 98.79% | 222 | 19 | 3 | 3 |
+| internal/ascii | 100.00% | 100.00% | 58 | 0 | 0 | 0 |
+| internal/detect | 87.31% | 92.17% | 1769 | 221 | 36 | 172 |
 | internal/output | 82.35% | 100.00% | 56 | 10 | 2 | 0 |
 | internal/saferecord | 100.00% | 100.00% | 5 | 0 | 0 | 0 |
 <!-- mutation-baseline:end -->

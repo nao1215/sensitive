@@ -113,9 +113,6 @@ func TestBoundaryAlphabetContract(t *testing.T) {
 	for n := range 256 {
 		b := byte(n)
 		alnum := strings.ContainsRune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", rune(b))
-		if isAlphaNum(b) != alnum {
-			t.Fatalf("ASCII alphabet %x", b)
-		}
 		if isTokenByte(b) != (alnum || b == '_' || b == '-') {
 			t.Fatalf("token alphabet %x", b)
 		}
@@ -145,17 +142,6 @@ func TestIdentifierByteAlphabet(t *testing.T) {
 		}
 		if isIdentifierByte(b) != want {
 			t.Fatalf("identifier byte %x: want %v", b, want)
-		}
-	}
-}
-
-func TestHexByteAlphabet(t *testing.T) {
-	t.Parallel()
-	for n := range 256 {
-		b := byte(n)
-		_, err := hex.DecodeString("0" + string(b))
-		if isHexDigit(b) != (err == nil) {
-			t.Fatalf("hex alphabet %x", b)
 		}
 	}
 }

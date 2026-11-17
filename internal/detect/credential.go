@@ -3,6 +3,8 @@ package detect
 import (
 	"cmp"
 	"slices"
+
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 // Credential implements the public matching contract at
@@ -18,6 +20,64 @@ func (*Credential) Name() DetectorName { return NameCredential }
 // Hints returns delimiters required by every supported credential form.
 func (*Credential) Hints() [][]byte {
 	return [][]byte{[]byte(":"), []byte("="), []byte("AKIA"), []byte("ASIA"), []byte("Bearer "), []byte("Basic ")}
+}
+
+// Scan returns only secret spans, never their surrounding configuration fields.
+func (d *Credential) Scan(data []byte) []Finding {
+	out := d.scanPlain(data)
+	input := data
+	var positions []int
+	const layers = 4
+	for range layers {
+		decoded, mapping := credentialQuotes(input)
+		if mapping == nil {
+			break
+		}
+		mapping = composePositions(mapping, positions)
+		next := d.scanPlain(decoded)
+		previous := 0
+		added := make([]Finding, 0, len(next))
+		for _, f := range next {
+			f.Start, f.End = mapping[f.Start], mapping[f.End]
+			// A valid less-escaped value owns its quotes. Decoding its interior again
+			// must not reinterpret an escaped quote as the end of that value.
+			for previous < len(out) && out[previous].End <= f.Start {
+				previous++
+			}
+			if previous < len(out) && out[previous].Start < f.End && (f.Start >= out[previous].Start || f.End < out[previous].End) {
+				continue
+			}
+
+			added = append(added, f)
+		}
+		out = append(out, added...)
+		slices.SortFunc(out, func(a, b Finding) int { return cmp.Compare(a.Start, b.Start) })
+		input, positions = decoded, mapping
+	}
+	return out
+}
+
+// scanView adds normalized assignments while raw URL delimiters retain ownership
+// of percent-escaped userinfo. Mapping always refers to original input bytes.
+func (d *Credential) scanView(v View) []Finding {
+	out := d.Scan(v.Raw)
+	if v.Positions == nil {
+		return out
+	}
+	previous, rawCount := 0, len(out)
+	for _, f := range d.Scan(v.Data) {
+		f.Start, f.End = v.Positions[f.Start], v.Positions[f.End]
+		for previous < rawCount && out[previous].End <= f.Start {
+			previous++
+		}
+		if previous < rawCount && out[previous].Start < f.End && (f.Start >= out[previous].Start || f.End < out[previous].End) {
+			continue
+		}
+
+		out = append(out, f)
+	}
+	slices.SortFunc(out, func(a, b Finding) int { return cmp.Compare(a.Start, b.Start) })
+	return out
 }
 
 func (d *Credential) scanPlain(data []byte) []Finding {
@@ -98,4 +158,4 @@ func awsSecretPair(data []byte) []Finding {
 	return out
 }
 
-func awsSecretByte(b byte) bool { return isAlphaNum(b) || b == '+' || b == '/' }
+func awsSecretByte(b byte) bool { return ascii.IsAlphaNum(b) || b == '+' || b == '/' }

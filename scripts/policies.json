@@ -604,5 +604,11 @@
     "source": "AGENTS.md",
     "check": "function-growth",
     "where": "Verification"
+  },
+  {
+    "rule": "One owner each for byte classes, the scanned view and every detector",
+    "source": "Repository maintenance policy",
+    "check": "cohesion",
+    "where": "Verification"
   }
 ]

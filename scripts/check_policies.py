@@ -190,9 +190,32 @@ def evidence():
         require('pull_request:' in read('.github/workflows/'+path), 'PR security scan removed')
 
 
+def cohesion(files=None):
+    """Keep byte classes, the scanned view and each detector in one owner."""
+    if files is None:
+        names = subprocess.check_output(['git', 'ls-files', '*.go'], cwd=ROOT, text=True).splitlines()
+        files = {name: read(name) for name in names}
+    production = {name: text for name, text in files.items()
+                  if not name.endswith('_test.go') and not name.startswith(('tests/', 'adapters/'))}
+    ascii_range = re.compile(r"""(?:>=\s*'0'\s*&&\s*[\w.\[\]+-]+\s*<=\s*'9'|>=\s*'a'\s*&&\s*[\w.\[\]+-]+\s*<=\s*'z'|>=\s*'A'\s*&&\s*[\w.\[\]+-]+\s*<=\s*'Z')""")
+    violations = []
+    for name, text in sorted(production.items()):
+        if not name.startswith('internal/ascii/') and ascii_range.search(text):
+            violations.append(name + ': ASCII class outside internal/ascii')
+        if not name.startswith('internal/detect/') and re.search(r'\.\(\*?detect\.', text):
+            violations.append(name + ': detector-specific type assertion')
+        if name.startswith('internal/detect/'):
+            receivers = set(re.findall(r'^func \(\w+ \*?(\w+)\) Scan\(data \[\]byte\) \[\]Finding', text, re.M))
+            if len(receivers) > 1:
+                violations.append(name + ': more than one detector: ' + ', '.join(sorted(receivers)))
+            if name != 'internal/detect/view.go' and re.search(r'^func (?:composePositions|originalPosition|mapOriginalRange|decodePercent|removeTokenSeparators)\(', text, re.M):
+                violations.append(name + ': offset map outside view.go')
+    require(not violations, 'cohesion: ' + '; '.join(violations))
+
+
 def mapping():
     rows=json.loads(read('scripts/policies.json'))
-    checks={'function-growth':function_growth,'documentation-contract':documentation_contract,'repository-traces':repository_traces,'test-file-budget':test_file_budget,'root-module':root_module,'workflow-security':workflows,'branding':branding,'lint-config':lint_rules,'api-boundary':api_boundaries,'schedules':schedules,'pr-metadata':pr_metadata,'technique-links':linked_tests, 'evidence':evidence, 'detector-docs':detector_docs}
+    checks={'function-growth':function_growth,'documentation-contract':documentation_contract,'repository-traces':repository_traces,'test-file-budget':test_file_budget,'root-module':root_module,'workflow-security':workflows,'branding':branding,'lint-config':lint_rules,'api-boundary':api_boundaries,'schedules':schedules,'pr-metadata':pr_metadata,'technique-links':linked_tests, 'evidence':evidence, 'detector-docs':detector_docs, 'cohesion':cohesion}
     for row in rows:
         require(row['source'] and row['rule'] and row['where'], 'policy mapping is incomplete')
         if row['check'] in checks:

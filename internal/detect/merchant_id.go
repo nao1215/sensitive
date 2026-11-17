@@ -1,5 +1,7 @@
 package detect
 
+import "github.com/nao1215/embargo/internal/ascii"
+
 // MerchantID implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindMerchantID.
 type MerchantID struct {
@@ -63,8 +65,8 @@ func (d *MerchantID) Scan(data []byte) []Finding {
 		for _, seq := range seqs {
 			// Do not expose a keyword by masking only the numeric portion of
 			// an alphanumeric token; terminal identifiers are whole tokens.
-			if seq.start > 0 && isAlphaNum(data[seq.start-1]) && !encodedSeparatorBefore(data, seq.start) ||
-				seq.end < len(data) && isAlphaNum(data[seq.end]) {
+			if seq.start > 0 && ascii.IsAlphaNum(data[seq.start-1]) && !encodedSeparatorBefore(data, seq.start) ||
+				seq.end < len(data) && ascii.IsAlphaNum(data[seq.end]) {
 				continue
 			}
 

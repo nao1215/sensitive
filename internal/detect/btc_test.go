@@ -310,39 +310,8 @@ func TestBTCSpecificationVectors(t *testing.T) {
 	}
 }
 
-// These finite vectors cover alphabet endpoints that random addresses rarely hit.
-func TestEncodingAlphabetVectors(t *testing.T) {
-	t.Parallel()
-	for n := range 256 {
-		b := byte(n)
-		if got, want := base58CharIndex(b), strings.IndexByte("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz", b); got != want {
-			t.Fatalf("base58 %x: %d != %d", b, got, want)
-		}
-		if got, want := bech32CharIndex(b), strings.IndexByte("qpzry9x8gf2tvdw0s3jn54khce6mua7l", b); got != want {
-			t.Fatalf("bech32 %x: %d != %d", b, got, want)
-		}
-	}
-	for _, s := range []string{"0", "O", "I", "l", "!"} {
-		if _, ok := base58Decode(s); ok {
-			t.Fatalf("invalid base58 %q", s)
-		}
-	}
-	for _, s := range []string{"az", "AZ", "aZ", "Az", "09"} {
-		lower, upper := strings.ToLower(s), strings.ToUpper(s)
-		if isBech32ConsistentCase(s) != (s == lower || s == upper) {
-			t.Fatalf("bech32 case %q", s)
-		}
-		if toLowerString(s) != lower {
-			t.Fatalf("lowercase %q", s)
-		}
-	}
-}
-
 func TestBtcRejectedBoundaries(t *testing.T) {
 	t.Parallel()
-	if validateBase58Checksum([]byte{1, 2, 3, 4}) {
-		t.Fatal("short checksum accepted")
-	}
 	if _, _, ok := NewBTC().scanLegacy([]byte("mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJRfn"), 0); ok {
 		t.Fatal("unsupported network accepted")
 	}

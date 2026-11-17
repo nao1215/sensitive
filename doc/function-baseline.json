@@ -121,17 +121,17 @@
     },
     {
       "file": "internal/detect/log_context.go",
-      "name": "numericLogContext.fragment",
-      "statements": 14,
-      "cyclomatic": 19,
-      "lines": 22
-    },
-    {
-      "file": "internal/detect/mynumber.go",
       "name": "arnAccount",
       "statements": 16,
       "cyclomatic": 22,
       "lines": 23
+    },
+    {
+      "file": "internal/detect/log_context.go",
+      "name": "numericLogContext.fragment",
+      "statements": 14,
+      "cyclomatic": 19,
+      "lines": 22
     },
     {
       "file": "internal/detect/pan.go",

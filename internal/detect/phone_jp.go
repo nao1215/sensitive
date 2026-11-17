@@ -1,5 +1,7 @@
 package detect
 
+import "github.com/nao1215/embargo/internal/ascii"
+
 // JPPhoneType classifies a Japanese phone number; see the JPPhoneType* constants.
 type JPPhoneType string
 
@@ -148,7 +150,7 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 // isPhoneSepChar reports whether b is a digit or phone number separator.
 // Space is included to support formats like "090 1234 5678".
 func isPhoneSepChar(b byte) bool {
-	return isDigit(b) || b == '-' || b == '(' || b == ')' || b == ' '
+	return ascii.IsDigit(b) || b == '-' || b == '(' || b == ')' || b == ' '
 }
 
 // classifyJPPhone returns the phone type based on the prefix and digit count,
@@ -204,7 +206,7 @@ func phoneDigits(data []byte, start int) (digits []byte, end int) {
 	// Extract digit sequence with separators.
 	j := start
 	for j < len(data) && isPhoneSepChar(data[j]) {
-		if isDigit(data[j]) {
+		if ascii.IsDigit(data[j]) {
 			digits = append(digits, data[j])
 		}
 		j++
@@ -213,7 +215,7 @@ func phoneDigits(data []byte, start int) (digits []byte, end int) {
 
 	// Trim trailing non-digit separators (e.g., trailing spaces) so that
 	// the boundary check and matched text do not include them.
-	for end > start && !isDigit(data[end-1]) {
+	for end > start && !ascii.IsDigit(data[end-1]) {
 		end--
 	}
 	return digits, end

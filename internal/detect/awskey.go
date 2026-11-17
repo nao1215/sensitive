@@ -1,5 +1,7 @@
 package detect
 
+import "github.com/nao1215/embargo/internal/ascii"
+
 // AWSKey implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindAWSKey.
 type AWSKey struct{}
@@ -32,7 +34,7 @@ func (d *AWSKey) Scan(data []byte) []Finding {
 		}
 
 		// Word boundary: preceding character must not be alphanumeric.
-		if i > 0 && isAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
+		if i > 0 && ascii.IsAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
 			continue
 		}
 
@@ -42,7 +44,7 @@ func (d *AWSKey) Scan(data []byte) []Finding {
 		}
 
 		// Word boundary: following character must not be alphanumeric.
-		if i+20 < len(data) && isAlphaNum(data[i+20]) {
+		if i+20 < len(data) && ascii.IsAlphaNum(data[i+20]) {
 			continue
 		}
 
@@ -82,14 +84,9 @@ func validateAWSKeyBody(data []byte, start int) bool {
 		return false
 	}
 	for k := start; k < start+16; k++ {
-		if !isUpperAlphaNum(data[k]) {
+		if !ascii.IsUpper(data[k]) && !ascii.IsDigit(data[k]) {
 			return false
 		}
 	}
 	return true
-}
-
-// isUpperAlphaNum reports whether b is an uppercase ASCII letter or digit.
-func isUpperAlphaNum(b byte) bool {
-	return (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9')
 }

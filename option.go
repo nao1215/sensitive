@@ -19,7 +19,7 @@ func WithKinds(kinds ...Kind) ScannerOption {
 	selected := make(map[Kind]bool, len(kinds))
 	for _, kind := range kinds {
 		known := false
-		for _, d := range builtins() {
+		for _, d := range builtins(nil) {
 			if Kind(d.Name()) == kind {
 				known = true
 				break

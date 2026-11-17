@@ -23,7 +23,8 @@ const documentedEmail = "alice@example.com"
 
 func referenceScan(s *Scanner, data []byte) []Finding {
 	original := data
-	data, positions := decodePercent(data)
+	view := detect.NewView(data)
+	data, positions := view.Data, view.Positions
 	var out []Finding
 	var folded []byte
 	var ready bool
@@ -109,11 +110,11 @@ func TestReadmeDetectorCounts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := fmt.Sprintf("%d built-in detectors (%d run by default)", len(builtins()), len(NewScanner().detectors))
+	want := fmt.Sprintf("%d built-in detectors (%d run by default)", len(builtins(nil)), len(NewScanner().detectors))
 	if !strings.Contains(string(readme), want) {
 		t.Fatalf("README must say %q", want)
 	}
-	if overview := fmt.Sprintf("[%d built-in detectors](", len(builtins())); !strings.Contains(string(readme), overview) {
+	if overview := fmt.Sprintf("[%d built-in detectors](", len(builtins(nil))); !strings.Contains(string(readme), overview) {
 		t.Fatalf("README overview must link %q", overview)
 	}
 	_, table, found := strings.Cut(string(readme), "| Group | Detectors | What is detected |\n|---|---:|---|\n")
@@ -132,8 +133,8 @@ func TestReadmeDetectorCounts(t *testing.T) {
 		}
 		total += n
 	}
-	if total != len(builtins()) {
-		t.Fatalf("README detector groups add up to %d, want %d", total, len(builtins()))
+	if total != len(builtins(nil)) {
+		t.Fatalf("README detector groups add up to %d, want %d", total, len(builtins(nil)))
 	}
 }
 
@@ -261,7 +262,8 @@ func (lexer *candidateLexer) lex(data []byte) []candidateSpan {
 }
 
 func candidateScan(s *Scanner, lexer *candidateLexer, original []byte) []Finding {
-	data, positions := decodePercent(original)
+	view := detect.NewView(original)
+	data, positions := view.Data, view.Positions
 	spans := lexer.lex(data)
 	var out []Finding
 	for i, d := range s.detectors {

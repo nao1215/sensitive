@@ -1,6 +1,10 @@
 package detect
 
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/nao1215/embargo/internal/ascii"
+)
 
 // UKSortCode implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKSortCode.
@@ -29,7 +33,7 @@ func (d *UKSortCode) Hints() [][]byte {
 // separator byte and true when the pattern is valid. The caller must ensure
 // that i+1 < len(data) before calling.
 func isSortCodePattern(data []byte, i int) (sep byte, ok bool) {
-	if !isDigit(data[i]) || !isDigit(data[i+1]) {
+	if !ascii.IsDigit(data[i]) || !ascii.IsDigit(data[i+1]) {
 		return 0, false
 	}
 
@@ -41,13 +45,13 @@ func isSortCodePattern(data []byte, i int) (sep byte, ok bool) {
 	if i+7 >= len(data) {
 		return 0, false
 	}
-	if !isDigit(data[i+3]) || !isDigit(data[i+4]) {
+	if !ascii.IsDigit(data[i+3]) || !ascii.IsDigit(data[i+4]) {
 		return 0, false
 	}
 	if data[i+5] != sep {
 		return 0, false
 	}
-	if !isDigit(data[i+6]) || !isDigit(data[i+7]) {
+	if !ascii.IsDigit(data[i+6]) || !ascii.IsDigit(data[i+7]) {
 		return 0, false
 	}
 
@@ -60,18 +64,18 @@ func isSortCodePattern(data []byte, i int) (sep byte, ok bool) {
 // sequence, is followed by a digit, or continues with another separator group.
 func isValidSortCodeBoundary(data []byte, i, end int, sep byte) bool {
 	// Word boundary: preceding character must not be a digit or letter.
-	if i > 0 && isAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
+	if i > 0 && ascii.IsAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
 		return false
 	}
 
 	// Avoid matching part of a longer separated sequence (e.g., "12-34-56-78").
-	if i >= 3 && data[i-1] == sep && isDigit(data[i-2]) && isDigit(data[i-3]) {
+	if i >= 3 && data[i-1] == sep && ascii.IsDigit(data[i-2]) && ascii.IsDigit(data[i-3]) {
 		return false
 	}
 
 	// Word boundary: following character must not be a digit.
 	// Allow letter to follow (e.g., "12-34-56 is the sort code").
-	if end < len(data) && isDigit(data[end]) {
+	if end < len(data) && ascii.IsDigit(data[end]) {
 		return false
 	}
 
@@ -80,7 +84,7 @@ func isValidSortCodeBoundary(data []byte, i, end int, sep byte) bool {
 	// A space can also delimit prose or end the input; reject it only when
 	// another numeric group follows.
 	if end < len(data) && data[end] == sep &&
-		(sep != ' ' || end+1 < len(data) && isDigit(data[end+1])) {
+		(sep != ' ' || end+1 < len(data) && ascii.IsDigit(data[end+1])) {
 		// A complete hyphenated code following a space is an independent
 		// token, not another pair in the space-separated candidate.
 		if sep == ' ' && end+8 < len(data) {

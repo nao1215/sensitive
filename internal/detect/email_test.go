@@ -1,7 +1,6 @@
 package detect
 
 import (
-	"bytes"
 	"strings"
 	"testing"
 )
@@ -334,9 +333,6 @@ func TestDetectorByteAlphabets(t *testing.T) {
 		}
 		if isDomainChar(b) != (alnum || strings.ContainsRune(".-", rune(b))) {
 			t.Fatalf("domain alphabet %x", b)
-		}
-		if toLowerASCIIString(string(b)) != string(bytes.ToLower([]byte{b})) && b < 128 {
-			t.Fatalf("case endpoint %x", b)
 		}
 	}
 	for _, domain := range []string{"", "a", "-a", "a-b", "a-.b", "a.-b", "a.b", "a..b", ".a", "a."} {

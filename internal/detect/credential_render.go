@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 // Serialized collections of reserved markers are already safe. Every other
@@ -103,7 +105,7 @@ func credentialAttachedTail(data []byte, at int) bool {
 	for at < len(data) && (data[at] == ']' || data[at] == ')') {
 		at++
 	}
-	return at < len(data) && (isAlphaNum(data[at]) || data[at] == '[')
+	return at < len(data) && (ascii.IsAlphaNum(data[at]) || data[at] == '[')
 }
 
 // Go fmt emits a type before composite literals and named conversions. The
@@ -121,7 +123,7 @@ func credentialTypedValue(data []byte, start int) (begin int, closeByte byte) {
 		if c == '(' {
 			return at + 1, ')'
 		}
-		if c < utf8.RuneSelf && !isAlphaNum(c) && !strings.ContainsRune("[]._*", rune(c)) && (c != ' ' || !credentialTypeSpace(data, at)) {
+		if c < utf8.RuneSelf && !ascii.IsAlphaNum(c) && !strings.ContainsRune("[]._*", rune(c)) && (c != ' ' || !credentialTypeSpace(data, at)) {
 			break
 		}
 	}
@@ -166,7 +168,7 @@ func nextFmtField(data []byte, start int) bool {
 	for start < len(data) && (data[start] == ' ' || data[start] == '\t') {
 		start++
 	}
-	for start < len(data) && (isAlphaNum(data[start]) || strings.ContainsRune("_.-", rune(data[start]))) {
+	for start < len(data) && (ascii.IsAlphaNum(data[start]) || strings.ContainsRune("_.-", rune(data[start]))) {
 		start++
 	}
 	return start < len(data) && data[start] == ':'
@@ -287,7 +289,7 @@ func (d *Credential) credentialKey(data []byte, end int) []byte {
 	start := end - len(key)
 	if start > 0 && data[start-1] == ' ' {
 		prev := start - 1
-		for prev > 0 && isAlpha(data[prev-1]) {
+		for prev > 0 && ascii.IsAlpha(data[prev-1]) {
 			prev--
 		}
 		key = data[prev:end]
@@ -312,7 +314,7 @@ func assignmentKey(data []byte, end int) []byte {
 		return data[start:end]
 	}
 	start := end
-	for start > 0 && (isAlphaNum(data[start-1]) || strings.ContainsRune("_-.", rune(data[start-1]))) {
+	for start > 0 && (ascii.IsAlphaNum(data[start-1]) || strings.ContainsRune("_-.", rune(data[start-1]))) {
 		start--
 	}
 	return data[start:end]

@@ -3,6 +3,8 @@ package detect
 import (
 	"bytes"
 	"strings"
+
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 // Apostrophes and backticks can belong to an RFC auth-scheme rather than
@@ -100,7 +102,7 @@ func authSchemeEnd(data []byte, start, end int) int {
 
 // RFC 9110 auth-scheme uses the HTTP token alphabet.
 func authSchemeByte(b byte) bool {
-	return isAlphaNum(b) || strings.ContainsRune("!#$%&'*+-.^_`|~", rune(b))
+	return ascii.IsAlphaNum(b) || strings.ContainsRune("!#$%&'*+-.^_`|~", rune(b))
 }
 
 // Quoted header values retain their scheme even without an assignment label.

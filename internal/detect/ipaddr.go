@@ -3,6 +3,8 @@ package detect
 import (
 	"net"
 	"slices"
+
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 // IPAddr implements the public matching contract at
@@ -39,7 +41,7 @@ func (d *IPAddr) Scan(data []byte) []Finding {
 			continue
 		}
 		// Try IPv4 first if we see a digit.
-		if isDigit(data[i]) {
+		if ascii.IsDigit(data[i]) {
 			if f, adv, ok := d.tryIPv4(data, i); ok {
 				findings = append(findings, f)
 				i = adv
@@ -50,7 +52,7 @@ func (d *IPAddr) Scan(data []byte) []Finding {
 		}
 
 		// Try IPv6: hex digits or ':'.
-		if isHexDigit(data[i]) || data[i] == ':' {
+		if ascii.IsHexDigit(data[i]) || data[i] == ':' {
 			f, adv, ok := d.tryIPv6(data, i)
 			if ok {
 				findings = append(findings, f)
@@ -75,7 +77,7 @@ func (d *IPAddr) tryIPv4(data []byte, i int) (Finding, int, bool) {
 
 	// Consume digits and dots.
 	j := i
-	for j < len(data) && (isDigit(data[j]) || data[j] == '.') {
+	for j < len(data) && (ascii.IsDigit(data[j]) || data[j] == '.') {
 		j++
 	}
 
@@ -105,14 +107,14 @@ func isIPTokenSuffix(data []byte, at int) bool {
 	b := data[at]
 	if b == '-' {
 		end := at + 1
-		for end < len(data) && (isHexDigit(data[end]) || data[end] == ':' || data[end] == '.') {
+		for end < len(data) && (ascii.IsHexDigit(data[end]) || data[end] == ':' || data[end] == '.') {
 			end++
 		}
 		if _, ip := parseIPSentence(string(data[at+1 : end])); ip != nil {
 			return false
 		}
 	}
-	return isAlphaNum(b) || ((b == '_' || b == '-') && at+1 < len(data) && isAlphaNum(data[at+1]))
+	return ascii.IsAlphaNum(b) || ((b == '_' || b == '-') && at+1 < len(data) && ascii.IsAlphaNum(data[at+1]))
 }
 
 // tryIPv6 attempts to parse an IPv6 address starting at data[i].
@@ -125,7 +127,7 @@ func (d *IPAddr) tryIPv6(data []byte, i int) (Finding, int, bool) {
 
 	// Consume hex digits and colons.
 	j := i
-	for j < len(data) && (isHexDigit(data[j]) || data[j] == ':' || data[j] == '.') {
+	for j < len(data) && (ascii.IsHexDigit(data[j]) || data[j] == ':' || data[j] == '.') {
 		j++
 	}
 

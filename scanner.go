@@ -47,11 +47,12 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 			opt.apply(s)
 		}
 	}
-	for _, d := range builtins() {
+	var matchKey func(string) bool
+	if s.sensitiveKeys != nil {
+		matchKey = s.sensitiveKey
+	}
+	for _, d := range builtins(matchKey) {
 		if (s.kinds == nil && (s.allKinds || defaultKind(Kind(d.Name())))) || s.kinds[Kind(d.Name())] {
-			if credential, ok := d.(*detect.Credential); ok && s.sensitiveKeys != nil {
-				credential.MatchKey = s.sensitiveKey
-			}
 			s.detectors = append(s.detectors, d)
 		}
 	}
@@ -103,20 +104,19 @@ func (s *Scanner) scan(data []byte, canceled func() error) []Finding {
 	if !s.initialized {
 		return NewScanner().scan(data, canceled)
 	}
-	scanData := data
-	var positions []int
+	view := detect.View{Raw: data, Data: data}
 	if len(s.detectors) > 0 {
-		scanData, positions = normalizedScanInput(data)
+		view = detect.NewView(data)
 	}
-	return s.scanInput(data, scanData, positions, canceled)
+	return s.scanInput(view, canceled)
 }
 
 // scanInput shares the normalized view with streaming frame recognition.
-func (s *Scanner) scanInput(data, scanData []byte, positions []int, canceled func() error) []Finding {
-	if len(data) == 0 || scanCanceled(canceled) {
+func (s *Scanner) scanInput(view detect.View, canceled func() error) []Finding {
+	if len(view.Raw) == 0 || scanCanceled(canceled) {
 		return nil
 	}
-	selected := s.selectDetectors(scanData)
+	selected := s.selectDetectors(view.Data)
 	var findings []Finding
 	for i, d := range s.detectors {
 		if scanCanceled(canceled) {
@@ -125,18 +125,18 @@ func (s *Scanner) scanInput(data, scanData []byte, positions []int, canceled fun
 		if selected&(1<<i) == 0 {
 			continue
 		}
-		findings = appendBuiltinFindings(findings, d, data, scanData, positions)
+		findings = appendBuiltinFindings(findings, d, view)
 	}
 	for _, d := range s.custom {
 		if scanCanceled(canceled) {
 			return nil
 		}
-		findings = append(findings, d.Scan(data)...)
+		findings = append(findings, d.Scan(view.Raw)...)
 	}
 	if scanCanceled(canceled) {
 		return nil
 	}
-	return s.filterFindings(findings, len(data))
+	return s.filterFindings(findings, len(view.Raw))
 }
 
 // ScanString scans the bytes of text.
@@ -190,25 +190,9 @@ func scanCanceled(canceled func() error) bool {
 	return canceled != nil && canceled() != nil
 }
 
-func normalizedScanInput(data []byte) (normalized []byte, positions []int) {
-	decoded, positions := decodePercent(data)
-	normalized, tokenPositions := detect.RemoveTokenSeparators(decoded)
-	return normalized, detect.ComposePositions(tokenPositions, positions)
-}
-
-// appendBuiltinFindings translates one detector result to the caller's original bytes.
-func appendBuiltinFindings(findings []Finding, d detect.Detector, data, scanData []byte, positions []int) []Finding {
-	raw := d.Name() == "credential"
-	var detected []detect.Finding
-	if credential, ok := d.(*detect.Credential); ok {
-		detected = credential.ScanViews(data, scanData, positions)
-	} else {
-		detected = d.Scan(scanData)
-	}
-	for _, f := range detected {
-		if positions != nil && !raw {
-			f.Start, f.End = positions[f.Start], positions[f.End]
-		}
+// appendBuiltinFindings converts one detector result, already in original offsets, to public findings.
+func appendBuiltinFindings(findings []Finding, d detect.Detector, view detect.View) []Finding {
+	for _, f := range detect.ScanView(d, view) {
 		findings = append(findings, Finding{Kind: Kind(f.DetectorName), Start: f.Start, End: f.End, Confidence: f.Confidence})
 	}
 	return findings
