@@ -44,3 +44,6 @@ __pycache__/
 /quality-results/
 
 mutation-results/
+
+# The embargo command built in the repository root
+/embargo

@@ -1,6 +1,13 @@
 {
   "functions": [
     {
+      "file": "adapters/grpc/adapter.go",
+      "name": "record",
+      "statements": 31,
+      "cyclomatic": 8,
+      "lines": 39
+    },
+    {
       "file": "adapters/otel/span.go",
       "name": "maskSpan",
       "statements": 35,
@@ -10,37 +17,37 @@
     {
       "file": "adapters/otel/values.go",
       "name": "attributeSlice",
-      "statements": 36,
-      "cyclomatic": 16,
-      "lines": 51
+      "statements": 19,
+      "cyclomatic": 6,
+      "lines": 26
     },
     {
       "file": "adapters/sentry/adapter.go",
       "name": "NewBeforeSend",
-      "statements": 42,
-      "cyclomatic": 12,
-      "lines": 62
+      "statements": 31,
+      "cyclomatic": 8,
+      "lines": 47
     },
     {
-      "file": "cmd/embargo/audit.go",
+      "file": "cmd/embargo/main.go",
       "name": "run",
-      "statements": 24,
-      "cyclomatic": 8,
-      "lines": 35
+      "statements": 15,
+      "cyclomatic": 6,
+      "lines": 22
     },
     {
       "file": "embargotest/guard_names.go",
       "name": "guardTests",
-      "statements": 40,
-      "cyclomatic": 18,
-      "lines": 57
+      "statements": 17,
+      "cyclomatic": 7,
+      "lines": 24
     },
     {
       "file": "embargotest/json.go",
       "name": "jsonValue",
-      "statements": 37,
-      "cyclomatic": 15,
-      "lines": 54
+      "statements": 12,
+      "cyclomatic": 6,
+      "lines": 22
     },
     {
       "file": "embargotest/recorder.go",
@@ -53,22 +60,29 @@
       "file": "embargotest/run.go",
       "name": "Recorder.run",
       "statements": 37,
-      "cyclomatic": 17,
+      "cyclomatic": 13,
       "lines": 44
     },
     {
       "file": "embargotest/value.go",
       "name": "formatValue",
-      "statements": 37,
-      "cyclomatic": 20,
-      "lines": 62
+      "statements": 16,
+      "cyclomatic": 9,
+      "lines": 25
+    },
+    {
+      "file": "event.go",
+      "name": "eventScanner.maskScalar",
+      "statements": 23,
+      "cyclomatic": 15,
+      "lines": 35
     },
     {
       "file": "http_handler.go",
       "name": "eventScanner.maskHTTPHeaders",
-      "statements": 36,
-      "cyclomatic": 19,
-      "lines": 54
+      "statements": 22,
+      "cyclomatic": 13,
+      "lines": 33
     },
     {
       "file": "http_handler.go",
@@ -81,29 +95,57 @@
       "file": "internal/detect/aba.go",
       "name": "ABARouting.scanNormalized",
       "statements": 25,
-      "cyclomatic": 13,
-      "lines": 50
+      "cyclomatic": 10,
+      "lines": 49
+    },
+    {
+      "file": "internal/detect/aba.go",
+      "name": "validABACandidate",
+      "statements": 12,
+      "cyclomatic": 14,
+      "lines": 31
     },
     {
       "file": "internal/detect/btc.go",
       "name": "BTC.scanBech32",
-      "statements": 27,
-      "cyclomatic": 18,
-      "lines": 74
+      "statements": 26,
+      "cyclomatic": 11,
+      "lines": 66
     },
     {
       "file": "internal/detect/credential.go",
       "name": "Credential.scanPlain",
-      "statements": 35,
-      "cyclomatic": 19,
-      "lines": 47
+      "statements": 32,
+      "cyclomatic": 11,
+      "lines": 40
+    },
+    {
+      "file": "internal/detect/credential_authorization.go",
+      "name": "authorizationValueByte",
+      "statements": 10,
+      "cyclomatic": 14,
+      "lines": 19
     },
     {
       "file": "internal/detect/credential_authorization.go",
       "name": "authorizationValueEnd",
-      "statements": 26,
-      "cyclomatic": 22,
-      "lines": 37
+      "statements": 11,
+      "cyclomatic": 4,
+      "lines": 16
+    },
+    {
+      "file": "internal/detect/credential_escape.go",
+      "name": "credentialQuotes",
+      "statements": 25,
+      "cyclomatic": 14,
+      "lines": 31
+    },
+    {
+      "file": "internal/detect/credential_key.go",
+      "name": "Credential.secretKey",
+      "statements": 20,
+      "cyclomatic": 14,
+      "lines": 32
     },
     {
       "file": "internal/detect/credential_render.go",
@@ -115,65 +157,100 @@
     {
       "file": "internal/detect/iban.go",
       "name": "ibanCountryLength",
-      "statements": 20,
-      "cyclomatic": 19,
-      "lines": 60
+      "statements": 4,
+      "cyclomatic": 2,
+      "lines": 6
+    },
+    {
+      "file": "internal/detect/ipaddr.go",
+      "name": "IPAddr.tryIPv4",
+      "statements": 12,
+      "cyclomatic": 15,
+      "lines": 32
+    },
+    {
+      "file": "internal/detect/ipaddr.go",
+      "name": "IPAddr.tryIPv6",
+      "statements": 14,
+      "cyclomatic": 14,
+      "lines": 36
+    },
+    {
+      "file": "internal/detect/jwt.go",
+      "name": "extractJWTToken",
+      "statements": 16,
+      "cyclomatic": 14,
+      "lines": 37
     },
     {
       "file": "internal/detect/log_context.go",
       "name": "arnAccount",
-      "statements": 16,
-      "cyclomatic": 22,
-      "lines": 23
+      "statements": 7,
+      "cyclomatic": 10,
+      "lines": 11
     },
     {
       "file": "internal/detect/log_context.go",
       "name": "numericLogContext.fragment",
-      "statements": 14,
-      "cyclomatic": 19,
-      "lines": 22
+      "statements": 7,
+      "cyclomatic": 13,
+      "lines": 12
+    },
+    {
+      "file": "internal/detect/log_context.go",
+      "name": "objectReference",
+      "statements": 17,
+      "cyclomatic": 15,
+      "lines": 26
     },
     {
       "file": "internal/detect/pan.go",
       "name": "PAN.scanNormalized",
-      "statements": 28,
-      "cyclomatic": 20,
-      "lines": 49
+      "statements": 22,
+      "cyclomatic": 9,
+      "lines": 41
     },
     {
       "file": "internal/detect/phone_jp.go",
       "name": "JPPhone.scanNormalized",
-      "statements": 33,
-      "cyclomatic": 16,
-      "lines": 64
+      "statements": 26,
+      "cyclomatic": 9,
+      "lines": 50
     },
     {
       "file": "internal/detect/service_token.go",
       "name": "serviceTokenEnd",
-      "statements": 27,
-      "cyclomatic": 22,
-      "lines": 39
+      "statements": 7,
+      "cyclomatic": 3,
+      "lines": 9
+    },
+    {
+      "file": "json.go",
+      "name": "Scanner.maskJSON",
+      "statements": 29,
+      "cyclomatic": 14,
+      "lines": 40
     },
     {
       "file": "json.go",
       "name": "jsonWalker.container",
-      "statements": 37,
-      "cyclomatic": 12,
-      "lines": 49
+      "statements": 28,
+      "cyclomatic": 9,
+      "lines": 36
     },
     {
       "file": "json.go",
       "name": "jsonWalker.value",
-      "statements": 30,
-      "cyclomatic": 22,
-      "lines": 44
+      "statements": 21,
+      "cyclomatic": 12,
+      "lines": 31
     },
     {
       "file": "scanner.go",
       "name": "Scanner.scan",
-      "statements": 9,
-      "cyclomatic": 5,
-      "lines": 14
+      "statements": 1,
+      "cyclomatic": 1,
+      "lines": 3
     },
     {
       "file": "scanner.go",
@@ -185,9 +262,16 @@
     {
       "file": "slog_handler.go",
       "name": "slogHandler.sanitizeAttr",
-      "statements": 32,
+      "statements": 34,
       "cyclomatic": 15,
-      "lines": 49
+      "lines": 51
+    },
+    {
+      "file": "slog_handler.go",
+      "name": "slogHandler.sanitizeRecord",
+      "statements": 31,
+      "cyclomatic": 9,
+      "lines": 43
     }
   ],
   "schema": 1
