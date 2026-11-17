@@ -50,7 +50,7 @@ func (d *Email) Scan(data []byte) []Finding {
 			continue
 		}
 
-		if string(data[localStart:i]) == "git" && domainEnd+1 < len(data) && data[domainEnd] == ':' && !urlDelimiter(data[domainEnd+1]) {
+		if isSCPRemote(data, localStart, i, domainEnd) {
 			continue
 		}
 
@@ -59,26 +59,38 @@ func (d *Email) Scan(data []byte) []Finding {
 			continue
 		}
 
-		// Integer tenths avoid losing an inclusive documented threshold to rounding.
-		const basePoints, tldPoints, structurePoints, scoreScale = 7, 2, 1, 10
-		points := basePoints
-		if isKnownTLD(tld) {
-			points += tldPoints
-		}
-		// Structural check: no consecutive dots in domain.
-		if !hasConsecutiveDots(domain) {
-			points += structurePoints
-		}
 		findings = append(findings, Finding{
 			DetectorName: d.Name(),
 			Start:        localStart,
 			End:          domainEnd,
-			Confidence:   float64(points) / scoreScale,
+			Confidence:   emailConfidence(tld, domain),
 		})
 		boundary = domainEnd
 	}
 
 	return findings
+}
+
+// isSCPRemote reports whether git@host: followed by a path is an SCP-style Git
+// remote rather than an email address.
+func isSCPRemote(data []byte, localStart, at, domainEnd int) bool {
+	return string(data[localStart:at]) == "git" && domainEnd+1 < len(data) && data[domainEnd] == ':' && !urlDelimiter(data[domainEnd+1])
+}
+
+// emailConfidence scores an accepted address from a base, a known TLD and a
+// domain without consecutive dots.
+func emailConfidence(tld, domain []byte) float64 {
+	// Integer tenths avoid losing an inclusive documented threshold to rounding.
+	const basePoints, tldPoints, structurePoints, scoreScale = 7, 2, 1, 10
+	points := basePoints
+	if isKnownTLD(tld) {
+		points += tldPoints
+	}
+	// Structural check: no consecutive dots in domain.
+	if !hasConsecutiveDots(domain) {
+		points += structurePoints
+	}
+	return float64(points) / scoreScale
 }
 
 // findLocalPartStart walks backward from atIdx to find the start of the local
