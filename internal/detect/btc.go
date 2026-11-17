@@ -65,7 +65,7 @@ func matchBech32Prefix(data []byte, i int) bool {
 // Returns the Finding, end position, and success flag.
 func (d *BTC) scanBech32(data []byte, i int) (Finding, int, bool) {
 	// Word boundary: preceding character must not be alphanumeric or underscore.
-	if i > 0 && isIdentifierByte(data[i-1]) && !encodedSeparatorBefore(data, i) {
+	if !btcWordStart(data, i) {
 		return Finding{}, 0, false
 	}
 
@@ -87,7 +87,7 @@ func (d *BTC) scanBech32(data []byte, i int) (Finding, int, bool) {
 	}
 
 	// Word boundary: following character must not be alphanumeric or underscore.
-	if j < len(data) && isIdentifierByte(data[j]) {
+	if !btcWordEnd(data, j) {
 		return Finding{}, 0, false
 	}
 
@@ -115,15 +115,7 @@ func (d *BTC) scanBech32(data []byte, i int) (Finding, int, bool) {
 		return Finding{}, 0, false
 	}
 
-	// Determine address type from witness version and checksum constant.
-	// BIP-173: witness version 0 uses bech32.
-	// BIP-350: witness versions 1-16 use bech32m.
-	witnessVersion := decoded[0]
-	switch {
-	case witnessVersion == 0 && checksumConst == bech32ChecksumConst:
-	case witnessVersion >= 1 && witnessVersion <= 16 && checksumConst == bech32mChecksumConst:
-	default:
-		// Invalid witness version / checksum variant combination.
+	if !validBech32Witness(decoded[0], checksumConst) {
 		return Finding{}, 0, false
 	}
 
@@ -138,13 +130,41 @@ func (d *BTC) scanBech32(data []byte, i int) (Finding, int, bool) {
 	}, j, true
 }
 
+// validBech32Witness reports whether the witness version matches the checksum
+// variant: BIP-173 version 0 uses bech32 and BIP-350 versions 1-16 use bech32m.
+func validBech32Witness(witnessVersion, checksumConst int) bool {
+	// Determine address type from witness version and checksum constant.
+	// BIP-173: witness version 0 uses bech32.
+	// BIP-350: witness versions 1-16 use bech32m.
+	switch {
+	case witnessVersion == 0 && checksumConst == bech32ChecksumConst:
+	case witnessVersion >= 1 && witnessVersion <= 16 && checksumConst == bech32mChecksumConst:
+	default:
+		// Invalid witness version / checksum variant combination.
+		return false
+	}
+	return true
+}
+
+// btcWordStart reports whether an address may start at i: the preceding byte is
+// not an identifier byte unless an encoded separator precedes the address.
+func btcWordStart(data []byte, i int) bool {
+	return i == 0 || !isIdentifierByte(data[i-1]) || encodedSeparatorBefore(data, i)
+}
+
+// btcWordEnd reports whether an address may end at j: the following byte is not
+// an identifier byte.
+func btcWordEnd(data []byte, j int) bool {
+	return j >= len(data) || !isIdentifierByte(data[j])
+}
+
 // scanLegacy attempts to parse a legacy (P2PKH/P2SH) Bitcoin address starting at position i.
 // Returns the Finding, end position, and success flag.
 func (d *BTC) scanLegacy(data []byte, i int) (Finding, int, bool) {
 	// Word boundary: preceding character must not be alphanumeric or underscore.
 	// This matches the right-boundary check and prevents false positives from
 	// non-Base58 characters like 0, I, O, l that precede the address.
-	if i > 0 && isIdentifierByte(data[i-1]) && !encodedSeparatorBefore(data, i) {
+	if !btcWordStart(data, i) {
 		return Finding{}, 0, false
 	}
 
@@ -161,29 +181,13 @@ func (d *BTC) scanLegacy(data []byte, i int) (Finding, int, bool) {
 	}
 
 	// Word boundary: following character must not be alphanumeric or underscore.
-	if j < len(data) && isIdentifierByte(data[j]) {
+	if !btcWordEnd(data, j) {
 		return Finding{}, 0, false
 	}
 
 	addr := string(data[i:j])
 
-	// Validate Base58Check encoding (double SHA-256 checksum).
-	decoded, ok := base58Decode(addr)
-	if !ok || len(decoded) != 25 {
-		return Finding{}, 0, false
-	}
-
-	if !validateBase58Checksum(decoded) {
-		return Finding{}, 0, false
-	}
-
-	// Determine address type from version byte.
-	switch decoded[0] {
-	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-	case 0x00:
-	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-	case 0x05:
-	default:
+	if !validLegacyPayload(addr) {
 		return Finding{}, 0, false
 	}
 
@@ -194,4 +198,29 @@ func (d *BTC) scanLegacy(data []byte, i int) (Finding, int, bool) {
 		//nolint:mnd // The detector contract documents this heuristic score.
 		Confidence: 0.95,
 	}, j, true
+}
+
+// validLegacyPayload validates the Base58Check payload of a legacy address: a
+// 25-byte decoding, the double SHA-256 checksum and a P2PKH or P2SH version byte.
+func validLegacyPayload(addr string) bool {
+	// Validate Base58Check encoding (double SHA-256 checksum).
+	decoded, ok := base58Decode(addr)
+	if !ok || len(decoded) != 25 {
+		return false
+	}
+
+	if !validateBase58Checksum(decoded) {
+		return false
+	}
+
+	// Determine address type from version byte.
+	switch decoded[0] {
+	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
+	case 0x00:
+	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
+	case 0x05:
+	default:
+		return false
+	}
+	return true
 }
