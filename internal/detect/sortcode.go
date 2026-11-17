@@ -63,16 +63,24 @@ func isSortCodePattern(data []byte, i int) (sep byte, ok bool) {
 // is preceded by an alphanumeric character, is part of a longer separated
 // sequence, is followed by a digit, or continues with another separator group.
 func isValidSortCodeBoundary(data []byte, i, end int, sep byte) bool {
+	return sortCodeLeadingBoundary(data, i, sep) && sortCodeTrailingBoundary(data, end, sep)
+}
+
+// sortCodeLeadingBoundary rejects a candidate preceded by an alphanumeric byte
+// or by another separated digit pair.
+func sortCodeLeadingBoundary(data []byte, i int, sep byte) bool {
 	// Word boundary: preceding character must not be a digit or letter.
 	if i > 0 && ascii.IsAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
 		return false
 	}
 
 	// Avoid matching part of a longer separated sequence (e.g., "12-34-56-78").
-	if i >= 3 && data[i-1] == sep && ascii.IsDigit(data[i-2]) && ascii.IsDigit(data[i-3]) {
-		return false
-	}
+	return i < 3 || data[i-1] != sep || !ascii.IsDigit(data[i-2]) || !ascii.IsDigit(data[i-3])
+}
 
+// sortCodeTrailingBoundary rejects a candidate followed by a digit or by
+// another separator group, except a hyphenated code after a space.
+func sortCodeTrailingBoundary(data []byte, end int, sep byte) bool {
 	// Word boundary: following character must not be a digit.
 	// Allow letter to follow (e.g., "12-34-56 is the sort code").
 	if end < len(data) && ascii.IsDigit(data[end]) {
