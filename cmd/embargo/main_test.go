@@ -26,7 +26,7 @@ func TestFilesAreReadInOrderLikeCat(t *testing.T) {
 		t.Fatalf("got %q, want %q", out.String(), want)
 	}
 	out.Reset()
-	if err := run([]string{"--report", first, second}, strings.NewReader(""), &out); err != nil || !strings.Contains(out.String(), `"lines": 2`) {
+	if err := run([]string{flagReport, first, second}, strings.NewReader(""), &out); err != nil || !strings.Contains(out.String(), `"lines": 2`) {
 		t.Fatalf("report over files: err=%v output=%s", err, out.String())
 	}
 }
@@ -45,7 +45,7 @@ func TestMissingFileStopsWithoutItsName(t *testing.T) {
 		t.Fatalf("missing file: err=%v output=%q", err, out.String())
 	}
 	out.Reset()
-	if err := run([]string{"--report", missing}, strings.NewReader(""), &out); err == nil || err.Error() != "embargo: an input file cannot be opened" || out.Len() != 0 {
+	if err := run([]string{flagReport, missing}, strings.NewReader(""), &out); err == nil || err.Error() != "embargo: an input file cannot be opened" || out.Len() != 0 {
 		t.Fatalf("missing file in a report: err=%v output=%q", err, out.String())
 	}
 	if run([]string{directory}, strings.NewReader(""), &out) == nil {
@@ -57,7 +57,7 @@ func TestHelpVersionAndExitStatus(t *testing.T) {
 	t.Parallel()
 	for _, args := range [][]string{{"-h"}, {"--help"}} {
 		var out, diagnostics bytes.Buffer
-		if code := exitCode(args, strings.NewReader(""), &out, &diagnostics); code != 0 || !strings.HasPrefix(out.String(), "Usage: embargo [") || !strings.Contains(out.String(), "--report") || !strings.Contains(out.String(), kindsHelp) {
+		if code := exitCode(args, strings.NewReader(""), &out, &diagnostics); code != 0 || !strings.HasPrefix(out.String(), "Usage: embargo [") || !strings.Contains(out.String(), flagReport) || !strings.Contains(out.String(), kindsHelp) {
 			t.Errorf("%v: code=%d output=%q", args, code, out.String())
 		}
 	}
@@ -66,10 +66,10 @@ func TestHelpVersionAndExitStatus(t *testing.T) {
 		t.Errorf("version: code=%d output=%q", code, out.String())
 	}
 	out.Reset()
-	if code := exitCode([]string{"--kinds", "unknown"}, strings.NewReader(""), &out, &diagnostics); code != 1 || out.Len() != 0 || !strings.HasPrefix(diagnostics.String(), "embargo: --kinds") {
+	if code := exitCode([]string{flagKinds, "unknown"}, strings.NewReader(""), &out, &diagnostics); code != 1 || out.Len() != 0 || !strings.HasPrefix(diagnostics.String(), "embargo: --kinds") {
 		t.Errorf("invalid kind: code=%d stdout=%q stderr=%q", code, out.String(), diagnostics.String())
 	}
-	if exitCode([]string{"--kinds", "unknown"}, strings.NewReader(""), &out, failingOutput{}) != 1 {
+	if exitCode([]string{flagKinds, "unknown"}, strings.NewReader(""), &out, failingOutput{}) != 1 {
 		t.Error("a failed diagnostic changed the exit status")
 	}
 	for _, args := range [][]string{{"--help"}, {"--version"}} {

@@ -1243,12 +1243,12 @@ func TestScanBuffersAreNotReusedForCustomDetectors(t *testing.T) {
 	if withCustom.scratch != nil {
 		t.Fatal("a scanner with a custom detector must not pool scan buffers")
 	}
-	for _, document := range []string{`{"first":"aaaa"}`, `{"second":"bbbb"}`} {
+	for _, document := range []string{`{"opening":"aaaa"}`, `{"second":"bbbb"}`} {
 		if _, err := withCustom.MaskJSON([]byte(document)); err != nil {
 			t.Fatal(err)
 		}
 	}
-	if got := string(custom.seen[0]); got != "first" {
+	if got := string(custom.seen[0]); got != "opening" {
 		t.Fatalf("retained input changed to %q", got)
 	}
 	builtin := NewScanner()

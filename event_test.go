@@ -137,8 +137,8 @@ func TestCanonicalIntegerMatchesExactIntegerFixedPoints(t *testing.T) {
 func TestMaskBytesMatchesMaskScalar(t *testing.T) {
 	t.Parallel()
 	scanner := NewScanner(WithKinds(KindEmail, KindPAN))
-	for _, value := range []string{"clean application value", "alice@example.com", "4111111111111111", "4111111111111111 ", "-17", "true", "null", ""} {
-		for _, key := range []string{"", "card", "password"} {
+	for _, value := range []string{"clean application value", documentedEmail, "4111111111111111", "4111111111111111 ", "-17", "true", "null", ""} {
+		for _, key := range []string{"", "card", credentialFixtureKey} {
 			byText := eventScanner{scanner: scanner, remaining: maxScanBytes}
 			want, wantErr := byText.maskScalar(context.Background(), value, key)
 			byBytes := eventScanner{scanner: scanner, remaining: maxScanBytes}

@@ -39,6 +39,9 @@ linters:
   - goconst
   - gocritic
   - gocyclo
+  - funlen
+  - cyclop
+  - maintidx
   - godot
   - gomoddirectives
   - gosec
@@ -218,10 +221,21 @@ linters:
       allow-unused: false
     dupl:
       threshold: 150
+    # Production limits; test functions keep the earlier 30 and 25 through the
+    # exclusion rules below, since table cases read best kept together.
     gocognit:
-      min-complexity: 30
+      min-complexity: 15
     gocyclo:
-      min-complexity: 25
+      min-complexity: 15
+    cyclop:
+      max-complexity: 15
+    funlen:
+      lines: 60
+      statements: 40
+      ignore-comments: true
+    # The lowest production index measured when these limits were set was 37.
+    maintidx:
+      under: 35
     nestif:
       min-complexity: 5
     goconst:
@@ -313,6 +327,15 @@ linters:
     - path: '(^|/)([a-z_]+_)?example(_[a-z_]+)?_test\.go$'
       linters: [forbidigo]
       text: 'use of `fmt\.Print(f|ln)?`'
+    # Tests are held to the earlier complexity ceilings: gocognit 30, gocyclo 25.
+    - path: '_test\.go$'
+      linters: [gocognit]
+      text: 'cognitive complexity (1[6-9]|2[0-9]|30) of func'
+    - path: '_test\.go$'
+      linters: [gocyclo]
+      text: 'cyclomatic complexity (1[6-9]|2[0-5]) of func'
+    - path: '_test\.go$'
+      linters: [funlen, cyclop, maintidx]
     paths: []
 issues:
   max-issues-per-linter: 0

@@ -26,31 +26,48 @@ func filterLines(input io.Reader, output io.Writer, scanner *embargo.Scanner) er
 	writer := bufio.NewWriterSize(output, ioBuffer)
 	for number := 1; ; number++ {
 		line, tooLong, readErr := readLine(reader)
-		if tooLong {
-			return flushThen(writer, fmt.Errorf("embargo: line %d exceeds the 4 MiB limit; output stops before it", number))
+		if failure := readFailure(tooLong, readErr, number); failure != nil {
+			return flushThen(writer, failure)
 		}
-		if readErr != nil && !errors.Is(readErr, io.EOF) {
-			return flushThen(writer, safeInputError(readErr, fmt.Sprintf("embargo: input read failed at line %d", number)))
+		if err := writeMaskedLine(writer, scanner, line); err != nil {
+			return err
 		}
-		if len(line) > 0 {
-			body, ending := splitEnding(line)
-			_, err := writer.Write(maskLine(scanner, body))
-			if err == nil {
-				_, err = writer.Write(ending)
-			}
-			if err != nil {
-				return errors.New("embargo: output write failed")
-			}
+		done := errors.Is(readErr, io.EOF)
+		if (done || reader.Buffered() == 0) && writer.Flush() != nil {
+			return errors.New("embargo: output write failed")
 		}
-		if errors.Is(readErr, io.EOF) || reader.Buffered() == 0 {
-			if err := writer.Flush(); err != nil {
-				return errors.New("embargo: output write failed")
-			}
-		}
-		if errors.Is(readErr, io.EOF) {
+		if done {
 			return nil
 		}
 	}
+}
+
+// readFailure turns a stopped read into the message for line number, or nil
+// when the line was read in full, including the final one at io.EOF.
+func readFailure(tooLong bool, readErr error, number int) error {
+	if tooLong {
+		return fmt.Errorf("embargo: line %d exceeds the 4 MiB limit; output stops before it", number)
+	}
+	if readErr != nil && !errors.Is(readErr, io.EOF) {
+		return safeInputError(readErr, fmt.Sprintf("embargo: input read failed at line %d", number))
+	}
+	return nil
+}
+
+// writeMaskedLine writes one masked line followed by its original ending.
+func writeMaskedLine(writer *bufio.Writer, scanner *embargo.Scanner, line []byte) error {
+	if len(line) == 0 {
+		return nil
+	}
+	body, ending := splitEnding(line)
+	_, err := writer.Write(maskLine(scanner, body))
+	if err == nil {
+		_, err = writer.Write(ending)
+	}
+	if err != nil {
+		return errors.New("embargo: output write failed")
+	}
+	return nil
 }
 
 func flushThen(writer *bufio.Writer, err error) error {

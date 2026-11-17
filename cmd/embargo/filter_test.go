@@ -50,10 +50,10 @@ func TestFilterKindSelection(t *testing.T) {
 		want string
 		args []string
 	}{
-		{args: []string{"--kinds", "pan"}, want: filterEmail + " " + filterMarker + "\n"},
-		{args: []string{"--kinds", "email"}, want: filterMarker + " " + filterPAN + "\n"},
-		{args: []string{"--min-confidence", "1"}, want: filterMarker + " " + filterMarker + "\n"},
-		{args: []string{"--kinds", "all"}, want: filterMarker + " " + filterMarker + "\n"},
+		{args: []string{flagKinds, "pan"}, want: filterEmail + " " + filterMarker + "\n"},
+		{args: []string{flagKinds, "email"}, want: filterMarker + " " + filterPAN + "\n"},
+		{args: []string{flagMinimum, "1"}, want: filterMarker + " " + filterMarker + "\n"},
+		{args: []string{flagKinds, kindsAll}, want: filterMarker + " " + filterMarker + "\n"},
 	} {
 		var out bytes.Buffer
 		if err := run(tc.args, strings.NewReader(input), &out); err != nil {
@@ -78,8 +78,8 @@ func TestFilterStopsBeforeOverlongLineAndReadFailure(t *testing.T) {
 	}
 	out.Reset()
 	exact := strings.Repeat("y", maximumLine-1) + "\n"
-	if err := run(nil, strings.NewReader(exact), &out); err != nil || out.Len() != len(exact) {
-		t.Fatalf("line at the limit: err=%v length=%d", err, out.Len())
+	if exactErr := run(nil, strings.NewReader(exact), &out); exactErr != nil || out.Len() != len(exact) {
+		t.Fatalf("line at the limit: err=%v length=%d", exactErr, out.Len())
 	}
 	out.Reset()
 	failing := io.MultiReader(strings.NewReader("card="+filterPAN+"\n"), failingInput{})
@@ -121,7 +121,7 @@ func TestReadLineAndSplitEnding(t *testing.T) {
 		t.Fatalf("CRLF split = %q %q", body, ending)
 	}
 	body, ending = splitEnding([]byte("\r\n"))
-	if string(body) != "" || string(ending) != "\r\n" {
+	if len(body) != 0 || string(ending) != "\r\n" {
 		t.Fatalf("bare CRLF split = %q %q", body, ending)
 	}
 	body, ending = splitEnding([]byte("\n"))

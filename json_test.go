@@ -690,7 +690,7 @@ func TestPlainJSONTextMatchesEncodingJSON(t *testing.T) {
 	t.Parallel()
 	for b := range 256 {
 		text := "a" + string([]byte{byte(b)}) + "z"
-		encoded, err := json.Marshal(text)
+		encoded, err := json.Marshal(any(text))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -701,14 +701,14 @@ func TestPlainJSONTextMatchesEncodingJSON(t *testing.T) {
 			t.Errorf("byte %#x: plainJSONText = %v, encoding/json unchanged = %v", b, got, plain)
 		}
 	}
-	for _, text := range []string{"", "[REDACTED]", "user [REDACTED] failed", "é", " "} {
+	for _, text := range []string{"", redactionMarker, "user " + redactionMarker + " failed", "é", " "} {
 		walker := jsonWalker{}
 		walker.appendString(text)
-		want, err := json.Marshal(text)
+		want, err := json.Marshal(any(text))
 		if err != nil {
 			t.Fatal(err)
 		}
-		if string(walker.result) != string(want) {
+		if !bytes.Equal(walker.result, want) {
 			t.Errorf("appendString(%q) = %s, want %s", text, walker.result, want)
 		}
 	}

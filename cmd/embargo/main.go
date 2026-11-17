@@ -103,7 +103,7 @@ func parseConfidence(text string) (float64, bool) {
 // openInputs reads the named files in order, like cat, or stdin when there are
 // none. Files open one at a time; a file that cannot be read stops the input
 // with a fixed error that does not repeat its name.
-func openInputs(names []string, stdin io.Reader) (io.Reader, func()) {
+func openInputs(names []string, stdin io.Reader) (source io.Reader, closeAll func()) {
 	if len(names) == 0 {
 		return stdin, func() {}
 	}
@@ -134,32 +134,41 @@ type fileSequence struct {
 
 func (f *fileSequence) Read(p []byte) (int, error) {
 	for {
-		if f.closeErr != nil {
-			return 0, inputError("embargo: an input file cannot be closed")
-		}
-		if f.current == nil {
-			if len(f.names) == 0 {
-				return 0, io.EOF
-			}
-			file, err := os.Open(f.names[0])
-			if err != nil {
-				return 0, inputError("embargo: an input file cannot be opened")
-			}
-			f.current, f.names = file, f.names[1:]
+		if err := f.advance(); err != nil {
+			return 0, err
 		}
 		n, err := f.current.Read(p)
-		if errors.Is(err, io.EOF) {
-			f.close()
-			if n > 0 {
-				return n, nil
+		if !errors.Is(err, io.EOF) {
+			if err != nil {
+				return n, inputError("embargo: an input file cannot be read")
 			}
-			continue
+			return n, nil
 		}
-		if err != nil {
-			return n, inputError("embargo: an input file cannot be read")
+		f.close()
+		if n > 0 {
+			return n, nil
 		}
-		return n, nil
 	}
+}
+
+// advance opens the next file when none is open, returning io.EOF after the
+// last one and a fixed error for a file that cannot be opened or closed.
+func (f *fileSequence) advance() error {
+	if f.closeErr != nil {
+		return inputError("embargo: an input file cannot be closed")
+	}
+	if f.current != nil {
+		return nil
+	}
+	if len(f.names) == 0 {
+		return io.EOF
+	}
+	file, err := os.Open(f.names[0])
+	if err != nil {
+		return inputError("embargo: an input file cannot be opened")
+	}
+	f.current, f.names = file, f.names[1:]
+	return nil
 }
 
 // close releases the current file; a failure is reported by the next Read.

@@ -28,7 +28,7 @@ func (s *Scanner) buildDispatch() {
 		}
 	}
 	// A dense table lets selectDetectors skip most bytes without loading a bucket.
-	for b, bucket := range s.hintIndex {
+	for b, bucket := range &s.hintIndex {
 		s.hinted[b] = len(bucket) > 0
 	}
 }

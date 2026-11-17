@@ -16,7 +16,7 @@ func TestReportCountsOffsetsAndNeverEchoesInput(t *testing.T) {
 	const password = "private-fixture-value"
 	input := "受注 ok\r\ncard=" + pan + "\r\npassword=" + password + "\ncard=" + pan
 	var output bytes.Buffer
-	if err := run([]string{"--report"}, strings.NewReader(input), &output); err != nil {
+	if err := run([]string{flagReport}, strings.NewReader(input), &output); err != nil {
 		t.Fatal(err)
 	}
 	if strings.Contains(output.String(), pan) || strings.Contains(output.String(), password) || strings.Contains(output.String(), "受注") {
@@ -50,7 +50,7 @@ func TestReportSelectionAndSampleLimit(t *testing.T) {
 	t.Parallel()
 	input := strings.Repeat("card=4111111111111111\n", 10) + "alice@example.com\n"
 	var output bytes.Buffer
-	if err := run([]string{"--report", "--kinds", reportPAN, "--samples", "1"}, strings.NewReader(input), &output); err != nil {
+	if err := run([]string{flagReport, flagKinds, reportPAN, flagSamples, "1"}, strings.NewReader(input), &output); err != nil {
 		t.Fatal(err)
 	}
 	var got report
@@ -61,14 +61,14 @@ func TestReportSelectionAndSampleLimit(t *testing.T) {
 		t.Fatal("selection or sample cap ignored")
 	}
 	output.Reset()
-	if err := run([]string{"--report", "--kinds", "all"}, strings.NewReader("123-45-6789"), &output); err != nil {
+	if err := run([]string{flagReport, flagKinds, kindsAll}, strings.NewReader("123-45-6789"), &output); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(output.String(), "us_ssn") {
 		t.Fatal("opt-in kinds missing")
 	}
 	output.Reset()
-	if err := run([]string{"--report", "--min-confidence", "0.7"}, strings.NewReader("order_id=4111111111111111\n"), &output); err != nil || strings.Contains(output.String(), `"pan"`) {
+	if err := run([]string{flagReport, flagMinimum, "0.7"}, strings.NewReader("order_id=4111111111111111\n"), &output); err != nil || strings.Contains(output.String(), `"pan"`) {
 		t.Fatalf("minimum confidence ignored: %v %s", err, output.String())
 	}
 }
@@ -77,16 +77,16 @@ func TestReportRejectsIncompleteInputAndOutputFailure(t *testing.T) {
 	t.Parallel()
 	for _, input := range []io.Reader{strings.NewReader(strings.Repeat("x", 4<<20)), failingInput{}} {
 		var out bytes.Buffer
-		err := run([]string{"--report"}, input, &out)
+		err := run([]string{flagReport}, input, &out)
 		if err == nil || out.Len() != 0 || strings.Contains(err.Error(), "private-error") {
 			t.Fatal("incomplete report accepted or error echoed")
 		}
 	}
-	if run([]string{"--report"}, strings.NewReader(""), failingOutput{}) == nil {
+	if run([]string{flagReport}, strings.NewReader(""), failingOutput{}) == nil {
 		t.Fatal("output failure ignored")
 	}
 	var out bytes.Buffer
-	if err := run([]string{"--report"}, strings.NewReader(""), &out); err != nil || !json.Valid(out.Bytes()) || !strings.Contains(out.String(), `"findings": []`) {
+	if err := run([]string{flagReport}, strings.NewReader(""), &out); err != nil || !json.Valid(out.Bytes()) || !strings.Contains(out.String(), `"findings": []`) {
 		t.Fatalf("empty input report = %s, %v", out.String(), err)
 	}
 }

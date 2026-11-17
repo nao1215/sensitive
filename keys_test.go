@@ -13,7 +13,7 @@ import (
 func TestMaskKeyCacheHitMatchesScan(t *testing.T) {
 	t.Parallel()
 	scanner := NewScanner(WithKinds(KindEmail))
-	for _, key := range []string{"status", "password", "alice@example.com", "17", "-1", strings.Repeat("k", maxCachedKeyBytes+1)} {
+	for _, key := range []string{"status", credentialFixtureKey, documentedEmail, "17", "-1", strings.Repeat("k", maxCachedKeyBytes+1)} {
 		t.Run(key[:min(len(key), 20)], func(t *testing.T) {
 			t.Parallel()
 			want, wantErr := (&eventScanner{scanner: scanner, remaining: maxScanBytes}).maskScalar(context.Background(), key, "")
@@ -34,7 +34,7 @@ func TestMaskKeyCacheHitMatchesScan(t *testing.T) {
 func TestKeyCacheKeepsOnlyCleanShortTextKeys(t *testing.T) {
 	t.Parallel()
 	scanner := NewScanner(WithKinds(KindEmail))
-	for _, key := range []string{"status", "alice@example.com", "17", strings.Repeat("k", maxCachedKeyBytes+1)} {
+	for _, key := range []string{"status", documentedEmail, "17", strings.Repeat("k", maxCachedKeyBytes+1)} {
 		scan := eventScanner{scanner: scanner, remaining: maxScanBytes}
 		if _, err := scan.maskCached(context.Background(), key); err != nil {
 			t.Fatal(err)
@@ -43,7 +43,7 @@ func TestKeyCacheKeepsOnlyCleanShortTextKeys(t *testing.T) {
 	if _, ok := scanner.keys.load("status"); !ok {
 		t.Fatal("clean key was not cached")
 	}
-	for _, key := range []string{"alice@example.com", "17", strings.Repeat("k", maxCachedKeyBytes+1)} {
+	for _, key := range []string{documentedEmail, "17", strings.Repeat("k", maxCachedKeyBytes+1)} {
 		if _, ok := scanner.keys.load(key); ok {
 			t.Fatalf("%q must not be cached", key)
 		}
@@ -51,7 +51,7 @@ func TestKeyCacheKeepsOnlyCleanShortTextKeys(t *testing.T) {
 	if got := scanner.keys.size(); got != 1 {
 		t.Fatalf("cache size = %d, want 1", got)
 	}
-	if !scanner.cachedSensitiveKey("password") || scanner.cachedSensitiveKey("status") {
+	if !scanner.cachedSensitiveKey(credentialFixtureKey) || scanner.cachedSensitiveKey("status") {
 		t.Fatal("cached sensitivity disagrees with the key policy")
 	}
 	if NewScanner(WithDetector(&retainingDetector{})).keys != nil {
@@ -63,13 +63,13 @@ func TestKeyCacheStopsAdmittingWhenFull(t *testing.T) {
 	t.Parallel()
 	var cache keyCache
 	for i := range maxCachedKeys + 10 {
-		cache.store("key"+strconv.Itoa(i), keyResult{masked: "key"})
+		cache.store("key"+strconv.Itoa(i), keyResult{masked: "kept"})
 	}
 	cache.store("key0", keyResult{masked: "again"})
 	if got := cache.size(); got != maxCachedKeys {
 		t.Fatalf("cache size = %d, want %d", got, maxCachedKeys)
 	}
-	if result, ok := cache.load("key0"); !ok || result.masked != "key" {
+	if result, ok := cache.load("key0"); !ok || result.masked != "kept" {
 		t.Fatalf("first entry = %+v, %v", result, ok)
 	}
 	if _, ok := cache.load("key" + strconv.Itoa(maxCachedKeys)); ok {
