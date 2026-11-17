@@ -18,54 +18,66 @@ Use a base that contains these benchmark names and a compatible API. The first b
 ## Measured results
 
 <!-- benchmarks:start -->
-Measured 2026-11-15 with go1.26.11, linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S, GOMAXPROCS=1; median of ten 200 ms samples.
+Measured 2026-11-17 with go1.26.11, linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S, GOMAXPROCS=1; median of ten 200 ms samples.
 
 Background load: no intentional concurrent workload.
 
 | Operation | ns/op | MB/s | B/op | allocs/op |
 |---|---:|---:|---:|---:|
-| Scanner WithAll, clean | 67131.5 | 41.00 | 0 | 0 |
-| Scanner WithAll, dirty | 8091315.0 | 4.89 | 1187111 | 14113 |
-| Mask | 6306.5 | 466.82 | 13816 | 12 |
-| Writer only | 11.5 | 47214.50 | 0 | 0 |
-| Recorder + Check | 76069.5 | 7.15 | 40396 | 590 |
-| Plain slog, clean | 866.2 | — | 16 | 1 |
-| Masked slog, clean | 2477.0 | — | 80 | 5 |
-| Plain slog, dirty | 875.1 | — | 16 | 1 |
-| Masked slog, dirty | 3422.0 | — | 352 | 13 |
+| Scanner WithAll, clean | 64694.5 | 42.54 | 0 | 0 |
+| Scanner WithAll, dirty | 6927204.0 | 9.18 | 1431824 | 11824 |
+| Mask | 3317.5 | 887.66 | 8448 | 2 |
+| Writer only | 5.7 | 94907.39 | 0 | 0 |
+| Recorder + Check | 50541.0 | 10.76 | 45900 | 686 |
+| Plain slog, clean | 430.0 | — | 16 | 1 |
+| Masked slog, clean | 1453.5 | — | 16 | 1 |
+| Plain slog, dirty | 424.1 | — | 16 | 1 |
+| Masked slog, dirty | 1738.0 | — | 64 | 2 |
 
 <details>
 <summary>Per-detector Scanner throughput</summary>
 
 | Detector | Clean MB/s | Dirty MB/s |
 |---|---:|---:|
-| aba_routing | 547.43 | 46.56 |
-| ach_trace | 699.91 | 4.88 |
-| all | 41.00 | 4.89 |
-| awskey | 731.00 | 95.30 |
-| bank_account | 569.69 | 6.16 |
-| btc | 728.13 | 45.03 |
-| card_expiry | 1007.12 | 3.72 |
-| credential | 275.76 | 47.54 |
-| cvv | 366.88 | 4.92 |
-| email | 25480.33 | 58.70 |
-| eth | 1215.56 | 144.50 |
-| github_token | 1125.67 | 125.61 |
-| google_api_key | 937.89 | 176.08 |
-| high_entropy | 685.06 | 51.61 |
-| iban | 791.74 | 51.82 |
-| ipaddr | 17847.85 | 43.54 |
-| jwt | 1065.56 | 27.58 |
-| merchant_id | 333.04 | 12.71 |
-| mynumber | 548.81 | 48.12 |
-| pan | 4717.77 | 41.24 |
-| payment_token | 276.62 | 208.34 |
-| phone_jp | 32909.97 | 40.50 |
-| private_key_pem | 753.46 | 98.44 |
-| service_token | 235.68 | 197.97 |
-| slack_token | 921.02 | 71.37 |
-| swiftbic | 188.83 | 32.41 |
-| uk_sortcode | 349.74 | 42.72 |
+| aba_routing | 884.43 | 119.20 |
+| ach_trace | 937.54 | 9.71 |
+| all | 42.54 | 9.18 |
+| awskey | 1069.07 | 265.07 |
+| bank_account | 906.08 | 12.93 |
+| br_cnpj | 874.26 | 161.18 |
+| br_cpf | 867.84 | 161.83 |
+| btc | 1206.04 | 103.44 |
+| ca_sin | 857.37 | 155.72 |
+| card_expiry | 1385.98 | 7.70 |
+| cn_resident_id | 1101.72 | 69.85 |
+| credential | 362.55 | 71.31 |
+| cvv | 642.57 | 9.82 |
+| email | 4182.23 | 181.48 |
+| eth | 1525.26 | 318.53 |
+| github_token | 1454.76 | 359.96 |
+| google_api_key | 1298.53 | 412.38 |
+| high_entropy | 1216.20 | 110.26 |
+| iban | 434.47 | 127.07 |
+| in_aadhaar | 881.13 | 156.55 |
+| in_pan | 1115.72 | 183.28 |
+| ipaddr | 4014.06 | 70.69 |
+| jwt | 1426.62 | 58.28 |
+| kr_rrn | 886.89 | 130.75 |
+| merchant_id | 588.03 | 27.05 |
+| mynumber | 991.82 | 115.86 |
+| pan | 3110.60 | 150.54 |
+| payment_token | 273.13 | 351.73 |
+| phone_jp | 3912.62 | 121.97 |
+| phone_us | 3131.45 | 119.07 |
+| private_key_pem | 1114.80 | 1138.87 |
+| service_token | 430.77 | 443.19 |
+| slack_token | 1256.15 | 188.98 |
+| swiftbic | 352.22 | 109.35 |
+| uk_nhs | 914.43 | 164.74 |
+| uk_nino | 859.23 | 151.24 |
+| uk_sortcode | 619.88 | 137.25 |
+| us_itin | 864.94 | 166.93 |
+| us_ssn | 864.40 | 166.54 |
 
 </details>
 <!-- benchmarks:end -->
