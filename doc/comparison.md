@@ -2,6 +2,25 @@
 
 This compares overlapping use cases, not overall library quality or adoption. masq v0.2.3 offers a convenient slog ReplaceAttr, type/tag/name/prefix rules, allowed types and custom censors/redactors. embargo adds built-in detection, output-safe values, multiple logger adapters and application output assertions. The exact measured production and benchmark source fingerprint is recorded with the results.
 
+## Keeping a known secret out: typed wrappers
+
+<!-- secret-types:start -->
+| Output path | embargo Secret | ggwhite/go-masker v3.3.0 Sensitive |
+|---|---|---|
+| `fmt` `%v` and `%s` | hidden | hidden |
+| `fmt` `%+v` of a struct field | hidden | hidden |
+| `fmt` `%+v` of an unexported field | hidden | visible |
+| `fmt` `%#v` | hidden | hidden |
+| `fmt` `%x` and `%q` | hidden | hidden |
+| error built with `fmt.Errorf` | hidden | hidden |
+| `encoding/json` struct field | hidden | hidden |
+| `encoding/xml` struct field | hidden | hidden |
+| `encoding/gob` struct field | error | error |
+| `text/template` value | hidden | hidden |
+| `slog` JSON attribute | hidden | hidden |
+| `slog` text attribute | hidden | hidden |
+<!-- secret-types:end -->
+
 ## Correctness before speed
 
 The first eight cases reproduce the original comparison probe. Both libraries receive identical events through slog.JSONHandler. masq gets precompiled email and 13–19 digit card regexes, Password/password/token field rules and `masq:"secret"`, with time.Time and slog.Level allowed; embargo selects email/PAN detectors, default confidence 0 and its default sensitive keys plus `recovery`. The tagged Recovery field is protected by that key rule in embargo. These are practical documented configurations; neither claims that regex syntax provides a checksum validator.

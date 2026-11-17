@@ -3,7 +3,9 @@ package tests
 import (
 	"bytes"
 	"context"
+	"encoding/gob"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -16,11 +18,13 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/awslabs/ferret-scan/pkg/redact"
 	dlp "github.com/bytedance/godlp"
 	"github.com/bytedance/godlp/dlpheader"
+	gomasker "github.com/ggwhite/go-masker/v3"
 	masker "github.com/icntswm/go-masker"
 	"github.com/icntswm/go-masker/httpmask"
 	"github.com/icntswm/go-masker/slogmask"
@@ -873,3 +877,100 @@ func TestComparisonTypedCopy(t *testing.T) {
 }
 
 const comparisonInvalidCard = "invalid_luhn"
+
+const secretFixture = "opaque-secret-value"
+
+type secretOutputPath struct {
+	render func(wrapper secretWrapper) (string, error)
+	label  string
+}
+
+// secretWrapper holds one typed wrapper alone, as the exported field of a
+// struct and as an unexported field, which fmt prints without its methods.
+type secretWrapper struct {
+	value, field, hidden any
+	name                 string
+}
+
+func secretOutputPaths() []secretOutputPath {
+	value := func(render func(any) (string, error)) func(secretWrapper) (string, error) {
+		return func(w secretWrapper) (string, error) { return render(w.value) }
+	}
+	return []secretOutputPath{
+		{label: "`fmt` `%v` and `%s`", render: value(func(v any) (string, error) { return fmt.Sprintf("%v %s", v, v), nil })},
+		{label: "`fmt` `%+v` of a struct field", render: func(w secretWrapper) (string, error) { return fmt.Sprintf("%+v", w.field), nil }},
+		{label: "`fmt` `%+v` of an unexported field", render: func(w secretWrapper) (string, error) { return fmt.Sprintf("%+v", w.hidden), nil }},
+		{label: "`fmt` `%#v`", render: value(func(v any) (string, error) { return fmt.Sprintf("%#v", v), nil })},
+		{label: "`fmt` `%x` and `%q`", render: value(func(v any) (string, error) { return fmt.Sprintf("%x %q", v, v), nil })},
+		{label: "error built with `fmt.Errorf`", render: value(func(v any) (string, error) { return fmt.Errorf("login failed: %v", v).Error(), nil })},
+		{label: "`encoding/json` struct field", render: func(w secretWrapper) (string, error) { data, err := json.Marshal(w.field); return string(data), err }},
+		{label: "`encoding/xml` struct field", render: func(w secretWrapper) (string, error) { data, err := xml.Marshal(w.field); return string(data), err }},
+		{label: "`encoding/gob` struct field", render: func(w secretWrapper) (string, error) { return gobRender(w.field) }},
+		{label: "`text/template` value", render: value(templateRender)},
+		{label: "`slog` JSON attribute", render: value(func(v any) (string, error) { return slogRender(v, false), nil })},
+		{label: "`slog` text attribute", render: value(func(v any) (string, error) { return slogRender(v, true), nil })},
+	}
+}
+
+func gobRender(v any) (string, error) {
+	var out bytes.Buffer
+	err := gob.NewEncoder(&out).Encode(v)
+	return out.String(), err
+}
+
+func templateRender(v any) (string, error) {
+	var out strings.Builder
+	err := template.Must(template.New("value").Parse("{{.}}")).Execute(&out, v)
+	return out.String(), err
+}
+
+func slogRender(v any, text bool) string {
+	var out strings.Builder
+	var handler slog.Handler = slog.NewJSONHandler(&out, nil)
+	if text {
+		handler = slog.NewTextHandler(&out, nil)
+	}
+	slog.New(handler).Info("login", "password", v)
+	return out.String()
+}
+
+func secretVerdict(output string, err error) string {
+	switch {
+	case err != nil:
+		return "error"
+	case strings.Contains(output, secretFixture):
+		return "visible"
+	default:
+		return "hidden"
+	}
+}
+
+// TestSecretTypeOutputPaths renders a wrapped password through every standard
+// output path for embargo.Secret and go-masker v3's Sensitive, the two typed
+// wrappers, and publishes which paths keep the value out.
+func TestSecretTypeOutputPaths(t *testing.T) {
+	t.Parallel()
+	secret, sensitive := embargo.NewSecret(secretFixture), gomasker.NewPassword(secretFixture)
+	type embargoField struct{ Field embargo.Secret[string] }
+	type maskerField struct{ Field gomasker.Sensitive[string] }
+	type embargoHidden struct{ field embargo.Secret[string] }
+	type maskerHidden struct{ field gomasker.Sensitive[string] }
+	wrappers := []secretWrapper{
+		{name: "embargo Secret", value: secret, field: embargoField{secret}, hidden: embargoHidden{secret}},
+		{name: "go-masker v3.3.0 Sensitive", value: sensitive, field: maskerField{sensitive}, hidden: maskerHidden{sensitive}},
+	}
+	var table strings.Builder
+	writeComparisonTable(t, &table, "| Output path | embargo Secret | ggwhite/go-masker v3.3.0 Sensitive |\n|---|---|---|\n")
+	for _, path := range secretOutputPaths() {
+		writeComparisonTable(t, &table, "| %s |", path.label)
+		for _, wrapper := range wrappers {
+			verdict := secretVerdict(path.render(wrapper))
+			if wrapper.name == "embargo Secret" && verdict == "visible" {
+				t.Errorf("%s exposed the value on %s", wrapper.name, path.label)
+			}
+			writeComparisonTable(t, &table, " %s |", verdict)
+		}
+		writeComparisonTable(t, &table, "\n")
+	}
+	syncDocTable(t, "../doc/comparison.md", "secret-types", table.String())
+}

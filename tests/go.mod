@@ -29,6 +29,7 @@ require github.com/icntswm/go-masker v0.6.1
 
 require (
 	github.com/awslabs/ferret-scan v1.10.0
+	github.com/ggwhite/go-masker/v3 v3.3.0
 	github.com/pii-shield/pii-shield/v3 v3.0.0
 )
 
