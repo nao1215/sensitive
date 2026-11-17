@@ -27,11 +27,10 @@ func (s *Scanner) buildDispatch() {
 			s.hintIndex[b] = append(s.hintIndex[b], dispatchHint{hint: entry.lowered, mask: mask})
 		}
 	}
-	// Dense tables let selectDetectors skip most bytes without loading a
-	// bucket: hinted marks possible first bytes and follow the possible
-	// second bytes after each of them.
+	// A dense table lets selectDetectors skip most bytes without loading a
+	// bucket: follow holds the possible second bytes after each first byte,
+	// and is empty when no hint starts with that byte.
 	for b, bucket := range &s.hintIndex {
-		s.hinted[b] = len(bucket) > 0
 		s.follow[b] = followingBytes(bucket)
 	}
 }
@@ -59,9 +58,9 @@ func followingBytes(bucket []dispatchHint) byteSet {
 }
 
 // mayStartHint reports whether data[i], already lowered as b, can begin a
-// hint given the byte after it.
+// hint given the byte after it; the final byte only reaches its bucket.
 func (s *Scanner) mayStartHint(data []byte, i int, b byte) bool {
-	return s.hinted[b] && (i+1 == len(data) || s.follow[b].has(ascii.ToLower(data[i+1])))
+	return i+1 == len(data) || s.follow[b].has(ascii.ToLower(data[i+1]))
 }
 
 func (s *Scanner) selectDetectors(data []byte) uint64 {

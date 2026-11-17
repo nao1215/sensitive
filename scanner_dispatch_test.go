@@ -86,6 +86,26 @@ func TestDispatchSecondByteFilter(t *testing.T) {
 	}
 }
 
+func TestFollowingBytes(t *testing.T) {
+	t.Parallel()
+	set := followingBytes([]dispatchHint{{hint: []byte("ab")}, {hint: []byte("a-c")}})
+	for b := range 256 {
+		want := b == 'b' || b == '-'
+		if got := set.has(byte(b)); got != want {
+			t.Errorf("has(%q) = %v, want %v", byte(b), got, want)
+		}
+	}
+	for _, bucket := range [][]dispatchHint{{{hint: []byte("|")}}, {{mask: 1}}} {
+		set := followingBytes(bucket)
+		if !set.has(0) || !set.has('z') || !set.has(0xff) {
+			t.Errorf("followingBytes(%v) does not accept every byte", bucket)
+		}
+	}
+	if empty := followingBytes(nil); empty != (byteSet{}) {
+		t.Errorf("followingBytes(nil) = %v, want empty", empty)
+	}
+}
+
 //nolint:paralleltest // AllocsPerRun changes GOMAXPROCS while measuring.
 func TestCleanScanAllocationBudget(t *testing.T) {
 	s := NewScanner()

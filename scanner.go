@@ -22,7 +22,6 @@ type Scanner struct {
 	keys          *keyCache
 	hintIndex     [256][]dispatchHint
 	follow        [256]byteSet
-	hinted        [256]bool
 	minConfidence float64
 	unconditional uint64
 	initialized   bool
