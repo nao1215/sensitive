@@ -41,7 +41,7 @@ The generator rejects incomplete mutation/fuzz runs and records source-log hashe
 | Package | Score floor | Mutation coverage floor | Killed | Lived | Timed out | Uncovered |
 |---|---:|---:|---:|---:|---:|---:|
 | . | 82.97% | 99.73% | 302 | 46 | 16 | 1 |
-| cmd/embargo-audit | 91.67% | 100.00% | 33 | 3 | 0 | 0 |
+| cmd/embargo | 91.67% | 100.00% | 33 | 3 | 0 | 0 |
 | embargotest | 90.98% | 98.79% | 222 | 19 | 3 | 3 |
 | internal/ascii | 100.00% | 100.00% | 58 | 0 | 0 | 0 |
 | internal/detect | 87.31% | 92.17% | 1769 | 221 | 36 | 172 |
@@ -59,7 +59,7 @@ The remaining exceptions fall into four groups: standard-library encoding failur
 
 | Remaining function | Missing path and disposition |
 |---|---|
-| cmd/embargo-audit.main; embargotest.Guard | Child fixtures assert entry points; run, exitCode and guardParent are measured in-process. |
+| cmd/embargo.main; embargotest.Guard | Child fixtures assert entry points; run, exitCode and guardParent are measured in-process. |
 | embargotest.Run; embargotest.Guard | os.Executable failure is not portable to induce in an already running Go test binary. |
 | embargotest.guardMessage | Replacing process-wide stderr disturbs other tests; replay and child diagnostics are asserted. |
 | embargotest.representations; embargotest.recordHeaders; maskHTTPHeaders; appendString; sanitizeBytes | encoding/json cannot fail for the concrete string, byte slice and string-only map types passed here. |

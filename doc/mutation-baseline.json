@@ -57,7 +57,7 @@
         "KILLED": 5
       }
     },
-    "cmd/embargo-audit": {
+    "cmd/embargo": {
       "score": 91.67,
       "coverage": 100.0,
       "counts": {

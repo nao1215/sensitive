@@ -9,7 +9,7 @@ embargo keeps secrets and personal data out of what a Go program writes: logs, e
 
 ## Architecture
 
-The root package owns immutable scanner policy, public findings, masking, Secret/Input, the validated JSON walk, event scalar policy, slog and HTTP. internal/detect owns detector grammar and validation. internal/ascii owns byte primitives; internal/saferecord owns fixed diagnostics and request budgets; internal/output owns masked JSON framing. embargotest owns capture, canaries and expectations. cmd/embargo-audit owns local log inspection. Each of the six adapters is an independent module with its own SDK dependencies. Runtime code never imports embargotest; root never imports internal/output or an adapter.
+The root package owns immutable scanner policy, public findings, masking, Secret/Input, the validated JSON walk, event scalar policy, slog and HTTP. internal/detect owns detector grammar and validation. internal/ascii owns byte primitives; internal/saferecord owns fixed diagnostics and request budgets; internal/output owns masked JSON framing. embargotest owns capture, canaries and expectations. cmd/embargo owns local log inspection. Each of the six adapters is an independent module with its own SDK dependencies. Runtime code never imports embargotest; root never imports internal/output or an adapter.
 
 The production package inventory below is checked against go list in the root and every adapter by scripts/check_policies.py. Tool, integration and fixture packages live in the separate tests module.
 
@@ -21,7 +21,7 @@ The production package inventory below is checked against go list in the root an
 - `github.com/nao1215/embargo/adapters/sentry`
 - `github.com/nao1215/embargo/adapters/zap`
 - `github.com/nao1215/embargo/adapters/zerolog`
-- `github.com/nao1215/embargo/cmd/embargo-audit`
+- `github.com/nao1215/embargo/cmd/embargo`
 - `github.com/nao1215/embargo/embargotest`
 - `github.com/nao1215/embargo/internal/ascii`
 - `github.com/nao1215/embargo/internal/detect`

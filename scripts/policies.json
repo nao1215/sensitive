@@ -524,7 +524,7 @@
   {
     "rule": "Local log audits count actual findings without echoing source values",
     "source": "Repository maintenance policy",
-    "check": "cmd/embargo-audit/main_test.go#TestAuditCountsOffsetsAndNeverEchoesInput",
+    "check": "cmd/embargo/audit_test.go#TestAuditCountsOffsetsAndNeverEchoesInput",
     "where": "MultiPlatformUnitTest"
   },
   {

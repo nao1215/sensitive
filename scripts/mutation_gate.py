@@ -296,7 +296,7 @@ def main():
         shutil.copytree(ROOT, snapshot, symlinks=True, ignore=shutil.ignore_patterns(*ignored, 'node_modules', '.lake', '__pycache__', 'mutation-results', 'benchmark-results', 'quality-results', '_apalache-out'))
         subprocess.run(['go', 'test', './...'], cwd=snapshot, env=env, check=True, preexec_fn=limit_memory)
         listed = subprocess.check_output(['go', 'list', '-f', '{{.Dir}}', './...'], cwd=snapshot, env=env, text=True).split()
-        listed = {Path(path).relative_to(snapshot).as_posix() for path in listed} - {'.', 'cmd/embargo-audit'}
+        listed = {Path(path).relative_to(snapshot).as_posix() for path in listed} - {'.', 'cmd/embargo'}
         if listed != set(PACKAGES):
             raise ValueError('root packages changed; list every package in PACKAGES')
         # One run per package: gremlins derives every mutant's timeout from the
@@ -317,12 +317,12 @@ def main():
         # gremlins infers package paths from package names; nested package main
         # is mapped incorrectly. A temporary module makes the command its root.
         command = temporary/'command'
-        shutil.copytree(snapshot/'cmd/embargo-audit', command)
+        shutil.copytree(snapshot/'cmd/embargo', command)
         version = subprocess.check_output(['go', '-C', str(ROOT/'tests'), 'list', '-m', '-f', '{{.Version}}', 'github.com/nao1215/embargo'], env=env, text=True).strip()
         (command/'go.mod').write_text(f'module mutationcommand\n\ngo 1.26.11\n\nrequire github.com/nao1215/embargo {version}\nreplace github.com/nao1215/embargo => {snapshot}\n')
         report = measure(command, '.', output/'command.json', args.workers, env, scratch/'command')
-        scores.update(package_scores(report, 'cmd/embargo-audit'))
-        files = root_report['files'] + [dict(file, file_name='cmd/embargo-audit/'+file['file_name']) for file in report['files']]
+        scores.update(package_scores(report, 'cmd/embargo'))
+        files = root_report['files'] + [dict(file, file_name='cmd/embargo/'+file['file_name']) for file in report['files']]
         evidence = {'tool': TOOL, 'files': files, 'source_sha256': {file['file_name']: hashlib.sha256((snapshot/file['file_name']).read_bytes()).hexdigest() for file in files}}
         if package_scores(evidence) != scores:
             raise ValueError('combined command and root mutation scopes disagree')

@@ -6,7 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-## [0.10.1] - 2026-11-17
+The command-line tool is now `embargo`: by default it masks each line of files or stdin, keeping JSON lines' shape, and `embargo audit` replaces `embargo-audit`. Masking is faster with fewer allocations and unchanged output. The public library API is unchanged and the root module remains dependency-free.
+
+### Changed
+
+- The `cmd/embargo-audit` command is replaced by `cmd/embargo`. `embargo [flags] [file ...]` writes every line masked: JSON object and array lines go through MaskJSON and are written compact, other lines are masked as text, and line endings are kept. `embargo audit` takes the former flags and also reads files. Install with `go install github.com/nao1215/embargo/cmd/embargo@latest`.
+
+### Performance
+
+- The slog handler and MaskJSON reuse scan buffers, add all attributes to a record at once, cache the masked spelling and key policy of up to 1024 clean keys and messages of at most 64 bytes per built-in scanner, skip re-validating encoding/json output and copy clean JSON string lexemes without decoding them. Card detection skips text with fewer than 13 digits. On the comparison events allocations fell from 14–169 to 2–18 per record; output is byte-identical on the full equivalence corpus.
 
 ### Fixed
 

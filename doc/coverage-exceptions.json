@@ -1,8 +1,8 @@
 [
   {
-    "file": "cmd/embargo-audit/main.go",
-    "start": 38,
-    "end": 38,
+    "file": "cmd/embargo/main.go",
+    "start": 18,
+    "end": 18,
     "sha256": "b2849765c2b6e4020fe6008f325bbc591a90fd2a587d912e0c4722eefdaed6c4",
     "reason": "The os.Exit entry point is exercised by the installed command subprocess; exitCode and run are fully covered in-process. Child profiles are not merged into this profile."
   },

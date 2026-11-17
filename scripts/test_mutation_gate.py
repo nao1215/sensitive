@@ -26,7 +26,7 @@ class MutationGateTests(unittest.TestCase):
 
     def test_every_root_package_is_mutated_in_its_own_run(self):
         listed = subprocess.check_output(['go', 'list', '-f', '{{.Dir}}', './...'], cwd=gate.ROOT, text=True).split()
-        listed = {Path(path).relative_to(gate.ROOT).as_posix() for path in listed} - {'.', 'cmd/embargo-audit'}
+        listed = {Path(path).relative_to(gate.ROOT).as_posix() for path in listed} - {'.', 'cmd/embargo'}
         self.assertEqual(set(gate.PACKAGES), listed)
 
     def test_memory_cap_applies_to_child_processes(self):

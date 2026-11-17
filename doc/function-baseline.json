@@ -22,7 +22,7 @@
       "lines": 62
     },
     {
-      "file": "cmd/embargo-audit/main.go",
+      "file": "cmd/embargo/audit.go",
       "name": "run",
       "statements": 24,
       "cyclomatic": 8,

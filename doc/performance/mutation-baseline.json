@@ -17998,7 +17998,7 @@
       ]
     },
     {
-      "file_name": "cmd/embargo-audit/main.go",
+      "file_name": "cmd/embargo/audit.go",
       "mutations": [
         {
           "type": "CONDITIONALS_NEGATION",
@@ -18290,6 +18290,6 @@
     "internal/detect/credential_render.go": "c2794527d18e918ac1b742843bf316667296f2fb3d32d74d22b060e32f2f5691",
     "internal/detect/phone_jp.go": "09ba1aefae650ccd1ed45561bd7c4b08f46b42a3c7b5a10cc5741a32d8aa1e4f",
     "internal/detect/service_token.go": "1323ed88f7ef747ef9bfcddce7e29f1c6f8ce1896db78f56ce4cd5b2e90b87ed",
-    "cmd/embargo-audit/main.go": "e6e9c15ef4b10f53772d09b763196bedaecfa83cf0ee5ebfa0b67518e2992ab1"
+    "cmd/embargo/audit.go": "e6e9c15ef4b10f53772d09b763196bedaecfa83cf0ee5ebfa0b67518e2992ab1"
   }
 }

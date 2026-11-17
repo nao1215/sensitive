@@ -16,7 +16,7 @@ class ChangesTest(unittest.TestCase):
     def test_detector_filter(self):
         for path in ['scanner.go', 'scanner_dispatch.go', 'future_scanner_helper.go', 'json.go', 'option.go', 'finding.go', 'internal/detect/new.go', 'internal/ascii/ascii.go']:
             self.assertTrue(classify([path])['detectors'], path)
-        for path in ['README.md', 'doc/quality-gates.json', 'tests/quality_gates_test.go', 'scanner_test.go', 'internal/detect/pan_test.go', 'slog_handler.go', 'cmd/embargo-audit/main.go', 'scripts/quality_gate.py']:
+        for path in ['README.md', 'doc/quality-gates.json', 'tests/quality_gates_test.go', 'scanner_test.go', 'internal/detect/pan_test.go', 'slog_handler.go', 'cmd/embargo/audit.go', 'scripts/quality_gate.py']:
             self.assertFalse(classify([path])['detectors'], path)
 
     def test_workflows(self):

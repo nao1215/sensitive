@@ -108,7 +108,7 @@ linters:
         commands:
           list-mode: strict
           files:
-          - '**/cmd/embargo-audit/*.go'
+          - '**/cmd/embargo/*.go'
           - '!$test'
           allow:
           - $gostd

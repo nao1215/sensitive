@@ -24,7 +24,7 @@ func TestAuditCountsOffsetsAndNeverEchoesInput(t *testing.T) {
 	const password = "private-fixture-value"
 	input := "受注 ok\r\ncard=" + pan + "\r\npassword=" + password + "\ncard=" + pan
 	var output bytes.Buffer
-	if err := run(nil, strings.NewReader(input), &output); err != nil {
+	if err := runAudit(nil, strings.NewReader(input), &output); err != nil {
 		t.Fatal(err)
 	}
 	if strings.Contains(output.String(), pan) || strings.Contains(output.String(), password) || strings.Contains(output.String(), "受注") {
@@ -58,7 +58,7 @@ func TestAuditSelectionAndSampleLimit(t *testing.T) {
 	t.Parallel()
 	input := strings.Repeat("card=4111111111111111\n", 10) + "alice@example.com\n"
 	var output bytes.Buffer
-	if err := run([]string{auditKindsFlag, auditPAN, auditSamplesFlag, "1"}, strings.NewReader(input), &output); err != nil {
+	if err := runAudit([]string{auditKindsFlag, auditPAN, auditSamplesFlag, "1"}, strings.NewReader(input), &output); err != nil {
 		t.Fatal(err)
 	}
 	var got report
@@ -69,7 +69,7 @@ func TestAuditSelectionAndSampleLimit(t *testing.T) {
 		t.Fatal("selection or sample cap ignored")
 	}
 	output.Reset()
-	if err := run([]string{"--all"}, strings.NewReader("123-45-6789"), &output); err != nil {
+	if err := runAudit([]string{"--all"}, strings.NewReader("123-45-6789"), &output); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(output.String(), "us_ssn") {
@@ -79,23 +79,23 @@ func TestAuditSelectionAndSampleLimit(t *testing.T) {
 
 func TestAuditRejectsInvalidConfigurationAndIncompleteInput(t *testing.T) {
 	t.Parallel()
-	if run([]string{"--help"}, strings.NewReader(""), failingOutput{}) == nil {
+	if runAudit([]string{"--help"}, strings.NewReader(""), failingOutput{}) == nil {
 		t.Fatal("help output failure ignored")
 	}
 	for _, args := range [][]string{{auditKindsFlag, "unknown"}, {auditKindsFlag, auditPAN, "--all"}, {auditConfidenceFlag, "NaN"}, {auditConfidenceFlag, "2"}, {auditSamplesFlag, "-1"}, {auditSamplesFlag, "21"}, {"extra"}, {"--unknown"}} {
 		var out bytes.Buffer
-		if run(args, strings.NewReader("sensitive-input"), &out) == nil || out.Len() != 0 {
+		if runAudit(args, strings.NewReader("sensitive-input"), &out) == nil || out.Len() != 0 {
 			t.Fatal("invalid arguments accepted", args)
 		}
 	}
 	for _, input := range []io.Reader{strings.NewReader(strings.Repeat("x", 4<<20)), failingInput{}} {
 		var out bytes.Buffer
-		err := run(nil, input, &out)
+		err := runAudit(nil, input, &out)
 		if err == nil || out.Len() != 0 || strings.Contains(err.Error(), "private-error") {
 			t.Fatal("incomplete audit accepted or error echoed")
 		}
 	}
-	if run(nil, strings.NewReader(""), failingOutput{}) == nil {
+	if runAudit(nil, strings.NewReader(""), failingOutput{}) == nil {
 		t.Fatal("output failure ignored")
 	}
 }
@@ -122,7 +122,7 @@ func TestCompareSettings(t *testing.T) {
 	} {
 		var out bytes.Buffer
 		input := "order_id=4111111111111111\nalice@example.com\n"
-		if err := run(tc.args, strings.NewReader(input), &out); err != nil {
+		if err := runAudit(tc.args, strings.NewReader(input), &out); err != nil {
 			t.Fatal(err)
 		}
 		var got comparisonReport
@@ -149,12 +149,12 @@ func TestCompareSettings(t *testing.T) {
 	}
 	for _, args := range [][]string{{auditCompareKindsFlag, auditPAN}, {auditCompareFlag, auditCompareKindsFlag, "unknown"}, {auditCompareFlag, "--compare-all", auditCompareKindsFlag, auditPAN}, {auditCompareFlag, auditCompareConfidenceFlag, "NaN"}, {auditCompareFlag, auditCompareConfidenceFlag, "-1"}, {auditCompareFlag, auditCompareConfidenceFlag, "2"}} {
 		var out bytes.Buffer
-		if run(args, strings.NewReader(""), &out) == nil || out.Len() != 0 {
+		if runAudit(args, strings.NewReader(""), &out) == nil || out.Len() != 0 {
 			t.Fatal("invalid comparison accepted", args)
 		}
 	}
 	var out bytes.Buffer
-	if run([]string{auditCompareFlag}, failingInput{}, &out) == nil || out.Len() != 0 {
+	if runAudit([]string{auditCompareFlag}, failingInput{}, &out) == nil || out.Len() != 0 {
 		t.Fatal("partial comparison escaped")
 	}
 }
@@ -167,12 +167,12 @@ func TestExitStatusAndSafeDiagnostic(t *testing.T) {
 		if invalid {
 			args = []string{"--private-unrecognized-flag"}
 		}
-		code := exitCode(args, strings.NewReader(""), &output, &diagnostic)
+		code := exitCode(append([]string{"audit"}, args...), strings.NewReader(""), &output, &diagnostic)
 		if invalid {
-			if code != 1 || output.Len() != 0 || !strings.HasPrefix(diagnostic.String(), "embargo-audit:") || strings.Contains(diagnostic.String(), "private-unrecognized") {
+			if code != 1 || output.Len() != 0 || !strings.HasPrefix(diagnostic.String(), "embargo audit:") || strings.Contains(diagnostic.String(), "private-unrecognized") {
 				t.Fatal("unsafe command failure")
 			}
-			if exitCode(args, strings.NewReader(""), &output, failingOutput{}) != 1 {
+			if exitCode(append([]string{"audit"}, args...), strings.NewReader(""), &output, failingOutput{}) != 1 {
 				t.Fatal("failed diagnostic changed exit status")
 			}
 		} else if code != 0 || diagnostic.Len() != 0 || !json.Valid(output.Bytes()) {
@@ -187,7 +187,7 @@ func TestAuditHelpAndInvalidFlagUsage(t *testing.T) {
 	t.Parallel()
 	for _, arg := range []string{"-h", "--help", "--unknown=opaqueFixture"} {
 		var out, diagnostics bytes.Buffer
-		code := exitCode([]string{arg}, strings.NewReader(""), &out, &diagnostics)
+		code := exitCode([]string{"audit", arg}, strings.NewReader(""), &out, &diagnostics)
 		combined := out.String() + diagnostics.String()
 		want := 0
 		if strings.Contains(arg, "unknown") {
@@ -207,22 +207,22 @@ func TestAuditOptionDiagnostics(t *testing.T) {
 		want string
 		args []string
 	}{
-		{args: []string{auditConfidenceFlag, "2"}, want: "embargo-audit: --min-confidence must be between 0 and 1\n"},
-		{args: []string{auditConfidenceFlag, auditSecretFixture}, want: "embargo-audit: --min-confidence must be between 0 and 1\n"},
-		{args: []string{auditSamplesFlag, "21"}, want: "embargo-audit: --samples must be between 0 and 20\n"},
-		{args: []string{auditSamplesFlag, auditSecretFixture}, want: "embargo-audit: --samples must be between 0 and 20\n"},
-		{args: []string{"--kinds", "xyz"}, want: "embargo-audit: --kinds contains an unknown kind; use --help for kinds\n"},
-		{args: []string{"--kinds", auditSecretFixture}, want: "embargo-audit: --kinds contains an unknown kind; use --help for kinds\n"},
+		{args: []string{auditConfidenceFlag, "2"}, want: "embargo audit: --min-confidence must be between 0 and 1\n"},
+		{args: []string{auditConfidenceFlag, auditSecretFixture}, want: "embargo audit: --min-confidence must be between 0 and 1\n"},
+		{args: []string{auditSamplesFlag, "21"}, want: "embargo audit: --samples must be between 0 and 20\n"},
+		{args: []string{auditSamplesFlag, auditSecretFixture}, want: "embargo audit: --samples must be between 0 and 20\n"},
+		{args: []string{"--kinds", "xyz"}, want: "embargo audit: --kinds contains an unknown kind; use --help for kinds\n"},
+		{args: []string{"--kinds", auditSecretFixture}, want: "embargo audit: --kinds contains an unknown kind; use --help for kinds\n"},
 	} {
 		var out, diagnostics bytes.Buffer
-		code := exitCode(tc.args, strings.NewReader(auditSecretFixture), &out, &diagnostics)
+		code := exitCode(append([]string{"audit"}, tc.args...), strings.NewReader(auditSecretFixture), &out, &diagnostics)
 		if code != 1 || out.Len() != 0 || diagnostics.String() != tc.want {
 			t.Errorf("exit=%d stdout=%q stderr=%q want=%q", code, out.String(), diagnostics.String(), tc.want)
 		}
 	}
 	for _, args := range [][]string{{auditConfidenceFlag, "0"}, {auditConfidenceFlag, "1"}, {auditSamplesFlag, "0"}, {auditSamplesFlag, "20"}} {
 		var out, diagnostics bytes.Buffer
-		if code := exitCode(args, strings.NewReader("clean"), &out, &diagnostics); code != 0 || out.Len() == 0 || diagnostics.Len() != 0 {
+		if code := exitCode(append([]string{"audit"}, args...), strings.NewReader("clean"), &out, &diagnostics); code != 0 || out.Len() == 0 || diagnostics.Len() != 0 {
 			t.Errorf("valid boundary rejected: %v", args)
 		}
 	}
