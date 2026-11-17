@@ -14,6 +14,7 @@ The public-log evaluation adds seven operations logs that LogHub lacks: Nginx an
 - `KindIPAddr` skips IPv4 addresses whose first octet is zero. That block is never a host address; the 0.0.0.0 listener was already skipped, and other members appeared as version strings such as `Debian APT-HTTP/1.3 (0.9.7.9)`.
 - `KindCredential` leaves a canonical UUID under `clientToken` or `idempotencyToken` visible. CloudTrail records these EC2 request deduplication keys, which authenticate nothing; other token keys holding a UUID are still masked.
 - `KindHighEntropy` (opt-in) skips lowercase Kubernetes generated names such as `my-vault-agent-injector-9d457c8b-5pqfx`, whose five-character suffix uses the Kubernetes random alphabet.
+- `KindUSPhone` treats an opening parenthesis as its own boundary. `x(212) 555-0100` and a number glued to the previous one, as in `202-555-0108(212) 555-0118`, were left visible because a letter or digit came right before the parenthesis; the second number then appeared only after a second masking pass. A parenthesis after `/` or `+` still does not start a number.
 
 ### Performance
 

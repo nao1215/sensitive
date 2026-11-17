@@ -147,7 +147,8 @@ func allDigits(data []byte) bool {
 }
 
 // usPhoneLeadingBoundary rejects a candidate inside an identifier, a longer
-// number, a dotted version or a path.
+// number, a dotted version or a path. An opening parenthesis is itself a
+// boundary, so "x(212) 555-0100" and a number glued to a previous number match.
 func usPhoneLeadingBoundary(data []byte, i int) bool {
 	if i == 0 {
 		return true
@@ -157,7 +158,7 @@ func usPhoneLeadingBoundary(data []byte, i int) bool {
 		// Only a 1 or +1 country code may join the number with these separators.
 		return usPhoneCountryCode(data, i) != i
 	}
-	return !isIdentifierByte(previous) && previous != '/' && previous != '+'
+	return (data[i] == '(' || !isIdentifierByte(previous)) && previous != '/' && previous != '+'
 }
 
 // usPhoneTrailingBoundary rejects a candidate followed by more digits or a
