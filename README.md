@@ -150,7 +150,7 @@ fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
 ```
 
 <!-- speed-summary:start -->
-On the same five JSON slog events, the wrapped handler is at or ahead of the fastest other library measured and three to five times faster than pii-shield. [Time per event](#benchmarks)
+On the same five JSON slog events, go-masker takes 0.81 to 1.37 times and pii-shield 1.9 to 4.5 times embargo's time per event. [Time per event](doc/comparison.md#time-and-allocations)
 <!-- speed-summary:end -->
 
 ## Find and mask sensitive text

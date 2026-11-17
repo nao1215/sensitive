@@ -481,8 +481,8 @@
     {
       "results": {
         "embargo": {
-          "output": "{\"level\":\"INFO\",\"msg\":\"contact 202-555-0123\"}",
-          "removed": false
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact [REDACTED]\"}",
+          "removed": true
         },
         "ferret-scan": {
           "output": "{\"level\":\"INFO\",\"msg\":\"contact [PHONE-REDACTED]\"}",
