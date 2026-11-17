@@ -14,7 +14,7 @@ The command-line tool is now `embargo`: by default it masks each line of files o
 
 ### Changed
 
-- The `cmd/embargo-audit` command is replaced by `cmd/embargo` (`go install github.com/nao1215/embargo/cmd/embargo@latest`). `embargo [flags] [file ...]` writes every line masked: JSON object and array lines go through MaskJSON and are written compact, other lines are masked as text, line endings are kept and output is flushed whenever no more input is buffered, so it works behind `tail -f`. Migration: `embargo-audit` becomes `embargo --report`; `--all` becomes `--kinds all`; `--samples` now requires `--report`; the four `--compare` flags are removed, so diff two `--report` runs instead. Both modes read files as well as stdin.
+- The `cmd/embargo-audit` command is replaced by `cmd/embargo` (`go install github.com/nao1215/embargo/cmd/embargo@latest`). `embargo [flags] [file ...]` writes every line masked: JSON object and array lines go through MaskJSON and are written compact, other lines are masked as text, line endings are kept and output is flushed whenever no more input is buffered, so it works behind `tail -f`. Migration: `embargo-audit` becomes `embargo --report`; `--all` becomes `--kinds all`; `--samples` now requires `--report`; the four `--compare` flags are removed, so diff two `--report` runs instead. Both modes read files as well as stdin. Releases now publish signed archives and deb, rpm and apk packages of the command with SBOMs, build attestations and SLSA provenance; `make build` builds it locally.
 
 ### Performance
 

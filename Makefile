@@ -1,4 +1,4 @@
-.PHONY: test clean lint benchmark tools help
+.PHONY: build release-snapshot test clean lint benchmark tools help
 
 export GOMAXPROCS := 4
 
@@ -14,8 +14,15 @@ GO_INSTALL  = $(GO) install
 GO_PKGROOT  = ./...
 GO_PACKAGES = $(shell $(GO_LIST) $(GO_PKGROOT))
 
+build: ## Build the embargo command into the repository root
+	$(GO_BUILD) -trimpath -o $(APP) ./cmd/embargo
+
+release-snapshot: ## Build every release archive locally without publishing
+	GORELEASER_CURRENT_TAG=$$(git describe --tags --abbrev=0 --match 'v*') goreleaser release --snapshot --clean --skip=sign,sbom,publish
+	sh scripts/smoke_artifacts.sh
+
 clean: ## Clean project
-	-rm -rf $(APP) cover.*
+	-rm -rf $(APP) cover.* dist
 
 test: ## Run tests with coverage
 	$(GO_TEST) -cover $(GO_PKGROOT) -coverpkg=./... -coverprofile=cover.out

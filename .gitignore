@@ -47,3 +47,5 @@ mutation-results/
 
 # The embargo command built in the repository root
 /embargo
+/dist/
+/third_party_licenses/

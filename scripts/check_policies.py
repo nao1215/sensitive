@@ -82,8 +82,14 @@ def function_growth():
     subprocess.run(['go', '-C', 'tests', 'run', './cmd/functionmetrics'], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
 
 
+# slsa-verifier checks the generator's ref, so it must be referenced by its tag.
+TAG_PINNED_WORKFLOWS = {'slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0'}
+
+
 def workflows():
-    writes = {'release.yml': {'contents'}, 'coverage.yml': {'actions', 'pull-requests'},
+    # release.yml signs keylessly (id-token), attests archives (attestations) and
+    # uploads them with the SLSA provenance (contents).
+    writes = {'release.yml': {'contents', 'id-token', 'attestations'}, 'coverage.yml': {'actions', 'pull-requests'},
               'reviewdog.yml': {'pull-requests'}, 'codeql.yml': {'security-events'},
               'trivy.yml': {'security-events'}, 'scorecard.yml': {'security-events', 'id-token'},
               'fuzz.yml': {'issues'}}
@@ -101,7 +107,7 @@ def workflows():
             if reference.startswith('./'):
                 require((ROOT/reference).is_file(), f'missing local workflow: {reference}')
             else:
-                require(re.search(r'@[0-9a-f]{40}$', reference), f'unpinned action: {reference}')
+                require(re.search(r'@[0-9a-f]{40}$', reference) or reference in TAG_PINNED_WORKFLOWS, f'unpinned action: {reference}')
         require('pull_request_target:' not in text, f'{path.name}: privileged PR execution forbidden')
     require('github-actions' in read('.github/dependabot.yml'), 'Dependabot must watch actions')
 

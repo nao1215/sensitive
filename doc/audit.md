@@ -12,6 +12,8 @@ kubectl logs deploy/api | embargo > masked.log
 embargo --kinds pan,credential app.log
 ```
 
+[Releases](https://github.com/nao1215/embargo/releases) also carry archives for Linux, macOS and Windows on amd64 and arm64, plus deb, rpm and apk packages. `checksums.txt` is signed keylessly with cosign, every archive has an SBOM, and the SLSA provenance verifies with `slsa-verifier verify-artifact --provenance-path multiple.intoto.jsonl --source-uri github.com/nao1215/embargo --source-tag <tag> <archive>`.
+
 A line that holds one JSON object or array goes through MaskJSON, so keys, types, nesting and the sensitive-key rule are kept and the line is written compact; any other line, and JSON that MaskJSON rejects (invalid or over 1 MiB), is masked as text. Line endings, including CRLF and a missing final newline, are kept. Output is flushed whenever no more input is buffered, so `tail -f app.log | embargo` shows each line as it arrives. A read failure or a line over 4 MiB stops the output before that line and exits nonzero with a message that names only the line number. `--kinds` takes `all` or a comma-separated list, `--min-confidence` a number from 0 to 1; option errors name the flag and its allowed values and never repeat what was passed.
 
 ## Measure the policy
