@@ -30,6 +30,8 @@ func TestXMLElementCredentialsKeepNonValues(t *testing.T) {
 		`<1password>opaque12</1password>`,
 		`a < password > b`,
 		`<password>opaque12`,
+		`<password type="text"`,
+		`<password />`,
 	} {
 		if got := scanner.Scan([]byte(text)); len(got) != 0 {
 			t.Errorf("Scan(%q) = %+v, want none", text, got)

@@ -12,6 +12,7 @@ func TestCurlUserPasswords(t *testing.T) {
 		{`curl -u ":opaque12" https://example.com`, `curl -u ":********" https://example.com`},
 		{`curl -u "opaque12:" https://example.com`, `curl -u "********:" https://example.com`},
 		{`curl -u "{user}":"{opaque1}" https://example.com`, `curl -u "{user}":"*********" https://example.com`},
+		{`curl -u "user:opa\"que" https://example.com`, `curl -u "user:********" https://example.com`},
 	} {
 		got := maskCredentialFindings(tc.text, curlUserPasswords([]byte(tc.text)))
 		if got != tc.want {

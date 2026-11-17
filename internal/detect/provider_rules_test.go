@@ -97,6 +97,8 @@ func providerSamples() map[string]string {
 		"SonarQube":                  "squ_" + alnum(40),
 		"Yandex API":                 "AQVN" + alnum(36),
 		"Mailgun":                    "key-" + hex(32),
+		"ReadMe":                     "rdme_" + synthetic("q7z3k9x2w5p8l4r6m1n0", 70),
+		"Sentry organization":        "sntrys_eyJ" + synthetic(base64Alphabet, 40) + "_" + alnum(20) + "=",
 	}
 }
 

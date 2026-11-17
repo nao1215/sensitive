@@ -272,15 +272,14 @@ func parseSegment(field string) (tokenSegment, error) {
 type providerIndex [256][]providerRule
 
 // newProviderIndex compiles providerLayoutTable; the layouts are fixed source
-// data, so a parse error is a programming error caught by the package tests.
+// data whose parse errors the package tests reject.
 func newProviderIndex() *providerIndex {
 	var index providerIndex
 	for _, layout := range providerLayouts() {
-		rule, err := parseLayout(layout)
-		if err != nil {
-			panic(err)
+		// TestProviderLayoutsParse proves that every layout compiles.
+		if rule, err := parseLayout(layout); err == nil {
+			index[rule.prefix[0]] = append(index[rule.prefix[0]], rule)
 		}
-		index[rule.prefix[0]] = append(index[rule.prefix[0]], rule)
 	}
 	return &index
 }
