@@ -66,7 +66,8 @@ def documentation_contract():
     expected = []
     for directory in ['.'] + ['adapters/'+name for name in ('grpc', 'logrus', 'otel', 'sentry', 'zap', 'zerolog')]:
         expected.extend(subprocess.check_output(['go', 'list', './...'], cwd=ROOT/directory, text=True).splitlines())
-    text = read('CLAUDE.md')
+    require(read('CLAUDE.md') == '@AGENTS.md\n', 'CLAUDE.md must load the shared agent guide')
+    text = read('AGENTS.md')
     block = re.search(r'<!-- packages:start -->\n(.*?)<!-- packages:end -->', text, re.S)
     require(block is not None, 'documented package inventory missing')
     actual = re.findall(r'^- `([^`]+)`$', block[1], re.M)
@@ -74,6 +75,11 @@ def documentation_contract():
     gate = re.search(r'acceptable:\s*(\d+)%', read('.octocov.yml'))[1]
     figures = re.findall(r'coverage[^\n]*?(\d+)%', text, re.I)
     require(figures and all(value == gate for value in figures), 'documented coverage differs from the gate')
+
+
+def function_growth():
+    """Require a reviewed baseline for growth in large production functions."""
+    subprocess.run(['go', '-C', 'tests', 'run', './cmd/functionmetrics'], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
 
 
 def workflows():
@@ -186,7 +192,7 @@ def evidence():
 
 def mapping():
     rows=json.loads(read('scripts/policies.json'))
-    checks={'documentation-contract':documentation_contract,'repository-traces':repository_traces,'test-file-budget':test_file_budget,'root-module':root_module,'workflow-security':workflows,'branding':branding,'lint-config':lint_rules,'api-boundary':api_boundaries,'schedules':schedules,'pr-metadata':pr_metadata,'technique-links':linked_tests, 'evidence':evidence, 'detector-docs':detector_docs}
+    checks={'function-growth':function_growth,'documentation-contract':documentation_contract,'repository-traces':repository_traces,'test-file-budget':test_file_budget,'root-module':root_module,'workflow-security':workflows,'branding':branding,'lint-config':lint_rules,'api-boundary':api_boundaries,'schedules':schedules,'pr-metadata':pr_metadata,'technique-links':linked_tests, 'evidence':evidence, 'detector-docs':detector_docs}
     for row in rows:
         require(row['source'] and row['rule'] and row['where'], 'policy mapping is incomplete')
         if row['check'] in checks:

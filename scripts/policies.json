@@ -1,13 +1,13 @@
 [
   {
     "rule": "Root has no requirements; tools use separate modules",
-    "source": "CLAUDE.md",
+    "source": "AGENTS.md",
     "check": "root-module",
     "where": "Verification"
   },
   {
     "rule": "Architecture and package inventory remain explicit",
-    "source": "CLAUDE.md",
+    "source": "AGENTS.md",
     "check": "tests/contracts/policy_test.go#TestProductionPackageInventory",
     "where": "MultiPlatformUnitTest"
   },
@@ -31,7 +31,7 @@
   },
   {
     "rule": "No globals; check errors; use typed error comparisons",
-    "source": "CLAUDE.md",
+    "source": "AGENTS.md",
     "check": "lint-config",
     "where": "Verification"
   },
@@ -49,13 +49,13 @@
   },
   {
     "rule": "Exported declarations and fields have useful English godoc",
-    "source": "CLAUDE.md",
+    "source": "AGENTS.md",
     "check": "scripts/check_prose.py#godoc",
     "where": "Verification"
   },
   {
     "rule": "Runtime public API has runnable godoc Examples",
-    "source": "CLAUDE.md",
+    "source": "AGENTS.md",
     "check": "doc_test.go#TestExamplesAppearInGodoc",
     "where": "MultiPlatformUnitTest"
   },
@@ -97,7 +97,7 @@
   },
   {
     "rule": "Badge set, order, centered logo and sponsor link stay intact",
-    "source": "CLAUDE.md",
+    "source": "AGENTS.md",
     "check": "branding",
     "where": "Verification"
   },
@@ -109,7 +109,7 @@
   },
   {
     "rule": "Tests run on three OSes and minimum/stable Go",
-    "source": "CLAUDE.md",
+    "source": "AGENTS.md",
     "check": ".github/workflows/unit_test.yml#macos-latest",
     "where": "MultiPlatformUnitTest"
   },
@@ -163,19 +163,19 @@
   },
   {
     "rule": "Hint dispatch agrees with exhaustive scanning",
-    "source": "CLAUDE.md",
+    "source": "AGENTS.md",
     "check": "scanner_dispatch_test.go#TestDispatchDifferential",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Clean scanning retains deterministic allocation gates",
-    "source": "CLAUDE.md",
+    "source": "AGENTS.md",
     "check": "scanner_dispatch_test.go#TestCleanScanAllocationBudget",
     "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Full-width numeric positions map to original bytes",
-    "source": "CLAUDE.md",
+    "source": "AGENTS.md",
     "check": "internal/detect/fullwidth_test.go#TestNormalizationIdentityDifferential",
     "where": "MultiPlatformUnitTest"
   },
@@ -307,7 +307,7 @@
   },
   {
     "rule": "Production fixes retain failing-first evidence",
-    "source": "CLAUDE.md",
+    "source": "AGENTS.md",
     "check": "scripts/check_policies.py#regression-evidence",
     "where": "Verification"
   },
@@ -595,8 +595,14 @@
   },
   {
     "rule": "Documented packages and coverage match Go and the coverage gate",
-    "source": "CLAUDE.md",
+    "source": "AGENTS.md",
     "check": "documentation-contract",
+    "where": "Verification"
+  },
+  {
+    "rule": "Growth in large functions requires a reviewed baseline update",
+    "source": "AGENTS.md",
+    "check": "function-growth",
     "where": "Verification"
   }
 ]
