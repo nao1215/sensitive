@@ -18,7 +18,7 @@ The command-line tool is now `embargo`: by default it masks each line of files o
 
 ### Performance
 
-- The slog handler and MaskJSON reuse scan buffers, add all attributes to a record at once, cache the masked spelling and key policy of up to 1024 clean keys and messages of at most 64 bytes per built-in scanner, skip re-validating encoding/json output and copy clean JSON string lexemes without decoding them. Card detection skips text with fewer than 13 digits. On the comparison events allocations fell from 14–169 to 2–18 per record; output is byte-identical on the full equivalence corpus.
+- The slog handler and MaskJSON reuse scan buffers, add all attributes to a record at once, cache the masked spelling and key policy of up to 1024 clean keys and messages of at most 64 bytes per built-in scanner, skip re-validating encoding/json output and copy clean JSON string lexemes without decoding them. Card detection skips text with fewer than 13 digits, and the normalized view tests 32 bytes at a time for non-ASCII input, so clean ASCII text with a narrow kind selection scans about ten times faster. On the comparison events allocations fell from 14–169 to 2–18 per record; output is byte-identical on the full equivalence corpus.
 
 ### Fixed
 

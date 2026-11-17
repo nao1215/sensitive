@@ -1,6 +1,7 @@
 package detect
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"reflect"
@@ -140,6 +141,26 @@ func TestPercentPositionMapStaysWithinOriginalSize(t *testing.T) {
 		// Reserving more than the original size is unnecessary and risks overflow.
 		if cap(positions) > len(input) || len(positions) != len(decoded)+1 {
 			t.Fatalf("position map for %q exceeds its original-size budget", input)
+		}
+	}
+}
+
+func TestFirstNonASCIIFindsEveryPositionAcrossWords(t *testing.T) {
+	t.Parallel()
+	for length := range 70 {
+		ascii := bytes.Repeat([]byte("a"), length)
+		if got := firstNonASCII(ascii); got != -1 {
+			t.Fatalf("length %d: ASCII input reported %d", length, got)
+		}
+		for position := range length {
+			data := bytes.Clone(ascii)
+			data[position] = 0x80
+			if position+1 < length {
+				data[length-1] = 0xff
+			}
+			if got := firstNonASCII(data); got != position {
+				t.Fatalf("length %d: first non-ASCII at %d, got %d", length, position, got)
+			}
 		}
 	}
 }

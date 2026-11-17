@@ -240,7 +240,7 @@ Mask everything a scanner finds, or keep part of a value:
 `Scanner.ScanLines` reads files and streams line by line. [Scanner options and custom replacements](doc/masking.md)
 
 <!-- narrowing-line:start -->
-Pick the kinds you need: on 2.7 KB of log lines with no secret, `WithKinds(KindEmail)` returns in 0.10 µs because there is no `@` to inspect, while `WithAll()` takes 60 µs. [Per-detector benchmarks](doc/benchmarks.md)
+Pick the kinds you need: on 2.7 KB of log lines with no secret, `WithKinds(KindEmail)` returns in 0.66 µs because there is no `@` to inspect, while `WithAll()` takes 65 µs. [Per-detector benchmarks](doc/benchmarks.md)
 <!-- narrowing-line:end -->
 
 ## Fail tests on leaks
@@ -380,10 +380,10 @@ Recorded scanner medians (ten interleaved samples):
 
 | Selection | Clean ns/op | Dirty ns/op | Clean / dirty speedup over WithAll |
 |---|---:|---:|---|
-| all | 60,274.000 | 6,487,012.0 | 1.00× / 1.00× |
-| kinds1 | 96.955 | 38,425.5 | 621.67× / 168.82× |
-| kinds3 | 14,700.500 | 598,465.0 | 4.10× / 10.84× |
-| kinds8 | 17,402.000 | 2,790,511.5 | 3.46× / 2.32× |
+| all | 65,366.500 | 6,681,389.0 | 1.00× / 1.00× |
+| kinds1 | 664.550 | 34,136.5 | 98.36× / 195.73× |
+| kinds3 | 9,140.500 | 510,352.5 | 7.15× / 13.09× |
+| kinds8 | 10,751.000 | 1,556,919.0 | 6.08× / 4.29× |
 
 [kinds1/3/8 definitions, input sizes and uncertainty](doc/benchmarks.md#choose-the-kinds-the-application-needs). Narrower selection avoids irrelevant detections and gives up their recall.
 <!-- narrowing-summary:end -->

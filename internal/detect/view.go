@@ -2,6 +2,7 @@ package detect
 
 import (
 	"bytes"
+	"encoding/binary"
 	"math"
 	"strconv"
 	"unicode"
@@ -181,8 +182,23 @@ func removeTokenSeparators(data []byte) (normalized []byte, positions []int) {
 // firstNonASCII returns the index of the first non-ASCII byte, or -1 when
 // data is pure ASCII and needs no Unicode normalization.
 func firstNonASCII(data []byte) int {
-	for i, b := range data {
-		if b >= utf8.RuneSelf {
+	// A word has a non-ASCII byte when any high bit is set; four words are
+	// tested together, then single words, then the remaining bytes.
+	const highBits = 0x8080808080808080
+	i := 0
+	for ; i+32 <= len(data); i += 32 {
+		block := data[i : i+32 : i+32]
+		if (binary.LittleEndian.Uint64(block)|binary.LittleEndian.Uint64(block[8:])|binary.LittleEndian.Uint64(block[16:])|binary.LittleEndian.Uint64(block[24:]))&highBits != 0 {
+			break
+		}
+	}
+	for ; i+8 <= len(data); i += 8 {
+		if binary.LittleEndian.Uint64(data[i:])&highBits != 0 {
+			break
+		}
+	}
+	for ; i < len(data); i++ {
+		if data[i] >= utf8.RuneSelf {
 			return i
 		}
 	}
