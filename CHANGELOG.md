@@ -10,7 +10,7 @@ The command-line tool is now `embargo`: by default it masks each line of files o
 
 ### Detection changes
 
-- Email no longer matches the userinfo of a URL (`scheme://user@host`, `scheme://user:password@host`), the same exclusion SCP-style Git remotes already had. With the default kinds, `postgres://app:s3cr3t@db.example/orders` now masks to `postgres://app:[REDACTED]@db.example/orders`: the credential rule still masks the password and the host stays readable, where the overlapping email span used to hide the host as well. An email address written as a URL user name, such as `ftp://alice@example.com@host`, is no longer reported as an email.
+- Email no longer matches the userinfo of a URL (`scheme://user@host`, `scheme://user:password@host`), the same exclusion SCP-style Git remotes already had. With the default kinds, `postgres://app:s3cr3t@db.example/orders` now masks to `postgres://app:[REDACTED]@db.example/orders`: the credential rule still masks the password and the host stays readable, where the overlapping email span used to hide the host as well. Text in that position is read as a user name and host even when it looks like an address, so `https://alice@example.com/` is no longer reported as an email.
 
 ### Changed
 
