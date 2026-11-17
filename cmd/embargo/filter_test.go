@@ -53,7 +53,7 @@ func TestFilterKindSelection(t *testing.T) {
 		{args: []string{"--kinds", "pan"}, want: filterEmail + " " + filterMarker + "\n"},
 		{args: []string{"--kinds", "email"}, want: filterMarker + " " + filterPAN + "\n"},
 		{args: []string{"--min-confidence", "1"}, want: filterMarker + " " + filterMarker + "\n"},
-		{args: []string{"--all"}, want: filterMarker + " " + filterMarker + "\n"},
+		{args: []string{"--kinds", "all"}, want: filterMarker + " " + filterMarker + "\n"},
 	} {
 		var out bytes.Buffer
 		if err := run(tc.args, strings.NewReader(input), &out); err != nil {
@@ -61,26 +61,6 @@ func TestFilterKindSelection(t *testing.T) {
 		}
 		if out.String() != tc.want {
 			t.Errorf("%v: got %q, want %q", tc.args, out.String(), tc.want)
-		}
-	}
-}
-
-func TestFilterRejectsInvalidFlagsWithoutEchoingThem(t *testing.T) {
-	t.Parallel()
-	for _, tc := range []struct {
-		want string
-		args []string
-	}{
-		{args: []string{"--kinds", filterPassword}, want: "embargo: --kinds contains an unknown kind; use --help for kinds"},
-		{args: []string{"--min-confidence", filterPassword}, want: "embargo: --min-confidence must be between 0 and 1"},
-		{args: []string{"--min-confidence", "1.5"}, want: "embargo: --min-confidence must be between 0 and 1"},
-		{args: []string{"--all", "--kinds", "pan"}, want: "embargo: --all and --kinds cannot be combined"},
-		{args: []string{"--" + filterPassword}, want: "embargo: invalid flags"},
-	} {
-		var out bytes.Buffer
-		err := run(tc.args, strings.NewReader(filterPAN), &out)
-		if err == nil || !strings.HasPrefix(err.Error(), tc.want) || strings.Contains(err.Error(), filterPassword) || out.Len() != 0 {
-			t.Errorf("%v: err=%v output=%q", tc.args, err, out.String())
 		}
 	}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"math"
@@ -28,15 +29,31 @@ func exitCode(args []string, input io.Reader, output, diagnostics io.Writer) int
 	return 0
 }
 
-// run masks lines by default; "embargo audit" reports findings instead.
+// run masks lines by default; --report prints finding counts instead.
 func run(args []string, input io.Reader, output io.Writer) error {
-	if len(args) > 0 && args[0] == "audit" {
-		return runAudit(args[1:], input, output)
+	parsed, err := parseOptions(args)
+	if errors.Is(err, flag.ErrHelp) {
+		return writeUsage(output)
 	}
-	return runFilter(args, input, output)
+	if err != nil {
+		return err
+	}
+	if parsed.version {
+		return writeVersion(output)
+	}
+	scanner, err := selectedScanner(parsed.kinds, parsed.minimum)
+	if err != nil {
+		return err
+	}
+	source, closeInputs := openInputs(parsed.files, input)
+	defer closeInputs()
+	if parsed.report {
+		return writeReport(source, output, scanner, parsed.samples)
+	}
+	return filterLines(source, output, scanner)
 }
 
-func writeUsage(output io.Writer, usage string) error {
+func writeUsage(output io.Writer) error {
 	if _, err := io.WriteString(output, usage); err != nil {
 		return err
 	}
@@ -53,21 +70,22 @@ func writeVersion(output io.Writer) error {
 	return err
 }
 
-// selectedScanner builds the scanner for a kind selection. WithKinds rejects
-// unknown public Kind strings; only that input error becomes a fixed
-// diagnostic, so possibly sensitive arguments are never echoed.
-func selectedScanner(kinds string, all bool, minimum float64, flagName string) (scanner *embargo.Scanner, err error) {
+// selectedScanner builds the scanner for --kinds: empty is the default set and
+// all selects every kind. WithKinds rejects unknown public Kind strings; only
+// that input error becomes a fixed diagnostic, so arguments are never echoed.
+func selectedScanner(kinds string, minimum float64) (scanner *embargo.Scanner, err error) {
 	defer func() {
 		if recover() != nil {
 			scanner = nil
-			err = errors.New(flagName + " contains an unknown kind; use --help for kinds")
+			err = errors.New("embargo: --kinds must be all or a comma-separated list of kinds; see embargo --help")
 		}
 	}()
 	options := []embargo.ScannerOption{embargo.WithMinConfidence(minimum)}
-	if all {
+	switch kinds {
+	case "":
+	case "all":
 		options = append(options, embargo.WithAll())
-	}
-	if kinds != "" {
+	default:
 		selection := make([]embargo.Kind, 0, strings.Count(kinds, ",")+1)
 		for kind := range strings.SplitSeq(kinds, ",") {
 			selection = append(selection, embargo.Kind(strings.TrimSpace(kind)))

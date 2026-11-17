@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,8 +26,8 @@ func TestFilesAreReadInOrderLikeCat(t *testing.T) {
 		t.Fatalf("got %q, want %q", out.String(), want)
 	}
 	out.Reset()
-	if err := run([]string{"audit", first, second}, strings.NewReader(""), &out); err != nil || !strings.Contains(out.String(), `"lines": 2`) {
-		t.Fatalf("audit over files: err=%v output=%s", err, out.String())
+	if err := run([]string{"--report", first, second}, strings.NewReader(""), &out); err != nil || !strings.Contains(out.String(), `"lines": 2`) {
+		t.Fatalf("report over files: err=%v output=%s", err, out.String())
 	}
 }
 
@@ -52,7 +53,7 @@ func TestHelpVersionAndExitStatus(t *testing.T) {
 	t.Parallel()
 	for _, args := range [][]string{{"-h"}, {"--help"}} {
 		var out, diagnostics bytes.Buffer
-		if code := exitCode(args, strings.NewReader(""), &out, &diagnostics); code != 0 || !strings.HasPrefix(out.String(), "Usage: embargo [") || !strings.Contains(out.String(), "embargo audit") || !strings.Contains(out.String(), kindsHelp) {
+		if code := exitCode(args, strings.NewReader(""), &out, &diagnostics); code != 0 || !strings.HasPrefix(out.String(), "Usage: embargo [") || !strings.Contains(out.String(), "--report") || !strings.Contains(out.String(), kindsHelp) {
 			t.Errorf("%v: code=%d output=%q", args, code, out.String())
 		}
 	}
@@ -72,7 +73,7 @@ func TestHelpVersionAndExitStatus(t *testing.T) {
 			t.Errorf("%v: output failure ignored", args)
 		}
 	}
-	if writeUsage(&shortWriter{limit: len(filterUsage)}, filterUsage) == nil {
+	if writeUsage(&shortWriter{limit: len(usage)}) == nil {
 		t.Error("a failure writing the kinds line was ignored")
 	}
 }
@@ -85,3 +86,11 @@ func TestParseConfidenceBounds(t *testing.T) {
 		}
 	}
 }
+
+type failingInput struct{}
+
+func (failingInput) Read([]byte) (int, error) { return 0, errors.New("private-error") }
+
+type failingOutput struct{}
+
+func (failingOutput) Write([]byte) (int, error) { return 0, errors.New("output closed") }

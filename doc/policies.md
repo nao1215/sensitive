@@ -92,7 +92,7 @@ This inventory states the owner's active maintenance policy and maps each rule t
 | Adoption table is generated from executed cases and checked in CI | Repository maintenance policy | [main](../scripts/case_docs.py) | Verification |
 | Output cases isolate detector decisions from canary and fragment matching | Repository maintenance policy | [TestAdoptionCheckIndependence](../tests/cases_test.go) | Verification |
 | Canary fragments retain minimum-length and option-order boundaries | Repository maintenance policy | [TestCanaryFragmentBoundsAndOrder](../embargotest/canary_test.go) | MultiPlatformUnitTest |
-| Local log audits count actual findings without echoing source values | Repository maintenance policy | [TestAuditCountsOffsetsAndNeverEchoesInput](../cmd/embargo/audit_test.go) | MultiPlatformUnitTest |
+| Local log audits count actual findings without echoing source values | Repository maintenance policy | [TestReportCountsOffsetsAndNeverEchoesInput](../cmd/embargo/report_test.go) | MultiPlatformUnitTest |
 | Diagnostic-preservation recipes retain IDs and expose their recall tradeoff | Repository maintenance policy | [TestAuditDiagnosticRecipe](../tests/cases_test.go) | MultiPlatformUnitTest |
 | Detector changes enforce frozen per-Kind accuracy and critical exposure floors | Repository maintenance policy | [TestQualityAccuracy](../tests/quality_gates_test.go) | Verification |
 | Real-log gates compare exact sampled FP rates with explicit per-Kind ceilings | Repository maintenance policy | [compare_rates](../scripts/quality_gate.py) | Verification |
