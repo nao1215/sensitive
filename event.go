@@ -73,11 +73,14 @@ func canonicalInteger(text string) bool {
 }
 
 func (s *eventScanner) scanScalar(ctx context.Context, value, key string) (string, error) {
-	findings, err := scalarFindings(ctx, s, value, key)
+	storage := s.scanner.takeFindings()
+	findings, err := scalarFindings(ctx, s, *storage, value, key)
 	if err != nil {
 		return "", err
 	}
-	return maskOwned(value, findings, redact), nil
+	masked := maskOwned(value, findings, redact)
+	s.scanner.returnFindings(storage, findings)
+	return masked, nil
 }
 
 // maskBytes is maskScalar for bytes that usually stay unchanged: the value
@@ -89,18 +92,21 @@ func (s *eventScanner) maskBytes(ctx context.Context, value []byte, key string) 
 		masked, err = s.maskScalar(ctx, text, key)
 		return masked, masked != text, err
 	}
-	findings, err := scalarFindings(ctx, s, value, key)
+	storage := s.scanner.takeFindings()
+	findings, err := scalarFindings(ctx, s, *storage, value, key)
 	if err != nil || len(findings) == 0 {
+		s.scanner.returnFindings(storage, findings)
 		return "", false, err
 	}
 	text := string(value)
 	masked = maskOwned(text, findings, redact)
+	s.scanner.returnFindings(storage, findings)
 	return masked, masked != text, nil
 }
 
 // scalarFindings scans "key: value" and returns the value's findings in value
 // offsets. The budget is charged before any buffer is filled or detector runs.
-func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, value T, key string) ([]Finding, error) {
+func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, dst []Finding, value T, key string) ([]Finding, error) {
 	if ctx.Err() != nil {
 		return nil, saferecord.ErrCanceled
 	}
@@ -118,7 +124,7 @@ func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, val
 		scratch = append(append(scratch, key...), ": "...)
 	}
 	scratch = append(scratch, value...)
-	findings := s.scanner.scan(scratch, ctx.Err)
+	findings := s.scanner.scanAppend(dst, scratch, ctx.Err)
 	s.scanner.returnBuffer(buffer, scratch)
 	if ctx.Err() != nil {
 		return nil, saferecord.ErrCanceled

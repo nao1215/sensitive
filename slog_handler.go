@@ -245,9 +245,12 @@ func (h *slogHandler) sanitizeAttrs(attrs []slog.Attr) (safe []slog.Attr, crosse
 	return safe, crossed, nil
 }
 
+// mask scans a message alone; short clean messages, like field keys, repeat
+// across records and come from the scanner's cache.
 func (h *slogHandler) mask(ctx context.Context, text string) (string, error) {
 	scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
-	return scan.maskScalar(ctx, text, "")
+	result, err := scan.maskCached(ctx, text)
+	return result.masked, err
 }
 
 func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth int, groups string) (slog.Attr, bool, error) {
@@ -259,7 +262,7 @@ func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth in
 		return slog.Attr{}, false, saferecord.ErrSizeLimit
 	}
 	scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
-	result, err := scan.maskKey(ctx, attr.Key)
+	result, err := scan.maskCached(ctx, attr.Key)
 	if err != nil {
 		return slog.Attr{}, false, err
 	}

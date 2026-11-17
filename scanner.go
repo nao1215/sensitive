@@ -19,6 +19,7 @@ type Scanner struct {
 	hintCache     [][]hintEntry
 	custom        []Detector
 	buffers       *sync.Pool
+	results       *sync.Pool
 	keys          *keyCache
 	hintIndex     [256][]dispatchHint
 	minConfidence float64
@@ -68,6 +69,7 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 	// input and always return the same findings, reuse buffers and key results.
 	if len(s.custom) == 0 {
 		s.buffers = &sync.Pool{New: func() any { return new([]byte) }}
+		s.results = &sync.Pool{New: func() any { return new([]Finding) }}
 		s.keys = &keyCache{}
 	}
 	return s
@@ -90,6 +92,31 @@ func (s *Scanner) takeBuffer(size int) *[]byte {
 	*buffer = slices.Grow((*buffer)[:0], size)
 	return buffer
 }
+
+// takeFindings returns empty storage for internal findings that the caller
+// consumes before returnFindings; findings that leave the package are never pooled.
+func (s *Scanner) takeFindings() *[]Finding {
+	if s.results == nil {
+		return new([]Finding)
+	}
+	findings, ok := s.results.Get().(*[]Finding)
+	if !ok {
+		panic("embargo: invalid findings buffer")
+	}
+	return findings
+}
+
+// returnFindings keeps storage grown by its last user for the next scan.
+func (s *Scanner) returnFindings(findings *[]Finding, used []Finding) {
+	if s.results == nil || cap(used) > maxPooledFindings {
+		return
+	}
+	*findings = used[:0]
+	s.results.Put(findings)
+}
+
+// maxPooledFindings keeps a scan with many findings from pinning its storage.
+const maxPooledFindings = 64
 
 // returnBuffer keeps a buffer, grown by its last user, for the next scan.
 func (s *Scanner) returnBuffer(buffer *[]byte, used []byte) {
@@ -135,26 +162,31 @@ func (s *Scanner) Scan(data []byte) []Finding {
 }
 
 func (s *Scanner) scan(data []byte, canceled func() error) []Finding {
+	return s.scanAppend(nil, data, canceled)
+}
+
+// scanAppend is scan that reuses dst's storage for the findings it returns.
+func (s *Scanner) scanAppend(dst []Finding, data []byte, canceled func() error) []Finding {
 	if scanCanceled(canceled) || len(data) == 0 {
 		return nil
 	}
 	if !s.initialized {
-		return NewScanner().scan(data, canceled)
+		return NewScanner().scanAppend(dst, data, canceled)
 	}
 	view := detect.View{Raw: data, Data: data}
 	if len(s.detectors) > 0 {
 		view = detect.NewView(data)
 	}
-	return s.scanInput(view, canceled)
+	return s.scanInput(dst, view, canceled)
 }
 
 // scanInput shares the normalized view with streaming frame recognition.
-func (s *Scanner) scanInput(view detect.View, canceled func() error) []Finding {
+func (s *Scanner) scanInput(dst []Finding, view detect.View, canceled func() error) []Finding {
 	if len(view.Raw) == 0 || scanCanceled(canceled) {
 		return nil
 	}
 	selected := s.selectDetectors(view.Data)
-	var findings []Finding
+	findings := dst[:0]
 	for i, d := range s.detectors {
 		if scanCanceled(canceled) {
 			return nil

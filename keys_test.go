@@ -19,12 +19,12 @@ func TestMaskKeyCacheHitMatchesScan(t *testing.T) {
 			want, wantErr := (&eventScanner{scanner: scanner, remaining: maxScanBytes}).maskScalar(context.Background(), key, "")
 			for range 2 {
 				scan := eventScanner{scanner: scanner, remaining: maxScanBytes}
-				got, err := scan.maskKey(context.Background(), key)
+				got, err := scan.maskCached(context.Background(), key)
 				if got.masked != want || !errors.Is(err, wantErr) || got.sensitive != scanner.sensitiveKey(key) {
-					t.Fatalf("maskKey(%q) = %+v, %v; want %q, %v", key, got, err, want, wantErr)
+					t.Fatalf("maskCached(%q) = %+v, %v; want %q, %v", key, got, err, want, wantErr)
 				}
 				if scan.remaining != maxScanBytes-len(key) {
-					t.Fatalf("maskKey(%q) charged %d bytes", key, maxScanBytes-scan.remaining)
+					t.Fatalf("maskCached(%q) charged %d bytes", key, maxScanBytes-scan.remaining)
 				}
 			}
 		})
@@ -36,7 +36,7 @@ func TestKeyCacheKeepsOnlyCleanShortTextKeys(t *testing.T) {
 	scanner := NewScanner(WithKinds(KindEmail))
 	for _, key := range []string{"status", "alice@example.com", "17", strings.Repeat("k", maxCachedKeyBytes+1)} {
 		scan := eventScanner{scanner: scanner, remaining: maxScanBytes}
-		if _, err := scan.maskKey(context.Background(), key); err != nil {
+		if _, err := scan.maskCached(context.Background(), key); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -48,7 +48,7 @@ func TestKeyCacheKeepsOnlyCleanShortTextKeys(t *testing.T) {
 			t.Fatalf("%q must not be cached", key)
 		}
 	}
-	if got := scanner.keys.size.Load(); got != 1 {
+	if got := scanner.keys.size(); got != 1 {
 		t.Fatalf("cache size = %d, want 1", got)
 	}
 	if !scanner.cachedSensitiveKey("password") || scanner.cachedSensitiveKey("status") {
@@ -66,7 +66,7 @@ func TestKeyCacheStopsAdmittingWhenFull(t *testing.T) {
 		cache.store("key"+strconv.Itoa(i), keyResult{masked: "key"})
 	}
 	cache.store("key0", keyResult{masked: "again"})
-	if got := cache.size.Load(); got != maxCachedKeys {
+	if got := cache.size(); got != maxCachedKeys {
 		t.Fatalf("cache size = %d, want %d", got, maxCachedKeys)
 	}
 	if result, ok := cache.load("key0"); !ok || result.masked != "key" {
@@ -81,20 +81,20 @@ func TestMaskKeyHitStillChecksCancellationAndBudget(t *testing.T) {
 	t.Parallel()
 	scanner := NewScanner(WithKinds(KindEmail))
 	warm := eventScanner{scanner: scanner, remaining: maxScanBytes}
-	if _, err := warm.maskKey(context.Background(), "status"); err != nil {
+	if _, err := warm.maskCached(context.Background(), "status"); err != nil {
 		t.Fatal(err)
 	}
 	canceled, cancel := context.WithCancel(context.Background())
 	cancel()
-	if _, err := warm.maskKey(canceled, "status"); !errors.Is(err, saferecord.ErrCanceled) {
+	if _, err := warm.maskCached(canceled, "status"); !errors.Is(err, saferecord.ErrCanceled) {
 		t.Fatalf("canceled hit = %v", err)
 	}
 	short := eventScanner{scanner: scanner, remaining: len("status") - 1}
-	if _, err := short.maskKey(context.Background(), "status"); !errors.Is(err, saferecord.ErrSizeLimit) {
+	if _, err := short.maskCached(context.Background(), "status"); !errors.Is(err, saferecord.ErrSizeLimit) {
 		t.Fatalf("hit beyond budget = %v", err)
 	}
 	exact := eventScanner{scanner: scanner, remaining: len("status")}
-	if _, err := exact.maskKey(context.Background(), "status"); err != nil || exact.remaining != 0 {
+	if _, err := exact.maskCached(context.Background(), "status"); err != nil || exact.remaining != 0 {
 		t.Fatalf("hit at the budget = %v, remaining %d", err, exact.remaining)
 	}
 }

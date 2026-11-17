@@ -29,7 +29,7 @@ func (s *Scanner) ScanLines(r io.Reader, fn func(lineNum int, line []byte, findi
 		lineNum++
 		raw := sc.Bytes()
 		view := detect.NewView(raw)
-		findings := s.scanInput(view, nil)
+		findings := s.scanInput(nil, view, nil)
 		covered := 0
 		if len(label) > 0 {
 			end, complete := detect.PEMFooter(view.Data, 0, label)

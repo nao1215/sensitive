@@ -2,6 +2,7 @@ package embargo
 
 import (
 	"context"
+	"maps"
 	"sync"
 	"sync/atomic"
 
@@ -49,7 +50,7 @@ func (s *Scanner) sensitiveKey(key string) bool {
 	return detect.SensitiveCredentialKey(key)
 }
 
-// Field keys repeat across events, and their masked spelling and sensitivity
+// Field keys and log messages repeat across events, and their masked spelling and sensitivity
 // depend only on the scanner's immutable built-in policy. Only keys without
 // findings are cached, so it holds no detected value. The cache is bounded
 // in entries and key length; once full it stops admitting keys, so unique keys
@@ -60,72 +61,114 @@ const (
 )
 
 type keyResult struct {
+	key       string
 	masked    string
 	sensitive bool
 }
 
+// keyCache publishes an immutable map, so lookups take no lock and a lookup by
+// bytes allocates nothing. Stores copy the map; there are at most
+// maxCachedKeys of them over a scanner's life.
 type keyCache struct {
-	entries sync.Map
-	size    atomic.Int64
+	entries atomic.Pointer[map[string]keyResult]
+	mu      sync.Mutex
 }
 
 func (c *keyCache) load(key string) (keyResult, bool) {
-	value, ok := c.entries.Load(key)
-	if !ok {
+	entries := c.entries.Load()
+	if entries == nil {
 		return keyResult{}, false
 	}
-	result, ok := value.(keyResult)
+	result, ok := (*entries)[key]
 	return result, ok
 }
 
+func (c *keyCache) loadBytes(key []byte) (keyResult, bool) {
+	entries := c.entries.Load()
+	if entries == nil {
+		return keyResult{}, false
+	}
+	result, ok := (*entries)[string(key)]
+	return result, ok
+}
+
+func (c *keyCache) size() int {
+	if entries := c.entries.Load(); entries != nil {
+		return len(*entries)
+	}
+	return 0
+}
+
 func (c *keyCache) store(key string, result keyResult) {
-	if c.size.Add(1) > maxCachedKeys {
-		c.size.Add(-1)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	var current map[string]keyResult
+	if entries := c.entries.Load(); entries != nil {
+		current = *entries
+	}
+	if _, ok := current[key]; ok || len(current) >= maxCachedKeys {
 		return
 	}
-	if _, loaded := c.entries.LoadOrStore(key, result); loaded {
-		c.size.Add(-1)
-	}
+	next := make(map[string]keyResult, len(current)+1)
+	maps.Copy(next, current)
+	result.key = key
+	next[key] = result
+	c.entries.Store(&next)
 }
 
 // cacheableKey excludes numeric-looking keys, which maskScalar also checks as
 // exact integers with a second budget charge, and keys too long to keep.
-func (s *Scanner) cacheableKey(key string) bool {
-	return s.keys != nil && key != "" && len(key) <= maxCachedKeyBytes && key[0] != '-' && (key[0] < '0' || key[0] > '9')
+func cacheableKey[T string | []byte](s *Scanner, key T) bool {
+	return s.keys != nil && len(key) > 0 && len(key) <= maxCachedKeyBytes && key[0] != '-' && (key[0] < '0' || key[0] > '9')
 }
 
-// maskKey is maskScalar(ctx, key, "") with its result cached per scanner. A hit
-// performs the same cancellation and budget checks and charges as a scan.
-func (s *eventScanner) maskKey(ctx context.Context, key string) (keyResult, error) {
-	if !s.scanner.cacheableKey(key) {
-		masked, err := s.maskScalar(ctx, key, "")
-		return keyResult{masked: masked, sensitive: err == nil && s.scanner.sensitiveKey(key)}, err
+// cachedKey returns a cached result for key after the cancellation and budget
+// checks and charge that scanning it would apply. A miss charges nothing.
+func cachedKey[T string | []byte](ctx context.Context, s *eventScanner, key T) (keyResult, bool, error) {
+	if !cacheableKey(s.scanner, key) {
+		return keyResult{}, false, nil
 	}
 	if ctx.Err() != nil {
-		return keyResult{}, saferecord.ErrCanceled
+		return keyResult{}, false, saferecord.ErrCanceled
 	}
 	if len(key) > s.remaining {
-		return keyResult{}, saferecord.ErrSizeLimit
+		return keyResult{}, false, saferecord.ErrSizeLimit
 	}
-	if result, ok := s.scanner.keys.load(key); ok {
+	var result keyResult
+	var ok bool
+	switch typed := any(key).(type) {
+	case string:
+		result, ok = s.scanner.keys.load(typed)
+	case []byte:
+		result, ok = s.scanner.keys.loadBytes(typed)
+	}
+	if ok {
 		s.remaining -= len(key)
-		return result, nil
+	}
+	return result, ok, nil
+}
+
+// maskCached is maskScalar(ctx, key, "") with its result cached per scanner. A hit
+// performs the same cancellation and budget checks and charges as a scan.
+func (s *eventScanner) maskCached(ctx context.Context, key string) (keyResult, error) {
+	if result, ok, err := cachedKey(ctx, s, key); ok || err != nil {
+		return result, err
 	}
 	masked, err := s.maskScalar(ctx, key, "")
 	if err != nil {
 		return keyResult{}, err
 	}
-	result := keyResult{masked: masked, sensitive: s.scanner.sensitiveKey(key)}
+	result := keyResult{key: key, masked: masked, sensitive: s.scanner.sensitiveKey(key)}
 	// Only clean keys are kept, so the cache never holds detected values.
-	if masked == key {
+	if masked == key && cacheableKey(s.scanner, key) {
 		s.scanner.keys.store(key, result)
 	}
 	return result, nil
 }
 
-// cachedSensitiveKey answers sensitiveKey from the cache when maskKey has seen key.
+// cachedSensitiveKey answers sensitiveKey from the cache when maskCached has seen key.
 func (s *Scanner) cachedSensitiveKey(key string) bool {
-	if s.cacheableKey(key) {
+	if cacheableKey(s, key) {
 		if result, ok := s.keys.load(key); ok {
 			return result.sensitive
 		}

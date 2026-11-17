@@ -280,11 +280,21 @@ func (w *jsonWalker) maskText(ctx context.Context, text, key string, objectKey b
 	if !objectKey {
 		return w.scanner.maskScalar(ctx, text, key)
 	}
-	result, err := w.scanner.maskKey(ctx, text)
+	result, err := w.scanner.maskCached(ctx, text)
 	return result.masked, err
 }
 
 func (w *jsonWalker) appendString(text string) {
+	if plainJSONText(text) {
+		// Same bytes and limit as appendResult(json.Marshal(text)), without the copy.
+		if w.err == nil && len(text)+len(`""`) > maxEventBytes-len(w.result) {
+			w.err = saferecord.ErrSizeLimit
+		}
+		if w.err == nil {
+			w.result = append(append(append(w.result, '"'), text...), '"')
+		}
+		return
+	}
 	// Marshaling a string cannot fail. Keep the explicit boundary for panics.
 	//nolint:errchkjson // Keep the explicit error check required by strict errcheck.
 	encoded, err := json.Marshal(text)
@@ -292,6 +302,17 @@ func (w *jsonWalker) appendString(text string) {
 		panic("embargo: JSON string encoding failed")
 	}
 	w.appendResult(encoded)
+}
+
+// plainJSONText reports whether encoding/json writes text unchanged between
+// quotes: printable ASCII without quote, backslash or the HTML-escaped <, > and &.
+func plainJSONText(text string) bool {
+	for i := range len(text) {
+		if c := text[i]; c < ' ' || c >= utf8.RuneSelf || c == '"' || c == '\\' || c == '<' || c == '>' || c == '&' {
+			return false
+		}
+	}
+	return true
 }
 
 // Stop before retaining bytes beyond the output limit, including a token that
@@ -335,6 +356,20 @@ func (w *jsonWalker) keyPath(ctx context.Context, key string, start, end int) er
 
 func (w *jsonWalker) objectKey(ctx context.Context, raw []byte) (string, error) {
 	start := len(w.result)
+	if content := raw[1 : len(raw)-1]; bytes.IndexByte(content, '\\') < 0 && utf8.Valid(content) {
+		// A cached key had no findings, so its lexeme is copied unchanged.
+		result, ok, err := cachedKey(ctx, &w.scanner, content)
+		if err != nil {
+			return "", err
+		}
+		if ok {
+			w.appendResult(raw)
+			if w.err != nil {
+				return "", w.err
+			}
+			return result.key, w.keyPath(ctx, result.key, start, len(w.result))
+		}
+	}
 	original, err := w.stringValue(ctx, raw, "", true)
 	if err != nil {
 		return "", err

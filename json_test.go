@@ -15,6 +15,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/nao1215/embargo/internal/saferecord"
 )
@@ -682,5 +683,43 @@ func TestMaskJSONFixedFailureReasons(t *testing.T) {
 		if got != nil || err == nil || err.Error() != tc.want {
 			t.Errorf("got=%q err=%v want=%q", got, err, tc.want)
 		}
+	}
+}
+
+func TestPlainJSONTextMatchesEncodingJSON(t *testing.T) {
+	t.Parallel()
+	for b := range 256 {
+		text := "a" + string([]byte{byte(b)}) + "z"
+		encoded, err := json.Marshal(text)
+		if err != nil {
+			t.Fatal(err)
+		}
+		plain := string(encoded) == `"`+text+`"`
+		if got := plainJSONText(text); got && !plain {
+			t.Errorf("byte %#x: plainJSONText is true but encoding/json writes %s", b, encoded)
+		} else if got != plain && b < utf8.RuneSelf {
+			t.Errorf("byte %#x: plainJSONText = %v, encoding/json unchanged = %v", b, got, plain)
+		}
+	}
+	for _, text := range []string{"", "[REDACTED]", "user [REDACTED] failed", "é", " "} {
+		walker := jsonWalker{}
+		walker.appendString(text)
+		want, err := json.Marshal(text)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(walker.result) != string(want) {
+			t.Errorf("appendString(%q) = %s, want %s", text, walker.result, want)
+		}
+	}
+	full := jsonWalker{result: make([]byte, maxEventBytes-len(`"ab"`)+1)}
+	full.appendString("ab")
+	if !errors.Is(full.err, saferecord.ErrSizeLimit) || len(full.result) != maxEventBytes-len(`"ab"`)+1 {
+		t.Fatalf("appendString past the limit: err %v, length %d", full.err, len(full.result))
+	}
+	exact := jsonWalker{result: make([]byte, maxEventBytes-len(`"ab"`))}
+	exact.appendString("ab")
+	if exact.err != nil || len(exact.result) != maxEventBytes {
+		t.Fatalf("appendString at the limit: err %v, length %d", exact.err, len(exact.result))
 	}
 }
