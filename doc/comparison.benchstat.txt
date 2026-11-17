@@ -2,14 +2,14 @@ goos: linux
 goarch: amd64
 pkg: github.com/nao1215/embargo/tests
 cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-                   │  masq.txt   │             embargo.txt             │
-                   │   sec/op    │   sec/op     vs base                │
-Comparison/flat      3.113µ ± 1%   1.317µ ± 1%  -57.71% (p=0.000 n=10)
-Comparison/nested    5.031µ ± 0%   2.304µ ± 3%  -54.21% (p=0.000 n=10)
-Comparison/map       5.558µ ± 1%   3.209µ ± 0%  -42.26% (p=0.000 n=10)
-Comparison/clean     2.871µ ± 1%   1.008µ ± 1%  -64.88% (p=0.000 n=10)
-Comparison/large50   59.82µ ± 1%   13.52µ ± 2%  -77.40% (p=0.000 n=10)
-geomean              6.838µ        2.658µ       -61.13%
+                   │  masq.txt   │             embargo.txt              │
+                   │   sec/op    │    sec/op     vs base                │
+Comparison/flat      3.203µ ± 2%   1.349µ ±  2%  -57.88% (p=0.000 n=10)
+Comparison/nested    5.415µ ± 7%   2.283µ ±  1%  -57.84% (p=0.000 n=10)
+Comparison/map       5.559µ ± 5%   3.214µ ± 11%  -42.19% (p=0.000 n=10)
+Comparison/clean     2.861µ ± 0%   1.028µ ±  1%  -64.08% (p=0.000 n=10)
+Comparison/large50   59.94µ ± 0%   13.47µ ±  2%  -77.53% (p=0.000 n=10)
+geomean              6.977µ        2.675µ        -61.66%
 
                    │   masq.txt    │             embargo.txt              │
                    │     B/op      │     B/op      vs base                │
