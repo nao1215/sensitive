@@ -38,6 +38,14 @@ func (d *MerchantID) Scan(data []byte) []Finding {
 	var findings []Finding
 
 	// Check merchant keywords.
+	findings = d.appendMerchantIDs(findings, data)
+
+	// Check terminal keywords.
+	return d.appendTerminalIDs(findings, data)
+}
+
+// appendMerchantIDs reports alphanumeric merchant IDs near merchant keywords.
+func (d *MerchantID) appendMerchantIDs(findings []Finding, data []byte) []Finding {
 	merchantMatches := d.merchantKeywords.findPositions(data)
 	for _, m := range merchantMatches {
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
@@ -56,8 +64,12 @@ func (d *MerchantID) Scan(data []byte) []Finding {
 			})
 		}
 	}
+	return findings
+}
 
-	// Check terminal keywords.
+// appendTerminalIDs reports whole-token numeric terminal IDs near terminal
+// keywords that do not overlap an earlier finding.
+func (d *MerchantID) appendTerminalIDs(findings []Finding, data []byte) []Finding {
 	terminalMatches := d.terminalKeywords.findPositions(data)
 	for _, m := range terminalMatches {
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
@@ -65,8 +77,7 @@ func (d *MerchantID) Scan(data []byte) []Finding {
 		for _, seq := range seqs {
 			// Do not expose a keyword by masking only the numeric portion of
 			// an alphanumeric token; terminal identifiers are whole tokens.
-			if seq.start > 0 && ascii.IsAlphaNum(data[seq.start-1]) && !encodedSeparatorBefore(data, seq.start) ||
-				seq.end < len(data) && ascii.IsAlphaNum(data[seq.end]) {
+			if !isWholeTerminalToken(data, seq.start, seq.end) {
 				continue
 			}
 
@@ -83,8 +94,14 @@ func (d *MerchantID) Scan(data []byte) []Finding {
 			})
 		}
 	}
-
 	return findings
+}
+
+// isWholeTerminalToken reports whether [start, end) is not embedded in a longer
+// alphanumeric token, allowing an encoded separator before it.
+func isWholeTerminalToken(data []byte, start, end int) bool {
+	return (start == 0 || !ascii.IsAlphaNum(data[start-1]) || encodedSeparatorBefore(data, start)) &&
+		(end >= len(data) || !ascii.IsAlphaNum(data[end]))
 }
 
 // overlapsFinding reports whether [start, end) overlaps any existing finding.
