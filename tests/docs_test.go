@@ -61,6 +61,33 @@ func TestBenchmarkTable(t *testing.T) {
 		}
 		printLine("| %s | %.1f | %s | %.0f | %.0f |\n", row.label, values["ns/op"], throughput, values["B/op"], values["allocs/op"])
 	}
+	printLine("\nParallel: ns/op is wall time per event across all goroutines.\n\n")
+	printLine("| Shared value | ")
+	procsList := parallelProcs()
+	for _, procs := range procsList {
+		printLine("%d CPU ns/op | ", procs)
+	}
+	printLine("Speed-up at %d |\n|---|%s---:|\n", procsList[len(procsList)-1], strings.Repeat("---:|", len(procsList)))
+	for _, row := range []struct{ label, name string }{
+		{label: "Scanner.Scan", name: parallelScanner},
+		{label: "slog handler", name: loggerSlog},
+		{label: "zap WriteSyncer", name: loggerZap},
+	} {
+		var first, last float64
+		printLine("| %s | ", row.label)
+		for index, procs := range procsList {
+			values, ok := snapshot.Benchmarks[fmt.Sprintf("BenchmarkPublishedParallel/%s/%dprocs", row.name, procs)]
+			if !ok {
+				t.Fatal("parallel benchmark missing")
+			}
+			if index == 0 {
+				first = values["ns/op"]
+			}
+			last = values["ns/op"]
+			printLine("%.1f | ", values["ns/op"])
+		}
+		printLine("%.1fx |\n", first/last)
+	}
 	printLine("\n<details>\n<summary>Per-detector Scanner throughput</summary>\n\n| Detector | Clean MB/s | Dirty MB/s |\n|---|---:|---:|\n")
 	var names []string
 	for name := range snapshot.Benchmarks {

@@ -99,6 +99,116 @@ func TestWriterConcurrentWholeEvents(t *testing.T) {
 	}
 }
 
+// gateDetector blocks every scan until release is closed and reports each
+// entry, so a test can see two events being masked at the same time.
+type gateDetector struct {
+	entered chan struct{}
+	release chan struct{}
+}
+
+func (d gateDetector) Scan([]byte) []embargo.Finding {
+	d.entered <- struct{}{}
+	<-d.release
+	return nil
+}
+
+func TestWriterMasksWholeEventsOutsideTheLock(t *testing.T) {
+	t.Parallel()
+	gate := gateDetector{entered: make(chan struct{}, 4), release: make(chan struct{})}
+	var sink bytes.Buffer
+	w := NewWriter(&sink, embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(gate)))
+	var group sync.WaitGroup
+	for range 2 {
+		group.Go(func() {
+			if _, err := w.Write([]byte("{\"msg\":\"public\"}\n")); err != nil {
+				t.Error(err)
+			}
+		})
+	}
+	<-gate.entered
+	<-gate.entered
+	close(gate.release)
+	group.Wait()
+	if sink.String() != "{\"msg\":\"public\"}\n{\"msg\":\"public\"}\n" {
+		t.Fatalf("events changed: %q", sink.String())
+	}
+}
+
+func TestWriterDropsEventMaskedAcrossClose(t *testing.T) {
+	t.Parallel()
+	gate := gateDetector{entered: make(chan struct{}, 1), release: make(chan struct{})}
+	var sink bytes.Buffer
+	w := NewWriter(&sink, embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(gate)))
+	done := make(chan error, 1)
+	go func() {
+		_, err := w.Write([]byte("{\"msg\":\"public\"}\n"))
+		done <- err
+	}()
+	<-gate.entered
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+	close(gate.release)
+	if err := <-done; !errors.Is(err, io.ErrClosedPipe) || sink.Len() != 0 {
+		t.Fatalf("event written after Close: %v %q", err, sink.String())
+	}
+}
+
+func TestWriterKeepsFragmentWhileWholeEventsPass(t *testing.T) {
+	t.Parallel()
+	var sink bytes.Buffer
+	w := NewWriter(&sink, embargo.NewScanner(embargo.WithKinds(embargo.KindEmail)))
+	if _, err := w.Write([]byte(`{"email":"bob@`)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := w.Write([]byte("example.com\"}\n")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := w.Write([]byte("{\"email\":\"alice@example.com\"}\n")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := w.Write([]byte("{\"email\":\"carol@example.com\"}\n{\"email\":\"dave@example.com\"}\n")); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Count(sink.String(), "[REDACTED]") != 4 || strings.Contains(sink.String(), "example.com") || strings.Contains(sink.String(), "withheld") {
+		t.Fatalf("split or whole event leaked: %q", sink.String())
+	}
+}
+
+func TestWriterOversizedTailIsNotAnEvent(t *testing.T) {
+	t.Parallel()
+	var sink bytes.Buffer
+	w := NewWriter(&sink, embargo.NewScanner(embargo.WithKinds(embargo.KindEmail)))
+	if _, err := w.Write([]byte(`{"pad":"` + strings.Repeat("a", maxEventBytes))); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := w.Write([]byte("\",\"note\":\"public\"}\n")); err != nil {
+		t.Fatal(err)
+	}
+	if sink.String() != "{\"msg\":\"embargo: record withheld (size limit)\",\"withheld_attributes\":2}\n" {
+		t.Fatalf("tail of an oversized record was written as its own event: %q", sink.String())
+	}
+}
+
+func TestFlushSyncDiagnosesThenSyncs(t *testing.T) {
+	t.Parallel()
+	var sink bytes.Buffer
+	w := NewWriter(&sink, embargo.NewScanner(embargo.WithKinds()))
+	if _, err := w.Write([]byte(`{"msg":"partial`)); err != nil {
+		t.Fatal(err)
+	}
+	synced := errors.New("sync failed")
+	err := w.FlushSync(func() error {
+		if !strings.Contains(sink.String(), "withheld") {
+			t.Error("sync ran before the pending fragment was diagnosed")
+		}
+		return synced
+	})
+	if !errors.Is(err, synced) || errors.Is(err, io.ErrClosedPipe) || err.Error() == synced.Error() {
+		t.Fatalf("framing and sync errors were not joined: %v", err)
+	}
+}
+
 func TestJSONScannerPanicNilFailsClosed(t *testing.T) {
 	t.Parallel()
 	if os.Getenv("EMBARGO_OUTPUT_PANIC_CHILD") == "1" {

@@ -3,13 +3,20 @@ package tests
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
+	"runtime"
 	"sort"
 	"strings"
+	"sync/atomic"
 	"testing"
 
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
 	"github.com/nao1215/embargo"
+	embargozap "github.com/nao1215/embargo/adapters/zap"
 	"github.com/nao1215/embargo/embargotest"
 )
 
@@ -122,6 +129,63 @@ func BenchmarkPublishedSlog(b *testing.B) {
 			}
 		})
 	}
+}
+
+// parallelScanner names the parallel benchmark of a bare Scanner.
+const parallelScanner = "scanner"
+
+// parallelProcs returns the GOMAXPROCS values of the parallel benchmark. The
+// names end in "procs" because the sample parser strips a trailing -N suffix.
+func parallelProcs() []int { return []int{1, 4, 16} }
+
+// BenchmarkPublishedParallel shares one scanner, one slog logger and one zap
+// logger among GOMAXPROCS goroutines, as a service does, so ns/op is wall time
+// per event and falls as the work spreads over more CPUs.
+func BenchmarkPublishedParallel(b *testing.B) {
+	scanner := embargo.NewScanner()
+	line := []byte(`{"level":"info","msg":"request accepted","email":"alice@example.com","user_id":42,"path":"/api/v1/orders"}`)
+	paths := map[string]func(sink *countingWriter) func(){
+		parallelScanner: func(*countingWriter) func() { return func() { scanner.Scan(line) } },
+		loggerSlog: func(sink *countingWriter) func() {
+			logger := slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(sink, nil), scanner))
+			return func() {
+				logger.Info("request accepted", "email", "alice@example.com", "user_id", 42, "path", "/api/v1/orders")
+			}
+		},
+		loggerZap: func(sink *countingWriter) func() {
+			core := zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()), embargozap.NewWriteSyncer(zapcore.AddSync(sink), scanner), zap.InfoLevel)
+			logger := zap.New(core)
+			return func() {
+				logger.Info("request accepted", zap.String("email", "alice@example.com"), zap.Int("user_id", 42), zap.String("path", "/api/v1/orders"))
+			}
+		},
+	}
+	for _, name := range []string{parallelScanner, loggerSlog, loggerZap} {
+		for _, procs := range parallelProcs() {
+			b.Run(fmt.Sprintf("%s/%dprocs", name, procs), func(b *testing.B) {
+				defer runtime.GOMAXPROCS(runtime.GOMAXPROCS(procs))
+				sink := &countingWriter{}
+				event := paths[name](sink)
+				b.ReportAllocs()
+				b.RunParallel(func(pb *testing.PB) {
+					for pb.Next() {
+						event()
+					}
+				})
+				if name != parallelScanner && sink.written.Load() == 0 {
+					b.Fatal("benchmark skipped actual JSON encoding")
+				}
+			})
+		}
+	}
+}
+
+// countingWriter is a benchmarkWriter that goroutines can share.
+type countingWriter struct{ written atomic.Int64 }
+
+func (w *countingWriter) Write(data []byte) (int, error) {
+	w.written.Add(int64(len(data)))
+	return len(data), nil
 }
 
 // benchmarkWriter discards bytes only after the real JSON encoder has run.
