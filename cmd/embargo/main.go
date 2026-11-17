@@ -111,6 +111,21 @@ func openInputs(names []string, stdin io.Reader) (io.Reader, func()) {
 	return files, files.close
 }
 
+// inputError is a fixed message about the named input files; it never holds a
+// file name or operating-system detail, so it is shown as is.
+type inputError string
+
+func (e inputError) Error() string { return string(e) }
+
+// safeInputError returns err's own message when it is an inputError and
+// fallback otherwise, so reader errors from other sources are never shown.
+func safeInputError(err error, fallback string) error {
+	if message, ok := errors.AsType[inputError](err); ok {
+		return message
+	}
+	return errors.New(fallback)
+}
+
 type fileSequence struct {
 	current  *os.File
 	closeErr error
@@ -120,7 +135,7 @@ type fileSequence struct {
 func (f *fileSequence) Read(p []byte) (int, error) {
 	for {
 		if f.closeErr != nil {
-			return 0, errors.New("embargo: an input file cannot be closed")
+			return 0, inputError("embargo: an input file cannot be closed")
 		}
 		if f.current == nil {
 			if len(f.names) == 0 {
@@ -128,7 +143,7 @@ func (f *fileSequence) Read(p []byte) (int, error) {
 			}
 			file, err := os.Open(f.names[0])
 			if err != nil {
-				return 0, errors.New("embargo: an input file cannot be opened")
+				return 0, inputError("embargo: an input file cannot be opened")
 			}
 			f.current, f.names = file, f.names[1:]
 		}
@@ -141,7 +156,7 @@ func (f *fileSequence) Read(p []byte) (int, error) {
 			continue
 		}
 		if err != nil {
-			return n, errors.New("embargo: an input file cannot be read")
+			return n, inputError("embargo: an input file cannot be read")
 		}
 		return n, nil
 	}

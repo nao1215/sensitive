@@ -30,7 +30,7 @@ func filterLines(input io.Reader, output io.Writer, scanner *embargo.Scanner) er
 			return flushThen(writer, fmt.Errorf("embargo: line %d exceeds the 4 MiB limit; output stops before it", number))
 		}
 		if readErr != nil && !errors.Is(readErr, io.EOF) {
-			return flushThen(writer, fmt.Errorf("embargo: input read failed at line %d", number))
+			return flushThen(writer, safeInputError(readErr, fmt.Sprintf("embargo: input read failed at line %d", number)))
 		}
 		if len(line) > 0 {
 			body, ending := splitEnding(line)

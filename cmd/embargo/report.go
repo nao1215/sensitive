@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"slices"
@@ -65,8 +64,8 @@ func collectReport(input io.Reader, scanner *embargo.Scanner, sampleLimit int) (
 			addFinding(groups, finding, lineStart, lineCount, sampleLimit)
 		}
 	}
-	if lines.Err() != nil {
-		return report{}, errors.New("embargo: input read failed or a line reached the 4 MiB limit; no report was written")
+	if err := lines.Err(); err != nil {
+		return report{}, safeInputError(err, "embargo: input read failed or a line reached the 4 MiB limit; no report was written")
 	}
 	return report{Findings: sortedKinds(groups), Bytes: bytesRead, Lines: lineCount}, nil
 }

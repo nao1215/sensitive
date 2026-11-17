@@ -1,0 +1,147 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nao1215/atago/v0.26.0/schema/atago.schema.json
+# Black-box behaviour of the embargo command: the pipe filter, file input,
+# the --report mode, exit codes and option errors. scripts/run_e2e.sh builds
+# the command from this checkout and puts it first on PATH.
+# The first scenario pins the command output shown in the README.
+version: "1"
+
+suite:
+  name: embargo command
+
+scenarios:
+  - name: README example masks a text line and a JSON line
+    steps:
+      - run:
+          command: embargo
+          stdin: |
+            login failed for alice@example.com from 203.0.113.7
+            {"user":"alice@example.com","password":"hunter2","card":"4111111111111111","attempts":3}
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              login failed for [REDACTED] from [REDACTED]
+              {"user":"[REDACTED]","password":"[REDACTED]","card":"[REDACTED]","attempts":3}
+          stderr:
+            empty: true
+
+  - name: line endings and a missing final newline are kept
+    steps:
+      - run:
+          command: embargo
+          stdin: "card=4111111111111111\r\nplain\nlast 4111111111111111"
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: "card=[REDACTED]\r\nplain\nlast [REDACTED]"
+
+  - name: files are read in order like cat
+    steps:
+      - fixture:
+          file: first.log
+          content: |
+            first alice@example.com
+      - fixture:
+          file: second.log
+          content: |
+            second 4111111111111111
+      - run:
+          command: embargo first.log second.log
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              first [REDACTED]
+              second [REDACTED]
+
+  - name: --kinds narrows the detectors
+    steps:
+      - run:
+          command: embargo --kinds pan
+          stdin: |
+            alice@example.com 4111111111111111
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              alice@example.com [REDACTED]
+
+  - name: --report prints counts and masked locations without input bytes
+    steps:
+      - run:
+          command: embargo --report --samples 1
+          stdin: |
+            card=4111111111111111
+            card=4111111111111111
+      - assert:
+          exit_code: 0
+          stdout:
+            contains:
+              - '"kind": "pan"'
+              - '"count": 2'
+              - '"value": "[REDACTED]"'
+              - '"start": 5'
+              - '"lines": 2'
+            not_contains: "4111111111111111"
+
+  - name: a missing file fails without repeating its name
+    steps:
+      - run:
+          command: embargo private-name.log
+      - assert:
+          exit_code: 1
+          stdout:
+            empty: true
+          stderr:
+            equals: |
+              embargo: an input file cannot be opened
+
+  - name: option errors name the flag and never echo the value
+    steps:
+      - run:
+          command: embargo --min-confidence password=hunter2
+      - assert:
+          exit_code: 1
+          stdout:
+            empty: true
+          stderr:
+            equals: |
+              embargo: --min-confidence must be a number from 0 to 1
+      - run:
+          command: embargo --kinds password=hunter2
+      - assert:
+          exit_code: 1
+          stderr:
+            equals: |
+              embargo: --kinds must be all or a comma-separated list of kinds; see embargo --help
+      - run:
+          command: embargo --samples 2
+      - assert:
+          exit_code: 1
+          stderr:
+            equals: |
+              embargo: --samples requires --report
+      - run:
+          command: embargo --password=hunter2
+      - assert:
+          exit_code: 1
+          stderr:
+            equals: |
+              embargo: unknown flag or missing flag value; see embargo --help
+
+  - name: help and version exit successfully
+    steps:
+      - run:
+          command: embargo --help
+      - assert:
+          exit_code: 0
+          stdout:
+            contains:
+              - "Usage: embargo [--kinds all|KIND,...]"
+              - "--report"
+      - run:
+          command: embargo --version
+      - assert:
+          exit_code: 0
+          stdout:
+            contains: "embargo "

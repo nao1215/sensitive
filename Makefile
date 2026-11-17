@@ -56,6 +56,10 @@ fuzz: ## Smoke test every root fuzz target
 	python3 scripts/fuzz_targets.py --run 10s
 
 
+.PHONY: test-e2e
+test-e2e: ## Run the atago end-to-end specs against the embargo command
+	./scripts/run_e2e.sh
+
 .PHONY: compatibility-doc
 compatibility-doc: ## Regenerate the table from real output tests
 	UPDATE_DOCS=1 go -C tests test -run '^TestCompatibilityTable$$' -count=1 .
