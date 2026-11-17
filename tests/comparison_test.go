@@ -25,6 +25,7 @@ import (
 	"github.com/icntswm/go-masker/slogmask"
 	"github.com/icntswm/go-masker/zapmask"
 	"github.com/icntswm/go-masker/zerologmask"
+	piishield "github.com/pii-shield/pii-shield/v3/pkg/scanner"
 	"github.com/m-mizutani/masq"
 	"github.com/rs/zerolog"
 	slogformatter "github.com/samber/slog-formatter"
@@ -51,6 +52,7 @@ const (
 	comparisonClean          = "clean"
 	comparisonEmail          = "alice@example.com"
 	comparisonMaskerName     = "go-masker"
+	comparisonPIIShieldName  = "pii-shield"
 	comparisonMasqName       = "masq"
 	comparisonEmbargoName    = "embargo"
 	comparisonMap            = "map"
@@ -81,8 +83,34 @@ func comparisonMasq() func([]string, slog.Attr) slog.Attr {
 	return masq.New(masq.WithAllowedType(reflect.TypeFor[time.Time](), reflect.TypeFor[slog.Level]()), masq.WithRegex(regexp.MustCompile(`[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}`)), masq.WithRegex(regexp.MustCompile(`\b(?:\d[ -]?){12,18}\d\b`)), masq.WithFieldName("Password"), masq.WithFieldName(comparisonPasswordKey), masq.WithFieldName("token"), masq.WithTag("secret"))
 }
 
+// comparisonPIIShield is pii-shield's default policy plus the recovery key the
+// other libraries are given, with a fixed salt so its hashed markers repeat.
+func comparisonPIIShield() *piishield.Scanner {
+	config := piishield.DefaultConfig()
+	config.SensitiveKeys = append(config.SensitiveKeys, "recovery")
+	config.Salt = []byte("comparison-fixed-salt")
+	return piishield.NewScanner(config)
+}
+
+// piiShieldWriter applies pii-shield where its documentation places it: on each
+// encoded log line before it reaches the sink.
+type piiShieldWriter struct {
+	scanner *piishield.Scanner
+	out     io.Writer
+}
+
+func (w piiShieldWriter) Write(line []byte) (int, error) {
+	if _, err := io.WriteString(w.out, w.scanner.ScanAndRedact(strings.TrimSuffix(string(line), "\n"))+"\n"); err != nil {
+		return 0, err
+	}
+	return len(line), nil
+}
+
 func comparisonHandler(mode string, out io.Writer) slog.Handler {
 	options := &slog.HandlerOptions{}
+	if mode == comparisonPIIShieldName {
+		return slog.NewJSONHandler(piiShieldWriter{scanner: comparisonPIIShield(), out: out}, options)
+	}
 	if mode == comparisonMaskerName {
 		options.ReplaceAttr = slogmask.ReplaceAttr(comparisonValueMasker())
 	}
@@ -186,7 +214,7 @@ func BenchmarkComparison(b *testing.B) {
 	for _, name := range []string{comparisonFlat, comparisonNested, comparisonMap, comparisonClean, comparisonLarge} {
 		attrs := events[name]
 		b.Run(name, func(b *testing.B) {
-			for _, mode := range []string{scenarioPlain, comparisonMasqName, comparisonEmbargoName, comparisonMaskerName} {
+			for _, mode := range []string{scenarioPlain, comparisonMasqName, comparisonEmbargoName, comparisonMaskerName, comparisonPIIShieldName} {
 				b.Run(mode, func(b *testing.B) {
 					logger := slog.New(comparisonHandler(mode, io.Discard))
 					ctx := context.Background()

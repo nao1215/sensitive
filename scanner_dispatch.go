@@ -27,6 +27,10 @@ func (s *Scanner) buildDispatch() {
 			s.hintIndex[b] = append(s.hintIndex[b], dispatchHint{hint: entry.lowered, mask: mask})
 		}
 	}
+	// A dense table lets selectDetectors skip most bytes without loading a bucket.
+	for b, bucket := range s.hintIndex {
+		s.hinted[b] = len(bucket) > 0
+	}
 }
 
 func (s *Scanner) selectDetectors(data []byte) uint64 {
@@ -43,7 +47,11 @@ func (s *Scanner) selectDetectors(data []byte) uint64 {
 	selected := s.unconditional
 	all := uint64(1)<<len(s.detectors) - 1
 	for i, b := range data {
-		for _, entry := range s.hintIndex[ascii.ToLower(b)] {
+		b = ascii.ToLower(b)
+		if !s.hinted[b] {
+			continue
+		}
+		for _, entry := range s.hintIndex[b] {
 			if selected&entry.mask != 0 || len(entry.hint) > len(data)-i {
 				continue
 			}

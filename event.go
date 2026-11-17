@@ -3,6 +3,7 @@ package embargo
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"strings"
 
 	"github.com/nao1215/embargo/internal/saferecord"
@@ -73,14 +74,13 @@ func canonicalInteger(text string) bool {
 }
 
 func (s *eventScanner) scanScalar(ctx context.Context, value, key string) (string, error) {
-	storage := s.scanner.takeFindings()
-	findings, err := scalarFindings(ctx, s, *storage, value, key)
+	scratch := s.scanner.takeScratch()
+	defer s.scanner.returnScratch(scratch)
+	findings, err := scalarFindings(ctx, s, scratch, value, key)
 	if err != nil {
 		return "", err
 	}
-	masked := maskOwned(value, findings, redact)
-	s.scanner.returnFindings(storage, findings)
-	return masked, nil
+	return maskOwned(value, findings, redact), nil
 }
 
 // maskBytes is maskScalar for bytes that usually stay unchanged: the value
@@ -92,21 +92,20 @@ func (s *eventScanner) maskBytes(ctx context.Context, value []byte, key string) 
 		masked, err = s.maskScalar(ctx, text, key)
 		return masked, masked != text, err
 	}
-	storage := s.scanner.takeFindings()
-	findings, err := scalarFindings(ctx, s, *storage, value, key)
+	scratch := s.scanner.takeScratch()
+	defer s.scanner.returnScratch(scratch)
+	findings, err := scalarFindings(ctx, s, scratch, value, key)
 	if err != nil || len(findings) == 0 {
-		s.scanner.returnFindings(storage, findings)
 		return "", false, err
 	}
 	text := string(value)
 	masked = maskOwned(text, findings, redact)
-	s.scanner.returnFindings(storage, findings)
 	return masked, masked != text, nil
 }
 
 // scalarFindings scans "key: value" and returns the value's findings in value
 // offsets. The budget is charged before any buffer is filled or detector runs.
-func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, dst []Finding, value T, key string) ([]Finding, error) {
+func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scratch *scanScratch, value T, key string) ([]Finding, error) {
 	if ctx.Err() != nil {
 		return nil, saferecord.ErrCanceled
 	}
@@ -118,14 +117,14 @@ func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, dst
 		return nil, saferecord.ErrSizeLimit
 	}
 	s.remaining -= prefixBytes + len(value)
-	buffer := s.scanner.takeBuffer(prefixBytes + len(value))
-	scratch := *buffer
+	text := slices.Grow(scratch.text[:0], prefixBytes+len(value))
 	if prefixBytes > 0 {
-		scratch = append(append(scratch, key...), ": "...)
+		text = append(append(text, key...), ": "...)
 	}
-	scratch = append(scratch, value...)
-	findings := s.scanner.scanAppend(dst, scratch, ctx.Err)
-	s.scanner.returnBuffer(buffer, scratch)
+	text = append(text, value...)
+	findings := s.scanner.scanAppend(scratch.findings[:0], text, ctx.Err)
+	// Keep grown storage for the next user; the returned spans alias findings.
+	scratch.text, scratch.findings = text, findings
 	if ctx.Err() != nil {
 		return nil, saferecord.ErrCanceled
 	}

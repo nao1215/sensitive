@@ -1240,7 +1240,7 @@ func TestScanBuffersAreNotReusedForCustomDetectors(t *testing.T) {
 	t.Parallel()
 	custom := &retainingDetector{}
 	withCustom := NewScanner(WithDetector(custom))
-	if withCustom.buffers != nil {
+	if withCustom.scratch != nil {
 		t.Fatal("a scanner with a custom detector must not pool scan buffers")
 	}
 	for _, document := range []string{`{"first":"aaaa"}`, `{"second":"bbbb"}`} {
@@ -1252,18 +1252,25 @@ func TestScanBuffersAreNotReusedForCustomDetectors(t *testing.T) {
 		t.Fatalf("retained input changed to %q", got)
 	}
 	builtin := NewScanner()
-	small := builtin.takeBuffer(8)
-	if cap(*small) < 8 || len(*small) != 0 {
-		t.Fatalf("takeBuffer(8) = len %d cap %d", len(*small), cap(*small))
+	scratch := builtin.takeScratch()
+	scratch.text = append(scratch.text, "grown"...)
+	scratch.findings = append(scratch.findings, Finding{Kind: KindEmail, Start: 0, End: 1, Confidence: 1})
+	builtin.returnScratch(scratch)
+	if len(scratch.text) != 0 || len(scratch.findings) != 0 {
+		t.Fatal("returned scratch keeps old contents")
 	}
-	builtin.returnBuffer(small, append(*small, "grown"...))
-	huge := builtin.takeBuffer(largestPooledBuffer + 1)
-	if cap(*huge) <= largestPooledBuffer {
-		t.Fatalf("large buffer has cap %d", cap(*huge))
+	huge := builtin.takeScratch()
+	huge.text = make([]byte, 1, largestPooledBuffer+1)
+	builtin.returnScratch(huge)
+	many := builtin.takeScratch()
+	many.findings = make([]Finding, 1, maxPooledFindings+1)
+	builtin.returnScratch(many)
+	if len(huge.text) != 1 || len(many.findings) != 1 {
+		t.Fatal("oversized scratch must be dropped, not reset and pooled")
 	}
-	builtin.returnBuffer(huge, *huge)
 	var zero Scanner
-	if buffer := zero.takeBuffer(4); cap(*buffer) < 4 {
-		t.Fatal("zero-value scanner needs a fresh buffer")
+	if fresh := zero.takeScratch(); fresh == nil || len(fresh.text) != 0 {
+		t.Fatal("zero-value scanner needs fresh scratch")
 	}
+	zero.returnScratch(&scanScratch{text: []byte("x"), findings: nil})
 }

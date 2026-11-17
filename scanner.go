@@ -18,10 +18,10 @@ type Scanner struct {
 	detectors     []detect.Detector
 	hintCache     [][]hintEntry
 	custom        []Detector
-	buffers       *sync.Pool
-	results       *sync.Pool
+	scratch       *sync.Pool
 	keys          *keyCache
 	hintIndex     [256][]dispatchHint
+	hinted        [256]bool
 	minConfidence float64
 	unconditional uint64
 	initialized   bool
@@ -68,63 +68,46 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 	// differently each time, so only built-in selections, which never retain
 	// input and always return the same findings, reuse buffers and key results.
 	if len(s.custom) == 0 {
-		s.buffers = &sync.Pool{New: func() any { return new([]byte) }}
-		s.results = &sync.Pool{New: func() any { return new([]Finding) }}
+		s.scratch = &sync.Pool{New: func() any { return &scanScratch{text: nil, findings: nil} }}
 		s.keys = &keyCache{}
 	}
 	return s
 }
 
-// largestPooledBuffer keeps one huge scalar from pinning its buffer in the pool.
-const largestPooledBuffer = 64 << 10
-
-// takeBuffer returns an empty buffer with room for size bytes. Scanners with
-// custom detectors, zero-value scanners and large sizes get a fresh one.
-func (s *Scanner) takeBuffer(size int) *[]byte {
-	if s.buffers == nil || size > largestPooledBuffer {
-		buffer := make([]byte, 0, size)
-		return &buffer
-	}
-	buffer, ok := s.buffers.Get().(*[]byte)
-	if !ok {
-		panic("embargo: invalid scan buffer")
-	}
-	*buffer = slices.Grow((*buffer)[:0], size)
-	return buffer
+// scanScratch holds the "key: value" bytes of one scalar scan and the findings
+// the caller consumes before returning it; findings that leave the package are
+// never pooled.
+type scanScratch struct {
+	text     []byte
+	findings []Finding
 }
 
-// takeFindings returns empty storage for internal findings that the caller
-// consumes before returnFindings; findings that leave the package are never pooled.
-func (s *Scanner) takeFindings() *[]Finding {
-	if s.results == nil {
-		return new([]Finding)
+// Limits that keep one huge or finding-heavy scalar from pinning its storage.
+const (
+	largestPooledBuffer = 64 << 10
+	maxPooledFindings   = 64
+)
+
+// takeScratch returns empty scratch storage. Scanners with custom detectors and
+// zero-value scanners get fresh storage.
+func (s *Scanner) takeScratch() *scanScratch {
+	if s.scratch == nil {
+		return &scanScratch{text: nil, findings: nil}
 	}
-	findings, ok := s.results.Get().(*[]Finding)
+	scratch, ok := s.scratch.Get().(*scanScratch)
 	if !ok {
-		panic("embargo: invalid findings buffer")
+		panic("embargo: invalid scan scratch")
 	}
-	return findings
+	return scratch
 }
 
-// returnFindings keeps storage grown by its last user for the next scan.
-func (s *Scanner) returnFindings(findings *[]Finding, used []Finding) {
-	if s.results == nil || cap(used) > maxPooledFindings {
+// returnScratch keeps storage, grown by its last user, for the next scan.
+func (s *Scanner) returnScratch(scratch *scanScratch) {
+	if s.scratch == nil || cap(scratch.text) > largestPooledBuffer || cap(scratch.findings) > maxPooledFindings {
 		return
 	}
-	*findings = used[:0]
-	s.results.Put(findings)
-}
-
-// maxPooledFindings keeps a scan with many findings from pinning its storage.
-const maxPooledFindings = 64
-
-// returnBuffer keeps a buffer, grown by its last user, for the next scan.
-func (s *Scanner) returnBuffer(buffer *[]byte, used []byte) {
-	if s.buffers == nil || cap(used) > largestPooledBuffer {
-		return
-	}
-	*buffer = used[:0]
-	s.buffers.Put(buffer)
+	scratch.text, scratch.findings = scratch.text[:0], scratch.findings[:0]
+	s.scratch.Put(scratch)
 }
 
 // buildHintCache pre-computes lowered hints for each detector so that

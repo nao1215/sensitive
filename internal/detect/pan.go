@@ -2,6 +2,7 @@ package detect
 
 import (
 	"slices"
+	"unicode/utf8"
 
 	"github.com/nao1215/embargo/internal/ascii"
 )
@@ -81,8 +82,22 @@ func (d *PAN) Hints() [][]byte {
 
 // Scan returns matches in data using the rules documented on [PAN].
 func (d *PAN) Scan(data []byte) []Finding {
-	normalized, posMap := normalizeDigits(data)
-	return d.scanNormalized(data, normalized, posMap)
+	// One pass decides both the ASCII fast path and the digit count that
+	// normalizeDigits and scanNormalized would otherwise each walk for.
+	digits := 0
+	for _, b := range data {
+		if b >= utf8.RuneSelf {
+			normalized, posMap := NormalizeFullWidthDigits(data)
+			return d.scanNormalized(data, normalized, posMap)
+		}
+		if ascii.IsDigit(b) {
+			digits++
+		}
+	}
+	if digits < panMinDigits {
+		return nil
+	}
+	return d.scanNormalized(data, data, nil)
 }
 
 // scanNormalized performs PAN detection on normalized (half-width) data.
