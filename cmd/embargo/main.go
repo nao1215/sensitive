@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"errors"
 	"flag"
 	"fmt"
@@ -63,8 +64,8 @@ func writeUsage(output io.Writer) error {
 
 func writeVersion(output io.Writer) error {
 	version := "(devel)"
-	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" {
-		version = info.Main.Version
+	if info, ok := debug.ReadBuildInfo(); ok {
+		version = cmp.Or(info.Main.Version, version)
 	}
 	_, err := fmt.Fprintln(output, "embargo", version)
 	return err
@@ -141,11 +142,12 @@ func (f *fileSequence) Read(p []byte) (int, error) {
 		}
 		n, err := f.current.Read(p)
 		if errors.Is(err, io.EOF) {
+			// The next file continues the stream, so EOF is reported only after the last.
 			f.close()
-			if n == 0 {
-				continue
+			if n > 0 {
+				return n, nil
 			}
-			err = nil
+			continue
 		}
 		if err != nil {
 			return n, inputError("embargo: an input file cannot be read")

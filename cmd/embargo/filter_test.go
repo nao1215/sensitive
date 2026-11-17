@@ -133,3 +133,38 @@ func TestReadLineAndSplitEnding(t *testing.T) {
 		t.Fatalf("unterminated split = %q %q", body, ending)
 	}
 }
+
+// pacedReader hands out one line per Read and records, on the next Read,
+// whether the previous line had already reached the output.
+type pacedReader struct {
+	output  *bytes.Buffer
+	lines   []string
+	flushed []bool
+}
+
+func (r *pacedReader) Read(p []byte) (int, error) {
+	if len(r.flushed) > 0 || len(r.lines) < 2 {
+		r.flushed = append(r.flushed, r.output.Len() > 0)
+	}
+	if len(r.lines) == 0 {
+		return 0, io.EOF
+	}
+	n := copy(p, r.lines[0])
+	r.lines = r.lines[1:]
+	return n, nil
+}
+
+func TestFilterFlushesWhenNoInputIsBuffered(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	reader := &pacedReader{output: &out, lines: []string{"first\n", "second\n"}, flushed: nil}
+	if err := run(nil, reader, &out); err != nil {
+		t.Fatal(err)
+	}
+	if len(reader.flushed) == 0 || !reader.flushed[0] {
+		t.Fatalf("the first line was not written before more input was read: %v", reader.flushed)
+	}
+	if out.String() != "first\nsecond\n" {
+		t.Fatalf("output %q", out.String())
+	}
+}

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -98,3 +99,26 @@ func (failingInput) Read([]byte) (int, error) { return 0, errors.New("private-er
 type failingOutput struct{}
 
 func (failingOutput) Write([]byte) (int, error) { return 0, errors.New("output closed") }
+
+func TestFileBoundaryNeverReadsZeroBytesBeforeTheEnd(t *testing.T) {
+	t.Parallel()
+	directory := t.TempDir()
+	first, second := filepath.Join(directory, "a.log"), filepath.Join(directory, "b.log")
+	for name, content := range map[string]string{first: "ab", second: "cd"} {
+		if err := os.WriteFile(name, []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	source, closeAll := openInputs([]string{first, second}, strings.NewReader(""))
+	defer closeAll()
+	buffer := make([]byte, 16)
+	for _, want := range []string{"ab", "cd"} {
+		n, err := source.Read(buffer)
+		if err != nil || string(buffer[:n]) != want {
+			t.Fatalf("Read = %q, %v; want %q", buffer[:n], err, want)
+		}
+	}
+	if n, err := source.Read(buffer); n != 0 || !errors.Is(err, io.EOF) {
+		t.Fatalf("after the last file: %d, %v", n, err)
+	}
+}

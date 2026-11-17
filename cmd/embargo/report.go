@@ -52,10 +52,9 @@ func collectReport(input io.Reader, scanner *embargo.Scanner, sampleLimit int) (
 	lineCount := 0
 	lines.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		advance, token, err = bufio.ScanLines(data, atEOF)
-		if advance > 0 {
-			lineStart = bytesRead
-			bytesRead += int64(advance)
-		}
+		// Before a token is ready advance is 0, which leaves both offsets in place.
+		lineStart = bytesRead
+		bytesRead += int64(advance)
 		return advance, token, err
 	})
 	for lines.Scan() {
