@@ -8,7 +8,7 @@ require (
 	github.com/bytedance/godlp v1.2.15
 	github.com/getsentry/sentry-go v0.50.0
 	github.com/m-mizutani/masq v0.2.3
-	github.com/nao1215/embargo v0.10.0
+	github.com/nao1215/embargo v0.11.0
 	github.com/rs/zerolog v1.35.1
 	github.com/samber/slog-formatter v1.3.0
 	github.com/showa-93/go-mask v0.6.2
