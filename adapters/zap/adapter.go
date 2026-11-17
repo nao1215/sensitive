@@ -1,6 +1,9 @@
 package embargozap
 
 import (
+	"errors"
+	"sync"
+
 	"go.uber.org/zap/zapcore"
 
 	"github.com/nao1215/embargo"
@@ -21,14 +24,21 @@ func NewWriteSyncer(next zapcore.WriteSyncer, scanner *embargo.Scanner) zapcore.
 type writeSyncer struct {
 	writer *output.Writer
 	next   zapcore.WriteSyncer
+	// mu lets Writes run together, since the writer serializes its sink
+	// itself, and keeps Sync from running during any of them.
+	mu sync.RWMutex
 }
 
 // Write buffers split events until a complete JSON line can be checked.
 func (w *writeSyncer) Write(data []byte) (int, error) {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
 	return w.writer.Write(data)
 }
 
 // Sync forwards pending diagnostics, synchronizes the sink and joins both errors.
 func (w *writeSyncer) Sync() error {
-	return w.writer.FlushSync(w.next.Sync)
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return errors.Join(w.writer.Flush(), w.next.Sync())
 }

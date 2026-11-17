@@ -3,7 +3,6 @@ package output
 import (
 	"bytes"
 	"context"
-	"errors"
 	"io"
 	"reflect"
 	"sync"
@@ -167,14 +166,6 @@ func (w *Writer) Flush() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	return w.flush()
-}
-
-// FlushSync flushes like Flush and then calls syncSink while still holding the
-// lock, so a sink's Sync never runs during one of its Writes.
-func (w *Writer) FlushSync(syncSink func() error) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	return errors.Join(w.flush(), syncSink())
 }
 
 func (w *Writer) flush() error {

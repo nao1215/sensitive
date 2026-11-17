@@ -190,25 +190,6 @@ func TestWriterOversizedTailIsNotAnEvent(t *testing.T) {
 	}
 }
 
-func TestFlushSyncDiagnosesThenSyncs(t *testing.T) {
-	t.Parallel()
-	var sink bytes.Buffer
-	w := NewWriter(&sink, embargo.NewScanner(embargo.WithKinds()))
-	if _, err := w.Write([]byte(`{"msg":"partial`)); err != nil {
-		t.Fatal(err)
-	}
-	synced := errors.New("sync failed")
-	err := w.FlushSync(func() error {
-		if !strings.Contains(sink.String(), "withheld") {
-			t.Error("sync ran before the pending fragment was diagnosed")
-		}
-		return synced
-	})
-	if !errors.Is(err, synced) || errors.Is(err, io.ErrClosedPipe) || err.Error() == synced.Error() {
-		t.Fatalf("framing and sync errors were not joined: %v", err)
-	}
-}
-
 func TestJSONScannerPanicNilFailsClosed(t *testing.T) {
 	t.Parallel()
 	if os.Getenv("EMBARGO_OUTPUT_PANIC_CHILD") == "1" {
