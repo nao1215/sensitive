@@ -150,7 +150,7 @@ fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
 ```
 
 <!-- speed-summary:start -->
-On the same five JSON slog events, go-masker takes 1.05 to 1.32 times and pii-shield 2.1 to 4.8 times embargo's time per event. [Time per event](doc/comparison.md#time-and-allocations)
+On the same five JSON slog events, go-masker takes 1.07 to 1.36 times and pii-shield 2.3 to 5.0 times embargo's time per event. [Time per event](doc/comparison.md#time-and-allocations)
 <!-- speed-summary:end -->
 
 ## Find and mask sensitive text
