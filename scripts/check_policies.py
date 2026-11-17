@@ -85,13 +85,16 @@ def function_growth():
 def workflows():
     writes = {'release.yml': {'contents'}, 'coverage.yml': {'actions', 'pull-requests'},
               'reviewdog.yml': {'pull-requests'}, 'codeql.yml': {'security-events'},
-              'trivy.yml': {'security-events'}, 'scorecard.yml': {'security-events', 'id-token'}}
+              'trivy.yml': {'security-events'}, 'scorecard.yml': {'security-events', 'id-token'},
+              'fuzz.yml': {'issues'}}
     for path in sorted((ROOT / '.github/workflows').glob('*.yml')):
         text = path.read_text()
         require('permissions:' in text, f'{path.name}: explicit permissions required')
         require('write-all' not in text, f'{path.name}: write-all forbidden')
         actual = set(re.findall(r'^\s+([\w-]+):\s*write\s*$', text, re.M))
         require(actual <= writes.get(path.name, set()), f'{path.name}: unexpected write permissions: {actual}')
+        if path.name == 'fuzz.yml':
+            fuzz_issue_permissions(text)
         if path.name == 'scorecard.yml':
             require(not re.search(r'^(?:env|defaults):', text, re.M), 'Scorecard publication forbids workflow env/defaults')
         for reference in re.findall(r'uses:\s*([^\s#]+)', text):
@@ -101,6 +104,25 @@ def workflows():
                 require(re.search(r'@[0-9a-f]{40}$', reference), f'unpinned action: {reference}')
         require('pull_request_target:' not in text, f'{path.name}: privileged PR execution forbidden')
     require('github-actions' in read('.github/dependabot.yml'), 'Dependabot must watch actions')
+
+
+def fuzz_issue_permissions(text):
+    """Limit issue writes to the scheduled main-branch reporting job."""
+    prefix, jobs = text.split('\njobs:\n', 1)
+    parts = re.split(r'^  ([\w-]+):\n', jobs, flags=re.M)
+    blocks = dict(zip(parts[1::2], parts[2::2]))
+    report = blocks.get('report', '')
+    permission = r'^\s+issues:\s*write\s*$'
+    require(not re.search(permission, prefix, re.M), 'fuzz issue permission must be job-scoped')
+    require(sum(len(re.findall(permission, block, re.M)) for block in blocks.values()) == 1
+            and re.search(r'^      issues: write$', report, re.M),
+            'fuzz issue permission belongs only to the report job')
+    condition = re.search(r'^    if: (.+)$', report, re.M)
+    required = ['always()', "(github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')", "github.ref == 'refs/heads/main'",
+                "github.repository == 'nao1215/embargo'"]
+    require(condition and condition[1].split(' && ') == required,
+            'fuzz issue report must be restricted to scheduled main runs')
+    require('    needs: [targets, fuzz]\n' in report, 'fuzz issue report must await all fuzz jobs')
 
 
 def branding():

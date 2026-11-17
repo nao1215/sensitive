@@ -1579,3 +1579,34 @@ func checkGRPCBoundaryHooks(t *testing.T, rows [][]string) {
 	}
 	t.Log(strings.TrimSpace(string(output)))
 }
+
+func TestLoggerIntegerExpansionFailureIsWithheld(t *testing.T) {
+	t.Parallel()
+	scanner := embargo.NewScanner()
+	input := json.RawMessage(`{"email":"alice@example.com","public":1e1048576}`)
+	if out, err := scanner.MaskJSON(input); err == nil || out != nil {
+		t.Fatal("fixture must fail integer expansion")
+	}
+	for _, name := range []string{loggerSlog, loggerZap, loggerZerolog, loggerLogrus} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			out := loggerOutput(t, scanner, name, "payload", input)
+			var fields map[string]any
+			if err := json.Unmarshal(out, &fields); err != nil {
+				t.Fatal(err)
+			}
+			messageKey := slog.MessageKey
+			if name == loggerZerolog {
+				messageKey = metamorphicMessageKey
+			}
+			if fields[messageKey] != "embargo: record withheld (size limit)" || fields["withheld_attributes"] == nil {
+				t.Fatalf("missing size diagnostic: %s", out)
+			}
+			for key := range fields {
+				if key != "time" && key != "level" && key != messageKey && key != "withheld_attributes" {
+					t.Fatalf("original field survived: %s", out)
+				}
+			}
+		})
+	}
+}

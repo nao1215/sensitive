@@ -317,7 +317,7 @@ func FuzzJSONPaths(f *testing.F) {
 		if len(value) > 4096 {
 			t.Skip()
 		}
-		var tree any = map[string]any{"password": value, "public": true}
+		var tree any = map[string]any{"password": value, budgetPublicKey: true}
 		for range int(depth) % 70 {
 			if object {
 				tree = map[string]any{"child": tree}
@@ -362,16 +362,18 @@ func FuzzJSONPaths(f *testing.F) {
 		if !ok {
 			t.Fatal("leaf shape changed")
 		}
-		if leaf["password"] != redactionMarker || leaf["public"] != true {
+		if leaf["password"] != redactionMarker || leaf[budgetPublicKey] != true {
 			t.Fatal("nested sensitive path lost or clean field changed")
 		}
 	})
 }
 
+const budgetPublicKey = "public"
+
 // Budget checks run in the fuzz worker, where inputs are evaluated serially.
 // The seed path also runs without t.Parallel so allocation counters are isolated.
 func FuzzAdversarialBudgets(f *testing.F) {
-	for _, seed := range []string{digitSeparatorRun, credentialPrefixRun, nestedPercentPrefix, ibanPrefixRun, "listener 0.0.0.0", "\"\\\n"} {
+	for _, seed := range []string{digitSeparatorRun, credentialPrefixRun, nestedPercentPrefix, ibanPrefixRun, "listener 0.0.0.0", "\"\\\n", exponentWhitespaceString, "-1e+00\t", "+01E-00 ", "001e00 ", "1e-04 "} {
 		f.Add(seed, uint8(8))
 	}
 	f.Fuzz(func(t *testing.T, pattern string, repeat uint8) {
@@ -379,7 +381,7 @@ func FuzzAdversarialBudgets(f *testing.F) {
 			t.Skip()
 		}
 		text := strings.Repeat(pattern, int(repeat)+1)
-		document, err := json.Marshal(map[string]string{"public": text})
+		document, err := json.Marshal(map[string]string{budgetPublicKey: text})
 		if err != nil {
 			t.Fatal(err)
 		}

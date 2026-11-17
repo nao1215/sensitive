@@ -297,7 +297,7 @@ func TestLogBodyNestingLimitSuppressesOutput(t *testing.T) {
 	exporter := embargootel.NewLogExporter(sink, embargo.NewScanner())
 	var record sdklog.Record
 	record.SetBody(value)
-	if err := exporter.Export(t.Context(), []sdklog.Record{record}); err != nil || len(sink.records) != 1 || sink.records[0].Body().AsString() != "embargo: record withheld (size limit)" {
+	if err := exporter.Export(t.Context(), []sdklog.Record{record}); err != nil || len(sink.records) != 1 || sink.records[0].Body().AsString() != withheldSizeLimit {
 		t.Fatal("unbounded nesting was forwarded")
 	}
 }
@@ -308,7 +308,7 @@ func TestOversizedLogBodyIsNotExported(t *testing.T) {
 	exporter := embargootel.NewLogExporter(sink, embargo.NewScanner())
 	var record sdklog.Record
 	record.SetBody(attribute.StringValue(strings.Repeat("x", 1<<20)))
-	if err := exporter.Export(t.Context(), []sdklog.Record{record}); err != nil || len(sink.records) != 1 || sink.records[0].Body().AsString() != "embargo: record withheld (size limit)" {
+	if err := exporter.Export(t.Context(), []sdklog.Record{record}); err != nil || len(sink.records) != 1 || sink.records[0].Body().AsString() != withheldSizeLimit {
 		t.Fatal("oversized log body was exported")
 	}
 }

@@ -16,157 +16,157 @@
   },
   "benchmarks": {
     "BenchmarkComparison/clean/embargo": {
-      "ns/op": 3418.5,
+      "ns/op": 4246.0,
       "B/op": 152.0,
       "allocs/op": 14.0
     },
     "BenchmarkComparison/clean/go-masker": {
-      "ns/op": 3375.0,
+      "ns/op": 4029.0,
       "B/op": 8.0,
       "allocs/op": 1.0
     },
     "BenchmarkComparison/clean/masq": {
-      "ns/op": 6857.0,
+      "ns/op": 8129.5,
       "B/op": 792.0,
       "allocs/op": 50.0
     },
     "BenchmarkComparison/clean/plain": {
-      "ns/op": 1035.5,
+      "ns/op": 1225.0,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparison/flat/embargo": {
-      "ns/op": 2846.0,
+      "ns/op": 5434.5,
       "B/op": 520.0,
       "allocs/op": 17.0
     },
     "BenchmarkComparison/flat/go-masker": {
-      "ns/op": 2196.5,
+      "ns/op": 4150.5,
       "B/op": 48.0,
       "allocs/op": 3.0
     },
     "BenchmarkComparison/flat/masq": {
-      "ns/op": 4485.5,
+      "ns/op": 9123.0,
       "B/op": 672.0,
       "allocs/op": 32.0
     },
     "BenchmarkComparison/flat/plain": {
-      "ns/op": 498.0,
+      "ns/op": 1129.0,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparison/large50/embargo": {
-      "ns/op": 49631.0,
+      "ns/op": 60004.5,
       "B/op": 11050.0,
       "allocs/op": 169.0
     },
     "BenchmarkComparison/large50/go-masker": {
-      "ns/op": 38109.5,
-      "B/op": 2096.0,
+      "ns/op": 43908.5,
+      "B/op": 2097.0,
       "allocs/op": 4.0
     },
     "BenchmarkComparison/large50/masq": {
-      "ns/op": 134895.0,
+      "ns/op": 174452.0,
       "B/op": 12710.0,
       "allocs/op": 561.0
     },
     "BenchmarkComparison/large50/plain": {
-      "ns/op": 8588.0,
+      "ns/op": 10541.0,
       "B/op": 2048.0,
       "allocs/op": 1.0
     },
     "BenchmarkComparison/map/embargo": {
-      "ns/op": 12030.0,
+      "ns/op": 13019.5,
       "B/op": 1296.0,
       "allocs/op": 49.0
     },
     "BenchmarkComparison/map/go-masker": {
-      "ns/op": 8544.5,
+      "ns/op": 9935.5,
       "B/op": 1448.0,
       "allocs/op": 29.0
     },
     "BenchmarkComparison/map/masq": {
-      "ns/op": 14252.0,
+      "ns/op": 15582.5,
       "B/op": 1744.0,
       "allocs/op": 63.0
     },
     "BenchmarkComparison/map/plain": {
-      "ns/op": 2962.0,
+      "ns/op": 3160.0,
       "B/op": 288.0,
       "allocs/op": 9.0
     },
     "BenchmarkComparison/nested/embargo": {
-      "ns/op": 10461.0,
+      "ns/op": 4305.0,
       "B/op": 888.0,
       "allocs/op": 41.0
     },
     "BenchmarkComparison/nested/go-masker": {
-      "ns/op": 7773.0,
+      "ns/op": 7180.0,
       "B/op": 800.0,
       "allocs/op": 19.0
     },
     "BenchmarkComparison/nested/masq": {
-      "ns/op": 14060.0,
+      "ns/op": 9702.0,
       "B/op": 1784.0,
       "allocs/op": 61.0
     },
     "BenchmarkComparison/nested/plain": {
-      "ns/op": 1512.0,
+      "ns/op": 629.6,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparisonFormatter/clean": {
-      "ns/op": 1325.0,
+      "ns/op": 1313.5,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparisonFormatter/flat": {
-      "ns/op": 1431.0,
+      "ns/op": 2146.0,
       "B/op": 32.0,
       "allocs/op": 2.0
     },
     "BenchmarkComparisonFormatter/large50": {
-      "ns/op": 17176.0,
+      "ns/op": 18209.5,
       "B/op": 7873.0,
       "allocs/op": 10.0
     },
     "BenchmarkComparisonFormatter/map": {
-      "ns/op": 1070.0,
+      "ns/op": 1045.0,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparisonFormatter/nested": {
-      "ns/op": 1063.0,
+      "ns/op": 1060.5,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparisonStruct/embargo": {
-      "ns/op": 6011.5,
+      "ns/op": 6271.5,
       "B/op": 920.0,
       "allocs/op": 39.0
     },
     "BenchmarkComparisonStruct/go_mask": {
-      "ns/op": 985.55,
+      "ns/op": 1286.0,
       "B/op": 328.0,
       "allocs/op": 7.0
     },
     "BenchmarkComparisonText/embargo": {
-      "ns/op": 4644.0,
+      "ns/op": 4935.5,
       "B/op": 1376.0,
       "allocs/op": 36.0
     },
     "BenchmarkComparisonText/godlp": {
-      "ns/op": 72092.0,
+      "ns/op": 69616.0,
       "B/op": 11714.0,
       "allocs/op": 59.0
     },
     "BenchmarkStructuredPath/json_shape": {
-      "ns/op": 6061.5,
+      "ns/op": 7468.0,
       "B/op": 920.0,
       "allocs/op": 39.0
     },
     "BenchmarkStructuredPath/old_string": {
-      "ns/op": 1789.0,
+      "ns/op": 1896.5,
       "B/op": 640.0,
       "allocs/op": 10.0
     }
@@ -175,8 +175,8 @@
   "date": "2026-11-17",
   "command": "GOMAXPROCS=1 GOTOOLCHAIN=go1.26.11 go -C tests test -run '^$' -bench '^Benchmark(Comparison|StructuredPath)' -benchmem -benchtime=200ms -count=10 .",
   "go": "go version go1.26.11 linux/amd64",
-  "source_sha256": "6e64bee9ed5d83b2c5a95b8155a1e02bc9de9413718b873330750b9889a8ad49",
-  "full_source_sha256": "a10ed48dd1b99ea53ceaf1ac74dfd276245ca86c59057f0968e1954ebda756fc",
+  "source_sha256": "191070a0231d597bb1c4d89a24d59caa15e0082bff3840c5f481cc7ab96b30fe",
+  "full_source_sha256": "2680e0da61546b8ff7485aaaf1ffd6e793fe97a3c60c8c449f4346a6d0bd5a52",
   "measured_modules": [
     "github.com/bytedance/godlp",
     "github.com/m-mizutani/masq",
@@ -189,42 +189,11 @@
     "golang.org/x/text",
     "gopkg.in/yaml.v2"
   ],
-  "raw_sha256": "e139babb02dccc535b4bf761aede88b5192fd8602018b3f6010852a0ddc8ffb8",
-  "benchstat_sha256": "25c31125c941e4ba905367e9f875829994f23373a6d30f5d9ba1897abd0e2364",
+  "raw_sha256": "3f2e14f0f372125673ce88a24024e83210f6d9237e3dbf94d338f6ce3b040ac8",
+  "benchstat_sha256": "4a458f27e2e42e3150e111a91882a2745011c57fbd79ecf0abef26c04326a4bf",
   "cpu": "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S",
   "affinity": [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-    19,
-    20,
-    21,
-    22,
-    23,
-    24,
-    25,
-    26,
-    27,
-    28,
-    29,
-    30,
-    31
+    2
   ],
   "background_load": "no intentional concurrent workload",
   "versions": {

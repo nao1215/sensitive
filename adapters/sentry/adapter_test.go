@@ -366,3 +366,17 @@ func TestNumberLexemeProperty(t *testing.T) {
 		}
 	}
 }
+
+func TestIntegerExpansionFailureIsWithheld(t *testing.T) {
+	t.Parallel()
+	event := sentry.NewEvent()
+	event.Message = "private@example.net"
+	event.Contexts = map[string]sentry.Context{"detail": {"public": "1e1048576"}}
+	safe := embargosentry.NewBeforeSend(embargo.NewScanner())(event, nil)
+	if safe == nil || safe.Message != "embargo: record withheld (size limit)" {
+		t.Fatal("missing size diagnostic")
+	}
+	if len(safe.Tags) != 0 || len(safe.Attachments) != 0 || len(safe.Contexts) != 1 || safe.Contexts["embargo"]["withheld_attributes"] == nil {
+		t.Fatal("original event fields survived")
+	}
+}

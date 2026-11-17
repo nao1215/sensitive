@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-11-17
+
+### Fixed
+
+- Numeric-looking JSON strings with trailing JSON whitespace no longer produce a false size-limit error during exact integer expansion. Original clean string bytes and the existing numeric-string masking policy are preserved; genuine expansion limits still fail closed.
+- Scheduled fuzz failures on main maintain one issue with target, run and crasher artifact links, and the next successful main-branch run closes it.
+
 ## [0.10.0] - 2026-11-17
 
 This minor release closes IP punctuation, authorization-list, encoded private-key and Go-value masking gaps, refines measured SWIFT/ABA log contexts, and improves safe input diagnostics. The public API and default minimum confidence of 0 are unchanged, and the root module remains dependency-free. Upgrade every installed adapter to v0.10.0 after the adapter tags are published.

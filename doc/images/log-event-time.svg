@@ -8,25 +8,25 @@
 <rect x="240" y="105" width="1.00" height="174" rx="2" fill="#ccd2da"/>
 <text x="240.0" y="302" font-size="13" fill="#172033" text-anchor="middle">0</text>
 <rect x="402" y="105" width="1.00" height="174" rx="2" fill="#ccd2da"/>
-<text x="402.5" y="302" font-size="13" fill="#172033" text-anchor="middle">1.5</text>
+<text x="402.5" y="302" font-size="13" fill="#172033" text-anchor="middle">2.5</text>
 <rect x="565" y="105" width="1.00" height="174" rx="2" fill="#ccd2da"/>
-<text x="565.0" y="302" font-size="13" fill="#172033" text-anchor="middle">3</text>
+<text x="565.0" y="302" font-size="13" fill="#172033" text-anchor="middle">5</text>
 <rect x="728" y="105" width="1.00" height="174" rx="2" fill="#ccd2da"/>
-<text x="727.5" y="302" font-size="13" fill="#172033" text-anchor="middle">4.5</text>
+<text x="727.5" y="302" font-size="13" fill="#172033" text-anchor="middle">7.5</text>
 <rect x="890" y="105" width="1.00" height="174" rx="2" fill="#ccd2da"/>
-<text x="890.0" y="302" font-size="13" fill="#172033" text-anchor="middle">6</text>
+<text x="890.0" y="302" font-size="13" fill="#172033" text-anchor="middle">10</text>
 <text x="24" y="134" font-size="15" fill="#172033" text-anchor="start">slog alone</text>
-<rect x="240" y="113" width="53.95" height="28" rx="2" fill="#617281"/>
-<text x="303.95" y="134" font-size="14" fill="#172033" text-anchor="start">0.50 µs</text>
+<rect x="240" y="113" width="73.39" height="28" rx="2" fill="#617281"/>
+<text x="323.38" y="134" font-size="14" fill="#172033" text-anchor="start">1.13 µs</text>
 <text x="24" y="176" font-size="15" fill="#172033" text-anchor="start">slog + embargo</text>
-<rect x="240" y="155" width="308.32" height="28" rx="2" fill="#087f75"/>
-<text x="558.32" y="176" font-size="14" fill="#172033" text-anchor="start">2.85 µs</text>
+<rect x="240" y="155" width="353.24" height="28" rx="2" fill="#087f75"/>
+<text x="603.24" y="176" font-size="14" fill="#172033" text-anchor="start">5.43 µs</text>
 <text x="24" y="218" font-size="15" fill="#172033" text-anchor="start">slog + masq v0.2.3</text>
-<rect x="240" y="197" width="485.93" height="28" rx="2" fill="#4169b1"/>
-<text x="735.93" y="218" font-size="14" fill="#172033" text-anchor="start">4.49 µs</text>
+<rect x="240" y="197" width="593.00" height="28" rx="2" fill="#4169b1"/>
+<text x="843.0" y="218" font-size="14" fill="#172033" text-anchor="start">9.12 µs</text>
 <text x="24" y="260" font-size="15" fill="#172033" text-anchor="start">slog + go-masker v0.6.1</text>
-<rect x="240" y="239" width="237.95" height="28" rx="2" fill="#9a4814"/>
-<text x="487.95" y="260" font-size="14" fill="#172033" text-anchor="start">2.20 µs</text>
+<rect x="240" y="239" width="269.78" height="28" rx="2" fill="#9a4814"/>
+<text x="519.78" y="260" font-size="14" fill="#172033" text-anchor="start">4.15 µs</text>
 <text x="565.0" y="328" font-size="15" fill="#172033" text-anchor="middle">Time per event (microseconds; linear scale)</text>
 <text x="24" y="352" font-size="12" fill="#172033" text-anchor="start">Median of ten 200 ms samples; JSON to io.Discard; setup excluded. Policies and raw samples: doc/comparison.md.</text>
 </g></svg>

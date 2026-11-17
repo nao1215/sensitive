@@ -17,13 +17,14 @@ import (
 )
 
 const (
-	withheldMasking  = "embargo: record withheld (masking error)"
-	withheldCanceled = "embargo: record withheld (canceled)"
-	canceledReason   = "canceled"
-	maskingReason    = "masking error"
-	sizeReason       = "size limit"
-	publicText       = "public"
-	exampleEmail     = "alice@example.com"
+	withheldMasking   = "embargo: record withheld (masking error)"
+	withheldCanceled  = "embargo: record withheld (canceled)"
+	withheldSizeLimit = "embargo: record withheld (size limit)"
+	canceledReason    = "canceled"
+	maskingReason     = "masking error"
+	sizeReason        = "size limit"
+	publicText        = "public"
+	exampleEmail      = "alice@example.com"
 )
 
 const withheldCountKey = "withheld_attributes"
@@ -349,4 +350,27 @@ func TestLogWithheldSchemaProperty(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestLogIntegerExpansionFailureIsWithheld(t *testing.T) {
+	t.Parallel()
+	before := reviewRecord(t, -1, attribute.String("public", "1e1048576"))
+	before.SetBody(attribute.StringValue(exampleEmail))
+	sink := &captureLog{}
+	if err := embargootel.NewLogExporter(sink, embargo.NewScanner()).Export(t.Context(), []sdklog.Record{before}); err != nil {
+		t.Fatal(err)
+	}
+	if len(sink.records) != 1 {
+		t.Fatal("missing diagnostic")
+	}
+	after := sink.records[0]
+	if after.Body().AsString() != withheldSizeLimit || after.AttributesLen() != 1 || len(after.Resource().Attributes()) != 0 {
+		t.Fatal("original log fields survived")
+	}
+	after.WalkAttributes(func(kv attribute.KeyValue) bool {
+		if string(kv.Key) != withheldCountKey {
+			t.Error("original attribute survived")
+		}
+		return true
+	})
 }

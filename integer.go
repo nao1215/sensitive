@@ -8,8 +8,11 @@ import (
 )
 
 // exactInteger expands a valid JSON number without floating-point rounding.
+// Numeric strings may include surrounding JSON whitespace, which is not part
+// of the mantissa or exponent; the caller retains the original string lexeme.
 // Expansion is bounded before allocating; non-integers have no second spelling.
 func exactInteger(text string) (string, error) {
+	text = strings.Trim(text, " \t\r\n")
 	mantissa, exponent := text, 0
 	if i := strings.IndexAny(text, "eE"); i >= 0 {
 		mantissa = text[:i]
