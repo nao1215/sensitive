@@ -150,7 +150,7 @@ fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
 ```
 
 <!-- speed-summary:start -->
-On the same five JSON slog events, go-masker takes 1.01 to 1.35 times and pii-shield 2.2 to 4.8 times embargo's time per event. [Time per event](doc/comparison.md#time-and-allocations)
+On the same five JSON slog events, go-masker takes 1.05 to 1.30 times and pii-shield 2.3 to 4.7 times embargo's time per event. [Time per event](doc/comparison.md#time-and-allocations)
 <!-- speed-summary:end -->
 
 ## Find and mask sensitive text
@@ -408,7 +408,7 @@ pii-shield also runs as a Kubernetes sidecar outside the process, and ferret-sca
 The service probe below also checks a redirect that bypasses every logger. `embargotest.HTTP` catches that response leak:
 
 <!-- leak-scenarios:start -->
-| Service output | embargo slog | embargo zap | pii-shield v3.0.0 | ferret-scan v1.10.0 | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |
+| Service output | embargo slog | embargo zap | pii-shield v3.0.0 | ferret-scan v2.4.3 | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |
 |---|---|---|---|---|---|---|---|---|---|
 | Password under the key `password` | caught | caught | caught | caught | caught | caught | caught | caught | leaked |
 | Config struct holding a database DSN | caught | caught | caught | leaked | caught | leaked | leaked | caught | leaked |

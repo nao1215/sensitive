@@ -10,7 +10,7 @@
 <text x="24" y="133" font-size="14" fill="#172033" text-anchor="start">pii-shield v3.0.0</text>
 <rect x="245" y="116" width="461.54" height="23" rx="2" fill="#8a6d00"/>
 <text x="718.54" y="133" font-size="14" fill="#172033" text-anchor="start">10 / 13</text>
-<text x="24" y="165" font-size="14" fill="#172033" text-anchor="start">ferret-scan v1.10.0</text>
+<text x="24" y="165" font-size="14" fill="#172033" text-anchor="start">ferret-scan v2.4.3</text>
 <rect x="245" y="148" width="415.38" height="23" rx="2" fill="#3f7d3a"/>
 <text x="672.38" y="165" font-size="14" fill="#172033" text-anchor="start">9 / 13</text>
 <text x="24" y="197" font-size="14" fill="#172033" text-anchor="start">masq v0.2.3</text>
