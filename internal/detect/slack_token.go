@@ -77,6 +77,8 @@ func slackTokenPrefix(data []byte, i int) bool {
 		return true
 	case 's':
 		return true
+	case 'e':
+		return true
 	default:
 		return false
 	}

@@ -21,7 +21,7 @@ type Scanner struct {
 	scratch       *sync.Pool
 	keys          *keyCache
 	hintIndex     [256][]dispatchHint
-	hinted        [256]bool
+	follow        [256]byteSet
 	minConfidence float64
 	unconditional uint64
 	initialized   bool

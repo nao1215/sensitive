@@ -70,6 +70,7 @@ func TestSlackTokenDetector_Validation(t *testing.T) {
 		{input: "xoxp-1234567890-abcdefghijkl"},
 		{input: "xoxa-1234567890-abcdefghijkl"},
 		{input: "xoxr-1234567890-abcdefghijkl"},
+		{input: "xoxe-1-1234567890-abcdefghijkl"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {

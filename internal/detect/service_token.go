@@ -3,36 +3,56 @@ package detect
 import (
 	"bytes"
 	"strings"
+
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 // ServiceToken implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindServiceToken.
-type ServiceToken struct{}
+type ServiceToken struct {
+	index *providerIndex
+}
+
+// NewServiceToken compiles the provider prefix table.
+func NewServiceToken() *ServiceToken {
+	return &ServiceToken{index: newProviderIndex()}
+}
 
 // Name returns the service token family.
 func (*ServiceToken) Name() DetectorName { return "service_token" }
 
-// Hints returns exhaustive provider prefixes.
+// Hints returns every table prefix plus a substring that each special layout
+// contains, so the list is exhaustive by construction.
 func (*ServiceToken) Hints() [][]byte {
-	return [][]byte{[]byte("sk-"), []byte("sk_live_"), []byte("rk_live_"), []byte("whsec_"), []byte("glpat-"), []byte("npm_"), []byte("pypi-"), []byte("GOCSPX-"), []byte("SG."), []byte("hooks.slack.com/services/"), []byte("hooks.slack-gov.com/services/")}
+	special := []string{"hooks.slack.com/", "hooks.slack-gov.com/", "webhook.office.com/webhookb2/", ".atlasv1.", "Q~", ":A", "_mmk", "-us", "|"}
+	seen := map[string]bool{}
+	var out [][]byte
+	for _, layout := range providerLayouts() {
+		if !seen[layout.prefix] {
+			seen[layout.prefix] = true
+			out = append(out, []byte(layout.prefix))
+		}
+	}
+	for _, hint := range special {
+		out = append(out, []byte(hint))
+	}
+	return out
 }
 
 // Scan finds provider credentials without contacting any service.
 func (d *ServiceToken) Scan(data []byte) []Finding {
+	index := d.index
+	if index == nil {
+		index = newProviderIndex()
+	}
 	var out []Finding
 	for i := 0; i < len(data); i++ {
-		if i > 0 && isIdentifierByte(data[i-1]) {
+		if i > 0 && isIdentifierByte(data[i-1]) && !telegramBotPath(data, i) {
 			continue
 		}
-		end := serviceTokenEnd(data, i)
-		if end <= i {
+		start, end := serviceTokenSpan(index, data, i)
+		if end <= start {
 			continue
-		}
-		start := i
-		if bytes.HasPrefix(data[i:], []byte("https://hooks.slack")) {
-			marker := bytes.Index(data[i:end], []byte("/services/"))
-			// serviceTokenEnd accepted a complete /services/ prefix.
-			start = i + marker + len("/services/")
 		}
 		//nolint:mnd // Prefix-based candidates use the documented heuristic score.
 		out = append(out, Finding{DetectorName: d.Name(), Start: start, End: end, Confidence: 0.95})
@@ -41,67 +61,230 @@ func (d *ServiceToken) Scan(data []byte) []Finding {
 	return out
 }
 
-func serviceTokenEnd(data []byte, start int) int {
-	if end, ok := prefixedServiceTokenEnd(data, start); ok {
-		return end
+// serviceTokenSpan returns the credential span that begins its layout at
+// position i; webhook URLs report only their secret path.
+func serviceTokenSpan(index *providerIndex, data []byte, i int) (start, end int) {
+	if end, ok := index.match(data, i); ok {
+		return i, end
 	}
-	if end, ok := sendGridKeyEnd(data, start); ok {
-		return end
+	if end, ok := terraformTokenEnd(data, i); ok {
+		return i, end
 	}
-	return slackWebhookEnd(data, start)
+	if end, ok := azureClientSecretEnd(data, i); ok {
+		return i, end
+	}
+	if end, ok := telegramBotTokenEnd(data, i); ok {
+		return i, end
+	}
+	if end, ok := maxMindLicenseKeyEnd(data, i); ok {
+		return i, end
+	}
+	if end, ok := mailchimpKeyEnd(data, i); ok {
+		return i, end
+	}
+	if end, ok := facebookAppTokenEnd(data, i); ok {
+		return i, end
+	}
+	if start, end, ok := slackWebhookSpan(data, i); ok {
+		return start, end
+	}
+	if start, end, ok := teamsWebhookSpan(data, i); ok {
+		return start, end
+	}
+	return i, i
 }
 
-// prefixedServiceTokenEnd owns the fixed-prefix tokens: once a prefix matches,
-// it decides the result alone, returning start when the body is too short.
-func prefixedServiceTokenEnd(data []byte, start int) (int, bool) {
-	for _, prefix := range []string{"sk-proj-", "sk-svcacct-", "sk-ant-api03-", "sk-ant-admin01-", "sk_live_", "rk_live_", "whsec_", "glpat-", "npm_", "pypi-", "GOCSPX-"} {
-		if !bytes.HasPrefix(data[start:], []byte(prefix)) {
-			continue
-		}
-		end := start + len(prefix)
-		for end < len(data) && isTokenByte(data[end]) {
-			end++
-		}
-		const minBody = 16
-		if end-start-len(prefix) >= minBody {
-			return end, true
-		}
-		return start, true
-	}
-	return start, false
-}
-
-// sendGridKeyEnd matches the fixed SG.<22>.<43> SendGrid key layout followed
-// by a token boundary.
-func sendGridKeyEnd(data []byte, start int) (int, bool) {
-	if !bytes.HasPrefix(data[start:], []byte("SG.")) {
+// terraformTokenEnd matches a Terraform Cloud token: 14 ASCII letters or
+// digits, the literal .atlasv1. and 60 to 70 token bytes or '='.
+func terraformTokenEnd(data []byte, start int) (int, bool) {
+	const idLen, minBody, maxBody = 14, 60, 70
+	marker := start + idLen
+	if marker+len(".atlasv1.") > len(data) || !hasASCIIPrefix(data, marker, ".atlasv1.") || !allBytes(data, start, marker, ascii.IsAlphaNum) {
 		return start, false
 	}
-	const firstLen, secondLen = 22, 43
-	middle := start + len("SG.") + firstLen
-	end := middle + 1 + secondLen
-	if end <= len(data) && data[middle] == '.' && allBytes(data, start+len("SG."), middle, isTokenByte) && allBytes(data, middle+1, end, isTokenByte) && (end == len(data) || !isTokenByte(data[end])) {
-		return end, true
+	body := marker + len(".atlasv1.")
+	end := body
+	for end < len(data) && isTokenOrEquals(data[end]) {
+		end++
 	}
-	return start, false
+	if end-body < minBody || end-body > maxBody {
+		return start, false
+	}
+	return end, true
 }
 
-// slackWebhookEnd matches a Slack webhook URL with three path parts and a
-// long enough secret, returning start otherwise.
-func slackWebhookEnd(data []byte, start int) int {
-	for _, prefix := range []string{"https://hooks.slack.com/services/", "https://hooks.slack-gov.com/services/"} {
-		if !bytes.HasPrefix(data[start:], []byte(prefix)) {
-			continue
-		}
-		end := start + len(prefix)
-		for end < len(data) && (isTokenByte(data[end]) || data[end] == '/') {
-			end++
-		}
-		parts := strings.Split(string(data[start+len(prefix):end]), "/")
-		const minWebhookSecret = 16
-		if len(parts) == 3 && len(parts[0]) > 1 && len(parts[1]) > 1 && len(parts[2]) >= minWebhookSecret {
-			return end
+// azureClientSecretEnd matches the Microsoft Entra client secret layout:
+// three bytes, a digit, the literal Q~ and 31 to 34 more bytes, all drawn
+// from ASCII letters, digits, _, ~ and dots, with hyphens allowed after Q~.
+func azureClientSecretEnd(data []byte, start int) (int, bool) {
+	const headLen, minTail, maxTail = 3, 31, 34
+	marker := start + headLen + 1
+	if marker > len(data) || !hasASCIIPrefix(data, marker, "Q~") || !ascii.IsDigit(data[marker-1]) || !allBytes(data, start, start+headLen, isAzureSecretByte) {
+		return start, false
+	}
+	tail := marker + len("Q~")
+	end := tail
+	for end < len(data) && (isAzureSecretByte(data[end]) || data[end] == '-') {
+		end++
+	}
+	for end > tail && data[end-1] == '.' {
+		end--
+	}
+	if end-tail < minTail || end-tail > maxTail {
+		return start, false
+	}
+	return end, true
+}
+
+func isAzureSecretByte(b byte) bool { return ascii.IsAlphaNum(b) || b == '_' || b == '~' || b == '.' }
+
+// telegramBotTokenEnd matches a Telegram bot token: a 5 to 16 digit bot ID,
+// a colon and a 35-byte secret that starts with A.
+func telegramBotTokenEnd(data []byte, start int) (int, bool) {
+	const minID, maxID, secretLen = 5, 16, 35
+	colon := start
+	for colon < len(data) && ascii.IsDigit(data[colon]) {
+		colon++
+	}
+	if colon-start < minID || colon-start > maxID || colon+1+secretLen > len(data) || data[colon] != ':' || data[colon+1] != 'A' {
+		return start, false
+	}
+	end := colon + 1 + secretLen
+	if !allBytes(data, colon+1, end, isTokenByte) || (end < len(data) && isTokenByte(data[end])) {
+		return start, false
+	}
+	return end, true
+}
+
+// telegramBotPath lets a bot token start right after /bot in Bot API URLs.
+func telegramBotPath(data []byte, i int) bool {
+	return i >= 4 && ascii.IsDigit(data[i]) && string(data[i-4:i]) == "/bot"
+}
+
+// slackWebhookSpan matches Slack incoming webhook, workflow and trigger URLs
+// with an optional http or https scheme and reports only the path after the
+// webhook kind.
+func slackWebhookSpan(data []byte, start int) (body, end int, ok bool) {
+	pos := start
+	for _, scheme := range []string{"https://", "http://"} {
+		if hasASCIIPrefix(data, pos, scheme) {
+			pos += len(scheme)
+			break
 		}
 	}
-	return start
+	body, incoming, found := slackWebhookBody(data, pos)
+	if !found {
+		return start, start, false
+	}
+	end = body
+	for end < len(data) && (isTokenByte(data[end]) || data[end] == '/') {
+		end++
+	}
+	return body, end, slackWebhookPath(string(data[body:end]), incoming)
+}
+
+// slackWebhookBody returns where the path after a Slack webhook host and kind
+// starts and whether the kind is an incoming webhook.
+func slackWebhookBody(data []byte, pos int) (body int, incoming, ok bool) {
+	for _, host := range []string{"hooks.slack.com/", "hooks.slack-gov.com/"} {
+		if !hasASCIIPrefix(data, pos, host) {
+			continue
+		}
+		for _, kind := range []string{"services/", "workflows/", "triggers/"} {
+			if hasASCIIPrefix(data, pos+len(host), kind) {
+				return pos + len(host) + len(kind), kind == "services/", true
+			}
+		}
+	}
+	return pos, false, false
+}
+
+// slackWebhookPath checks the slash-separated path: incoming webhooks need
+// three parts and workflow or trigger URLs three or four; every part needs two
+// bytes and the last one, the secret, needs 16.
+func slackWebhookPath(path string, incoming bool) bool {
+	const incomingParts, workflowParts, minPart, minWebhookSecret = 3, 4, 2, 16
+	parts := strings.Split(path, "/")
+	if len(parts) != incomingParts && (incoming || len(parts) != workflowParts) {
+		return false
+	}
+	for _, part := range parts[:len(parts)-1] {
+		if len(part) < minPart {
+			return false
+		}
+	}
+	return len(parts[len(parts)-1]) >= minWebhookSecret
+}
+
+// teamsWebhookSpan matches a Microsoft Teams incoming webhook URL and reports
+// the path after /webhookb2/, which carries the tenant and secret parts.
+func teamsWebhookSpan(data []byte, start int) (body, end int, ok bool) {
+	if !hasASCIIPrefix(data, start, "https://") {
+		return start, start, false
+	}
+	host := start + len("https://")
+	sub := host
+	for sub < len(data) && ascii.IsAlphaNum(data[sub]) {
+		sub++
+	}
+	if sub == host || !hasASCIIPrefix(data, sub, ".webhook.office.com/webhookb2/") {
+		return start, start, false
+	}
+	body = sub + len(".webhook.office.com/webhookb2/")
+	end = body
+	for end < len(data) && (isTokenByte(data[end]) || data[end] == '/' || data[end] == '@') {
+		end++
+	}
+	const minPath = 64
+	if end-body < minPath || !bytes.Contains(data[body:end], []byte("/IncomingWebhook/")) {
+		return start, start, false
+	}
+	return body, end, true
+}
+
+// maxMindLicenseKeyEnd matches a MaxMind license key: 6 and 29 ASCII letters
+// or digits joined by an underscore and followed by the literal _mmk.
+func maxMindLicenseKeyEnd(data []byte, start int) (int, bool) {
+	const headLen, bodyLen = 6, 29
+	sep := start + headLen
+	suffix := sep + 1 + bodyLen
+	end := suffix + len("_mmk")
+	if end > len(data) || data[sep] != '_' || !hasASCIIPrefix(data, suffix, "_mmk") || !allBytes(data, start, sep, ascii.IsAlphaNum) || !allBytes(data, sep+1, suffix, ascii.IsAlphaNum) || (end < len(data) && isTokenByte(data[end])) {
+		return start, false
+	}
+	return end, true
+}
+
+// mailchimpKeyEnd matches a Mailchimp API key: 32 lower-case hexadecimal
+// digits, the literal -us and a two-digit data center number.
+func mailchimpKeyEnd(data []byte, start int) (int, bool) {
+	const hexLen, dcLen = 32, 2
+	dash := start + hexLen
+	end := dash + len("-us") + dcLen
+	if end > len(data) || !hasASCIIPrefix(data, dash, "-us") || !allBytes(data, start, dash, isLowerHexOrDigit) || !allBytes(data, end-dcLen, end, ascii.IsDigit) || (end < len(data) && isTokenByte(data[end])) {
+		return start, false
+	}
+	return end, true
+}
+
+// facebookAppTokenEnd matches a Facebook app access token: a 15 or 16 digit
+// app ID, a pipe or its %7C escape and a 27 to 40 byte app secret.
+func facebookAppTokenEnd(data []byte, start int) (int, bool) {
+	const minID, maxID, minSecret, maxSecret = 15, 16, 27, 40
+	sep := start
+	for sep < len(data) && ascii.IsDigit(data[sep]) {
+		sep++
+	}
+	if sep-start < minID || sep-start > maxID || sep >= len(data) || data[sep] != '|' {
+		return start, false
+	}
+	body := sep + 1
+	end := body
+	for end < len(data) && isTokenByte(data[end]) {
+		end++
+	}
+	if end-body < minSecret || end-body > maxSecret {
+		return start, false
+	}
+	return end, true
 }

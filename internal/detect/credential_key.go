@@ -73,11 +73,30 @@ func (d *Credential) secretKey(key []byte) bool {
 	return false
 }
 
+// unnumberedKey removes a trailing number and its separator, so numbered
+// keys such as api_token_2 or password1 keep their meaning.
+func unnumberedKey(key string) (base string, numbered bool) {
+	end := len(key)
+	for end > 0 && ascii.IsDigit(key[end-1]) {
+		end--
+	}
+	if end == len(key) {
+		return key, false
+	}
+	for end > 0 && strings.IndexByte("_.- ", key[end-1]) >= 0 {
+		end--
+	}
+	return key[:end], true
+}
+
 // Credential suffixes require a separator or camel-case segment boundary, so
 // token_count, primary_key and ordinary words do not become credentials.
 func credentialSuffix(key string) bool {
 	if key == "" {
 		return false
+	}
+	if base, numbered := unnumberedKey(key); numbered {
+		return base != "" && credentialSuffix(base)
 	}
 	var candidates []string
 	switch key[len(key)-1] | 0x20 {
@@ -89,10 +108,12 @@ func credentialSuffix(key string) bool {
 		candidates = []string{credentialTokenKey}
 	case 'l':
 		candidates = []string{string(NameCredential)}
+	case 's':
+		candidates = []string{"credentials", "creds"}
 	case 'h':
 		candidates = []string{"auth"}
 	case 'y':
-		candidates = []string{"key"}
+		candidates = []string{"key", "apikey", "accesskey", "secretkey", "privatekey"}
 	default:
 		return false
 	}

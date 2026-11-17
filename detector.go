@@ -13,7 +13,7 @@ type Detector interface {
 func builtins(matchKey func(string) bool) []detect.Detector {
 	return []detect.Detector{
 		&detect.Credential{MatchKey: matchKey},
-		&detect.ServiceToken{},
+		detect.NewServiceToken(),
 		&detect.HighEntropy{},
 		detect.NewPAN(),
 		detect.NewEmail(),

@@ -21,6 +21,8 @@ func (d *AWSKey) Hints() [][]byte {
 	return [][]byte{
 		[]byte("AKIA"),
 		[]byte("ASIA"),
+		[]byte("ABIA"),
+		[]byte("ACCA"),
 	}
 }
 
@@ -63,18 +65,19 @@ func (d *AWSKey) Scan(data []byte) []Finding {
 	return findings
 }
 
-// matchAWSPrefix checks whether data[i:i+4] is "AKIA" or "ASIA".
+// matchAWSPrefix checks whether data[i:i+4] is an access-key ID prefix:
+// AKIA (long-term), ASIA (temporary), ABIA (STS service bearer) or ACCA
+// (context-specific credential).
 func matchAWSPrefix(data []byte, i int) bool {
 	if data[i] != 'A' {
 		return false
 	}
-	if data[i+1] == 'K' && data[i+2] == 'I' && data[i+3] == 'A' {
+	switch string(data[i+1 : i+4]) {
+	case "KIA", "SIA", "BIA", "CCA":
 		return true
+	default:
+		return false
 	}
-	if data[i+1] == 'S' && data[i+2] == 'I' && data[i+3] == 'A' {
-		return true
-	}
-	return false
 }
 
 // validateAWSKeyBody checks that 16 characters starting at data[start] are

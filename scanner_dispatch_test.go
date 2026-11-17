@@ -53,7 +53,7 @@ func TestDispatchDifferential(t *testing.T) {
 	t.Parallel()
 	// #nosec G404 -- Fixed seed for reproducible synthetic tests.
 	rng := rand.New(rand.NewPCG(72, 54))
-	parts := []string{"foo", "@", "ABC", "0123456789", " ", "\n", "銀行", "４２４２", "expiry 12/29", "CVV 123", "a+b@example.com", "SWIFT: DEUTDEFF", "%20", "bank account 12345678", "4242424242424242", "090-1234-5678", "ghp_", "\xff", "sort code 40-12-36"}
+	parts := []string{"foo", "@", "ABC", "0123456789", " ", "\n", "銀行", "４２４２", "expiry 12/29", "CVV 123", "a+b@example.com", "SWIFT: DEUTDEFF", "%20", "bank account 12345678", "4242424242424242", "090-1234-5678", "ghp_", "\xff", "sort code 40-12-36", "|", "Q~", "-us", "sk", "PUL-", "dop_v1_", "<token>", "</token>", "curl -u a:", "=>", ":A"}
 	for _, s := range []*Scanner{NewScanner(), NewScanner(WithKinds(KindEmail)), NewScanner(WithMinConfidence(.7)), NewScanner(WithKinds())} {
 		for i := range 3000 {
 			var data []byte
@@ -68,6 +68,41 @@ func TestDispatchDifferential(t *testing.T) {
 				t.Fatalf("input %q\ngot %+v\nwant %+v", data, got, want)
 			}
 		}
+	}
+}
+
+func TestDispatchSecondByteFilter(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithAll())
+	for _, input := range []string{
+		"|", "x|", "Q~", "q", "PUL-" + strings.Repeat("0a", 20), "pul-" + strings.Repeat("0a", 20), "end with s", "sk", "SK",
+		"ask task disk", "a|b", "token => " + documentedEmail, "<password>opaque12</password>", "curl -u user:opaque12 https://example.com",
+		"=", "e", "eyJ", "%7C", "Ｑ~",
+	} {
+		got, want := scanner.ScanString(input), referenceScan(scanner, []byte(input))
+		if !slices.Equal(got, want) {
+			t.Errorf("input %q\ngot %+v\nwant %+v", input, got, want)
+		}
+	}
+}
+
+func TestFollowingBytes(t *testing.T) {
+	t.Parallel()
+	set := followingBytes([]dispatchHint{{hint: []byte("ab")}, {hint: []byte("a-c")}})
+	for b := range 256 {
+		want := b == 'b' || b == '-'
+		if got := set.has(byte(b)); got != want {
+			t.Errorf("has(%q) = %v, want %v", byte(b), got, want)
+		}
+	}
+	for _, bucket := range [][]dispatchHint{{{hint: []byte("|")}}, {{mask: 1}}} {
+		set := followingBytes(bucket)
+		if !set.has(0) || !set.has('z') || !set.has(0xff) {
+			t.Errorf("followingBytes(%v) does not accept every byte", bucket)
+		}
+	}
+	if empty := followingBytes(nil); empty != (byteSet{}) {
+		t.Errorf("followingBytes(nil) = %v, want empty", empty)
 	}
 }
 

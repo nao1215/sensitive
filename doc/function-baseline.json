@@ -115,9 +115,9 @@
     {
       "file": "internal/detect/credential.go",
       "name": "Credential.scanPlain",
-      "statements": 32,
+      "statements": 30,
       "cyclomatic": 11,
-      "lines": 40
+      "lines": 38
     },
     {
       "file": "internal/detect/credential_authorization.go",
@@ -151,8 +151,8 @@
       "file": "internal/detect/credential_render.go",
       "name": "assignmentValue",
       "statements": 18,
-      "cyclomatic": 12,
-      "lines": 26
+      "cyclomatic": 10,
+      "lines": 25
     },
     {
       "file": "internal/detect/iban.go",
@@ -216,13 +216,6 @@
       "statements": 26,
       "cyclomatic": 9,
       "lines": 50
-    },
-    {
-      "file": "internal/detect/service_token.go",
-      "name": "serviceTokenEnd",
-      "statements": 7,
-      "cyclomatic": 3,
-      "lines": 9
     },
     {
       "file": "json.go",
