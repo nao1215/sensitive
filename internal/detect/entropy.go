@@ -1,6 +1,7 @@
 package detect
 
 import (
+	"bytes"
 	"math"
 	"strings"
 
@@ -30,7 +31,7 @@ func (d *HighEntropy) Scan(data []byte) []Finding {
 		for end < len(data) && entropyByte(data[end]) {
 			end++
 		}
-		if !entropyLocation(data, start, end) && entropyCandidate(data[start:end]) && !ordinaryIDContext(data, start) {
+		if !entropyLocation(data, start, end) && entropyCandidate(data[start:end]) && !ordinaryIDContext(data, start) && !kubernetesGeneratedName(data[start:end]) {
 			//nolint:mnd // Uncontextualized entropy is deliberately below masking precision thresholds.
 			out = append(out, Finding{DetectorName: d.Name(), Start: start, End: end, Confidence: 0.3})
 		}
@@ -116,4 +117,37 @@ func ordinaryIDContext(data []byte, start int) bool {
 		return true
 	}
 	return false
+}
+
+// kubernetesRandomAlphabet is the alphabet of Kubernetes generated name
+// suffixes (k8s.io/apimachinery/pkg/util/rand), which omits vowels and the
+// digits 0, 1 and 3.
+const kubernetesRandomAlphabet = "bcdfghjklmnpqrstvwxz2456789"
+
+// kubernetesGeneratedName reports a lowercase DNS name such as a pod name
+// (word-<template hash>-<five random characters>). Such names are public
+// resource identifiers, not secrets, though their suffixes raise entropy.
+func kubernetesGeneratedName(value []byte) bool {
+	const suffixLength = 5
+	cut := bytes.LastIndexByte(value, '-')
+	if cut <= 0 || len(value)-cut-1 != suffixLength {
+		return false
+	}
+	for _, b := range value[cut+1:] {
+		if strings.IndexByte(kubernetesRandomAlphabet, b) < 0 {
+			return false
+		}
+	}
+	word := false
+	for segment := range bytes.SplitSeq(value[:cut], []byte("-")) {
+		letters := len(segment) > 1
+		for _, b := range segment {
+			if !ascii.IsLower(b) && !ascii.IsDigit(b) {
+				return false
+			}
+			letters = letters && ascii.IsLower(b)
+		}
+		word = word || letters
+	}
+	return word
 }

@@ -818,8 +818,8 @@
     {
       "set": "held",
       "kind": "ca_sin",
-      "numerator": 4500000000,
-      "denominator": 42178681
+      "numerator": 14000000000,
+      "denominator": 103880631
     },
     {
       "set": "held",
@@ -836,8 +836,8 @@
     {
       "set": "held",
       "kind": "credential",
-      "numerator": 0,
-      "denominator": 1
+      "numerator": 2000000000,
+      "denominator": 103880631
     },
     {
       "set": "held",
@@ -872,8 +872,8 @@
     {
       "set": "held",
       "kind": "high_entropy",
-      "numerator": 0,
-      "denominator": 1
+      "numerator": 71000000000,
+      "denominator": 34626877
     },
     {
       "set": "held",
@@ -884,8 +884,8 @@
     {
       "set": "held",
       "kind": "in_aadhaar",
-      "numerator": 0,
-      "denominator": 1
+      "numerator": 216000000000,
+      "denominator": 34626877
     },
     {
       "set": "held",
@@ -920,8 +920,8 @@
     {
       "set": "held",
       "kind": "mynumber",
-      "numerator": 0,
-      "denominator": 1
+      "numerator": 227000000000,
+      "denominator": 34626877
     },
     {
       "set": "held",
@@ -968,8 +968,8 @@
     {
       "set": "held",
       "kind": "swiftbic",
-      "numerator": 0,
-      "denominator": 1
+      "numerator": 1000000000,
+      "denominator": 34626877
     },
     {
       "set": "held",
@@ -998,8 +998,8 @@
     {
       "set": "held",
       "kind": "us_ssn",
-      "numerator": 16000000000,
-      "denominator": 42178681
+      "numerator": 43000000000,
+      "denominator": 103880631
     }
   ],
   "speed": {

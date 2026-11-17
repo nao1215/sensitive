@@ -110,7 +110,8 @@ func TestStandardLibraryOracles(t *testing.T) {
 			raw[i] = rapid.Byte().Draw(t, "octet")
 		}
 		address := netip.AddrFrom4(raw)
-		valid := !address.IsLoopback() && !address.IsUnspecified()
+		// The this-network block (first octet zero) contains the unspecified address.
+		valid := !address.IsLoopback() && raw[0] != 0
 		findings = embargo.NewScanner(embargo.WithKinds(embargo.KindIPAddr)).ScanString(address.String())
 		if (len(findings) == 1) != valid {
 			t.Fatal("netip policy mismatch")

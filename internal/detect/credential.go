@@ -154,10 +154,17 @@ func (d *Credential) assignmentName(data []byte, i int) (string, bool) {
 	return name, true
 }
 
-// acceptedAssignmentValue rejects already redacted values and token values
-// that only reference another object.
+// acceptedAssignmentValue rejects already redacted values, token values
+// that only reference another object, and UUID idempotency tokens.
 func acceptedAssignmentValue(data []byte, start, end int, name string) bool {
-	return !redactedCredentialValue(data[start:end]) && (name != credentialTokenKey || !objectReference(data, start, end))
+	return !redactedCredentialValue(data[start:end]) && (name != credentialTokenKey || !objectReference(data, start, end)) && !idempotencyToken(data, start, end, name)
+}
+
+// idempotencyToken reports an AWS-style clientToken or idempotencyToken whose
+// value is a canonical UUID. These keys deduplicate retried requests (EC2,
+// CloudTrail requestParameters) and authenticate nothing.
+func idempotencyToken(data []byte, start, end int, name string) bool {
+	return (name == "clienttoken" || name == "idempotencytoken") && end-start == uuidLength && canonicalUUID(data, start)
 }
 
 func credentialFinding(start, end int) Finding {

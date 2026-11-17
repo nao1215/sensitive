@@ -66,22 +66,22 @@ At threshold 0.5 the synthetic business-label false positives disappear without 
 
 ## Cached real logs
 
-The eight checksum-pinned datasets are 92,409,848 bytes and 819,576 lines in the pinned manifest. Raw logs and sampled excerpts remain outside Git. The [real-log evidence](real-logs.md) records licenses, hashes and sample labels. Each dataset/kind stratum uses at most 40 deterministic sampled findings; FP/GB is count multiplied by the sampled false-positive fraction, divided by decimal GB. This is an estimate, not recall or a confidence bound. The previous held log split has already been inspected during evaluation.
+The checksum-pinned datasets in the [manifest](real-logs-manifest.json) combine LogHub system logs with web access, Kubernetes audit and CloudTrail logs; the [real-log page](real-logs.md) lists their sizes. Raw logs and sampled excerpts remain outside Git. The [real-log evidence](real-logs.md) records licenses, hashes and sample labels. Each dataset/kind stratum uses at most 40 deterministic sampled findings; FP/GB is count multiplied by the sampled false-positive fraction, divided by decimal GB. This is an estimate, not recall or a confidence bound. The LogHub held split has already been inspected during evaluation.
 
 <!-- country-logs:start -->
 | Kind | Dev findings | Dev sampled FP / sample | Dev estimated FP / GB | Held findings | Held sampled FP / sample | Held estimated FP / GB |
 |---|---:|---|---:|---:|---|---:|
 | br_cnpj | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
 | br_cpf | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
-| ca_sin | 15 | 15 / 15 | 1,862.8 | 9 | 9 / 9 | 106.7 |
+| ca_sin | 15 | 15 / 15 | 110.3 | 14 | 14 / 14 | 134.8 |
 | cn_resident_id | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
-| in_aadhaar | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
+| in_aadhaar | 0 | 0 / 0 | 0.0 | 648 | 40 / 40 | 6,237.9 |
 | in_pan | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
 | kr_rrn | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
-| uk_nhs | 0 | 0 / 0 | 0.0 | 193 | 40 / 40 | 2,287.9 |
+| uk_nhs | 0 | 0 / 0 | 0.0 | 194 | 41 / 41 | 1,867.5 |
 | uk_nino | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
 | us_itin | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
-| us_ssn | 165 | 73 / 73 | 20,490.6 | 32 | 32 / 32 | 379.3 |
+| us_ssn | 165 | 73 / 73 | 1,213.2 | 43 | 43 / 43 | 413.9 |
 <!-- country-logs:end -->
 
 The sampled SSN matches are Android event times and lock identifiers, Linux inode/process values and BGL counters. SIN matches overlap those numeric fields, Zookeeper snapshot filenames and one OpenSSH hostname fragment. NHS matches are BGL epoch seconds. These are false positives for national identifiers even when a machine or user reference elsewhere on the same line could be sensitive. Zero findings for the remaining kinds only describes this corpus.

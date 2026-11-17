@@ -369,3 +369,20 @@ func TestIPTrailingIdentifierEdges(t *testing.T) {
 		}
 	}
 }
+
+func TestIPAddrSkipsThisNetworkBlock(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		text string
+		want int
+	}{
+		{`"Debian APT-HTTP/1.3 (0.9.7.9)"`, 0},
+		{"listen 0.0.0.0:80", 0},
+		{"client 1.9.7.9", 1},
+		{"client 10.0.0.1", 1},
+	} {
+		if got := NewIPAddr().Scan([]byte(tc.text)); len(got) != tc.want {
+			t.Errorf("%q: got %v, want %d findings", tc.text, got, tc.want)
+		}
+	}
+}

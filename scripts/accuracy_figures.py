@@ -135,7 +135,7 @@ def threshold_section():
     names = [row['dataset'] for row in public]
     size = sum(row['bytes'] for row in public)
     out = ['## Choosing a threshold', '',
-           'The default remains 0 for all 26 default kinds. Public-log rates are sample estimates on 92,409,848 bytes; precision treats published contacts/endpoints as sensitive references. Absolute public-log misses are unknown because undetected secrets are not labeled. Synthetic precision and misses use each default kind alone with the existing exact-span labels, including the credential sets; opt-in entropy and country kinds are excluded. Both previously inspected splits are regression evidence.', '',
+           f'The default remains 0 for all 26 default kinds. Public-log rates are sample estimates on {size:,} bytes; precision treats published contacts/endpoints as sensitive references. Absolute public-log misses are unknown because undetected secrets are not labeled. Synthetic precision and misses use each default kind alone with the existing exact-span labels, including the credential sets; opt-in entropy and country kinds are excluded. The LogHub splits were inspected before; the operations-log held files were labeled and seen but not used to choose rules.', '',
            '| Minimum confidence | Public FP/GB | Public precision | Development precision / misses | Held precision / misses |',
            '|---|---:|---:|---:|---:|']
     for threshold, config in ((0,'default'),(.5,'default50'),(.7,'default70')):
