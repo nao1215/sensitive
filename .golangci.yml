@@ -197,6 +197,12 @@ linters:
           - github.com/samber/slog-formatter$
           - github.com/showa-93/go-mask$
           - github.com/bytedance/godlp
+          - github.com/pii-shield/pii-shield/v3
+          - github.com/awslabs/ferret-scan
+          - github.com/ggwhite/go-masker/v3
+          - github.com/gin-gonic/gin
+          - github.com/labstack/echo/v4
+          - connectrpc.com/connect
           - golang.org/x/crypto/
           - golang.org/x/tools/go/
           - go/types$

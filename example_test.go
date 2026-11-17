@@ -799,3 +799,15 @@ func ExampleKindCanadaSIN() {
 	fmt.Println(embargo.Mask(input, scanner.ScanString(input)))
 	// Output: ca_sin=[REDACTED]
 }
+
+// Access logs usually need the client address for incident response. Leaving
+// KindIPAddress out of the selection keeps it while credentials, provider
+// tokens, email addresses and cards in the request line are still masked.
+func ExampleWithKinds_accessLog() {
+	scanner := embargo.NewScanner(embargo.WithKinds(
+		embargo.KindCredential, embargo.KindServiceToken, embargo.KindJWT, embargo.KindEmail, embargo.KindPAN,
+	))
+	line := `203.0.113.7 - - [17/Nov/2026:10:00:00 +0000] "GET /reset?email=alice@example.com&token=sk-proj-Fake0Fake0Fake0Fake0Fake0Fake0 HTTP/1.1" 302 0`
+	fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
+	// Output: 203.0.113.7 - - [17/Nov/2026:10:00:00 +0000] "GET /reset?email=[REDACTED]&token=[REDACTED] HTTP/1.1" 302 0
+}

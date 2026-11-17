@@ -1,8 +1,10 @@
 # Measured application masking comparison
 
-This compares overlapping use cases, not overall library quality or adoption. masq v0.2.3 offers a convenient slog ReplaceAttr, type/tag/name/prefix rules, allowed types and custom censors/redactors. embargo adds built-in detection, output-safe values, multiple logger adapters and application output assertions. The exact measured production and benchmark source fingerprint is recorded with the results.
+This compares overlapping use cases, not overall library quality or adoption. pii-shield v3.0.0 (default policy plus the recovery key, fixed salt) and ferret-scan v1.10.0 (all default checks, Simple strategy) rewrite each encoded slog line before the sink, the position their documentation gives for in-process use; pii-shield also runs as a sidecar and ferret-scan scans files, which are not measured here. masq v0.2.3 offers a convenient slog ReplaceAttr, type/tag/name/prefix rules, allowed types and custom censors/redactors. embargo adds built-in detection, output-safe values, multiple logger adapters and application output assertions. The exact measured production and benchmark source fingerprint is recorded with the results.
 
 ## Keeping a known secret out: typed wrappers
+
+embargo `Secret` and ggwhite/go-masker v3.3.0 `Sensitive` are the two typed wrappers among the measured libraries. The test renders one wrapped password through each standard output path; hidden means the value is absent from the output, and error means the encoder refused the type. go-masker's `Sensitive` also offers partial-display maskers and database `Scan`/`Value`, which this table does not score.
 
 <!-- secret-types:start -->
 | Output path | embargo Secret | ggwhite/go-masker v3.3.0 Sensitive |

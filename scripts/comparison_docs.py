@@ -155,6 +155,17 @@ def rendered(raw, meta):
 
 
 
+def speed_summary(rows):
+    """One README sentence with the measured time ratios, so it cannot go stale."""
+    events = ("flat", "nested", "map", "clean", "large50")
+    def ratios(other):
+        values = [rows[f"BenchmarkComparison/{event}/{other}"]["ns/op"] / rows[f"BenchmarkComparison/{event}/embargo"]["ns/op"] for event in events]
+        return min(values), max(values)
+    masker, shield = ratios("go-masker"), ratios("pii-shield")
+    return (f"On the same five JSON slog events, go-masker takes {masker[0]:.2f} to {masker[1]:.2f} times and pii-shield "
+            f"{shield[0]:.1f} to {shield[1]:.1f} times embargo's time per event. [Time per event](doc/comparison.md#time-and-allocations)\n")
+
+
 def replace_block(text, name, content):
     start, end = f"<!-- {name}:start -->", f"<!-- {name}:end -->"
     if text.count(start) != 1 or text.count(end) != 1 or text.index(start) >= text.index(end):
@@ -187,7 +198,9 @@ def main():
     updated = replace_block(original, "comparison", table)
     correctness = (DOC / "comparison-correctness.md").read_text(encoding="utf-8")
     updated = replace_block(updated, "correctness", correctness)
-    for path, content in ((page, updated), (DOC / "images/comparison.svg", svg)):
+    readme_path = ROOT / "README.md"
+    readme = replace_block(readme_path.read_text(encoding="utf-8"), "speed-summary", speed_summary(parse(raw)))
+    for path, content in ((page, updated), (DOC / "images/comparison.svg", svg), (readme_path, readme)):
         if args.check:
             if path.read_text(encoding="utf-8") != content:
                 raise SystemExit("stale generated comparison: " + str(path))

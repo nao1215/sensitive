@@ -36,6 +36,11 @@ import (
 	"text/template"
 	"time"
 
+	"connectrpc.com/connect"
+
+	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
+
 	"github.com/getsentry/sentry-go"
 	"github.com/rs/zerolog"
 	"github.com/sirupsen/logrus"
@@ -1606,6 +1611,81 @@ func TestLoggerIntegerExpansionFailureIsWithheld(t *testing.T) {
 				if key != "time" && key != "level" && key != messageKey && key != "withheld_attributes" {
 					t.Fatalf("original field survived: %s", out)
 				}
+			}
+		})
+	}
+}
+
+// frameworkJSONCodec lets the Connect example run without generated protobuf
+// code; Connect calls it for application/json requests.
+type frameworkJSONCodec struct{}
+
+func (frameworkJSONCodec) Name() string { return "json" }
+
+func (frameworkJSONCodec) Marshal(message any) ([]byte, error) { return json.Marshal(message) }
+
+func (frameworkJSONCodec) Unmarshal(data []byte, message any) error {
+	return json.Unmarshal(data, message)
+}
+
+type frameworkLogin struct {
+	Email string `json:"email"`
+}
+
+// TestWebFrameworkAccessLogs wraps gin, echo and Connect servers the way
+// doc/adapters.md shows: the framework stays an http.Handler behind
+// NewHTTPHandler, and application logs go through NewSlogHandler.
+func TestWebFrameworkAccessLogs(t *testing.T) {
+	t.Parallel()
+	const apiKey = "sk-proj-" + "Fake0Fake0Fake0Fake0Fake0Fake0"
+	gin.SetMode(gin.ReleaseMode)
+	frameworks := map[string]func(*slog.Logger) http.Handler{
+		"gin": func(logger *slog.Logger) http.Handler {
+			router := gin.New()
+			router.GET("/login", func(c *gin.Context) {
+				logger.Info("login", "email", c.Query("email"))
+				c.Status(http.StatusNoContent)
+			})
+			return router
+		},
+		"echo": func(logger *slog.Logger) http.Handler {
+			server := echo.New()
+			server.GET("/login", func(c echo.Context) error {
+				logger.Info("login", "email", c.QueryParam("email"))
+				return c.NoContent(http.StatusNoContent)
+			})
+			return server
+		},
+		"connect": func(logger *slog.Logger) http.Handler {
+			mux := http.NewServeMux()
+			mux.Handle("/login", connect.NewUnaryHandler("/login", func(_ context.Context, request *connect.Request[frameworkLogin]) (*connect.Response[frameworkLogin], error) {
+				logger.Info("login", "email", request.Msg.Email)
+				return connect.NewResponse(&frameworkLogin{Email: ""}), nil
+			}, connect.WithCodec(frameworkJSONCodec{})))
+			return mux
+		},
+	}
+	for name, build := range frameworks {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			var out bytes.Buffer
+			scanner := embargo.NewScanner()
+			logger := slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(&out, nil), scanner))
+			handler := embargo.NewHTTPHandler(build(logger), logger, scanner)
+			target := "/login?email=alice%40example.com&token=" + apiKey
+			request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, target, nil)
+			if name == "connect" {
+				request = httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/login?token="+apiKey, strings.NewReader(`{"email":"alice@example.com"}`))
+				request.Header.Set("Content-Type", "application/json")
+			}
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, request)
+			if response.Code >= http.StatusBadRequest {
+				t.Fatalf("status %d: %s", response.Code, response.Body.String())
+			}
+			logs := out.String()
+			if strings.Count(logs, "\n") != 2 || strings.Contains(logs, "alice@example.com") || strings.Contains(logs, apiKey) || !strings.Contains(logs, `"target":"/login?`) {
+				t.Fatalf("framework logs:\n%s", logs)
 			}
 		})
 	}

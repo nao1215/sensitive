@@ -878,6 +878,7 @@ func TestComparisonTypedCopy(t *testing.T) {
 
 const comparisonInvalidCard = "invalid_luhn"
 
+// #nosec G101 -- Public synthetic value used only to test wrapper output.
 const secretFixture = "opaque-secret-value"
 
 type secretOutputPath struct {

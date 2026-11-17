@@ -71,6 +71,88 @@ fmt.Println(key)
 
 `key.Reveal()` returns the value when the program really needs it. [Tested outputs](#tested-outputs) lists every path checked to print `[REDACTED]`, and `Input` loads such values from JSON, config files and SQL rows. [Secret, Input and your own types](doc/values.md)
 
+Measured against the other typed wrapper, go-masker v3's `Sensitive`, on twelve standard output paths: both hide the value on fmt, JSON, XML, templates and slog, and only `Secret` stays hidden when it sits in an unexported struct field printed with `%+v`. [Output-path table](doc/comparison.md#keeping-a-known-secret-out-typed-wrappers)
+
+## Mask structs without changing their types
+
+Log the struct you already have. The handler encodes it as `slog.JSONHandler` would, masks detected values, and hides whole values under keys such as `password`, `token` or `authorization`.
+
+<!-- example: example_test.go:ExampleNewSlogHandler_struct -->
+```go
+// An existing type: no tags, no embargo field types.
+type User struct {
+	Name     string
+	Email    string
+	Password string
+}
+logger := slog.New(embargo.NewSlogHandler(next, embargo.NewScanner()))
+
+logger.Info("signup", "user", User{Name: "carol", Email: "carol@example.com", Password: "hunter2"})
+
+// Output: {"level":"INFO","msg":"signup","user":{"Name":"carol","Email":"[REDACTED]","Password":"[REDACTED]"}}
+```
+
+`next` is the handler your logger already uses. The same rules apply to JSON that never reaches a logger, such as an API response or an audit export:
+
+<!-- example: example_test.go:ExampleScanner_MaskJSON -->
+```go
+scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
+// Sanitize an audit export before uploading it to a support system.
+safe, err := scanner.MaskJSON([]byte(`{"user":{"email":"alice@example.com","password":"opaque"},"amount":125,"paid":true}`))
+if err != nil {
+	panic(err)
+}
+fmt.Println(string(safe))
+// Output:
+// {"user":{"email":"[REDACTED]","password":"[REDACTED]"},"amount":125,"paid":true}
+```
+
+Numbers and booleans keep their types. `WithSensitiveKeys` replaces the key list. [Structured values and key rules](doc/logging.md)
+
+## Loggers and services
+
+| Logger | Wrap it with | Module |
+|---|---|---|
+| log/slog: TextHandler, JSONHandler or any other slog.Handler | `embargo.NewSlogHandler(next, scanner)` | root, standard library only |
+| go.uber.org/zap | [`embargozap.NewWriteSyncer(next, scanner)`](adapters/zap/example_test.go) | `adapters/zap` |
+| github.com/rs/zerolog | [`embargozerolog.NewWriter(next, scanner)`](adapters/zerolog/example_test.go) | `adapters/zerolog` |
+| github.com/sirupsen/logrus | [`embargologrus.NewFormatter(next, scanner)`](adapters/logrus/example_test.go) | `adapters/logrus` |
+| net/http server access log | [`embargo.NewHTTPHandler(next, logger, scanner)`](example_test.go) | root, standard library only |
+| gRPC server, unary and stream | [`embargogrpc.NewUnaryServerInterceptor(logger, scanner)`](adapters/grpc/example_test.go) | `adapters/grpc` |
+| OpenTelemetry SDK logs and spans | [`embargootel.NewLogExporter(next, scanner)`](adapters/otel/example_test.go) | `adapters/otel` |
+| Sentry events | [`embargosentry.NewBeforeSend(scanner)`](adapters/sentry/example_test.go) | `adapters/sentry` |
+| log, fmt and anything else | `Secret` values, or `embargo.Mask` on the text before writing | root |
+
+<!-- example: example_test.go:ExampleNewSlogHandler_short -->
+```go
+scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
+logger := slog.New(embargo.NewSlogHandler(next, scanner))
+
+logger.Info("checkout", "email", "alice@example.com")
+
+// Output: {"level":"INFO","msg":"checkout","email":"[REDACTED]"}
+```
+
+Limits: MaskJSON bounds encoded input/output to 1 MiB, nesting to 64 and cumulative detector input to 4 MiB; logger writers include the newline in their 1 MiB limit. Recorder WithLimits bounds retained bytes and child Run time. Input decoding has no size limit; bound its upstream reader. MarshalJSON, LogValue, String and Error run before these byte limits apply, so their time and memory are not bounded; use Secret or a LogValuer returning a bounded value. [Details](doc/logging.md#bounds-and-failures)
+
+Every adapter and hook uses the same detectors and key rules as the slog handler. The HTTP and gRPC hooks mask what they log, not the request your service receives or the response it sends. gin, echo and Connect servers are `http.Handler`s, so `NewHTTPHandler` wraps them unchanged; [a test runs all three](tests/integrations_test.go). [Installation and limits](doc/adapters.md)
+
+Access logs usually need the client address. Select kinds without `KindIPAddress` to keep it while tokens and addresses in the request line are still masked:
+
+<!-- example: example_test.go:ExampleWithKinds_accessLog -->
+```go
+scanner := embargo.NewScanner(embargo.WithKinds(
+	embargo.KindCredential, embargo.KindServiceToken, embargo.KindJWT, embargo.KindEmail, embargo.KindPAN,
+))
+line := `203.0.113.7 - - [17/Nov/2026:10:00:00 +0000] "GET /reset?email=alice@example.com&token=sk-proj-Fake0Fake0Fake0Fake0Fake0Fake0 HTTP/1.1" 302 0`
+fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
+// Output: 203.0.113.7 - - [17/Nov/2026:10:00:00 +0000] "GET /reset?email=[REDACTED]&token=[REDACTED] HTTP/1.1" 302 0
+```
+
+<!-- speed-summary:start -->
+On the same five JSON slog events, the wrapped handler is at or ahead of the fastest other library measured and three to five times faster than pii-shield. [Time per event](#benchmarks)
+<!-- speed-summary:end -->
+
 ## Find and mask sensitive text
 
 embargo has 37 built-in detectors (25 run by default). `NewScanner()` runs the first five groups below except the entropy heuristic. The national IDs and the heuristic are opt-in: name them in `WithKinds`, or turn on everything with `WithAll`. The scanner reads the text itself, so no field has to be listed first.
@@ -160,70 +242,6 @@ Mask everything a scanner finds, or keep part of a value:
 Pick the kinds you need: on 2.7 KB of log lines with no secret, `WithKinds(KindEmail)` returns in 0.10 µs because there is no `@` to inspect, while `WithAll()` takes 60 µs. [Per-detector benchmarks](doc/benchmarks.md)
 <!-- narrowing-line:end -->
 
-## Mask structs without changing their types
-
-Log the struct you already have. The handler encodes it as `slog.JSONHandler` would, masks detected values, and hides whole values under keys such as `password`, `token` or `authorization`.
-
-<!-- example: example_test.go:ExampleNewSlogHandler_struct -->
-```go
-// An existing type: no tags, no embargo field types.
-type User struct {
-	Name     string
-	Email    string
-	Password string
-}
-logger := slog.New(embargo.NewSlogHandler(next, embargo.NewScanner()))
-
-logger.Info("signup", "user", User{Name: "carol", Email: "carol@example.com", Password: "hunter2"})
-
-// Output: {"level":"INFO","msg":"signup","user":{"Name":"carol","Email":"[REDACTED]","Password":"[REDACTED]"}}
-```
-
-`next` is the handler your logger already uses. The same rules apply to JSON that never reaches a logger, such as an API response or an audit export:
-
-<!-- example: example_test.go:ExampleScanner_MaskJSON -->
-```go
-scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
-// Sanitize an audit export before uploading it to a support system.
-safe, err := scanner.MaskJSON([]byte(`{"user":{"email":"alice@example.com","password":"opaque"},"amount":125,"paid":true}`))
-if err != nil {
-	panic(err)
-}
-fmt.Println(string(safe))
-// Output:
-// {"user":{"email":"[REDACTED]","password":"[REDACTED]"},"amount":125,"paid":true}
-```
-
-Numbers and booleans keep their types. `WithSensitiveKeys` replaces the key list. [Structured values and key rules](doc/logging.md)
-
-## Loggers and services
-
-| Logger | Wrap it with | Module |
-|---|---|---|
-| log/slog: TextHandler, JSONHandler or any other slog.Handler | `embargo.NewSlogHandler(next, scanner)` | root, standard library only |
-| go.uber.org/zap | [`embargozap.NewWriteSyncer(next, scanner)`](adapters/zap/example_test.go) | `adapters/zap` |
-| github.com/rs/zerolog | [`embargozerolog.NewWriter(next, scanner)`](adapters/zerolog/example_test.go) | `adapters/zerolog` |
-| github.com/sirupsen/logrus | [`embargologrus.NewFormatter(next, scanner)`](adapters/logrus/example_test.go) | `adapters/logrus` |
-| net/http server access log | [`embargo.NewHTTPHandler(next, logger, scanner)`](example_test.go) | root, standard library only |
-| gRPC server, unary and stream | [`embargogrpc.NewUnaryServerInterceptor(logger, scanner)`](adapters/grpc/example_test.go) | `adapters/grpc` |
-| OpenTelemetry SDK logs and spans | [`embargootel.NewLogExporter(next, scanner)`](adapters/otel/example_test.go) | `adapters/otel` |
-| Sentry events | [`embargosentry.NewBeforeSend(scanner)`](adapters/sentry/example_test.go) | `adapters/sentry` |
-| log, fmt and anything else | `Secret` values, or `embargo.Mask` on the text before writing | root |
-
-<!-- example: example_test.go:ExampleNewSlogHandler_short -->
-```go
-scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
-logger := slog.New(embargo.NewSlogHandler(next, scanner))
-
-logger.Info("checkout", "email", "alice@example.com")
-
-// Output: {"level":"INFO","msg":"checkout","email":"[REDACTED]"}
-```
-
-Limits: MaskJSON bounds encoded input/output to 1 MiB, nesting to 64 and cumulative detector input to 4 MiB; logger writers include the newline in their 1 MiB limit. Recorder WithLimits bounds retained bytes and child Run time. Input decoding has no size limit; bound its upstream reader. MarshalJSON, LogValue, String and Error run before these byte limits apply, so their time and memory are not bounded; use Secret or a LogValuer returning a bounded value. [Details](doc/logging.md#bounds-and-failures)
-
-Every adapter and hook uses the same detectors and key rules as the slog handler. The HTTP and gRPC hooks mask what they log, not the request your service receives or the response it sends. [Installation and limits](doc/adapters.md)
-
 ## Fail tests on leaks
 
 Add one line to a package's tests:
@@ -251,6 +269,24 @@ func TestReadmeCheckOutput(t *testing.T) {
 [Keep your masking, add the leak test](doc/keep-your-masking.md) shows how to add only embargotest to existing masking. [HTTP, child processes, and canaries in env, files and headers](doc/testing-output.md)
 
 In a sample service with planted leaks (a DSN, wrapped errors, an Authorization header, a token in a request body), the slog and zap paths masked every leak that reached a logger. The redirect URL never reaches a logger; `embargotest.HTTP` catches it. [Scenario table](doc/comparison.md#service-leak-scenarios)
+
+## Command line
+
+The `embargo` command masks log files or a pipe line by line, keeps JSON lines' shape and depends only on the standard library.
+
+```sh
+go install github.com/nao1215/embargo/cmd/embargo@v0.11.0
+kubectl logs deploy/api | embargo
+embargo --report --kinds all app.log
+```
+
+<!-- cli-example: e2e/atago/cli.atago.yaml -->
+```text
+$ printf '%s\n' 'login failed for alice@example.com from 203.0.113.7' | embargo
+login failed for [REDACTED] from [REDACTED]
+```
+
+`--report` prints per-kind counts and masked byte locations instead, without echoing the input. [Flags, limits and comparing settings](doc/audit.md)
 
 ## Tested outputs
 
@@ -355,19 +391,18 @@ Recorded scanner medians (ten interleaved samples):
 
 ## Compared with other Go libraries
 
-The same scenarios and log events run against the latest releases of masq, go-masker, slog-formatter, go-mask and godlp. The chart shows every positive scenario and two clean controls, including cases embargo misses. A catch means the original planted value was removed; partial masks count. These configured examples are not a production accuracy estimate.
+The same scenarios, service probe and log events run against pii-shield, ferret-scan, masq, go-masker, slog-formatter, go-mask and godlp, and the typed-wrapper paths against ggwhite/go-masker v3. A catch means the original planted value was removed; partial masks count. These configured examples are not a production accuracy estimate.
+
+| Job | Strongest measured option | Where others win or tie |
+|---|---|---|
+| Keep a known secret from printing | embargo `Secret`: hidden on every tested path, including unexported struct fields | [ggwhite/go-masker v3.3.0](https://github.com/ggwhite/go-masker) `Sensitive` ties on fmt, JSON, XML, templates and slog, and adds partial-display maskers and SQL `Scan`/`Value`; [table](doc/comparison.md#keeping-a-known-secret-out-typed-wrappers) |
+| Log existing structs and JSON with their shape | embargo: keys, groups and custom JSON output are scanned as structure, in slog and seven other integrations | [pii-shield v3.0.0](https://github.com/pii-shield/pii-shield) and [ferret-scan v1.10.0](https://github.com/awslabs/ferret-scan) rewrite any logger's encoded line without code changes; [masq v0.2.3](https://github.com/m-mizutani/masq) and [go-masker v0.6.1](https://github.com/icntswm/go-masker) mask declared tags embargo cannot see |
+| Catch values nobody declared | embargo and ferret-scan remove the most planted values in the scenario matrix, pii-shield one fewer; in the service probe only embargo and pii-shield catch every logged leak | pii-shield, ferret-scan and [godlp v1.2.15](https://github.com/bytedance/godlp) catch the US phone number embargo misses, and embargo also masks the invalid-Luhn control |
+| Prove in CI that nothing leaked | embargo `embargotest`: canaries in logs, HTTP responses and child processes | No other measured library ships a leak test; it [works with any of them](doc/keep-your-masking.md) |
 
 ![Scenario catch rate](doc/images/scenario-catch.svg)
 
-| Library | Where it wins or ties | Where embargo adds coverage |
-|---|---|---|
-| [masq v0.2.3](https://github.com/m-mizutani/masq) | Tag-only opaque secrets; no runtime dependencies; custom type/tag policies | Detects keys, groups and custom JSON output; keeps message context |
-| [go-masker v0.6.1](https://github.com/icntswm/go-masker) | Faster measured slog events; tag-only secrets; partial masks; no runtime dependencies | More tested detector families and joined-key scanning |
-| [slog-formatter v1.3.0](https://github.com/samber/slog-formatter) | Faster configured field transforms; nested email ties | Scans arbitrary message values and preserves structured fields |
-| [go-mask v0.6.2](https://github.com/showa-93/go-mask) | Tags; faster typed masked copies; no runtime dependencies | Detects unregistered values inside message text |
-| [godlp v1.2.15](https://github.com/bytedance/godlp) | US phone detection; partial email/labeled-card masking ties | Recognizes the tested Japanese phone and opaque credential contexts |
-
-embargo also has no runtime dependencies. go-masker's measured configuration uses its default key policies and opts into Luhn card detection; its slog, zap, zerolog and HTTP adapters are exercised. [Exact outputs, setup, runtime dependencies and speed](doc/comparison.md) document the strengths and limits of every configuration. [Keep your masking, add the leak test](doc/keep-your-masking.md) works with any of them.
+pii-shield also runs as a Kubernetes sidecar outside the process, and ferret-scan scans documents and images; embargo stays inside the Go process where the value is written. [Exact outputs, setup, runtime dependencies and speed](doc/comparison.md) document the strengths and limits of every configuration.
 
 The service probe below also checks a redirect that bypasses every logger. `embargotest.HTTP` catches that response leak:
 

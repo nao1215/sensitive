@@ -592,3 +592,27 @@ func syncVisualDocument(t *testing.T, path, name, content string) {
 		t.Fatal("figure differs from runnable Examples; run make masking-doc")
 	}
 }
+
+// TestReadmeCLIExampleIsPinnedByE2E keeps the README command example in step
+// with the atago spec that runs it: the example's input line must be fed to the
+// built command there and its output line must be what the spec expects.
+func TestReadmeCLIExampleIsPinnedByE2E(t *testing.T) {
+	t.Parallel()
+	readme, err := os.ReadFile("README.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	block := regexp.MustCompile("(?s)<!-- cli-example: ([^ ]+) -->\n```text\n\\$ printf '%s\\\\n' '([^']+)' \\| embargo\n([^\n]+)\n```").FindSubmatch(readme)
+	if block == nil {
+		t.Fatal("README needs one cli-example block piping one printf line into embargo, then the output line")
+	}
+	spec, err := os.ReadFile(string(block[1]))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, line := range [][]byte{block[2], block[3]} {
+		if !regexp.MustCompile(`(?m)^\s+` + regexp.QuoteMeta(string(line)) + `$`).Match(spec) {
+			t.Errorf("%s does not run or expect the README line %q", block[1], line)
+		}
+	}
+}
