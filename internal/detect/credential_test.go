@@ -248,6 +248,7 @@ func TestCredentialSkipsUUIDIdempotencyTokens(t *testing.T) {
 		{`"ClientToken": "129caf40-59bf-4e49-8324-ed4f25010dcc"`, 0},
 		{`idempotency_token=129caf40-59bf-4e49-8324-ed4f25010dcc`, 0},
 		{`"clientToken": "129CAF40-59BF-4E49-8324-ED4F25010DCCX"`, 1},
+		{`"clientToken": "129caf40-59bf-4e49-8324-ed4f25010dcc-retry"`, 1},
 		{`"authToken": "129CAF40-59BF-4E49-8324-ED4F25010DCC"`, 1},
 	} {
 		if got := (&Credential{}).Scan([]byte(tc.text)); len(got) != tc.want {

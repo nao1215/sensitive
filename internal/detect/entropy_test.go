@@ -21,3 +21,21 @@ func TestHighEntropySkipsKubernetesGeneratedNames(t *testing.T) {
 		}
 	}
 }
+
+func TestKubernetesGeneratedNameNeedsAWord(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name string
+		want bool
+	}{
+		{"my-9d457c8b-5pqfx", true},
+		// A one-letter or mixed segment is not a human-chosen word.
+		{"q-9d457c8b-5pqfx", false},
+		{"q7-9d457c8b-5pqfx", false},
+		{"-5pqfx", false},
+	} {
+		if got := kubernetesGeneratedName([]byte(tc.name)); got != tc.want {
+			t.Errorf("%q: got %v, want %v", tc.name, got, tc.want)
+		}
+	}
+}
