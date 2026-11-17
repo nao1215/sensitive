@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 The command-line tool is now `embargo`: by default it masks each line of files or stdin, keeping JSON lines' shape, and `embargo --report` replaces `embargo-audit`. Masking is faster with fewer allocations and unchanged output. The public library API is unchanged and the root module remains dependency-free.
 
+### Detection changes
+
+- Email no longer matches the userinfo of a URL (`scheme://user@host`, `scheme://user:password@host`), the same exclusion SCP-style Git remotes already had. With the default kinds, `postgres://app:s3cr3t@db.example/orders` now masks to `postgres://app:[REDACTED]@db.example/orders`: the credential rule still masks the password and the host stays readable, where the overlapping email span used to hide the host as well. An email address written as a URL user name, such as `ftp://alice@example.com@host`, is no longer reported as an email.
+
 ### Changed
 
 - The `cmd/embargo-audit` command is replaced by `cmd/embargo` (`go install github.com/nao1215/embargo/cmd/embargo@latest`). `embargo [flags] [file ...]` writes every line masked: JSON object and array lines go through MaskJSON and are written compact, other lines are masked as text, line endings are kept and output is flushed whenever no more input is buffered, so it works behind `tail -f`. Migration: `embargo-audit` becomes `embargo --report`; `--all` becomes `--kinds all`; `--samples` now requires `--report`; the four `--compare` flags are removed, so diff two `--report` runs instead. Both modes read files as well as stdin.
