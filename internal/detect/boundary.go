@@ -51,16 +51,5 @@ func isIdentifierByte(b byte) bool {
 // developer token body: an ASCII letter, digit, '_' or '-'. It is used for word
 // boundary checks so a token embedded in a longer identifier is not matched.
 func isTokenByte(b byte) bool {
-	switch {
-	case b >= 'A' && b <= 'Z':
-		return true
-	case b >= 'a' && b <= 'z':
-		return true
-	case b >= '0' && b <= '9':
-		return true
-	case b == '_' || b == '-':
-		return true
-	default:
-		return false
-	}
+	return ascii.IsAlphaNum(b) || b == '_' || b == '-'
 }

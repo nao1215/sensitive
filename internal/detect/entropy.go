@@ -3,6 +3,8 @@ package detect
 import (
 	"math"
 	"strings"
+
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 // HighEntropy implements the public matching contract at
@@ -67,11 +69,11 @@ func entropyCandidate(data []byte) bool {
 	for _, b := range data {
 		counts[b]++
 		switch {
-		case b >= 'a' && b <= 'z':
+		case ascii.IsLower(b):
 			lower = true
-		case b >= 'A' && b <= 'Z':
+		case ascii.IsUpper(b):
 			upper = true
-		case b >= '0' && b <= '9':
+		case ascii.IsDigit(b):
 			digit = true
 		default:
 			symbol = true

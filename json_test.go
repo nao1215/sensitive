@@ -379,7 +379,7 @@ func TestAdversarialJSONLimits(t *testing.T) {
 func TestAdversarialAllocationBudget(t *testing.T) {
 	for _, pattern := range []string{digitSeparatorRun, credentialPrefixRun, nestedPercentPrefix, ibanPrefixRun, "=== RUN   fake\n"} {
 		data := []byte(strings.Repeat(pattern, (64<<10)/len(pattern)))
-		for _, detector := range builtins() {
+		for _, detector := range builtins(nil) {
 			runtime.GC()
 			var before, after runtime.MemStats
 			runtime.ReadMemStats(&before)
@@ -403,7 +403,7 @@ func BenchmarkAdversarialScaling(b *testing.B) {
 		for _, size := range []int{1 << 10, 16 << 10, 256 << 10, 1 << 20, 16 << 20} {
 			data := []byte(strings.Repeat(pattern, size/len(pattern)))
 			scanners := map[string]*Scanner{"all": NewScanner(WithAll())}
-			for _, detector := range builtins() {
+			for _, detector := range builtins(nil) {
 				scanners[string(detector.Name())] = NewScanner(WithKinds(Kind(detector.Name())))
 			}
 			for name, scanner := range scanners {

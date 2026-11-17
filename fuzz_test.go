@@ -68,7 +68,7 @@ func fuzzSeeds() []string {
 	}
 }
 
-func builtinDetectors() []detect.Detector { return builtins() }
+func builtinDetectors() []detect.Detector { return builtins(nil) }
 
 type findingKey struct {
 	name       Kind

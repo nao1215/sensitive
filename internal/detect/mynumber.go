@@ -1,8 +1,6 @@
 package detect
 
 import (
-	"bytes"
-
 	"github.com/nao1215/embargo/internal/ascii"
 )
 
@@ -142,29 +140,4 @@ func isValidMyNumber(digits []byte) bool {
 	}
 	actual := int(digits[11] - '0')
 	return actual == expected
-}
-
-// ARN has partition, service, region and account fields before its resource.
-func arnAccount(data []byte, start, end int) bool {
-	if end >= len(data) || data[end] != ':' || end-start != 12 {
-		return false
-	}
-	left := start
-	colons := 0
-	for left > 0 && !urlDelimiter(data[left-1]) && data[left-1] != '=' && data[left-1] != '[' {
-		left--
-		if data[left] == ':' {
-			colons++
-			const arnSeparators = 4
-			if colons == arnSeparators {
-				left = max(0, left-len("arn"))
-				break
-			}
-		}
-	}
-	if left > 0 && ascii.IsAlphaNum(data[left-1]) {
-		return false
-	}
-	fields := bytes.Split(data[left:start], []byte(":"))
-	return len(fields) == 5 && string(fields[0]) == "arn" && (string(fields[1]) == "aws" || string(fields[1]) == "aws-cn" || string(fields[1]) == "aws-us-gov" || string(fields[1]) == "aws-iso" || string(fields[1]) == "aws-iso-b" || string(fields[1]) == "aws-iso-e" || string(fields[1]) == "aws-iso-f") && len(fields[2]) > 0 && len(fields[4]) == 0
 }

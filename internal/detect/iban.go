@@ -99,10 +99,10 @@ func validateIBANMod97(iban []byte) bool {
 	for _, seg := range segments {
 		for _, b := range seg {
 			switch {
-			case b >= '0' && b <= '9':
+			case ascii.IsDigit(b):
 				//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 				mod = (mod*10 + int(b-'0')) % 97
-			case b >= 'A' && b <= 'Z':
+			case ascii.IsUpper(b):
 				//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 				mod = (mod*100 + int(b-'A') + 10) % 97
 			default:

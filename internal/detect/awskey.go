@@ -84,7 +84,7 @@ func validateAWSKeyBody(data []byte, start int) bool {
 		return false
 	}
 	for k := start; k < start+16; k++ {
-		if !(ascii.IsUpper(data[k]) || ascii.IsDigit(data[k])) {
+		if !ascii.IsUpper(data[k]) && !ascii.IsDigit(data[k]) {
 			return false
 		}
 	}

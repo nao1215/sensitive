@@ -189,7 +189,7 @@ func tokenInterior(data []byte, i, size int) bool {
 }
 
 func tokenRune(r rune) bool {
-	return r >= '0' && r <= '9' || r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z' || r >= 0xFF10 && r <= 0xFF19 || r == '_' || r == '-' || r == '.' || r == '/' || r == '+'
+	return ascii.IsAlphaNumRune(r) || r >= 0xFF10 && r <= 0xFF19 || r == '_' || r == '-' || r == '.' || r == '/' || r == '+'
 }
 
 // Consume consecutive formatting marks together, so a run is handled once.

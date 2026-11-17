@@ -47,11 +47,12 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 			opt.apply(s)
 		}
 	}
-	for _, d := range builtins() {
+	var matchKey func(string) bool
+	if s.sensitiveKeys != nil {
+		matchKey = s.sensitiveKey
+	}
+	for _, d := range builtins(matchKey) {
 		if (s.kinds == nil && (s.allKinds || defaultKind(Kind(d.Name())))) || s.kinds[Kind(d.Name())] {
-			if credential, ok := d.(*detect.Credential); ok && s.sensitiveKeys != nil {
-				credential.MatchKey = s.sensitiveKey
-			}
 			s.detectors = append(s.detectors, d)
 		}
 	}
@@ -112,8 +113,7 @@ func (s *Scanner) scan(data []byte, canceled func() error) []Finding {
 
 // scanInput shares the normalized view with streaming frame recognition.
 func (s *Scanner) scanInput(view detect.View, canceled func() error) []Finding {
-	data := view.Raw
-	if len(data) == 0 || scanCanceled(canceled) {
+	if len(view.Raw) == 0 || scanCanceled(canceled) {
 		return nil
 	}
 	selected := s.selectDetectors(view.Data)
@@ -131,12 +131,12 @@ func (s *Scanner) scanInput(view detect.View, canceled func() error) []Finding {
 		if scanCanceled(canceled) {
 			return nil
 		}
-		findings = append(findings, d.Scan(data)...)
+		findings = append(findings, d.Scan(view.Raw)...)
 	}
 	if scanCanceled(canceled) {
 		return nil
 	}
-	return s.filterFindings(findings, len(data))
+	return s.filterFindings(findings, len(view.Raw))
 }
 
 // ScanString scans the bytes of text.

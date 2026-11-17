@@ -9,9 +9,10 @@ type Detector interface {
 	Scan(data []byte) []Finding
 }
 
-func builtins() []detect.Detector {
+// builtins returns every built-in detector; matchKey optionally replaces the credential key policy.
+func builtins(matchKey func(string) bool) []detect.Detector {
 	return []detect.Detector{
-		&detect.Credential{},
+		&detect.Credential{MatchKey: matchKey},
 		&detect.ServiceToken{},
 		&detect.HighEntropy{},
 		detect.NewPAN(),

@@ -23,10 +23,7 @@ func NormalizeCredentialKey(key string) string {
 		case '_', '-', '.', ' ':
 			return -1
 		}
-		if r >= 'A' && r <= 'Z' {
-			return r + ('a' - 'A')
-		}
-		return r
+		return ascii.ToLowerRune(r)
 	}, key)
 }
 
@@ -128,7 +125,7 @@ func credentialSegmentStart(key string) int {
 			start = i + 1
 			continue
 		}
-		if i > 0 && key[i] >= 'A' && key[i] <= 'Z' && (key[i-1] >= 'a' && key[i-1] <= 'z' || i+1 < len(key) && key[i+1] >= 'a' && key[i+1] <= 'z') {
+		if i > 0 && ascii.IsUpper(key[i]) && (ascii.IsLower(key[i-1]) || i+1 < len(key) && ascii.IsLower(key[i+1])) {
 			start = i
 		}
 	}

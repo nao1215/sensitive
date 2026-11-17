@@ -13,9 +13,6 @@ func TestCredentialAndNetworkAlphabetEdges(t *testing.T) {
 		if isTokenByte(b) != (alnum || strings.ContainsRune("_-", rune(b))) {
 			t.Fatalf("payment byte %x", b)
 		}
-		if isBase58Char(b) != strings.ContainsRune("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz", rune(b)) {
-			t.Fatalf("base58 byte %x", b)
-		}
 	}
 	for _, s := range []string{"aA", "fF", "aF", "fA", "09af", "09AF"} {
 		want := hexCaseMixed

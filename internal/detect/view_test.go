@@ -9,6 +9,9 @@ import (
 	"unicode"
 )
 
+// escapedSpace is the percent escape of an ASCII space.
+const escapedSpace = "%20"
+
 func TestNormalizationMapSizeRejectsOverflow(t *testing.T) {
 	t.Parallel()
 	for _, length := range []int{0, 1, 1024} {
@@ -105,7 +108,7 @@ func TestComposePositionsLayers(t *testing.T) {
 func TestPercentDecodingPolicy(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct{ input, want string }{
-		{"a+b", "a+b"}, {"%2520", "%20"}, {"%x1%41%", "%x1A%"}, {"%0", "%0"}, {"%41%0", "A%0"}, {"%00%FF", "\x00\xff"},
+		{"a+b", "a+b"}, {"%2520", escapedSpace}, {"%x1%41%", "%x1A%"}, {"%0", "%0"}, {"%41%0", "A%0"}, {"%00%FF", "\x00\xff"},
 	} {
 		data, positions := decodePercent([]byte(tc.input))
 		if string(data) != tc.want {

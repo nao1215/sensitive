@@ -106,6 +106,7 @@ This inventory states the owner's active maintenance policy and maps each rule t
 | Mutation package scores and coverage cannot fall below recorded floors | Repository maintenance policy | [def check(](../scripts/mutation_gate.py) | Heavy verification |
 | Documented packages and coverage match Go and the coverage gate | AGENTS.md | [documentation-contract](../scripts/check_policies.py) | Verification |
 | Growth in large functions requires a reviewed baseline update | AGENTS.md | [function-growth](../scripts/check_policies.py) | Verification |
+| One owner each for byte classes, the scanned view and every detector | Repository maintenance policy | [cohesion](../scripts/check_policies.py) | Verification |
 <!-- policy-map:end -->
 
 The TDD rule requires a failing regression before a production fix. Record that evidence in the PR or external work report; CI checks that the regression remains. Test readability, useful explanations, false-positive labeling and table layout retain human review alongside executable checks.

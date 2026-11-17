@@ -163,8 +163,23 @@ func TestByteClasses(t *testing.T) {
 		if got := ascii.ToUpper(b); got != wantUpper {
 			t.Fatalf("ToUpper(%#x) = %#x, want %#x", b, got, wantUpper)
 		}
+		if got := ascii.IsAlphaNumRune(rune(b)); got != (isUpper || isLower || isDigit) {
+			t.Fatalf("IsAlphaNumRune(%#x) = %v", b, got)
+		}
+		if got := ascii.ToLowerRune(rune(b)); got != rune(wantLower) {
+			t.Fatalf("ToLowerRune(%#x) = %#x", b, got)
+		}
 		if got := ascii.LowerString(string([]byte{'X', b})); got != string([]byte{'x', wantLower}) {
 			t.Fatalf("LowerString(%#x) = %q", b, got)
+		}
+	}
+}
+
+func TestRuneClassesIgnoreNonASCII(t *testing.T) {
+	t.Parallel()
+	for _, r := range []rune{'０', 'Ａ', 'ａ', 'İ', 0x10FFFF, -1} {
+		if ascii.IsAlphaNumRune(r) || ascii.ToLowerRune(r) != r {
+			t.Fatalf("non-ASCII rune %U treated as ASCII", r)
 		}
 	}
 }

@@ -1,13 +1,10 @@
 package ascii
 
+import "slices"
+
 // HasLetter reports whether data contains at least one ASCII letter (a-z, A-Z).
 func HasLetter(data []byte) bool {
-	for _, b := range data {
-		if IsAlpha(b) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(data, IsAlpha)
 }
 
 // IsDigit reports whether b is an ASCII digit (0-9).
@@ -24,6 +21,19 @@ func IsAlpha(b byte) bool { return IsLower(b) || IsUpper(b) }
 
 // IsAlphaNum reports whether b is an ASCII letter or digit.
 func IsAlphaNum(b byte) bool { return IsAlpha(b) || IsDigit(b) }
+
+// IsAlphaNumRune reports whether r is an ASCII letter or digit.
+func IsAlphaNumRune(r rune) bool {
+	return r >= '0' && r <= '9' || r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z'
+}
+
+// ToLowerRune converts an ASCII uppercase letter to lowercase; other runes are unchanged.
+func ToLowerRune(r rune) rune {
+	if r >= 'A' && r <= 'Z' {
+		return r + ('a' - 'A')
+	}
+	return r
+}
 
 // IsHexDigit reports whether b is an ASCII hexadecimal digit in either case.
 func IsHexDigit(b byte) bool {
