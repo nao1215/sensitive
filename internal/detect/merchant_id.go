@@ -1,21 +1,5 @@
 package detect
 
-// MerchantIDType represents the type of merchant/terminal identifier detected.
-type MerchantIDType string
-
-const (
-	// MerchantIDTypeMerchant indicates a merchant ID (MID).
-	MerchantIDTypeMerchant MerchantIDType = "merchant"
-	// MerchantIDTypeTerminal indicates a terminal ID (TID).
-	MerchantIDTypeTerminal MerchantIDType = "terminal"
-)
-
-// MerchantIDDetail holds merchant/terminal ID-specific detail information.
-type MerchantIDDetail struct {
-	// IDType is the type of identifier detected.
-	IDType MerchantIDType
-}
-
 // MerchantID implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindMerchantID.
 type MerchantID struct {
@@ -67,8 +51,6 @@ func (d *MerchantID) Scan(data []byte) []Finding {
 				End:          seq.end,
 				//nolint:mnd // The detector contract documents this heuristic score.
 				Confidence: 0.7,
-				RawValue:   string(data[seq.start:seq.end]),
-				Detail:     &MerchantIDDetail{IDType: MerchantIDTypeMerchant},
 			})
 		}
 	}
@@ -96,8 +78,6 @@ func (d *MerchantID) Scan(data []byte) []Finding {
 				End:          seq.end,
 				//nolint:mnd // The detector contract documents this heuristic score.
 				Confidence: 0.7,
-				RawValue:   string(data[seq.start:seq.end]),
-				Detail:     &MerchantIDDetail{IDType: MerchantIDTypeTerminal},
 			})
 		}
 	}

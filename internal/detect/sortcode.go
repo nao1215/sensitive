@@ -2,12 +2,6 @@ package detect
 
 import "bytes"
 
-// UKSortCodeDetail holds UK sort code-specific detail information.
-type UKSortCodeDetail struct {
-	// FormattedValue is the sort code in XX-XX-XX format with hyphens.
-	FormattedValue string
-}
-
 // UKSortCode implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKSortCode.
 type UKSortCode struct{}
@@ -144,20 +138,11 @@ func (d *UKSortCode) Scan(data []byte) []Finding {
 			confidence = 0.55
 		}
 
-		// Build formatted value with hyphens.
-		formatted := string([]byte{
-			data[i], data[i+1], '-',
-			data[i+3], data[i+4], '-',
-			data[i+6], data[i+7],
-		})
-
 		findings = append(findings, Finding{
 			DetectorName: d.Name(),
 			Start:        i,
 			End:          end,
 			Confidence:   confidence,
-			RawValue:     string(data[i:end]),
-			Detail:       &UKSortCodeDetail{FormattedValue: formatted},
 		})
 
 		i = end - 1

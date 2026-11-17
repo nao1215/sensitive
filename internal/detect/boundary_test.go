@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 func TestEncodedBoundary(t *testing.T) {
@@ -38,7 +40,7 @@ func TestEncodedBoundary(t *testing.T) {
 			t.Run(string(sample.d.Name())+prefix, func(t *testing.T) {
 				t.Parallel()
 				got := sample.d.Scan([]byte(prefix + sample.raw + "\n" + sample.raw))
-				if len(got) != 2 || got[0].RawValue != sample.raw || got[0].Start != len(prefix) || got[0].End != len(prefix)+len(sample.raw) || got[1].RawValue != sample.raw || got[1].Start != len(prefix)+len(sample.raw)+1 || got[1].End != len(prefix)+2*len(sample.raw)+1 {
+				if len(got) != 2 || (prefix + sample.raw + "\n" + sample.raw)[got[0].Start:got[0].End] != sample.raw || got[0].Start != len(prefix) || got[0].End != len(prefix)+len(sample.raw) || (prefix + sample.raw + "\n" + sample.raw)[got[1].Start:got[1].End] != sample.raw || got[1].Start != len(prefix)+len(sample.raw)+1 || got[1].End != len(prefix)+2*len(sample.raw)+1 {
 					t.Errorf("encoded separator lost raw value: %v", got)
 				}
 			})
@@ -99,7 +101,7 @@ func TestBitcoinIdentifierBoundaries(t *testing.T) {
 		}
 	}
 	for _, value := range []string{raw, strings.ToUpper(raw)} {
-		if got := NewBTC().Scan([]byte(value)); len(got) != 1 || got[0].RawValue != value {
+		if got := NewBTC().Scan([]byte(value)); len(got) != 1 || value[got[0].Start:got[0].End] != value {
 			t.Fatal("consistent-case address rejected")
 		}
 	}
@@ -111,14 +113,14 @@ func TestBoundaryAlphabetContract(t *testing.T) {
 	for n := range 256 {
 		b := byte(n)
 		alnum := strings.ContainsRune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", rune(b))
-		if isASCIIAlphaNum(b) != alnum {
+		if isAlphaNum(b) != alnum {
 			t.Fatalf("ASCII alphabet %x", b)
 		}
 		if isTokenByte(b) != (alnum || b == '_' || b == '-') {
 			t.Fatalf("token alphabet %x", b)
 		}
 		decoded, err := hex.DecodeString("0" + string(b))
-		v, ok := boundaryHex(b)
+		v, ok := ascii.DecodeHex(b)
 		if ok != (err == nil) || ok && v != decoded[0] {
 			t.Fatalf("hex alphabet %x", b)
 		}
@@ -128,6 +130,32 @@ func TestBoundaryAlphabetContract(t *testing.T) {
 		want := strings.ContainsRune(" \t\n\r\"'()[]{}:,;=&?", rune(n))
 		if encodedSeparatorBefore([]byte(escaped), len(escaped)) != want {
 			t.Fatalf("encoded boundary %q", escaped)
+		}
+	}
+}
+
+func TestIdentifierByteAlphabet(t *testing.T) {
+	t.Parallel()
+	const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_"
+	for n := range 256 {
+		b := byte(n)
+		want := false
+		for i := range len(alphabet) {
+			want = want || alphabet[i] == b
+		}
+		if isIdentifierByte(b) != want {
+			t.Fatalf("identifier byte %x: want %v", b, want)
+		}
+	}
+}
+
+func TestHexByteAlphabet(t *testing.T) {
+	t.Parallel()
+	for n := range 256 {
+		b := byte(n)
+		_, err := hex.DecodeString("0" + string(b))
+		if isHexDigit(b) != (err == nil) {
+			t.Fatalf("hex alphabet %x", b)
 		}
 	}
 }

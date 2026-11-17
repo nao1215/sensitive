@@ -1,6 +1,7 @@
 package ascii_test
 
 import (
+	"encoding/hex"
 	"testing"
 	"unicode"
 
@@ -106,6 +107,17 @@ func TestEveryByteAgainstUnicodeASCIIOracle(t *testing.T) {
 		} // #nosec G115 -- ASCII case conversion stays in the byte domain.
 		if ascii.ToLower(b) != want || ascii.LowerCopy([]byte{b})[0] != want {
 			t.Fatalf("lowercase boundary at byte %d", n)
+		}
+	}
+}
+
+func TestDecodeHexAlphabet(t *testing.T) {
+	t.Parallel()
+	for n := range 256 {
+		decoded, err := hex.DecodeString("0" + string(rune(n)))
+		value, ok := ascii.DecodeHex(byte(n))
+		if ok != (err == nil) || ok && value != decoded[0] {
+			t.Fatal(n, value, ok)
 		}
 	}
 }

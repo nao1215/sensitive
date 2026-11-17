@@ -1,31 +1,5 @@
 package detect
 
-// SlackTokenType classifies a detected Slack token by the character that follows
-// the "xox" prefix. Use the SlackToken* constants for comparison with
-// [SlackTokenDetail.TokenType].
-type SlackTokenType string
-
-const (
-	// SlackTokenBot identifies a bot token (xoxb-).
-	SlackTokenBot SlackTokenType = "bot"
-	// SlackTokenUser identifies a user token (xoxp-).
-	SlackTokenUser SlackTokenType = "user"
-	// SlackTokenApp identifies an app-level token (xoxa-).
-	SlackTokenApp SlackTokenType = "app"
-	// SlackTokenOAuth identifies a legacy OAuth token (xoxo-).
-	SlackTokenOAuth SlackTokenType = "oauth"
-	// SlackTokenRefresh identifies a refresh token (xoxr-).
-	SlackTokenRefresh SlackTokenType = "refresh"
-	// SlackTokenServiceRefresh identifies a service refresh token (xoxs-).
-	SlackTokenServiceRefresh SlackTokenType = "service_refresh"
-)
-
-// SlackTokenDetail holds Slack token-specific detail information.
-type SlackTokenDetail struct {
-	// TokenType is the token kind inferred from the fourth prefix character.
-	TokenType SlackTokenType
-}
-
 // SlackToken implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindSlackToken.
 type SlackToken struct{}
@@ -56,8 +30,7 @@ func (d *SlackToken) Scan(data []byte) []Finding {
 			i++
 			continue
 		}
-		kind, ok := slackTokenType(data, i)
-		if !ok {
+		if !slackTokenPrefix(data, i) {
 			i++
 			continue
 		}
@@ -78,39 +51,36 @@ func (d *SlackToken) Scan(data []byte) []Finding {
 			End:          end,
 			//nolint:mnd // The detector contract documents this heuristic score.
 			Confidence: 0.9,
-			RawValue:   string(data[i:end]),
-			Detail:     &SlackTokenDetail{TokenType: kind},
 		})
 		i = end
 	}
 	return findings
 }
 
-// slackTokenType reports the token type when data[i:i+4] is "xox" plus a known
-// type character.
-func slackTokenType(data []byte, i int) (SlackTokenType, bool) {
+// slackTokenPrefix reports whether data[i:i+4] is "xox" plus a known type character.
+func slackTokenPrefix(data []byte, i int) bool {
 	if !hasASCIIPrefix(data, i, "xox") {
-		return "", false
+		return false
 	}
 	switch data[i+3] {
 	case 'b':
-		return SlackTokenBot, true
+		return true
 	case 'p':
-		return SlackTokenUser, true
+		return true
 	case 'a':
-		return SlackTokenApp, true
+		return true
 	case 'o':
-		return SlackTokenOAuth, true
+		return true
 	case 'r':
-		return SlackTokenRefresh, true
+		return true
 	case 's':
-		return SlackTokenServiceRefresh, true
+		return true
 	default:
-		return "", false
+		return false
 	}
 }
 
 // isSlackBodyByte reports whether b can appear in a Slack token body.
 func isSlackBodyByte(b byte) bool {
-	return isBase62(b) || b == '-'
+	return isAlphaNum(b) || b == '-'
 }

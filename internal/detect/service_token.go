@@ -21,7 +21,7 @@ func (*ServiceToken) Hints() [][]byte {
 func (d *ServiceToken) Scan(data []byte) []Finding {
 	var out []Finding
 	for i := 0; i < len(data); i++ {
-		if i > 0 && (isBase62(data[i-1]) || data[i-1] == '_') {
+		if i > 0 && isIdentifierByte(data[i-1]) {
 			continue
 		}
 		end := serviceTokenEnd(data, i)
@@ -35,7 +35,7 @@ func (d *ServiceToken) Scan(data []byte) []Finding {
 			start = i + marker + len("/services/")
 		}
 		//nolint:mnd // Prefix-based candidates use the documented heuristic score.
-		out = append(out, Finding{DetectorName: d.Name(), Start: start, End: end, Confidence: 0.95, RawValue: string(data[start:end])})
+		out = append(out, Finding{DetectorName: d.Name(), Start: start, End: end, Confidence: 0.95})
 		i = end - 1
 	}
 	return out
@@ -47,7 +47,7 @@ func serviceTokenEnd(data []byte, start int) int {
 			continue
 		}
 		end := start + len(prefix)
-		for end < len(data) && tokenByte(data[end]) {
+		for end < len(data) && isTokenByte(data[end]) {
 			end++
 		}
 		const minBody = 16
@@ -60,7 +60,7 @@ func serviceTokenEnd(data []byte, start int) int {
 		const firstLen, secondLen = 22, 43
 		middle := start + len("SG.") + firstLen
 		end := middle + 1 + secondLen
-		if end <= len(data) && data[middle] == '.' && allTokenBytes(data[start+len("SG."):middle]) && allTokenBytes(data[middle+1:end]) && (end == len(data) || !tokenByte(data[end])) {
+		if end <= len(data) && data[middle] == '.' && allBytes(data, start+len("SG."), middle, isTokenByte) && allBytes(data, middle+1, end, isTokenByte) && (end == len(data) || !isTokenByte(data[end])) {
 			return end
 		}
 	}
@@ -69,7 +69,7 @@ func serviceTokenEnd(data []byte, start int) int {
 			continue
 		}
 		end := start + len(prefix)
-		for end < len(data) && (tokenByte(data[end]) || data[end] == '/') {
+		for end < len(data) && (isTokenByte(data[end]) || data[end] == '/') {
 			end++
 		}
 		parts := strings.Split(string(data[start+len(prefix):end]), "/")
@@ -79,14 +79,4 @@ func serviceTokenEnd(data []byte, start int) int {
 		}
 	}
 	return start
-}
-
-func tokenByte(b byte) bool { return isBase62(b) || b == '_' || b == '-' }
-func allTokenBytes(data []byte) bool {
-	for _, b := range data {
-		if !tokenByte(b) {
-			return false
-		}
-	}
-	return true
 }

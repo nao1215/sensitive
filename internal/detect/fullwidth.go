@@ -177,3 +177,18 @@ func normalizationRune(data []byte, index int) (value rune, size int) {
 	}
 	return value, size
 }
+
+// ComposePositions maps child-view boundaries through a parent view in place.
+// Nil is the identity view. Non-nil maps include the exclusive end sentinel;
+// child entries must be valid indexes in parent. The returned map may alias either input.
+func ComposePositions(child, parent []int) []int {
+	if child == nil {
+		return parent
+	}
+	if parent != nil {
+		for i, at := range child {
+			child[i] = parent[at]
+		}
+	}
+	return child
+}

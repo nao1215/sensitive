@@ -5,19 +5,6 @@ import (
 	"slices"
 )
 
-// SWIFTBICDetail holds SWIFT/BIC code-specific detail information.
-type SWIFTBICDetail struct {
-	// BankCode is the 4-letter bank/institution code (e.g., "DEUT" for Deutsche Bank).
-	BankCode string
-	// CountryCode is the ISO 3166-1 alpha-2 country code (e.g., "DE", "US", "GB").
-	CountryCode string
-	// LocationCode is the 2-character location code (alphanumeric).
-	LocationCode string
-	// BranchCode is the optional 3-character branch code (alphanumeric).
-	// Empty string for 8-character SWIFT/BIC codes (head office).
-	BranchCode string
-}
-
 // SWIFTBIC implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindSWIFTBIC.
 type SWIFTBIC struct{}
@@ -46,7 +33,7 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 			continue
 		}
 
-		end, branchCode, ok := determineSWIFTLength(data, i)
+		end, ok := determineSWIFTLength(data, i)
 		if !ok || (entropyLocation(data, i, end) && !swiftSlashList(data, i, end)) {
 			continue
 		}
@@ -74,30 +61,12 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 			continue
 		}
 
-		bankCode := string([]byte{
-			toUpperByte(data[i]),
-			toUpperByte(data[i+1]),
-			toUpperByte(data[i+2]),
-			toUpperByte(data[i+3]),
-		})
-		locationCode := string([]byte{
-			toUpperByte(data[i+6]),
-			toUpperByte(data[i+7]),
-		})
-
 		findings = append(findings, Finding{
 			DetectorName: d.Name(),
 			Start:        i,
 			End:          end,
 			//nolint:mnd // The detector contract documents this heuristic score.
 			Confidence: 0.85,
-			RawValue:   string(data[i:end]),
-			Detail: &SWIFTBICDetail{
-				BankCode:     bankCode,
-				CountryCode:  string([]byte{toUpperByte(data[i+4]), toUpperByte(data[i+5])}),
-				LocationCode: locationCode,
-				BranchCode:   branchCode,
-			},
 		})
 
 		i = end - 1
@@ -117,7 +86,7 @@ func swiftSlashList(data []byte, start, end int) bool {
 		if len(data)-at < shortCodeLength || !validateSWIFTStructure(data, at) {
 			return -1
 		}
-		last, _, valid := determineSWIFTLength(data, at)
+		last, valid := determineSWIFTLength(data, at)
 		if !valid {
 			return -1
 		}
@@ -157,26 +126,21 @@ func validateSWIFTStructure(data []byte, i int) bool {
 }
 
 // determineSWIFTLength determines whether the SWIFT/BIC code at data[i] is
-// 8 or 11 characters. Returns (end, branchCode, true) for valid lengths,
-// or (0, "", false) for invalid lengths (9 or 10 characters).
-func determineSWIFTLength(data []byte, i int) (end int, branchCode string, ok bool) {
+// 8 or 11 characters. Returns (end, true) for valid lengths,
+// or (0, false) for invalid lengths (9 or 10 characters).
+func determineSWIFTLength(data []byte, i int) (end int, ok bool) {
 	if i+11 <= len(data) && isAlphaNum(data[i+8]) && isAlphaNum(data[i+9]) && isAlphaNum(data[i+10]) {
 		if i+11 < len(data) && isAlphaNum(data[i+11]) {
-			return 0, "", false
+			return 0, false
 		}
-		branch := string([]byte{
-			toUpperByte(data[i+8]),
-			toUpperByte(data[i+9]),
-			toUpperByte(data[i+10]),
-		})
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		return i + 11, branch, true
+		return i + 11, true
 	}
 	if i+8 < len(data) && isAlphaNum(data[i+8]) {
-		return 0, "", false
+		return 0, false
 	}
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-	return i + 8, "", true
+	return i + 8, true
 }
 
 // hasDigitInRange reports whether data[start:end] contains at least one digit.
@@ -286,7 +250,7 @@ func swiftLabelGap(gap []byte) bool {
 	gap = bytes.Trim(gap, separators)
 	// Earlier complete codes in a slash list share the same field label.
 	for list && len(gap) >= 8 {
-		end, _, ok := determineSWIFTLength(gap, 0)
+		end, ok := determineSWIFTLength(gap, 0)
 		if !validateSWIFTStructure(gap, 0) || !ok {
 			break
 		}

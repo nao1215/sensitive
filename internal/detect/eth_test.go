@@ -116,18 +116,15 @@ func TestETHDetector_Scan(t *testing.T) {
 			if f.DetectorName != NameETH {
 				t.Errorf("DetectorName = %q, want %q", f.DetectorName, NameETH)
 			}
-			if tt.wantRaw != "" && f.RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", f.RawValue, tt.wantRaw)
+			if tt.wantRaw != "" && tt.input[f.Start:f.End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[f.Start:f.End], tt.wantRaw)
 			}
 			if f.Confidence < tt.wantMinConf {
 				t.Errorf("Confidence = %.2f, want >= %.2f", f.Confidence, tt.wantMinConf)
 			}
-			detail, ok := f.ETHDetail()
-			if !ok {
-				t.Fatal("ETHDetail() returned false")
-			}
-			if detail.EIP55 != tt.wantEIP55 {
-				t.Errorf("EIP55 = %v, want %v", detail.EIP55, tt.wantEIP55)
+			hexPart := tt.input[f.Start+2 : f.End]
+			if (hexCaseType(hexPart) == hexCaseMixed && validateEIP55(hexPart)) != tt.wantEIP55 {
+				t.Errorf("EIP55 = %v, want %v", (hexCaseType(hexPart) == hexCaseMixed && validateEIP55(hexPart)), tt.wantEIP55)
 			}
 		})
 	}
@@ -214,9 +211,6 @@ func TestETHDetector_Scan_BytePositions(t *testing.T) {
 	if f.End != expectedEnd {
 		t.Errorf("End = %d, want %d", f.End, expectedEnd)
 	}
-	if input[f.Start:f.End] != f.RawValue {
-		t.Errorf("input[%d:%d] = %q, want %q", f.Start, f.End, input[f.Start:f.End], f.RawValue)
-	}
 }
 
 func TestETHDetector_Scan_BoundaryChecks(t *testing.T) {
@@ -293,7 +287,7 @@ func TestETHSpecificationVectors(t *testing.T) {
 		if raw[2:] == strings.ToLower(raw[2:]) || raw[2:] == strings.ToUpper(raw[2:]) {
 			want = 0.80
 		}
-		if len(got) != 1 || got[0].RawValue != raw || got[0].Confidence != want {
+		if len(got) != 1 || raw[got[0].Start:got[0].End] != raw || got[0].Confidence != want {
 			t.Errorf("EIP-55 vector rejected or mis-scored: %s", raw)
 		}
 		if len(NewETH().Scan([]byte(raw+"0"))) != 0 {

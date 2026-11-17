@@ -1,10 +1,8 @@
-package detect_test
+package detect
 
 import (
 	"strings"
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestGoogleAPIKeyDetector_Scan(t *testing.T) {
@@ -12,7 +10,7 @@ func TestGoogleAPIKeyDetector_Scan(t *testing.T) {
 
 	key := "AIza" + strings.Repeat("a", 35)
 
-	d := detect.NewGoogleAPIKey()
+	d := NewGoogleAPIKey()
 	tests := []struct {
 		name    string
 		input   string
@@ -62,13 +60,8 @@ func TestGoogleAPIKeyDetector_Scan(t *testing.T) {
 			if len(findings) != tt.wantLen {
 				t.Fatalf("got %d findings, want %d: %+v", len(findings), tt.wantLen, findings)
 			}
-			if tt.wantLen == 1 && tt.wantRaw != "" && findings[0].RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
-			}
-			if tt.wantLen == 1 {
-				if _, ok := findings[0].GoogleAPIKeyDetail(); !ok {
-					t.Errorf("GoogleAPIKeyDetail() ok = false")
-				}
+			if tt.wantLen == 1 && tt.wantRaw != "" && tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
 			}
 		})
 	}

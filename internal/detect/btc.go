@@ -4,26 +4,6 @@ import (
 	"crypto/sha256"
 )
 
-// BTCAddressType identifies the encoding in [BTCDetail.AddressType].
-type BTCAddressType string
-
-const (
-	// BTCAddressP2PKH identifies Pay-to-Public-Key-Hash addresses (prefix '1').
-	BTCAddressP2PKH BTCAddressType = "p2pkh"
-	// BTCAddressP2SH identifies Pay-to-Script-Hash addresses (prefix '3').
-	BTCAddressP2SH BTCAddressType = "p2sh"
-	// BTCAddressBech32 identifies SegWit v0 addresses (prefix 'bc1q').
-	BTCAddressBech32 BTCAddressType = "bech32"
-	// BTCAddressBech32m identifies witness versions 1–16 using Bech32m.
-	BTCAddressBech32m BTCAddressType = "bech32m"
-)
-
-// BTCDetail holds Bitcoin address-specific detail information.
-type BTCDetail struct {
-	// AddressType is the address encoding.
-	AddressType BTCAddressType
-}
-
 // BTC implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindBTC.
 type BTC struct{}
@@ -85,7 +65,7 @@ func matchBech32Prefix(data []byte, i int) bool {
 // Returns the Finding, end position, and success flag.
 func (d *BTC) scanBech32(data []byte, i int) (Finding, int, bool) {
 	// Word boundary: preceding character must not be alphanumeric or underscore.
-	if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '_') && !encodedSeparatorBefore(data, i) {
+	if i > 0 && isIdentifierByte(data[i-1]) && !encodedSeparatorBefore(data, i) {
 		return Finding{}, 0, false
 	}
 
@@ -95,7 +75,7 @@ func (d *BTC) scanBech32(data []byte, i int) (Finding, int, bool) {
 	// Extract bech32 characters starting after "bc1".
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 	j := i + 3
-	for j < len(data) && isBech32Char(data[j]) {
+	for j < len(data) && isAlphaNum(data[j]) {
 		j++
 	}
 
@@ -107,7 +87,7 @@ func (d *BTC) scanBech32(data []byte, i int) (Finding, int, bool) {
 	}
 
 	// Word boundary: following character must not be alphanumeric or underscore.
-	if j < len(data) && (isAlphaNum(data[j]) || data[j] == '_') {
+	if j < len(data) && isIdentifierByte(data[j]) {
 		return Finding{}, 0, false
 	}
 
@@ -139,12 +119,9 @@ func (d *BTC) scanBech32(data []byte, i int) (Finding, int, bool) {
 	// BIP-173: witness version 0 uses bech32.
 	// BIP-350: witness versions 1-16 use bech32m.
 	witnessVersion := decoded[0]
-	var addrType BTCAddressType
 	switch {
 	case witnessVersion == 0 && checksumConst == bech32ChecksumConst:
-		addrType = BTCAddressBech32
 	case witnessVersion >= 1 && witnessVersion <= 16 && checksumConst == bech32mChecksumConst:
-		addrType = BTCAddressBech32m
 	default:
 		// Invalid witness version / checksum variant combination.
 		return Finding{}, 0, false
@@ -158,8 +135,6 @@ func (d *BTC) scanBech32(data []byte, i int) (Finding, int, bool) {
 		End:          j,
 		//nolint:mnd // The detector contract documents this heuristic score.
 		Confidence: 0.95,
-		RawValue:   addr,
-		Detail:     &BTCDetail{AddressType: addrType},
 	}, j, true
 }
 
@@ -169,7 +144,7 @@ func (d *BTC) scanLegacy(data []byte, i int) (Finding, int, bool) {
 	// Word boundary: preceding character must not be alphanumeric or underscore.
 	// This matches the right-boundary check and prevents false positives from
 	// non-Base58 characters like 0, I, O, l that precede the address.
-	if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '_') && !encodedSeparatorBefore(data, i) {
+	if i > 0 && isIdentifierByte(data[i-1]) && !encodedSeparatorBefore(data, i) {
 		return Finding{}, 0, false
 	}
 
@@ -186,7 +161,7 @@ func (d *BTC) scanLegacy(data []byte, i int) (Finding, int, bool) {
 	}
 
 	// Word boundary: following character must not be alphanumeric or underscore.
-	if j < len(data) && (isAlphaNum(data[j]) || data[j] == '_') {
+	if j < len(data) && isIdentifierByte(data[j]) {
 		return Finding{}, 0, false
 	}
 
@@ -203,14 +178,11 @@ func (d *BTC) scanLegacy(data []byte, i int) (Finding, int, bool) {
 	}
 
 	// Determine address type from version byte.
-	var addrType BTCAddressType
 	switch decoded[0] {
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 	case 0x00:
-		addrType = BTCAddressP2PKH
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 	case 0x05:
-		addrType = BTCAddressP2SH
 	default:
 		return Finding{}, 0, false
 	}
@@ -221,8 +193,6 @@ func (d *BTC) scanLegacy(data []byte, i int) (Finding, int, bool) {
 		End:          j,
 		//nolint:mnd // The detector contract documents this heuristic score.
 		Confidence: 0.95,
-		RawValue:   addr,
-		Detail:     &BTCDetail{AddressType: addrType},
 	}, j, true
 }
 
@@ -236,13 +206,6 @@ func isBase58Char(b byte) bool {
 		(b >= 'P' && b <= 'Z') ||
 		(b >= 'a' && b <= 'k') ||
 		(b >= 'm' && b <= 'z')
-}
-
-// isBech32Char reports whether b is a valid bech32 data character (lowercase or digit).
-func isBech32Char(b byte) bool {
-	return (b >= '0' && b <= '9') ||
-		(b >= 'a' && b <= 'z') ||
-		(b >= 'A' && b <= 'Z')
 }
 
 // isBech32ConsistentCase reports whether all characters in s are the same case.

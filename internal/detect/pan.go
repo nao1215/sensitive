@@ -5,8 +5,7 @@ import "slices"
 // CardBrand identifies a payment card brand; see the Brand* constants.
 type CardBrand string
 
-// Card brand constants. Use these with [PANDetail.Brand] to identify
-// the issuing network of a detected card number.
+// Card brand constants identify the issuer for prefix and length validation.
 const (
 	// BrandVisa identifies Visa cards (prefix 4).
 	BrandVisa CardBrand = "Visa"
@@ -23,20 +22,6 @@ const (
 	// BrandUnionPay identifies UnionPay cards (prefix 62).
 	BrandUnionPay CardBrand = "UnionPay"
 )
-
-// PANDetail holds credit card-specific detail information for a PAN finding.
-type PANDetail struct {
-	// Brand is the card brand identified by the BIN prefix.
-	Brand CardBrand
-	// BIN is the first 6 digits of the card number (Bank Identification Number).
-	BIN string
-	// Last4 is the last 4 digits of the card number.
-	Last4 string
-	// Luhn indicates whether the number passes the Luhn check digit algorithm.
-	Luhn bool
-	// Length is the total number of digits in the card number.
-	Length int
-}
 
 // PAN implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN.
@@ -78,8 +63,7 @@ func (d *PAN) Scan(data []byte) []Finding {
 
 // scanNormalized performs PAN detection on normalized (half-width) data.
 // orig is the original (possibly full-width) input; posMap maps normalized
-// byte positions back to original byte positions. RawValue is taken from
-// orig so it matches the original text exactly.
+// byte positions back to original byte positions. Context confidence uses orig.
 func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	var findings []Finding
 	var logContext numericLogContext
@@ -117,8 +101,8 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 
 		// Check digit count: valid PANs are 13-19 digits.
 		digitLen := len(digits)
-		leadingBoundary := start == 0 || (!isAlphaNum(data[start-1]) && data[start-1] != '_') || encodedSeparatorBefore(orig, originalPosition(posMap, start))
-		trailingBoundary := end == len(data) || (!isAlphaNum(data[end]) && data[end] != '_')
+		leadingBoundary := start == 0 || !isIdentifierByte(data[start-1]) || encodedSeparatorBefore(orig, originalPosition(posMap, start))
+		trailingBoundary := end == len(data) || !isIdentifierByte(data[end])
 		if f, ok := d.evaluateCandidate(orig, posMap, digits, digitLen, start, end); ok && leadingBoundary && trailingBoundary && !logContext.fragment(data, start, end) {
 			findings = append(findings, f)
 		}
@@ -165,11 +149,6 @@ func (d *PAN) evaluateCandidate(orig []byte, posMap []int, digits []byte, digitL
 		return Finding{}, false
 	}
 
-	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-	binStr := string(digits[:min(6, len(digits))])
-	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-	last4 := string(digits[max(0, len(digits)-4):])
-
 	origStart, origEnd := mapOriginalRange(posMap, start, end)
 
 	return Finding{
@@ -177,14 +156,6 @@ func (d *PAN) evaluateCandidate(orig []byte, posMap []int, digits []byte, digitL
 		Start:        origStart,
 		End:          origEnd,
 		Confidence:   businessConfidence(orig, origStart, confidence),
-		RawValue:     string(orig[origStart:origEnd]),
-		Detail: &PANDetail{
-			Brand:  brand,
-			BIN:    binStr,
-			Last4:  last4,
-			Luhn:   luhnOK,
-			Length: digitLen,
-		},
 	}, true
 }
 

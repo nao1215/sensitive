@@ -1,25 +1,5 @@
 package detect
 
-// BankAccountLanguage represents the language of the context keyword that
-// triggered a bank account detection.
-type BankAccountLanguage string
-
-const (
-	// BankAccountLangJA indicates a Japanese context keyword (e.g., "口座番号").
-	BankAccountLangJA BankAccountLanguage = "ja"
-	// BankAccountLangEN indicates an English context keyword (e.g., "bank account").
-	BankAccountLangEN BankAccountLanguage = "en"
-)
-
-// BankAccountDetail holds bank account context detection detail information.
-type BankAccountDetail struct {
-	// ContextKeyword is the keyword that triggered the detection
-	// (e.g., "口座番号", "bank account").
-	ContextKeyword string
-	// Language indicates whether the context keyword was Japanese or English.
-	Language BankAccountLanguage
-}
-
 // BankAccount implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindBankAccount.
 type BankAccount struct {
@@ -60,12 +40,11 @@ func (d *BankAccount) Hints() [][]byte {
 // Scan returns matches in data using the rules documented on [BankAccount].
 func (d *BankAccount) Scan(data []byte) []Finding {
 	normalized, posMap := normalizeDigits(data)
-	return d.scanNormalized(data, normalized, posMap)
+	return d.scanNormalized(normalized, posMap)
 }
 
 // scanNormalized performs bank account detection on normalized data.
-// orig is the original (possibly full-width) input used for RawValue.
-func (d *BankAccount) scanNormalized(orig, data []byte, posMap []int) []Finding {
+func (d *BankAccount) scanNormalized(data []byte, posMap []int) []Finding {
 	matches := d.bankAccountKeywords.findPositions(data)
 	if len(matches) == 0 {
 		return nil
@@ -75,11 +54,6 @@ func (d *BankAccount) scanNormalized(orig, data []byte, posMap []int) []Finding 
 	used := make(map[int]struct{}) // track digit sequence start positions already reported
 
 	for _, m := range matches {
-		// Determine the language of the matched keyword.
-		// Keywords are not affected by digit normalization, so data[m.start:m.end]
-		// contains the same bytes as the original.
-		lang := bankAccountKeywordLang(data[m.start:m.end])
-
 		// Search for digit sequences near the keyword in normalized data.
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 		seqs := extractDigitsNear(data, m.end, 50, 4, 17)
@@ -105,25 +79,11 @@ func (d *BankAccount) scanNormalized(orig, data []byte, posMap []int) []Finding 
 				Start:        origStart,
 				End:          origEnd,
 				Confidence:   confidence,
-				RawValue:     string(orig[origStart:origEnd]),
-				Detail: &BankAccountDetail{
-					ContextKeyword: string(data[m.start:m.end]),
-					Language:       lang,
-				},
 			})
 		}
 	}
 
 	return findings
-}
-
-// bankAccountKeywordLang determines the language of a bank account keyword.
-func bankAccountKeywordLang(kw []byte) BankAccountLanguage {
-	// Japanese keywords are multi-byte UTF-8 (first byte >= 0x80).
-	if len(kw) > 0 && kw[0] >= 0x80 {
-		return BankAccountLangJA
-	}
-	return BankAccountLangEN
 }
 
 // containsAny reports whether data contains any of the given byte sequences.

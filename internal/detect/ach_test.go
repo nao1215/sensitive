@@ -1,15 +1,13 @@
-package detect_test
+package detect
 
 import (
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestACHTraceDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewACHTrace()
+	d := NewACHTrace()
 	tests := []struct {
 		name       string
 		input      string
@@ -109,8 +107,8 @@ func TestACHTraceDetector_Scan(t *testing.T) {
 			if tt.wantLen == 0 {
 				return
 			}
-			if tt.wantRaw != "" && findings[0].RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
+			if tt.wantRaw != "" && tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
 			}
 			for _, f := range findings {
 				if f.Confidence < tt.wantMinCon {
@@ -121,37 +119,34 @@ func TestACHTraceDetector_Scan(t *testing.T) {
 	}
 }
 
-func TestACHTraceDetector_Detail(t *testing.T) {
+func TestACHTraceDetector_Validation(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewACHTrace()
+	d := NewACHTrace()
 	findings := d.Scan([]byte("ACH trace 021000021123456"))
 	if len(findings) != 1 {
 		t.Fatalf("expected 1 finding, got %d", len(findings))
 	}
 
-	detail, ok := findings[0].ACHTraceDetail()
-	if !ok {
-		t.Fatal("ACHTraceDetail() returned false")
-	}
-	if detail.ODFIRoutingNumber != "02100002" {
-		t.Errorf("ODFIRoutingNumber = %q, want %q", detail.ODFIRoutingNumber, "02100002")
+	matched := "ACH trace 021000021123456"[findings[0].Start:findings[0].End]
+	if matched[:8] != "02100002" {
+		t.Errorf("ODFIRoutingNumber = %q, want %q", matched[:8], "02100002")
 	}
 }
 
 func TestACHTraceDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewACHTrace()
-	if d.Name() != detect.NameACHTrace {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NameACHTrace)
+	d := NewACHTrace()
+	if d.Name() != NameACHTrace {
+		t.Errorf("Name() = %q, want %q", d.Name(), NameACHTrace)
 	}
 }
 
 func TestACHTraceDetector_KeywordVariations(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewACHTrace()
+	d := NewACHTrace()
 	tests := []struct {
 		name    string
 		input   string
@@ -219,7 +214,7 @@ func TestACHTraceDetector_KeywordVariations(t *testing.T) {
 func TestACHTraceDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewACHTrace()
+	d := NewACHTrace()
 	hints := d.Hints()
 	if len(hints) == 0 {
 		t.Error("Hints() returned empty slice, want at least one hint")

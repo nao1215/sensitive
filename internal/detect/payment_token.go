@@ -1,14 +1,5 @@
 package detect
 
-// PaymentTokenDetail holds payment processor token-specific detail information.
-type PaymentTokenDetail struct {
-	// Provider is the payment processor name (e.g., "Stripe", "PayPal", "Square").
-	Provider string
-	// TokenType describes the type of token (e.g., "secret_key", "publishable_key",
-	// "token", "payment_intent", "customer", "subscription").
-	TokenType string
-}
-
 // PaymentToken implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindPaymentToken.
 type PaymentToken struct{}
@@ -50,7 +41,7 @@ func (d *PaymentToken) Scan(data []byte) []Finding {
 
 	for i := 0; i < len(data); i++ {
 		// Word boundary: preceding character must not be alphanumeric or underscore.
-		if i > 0 && (isAlphaNum(data[i-1]) || data[i-1] == '_') && !encodedSeparatorBefore(data, i) {
+		if i > 0 && isIdentifierByte(data[i-1]) && !encodedSeparatorBefore(data, i) {
 			continue
 		}
 
@@ -74,7 +65,7 @@ func (d *PaymentToken) Scan(data []byte) []Finding {
 
 			// Extract the token body (alphanumeric, underscore, hyphen).
 			end := i + len(prefix)
-			for end < len(data) && isTokenChar(data[end]) {
+			for end < len(data) && isTokenByte(data[end]) {
 				end++
 			}
 
@@ -89,11 +80,6 @@ func (d *PaymentToken) Scan(data []byte) []Finding {
 				End:          end,
 				//nolint:mnd // The detector contract documents this heuristic score.
 				Confidence: 0.9,
-				RawValue:   string(data[i:end]),
-				Detail: &PaymentTokenDetail{
-					Provider:  pattern.provider,
-					TokenType: pattern.tokenType,
-				},
 			})
 
 			i = end - 1
@@ -104,28 +90,11 @@ func (d *PaymentToken) Scan(data []byte) []Finding {
 	return findings
 }
 
-// isTokenChar reports whether b is a valid character in a payment token body
-// (alphanumeric, underscore, or hyphen).
-func isTokenChar(b byte) bool {
-	return isAlphaNum(b) || b == '_' || b == '-'
-}
-
-// tokenPattern describes a known payment token prefix and its metadata.
+// tokenPattern describes a known payment token prefix and its minimum body length.
 type tokenPattern struct {
 	prefix     string
-	provider   string
-	tokenType  string
 	minBodyLen int // minimum number of characters after the prefix
 }
-
-// Payment processor names. Each is written once rather than on every row of
-// tokenPatterns below: a provider issues many prefixes, so the name repeats as
-// often as the provider has token kinds.
-const (
-	providerStripe = "Stripe"
-	providerPayPal = "PayPal"
-	providerSquare = "Square"
-)
 
 // tokenPatterns lists all recognized payment token patterns.
 // Longer prefixes are listed first so they match before shorter ones
@@ -134,36 +103,36 @@ func tokenPatterns() []tokenPattern {
 	return []tokenPattern{
 		// Stripe tokens (longer prefixes first).
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		{prefix: "sk_live_", provider: providerStripe, tokenType: "secret_key", minBodyLen: 16},
+		{prefix: "sk_live_", minBodyLen: 16},
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		{prefix: "pk_live_", provider: providerStripe, tokenType: "publishable_key", minBodyLen: 16},
+		{prefix: "pk_live_", minBodyLen: 16},
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		{prefix: "sk_test_", provider: providerStripe, tokenType: "secret_key_test", minBodyLen: 16},
+		{prefix: "sk_test_", minBodyLen: 16},
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		{prefix: "pk_test_", provider: providerStripe, tokenType: "publishable_key_test", minBodyLen: 16},
+		{prefix: "pk_test_", minBodyLen: 16},
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		{prefix: "price_", provider: providerStripe, tokenType: "price", minBodyLen: 8},
+		{prefix: "price_", minBodyLen: 8},
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		{prefix: "prod_", provider: providerStripe, tokenType: "product", minBodyLen: 8},
+		{prefix: "prod_", minBodyLen: 8},
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		{prefix: "tok_", provider: providerStripe, tokenType: "token", minBodyLen: 8},
+		{prefix: "tok_", minBodyLen: 8},
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		{prefix: "cus_", provider: providerStripe, tokenType: "customer", minBodyLen: 8},
+		{prefix: "cus_", minBodyLen: 8},
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		{prefix: "sub_", provider: providerStripe, tokenType: "subscription", minBodyLen: 8},
+		{prefix: "sub_", minBodyLen: 8},
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		{prefix: "pi_", provider: providerStripe, tokenType: "payment_intent", minBodyLen: 8},
+		{prefix: "pi_", minBodyLen: 8},
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		{prefix: "pm_", provider: providerStripe, tokenType: "payment_method", minBodyLen: 8},
+		{prefix: "pm_", minBodyLen: 8},
 
 		// PayPal tokens.
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		{prefix: "PAYID-", provider: providerPayPal, tokenType: "payment_id", minBodyLen: 16},
+		{prefix: "PAYID-", minBodyLen: 16},
 
 		// Square tokens.
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		{prefix: "sq0idp-", provider: providerSquare, tokenType: "application_id", minBodyLen: 16},
+		{prefix: "sq0idp-", minBodyLen: 16},
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		{prefix: "sq0csp-", provider: providerSquare, tokenType: "application_secret", minBodyLen: 16},
+		{prefix: "sq0csp-", minBodyLen: 16},
 	}
 }

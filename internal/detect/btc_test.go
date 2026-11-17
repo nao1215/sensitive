@@ -98,19 +98,16 @@ func TestBTCDetector_Scan(t *testing.T) {
 			if f.DetectorName != NameBTC {
 				t.Errorf("DetectorName = %q, want %q", f.DetectorName, NameBTC)
 			}
-			if tt.wantRaw != "" && f.RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", f.RawValue, tt.wantRaw)
+			if tt.wantRaw != "" && tt.input[f.Start:f.End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[f.Start:f.End], tt.wantRaw)
 			}
 			if f.Confidence < tt.wantMinConf {
 				t.Errorf("Confidence = %.2f, want >= %.2f", f.Confidence, tt.wantMinConf)
 			}
 			if tt.wantType != "" {
-				detail, ok := f.BTCDetail()
-				if !ok {
-					t.Fatal("BTCDetail() returned false")
-				}
-				if detail.AddressType != tt.wantType {
-					t.Errorf("AddressType = %q, want %q", detail.AddressType, tt.wantType)
+				addressType := checkedBTCEncoding(t, tt.input[f.Start:f.End])
+				if addressType != tt.wantType {
+					t.Errorf("AddressType = %q, want %q", addressType, tt.wantType)
 				}
 			}
 		})
@@ -198,9 +195,6 @@ func TestBTCDetector_Scan_BytePositions(t *testing.T) {
 	if f.End != expectedEnd {
 		t.Errorf("End = %d, want %d", f.End, expectedEnd)
 	}
-	if input[f.Start:f.End] != f.RawValue {
-		t.Errorf("input[%d:%d] = %q, want %q", f.Start, f.End, input[f.Start:f.End], f.RawValue)
-	}
 }
 
 func TestBTCDetector_Scan_BoundaryChecks(t *testing.T) {
@@ -254,12 +248,9 @@ func TestBase58Decode(t *testing.T) {
 		t.Fatalf("expected 1 finding for genesis address, got %d", len(findings))
 	}
 
-	detail, ok := findings[0].BTCDetail()
-	if !ok {
-		t.Fatal("BTCDetail() returned false")
-	}
-	if detail.AddressType != BTCAddressP2PKH {
-		t.Errorf("AddressType = %q, want %q", detail.AddressType, BTCAddressP2PKH)
+	addressType := checkedBTCEncoding(t, sampleBase58[findings[0].Start:findings[0].End])
+	if addressType != BTCAddressP2PKH {
+		t.Errorf("AddressType = %q, want %q", addressType, BTCAddressP2PKH)
 	}
 }
 
@@ -274,12 +265,9 @@ func TestBech32Checksum(t *testing.T) {
 		t.Fatalf("expected 1 finding for BIP-173 test vector, got %d", len(findings))
 	}
 
-	detail, ok := findings[0].BTCDetail()
-	if !ok {
-		t.Fatal("BTCDetail() returned false")
-	}
-	if detail.AddressType != BTCAddressBech32 {
-		t.Errorf("AddressType = %q, want %q", detail.AddressType, BTCAddressBech32)
+	addressType := checkedBTCEncoding(t, sampleBech32[findings[0].Start:findings[0].End])
+	if addressType != BTCAddressBech32 {
+		t.Errorf("AddressType = %q, want %q", addressType, BTCAddressBech32)
 	}
 }
 
@@ -294,12 +282,9 @@ func TestBech32mChecksum(t *testing.T) {
 		t.Fatalf("expected 1 finding for BIP-350 test vector, got %d", len(findings))
 	}
 
-	detail, ok := findings[0].BTCDetail()
-	if !ok {
-		t.Fatal("BTCDetail() returned false")
-	}
-	if detail.AddressType != BTCAddressBech32m {
-		t.Errorf("AddressType = %q, want %q", detail.AddressType, BTCAddressBech32m)
+	addressType := checkedBTCEncoding(t, "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0"[findings[0].Start:findings[0].End])
+	if addressType != BTCAddressBech32m {
+		t.Errorf("AddressType = %q, want %q", addressType, BTCAddressBech32m)
 	}
 }
 
@@ -362,3 +347,44 @@ func TestBtcRejectedBoundaries(t *testing.T) {
 		t.Fatal("unsupported network accepted")
 	}
 }
+
+// Check the published address encodings through their checksum primitives.
+func checkedBTCEncoding(t *testing.T, address string) BTCAddressType {
+	t.Helper()
+	if strings.HasPrefix(strings.ToLower(address), "bc1") {
+		decoded, ok := decodeBech32Chars(strings.ToLower(address)[3:])
+		if !ok {
+			t.Fatal("invalid Bech32 alphabet")
+		}
+		variant, ok := bech32VerifyChecksum("bc", decoded)
+		if !ok {
+			t.Fatal("invalid Bech32 checksum")
+		}
+		if variant == bech32ChecksumConst {
+			return BTCAddressBech32
+		}
+		return BTCAddressBech32m
+	}
+	decoded, ok := base58Decode(address)
+	if !ok || len(decoded) != 25 || !validateBase58Checksum(decoded) {
+		t.Fatal("invalid Base58Check address")
+	}
+	if decoded[0] == 0 {
+		return BTCAddressP2PKH
+	}
+	return BTCAddressP2SH
+}
+
+// BTCAddressType names expected encodings in the published checksum vectors.
+type BTCAddressType string
+
+const (
+	// BTCAddressP2PKH identifies Pay-to-Public-Key-Hash addresses (prefix '1').
+	BTCAddressP2PKH BTCAddressType = "p2pkh"
+	// BTCAddressP2SH identifies Pay-to-Script-Hash addresses (prefix '3').
+	BTCAddressP2SH BTCAddressType = "p2sh"
+	// BTCAddressBech32 identifies SegWit v0 addresses (prefix 'bc1q').
+	BTCAddressBech32 BTCAddressType = "bech32"
+	// BTCAddressBech32m identifies witness versions 1–16 using Bech32m.
+	BTCAddressBech32m BTCAddressType = "bech32m"
+)

@@ -1,11 +1,5 @@
 package detect
 
-// CVVDetail holds CVV/CVC-specific detail information.
-type CVVDetail struct {
-	// DigitCount is 3 for CVV/CVC or 4 for American Express CID.
-	DigitCount int
-}
-
 // CVV implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindCVV.
 type CVV struct {
@@ -58,7 +52,6 @@ func (d *CVV) Scan(data []byte) []Finding {
 			}
 
 			used[seq.start] = struct{}{}
-			digitCount := seq.end - seq.start
 
 			findings = append(findings, Finding{
 				DetectorName: d.Name(),
@@ -66,8 +59,6 @@ func (d *CVV) Scan(data []byte) []Finding {
 				End:          seq.end,
 				//nolint:mnd // The detector contract documents this heuristic score.
 				Confidence: 0.85,
-				RawValue:   string(data[seq.start:seq.end]),
-				Detail:     &CVVDetail{DigitCount: digitCount},
 			})
 		}
 	}

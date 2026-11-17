@@ -87,15 +87,12 @@ func TestPrivateKeyPEMDetector_Scan(t *testing.T) {
 			if tt.wantLen == 0 {
 				return
 			}
-			if findings[0].RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
+			if tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
 			}
-			detail, ok := findings[0].PrivateKeyPEMDetail()
-			if !ok {
-				t.Fatalf("PrivateKeyPEMDetail() ok = false")
-			}
-			if detail.KeyType != tt.wantAlgo {
-				t.Errorf("KeyType = %q, want %q", detail.KeyType, tt.wantAlgo)
+			label, _ := PEMHeader([]byte(tt.input[findings[0].Start:findings[0].End]), 0)
+			if strings.TrimSpace(strings.TrimSuffix(string(label), "PRIVATE KEY")) != tt.wantAlgo {
+				t.Errorf("KeyType = %q, want %q", strings.TrimSpace(strings.TrimSuffix(string(label), "PRIVATE KEY")), tt.wantAlgo)
 			}
 		})
 	}
@@ -106,7 +103,7 @@ func TestPEMHeaderVectors(t *testing.T) {
 	for _, kind := range []string{"PRIVATE KEY", "RSA PRIVATE KEY", "EC PRIVATE KEY", "DSA PRIVATE KEY", "OPENSSH PRIVATE KEY", "ENCRYPTED PRIVATE KEY", "PGP PRIVATE KEY BLOCK"} {
 		raw := "-----BEGIN " + kind + "-----"
 		got := NewPrivateKeyPEM().Scan([]byte(raw))
-		if len(got) != 1 || got[0].RawValue != raw {
+		if len(got) != 1 || raw[got[0].Start:got[0].End] != raw {
 			t.Fatalf("private header rejected: %s", kind)
 		}
 		bad := strings.Replace(raw, "PRIVATE", "PUBLIC", 1)
@@ -121,7 +118,7 @@ func TestPEMIncompleteBlockMasksFollowingInput(t *testing.T) {
 	first := pemHeader("")
 	second := first + "\nFAKE\n-----END PRIVATE KEY-----"
 	got := NewPrivateKeyPEM().Scan([]byte(first + "\n" + second))
-	if len(got) != 1 || got[0].RawValue != first+"\n"+second {
+	if len(got) != 1 || (first + "\n" + second)[got[0].Start:got[0].End] != first+"\n"+second {
 		t.Fatalf("wrong block bounds: %v", got)
 	}
 }
@@ -149,7 +146,7 @@ func TestPEMFrameSpanProperty(t *testing.T) {
 						input += newline + "public tail"
 					}
 					got := detector.Scan([]byte(input))
-					if len(got) != 1 || got[0].Start != len(prefix) || got[0].End != len(prefix)+len(block) || got[0].RawValue != block {
+					if len(got) != 1 || got[0].Start != len(prefix) || got[0].End != len(prefix)+len(block) || input[got[0].Start:got[0].End] != block {
 						t.Fatalf("private frame boundary changed at line %d for %s: %+v", cut, label, got)
 					}
 				}

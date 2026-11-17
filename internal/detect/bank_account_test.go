@@ -13,7 +13,6 @@ func TestBankAccountDetector_Scan(t *testing.T) {
 		name       string
 		input      string
 		wantRaw    string
-		wantLang   BankAccountLanguage
 		wantLen    int
 		wantMinCon float64
 		wantMaxCon float64
@@ -25,7 +24,6 @@ func TestBankAccountDetector_Scan(t *testing.T) {
 			wantRaw:    "12345678",
 			wantMinCon: 0.50,
 			wantMaxCon: 0.50,
-			wantLang:   BankAccountLangEN,
 		},
 		{
 			name:       "holder context increases confidence",
@@ -34,7 +32,6 @@ func TestBankAccountDetector_Scan(t *testing.T) {
 			wantRaw:    "12345678",
 			wantMinCon: 0.65,
 			wantMaxCon: 0.65,
-			wantLang:   BankAccountLangEN,
 		},
 		{
 			name:       "holder keyword far away does not boost confidence",
@@ -43,7 +40,6 @@ func TestBankAccountDetector_Scan(t *testing.T) {
 			wantRaw:    "12345678",
 			wantMinCon: 0.50,
 			wantMaxCon: 0.50,
-			wantLang:   BankAccountLangEN,
 		},
 		{
 			name:    "too short digits",
@@ -62,7 +58,6 @@ func TestBankAccountDetector_Scan(t *testing.T) {
 			wantRaw:    "１２３４５６７８",
 			wantMinCon: 0.50,
 			wantMaxCon: 0.50,
-			wantLang:   BankAccountLangJA,
 		},
 		{
 			name:       "full-width digits with holder name context",
@@ -71,7 +66,6 @@ func TestBankAccountDetector_Scan(t *testing.T) {
 			wantRaw:    "１２３４５６７８",
 			wantMinCon: 0.65,
 			wantMaxCon: 0.65,
-			wantLang:   BankAccountLangJA,
 		},
 	}
 
@@ -87,22 +81,11 @@ func TestBankAccountDetector_Scan(t *testing.T) {
 				return
 			}
 			f := findings[0]
-			if tt.wantRaw != "" && f.RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", f.RawValue, tt.wantRaw)
+			if tt.wantRaw != "" && tt.input[f.Start:f.End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[f.Start:f.End], tt.wantRaw)
 			}
 			if f.Confidence < tt.wantMinCon || f.Confidence > tt.wantMaxCon {
 				t.Errorf("Confidence = %f, want within [%f, %f]", f.Confidence, tt.wantMinCon, tt.wantMaxCon)
-			}
-
-			if detail, ok := f.BankAccountDetail(); ok {
-				if detail.Language != tt.wantLang {
-					t.Errorf("Language = %q, want %q", detail.Language, tt.wantLang)
-				}
-				if detail.ContextKeyword == "" {
-					t.Error("ContextKeyword is empty")
-				}
-			} else {
-				t.Error("BankAccountDetail() returned false")
 			}
 		})
 	}
@@ -127,14 +110,13 @@ func TestBankAccountDetector_Hints(t *testing.T) {
 	}
 }
 
-func TestBankAccountKeywordLang(t *testing.T) {
+func TestBankAccountKeywordLanguages(t *testing.T) {
 	t.Parallel()
-
-	if got := bankAccountKeywordLang([]byte("bank account")); got != BankAccountLangEN {
-		t.Errorf("bankAccountKeywordLang(en) = %q, want %q", got, BankAccountLangEN)
-	}
-	if got := bankAccountKeywordLang([]byte("口座番号")); got != BankAccountLangJA {
-		t.Errorf("bankAccountKeywordLang(ja) = %q, want %q", got, BankAccountLangJA)
+	for _, text := range []string{"bank account 12345678", "口座番号 12345678"} {
+		got := NewBankAccount().Scan([]byte(text))
+		if len(got) != 1 || got[0].End != len(text) || text[got[0].Start:got[0].End] != "12345678" {
+			t.Fatal(text, got)
+		}
 	}
 }
 

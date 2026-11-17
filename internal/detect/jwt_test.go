@@ -1,6 +1,7 @@
 package detect
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -88,7 +89,7 @@ func TestJWTDetector_Scan(t *testing.T) {
 	}
 }
 
-func TestJWTDetector_Detail(t *testing.T) {
+func TestJWTDetector_Validation(t *testing.T) {
 	t.Parallel()
 
 	d := NewJWT()
@@ -99,12 +100,9 @@ func TestJWTDetector_Detail(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	detail, ok := findings[0].JWTDetail()
-	if !ok {
-		t.Fatal("JWTDetail() returned false")
-	}
-	if detail.Algorithm != "HS256" {
-		t.Errorf("Algorithm = %q, want %q", detail.Algorithm, "HS256")
+	boost := decodeJWTHeader([]byte(strings.Split(token[findings[0].Start:findings[0].End], ".")[0]))
+	if boost != 3 {
+		t.Fatal("header confidence", boost)
 	}
 }
 
@@ -164,12 +162,9 @@ func TestJWTDetector_UnsignedJWT(t *testing.T) {
 	if f.Confidence < 0.5 {
 		t.Errorf("Confidence = %f, want >= 0.5 for unsigned JWT with valid header", f.Confidence)
 	}
-	detail, ok := f.JWTDetail()
-	if !ok {
-		t.Fatal("JWTDetail() returned false")
-	}
-	if detail.Algorithm != "none" {
-		t.Errorf("Algorithm = %q, want %q", detail.Algorithm, "none")
+	boost := decodeJWTHeader([]byte(strings.Split(token[f.Start:f.End], ".")[0]))
+	if boost != 3 {
+		t.Fatal("header confidence", boost)
 	}
 }
 
@@ -206,10 +201,10 @@ func TestJWTExactDocumentedScores(t *testing.T) {
 
 func TestJwtRejectedBoundaries(t *testing.T) {
 	t.Parallel()
-	if alg, boost := decodeJWTHeader([]byte("%%%")); alg != "" || boost != 0 {
+	if boost := decodeJWTHeader([]byte("%%%")); boost != 0 {
 		t.Fatal("invalid base64 accepted")
 	}
-	if alg, boost := decodeJWTHeader([]byte("eyJhbGciOjF9")); alg != "" || boost != 3 {
+	if boost := decodeJWTHeader([]byte("eyJhbGciOjF9")); boost != 3 {
 		t.Fatal("nonstring algorithm handling changed")
 	}
 	if _, _, ok := extractJWTToken([]byte("eyJ..signature"), 0); ok {

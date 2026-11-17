@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-//nolint:gocognit // Keep each acceptance table and its assertions together for review.
 func TestPANDetector_Scan(t *testing.T) {
 	t.Parallel()
 
@@ -131,17 +130,14 @@ func TestPANDetector_Scan(t *testing.T) {
 			}
 			if tt.wantLen > 0 && tt.wantBrand != "" {
 				f := findings[0]
-				detail, ok := f.PANDetail()
-				if !ok {
-					t.Fatalf("PANDetail() returned false for PAN finding")
-				}
-				if detail.Brand != tt.wantBrand {
-					t.Errorf("Brand = %q, want %q", detail.Brand, tt.wantBrand)
+				digits := testDigits([]byte(tt.input[f.Start:f.End]))
+				if identifyBrand(digits) != tt.wantBrand {
+					t.Errorf("Brand = %q, want %q", identifyBrand(digits), tt.wantBrand)
 				}
 			}
 			if tt.wantLen > 0 && tt.wantRaw != "" {
-				if findings[0].RawValue != tt.wantRaw {
-					t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
+				if tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
+					t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
 				}
 			}
 			if tt.wantLen > 0 && tt.wantMinCon > 0 {
@@ -153,7 +149,7 @@ func TestPANDetector_Scan(t *testing.T) {
 	}
 }
 
-func TestPANDetector_FullWidthRawValue(t *testing.T) {
+func TestPANDetector_FullWidthSpan(t *testing.T) {
 	t.Parallel()
 
 	d := NewPAN()
@@ -163,14 +159,11 @@ func TestPANDetector_FullWidthRawValue(t *testing.T) {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
 	f := findings[0]
-	// RawValue must match the original full-width text, not the normalized half-width.
-	if f.RawValue != input {
-		t.Errorf("RawValue = %q, want %q", f.RawValue, input)
+	// matched text must match the original full-width text, not the normalized half-width.
+	if input[f.Start:f.End] != input {
+		t.Errorf("matched text = %q, want %q", input[f.Start:f.End], input)
 	}
 	// Start:End must slice back to the same string.
-	if input[f.Start:f.End] != f.RawValue {
-		t.Errorf("input[Start:End] = %q, RawValue = %q", input[f.Start:f.End], f.RawValue)
-	}
 }
 
 func TestPANDetector_Name(t *testing.T) {
@@ -220,12 +213,9 @@ func TestPANDetector_Brands(t *testing.T) {
 			if len(findings) == 0 {
 				t.Fatalf("got 0 findings, want >= 1")
 			}
-			detail, ok := findings[0].PANDetail()
-			if !ok {
-				t.Fatal("PANDetail() returned false")
-			}
-			if detail.Brand != tt.wantBrand {
-				t.Errorf("Brand = %q, want %q", detail.Brand, tt.wantBrand)
+			digits := testDigits([]byte(tt.input[findings[0].Start:findings[0].End]))
+			if identifyBrand(digits) != tt.wantBrand {
+				t.Errorf("Brand = %q, want %q", identifyBrand(digits), tt.wantBrand)
 			}
 		})
 	}
@@ -303,15 +293,12 @@ func TestPANDetector_Visa13Digits(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	detail, ok := findings[0].PANDetail()
-	if !ok {
-		t.Fatal("PANDetail() returned false")
+	digits := testDigits([]byte("4222222222225"[findings[0].Start:findings[0].End]))
+	if identifyBrand(digits) != BrandVisa {
+		t.Errorf("Brand = %q, want %q", identifyBrand(digits), BrandVisa)
 	}
-	if detail.Brand != BrandVisa {
-		t.Errorf("Brand = %q, want %q", detail.Brand, BrandVisa)
-	}
-	if detail.Length != 13 {
-		t.Errorf("Length = %d, want 13", detail.Length)
+	if len(digits) != 13 {
+		t.Errorf("Length = %d, want 13", len(digits))
 	}
 }
 
@@ -323,12 +310,9 @@ func TestPANDetector_UnionPayLong(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	detail, ok := findings[0].PANDetail()
-	if !ok {
-		t.Fatal("PANDetail() returned false")
-	}
-	if detail.Brand != BrandUnionPay {
-		t.Errorf("Brand = %q, want %q", detail.Brand, BrandUnionPay)
+	digits := testDigits([]byte("6200000000000000003"[findings[0].Start:findings[0].End]))
+	if identifyBrand(digits) != BrandUnionPay {
+		t.Errorf("Brand = %q, want %q", identifyBrand(digits), BrandUnionPay)
 	}
 }
 
@@ -340,8 +324,8 @@ func TestPANDetector_JCBOutOfRange(t *testing.T) {
 	// This should not match as JCB. It might match as something else or not at all.
 	findings := d.Scan([]byte("3527000000000000"))
 	for _, f := range findings {
-		detail, ok := f.PANDetail()
-		if ok && detail.Brand == BrandJCB {
+		digits := testDigits([]byte("3527000000000000"[f.Start:f.End]))
+		if identifyBrand(digits) == BrandJCB {
 			t.Error("3527 prefix should not match as JCB")
 		}
 	}
@@ -354,8 +338,8 @@ func TestPANDetector_Mastercard2SeriesOutOfRange(t *testing.T) {
 	// 2220 is below Mastercard 2-series range (2221-2720).
 	findings := d.Scan([]byte("2220000000000000"))
 	for _, f := range findings {
-		detail, ok := f.PANDetail()
-		if ok && detail.Brand == BrandMastercard {
+		digits := testDigits([]byte("2220000000000000"[f.Start:f.End]))
+		if identifyBrand(digits) == BrandMastercard {
 			t.Error("2220 prefix should not match as Mastercard")
 		}
 	}
@@ -403,8 +387,8 @@ func TestPANDetector_TrailingSeparator(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	if findings[0].RawValue != "4532015112830366" {
-		t.Errorf("RawValue = %q, want %q", findings[0].RawValue, "4532015112830366")
+	if "4532015112830366 "[findings[0].Start:findings[0].End] != "4532015112830366" {
+		t.Errorf("matched text = %q, want %q", "4532015112830366 "[findings[0].Start:findings[0].End], "4532015112830366")
 	}
 }
 
@@ -416,7 +400,7 @@ func TestPANSpecificationVectors(t *testing.T) {
 	}
 	for raw := range strings.FieldsSeq(string(data)) {
 		got := NewPAN().Scan([]byte(raw))
-		if len(got) != 1 || got[0].RawValue != raw || got[0].Confidence < 0.99 {
+		if len(got) != 1 || raw[got[0].Start:got[0].End] != raw || got[0].Confidence < 0.99 {
 			t.Fatalf("Luhn vector rejected: %s", raw)
 		}
 	}
@@ -466,8 +450,8 @@ func TestPANPrefixAndLengthEdges(t *testing.T) {
 		if len(got) != 1 {
 			t.Fatal(tc.prefix, got)
 		}
-		detail, ok := got[0].Detail.(*PANDetail)
-		if !ok || detail.Brand != tc.brand {
+		digits := testDigits([]byte(raw[got[0].Start:got[0].End]))
+		if identifyBrand(digits) != tc.brand {
 			t.Fatal(tc.prefix, got)
 		}
 	}
@@ -482,5 +466,19 @@ func TestPanRejectedBoundaries(t *testing.T) {
 	t.Parallel()
 	if identifyBrand(nil) != "" || isExpectedLength("unknown", 16) {
 		t.Fatal("unknown brand accepted")
+	}
+}
+
+func TestPANChecksumSingleDigitChanges(t *testing.T) {
+	t.Parallel()
+	digits := []byte(samplePAN)
+	for i, original := range digits {
+		for replacement := byte('0'); replacement <= '9'; replacement++ {
+			digits[i] = replacement
+			if passesLuhn(digits) != (replacement == original) {
+				t.Fatal(i, replacement)
+			}
+		}
+		digits[i] = original
 	}
 }

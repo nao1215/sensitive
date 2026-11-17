@@ -4,23 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"strconv"
-	"strings"
 	"unicode/utf8"
 
 	"github.com/nao1215/embargo/internal/saferecord"
 )
-
-const (
-	maxEventBytes = 1 << 20
-	maxDepth      = 64
-	maxScanBytes  = 4 * maxEventBytes
-)
-
-type eventScanner struct {
-	scanner   *Scanner
-	remaining int
-}
 
 func jsonFailure() error { return saferecord.ErrMasking }
 
@@ -181,53 +168,6 @@ func (w *jsonWalker) scalar(ctx context.Context, raw []byte, key string) error {
 	return nil
 }
 
-// exactInteger expands a valid JSON number without floating-point rounding.
-// Expansion is bounded before allocating; non-integers have no second spelling.
-func exactInteger(text string) (string, error) {
-	mantissa, exponent := text, 0
-	if i := strings.IndexAny(text, "eE"); i >= 0 {
-		mantissa = text[:i]
-		value, err := strconv.Atoi(text[i+1:])
-		if err != nil {
-			return "", saferecord.ErrSizeLimit
-		}
-		exponent = value
-	}
-	negative := strings.HasPrefix(mantissa, "-")
-	mantissa = strings.TrimPrefix(mantissa, "-")
-	if dot := strings.IndexByte(mantissa, '.'); dot >= 0 {
-		fraction := len(mantissa) - dot - 1
-		if exponent < -maxEventBytes {
-			return "", nil
-		}
-		exponent -= fraction
-		mantissa = mantissa[:dot] + mantissa[dot+1:]
-	}
-	mantissa = strings.TrimLeft(mantissa, "0")
-	if mantissa == "" {
-		return "0", nil
-	}
-	if exponent < 0 {
-		if exponent < -len(mantissa) {
-			return "", nil
-		}
-		cut := len(mantissa) + exponent
-		if strings.Trim(mantissa[cut:], "0") != "" {
-			return "", nil
-		}
-		mantissa = mantissa[:cut]
-	} else {
-		if exponent > maxEventBytes-len(mantissa) {
-			return "", saferecord.ErrSizeLimit
-		}
-		mantissa += strings.Repeat("0", exponent)
-	}
-	if negative {
-		mantissa = "-" + mantissa
-	}
-	return mantissa, nil
-}
-
 func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidden bool) error {
 	open := w.data[w.pos]
 	w.pos++
@@ -323,72 +263,6 @@ func (w *jsonWalker) appendString(text string) {
 	w.appendResult(encoded)
 }
 
-// Include the field name so context-based detectors can recognize, for example,
-// {"cvv":123}. Translate findings back to value bytes before replacing them.
-func (s *eventScanner) maskScalar(ctx context.Context, value, key string) (string, error) {
-	masked, err := s.scanScalar(ctx, value, key)
-	if err != nil {
-		return masked, err
-	}
-	if value == "" || (value[0] != '-' && (value[0] < '0' || value[0] > '9')) || !json.Valid([]byte(value)) {
-		return masked, nil
-	}
-	if masked != value {
-		return redactionMarker, nil
-	}
-	integer, err := exactInteger(value)
-	if err != nil {
-		return "", err
-	}
-	if integer == "" || integer == value {
-		return masked, nil
-	}
-	safe, err := s.scanScalar(ctx, integer, key)
-	if err != nil {
-		return "", err
-	}
-	if safe != integer {
-		return redactionMarker, nil
-	}
-	return masked, nil
-}
-
-func (s *eventScanner) scanScalar(ctx context.Context, value, key string) (string, error) {
-	if ctx.Err() != nil {
-		return "", saferecord.ErrCanceled
-	}
-	// Charge before allocating the prefix or invoking any detector.
-	prefixBytes := 0
-	if key != "" {
-		prefixBytes = len(key) + len(": ")
-	}
-	if prefixBytes > s.remaining || len(value) > s.remaining-prefixBytes {
-		return "", saferecord.ErrSizeLimit
-	}
-	s.remaining -= prefixBytes + len(value)
-	if prefixBytes == 0 {
-		findings := s.scanner.scan([]byte(value), ctx.Err)
-		if ctx.Err() != nil {
-			return "", saferecord.ErrCanceled
-		}
-		return Mask(value, findings), nil
-	}
-	findings := s.scanner.scan([]byte(key+": "+value), ctx.Err)
-	if ctx.Err() != nil {
-		return "", saferecord.ErrCanceled
-	}
-	spans := make([]Finding, 0, len(findings))
-	for _, finding := range findings {
-		if finding.End <= prefixBytes {
-			continue
-		}
-		finding.Start = max(0, finding.Start-prefixBytes)
-		finding.End -= prefixBytes
-		spans = append(spans, finding)
-	}
-	return Mask(value, spans), nil
-}
-
 // Stop before retaining bytes beyond the output limit, including a token that
 // expands during masking. Callers check the failure before scanning another value.
 func (w *jsonWalker) appendResult(data []byte) {
@@ -426,24 +300,6 @@ func (w *jsonWalker) keyPath(ctx context.Context, key string, start, end int) er
 		w.pathMasks[segment.start] = Finding{Start: segment.start, End: segment.end}
 	}
 	return nil
-}
-
-// A finding must cross the last join; detecting an ancestor alone does not hide descendants.
-func (s *eventScanner) joinedKeySensitive(ctx context.Context, path string, boundary int) (bool, error) {
-	if len(path) > s.remaining {
-		return false, saferecord.ErrSizeLimit
-	}
-	s.remaining -= len(path)
-	findings := s.scanner.scan([]byte(path), ctx.Err)
-	if ctx.Err() != nil {
-		return false, saferecord.ErrCanceled
-	}
-	for _, f := range findings {
-		if f.Start < boundary && f.End > boundary+1 {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 func (w *jsonWalker) objectKey(ctx context.Context, raw []byte) (string, error) {

@@ -28,3 +28,18 @@ func ToLower(b byte) byte {
 	}
 	return b
 }
+
+// DecodeHex returns the value of one ASCII hexadecimal digit and whether it is valid.
+func DecodeHex(b byte) (byte, bool) {
+	const firstLetterValue = 10
+	if b >= '0' && b <= '9' {
+		return b - '0', true
+	}
+	if b >= 'a' && b <= 'f' {
+		return b - 'a' + firstLetterValue, true
+	}
+	if b >= 'A' && b <= 'F' {
+		return b - 'A' + firstLetterValue, true
+	}
+	return 0, false
+}

@@ -1,13 +1,5 @@
 package detect
 
-// CardExpiryDetail holds card expiry date-specific detail information.
-type CardExpiryDetail struct {
-	// Month is the 2-digit month string (e.g., "01", "12").
-	Month string
-	// Year is the year string as found in the input (e.g., "25" or "2025").
-	Year string
-}
-
 // CardExpiry implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindCardExpiry.
 type CardExpiry struct {
@@ -133,11 +125,6 @@ func (d *CardExpiry) searchRange(data []byte, start, end int, used map[int]int, 
 			End:          c.dateEnd,
 			//nolint:mnd // The detector contract documents this heuristic score.
 			Confidence: 0.85,
-			RawValue:   string(data[i:c.dateEnd]),
-			Detail: &CardExpiryDetail{
-				Month: string(data[i : i+2]),
-				Year:  string(data[i+3 : c.dateEnd]),
-			},
 		})
 
 		i = c.dateEnd - 1

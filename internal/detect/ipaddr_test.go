@@ -84,25 +84,12 @@ func TestIPAddrDetector_Scan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			findings := d.Scan([]byte(tt.input))
-			if len(findings) != tt.wantLen {
-				t.Fatalf("got %d findings, want %d: %+v", len(findings), tt.wantLen, findings)
-			}
-			if tt.wantLen > 0 && tt.wantRaw != "" {
-				if findings[0].RawValue != tt.wantRaw {
-					t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
-				}
-			}
-			if tt.wantLen > 0 && tt.wantMinCon > 0 {
-				if findings[0].Confidence < tt.wantMinCon {
-					t.Errorf("Confidence = %f, want >= %f", findings[0].Confidence, tt.wantMinCon)
-				}
-			}
+			assertDetectorScan(t, d, tt.input, tt.wantLen, tt.wantRaw, tt.wantMinCon)
 		})
 	}
 }
 
-func TestIPAddrDetector_Detail(t *testing.T) {
+func TestIPAddrDetector_Validation(t *testing.T) {
 	t.Parallel()
 
 	d := NewIPAddr()
@@ -110,12 +97,13 @@ func TestIPAddrDetector_Detail(t *testing.T) {
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	detail, ok := findings[0].IPAddrDetail()
-	if !ok {
-		t.Fatal("IPAddrDetail() returned false")
+	_, address := parseIPSentence("192.168.1.1"[findings[0].Start:findings[0].End])
+	version := 6
+	if address.To4() != nil {
+		version = 4
 	}
-	if detail.Version != 4 {
-		t.Errorf("Version = %d, want 4", detail.Version)
+	if version != 4 {
+		t.Errorf("Version = %d, want 4", version)
 	}
 }
 
@@ -187,15 +175,16 @@ func TestIPAddrDetector_IPv6(t *testing.T) {
 				t.Fatalf("got %d findings, want %d: %+v", len(findings), tt.wantLen, findings)
 			}
 			if tt.wantLen > 0 && tt.wantRaw != "" {
-				if findings[0].RawValue != tt.wantRaw {
-					t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
+				if tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
+					t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
 				}
-				detail, ok := findings[0].IPAddrDetail()
-				if !ok {
-					t.Fatal("IPAddrDetail() returned false")
+				_, address := parseIPSentence(tt.input[findings[0].Start:findings[0].End])
+				version := 6
+				if address.To4() != nil {
+					version = 4
 				}
-				if detail.Version != 6 {
-					t.Errorf("Version = %d, want 6", detail.Version)
+				if version != 6 {
+					t.Errorf("Version = %d, want 6", version)
 				}
 			}
 		})
@@ -335,7 +324,7 @@ func TestIPSentencePunctuationProperty(t *testing.T) {
 					input := "peer " + form + tail + " closed"
 					got := detector.Scan([]byte(input))
 					start := strings.Index(input, address)
-					if len(got) != 1 || got[0].Start != start || got[0].End != start+len(address) || got[0].RawValue != address {
+					if len(got) != 1 || got[0].Start != start || got[0].End != start+len(address) || input[got[0].Start:got[0].End] != address {
 						t.Fatalf("sentence punctuation changed the address boundary: %q: %+v", input, got)
 					}
 				}
@@ -361,6 +350,22 @@ func TestIPRangeSpanProperty(t *testing.T) {
 					t.Fatalf("range endpoints lost: %+v", got)
 				}
 			}
+		}
+	}
+}
+
+func TestIPTrailingIdentifierEdges(t *testing.T) {
+	t.Parallel()
+	for _, address := range []string{"203.0.113.9", "2001:db8::7"} {
+		for _, suffix := range []string{"_", "-", "_a", "_0", "-a"} {
+			t.Run(address+suffix, func(t *testing.T) {
+				t.Parallel()
+				want := 0
+				if suffix == "_" || suffix == "-" {
+					want = 1
+				}
+				assertDetectorScan(t, NewIPAddr(), address+suffix, want, address, 0)
+			})
 		}
 	}
 }

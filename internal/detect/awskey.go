@@ -1,21 +1,5 @@
 package detect
 
-// AWSKeyType identifies the credential type in [AWSKeyDetail.KeyType].
-type AWSKeyType string
-
-const (
-	// AWSKeyTypeLongTerm identifies long-term IAM user credentials (AKIA prefix).
-	AWSKeyTypeLongTerm AWSKeyType = "long_term"
-	// AWSKeyTypeTemporary identifies temporary STS credentials (ASIA prefix).
-	AWSKeyTypeTemporary AWSKeyType = "temporary"
-)
-
-// AWSKeyDetail holds AWS Access Key-specific detail information.
-type AWSKeyDetail struct {
-	// KeyType is the credential type inferred from the prefix.
-	KeyType AWSKeyType
-}
-
 // AWSKey implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindAWSKey.
 type AWSKey struct{}
@@ -43,8 +27,7 @@ func (d *AWSKey) Scan(data []byte) []Finding {
 	var findings []Finding
 
 	for i := 0; i < len(data)-19; i++ {
-		keyType, ok := matchAWSPrefix(data, i)
-		if !ok {
+		if !matchAWSPrefix(data, i) {
 			continue
 		}
 
@@ -70,8 +53,6 @@ func (d *AWSKey) Scan(data []byte) []Finding {
 			End: i + 20,
 			//nolint:mnd // The detector contract documents this heuristic score.
 			Confidence: 0.95,
-			RawValue:   string(data[i : i+20]),
-			Detail:     &AWSKeyDetail{KeyType: keyType},
 		})
 
 		i += 19
@@ -81,17 +62,17 @@ func (d *AWSKey) Scan(data []byte) []Finding {
 }
 
 // matchAWSPrefix checks whether data[i:i+4] is "AKIA" or "ASIA".
-func matchAWSPrefix(data []byte, i int) (AWSKeyType, bool) {
+func matchAWSPrefix(data []byte, i int) bool {
 	if data[i] != 'A' {
-		return "", false
+		return false
 	}
 	if data[i+1] == 'K' && data[i+2] == 'I' && data[i+3] == 'A' {
-		return AWSKeyTypeLongTerm, true
+		return true
 	}
 	if data[i+1] == 'S' && data[i+2] == 'I' && data[i+3] == 'A' {
-		return AWSKeyTypeTemporary, true
+		return true
 	}
-	return "", false
+	return false
 }
 
 // validateAWSKeyBody checks that 16 characters starting at data[start] are

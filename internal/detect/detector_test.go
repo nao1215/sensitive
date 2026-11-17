@@ -1,6 +1,8 @@
 package detect
 
 import (
+	"bytes"
+	"reflect"
 	"testing"
 )
 
@@ -22,275 +24,120 @@ const (
 	noKeywordCase    = "no keyword"
 )
 
-func TestFinding_Is(t *testing.T) {
-	t.Parallel()
-
-	f := Finding{DetectorName: NamePAN}
-
-	if !f.Is(NamePAN) {
-		t.Error("Is(NamePAN) should return true for a PAN finding")
-	}
-	if f.Is(NameEmail) {
-		t.Error("Is(NameEmail) should return false for a PAN finding")
+func detectorSpanFixtures() []struct {
+	detector Detector
+	text     string
+} {
+	return []struct {
+		detector Detector
+		text     string
+	}{
+		{NewPAN(), samplePAN}, {NewEmail(), "alice@example.com"}, {NewJPPhone(), sampleMobile}, {NewMyNumber(), sampleMyNumber}, {NewAWSKey(), sampleAccessKey}, {NewIBAN(), sampleIBAN}, {NewIPAddr(), "203.0.113.9"}, {NewABARouting(), "021000021"}, {NewBTC(), sampleBase58}, {&Credential{}, "password=opaqueFixture"},
 	}
 }
 
-func TestFinding_IsXXX(t *testing.T) {
+func TestFindingDetectorName(t *testing.T) {
 	t.Parallel()
-
-	tests := []struct {
-		check    func(Finding) bool
-		name     string
-		finding  Finding
-		wantTrue bool
-	}{
-		{name: "IsPAN true", finding: Finding{DetectorName: NamePAN}, check: Finding.IsPAN, wantTrue: true},
-		{name: "IsPAN false", finding: Finding{DetectorName: NameEmail}, check: Finding.IsPAN, wantTrue: false},
-		{name: "IsEmail true", finding: Finding{DetectorName: NameEmail}, check: Finding.IsEmail, wantTrue: true},
-		{name: "IsEmail false", finding: Finding{DetectorName: NamePAN}, check: Finding.IsEmail, wantTrue: false},
-		{name: "IsJPPhone true", finding: Finding{DetectorName: NameJPPhone}, check: Finding.IsJPPhone, wantTrue: true},
-		{name: "IsMyNumber true", finding: Finding{DetectorName: NameMyNumber}, check: Finding.IsMyNumber, wantTrue: true},
-		{name: "IsJWT true", finding: Finding{DetectorName: NameJWT}, check: Finding.IsJWT, wantTrue: true},
-		{name: "IsAWSKey true", finding: Finding{DetectorName: NameAWSKey}, check: Finding.IsAWSKey, wantTrue: true},
-		{name: "IsIBAN true", finding: Finding{DetectorName: NameIBAN}, check: Finding.IsIBAN, wantTrue: true},
-		{name: "IsIPAddr true", finding: Finding{DetectorName: NameIPAddr}, check: Finding.IsIPAddr, wantTrue: true},
-		{name: "IsSWIFTBIC true", finding: Finding{DetectorName: NameSWIFTBIC}, check: Finding.IsSWIFTBIC, wantTrue: true},
-		{name: "IsABARouting true", finding: Finding{DetectorName: NameABARouting}, check: Finding.IsABARouting, wantTrue: true},
-		{name: "IsUKSortCode true", finding: Finding{DetectorName: NameUKSortCode}, check: Finding.IsUKSortCode, wantTrue: true},
-		{name: "IsCVV true", finding: Finding{DetectorName: NameCVV}, check: Finding.IsCVV, wantTrue: true},
-		{name: "IsCardExpiry true", finding: Finding{DetectorName: NameCardExpiry}, check: Finding.IsCardExpiry, wantTrue: true},
-		{name: "IsPaymentToken true", finding: Finding{DetectorName: NamePaymentToken}, check: Finding.IsPaymentToken, wantTrue: true},
-		{name: "IsBankAccount true", finding: Finding{DetectorName: NameBankAccount}, check: Finding.IsBankAccount, wantTrue: true},
-		{name: "IsACHTrace true", finding: Finding{DetectorName: NameACHTrace}, check: Finding.IsACHTrace, wantTrue: true},
-		{name: "IsMerchantID true", finding: Finding{DetectorName: NameMerchantID}, check: Finding.IsMerchantID, wantTrue: true},
-		{name: "IsBTC true", finding: Finding{DetectorName: NameBTC}, check: Finding.IsBTC, wantTrue: true},
-		{name: "IsBTC false", finding: Finding{DetectorName: NameEmail}, check: Finding.IsBTC, wantTrue: false},
-		{name: "IsETH true", finding: Finding{DetectorName: NameETH}, check: Finding.IsETH, wantTrue: true},
-		{name: "IsETH false", finding: Finding{DetectorName: NameEmail}, check: Finding.IsETH, wantTrue: false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			got := tt.check(tt.finding)
-			if got != tt.wantTrue {
-				t.Errorf("got %v, want %v", got, tt.wantTrue)
+	for _, tc := range detectorSpanFixtures() {
+		for _, f := range tc.detector.Scan([]byte(tc.text)) {
+			if f.DetectorName != tc.detector.Name() {
+				t.Fatal(f)
 			}
-		})
+		}
 	}
 }
 
-func TestFinding_DetailAccessors_NewDetectors(t *testing.T) {
+func TestFindingOriginalByteOffsets(t *testing.T) {
 	t.Parallel()
-
-	tests := []struct {
-		expect func(Finding) bool
-		name   string
-		f      Finding
-	}{
-		{
-			name: "SWIFTBICDetail",
-			f: Finding{
-				DetectorName: NameSWIFTBIC,
-				Detail:       &SWIFTBICDetail{BankCode: "BOFA"},
-			},
-			expect: func(f Finding) bool { _, ok := f.SWIFTBICDetail(); return ok },
-		},
-		{
-			name: "ABARoutingDetail",
-			f: Finding{
-				DetectorName: NameABARouting,
-				Detail:       &ABARoutingDetail{FederalReserveDistrict: "02-New York"},
-			},
-			expect: func(f Finding) bool { _, ok := f.ABARoutingDetail(); return ok },
-		},
-		{
-			name: "UKSortCodeDetail",
-			f: Finding{
-				DetectorName: NameUKSortCode,
-				Detail:       &UKSortCodeDetail{FormattedValue: sampleSortCode},
-			},
-			expect: func(f Finding) bool { _, ok := f.UKSortCodeDetail(); return ok },
-		},
-		{
-			name: "CVVDetail",
-			f: Finding{
-				DetectorName: NameCVV,
-				Detail:       &CVVDetail{DigitCount: 3},
-			},
-			expect: func(f Finding) bool { _, ok := f.CVVDetail(); return ok },
-		},
-		{
-			name: "CardExpiryDetail",
-			f: Finding{
-				DetectorName: NameCardExpiry,
-				Detail:       &CardExpiryDetail{Month: "12", Year: "25"},
-			},
-			expect: func(f Finding) bool { _, ok := f.CardExpiryDetail(); return ok },
-		},
-		{
-			name: "PaymentTokenDetail",
-			f: Finding{
-				DetectorName: NamePaymentToken,
-				Detail:       &PaymentTokenDetail{Provider: "Stripe"},
-			},
-			expect: func(f Finding) bool { _, ok := f.PaymentTokenDetail(); return ok },
-		},
-		{
-			name: "BankAccountDetail",
-			f: Finding{
-				DetectorName: NameBankAccount,
-				Detail:       &BankAccountDetail{Language: "en"},
-			},
-			expect: func(f Finding) bool { _, ok := f.BankAccountDetail(); return ok },
-		},
-		{
-			name: "ACHTraceDetail",
-			f: Finding{
-				DetectorName: NameACHTrace,
-				Detail:       &ACHTraceDetail{ODFIRoutingNumber: "02100002"},
-			},
-			expect: func(f Finding) bool { _, ok := f.ACHTraceDetail(); return ok },
-		},
-		{
-			name: "MerchantIDDetail",
-			f: Finding{
-				DetectorName: NameMerchantID,
-				Detail:       &MerchantIDDetail{IDType: "merchant"},
-			},
-			expect: func(f Finding) bool { _, ok := f.MerchantIDDetail(); return ok },
-		},
-		{
-			name: "BTCDetail",
-			f: Finding{
-				DetectorName: NameBTC,
-				Detail:       &BTCDetail{AddressType: BTCAddressP2PKH},
-			},
-			expect: func(f Finding) bool { _, ok := f.BTCDetail(); return ok },
-		},
-		{
-			name: "ETHDetail",
-			f: Finding{
-				DetectorName: NameETH,
-				Detail:       &ETHDetail{EIP55: true},
-			},
-			expect: func(f Finding) bool { _, ok := f.ETHDetail(); return ok },
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			if !tt.expect(tt.f) {
-				t.Errorf("%s() returned false", tt.name)
-			}
-		})
+	for _, tc := range detectorSpanFixtures() {
+		plain := tc.detector.Scan([]byte(tc.text))
+		if len(plain) != 1 {
+			t.Fatal(tc.text, plain)
+		}
+		prefix := "日本語 "
+		got := tc.detector.Scan([]byte(prefix + tc.text + " "))
+		if len(got) != 1 || got[0].Start != plain[0].Start+len(prefix) || got[0].End != plain[0].End+len(prefix) {
+			t.Fatal(tc.text, got)
+		}
 	}
 }
 
-func TestFinding_Level(t *testing.T) {
+func TestDetectorInputUnmodified(t *testing.T) {
 	t.Parallel()
-
-	tests := []struct {
-		name       string
-		wantStr    string
-		confidence float64
-		wantLevel  ConfidenceLevel
-	}{
-		//nolint:goconst // Each test states its fixture and expected result independently.
-		{name: "high confidence (1.0)", confidence: 1.0, wantLevel: ConfidenceHigh, wantStr: "high"},
-		{name: "high confidence (0.8)", confidence: 0.8, wantLevel: ConfidenceHigh, wantStr: "high"},
-		//nolint:goconst // Each test states its fixture and expected result independently.
-		{name: "medium confidence (0.79)", confidence: 0.79, wantLevel: ConfidenceMedium, wantStr: "medium"},
-		{name: "medium confidence (0.4)", confidence: 0.4, wantLevel: ConfidenceMedium, wantStr: "medium"},
-		//nolint:goconst // Each test states its fixture and expected result independently.
-		{name: "low confidence (0.39)", confidence: 0.39, wantLevel: ConfidenceLow, wantStr: "low"},
-		{name: "low confidence (0.0)", confidence: 0.0, wantLevel: ConfidenceLow, wantStr: "low"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			f := Finding{Confidence: tt.confidence}
-			got := f.Level()
-			if got != tt.wantLevel {
-				t.Errorf("Level() = %v, want %v", got, tt.wantLevel)
-			}
-			if got.String() != tt.wantStr {
-				t.Errorf("Level().String() = %q, want %q", got.String(), tt.wantStr)
-			}
-		})
+	for _, tc := range detectorSpanFixtures() {
+		input := []byte(tc.text)
+		before := bytes.Clone(input)
+		tc.detector.Scan(input)
+		if !bytes.Equal(input, before) {
+			t.Fatal(tc.detector.Name())
+		}
 	}
 }
 
-func TestConfidenceLevel_String(t *testing.T) {
+func TestDetectorResultsIndependentOfInput(t *testing.T) {
 	t.Parallel()
-
-	tests := []struct {
-		want  string
-		level ConfidenceLevel
-	}{
-		{level: ConfidenceLow, want: "low"},
-		{level: ConfidenceMedium, want: "medium"},
-		{level: ConfidenceHigh, want: "high"},
-		{level: ConfidenceLevel(99), want: "unknown"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.want, func(t *testing.T) {
-			t.Parallel()
-
-			if got := tt.level.String(); got != tt.want {
-				t.Errorf("String() = %q, want %q", got, tt.want)
-			}
-		})
+	for _, tc := range detectorSpanFixtures() {
+		input := []byte(tc.text)
+		got := tc.detector.Scan(input)
+		want := append([]Finding(nil), got...)
+		clear(input)
+		tc.detector.Scan(input)
+		if !reflect.DeepEqual(got, want) {
+			t.Fatal(tc.detector.Name(), got)
+		}
 	}
 }
 
-func TestFinding_Kind(t *testing.T) {
+func TestFindingConfidenceRange(t *testing.T) {
 	t.Parallel()
-
-	tests := []struct {
-		name         string
-		detectorName DetectorName
-		wantKind     SensitiveKind
-	}{
-		// Financial
-		{name: "PAN is financial", detectorName: NamePAN, wantKind: KindFinancial},
-		{name: "IBAN is financial", detectorName: NameIBAN, wantKind: KindFinancial},
-		{name: "ABA routing is financial", detectorName: NameABARouting, wantKind: KindFinancial},
-		{name: "UK sort code is financial", detectorName: NameUKSortCode, wantKind: KindFinancial},
-		{name: "CVV is financial", detectorName: NameCVV, wantKind: KindFinancial},
-		{name: "card expiry is financial", detectorName: NameCardExpiry, wantKind: KindFinancial},
-		{name: "bank account is financial", detectorName: NameBankAccount, wantKind: KindFinancial},
-		{name: "ACH trace is financial", detectorName: NameACHTrace, wantKind: KindFinancial},
-		{name: "merchant ID is financial", detectorName: NameMerchantID, wantKind: KindFinancial},
-		{name: "SWIFT/BIC is financial", detectorName: NameSWIFTBIC, wantKind: KindFinancial},
-		{name: "BTC is financial", detectorName: NameBTC, wantKind: KindFinancial},
-		{name: "ETH is financial", detectorName: NameETH, wantKind: KindFinancial},
-		// PII
-		{name: "email is PII", detectorName: NameEmail, wantKind: KindPII},
-		{name: "JP phone is PII", detectorName: NameJPPhone, wantKind: KindPII},
-		{name: "My Number is PII", detectorName: NameMyNumber, wantKind: KindPII},
-		{name: "IP address is PII", detectorName: NameIPAddr, wantKind: KindPII},
-		// Credential
-		{name: "JWT is credential", detectorName: NameJWT, wantKind: KindCredential},
-		{name: "AWS key is credential", detectorName: NameAWSKey, wantKind: KindCredential},
-		{name: "payment token is credential", detectorName: NamePaymentToken, wantKind: KindCredential},
-		// Unknown
-		{name: "custom detector returns empty", detectorName: DetectorName("custom"), wantKind: ""},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			f := Finding{DetectorName: tt.detectorName}
-			if got := f.Kind(); got != tt.wantKind {
-				t.Errorf("Kind() = %q, want %q", got, tt.wantKind)
+	for _, tc := range detectorSpanFixtures() {
+		for _, f := range tc.detector.Scan([]byte(tc.text)) {
+			if !(f.Confidence >= 0 && f.Confidence <= 1) {
+				t.Fatal(f)
 			}
-		})
+		}
+	}
+}
+
+func TestDetectorEmptyInput(t *testing.T) {
+	t.Parallel()
+	for _, tc := range detectorSpanFixtures() {
+		if got := tc.detector.Scan(nil); len(got) != 0 {
+			t.Fatal(tc.detector.Name(), got)
+		}
+	}
+}
+
+// testDigits extracts normalized digits for direct checksum and issuer oracles.
+func testDigits(data []byte) []byte {
+	data, _ = normalizeDigits(data)
+	var digits []byte
+	for _, b := range data {
+		if b >= '0' && b <= '9' {
+			digits = append(digits, b)
+		}
+	}
+	return digits
+}
+
+func assertDetectorScan(t *testing.T, d Detector, input string, count int, matched string, confidence float64) {
+	t.Helper()
+	findings := d.Scan([]byte(input))
+	if len(findings) != count {
+		t.Fatalf("got %d findings, want %d: %+v", len(findings), count, findings)
+	}
+	for _, f := range findings {
+		if f.Start < 0 || f.End > len(input) || f.Start >= f.End {
+			t.Fatalf("invalid span: %+v", f)
+		}
+	}
+	if count == 0 {
+		return
+	}
+	if matched != "" && input[findings[0].Start:findings[0].End] != matched {
+		t.Errorf("matched text = %q, want %q", input[findings[0].Start:findings[0].End], matched)
+	}
+	if confidence > 0 && findings[0].Confidence < confidence {
+		t.Errorf("Confidence = %f, want >= %f", findings[0].Confidence, confidence)
 	}
 }

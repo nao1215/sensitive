@@ -1,15 +1,13 @@
-package detect_test
+package detect
 
 import (
 	"testing"
-
-	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestPaymentTokenDetector_Scan(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPaymentToken()
+	d := NewPaymentToken()
 	tests := []struct {
 		name       string
 		input      string
@@ -159,8 +157,8 @@ func TestPaymentTokenDetector_Scan(t *testing.T) {
 			if tt.wantLen == 0 {
 				return
 			}
-			if tt.wantRaw != "" && findings[0].RawValue != tt.wantRaw {
-				t.Errorf("RawValue = %q, want %q", findings[0].RawValue, tt.wantRaw)
+			if tt.wantRaw != "" && tt.input[findings[0].Start:findings[0].End] != tt.wantRaw {
+				t.Errorf("matched text = %q, want %q", tt.input[findings[0].Start:findings[0].End], tt.wantRaw)
 			}
 			for _, f := range findings {
 				if f.Confidence < tt.wantMinCon {
@@ -171,40 +169,33 @@ func TestPaymentTokenDetector_Scan(t *testing.T) {
 	}
 }
 
-func TestPaymentTokenDetector_Detail(t *testing.T) {
+func TestPaymentTokenDetector_Validation(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPaymentToken()
+	d := NewPaymentToken()
 	findings := d.Scan([]byte("sk_live_4eC39HqLyjWDarjtT1zdp7dc"))
 	if len(findings) != 1 {
 		t.Fatalf("expected 1 finding, got %d", len(findings))
 	}
 
-	detail, ok := findings[0].PaymentTokenDetail()
-	if !ok {
-		t.Fatal("PaymentTokenDetail() returned false")
-	}
-	if detail.Provider != "Stripe" {
-		t.Errorf("Provider = %q, want %q", detail.Provider, "Stripe")
-	}
-	if detail.TokenType != "secret_key" {
-		t.Errorf("TokenType = %q, want %q", detail.TokenType, "secret_key")
+	if findings[0].Start != 0 || findings[0].End != len("sk_live_4eC39HqLyjWDarjtT1zdp7dc") || findings[0].Confidence != 0.9 {
+		t.Fatal(findings)
 	}
 }
 
 func TestPaymentTokenDetector_Name(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPaymentToken()
-	if d.Name() != detect.NamePaymentToken {
-		t.Errorf("Name() = %q, want %q", d.Name(), detect.NamePaymentToken)
+	d := NewPaymentToken()
+	if d.Name() != NamePaymentToken {
+		t.Errorf("Name() = %q, want %q", d.Name(), NamePaymentToken)
 	}
 }
 
 func TestPaymentTokenDetector_Hints(t *testing.T) {
 	t.Parallel()
 
-	d := detect.NewPaymentToken()
+	d := NewPaymentToken()
 	hints := d.Hints()
 	if len(hints) == 0 {
 		t.Error("Hints() returned empty slice, want at least one hint")
