@@ -2,29 +2,29 @@ goos: linux
 goarch: amd64
 pkg: github.com/nao1215/embargo/tests
 cpu: AMD RYZEN AI MAX+ 395 w/ Radeon 8060S          
-                   │   masq.txt   │              embargo.txt              │
-                   │    sec/op    │    sec/op      vs base                │
-Comparison/flat      5.670µ ± 67%   1.830µ ± 125%  -67.72% (p=0.007 n=10)
-Comparison/nested    5.191µ ±  1%   3.242µ ±   2%  -37.54% (p=0.000 n=10)
-Comparison/map       5.593µ ±  2%   3.679µ ±   0%  -34.22% (p=0.000 n=10)
-Comparison/clean     2.929µ ±  1%   1.034µ ±   1%  -64.71% (p=0.000 n=10)
-Comparison/large50   60.66µ ± 24%   15.49µ ±   1%  -74.47% (p=0.000 n=10)
-geomean              7.820µ         3.226µ         -58.75%
+                   │   masq.txt   │             embargo.txt             │
+                   │    sec/op    │   sec/op     vs base                │
+Comparison/flat      3.110µ ±  2%   1.355µ ± 2%  -56.45% (p=0.000 n=10)
+Comparison/nested    5.094µ ±  1%   2.290µ ± 2%  -55.05% (p=0.000 n=10)
+Comparison/map       5.501µ ±  2%   3.287µ ± 2%  -40.24% (p=0.000 n=10)
+Comparison/clean     2.865µ ±  1%   1.011µ ± 0%  -64.72% (p=0.000 n=10)
+Comparison/large50   74.20µ ± 45%   13.67µ ± 1%  -81.58% (p=0.000 n=10)
+geomean              7.138µ         2.690µ       -62.31%
 
                    │   masq.txt    │             embargo.txt              │
                    │     B/op      │     B/op      vs base                │
 Comparison/flat        672.00 ± 0%     96.00 ± 0%  -85.71% (p=0.000 n=10)
-Comparison/nested      1784.0 ± 0%     520.0 ± 0%  -70.85% (p=0.000 n=10)
-Comparison/map         1744.0 ± 0%     720.0 ± 0%  -58.72% (p=0.000 n=10)
+Comparison/nested      1784.0 ± 0%     354.0 ± 0%  -80.16% (p=0.000 n=10)
+Comparison/map         1744.0 ± 0%     674.0 ± 0%  -61.35% (p=0.000 n=10)
 Comparison/clean       792.00 ± 0%     32.00 ± 0%  -95.96% (p=0.000 n=10)
 Comparison/large50   12.409Ki ± 0%   6.095Ki ± 0%  -50.89% (p=0.000 n=10)
-geomean               1.796Ki          372.6       -79.74%
+geomean               1.796Ki          340.5       -81.49%
 
                    │   masq.txt   │            embargo.txt             │
                    │  allocs/op   │ allocs/op   vs base                │
 Comparison/flat       32.000 ± 0%   2.000 ± 0%  -93.75% (p=0.000 n=10)
-Comparison/nested      61.00 ± 0%   19.00 ± 0%  -68.85% (p=0.000 n=10)
-Comparison/map         63.00 ± 0%   22.00 ± 0%  -65.08% (p=0.000 n=10)
+Comparison/nested     61.000 ± 0%   7.000 ± 0%  -88.52% (p=0.000 n=10)
+Comparison/map         63.00 ± 0%   18.00 ± 0%  -71.43% (p=0.000 n=10)
 Comparison/clean      50.000 ± 0%   4.000 ± 0%  -92.00% (p=0.000 n=10)
 Comparison/large50   561.000 ± 0%   5.000 ± 0%  -99.11% (p=0.000 n=10)
-geomean                80.83        6.993       -91.35%
+geomean                80.83        5.502       -93.19%
