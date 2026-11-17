@@ -27,18 +27,22 @@ func (d *USPhone) Hints() [][]byte {
 const (
 	usPhoneDigits     = 10
 	usPhoneCodeLength = 3
-	usPhoneLineEnd    = usPhoneCodeLength + 1 + 4
+	usPhoneLine       = 4
+	usPhoneLineEnd    = usPhoneCodeLength + 1 + usPhoneLine
 	usPhoneParenArea  = usPhoneCodeLength + 2
 	usPhoneCountry    = len("1 ")
 )
 
 // Scan returns matches in data using the rules documented on [USPhone].
 func (d *USPhone) Scan(data []byte) []Finding {
-	if !hasDigits(data, usPhoneDigits) {
+	if !hasDigits(data, usPhoneDigits) || !hasDigitRun(data, usPhoneLine) {
 		return nil
 	}
 	var findings []Finding
 	for i := 0; i < len(data); i++ {
+		if !usPhoneStart(data[i]) {
+			continue
+		}
 		end, ok := usPhoneAt(data, i)
 		if !ok {
 			continue
@@ -53,6 +57,29 @@ func (d *USPhone) Scan(data []byte) []Finding {
 		i = end - 1
 	}
 	return findings
+}
+
+// usPhoneStart reports whether b can open a number: an area code digit 2–9
+// or an opening parenthesis.
+func usPhoneStart(b byte) bool {
+	return b == '(' || (b >= '2' && b <= '9')
+}
+
+// hasDigitRun reports whether data holds n consecutive ASCII digits, such as
+// the four-digit line every number ends with.
+func hasDigitRun(data []byte, n int) bool {
+	run := 0
+	for _, b := range data {
+		if !ascii.IsDigit(b) {
+			run = 0
+			continue
+		}
+		run++
+		if run == n {
+			return true
+		}
+	}
+	return false
 }
 
 // usPhoneAt matches (202) 555-0123, 202-555-0123, 202.555.0123 or 202 555 0123

@@ -34,6 +34,7 @@ func TestUSPhoneDetector_Scan(t *testing.T) {
 		{name: "date and time", input: "2026-11-17 10:00:00", wantLen: 0},
 		{name: "IPv4 address", input: "203.0.113.7", wantLen: 0},
 		{name: "too short", input: "202-555-012", wantLen: 0},
+		{name: "no four-digit line", input: "202-555-012 345-678", wantLen: 0},
 		{name: "unclosed parenthesis", input: "(212 555-0100", wantLen: 0},
 		{name: "parenthesized with dot", input: "(212) 555.0100", wantLen: 0},
 		{name: "sentence end", input: "Call 202-555-0123.", wantRaw: usPhoneFixture, wantLen: 1, wantMinCon: 0.9},
