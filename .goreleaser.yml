@@ -56,9 +56,9 @@ nfpms:
         type: tree
 checksum:
   name_template: "checksums.txt"
-# A cask in the shared nao1215/homebrew-tap, published with a tap-scoped token.
-# Until the repository has TAP_GITHUB_TOKEN the upload is skipped, so a release
-# still publishes every other artifact.
+# A cask in the shared nao1215/homebrew-tap (the same tap that ships gup and
+# atago), published with a tap-scoped token. --skip=publish in release-smoke
+# keeps snapshot builds hermetic.
 homebrew_casks:
   - name: embargo
     repository:
@@ -68,7 +68,6 @@ homebrew_casks:
     directory: Casks
     homepage: "https://github.com/nao1215/embargo"
     description: "Masks secrets and personal data in log lines from files or a pipe"
-    skip_upload: '{{ if index .Env "TAP_GITHUB_TOKEN" }}false{{ else }}true{{ end }}'
     # The binary is not notarized; strip the quarantine attribute on install, as
     # GoReleaser documents for unsigned Go binaries.
     hooks:
