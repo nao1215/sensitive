@@ -97,3 +97,58 @@ func TestJoinedKeyFindingMustCrossSeparator(t *testing.T) {
 		})
 	}
 }
+
+func TestCanonicalIntegerMatchesExactIntegerFixedPoints(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		text string
+		want bool
+	}{
+		{"0", true},
+		{"17", true},
+		{"-17", true},
+		{"9223372036854775808", true},
+		{"-0", false},
+		{"007", false},
+		{"-01", false},
+		{"1e2", false},
+		{"1.0", false},
+		{"-", false},
+		{"", false},
+		{"12a", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.text, func(t *testing.T) {
+			t.Parallel()
+			if got := canonicalInteger(tt.text); got != tt.want {
+				t.Fatalf("canonicalInteger(%q) = %v, want %v", tt.text, got, tt.want)
+			}
+			if !tt.want {
+				return
+			}
+			// A canonical spelling is its own exact integer, so the second scan is redundant.
+			if integer, err := exactInteger(tt.text); err != nil || integer != tt.text {
+				t.Fatalf("exactInteger(%q) = %q, %v", tt.text, integer, err)
+			}
+		})
+	}
+}
+
+func TestMaskBytesMatchesMaskScalar(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindEmail, KindPAN))
+	for _, value := range []string{"clean application value", "alice@example.com", "4111111111111111", "4111111111111111 ", "-17", "true", "null", ""} {
+		for _, key := range []string{"", "card", "password"} {
+			byText := eventScanner{scanner: scanner, remaining: maxScanBytes}
+			want, wantErr := byText.maskScalar(context.Background(), value, key)
+			byBytes := eventScanner{scanner: scanner, remaining: maxScanBytes}
+			got, changed, err := byBytes.maskBytes(context.Background(), []byte(value), key)
+			if !changed {
+				got = value
+			}
+			if got != want || !errors.Is(err, wantErr) || changed != (want != value) || byText.remaining != byBytes.remaining {
+				t.Errorf("maskBytes(%q, %q) = %q, %v, %v; maskScalar = %q, %v", value, key, got, changed, err, want, wantErr)
+			}
+		}
+	}
+}

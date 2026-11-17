@@ -67,13 +67,13 @@ Bech32 candidates use ASCII alphanumeric bytes; case consistency and checksum va
 - python3 scripts/quality_gate.py false-positives --cache CACHE checks checksum-pinned real logs.
 - python3 scripts/detection_changes.py --base origin/main --cache CACHE checks the findings snapshot.
 - python3 scripts/ci_benchmark.py --base origin/main --head HEAD runs the paired benchmark gate.
-- make mutation runs full per-package mutation checks; make fuzz discovers and exercises root fuzz targets.
+- make mutation runs full per-package mutation checks and reruns timed-out mutants alone; make mutation-diff BASE=origin/main mutates only changed lines while working; make fuzz discovers and exercises root fuzz targets.
 
 Run heavy jobs one at a time with GOMAXPROCS at most 4. Use existing commands and inspect failed evidence before repeating a job. Do not weaken a gate to accommodate a refactor. Keep benchmark evidence on the same machine with alternating revision order.
 
 ## Coding and tests
 
-Write code comments and documentation in English. Keep Markdown paragraphs on one line and avoid bold and emoji. Use English Conventional Commits without agent trailers. Keep PRs below 100 changed files and CI timing tables in PR bodies only. Do not put development round labels, finding IDs or this repository's PR numbers and commit hashes in tracked files. Do not add pseudo-versions or root dependencies.
+Write code comments and documentation in English. Keep Markdown paragraphs on one line and avoid bold and emoji. Use English Conventional Commits without agent trailers. Keep CI timing tables in PR bodies only. Do not put development round labels, finding IDs or this repository's PR numbers and commit hashes in tracked files. Do not add pseudo-versions or root dependencies.
 
 Follow Effective Go, use explicit state instead of globals, use errors.Is/errors.As for typed error comparisons, and check returned errors. Every library package has a doc.go overview; exported functions, variables and fields have Go documentation comments explaining behavior and limits. Public APIs have runnable examples, detector comments describe their recognition and validation rules, and implementation comments explain decisions. Check for duplicate code after changes. Keep architecture dependencies, strict lint rules and constructor contracts intact. Preserve hint-based filtering before expensive detector work and avoid regular expressions when a bounded parser can express the grammar. Do not add a public package for an internal refactor.
 

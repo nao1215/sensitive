@@ -1228,3 +1228,42 @@ func TestEncodedBuiltinAndRawCustomOffsets(t *testing.T) {
 		t.Fatalf("escaped masking: %q", masked)
 	}
 }
+
+type retainingDetector struct{ seen [][]byte }
+
+func (d *retainingDetector) Scan(data []byte) []Finding {
+	d.seen = append(d.seen, data)
+	return nil
+}
+
+func TestScanBuffersAreNotReusedForCustomDetectors(t *testing.T) {
+	t.Parallel()
+	custom := &retainingDetector{}
+	withCustom := NewScanner(WithDetector(custom))
+	if withCustom.buffers != nil {
+		t.Fatal("a scanner with a custom detector must not pool scan buffers")
+	}
+	for _, document := range []string{`{"first":"aaaa"}`, `{"second":"bbbb"}`} {
+		if _, err := withCustom.MaskJSON([]byte(document)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if got := string(custom.seen[0]); got != "first" {
+		t.Fatalf("retained input changed to %q", got)
+	}
+	builtin := NewScanner()
+	small := builtin.takeBuffer(8)
+	if cap(*small) < 8 || len(*small) != 0 {
+		t.Fatalf("takeBuffer(8) = len %d cap %d", len(*small), cap(*small))
+	}
+	builtin.returnBuffer(small, append(*small, "grown"...))
+	huge := builtin.takeBuffer(largestPooledBuffer + 1)
+	if cap(*huge) <= largestPooledBuffer {
+		t.Fatalf("large buffer has cap %d", cap(*huge))
+	}
+	builtin.returnBuffer(huge, *huge)
+	var zero Scanner
+	if buffer := zero.takeBuffer(4); cap(*buffer) < 4 {
+		t.Fatal("zero-value scanner needs a fresh buffer")
+	}
+}

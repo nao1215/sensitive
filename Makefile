@@ -36,7 +36,7 @@ help:
 	@grep -E '^[0-9a-zA-Z_-]+[[:blank:]]*:.*?## .*$$' $(MAKEFILE_LIST) | sort \
 	| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[1;32m%-15s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: arch race properties mutation fuzz
+.PHONY: arch race properties mutation mutation-diff fuzz
 arch: ## Check production package boundaries
 	go run github.com/fe3dback/go-arch-lint@v1.19.0 check
 race: ## Run race detection in all modules
@@ -49,6 +49,9 @@ properties: ## Run property and API contract tests
 MUTATION_WORKERS ?= $(shell python3 -c 'import os; print(min(4, max(1, os.cpu_count()//2)))')
 mutation: ## Mutate root module packages with gremlins
 	python3 scripts/mutation_gate.py --workers $(MUTATION_WORKERS) --test-cpu 2
+BASE ?= origin/main
+mutation-diff: ## Mutate lines changed since BASE and list survivors
+	python3 scripts/mutation_gate.py --workers $(MUTATION_WORKERS) --test-cpu 2 --diff $(BASE)
 fuzz: ## Smoke test every root fuzz target
 	python3 scripts/fuzz_targets.py --run 10s
 

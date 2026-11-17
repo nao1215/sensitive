@@ -88,3 +88,38 @@ class MutationGateTests(unittest.TestCase):
                         gate.document_baseline(packages)
                 gate.document_baseline(packages, write=True)
                 gate.document_baseline(packages)
+
+    def test_mutate_source_replaces_the_operator_gremlins_named(self):
+        source = b'package p\nfunc f(a, b int) bool {\n\tfor i := 0; i < a; i++ {\n\t}\n\treturn a <= b && a-b != 0\n}\n'
+        cases = [
+            ({'type': 'CONDITIONALS_BOUNDARY', 'line': 3, 'column': 16}, b'i <= a'),
+            ({'type': 'CONDITIONALS_NEGATION', 'line': 3, 'column': 16}, b'i >= a'),
+            ({'type': 'INCREMENT_DECREMENT', 'line': 3, 'column': 22}, b'i--'),
+            ({'type': 'CONDITIONALS_BOUNDARY', 'line': 5, 'column': 11}, b'a < b'),
+            ({'type': 'ARITHMETIC_BASE', 'line': 5, 'column': 20}, b'a+b'),
+            ({'type': 'INVERT_NEGATIVES', 'line': 5, 'column': 20}, b'a+b'),
+            ({'type': 'CONDITIONALS_NEGATION', 'line': 5, 'column': 23}, b'== 0'),
+        ]
+        for mutant, fragment in cases:
+            mutated = gate.mutate_source(source, mutant)
+            self.assertIn(fragment, mutated, mutant)
+            self.assertEqual(len(mutated.split(b'\n')), len(source.split(b'\n')))
+        for mutant in ({'type': 'CONDITIONALS_BOUNDARY', 'line': 5, 'column': 20}, {'type': 'ARITHMETIC_BASE', 'line': 5, 'column': 11}, {'type': 'INVERT_LOGICAL', 'line': 5, 'column': 16}, {'type': 'ARITHMETIC_BASE', 'line': 9, 'column': 1}, {'type': 'ARITHMETIC_BASE', 'line': 1, 'column': 40}):
+            with self.assertRaises(ValueError):
+                gate.mutate_source(source, mutant)
+
+    def test_timed_out_mutants_are_rerun_alone_and_keep_persistent_timeouts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            module = Path(directory)
+            (module/'go.mod').write_text('module rerun\n\ngo 1.26.11\n')
+            (module/'loop.go').write_text('package rerun\n\nfunc Count(n int) int {\n\ttotal := 0\n\tfor i := 0; i < n; i++ {\n\t\ttotal += i\n\t}\n\treturn total\n}\n')
+            (module/'loop_test.go').write_text('package rerun\n\nimport "testing"\n\nfunc TestCount(t *testing.T) {\n\tif Count(4) != 6 {\n\t\tt.Fatal("count")\n\t}\n}\n')
+            mutants = [{'type': 'INCREMENT_DECREMENT', 'line': 5, 'column': 22, 'status': 'TIMED OUT'}, {'type': 'CONDITIONALS_BOUNDARY', 'line': 5, 'column': 16, 'status': 'TIMED_OUT'}, {'type': 'ARITHMETIC_BASE', 'line': 5, 'column': 16, 'status': 'KILLED'}]
+            report = {'files': [{'file_name': 'loop.go', 'mutations': mutants}]}
+            env = dict(gate.os.environ, GOWORK='off', GOFLAGS='-mod=mod')
+            with patch.object(gate, 'MINIMUM_RERUN_TIMEOUT', 2.0):
+                gate.rerun_timed_out(report, module, '.', 2, env, module/'scratch')
+            self.assertEqual([m['status'] for m in mutants], ['TIMED OUT', 'KILLED', 'KILLED'])
+            self.assertIn('rerun_timeout_seconds', mutants[0])
+            self.assertNotIn('rerun_timeout_seconds', mutants[2])
+            self.assertEqual((module/'loop.go').read_text().count('i++'), 1)

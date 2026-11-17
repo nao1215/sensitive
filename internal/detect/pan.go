@@ -27,6 +27,26 @@ const (
 	BrandUnionPay CardBrand = "UnionPay"
 )
 
+// Card numbers have 13 to 19 digits.
+const (
+	panMinDigits = 13
+	panMaxDigits = 19
+)
+
+// hasDigits reports whether data contains at least n ASCII digits.
+func hasDigits(data []byte, n int) bool {
+	count := 0
+	for _, b := range data {
+		if ascii.IsDigit(b) {
+			count++
+			if count == n {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // PAN implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN.
 type PAN struct{}
@@ -69,6 +89,11 @@ func (d *PAN) Scan(data []byte) []Finding {
 // orig is the original (possibly full-width) input; posMap maps normalized
 // byte positions back to original byte positions. Context confidence uses orig.
 func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
+	// Every candidate needs at least panMinDigits digits of data, so text with
+	// fewer, such as a key with a short index, cannot produce a finding.
+	if !hasDigits(data, panMinDigits) {
+		return nil
+	}
 	var findings []Finding
 	var logContext numericLogContext
 
@@ -88,7 +113,9 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 
 		// Found a digit — try to extract a candidate PAN.
 		start := i
-		var digits []byte
+		// Card digits fit the array; a longer run grows past it and is rejected by length.
+		var stack [panMaxDigits + 1]byte
+		digits := stack[:0]
 		j := i
 		for j < len(data) && (ascii.IsDigit(data[j]) || data[j] == '-' || data[j] == ' ') {
 			if ascii.IsDigit(data[j]) {
@@ -122,7 +149,7 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 // a Finding if it meets the confidence threshold. It returns (Finding, false)
 // when the candidate should be skipped.
 func (d *PAN) evaluateCandidate(orig []byte, posMap []int, digits []byte, digitLen, start, end int) (Finding, bool) {
-	if digitLen < 13 || digitLen > 19 {
+	if digitLen < panMinDigits || digitLen > panMaxDigits {
 		return Finding{}, false
 	}
 

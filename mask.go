@@ -13,8 +13,10 @@ const redactionMarker = "[REDACTED]"
 // value may move other text into a contextual detector's window. Scan each original
 // value once per output hook; the marker is not a trusted-input bypass.
 func Mask(text string, findings []Finding) string {
-	return MaskFunc(text, findings, func(Kind, string) string { return redactionMarker })
+	return MaskFunc(text, findings, redact)
 }
+
+func redact(Kind, string) string { return redactionMarker }
 
 // MaskFunc replaces each merged span with replace(kind, value), in input order.
 // The kind comes from the highest-confidence finding; ties prefer kind, start, then
@@ -32,9 +34,18 @@ func MaskFunc(text string, findings []Finding, replace func(kind Kind, value str
 			return redactionMarker
 		}
 	}
-	ordered := slices.Clone(findings)
+	return maskOwned(text, slices.Clone(findings), replace)
+}
+
+// maskOwned is MaskFunc for a validated findings slice that the caller owns:
+// it is sorted in place instead of copied.
+func maskOwned(text string, ordered []Finding, replace func(kind Kind, value string) string) string {
+	if len(ordered) == 0 {
+		return text
+	}
 	slices.SortStableFunc(ordered, compareFindings)
 	var out strings.Builder
+	out.Grow(len(text) + len(redactionMarker))
 	position := 0
 	for i := 0; i < len(ordered); {
 		best := ordered[i]

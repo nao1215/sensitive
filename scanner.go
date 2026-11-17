@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"cmp"
 	"slices"
+	"sync"
 
 	"github.com/nao1215/embargo/internal/ascii"
 	"github.com/nao1215/embargo/internal/detect"
@@ -17,6 +18,8 @@ type Scanner struct {
 	detectors     []detect.Detector
 	hintCache     [][]hintEntry
 	custom        []Detector
+	buffers       *sync.Pool
+	keys          *keyCache
 	hintIndex     [256][]dispatchHint
 	minConfidence float64
 	unconditional uint64
@@ -60,7 +63,41 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 	if len(s.detectors) > 1 {
 		s.buildDispatch()
 	}
+	// Custom detectors receive the scanned bytes and may keep them or answer
+	// differently each time, so only built-in selections, which never retain
+	// input and always return the same findings, reuse buffers and key results.
+	if len(s.custom) == 0 {
+		s.buffers = &sync.Pool{New: func() any { return new([]byte) }}
+		s.keys = &keyCache{}
+	}
 	return s
+}
+
+// largestPooledBuffer keeps one huge scalar from pinning its buffer in the pool.
+const largestPooledBuffer = 64 << 10
+
+// takeBuffer returns an empty buffer with room for size bytes. Scanners with
+// custom detectors, zero-value scanners and large sizes get a fresh one.
+func (s *Scanner) takeBuffer(size int) *[]byte {
+	if s.buffers == nil || size > largestPooledBuffer {
+		buffer := make([]byte, 0, size)
+		return &buffer
+	}
+	buffer, ok := s.buffers.Get().(*[]byte)
+	if !ok {
+		panic("embargo: invalid scan buffer")
+	}
+	*buffer = slices.Grow((*buffer)[:0], size)
+	return buffer
+}
+
+// returnBuffer keeps a buffer, grown by its last user, for the next scan.
+func (s *Scanner) returnBuffer(buffer *[]byte, used []byte) {
+	if s.buffers == nil || cap(used) > largestPooledBuffer {
+		return
+	}
+	*buffer = used[:0]
+	s.buffers.Put(buffer)
 }
 
 // buildHintCache pre-computes lowered hints for each detector so that

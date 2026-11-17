@@ -197,6 +197,12 @@ func (h *slogHandler) sanitizeRecord(ctx context.Context, record *slog.Record) (
 		completed = true
 		return safe, false, nil
 	}
+	// Adding every attribute in one call grows the record's storage once.
+	var inline [16]slog.Attr
+	attrs := inline[:0]
+	if record.NumAttrs() > len(inline) {
+		attrs = make([]slog.Attr, 0, record.NumAttrs())
+	}
 	record.Attrs(func(attr slog.Attr) bool {
 		var clean slog.Attr
 		var pathHidden bool
@@ -205,9 +211,12 @@ func (h *slogHandler) sanitizeRecord(ctx context.Context, record *slog.Record) (
 		if err != nil {
 			return false
 		}
-		safe.AddAttrs(clean)
+		attrs = append(attrs, clean)
 		return true
 	})
+	if err == nil {
+		safe.AddAttrs(attrs...)
+	}
 	completed = true
 	return safe, crossed, err
 }
@@ -249,10 +258,12 @@ func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth in
 	if depth > maxDepth {
 		return slog.Attr{}, false, saferecord.ErrSizeLimit
 	}
-	key, err := h.mask(ctx, attr.Key)
+	scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
+	result, err := scan.maskKey(ctx, attr.Key)
 	if err != nil {
 		return slog.Attr{}, false, err
 	}
+	key := result.masked
 	pathKey := key
 	crossed := false
 	if groups != "" && attr.Key != "" {
@@ -268,7 +279,7 @@ func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth in
 	if ctx.Err() != nil {
 		return slog.Attr{}, false, slogSanitizationError()
 	}
-	if h.scanner.sensitiveKey(attr.Key) {
+	if result.sensitive {
 		return slog.String(key, redactionMarker), crossed, nil
 	}
 	value, err := resolveLogValue(ctx, attr.Value)
@@ -320,7 +331,7 @@ func (h *slogHandler) sanitizeAny(ctx context.Context, key, originalKey string, 
 	if err != nil {
 		return slog.Attr{}, slogSanitizationError()
 	}
-	safe, err := h.scanner.maskJSON(ctx, encoded, originalKey)
+	safe, err := h.scanner.maskJSON(ctx, encoded, originalKey, true)
 	if err != nil {
 		return slog.Attr{}, err
 	}
@@ -331,20 +342,26 @@ func (h *slogHandler) sanitizeAny(ctx context.Context, key, originalKey string, 
 // Any values are frozen as masked JSON, so their original TextMarshaler and String
 // methods cannot introduce another representation after this boundary.
 func (h *slogHandler) sanitizeScalar(ctx context.Context, key, originalKey string, value slog.Value) (slog.Attr, error) {
-	representations := []string{value.String()}
+	var storage [2]string
+	representations := storage[:1]
 	switch value.Kind() {
+	case slog.KindString:
+		representations[0] = value.String()
 	case slog.KindTime:
-		representations = []string{value.Time().Format(time.RFC3339Nano), value.Time().Format("2006-01-02T15:04:05.000Z07:00")}
+		representations = append(storage[:0], value.Time().Format(time.RFC3339Nano), value.Time().Format("2006-01-02T15:04:05.000Z07:00"))
 	case slog.KindDuration:
+		representations[0] = value.String()
 		representations = append(representations, strconv.FormatInt(int64(value.Duration()), 10))
 	case slog.KindFloat64:
+		representations[0] = value.String()
 		encoded, err := json.Marshal(value.Float64())
 		if err != nil {
 			return slog.Attr{}, slogSanitizationError()
 		}
 		representations = append(representations, string(encoded))
-	case slog.KindAny, slog.KindBool, slog.KindGroup, slog.KindInt64, slog.KindLogValuer, slog.KindString, slog.KindUint64:
+	case slog.KindAny, slog.KindBool, slog.KindGroup, slog.KindInt64, slog.KindLogValuer, slog.KindUint64:
 		// Other kinds add no scalar encoding here; composites have separate paths.
+		representations[0] = value.String()
 	}
 	scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
 	for _, text := range representations {
