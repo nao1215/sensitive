@@ -328,12 +328,8 @@ func TestEncodingAlphabetVectors(t *testing.T) {
 		}
 	}
 	for _, s := range []string{"az", "AZ", "aZ", "Az", "09"} {
-		lower, upper := strings.ToLower(s), strings.ToUpper(s)
-		if isBech32ConsistentCase(s) != (s == lower || s == upper) {
+		if isBech32ConsistentCase(s) != (s == strings.ToLower(s) || s == strings.ToUpper(s)) {
 			t.Fatalf("bech32 case %q", s)
-		}
-		if toLowerString(s) != lower {
-			t.Fatalf("lowercase %q", s)
 		}
 	}
 }

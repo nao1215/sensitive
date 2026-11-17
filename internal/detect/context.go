@@ -135,12 +135,12 @@ func findKeywordPositions(data []byte, keywords [][]byte) []keywordMatch {
 //   - Before: data[max(0, pos-radius) : pos]
 //   - After:  data[pos : min(len(data), pos+radius)]
 func extractDigitsNear(data []byte, pos, radius, minDigits, maxDigits int) []digitSequence {
-	return extractNear(data, pos, radius, minDigits, maxDigits, isDigit)
+	return extractNear(data, pos, radius, minDigits, maxDigits, ascii.IsDigit)
 }
 
 // extractAlphaNumNear applies the same boundary rules to alphanumeric tokens.
 func extractAlphaNumNear(data []byte, pos, radius, minLen, maxLen int) []digitSequence {
-	return extractNear(data, pos, radius, minLen, maxLen, isAlphaNum)
+	return extractNear(data, pos, radius, minLen, maxLen, ascii.IsAlphaNum)
 }
 
 func extractNear(data []byte, pos, radius, minLen, maxLen int, accept func(byte) bool) []digitSequence {

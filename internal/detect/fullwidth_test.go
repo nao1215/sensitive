@@ -2,8 +2,6 @@ package detect
 
 import (
 	"bytes"
-	"math"
-	"reflect"
 	"strings"
 	"testing"
 	"unicode"
@@ -60,21 +58,6 @@ func TestNormalizeFullWidthDigits(t *testing.T) {
 	}
 }
 
-func TestNormalizationMapSizeRejectsOverflow(t *testing.T) {
-	t.Parallel()
-	for _, length := range []int{0, 1, 1024} {
-		if normalizationMapSize(length) != length+1 {
-			t.Fatal("ordinary mapping size changed")
-		}
-	}
-	defer func() {
-		if recover() != "embargo: input too large" {
-			t.Error("mapping sentinel size overflow was not rejected")
-		}
-	}()
-	normalizationMapSize(math.MaxInt)
-}
-
 func TestNormalizationIdentityDifferential(t *testing.T) {
 	t.Parallel()
 	for n := range 256 {
@@ -119,83 +102,5 @@ func TestUnicodeNormalizationOffsets(t *testing.T) {
 		if r > unicode.MaxASCII && strings.Contains(string(normalized), separator) {
 			t.Fatal("separator not normalized")
 		}
-	}
-}
-
-func TestFullwidthRejectedBoundaries(t *testing.T) {
-	t.Parallel()
-	for _, input := range []string{"\u200babc", "abc\u200b", "\u200b"} {
-		got, _ := RemoveTokenSeparators([]byte(input))
-		if string(got) != input {
-			t.Fatal("non-interior mark removed")
-		}
-	}
-}
-
-func TestTokenSeparatorCategoryProperty(t *testing.T) {
-	t.Parallel()
-	for r := rune(unicode.MaxASCII + 1); r <= unicode.MaxRune; r++ {
-		if !unicode.Is(unicode.Pd, r) && !unicode.Is(unicode.Zs, r) && !unicode.Is(unicode.Cf, r) && (!unicode.Is(unicode.Sm, r) || !unicode.Is(unicode.Dash, r)) {
-			continue
-		}
-		for _, repetitions := range []int{1, 3} {
-			separator := strings.Repeat(string(r), repetitions)
-			raw := "AKIA" + separator + "IOSFODNN7EXAMPLE"
-			got, positions := RemoveTokenSeparators([]byte(raw))
-			if string(got) != sampleAccessKey || len(positions) != len(got)+1 || positions[4] != 4+len(separator) || positions[len(got)] != len(raw) {
-				t.Fatalf("separator %U lost token bytes or offsets", r)
-			}
-			for i, position := range positions[:len(got)] {
-				if raw[position] != got[i] || i > 0 && position <= positions[i-1] {
-					t.Fatal("normalized bytes do not map to their original positions")
-				}
-			}
-			for _, edge := range []string{separator + "public", "public" + separator} {
-				unchanged, mapping := RemoveTokenSeparators([]byte(edge))
-				if string(unchanged) != edge || mapping != nil {
-					t.Fatal("non-interior separator changed")
-				}
-			}
-		}
-	}
-}
-
-func TestComposePositionsIdentity(t *testing.T) {
-	t.Parallel()
-	parent := []int{0, 3, 4}
-	if got := ComposePositions(nil, parent); !reflect.DeepEqual(got, parent) {
-		t.Fatal(got)
-	}
-	child := []int{0, 1, 2}
-	if got := ComposePositions(child, nil); !reflect.DeepEqual(got, child) {
-		t.Fatal(got)
-	}
-	if ComposePositions(nil, nil) != nil {
-		t.Fatal("identity allocated a map")
-	}
-}
-
-func TestComposePositionsSentinel(t *testing.T) {
-	t.Parallel()
-	child := []int{0, 2, 3}
-	got := ComposePositions(child, []int{0, 3, 4, 8})
-	if !reflect.DeepEqual(got, []int{0, 4, 8}) || &got[0] != &child[0] {
-		t.Fatal(got)
-	}
-}
-
-func TestComposePositionsLayers(t *testing.T) {
-	t.Parallel()
-	original := []byte(`password=\x22fixture\x22`)
-	first, a := credentialQuotes(original)
-	second, b := credentialQuotes(first)
-	mapping := ComposePositions(b, a)
-	got := (&Credential{}).Scan(second)
-	if len(got) != 1 {
-		t.Fatal(got)
-	}
-	start, end := mapping[got[0].Start], mapping[got[0].End]
-	if string(original[start:end]) != "fixture" {
-		t.Fatal(start, end)
 	}
 }

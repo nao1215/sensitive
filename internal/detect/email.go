@@ -1,6 +1,10 @@
 package detect
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/nao1215/embargo/internal/ascii"
+)
 
 // Email implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindEmail.
@@ -159,7 +163,7 @@ func validateTLD(domain []byte) (tld []byte, ok bool) {
 	}
 	// TLD must be all alpha.
 	for _, b := range tld {
-		if !isAlpha(b) {
+		if !ascii.IsAlpha(b) {
 			return nil, false
 		}
 	}
@@ -179,7 +183,7 @@ func isLocalPartChar(b byte) bool {
 // isDomainChar reports whether b is a valid character in the domain part
 // of an email address (after the '@').
 func isDomainChar(b byte) bool {
-	return isAlphaNum(b) || b == '.' || b == '-'
+	return ascii.IsAlphaNum(b) || b == '.' || b == '-'
 }
 
 // hasConsecutiveDots reports whether data contains "..".
@@ -201,7 +205,7 @@ func isKnownTLD(tld []byte) bool {
 		"io", "co", "us", "uk", "de", "fr", "jp", "cn", "kr", "au", "ca",
 		"info", "biz", "name", "pro", "museum", "coop", "aero",
 	}
-	s := toLowerASCIIString(string(tld))
+	s := ascii.LowerString(string(tld))
 	return slices.Contains(known, s)
 }
 
@@ -227,15 +231,4 @@ func hasInvalidLabelBoundary(domain []byte) bool {
 		}
 	}
 	return false
-}
-
-// toLowerASCIIString converts ASCII uppercase letters in a string to lowercase.
-func toLowerASCIIString(s string) string {
-	b := []byte(s)
-	for i, c := range b {
-		if c >= 'A' && c <= 'Z' {
-			b[i] = c + ('a' - 'A')
-		}
-	}
-	return string(b)
 }

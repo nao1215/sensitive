@@ -2,6 +2,8 @@ package detect
 
 import (
 	"strings"
+
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 const (
@@ -60,10 +62,7 @@ func (d *Credential) secretKey(key []byte) bool {
 		if n == len(normalized) {
 			return false
 		}
-		if b >= 'A' && b <= 'Z' {
-			b += 'a' - 'A'
-		}
-		normalized[n] = b
+		normalized[n] = ascii.ToLower(b)
 		n++
 	}
 	name := string(normalized[:n])

@@ -2,6 +2,7 @@ package ascii_test
 
 import (
 	"encoding/hex"
+	"strings"
 	"testing"
 	"unicode"
 
@@ -118,6 +119,52 @@ func TestDecodeHexAlphabet(t *testing.T) {
 		value, ok := ascii.DecodeHex(byte(n))
 		if ok != (err == nil) || ok && value != decoded[0] {
 			t.Fatal(n, value, ok)
+		}
+	}
+}
+
+// Every byte class agrees with the standard library on all 256 bytes, so detectors share one alphabet.
+func TestByteClasses(t *testing.T) {
+	t.Parallel()
+	const (
+		digits = "0123456789"
+		upper  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		lower  = "abcdefghijklmnopqrstuvwxyz"
+	)
+	for n := range 256 {
+		b := byte(n)
+		isDigit := strings.IndexByte(digits, b) >= 0
+		isUpper := strings.IndexByte(upper, b) >= 0
+		isLower := strings.IndexByte(lower, b) >= 0
+		_, hexErr := hex.DecodeString("0" + string(b))
+		checks := []struct {
+			name      string
+			got, want bool
+		}{
+			{"IsDigit", ascii.IsDigit(b), isDigit},
+			{"IsUpper", ascii.IsUpper(b), isUpper},
+			{"IsLower", ascii.IsLower(b), isLower},
+			{"IsAlpha", ascii.IsAlpha(b), isUpper || isLower},
+			{"IsAlphaNum", ascii.IsAlphaNum(b), isUpper || isLower || isDigit},
+			{"IsHexDigit", ascii.IsHexDigit(b), hexErr == nil},
+		}
+		for _, c := range checks {
+			if c.got != c.want {
+				t.Fatalf("%s(%#x) = %v, want %v", c.name, b, c.got, c.want)
+			}
+		}
+		wantUpper, wantLower := b, b
+		if isLower {
+			wantUpper = b - 'a' + 'A'
+		}
+		if isUpper {
+			wantLower = b - 'A' + 'a'
+		}
+		if got := ascii.ToUpper(b); got != wantUpper {
+			t.Fatalf("ToUpper(%#x) = %#x, want %#x", b, got, wantUpper)
+		}
+		if got := ascii.LowerString(string([]byte{'X', b})); got != string([]byte{'x', wantLower}) {
+			t.Fatalf("LowerString(%#x) = %q", b, got)
 		}
 	}
 }

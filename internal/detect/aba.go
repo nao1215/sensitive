@@ -1,5 +1,7 @@
 package detect
 
+import "github.com/nao1215/embargo/internal/ascii"
+
 // ABARouting implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindABARouting.
 type ABARouting struct{}
@@ -36,18 +38,18 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			i += 2
 			continue
 		}
-		if !isDigit(data[i]) {
+		if !ascii.IsDigit(data[i]) {
 			continue
 		}
 
 		// Word boundary: preceding character must not be alphanumeric.
-		if i > 0 && isAlphaNum(data[i-1]) && !encodedSeparatorBefore(orig, originalPosition(posMap, i)) {
+		if i > 0 && ascii.IsAlphaNum(data[i-1]) && !encodedSeparatorBefore(orig, originalPosition(posMap, i)) {
 			continue
 		}
 
 		// Need exactly 9 consecutive digits.
 		end := i
-		for end < len(data) && isDigit(data[end]) {
+		for end < len(data) && ascii.IsDigit(data[end]) {
 			end++
 		}
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
@@ -109,7 +111,7 @@ func validABAPrefix(digits []byte) bool {
 func validABACandidate(data []byte, i, end int) bool {
 	// A decimal component (including an RFC3339 fractional second) is not
 	// a standalone routing number, even when its digits satisfy the checksum.
-	if i >= 2 && data[i-1] == '.' && isDigit(data[i-2]) || end+1 < len(data) && data[end] == '.' && isDigit(data[end+1]) {
+	if i >= 2 && data[i-1] == '.' && ascii.IsDigit(data[i-2]) || end+1 < len(data) && data[end] == '.' && ascii.IsDigit(data[end+1]) {
 		return false
 	}
 
@@ -125,7 +127,7 @@ func validABACandidate(data []byte, i, end int) bool {
 	}
 
 	// Word boundary: following character must not be alphanumeric.
-	if end < len(data) && isAlphaNum(data[end]) {
+	if end < len(data) && ascii.IsAlphaNum(data[end]) {
 		return false
 	}
 

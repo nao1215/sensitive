@@ -28,17 +28,15 @@ func (s *Scanner) ScanLines(r io.Reader, fn func(lineNum int, line []byte, findi
 	for sc.Scan() {
 		lineNum++
 		raw := sc.Bytes()
-		normalized, positions := normalizedScanInput(raw)
-		findings := s.scanInput(raw, normalized, positions, nil)
+		view := detect.NewView(raw)
+		findings := s.scanInput(view, nil)
 		covered := 0
 		if len(label) > 0 {
-			end, complete := detect.PEMFooter(normalized, 0, label)
+			end, complete := detect.PEMFooter(view.Data, 0, label)
 			if complete {
 				label = nil
 			}
-			if positions != nil {
-				end = positions[end]
-			}
+			end = view.Original(end)
 			covered = end
 			if end > 0 {
 				//nolint:mnd // A continuation has the documented PEM header confidence.
@@ -46,7 +44,7 @@ func (s *Scanner) ScanLines(r io.Reader, fn func(lineNum int, line []byte, findi
 			}
 		}
 		if len(label) == 0 {
-			label = pemLineLabel(normalized, positions, findings, covered)
+			label = pemLineLabel(view, findings, covered)
 		}
 		if len(findings) > 0 {
 			// Copy raw so the callback can safely retain the slice;
@@ -59,7 +57,8 @@ func (s *Scanner) ScanLines(r io.Reader, fn func(lineNum int, line []byte, findi
 	return sc.Err()
 }
 
-func pemLineLabel(data []byte, positions []int, findings []Finding, covered int) []byte {
+func pemLineLabel(view detect.View, findings []Finding, covered int) []byte {
+	data, positions := view.Data, view.Positions
 	for _, f := range findings {
 		if f.Kind != KindPrivateKeyPEM || f.Start < covered {
 			continue

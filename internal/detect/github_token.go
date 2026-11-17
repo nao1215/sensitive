@@ -1,5 +1,7 @@
 package detect
 
+import "github.com/nao1215/embargo/internal/ascii"
+
 // GitHubToken implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindGitHubToken.
 type GitHubToken struct{}
@@ -79,7 +81,7 @@ func (d *GitHubToken) matchClassic(data []byte, i int) (Finding, int, bool) {
 		if !hasASCIIPrefix(data, i, prefix) {
 			continue
 		}
-		end, n := scanCharset(data, i+len(prefix), isAlphaNum)
+		end, n := scanCharset(data, i+len(prefix), ascii.IsAlphaNum)
 		if n != githubClassicBodyLen || !credBoundary(data, i, end) {
 			return Finding{}, 0, false
 		}

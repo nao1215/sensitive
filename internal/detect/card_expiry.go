@@ -1,5 +1,7 @@
 package detect
 
+import "github.com/nao1215/embargo/internal/ascii"
+
 // CardExpiry implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindCardExpiry.
 type CardExpiry struct {
@@ -64,7 +66,7 @@ type expiryCandidate struct {
 // parseExpiryCandidate checks whether data[i:] starts with a valid MM/YY or
 // MM/YYYY pattern. Returns the parsed candidate and true, or false if invalid.
 func parseExpiryCandidate(data []byte, i int) (expiryCandidate, bool) {
-	if !isDigit(data[i]) || !isDigit(data[i+1]) {
+	if !ascii.IsDigit(data[i]) || !ascii.IsDigit(data[i+1]) {
 		return expiryCandidate{}, false
 	}
 	sep := data[i+2]
@@ -74,13 +76,13 @@ func parseExpiryCandidate(data []byte, i int) (expiryCandidate, bool) {
 	if i+5 > len(data) {
 		return expiryCandidate{}, false
 	}
-	if !isDigit(data[i+3]) || !isDigit(data[i+4]) {
+	if !ascii.IsDigit(data[i+3]) || !ascii.IsDigit(data[i+4]) {
 		return expiryCandidate{}, false
 	}
 
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 	dateEnd := i + 5
-	if i+7 <= len(data) && isDigit(data[i+5]) && isDigit(data[i+6]) {
+	if i+7 <= len(data) && ascii.IsDigit(data[i+5]) && ascii.IsDigit(data[i+6]) {
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 		dateEnd = i + 7
 	}
@@ -107,10 +109,10 @@ func (d *CardExpiry) searchRange(data []byte, start, end int, used map[int]int, 
 		}
 
 		// Word boundary: no digit before or after.
-		if i > 0 && isDigit(data[i-1]) && !encodedSeparatorBefore(data, i) {
+		if i > 0 && ascii.IsDigit(data[i-1]) && !encodedSeparatorBefore(data, i) {
 			continue
 		}
-		if c.dateEnd < len(data) && isDigit(data[c.dateEnd]) {
+		if c.dateEnd < len(data) && ascii.IsDigit(data[c.dateEnd]) {
 			continue
 		}
 

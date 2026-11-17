@@ -1,6 +1,10 @@
 package detect
 
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/nao1215/embargo/internal/ascii"
+)
 
 // MyNumber implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindMyNumber.
@@ -40,7 +44,7 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			i += 3
 			continue
 		}
-		if !isDigit(data[i]) {
+		if !ascii.IsDigit(data[i]) {
 			i++
 			continue
 		}
@@ -88,14 +92,14 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 // the last digit (trailing separators are excluded).
 func extractMyNumberDigits(data []byte, start int) (digits []byte, end int) {
 	j := start
-	for j < len(data) && (isDigit(data[j]) || data[j] == '-' || data[j] == ' ') {
-		if isDigit(data[j]) {
+	for j < len(data) && (ascii.IsDigit(data[j]) || data[j] == '-' || data[j] == ' ') {
+		if ascii.IsDigit(data[j]) {
 			digits = append(digits, data[j])
 		}
 		j++
 	}
 	end = j
-	for end > start && !isDigit(data[end-1]) {
+	for end > start && !ascii.IsDigit(data[end-1]) {
 		end--
 	}
 	return digits, end
@@ -158,7 +162,7 @@ func arnAccount(data []byte, start, end int) bool {
 			}
 		}
 	}
-	if left > 0 && isAlphaNum(data[left-1]) {
+	if left > 0 && ascii.IsAlphaNum(data[left-1]) {
 		return false
 	}
 	fields := bytes.Split(data[left:start], []byte(":"))

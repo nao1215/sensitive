@@ -8,6 +8,8 @@ import (
 	"io"
 	"strings"
 	"testing"
+
+	"github.com/nao1215/embargo/internal/detect"
 )
 
 func TestScanner_ScanLines(t *testing.T) {
@@ -291,12 +293,12 @@ func TestPEMLineStateRejectsUnrelatedCustomFinding(t *testing.T) {
 	// A custom finding with the PEM kind is not proof of a BEGIN header.
 	raw := []byte("unrelated text")
 	finding := Finding{Kind: KindPrivateKeyPEM, Start: 0, End: len(raw), Confidence: 1}
-	if footer := pemLineLabel(raw, nil, []Finding{finding}, 0); footer != nil {
+	if footer := pemLineLabel(detect.View{Raw: raw, Data: raw}, []Finding{finding}, 0); footer != nil {
 		t.Fatal("custom finding entered PEM state")
 	}
-	decoded, positions := normalizedScanInput([]byte("%2D----BEGIN PRIVATE KEY-----"))
+	view := detect.NewView([]byte("%2D----BEGIN PRIVATE KEY-----"))
 	finding.Start = 1 // Inside the encoded byte, not a normalized boundary.
-	if label := pemLineLabel(decoded, positions, []Finding{finding}, 0); label != nil {
+	if label := pemLineLabel(view, []Finding{finding}, 0); label != nil {
 		t.Fatal("unaligned custom finding entered PEM state")
 	}
 }

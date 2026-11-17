@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 	"unicode"
+
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 // numericLogContext caches each hostname suffix during a left-to-right scan.
@@ -13,17 +15,17 @@ type numericLogContext struct{ end, lastDot int }
 // fragment rejects decimal tails, signed identifier suffixes, and
 // numeric components of hostnames. Checksums alone cannot distinguish these.
 func (c *numericLogContext) fragment(data []byte, start, end int) bool {
-	if start >= 2 && ((data[start-1] == '.' && isDigit(data[start-2])) || (data[start-1] == '-' && data[start-2] == '_')) {
+	if start >= 2 && ((data[start-1] == '.' && ascii.IsDigit(data[start-2])) || (data[start-1] == '-' && data[start-2] == '_')) {
 		return true
 	}
-	if end < len(data) && data[end] == '.' && end+1 < len(data) && isAlphaNum(data[end+1]) {
+	if end < len(data) && data[end] == '.' && end+1 < len(data) && ascii.IsAlphaNum(data[end+1]) {
 		return true
 	}
-	if end+1 < len(data) && data[end] == '-' && isAlpha(data[end+1]) {
+	if end+1 < len(data) && data[end] == '-' && ascii.IsAlpha(data[end+1]) {
 		if end >= c.end {
 			c.lastDot = -1
 			c.end = end + 2 //nolint:mnd // Skip the checked hyphen and first letter.
-			for c.end < len(data) && (isAlphaNum(data[c.end]) || data[c.end] == '-' || data[c.end] == '.') {
+			for c.end < len(data) && (ascii.IsAlphaNum(data[c.end]) || data[c.end] == '-' || data[c.end] == '.') {
 				if data[c.end] == '.' {
 					c.lastDot = c.end
 				}
@@ -67,13 +69,13 @@ func objectReference(data []byte, start, end int) bool {
 		if !isIdentifierByte(b) && b != '.' && b != '$' {
 			return false
 		}
-		upper = upper || b >= 'A' && b <= 'Z'
+		upper = upper || ascii.IsUpper(b)
 	}
 	if !upper {
 		return false
 	}
 	for _, b := range []byte(value[split+1:]) {
-		if !isHexDigit(b) {
+		if !ascii.IsHexDigit(b) {
 			return false
 		}
 	}
@@ -87,11 +89,11 @@ func registerSlot(data []byte, start, end int) bool {
 		return false
 	}
 	slot := assignmentKey(before, len(before)-1)
-	if len(slot) != 2 || slot[0] != 'a' || !isDigit(slot[1]) {
+	if len(slot) != 2 || slot[0] != 'a' || !ascii.IsDigit(slot[1]) {
 		return false
 	}
 	for _, b := range data[start:end] {
-		if !isHexDigit(b) {
+		if !ascii.IsHexDigit(b) {
 			return false
 		}
 	}

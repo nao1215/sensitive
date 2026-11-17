@@ -23,7 +23,8 @@ const documentedEmail = "alice@example.com"
 
 func referenceScan(s *Scanner, data []byte) []Finding {
 	original := data
-	data, positions := decodePercent(data)
+	view := detect.NewView(data)
+	data, positions := view.Data, view.Positions
 	var out []Finding
 	var folded []byte
 	var ready bool
@@ -261,7 +262,8 @@ func (lexer *candidateLexer) lex(data []byte) []candidateSpan {
 }
 
 func candidateScan(s *Scanner, lexer *candidateLexer, original []byte) []Finding {
-	data, positions := decodePercent(original)
+	view := detect.NewView(original)
+	data, positions := view.Data, view.Positions
 	spans := lexer.lex(data)
 	var out []Finding
 	for i, d := range s.detectors {

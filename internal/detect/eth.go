@@ -3,6 +3,8 @@ package detect
 import (
 	"encoding/binary"
 	"math/bits"
+
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 // ETH implements the public matching contract at
@@ -101,7 +103,7 @@ func isHex40(b []byte) bool {
 		return false
 	}
 	for i := range 40 {
-		if !isHexDigit(b[i]) {
+		if !ascii.IsHexDigit(b[i]) {
 			return false
 		}
 	}
@@ -157,7 +159,7 @@ func validateEIP55(hexAddr string) bool {
 	// Check each hex letter against the hash nibble.
 	for i := range 40 {
 		c := hexAddr[i]
-		if c >= '0' && c <= '9' {
+		if ascii.IsDigit(c) {
 			continue // Digits are case-insensitive.
 		}
 

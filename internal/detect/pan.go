@@ -1,6 +1,10 @@
 package detect
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/nao1215/embargo/internal/ascii"
+)
 
 // CardBrand identifies a payment card brand; see the Brand* constants.
 type CardBrand string
@@ -77,7 +81,7 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			continue
 		}
 		// Skip non-digit characters.
-		if !isDigit(data[i]) {
+		if !ascii.IsDigit(data[i]) {
 			i++
 			continue
 		}
@@ -86,8 +90,8 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		start := i
 		var digits []byte
 		j := i
-		for j < len(data) && (isDigit(data[j]) || data[j] == '-' || data[j] == ' ') {
-			if isDigit(data[j]) {
+		for j < len(data) && (ascii.IsDigit(data[j]) || data[j] == '-' || data[j] == ' ') {
+			if ascii.IsDigit(data[j]) {
 				digits = append(digits, data[j])
 			}
 			j++
@@ -95,7 +99,7 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		// Trim trailing separators (spaces, hyphens) so the end position
 		// points to the character after the last digit.
 		end := j
-		for end > start && !isDigit(data[end-1]) {
+		for end > start && !ascii.IsDigit(data[end-1]) {
 			end--
 		}
 
@@ -303,9 +307,4 @@ func isExpectedLength(brand CardBrand, length int) bool {
 		return length >= 16 && length <= 19
 	}
 	return false
-}
-
-// isDigit reports whether b is an ASCII digit ('0'-'9').
-func isDigit(b byte) bool {
-	return b >= '0' && b <= '9'
 }

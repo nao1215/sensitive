@@ -1,6 +1,10 @@
 package detect
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/nao1215/embargo/internal/ascii"
+)
 
 // Country implements the national-identifier contracts documented on the root Kind constants.
 // See https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSSSN and the following country kinds.
@@ -84,7 +88,7 @@ func countryCandidate(data []byte, start int, layout string) (text string, end i
 		c := data[start+i]
 		switch format {
 		case '#':
-			if !isDigit(c) {
+			if !ascii.IsDigit(c) {
 				return "", 0, false
 			}
 		case 'A':
@@ -92,11 +96,11 @@ func countryCandidate(data []byte, start int, layout string) (text string, end i
 				return "", 0, false
 			}
 		case 'C':
-			if !isDigit(c) && (c < 'A' || c > 'Z') {
+			if !ascii.IsDigit(c) && (c < 'A' || c > 'Z') {
 				return "", 0, false
 			}
 		case 'X':
-			if !isDigit(c) && c != 'X' {
+			if !ascii.IsDigit(c) && c != 'X' {
 				return "", 0, false
 			}
 		default:

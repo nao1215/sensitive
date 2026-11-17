@@ -1,7 +1,6 @@
 package detect
 
 import (
-	"bytes"
 	"strings"
 	"testing"
 )
@@ -10,19 +9,12 @@ func TestCredentialAndNetworkAlphabetEdges(t *testing.T) {
 	t.Parallel()
 	for n := range 256 {
 		b := byte(n)
-		upper := strings.ContainsRune("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", rune(b))
 		alnum := strings.ContainsRune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", rune(b))
-		if isUpperAlphaNum(b) != upper || isAlphaNum(b) != alnum {
-			t.Fatalf("credential byte %x", b)
-		}
 		if isTokenByte(b) != (alnum || strings.ContainsRune("_-", rune(b))) {
 			t.Fatalf("payment byte %x", b)
 		}
 		if isBase58Char(b) != strings.ContainsRune("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz", rune(b)) {
 			t.Fatalf("base58 byte %x", b)
-		}
-		if toUpperByte(b) != bytes.ToUpper([]byte{b})[0] && b < 128 {
-			t.Fatalf("uppercase %x", b)
 		}
 	}
 	for _, s := range []string{"aA", "fF", "aF", "fA", "09af", "09AF"} {

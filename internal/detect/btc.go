@@ -2,6 +2,8 @@ package detect
 
 import (
 	"crypto/sha256"
+
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 // BTC implements the public matching contract at
@@ -75,7 +77,7 @@ func (d *BTC) scanBech32(data []byte, i int) (Finding, int, bool) {
 	// Extract bech32 characters starting after "bc1".
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 	j := i + 3
-	for j < len(data) && isAlphaNum(data[j]) {
+	for j < len(data) && ascii.IsAlphaNum(data[j]) {
 		j++
 	}
 
@@ -100,7 +102,7 @@ func (d *BTC) scanBech32(data []byte, i int) (Finding, int, bool) {
 	}
 
 	// Normalize to lowercase for checksum validation.
-	lowerAddr := toLowerString(addr)
+	lowerAddr := ascii.LowerString(addr)
 
 	// Decode the data part (after "bc1").
 	dataPart := lowerAddr[3:]
@@ -213,27 +215,11 @@ func isBase58Char(b byte) bool {
 func isBech32ConsistentCase(s string) bool {
 	hasLower := false
 	hasUpper := false
-	for _, c := range s {
-		if c >= 'a' && c <= 'z' {
-			hasLower = true
-		}
-		if c >= 'A' && c <= 'Z' {
-			hasUpper = true
-		}
+	for i := range len(s) {
+		hasLower = hasLower || ascii.IsLower(s[i])
+		hasUpper = hasUpper || ascii.IsUpper(s[i])
 	}
 	return !hasLower || !hasUpper
-}
-
-// toLowerString converts an ASCII string to lowercase.
-func toLowerString(s string) string {
-	buf := make([]byte, len(s))
-	for i, b := range []byte(s) {
-		if b >= 'A' && b <= 'Z' {
-			b += 'a' - 'A'
-		}
-		buf[i] = b
-	}
-	return string(buf)
 }
 
 // --- Base58 encoding/decoding ---

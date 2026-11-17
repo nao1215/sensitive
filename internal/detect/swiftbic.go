@@ -3,6 +3,8 @@ package detect
 import (
 	"bytes"
 	"slices"
+
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 // SWIFTBIC implements the public matching contract at
@@ -99,7 +101,7 @@ func swiftSlashList(data []byte, start, end int) bool {
 		return false
 	}
 	previous := start - 1
-	for previous > 0 && isAlphaNum(data[previous-1]) {
+	for previous > 0 && ascii.IsAlphaNum(data[previous-1]) {
 		previous--
 	}
 	return codeEnd(previous) == start-1
@@ -109,19 +111,19 @@ func swiftSlashList(data []byte, start, end int) bool {
 // SWIFT/BIC structure: 4 alpha (bank) + 2 alpha (country) + 2 alphanumeric
 // (location), with word boundary check and ISO country code validation.
 func validateSWIFTStructure(data []byte, i int) bool {
-	if !isAlpha(data[i]) || !isAlpha(data[i+1]) || !isAlpha(data[i+2]) || !isAlpha(data[i+3]) {
+	if !ascii.IsAlpha(data[i]) || !ascii.IsAlpha(data[i+1]) || !ascii.IsAlpha(data[i+2]) || !ascii.IsAlpha(data[i+3]) {
 		return false
 	}
-	if !isAlpha(data[i+4]) || !isAlpha(data[i+5]) {
+	if !ascii.IsAlpha(data[i+4]) || !ascii.IsAlpha(data[i+5]) {
 		return false
 	}
-	if !isAlphaNum(data[i+6]) || !isAlphaNum(data[i+7]) {
+	if !ascii.IsAlphaNum(data[i+6]) || !ascii.IsAlphaNum(data[i+7]) {
 		return false
 	}
-	if i > 0 && isAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
+	if i > 0 && ascii.IsAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
 		return false
 	}
-	cc := [2]byte{toUpperByte(data[i+4]), toUpperByte(data[i+5])}
+	cc := [2]byte{ascii.ToUpper(data[i+4]), ascii.ToUpper(data[i+5])}
 	return isSWIFTCountry(string(cc[:]))
 }
 
@@ -129,14 +131,14 @@ func validateSWIFTStructure(data []byte, i int) bool {
 // 8 or 11 characters. Returns (end, true) for valid lengths,
 // or (0, false) for invalid lengths (9 or 10 characters).
 func determineSWIFTLength(data []byte, i int) (end int, ok bool) {
-	if i+11 <= len(data) && isAlphaNum(data[i+8]) && isAlphaNum(data[i+9]) && isAlphaNum(data[i+10]) {
-		if i+11 < len(data) && isAlphaNum(data[i+11]) {
+	if i+11 <= len(data) && ascii.IsAlphaNum(data[i+8]) && ascii.IsAlphaNum(data[i+9]) && ascii.IsAlphaNum(data[i+10]) {
+		if i+11 < len(data) && ascii.IsAlphaNum(data[i+11]) {
 			return 0, false
 		}
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 		return i + 11, true
 	}
-	if i+8 < len(data) && isAlphaNum(data[i+8]) {
+	if i+8 < len(data) && ascii.IsAlphaNum(data[i+8]) {
 		return 0, false
 	}
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
@@ -146,7 +148,7 @@ func determineSWIFTLength(data []byte, i int) (end int, ok bool) {
 // hasDigitInRange reports whether data[start:end] contains at least one digit.
 func hasDigitInRange(data []byte, start, end int) bool {
 	for k := start; k < end; k++ {
-		if isDigit(data[k]) {
+		if ascii.IsDigit(data[k]) {
 			return true
 		}
 	}

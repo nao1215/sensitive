@@ -1,5 +1,7 @@
 package detect
 
+import "github.com/nao1215/embargo/internal/ascii"
+
 // IBAN implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindIBAN.
 type IBAN struct{}
@@ -25,20 +27,20 @@ func (d *IBAN) Scan(data []byte) []Finding {
 
 	for i := 0; i < len(data)-4; i++ {
 		// IBAN starts with 2 letters (case-insensitive) + 2 digits.
-		if !isAlpha(data[i]) || !isAlpha(data[i+1]) {
+		if !ascii.IsAlpha(data[i]) || !ascii.IsAlpha(data[i+1]) {
 			continue
 		}
-		if !isDigit(data[i+2]) || !isDigit(data[i+3]) {
+		if !ascii.IsDigit(data[i+2]) || !ascii.IsDigit(data[i+3]) {
 			continue
 		}
 
 		// Check that it's not part of a longer word.
-		if i > 0 && isAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
+		if i > 0 && ascii.IsAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
 			continue
 		}
 
 		// Normalize country code to uppercase for lookup.
-		countryCode := string([]byte{toUpperByte(data[i]), toUpperByte(data[i+1])})
+		countryCode := string([]byte{ascii.ToUpper(data[i]), ascii.ToUpper(data[i+1])})
 		expectedLen, ok := ibanCountryLength(countryCode)
 		if !ok {
 			continue
@@ -52,7 +54,7 @@ func (d *IBAN) Scan(data []byte) []Finding {
 		}
 
 		// Check that the IBAN doesn't continue with alphanumeric chars.
-		if end < len(data) && isAlphaNum(data[end]) {
+		if end < len(data) && ascii.IsAlphaNum(data[end]) {
 			continue
 		}
 
@@ -118,9 +120,9 @@ func validateIBANMod97(iban []byte) bool {
 // following word cannot become part of the checksum candidate.
 func extractIBANChars(data []byte, start, expectedLen int) (ibanChars []byte, end int) {
 	j := start
-	for j < len(data) && len(ibanChars) < expectedLen && (isAlphaNum(data[j]) || data[j] == ' ') {
-		if isAlphaNum(data[j]) {
-			ibanChars = append(ibanChars, toUpperByte(data[j]))
+	for j < len(data) && len(ibanChars) < expectedLen && (ascii.IsAlphaNum(data[j]) || data[j] == ' ') {
+		if ascii.IsAlphaNum(data[j]) {
+			ibanChars = append(ibanChars, ascii.ToUpper(data[j]))
 		}
 		j++
 	}
@@ -129,15 +131,6 @@ func extractIBANChars(data []byte, start, expectedLen int) (ibanChars []byte, en
 		end--
 	}
 	return ibanChars, end
-}
-
-// toUpperByte converts an ASCII lowercase letter to uppercase.
-// Non-lowercase bytes are returned unchanged.
-func toUpperByte(b byte) byte {
-	if b >= 'a' && b <= 'z' {
-		return b - 'a' + 'A'
-	}
-	return b
 }
 
 // ibanCountryLength returns the country length from SWIFT IBAN Registry release
