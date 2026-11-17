@@ -44,23 +44,26 @@ import (
 )
 
 const (
-	comparisonFlat           = "flat"
-	comparisonDLPName        = "godlp"
-	comparisonFormatterName  = "slog-formatter"
-	comparisonCopyName       = "go-mask"
-	comparisonNested         = "nested"
-	comparisonLarge          = "large50"
-	comparisonPasswordKey    = "password"
-	comparisonID             = "u123"
-	comparisonOpaque         = "opaque-value"
-	comparisonEmailKey       = "email"
-	comparisonClean          = "clean"
-	comparisonEmail          = "alice@example.com"
-	comparisonMaskerName     = "go-masker"
-	comparisonPIIShieldName  = "pii-shield"
-	comparisonFerretName     = "ferret-scan"
-	comparisonMasqName       = "masq"
-	comparisonEmbargoName    = "embargo"
+	comparisonFlat          = "flat"
+	comparisonDLPName       = "godlp"
+	comparisonFormatterName = "slog-formatter"
+	comparisonCopyName      = "go-mask"
+	comparisonNested        = "nested"
+	comparisonLarge         = "large50"
+	comparisonPasswordKey   = "password"
+	comparisonID            = "u123"
+	comparisonOpaque        = "opaque-value"
+	comparisonEmailKey      = "email"
+	comparisonClean         = "clean"
+	comparisonEmail         = "alice@example.com"
+	comparisonMaskerName    = "go-masker"
+	comparisonPIIShieldName = "pii-shield"
+	comparisonFerretName    = "ferret-scan"
+	comparisonMasqName      = "masq"
+	comparisonEmbargoName   = "embargo"
+	// comparisonEmbargoDefault is the default scanner, whose detection breadth
+	// matches pii-shield's and ferret-scan's default policies.
+	comparisonEmbargoDefault = "embargo-default"
 	comparisonMap            = "map"
 	comparisonPassword       = "opaque-password"
 	comparisonRecovery       = "opaque-recovery"
@@ -81,8 +84,15 @@ type comparisonUser struct {
 	Count    int
 }
 
+// comparisonSensitiveKeys are the key names every keyed library is given.
+func comparisonSensitiveKeys() []string {
+	return []string{comparisonPasswordKey, "passwd", "secret", scenarioTokenKey, "api_key", "authorization", "cookie", "set-cookie", "recovery"}
+}
+
+// comparisonScanner selects email and card, the content rules masq and
+// go-masker are given here.
 func comparisonScanner() *embargo.Scanner {
-	return embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN), embargo.WithSensitiveKeys(comparisonPasswordKey, "passwd", "secret", "token", "api_key", "authorization", "cookie", "set-cookie", "recovery"))
+	return embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN), embargo.WithSensitiveKeys(comparisonSensitiveKeys()...))
 }
 
 func comparisonMasq() func([]string, slog.Attr) slog.Attr {
@@ -114,8 +124,8 @@ func (w piiShieldWriter) Write(line []byte) (int, error) {
 
 // comparisonFerret is ferret-scan's in-process engine with every default
 // check and its Simple strategy, which replaces each match with a marker.
-func comparisonFerret() *redact.Engine {
-	engine, err := redact.NewEngine(redact.EngineOptions{Strategy: redact.Simple})
+func comparisonFerret(checks ...string) *redact.Engine {
+	engine, err := redact.NewEngine(redact.EngineOptions{Checks: checks, Strategy: redact.Simple})
 	if err != nil {
 		panic(err)
 	}
@@ -155,10 +165,25 @@ func comparisonHandler(mode string, out io.Writer) slog.Handler {
 		options.ReplaceAttr = comparisonMasq()
 	}
 	h := slog.NewJSONHandler(out, options)
-	if mode == comparisonEmbargoName {
+	switch mode {
+	case comparisonEmbargoName:
 		return embargo.NewSlogHandler(h, comparisonScanner())
+	case comparisonEmbargoDefault:
+		return embargo.NewSlogHandler(h, embargo.NewScanner(embargo.WithSensitiveKeys(comparisonSensitiveKeys()...)))
 	}
 	return h
+}
+
+// speedHandler gives each library detection of similar breadth to the embargo
+// configuration it is timed against. masq and go-masker have email and card
+// rules and ferret-scan is narrowed to its EMAIL and CREDIT_CARD checks, all
+// against embargo with KindEmail and KindPAN. pii-shield cannot turn its
+// built-in detectors off, so it is timed against embargo's default scanner.
+func speedHandler(mode string, out io.Writer) slog.Handler {
+	if mode == comparisonFerretName {
+		return slog.NewJSONHandler(ferretWriter{engine: comparisonFerret("EMAIL", "CREDIT_CARD"), out: out}, &slog.HandlerOptions{})
+	}
+	return comparisonHandler(mode, out)
 }
 
 type comparisonCase struct {
@@ -251,9 +276,9 @@ func BenchmarkComparison(b *testing.B) {
 	for _, name := range []string{comparisonFlat, comparisonNested, comparisonMap, comparisonClean, comparisonLarge} {
 		attrs := events[name]
 		b.Run(name, func(b *testing.B) {
-			for _, mode := range []string{scenarioPlain, comparisonMasqName, comparisonEmbargoName, comparisonMaskerName, comparisonPIIShieldName, comparisonFerretName} {
+			for _, mode := range []string{scenarioPlain, comparisonMasqName, comparisonEmbargoName, comparisonEmbargoDefault, comparisonMaskerName, comparisonPIIShieldName, comparisonFerretName} {
 				b.Run(mode, func(b *testing.B) {
-					logger := slog.New(comparisonHandler(mode, io.Discard))
+					logger := slog.New(speedHandler(mode, io.Discard))
 					ctx := context.Background()
 					b.ReportAllocs()
 					b.ResetTimer()

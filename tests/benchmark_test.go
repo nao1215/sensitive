@@ -199,12 +199,27 @@ func (w *benchmarkWriter) Write(data []byte) (int, error) {
 func TestBenchmarkEventsMaskTheirSensitiveValues(t *testing.T) {
 	t.Parallel()
 	for name, attrs := range comparisonEvents() {
-		for _, mode := range []string{comparisonMasqName, comparisonEmbargoName} {
+		for _, mode := range []string{comparisonMasqName, comparisonEmbargoName, comparisonEmbargoDefault} {
 			t.Run(name+"/"+mode, func(t *testing.T) {
 				t.Parallel()
 				checkBenchmarkEvent(t, name, mode, attrs)
 			})
 		}
+	}
+}
+
+func TestSpeedConfigurationsMaskEmailAndCard(t *testing.T) {
+	t.Parallel()
+	attrs := comparisonEvents()[comparisonFlat]
+	for _, mode := range []string{comparisonMasqName, comparisonEmbargoName, comparisonEmbargoDefault, comparisonMaskerName, comparisonPIIShieldName, comparisonFerretName} {
+		t.Run(mode, func(t *testing.T) {
+			t.Parallel()
+			var out bytes.Buffer
+			slog.New(speedHandler(mode, &out)).LogAttrs(t.Context(), slog.LevelInfo, "request", attrs...)
+			if strings.Contains(out.String(), comparisonEmail) || strings.Contains(out.String(), "4111111111111111") || !json.Valid(out.Bytes()) {
+				t.Fatalf("timed configuration does not mask the flat event: %s", out.String())
+			}
+		})
 	}
 }
 

@@ -15,7 +15,7 @@ class ChartTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_time_uses_same_event_and_microseconds(self):
-        source = {'benchmarks': {'BenchmarkComparison/flat/'+mode: {'ns/op': value} for mode, value in zip(('plain', 'embargo', 'pii-shield', 'masq', 'go-masker'), (1000, 2000, 2500, 3000, 4000))}, 'date': '2026-01-01', 'cpu': 'fixture', 'versions': {'masq': 'v1', 'go-masker': 'v2', 'pii-shield': 'v3'}}
+        source = {'benchmarks': {'BenchmarkComparison/flat/'+mode: {'ns/op': value} for mode, value in zip(('plain', 'embargo', 'embargo-default', 'pii-shield', 'masq', 'go-masker'), (1000, 2000, 2200, 2500, 3000, 4000))}, 'date': '2026-01-01', 'cpu': 'fixture', 'versions': {'masq': 'v1', 'go-masker': 'v2', 'pii-shield': 'v3'}}
         svg = charts.event_chart(source)
         for label in ('1.00 µs', '2.00 µs', '2.50 µs', '3.00 µs', '4.00 µs', 'linear scale'):
             self.assertIn(label, svg)

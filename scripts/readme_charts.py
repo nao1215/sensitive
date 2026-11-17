@@ -15,12 +15,12 @@ EXTRA = (len(LIBRARIES)-6)*32
 
 def event_chart(measurement):
     rows = measurement['benchmarks']
-    modes = ('plain', 'embargo', 'pii-shield', 'masq', 'go-masker')
+    modes = ('plain', 'embargo', 'embargo-default', 'pii-shield', 'masq', 'go-masker')
     values = [rows['BenchmarkComparison/flat/'+mode]['ns/op']/1000 for mode in modes]
     if any(not math.isfinite(v) or v <= 0 for v in values):
         raise ValueError('event timings must be finite positive measurements')
     maximum = math.ceil(max(values)/2)*2
-    chart = SVG(1000, 407, 'Time per JSON slog event', 'Five labeled bars on the same linear microsecond axis. Lower is faster. Identical request message, email and card attributes; encoding and masking included.')
+    chart = SVG(1000, 449, 'Time per JSON slog event', 'Six labeled bars on the same linear microsecond axis. Lower is faster. Identical request message, email and card attributes; encoding and masking included.')
     chart.text(24, 34, 'Time per log event', 25)
     chart.text(24, 60, 'Same JSON slog event: request + email + card. Lower is faster.', 16)
     chart.text(24, 84, measurement['date']+' · '+measurement['cpu']+' · one CPU thread', 12)
@@ -28,16 +28,16 @@ def event_chart(measurement):
     for step in range(5):
         value = maximum*step/4
         x = left+width*step/4
-        chart.bar(round(x), 105, 1, 216, '#ccd2da')
-        chart.text(round(x, 2), 344, f'{value:g}', 13, anchor='middle')
-    labels = ('slog alone', 'slog + embargo', 'slog + pii-shield '+measurement['versions']['pii-shield'], 'slog + masq '+measurement['versions']['masq'], 'slog + go-masker '+measurement['versions']['go-masker'])
+        chart.bar(round(x), 105, 1, 258, '#ccd2da')
+        chart.text(round(x, 2), 386, f'{value:g}', 13, anchor='middle')
+    labels = ('slog alone', 'embargo: email, card', 'embargo: default', 'slog + pii-shield '+measurement['versions']['pii-shield'], 'slog + masq '+measurement['versions']['masq'], 'slog + go-masker '+measurement['versions']['go-masker'])
     for i, (label, value) in enumerate(zip(labels, values)):
         y = 113+i*42
         chart.text(24, y+21, label, 15)
-        chart.bar(left, y, width*value/maximum, 28, ('#617281', COLORS[0], COLORS[1], COLORS[3], COLORS[4])[i])
+        chart.bar(left, y, width*value/maximum, 28, ('#617281', COLORS[0], '#0b5f58', COLORS[1], COLORS[3], COLORS[4])[i])
         chart.text(round(left+width*value/maximum+10, 2), y+21, f'{value:.2f} µs', 14)
-    chart.text(left+width/2, 370, 'Time per event (microseconds; linear scale)', 15, anchor='middle')
-    chart.text(24, 394, 'Median of ten 200 ms samples; JSON to io.Discard; setup excluded. Policies and raw samples: doc/comparison.md.', 12)
+    chart.text(left+width/2, 412, 'Time per event (microseconds; linear scale)', 15, anchor='middle')
+    chart.text(24, 436, 'Median of ten 200 ms samples; JSON to io.Discard; setup excluded. masq and go-masker get email and card rules, pii-shield its default policy.', 12)
     return chart.render()
 
 
