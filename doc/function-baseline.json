@@ -1,0 +1,194 @@
+{
+  "functions": [
+    {
+      "file": "adapters/otel/span.go",
+      "name": "maskSpan",
+      "statements": 35,
+      "cyclomatic": 10,
+      "lines": 41
+    },
+    {
+      "file": "adapters/otel/values.go",
+      "name": "attributeSlice",
+      "statements": 36,
+      "cyclomatic": 16,
+      "lines": 51
+    },
+    {
+      "file": "adapters/sentry/adapter.go",
+      "name": "NewBeforeSend",
+      "statements": 42,
+      "cyclomatic": 12,
+      "lines": 62
+    },
+    {
+      "file": "cmd/embargo-audit/main.go",
+      "name": "run",
+      "statements": 24,
+      "cyclomatic": 8,
+      "lines": 35
+    },
+    {
+      "file": "embargotest/guard_names.go",
+      "name": "guardTests",
+      "statements": 40,
+      "cyclomatic": 18,
+      "lines": 57
+    },
+    {
+      "file": "embargotest/json.go",
+      "name": "jsonValue",
+      "statements": 37,
+      "cyclomatic": 15,
+      "lines": 54
+    },
+    {
+      "file": "embargotest/recorder.go",
+      "name": "Recorder.Check",
+      "statements": 32,
+      "cyclomatic": 13,
+      "lines": 46
+    },
+    {
+      "file": "embargotest/run.go",
+      "name": "Recorder.run",
+      "statements": 37,
+      "cyclomatic": 17,
+      "lines": 44
+    },
+    {
+      "file": "embargotest/value.go",
+      "name": "formatValue",
+      "statements": 37,
+      "cyclomatic": 20,
+      "lines": 62
+    },
+    {
+      "file": "http_handler.go",
+      "name": "eventScanner.maskHTTPHeaders",
+      "statements": 36,
+      "cyclomatic": 19,
+      "lines": 54
+    },
+    {
+      "file": "http_handler.go",
+      "name": "logHTTPExchange",
+      "statements": 28,
+      "cyclomatic": 8,
+      "lines": 38
+    },
+    {
+      "file": "internal/detect/aba.go",
+      "name": "ABARouting.scanNormalized",
+      "statements": 25,
+      "cyclomatic": 13,
+      "lines": 50
+    },
+    {
+      "file": "internal/detect/btc.go",
+      "name": "BTC.scanBech32",
+      "statements": 27,
+      "cyclomatic": 18,
+      "lines": 74
+    },
+    {
+      "file": "internal/detect/credential.go",
+      "name": "Credential.scanPlain",
+      "statements": 35,
+      "cyclomatic": 19,
+      "lines": 47
+    },
+    {
+      "file": "internal/detect/credential_authorization.go",
+      "name": "authorizationValueEnd",
+      "statements": 26,
+      "cyclomatic": 22,
+      "lines": 37
+    },
+    {
+      "file": "internal/detect/credential_render.go",
+      "name": "assignmentValue",
+      "statements": 18,
+      "cyclomatic": 12,
+      "lines": 26
+    },
+    {
+      "file": "internal/detect/iban.go",
+      "name": "ibanCountryLength",
+      "statements": 20,
+      "cyclomatic": 19,
+      "lines": 60
+    },
+    {
+      "file": "internal/detect/log_context.go",
+      "name": "numericLogContext.fragment",
+      "statements": 14,
+      "cyclomatic": 19,
+      "lines": 22
+    },
+    {
+      "file": "internal/detect/mynumber.go",
+      "name": "arnAccount",
+      "statements": 16,
+      "cyclomatic": 22,
+      "lines": 23
+    },
+    {
+      "file": "internal/detect/pan.go",
+      "name": "PAN.scanNormalized",
+      "statements": 28,
+      "cyclomatic": 20,
+      "lines": 49
+    },
+    {
+      "file": "internal/detect/phone_jp.go",
+      "name": "JPPhone.scanNormalized",
+      "statements": 33,
+      "cyclomatic": 16,
+      "lines": 64
+    },
+    {
+      "file": "internal/detect/service_token.go",
+      "name": "serviceTokenEnd",
+      "statements": 27,
+      "cyclomatic": 22,
+      "lines": 39
+    },
+    {
+      "file": "json.go",
+      "name": "jsonWalker.container",
+      "statements": 37,
+      "cyclomatic": 12,
+      "lines": 49
+    },
+    {
+      "file": "json.go",
+      "name": "jsonWalker.value",
+      "statements": 30,
+      "cyclomatic": 22,
+      "lines": 44
+    },
+    {
+      "file": "scanner.go",
+      "name": "Scanner.scan",
+      "statements": 9,
+      "cyclomatic": 5,
+      "lines": 14
+    },
+    {
+      "file": "scanner.go",
+      "name": "Scanner.scanInput",
+      "statements": 17,
+      "cyclomatic": 9,
+      "lines": 26
+    },
+    {
+      "file": "slog_handler.go",
+      "name": "slogHandler.sanitizeAttr",
+      "statements": 32,
+      "cyclomatic": 15,
+      "lines": 49
+    }
+  ],
+  "schema": 1
+}

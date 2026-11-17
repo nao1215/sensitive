@@ -5,25 +5,25 @@ This inventory states the owner's active maintenance policy and maps each rule t
 <!-- policy-map:start -->
 | Rule | Source | Check | Where it runs |
 |---|---|---|---|
-| Root has no requirements; tools use separate modules | CLAUDE.md | [root-module](../scripts/check_policies.py) | Verification |
-| Architecture and package inventory remain explicit | CLAUDE.md | [TestProductionPackageInventory](../tests/contracts/policy_test.go) | MultiPlatformUnitTest |
+| Root has no requirements; tools use separate modules | AGENTS.md | [root-module](../scripts/check_policies.py) | Verification |
+| Architecture and package inventory remain explicit | AGENTS.md | [TestProductionPackageInventory](../tests/contracts/policy_test.go) | MultiPlatformUnitTest |
 | Runtime cannot import test helpers or detector internals | Repository maintenance policy | [edges](../scripts/check_lint_contracts.py) | golangci-lint |
 | Secrets have no runtime dependencies or implicit SQL output | Repository maintenance policy | [TestSecretFilesHaveNoRuntimeDependencies](../tests/contracts/policy_test.go) | MultiPlatformUnitTest |
 | No struct-tag masking API; Reveal stays explicit | Repository maintenance policy | [api-boundary](../scripts/check_policies.py) | Verification |
-| No globals; check errors; use typed error comparisons | CLAUDE.md | [lint-config](../scripts/check_policies.py) | Verification |
+| No globals; check errors; use typed error comparisons | AGENTS.md | [lint-config](../scripts/check_policies.py) | Verification |
 | Constructor fields and receiver exceptions stay narrow | Repository maintenance policy | [addedContractField](../scripts/check_lint_contracts.py) | golangci-lint |
 | Printing exceptions apply only to runnable Examples | Repository maintenance policy | [TestUncheckedPrintingIsOnlyInExamples](../tests/contracts/policy_test.go) | MultiPlatformUnitTest |
-| Exported declarations and fields have useful English godoc | CLAUDE.md | [godoc](../scripts/check_prose.py) | Verification |
-| Runtime public API has runnable godoc Examples | CLAUDE.md | [TestExamplesAppearInGodoc](../doc_test.go) | MultiPlatformUnitTest |
+| Exported declarations and fields have useful English godoc | AGENTS.md | [godoc](../scripts/check_prose.py) | Verification |
+| Runtime public API has runnable godoc Examples | AGENTS.md | [TestExamplesAppearInGodoc](../doc_test.go) | MultiPlatformUnitTest |
 | README Go blocks equal runnable public Examples | Repository maintenance policy | [TestReadmeExamples](../doc_test.go) | MultiPlatformUnitTest |
 | Examples avoid private imports | Repository maintenance policy | [TestPublicExamplesOnlyImportPublicPackages](../doc_test.go) | MultiPlatformUnitTest |
 | API signatures and constant values require review | Repository maintenance policy | [TestAPIGoldenIncludesConstantValues](../tests/contracts/api_test.go) | MultiPlatformUnitTest |
 | Prose avoids filler, bold, emoji and wrapped paragraphs | Repository maintenance policy | [markdown](../scripts/check_prose.py) | Verification |
 | Godoc varies its openings and avoids repeated benchmark claims | Repository maintenance policy | [repeated-sentence](../scripts/check_prose.py) | Verification |
 | Tables fit a 120-character cell budget with reasoned exceptions | Repository maintenance policy | [table](../scripts/check_prose.py) | Verification |
-| Badge set, order, centered logo and sponsor link stay intact | CLAUDE.md | [branding](../scripts/check_policies.py) | Verification |
+| Badge set, order, centered logo and sponsor link stay intact | AGENTS.md | [branding](../scripts/check_policies.py) | Verification |
 | Root coverage is at least 97%; child modules are excluded | Repository maintenance policy | [acceptable: 97%](../.octocov.yml) | Coverage |
-| Tests run on three OSes and minimum/stable Go | CLAUDE.md | [macos-latest](../.github/workflows/unit_test.yml) | MultiPlatformUnitTest |
+| Tests run on three OSes and minimum/stable Go | AGENTS.md | [macos-latest](../.github/workflows/unit_test.yml) | MultiPlatformUnitTest |
 | BSD builds remain; unknown paths run full CI | Repository maintenance policy | [class](../scripts/test_ci_changes.py) | MultiPlatformUnitTest |
 | State failures clear Input and retain Secret snapshots | Repository maintenance policy | [TestQuintInputReplay](../tests/properties_test.go) | Verification |
 | Recorder requires observed bytes and checked expectations | Repository maintenance policy | [TestQuintRecorderReplay](../embargotest/recorder_test.go) | Verification |
@@ -32,9 +32,9 @@ This inventory states the owner's active maintenance policy and maps each rule t
 | Slog failures emit safe diagnostics and fixed errors | Repository maintenance policy | [TestSlogSuppressesNormalizationFailures](../slog_handler_test.go) | MultiPlatformUnitTest |
 | Structured masking preserves shape and bounds its work | Repository maintenance policy | [TestMaskJSONFailureBounds](../json_test.go) | MultiPlatformUnitTest |
 | HTTP interim responses share the retention budget | Repository maintenance policy | [TestInformationalHeadersConsumeTotalBudget](../embargotest/detector_test.go) | MultiPlatformUnitTest |
-| Hint dispatch agrees with exhaustive scanning | CLAUDE.md | [TestDispatchDifferential](../scanner_dispatch_test.go) | MultiPlatformUnitTest |
-| Clean scanning retains deterministic allocation gates | CLAUDE.md | [TestCleanScanAllocationBudget](../scanner_dispatch_test.go) | MultiPlatformUnitTest |
-| Full-width numeric positions map to original bytes | CLAUDE.md | [TestNormalizationIdentityDifferential](../internal/detect/fullwidth_test.go) | MultiPlatformUnitTest |
+| Hint dispatch agrees with exhaustive scanning | AGENTS.md | [TestDispatchDifferential](../scanner_dispatch_test.go) | MultiPlatformUnitTest |
+| Clean scanning retains deterministic allocation gates | AGENTS.md | [TestCleanScanAllocationBudget](../scanner_dispatch_test.go) | MultiPlatformUnitTest |
+| Full-width numeric positions map to original bytes | AGENTS.md | [TestNormalizationIdentityDifferential](../internal/detect/fullwidth_test.go) | MultiPlatformUnitTest |
 | Confidence is a score; business labels keep lower-confidence findings | Repository maintenance policy | [TestBusinessLabelsAtFieldBoundaries](../internal/detect/label_test.go) | MultiPlatformUnitTest |
 | IP unspecified and loopback addresses are excluded | Repository maintenance policy | [Test](../internal/detect/ipaddr_test.go) | MultiPlatformUnitTest |
 | Adapters stay isolated and work without local replace directives | Repository maintenance policy | [replace](../scripts/check_adapter_dependencies.py) | MultiPlatformUnitTest |
@@ -56,7 +56,7 @@ This inventory states the owner's active maintenance policy and maps each rule t
 | PR titles are English Conventional Commits without agent trailers | Repository maintenance policy | [pr-metadata](../scripts/check_policies.py) | Verification |
 | Squash only the owned PR after green CI and resolved review | Repository maintenance policy | [check_merge](../scripts/check_merge.py) | Pre-merge audit |
 | No force push or third-party mutations; release only when requested | Repository maintenance policy | [owned_repository](../scripts/check_merge.py) | Pre-merge audit |
-| Production fixes retain failing-first evidence | CLAUDE.md | [regression-evidence](../scripts/check_policies.py) | Verification |
+| Production fixes retain failing-first evidence | AGENTS.md | [regression-evidence](../scripts/check_policies.py) | Verification |
 | Guard diagnostics validate names and track active tests | Repository maintenance policy | [TestGuardNamesAtLeak](../embargotest/guard_names_test.go) | MultiPlatformUnitTest |
 | Critical recall cannot drop or retain unmasked expected bytes | Repository maintenance policy | [TestSeverityAccuracy](../tests/severity_test.go) | MultiPlatformUnitTest |
 | README techniques link bug classes to individual sections | Repository maintenance policy | [test_readme_links_each_bug_to_its_section](../scripts/test_testing_techniques.py) | Verification |
@@ -104,7 +104,8 @@ This inventory states the owner's active maintenance policy and maps each rule t
 | Every measured library runs every chart scenario and controls remain visible | Comparison policy | [TestComparisonScenarios](../tests/comparison_test.go) | MultiPlatformUnitTest |
 | Changed root statements require coverage or a source-bound triage exception | Repository maintenance policy | [def check(](../scripts/diff_coverage.py) | Coverage |
 | Mutation package scores and coverage cannot fall below recorded floors | Repository maintenance policy | [def check(](../scripts/mutation_gate.py) | Heavy verification |
-| Documented packages and coverage match Go and the coverage gate | CLAUDE.md | [documentation-contract](../scripts/check_policies.py) | Verification |
+| Documented packages and coverage match Go and the coverage gate | AGENTS.md | [documentation-contract](../scripts/check_policies.py) | Verification |
+| Growth in large functions requires a reviewed baseline update | AGENTS.md | [function-growth](../scripts/check_policies.py) | Verification |
 <!-- policy-map:end -->
 
 The TDD rule requires a failing regression before a production fix. Record that evidence in the PR or external work report; CI checks that the regression remains. Test readability, useful explanations, false-positive labeling and table layout retain human review alongside executable checks.

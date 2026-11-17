@@ -45,9 +45,18 @@ class PolicyTests(unittest.TestCase):
     def test_documented_inventory_and_coverage_reject_drift(self):
         for text in ('<!-- packages:start -->\n<!-- packages:end -->\nCoverage: 97%',
                      '<!-- packages:start -->\n'+('- `example.com/module`\n'*7)+'<!-- packages:end -->\nCoverage: 80%'):
-            with patch.object(policies.subprocess, 'check_output', return_value='example.com/module\n'), patch.object(policies, 'read', side_effect=lambda path: 'acceptable: 97%' if path == '.octocov.yml' else text):
+            with patch.object(policies.subprocess, 'check_output', return_value='example.com/module\n'), patch.object(policies, 'read', side_effect=lambda path: {'CLAUDE.md': '@AGENTS.md\n', '.octocov.yml': 'acceptable: 97%'}.get(path, text)):
                 with self.assertRaises(ValueError):
                     policies.documentation_contract()
+
+    def test_shared_agent_guide_is_the_documentation_source(self):
+        text = '<!-- packages:start -->\n' + '- `example.com/module`\n'*7 + '<!-- packages:end -->\nCoverage: 97%'
+        files = {'AGENTS.md': text, 'CLAUDE.md': '@AGENTS.md\n', '.octocov.yml': 'acceptable: 97%'}
+        with patch.object(policies.subprocess, 'check_output', return_value='example.com/module\n'), patch.object(policies, 'read', side_effect=files.__getitem__):
+            policies.documentation_contract()
+            files['CLAUDE.md'] = 'a separate guide'
+            with self.assertRaisesRegex(ValueError, 'shared agent guide'):
+                policies.documentation_contract()
 
     def test_root_dependencies(self):
         for manifest in ({'Require':[{'Path':'example.com/runtime'}]}, {'Tool':['example.com/tool']}):
