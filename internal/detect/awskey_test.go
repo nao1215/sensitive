@@ -103,8 +103,29 @@ func TestAWSKeyDetector_Hints(t *testing.T) {
 
 	d := NewAWSKey()
 	hints := d.Hints()
-	if len(hints) != 2 {
-		t.Errorf("Hints() returned %d hints, want 2", len(hints))
+	if len(hints) != 4 {
+		t.Errorf("Hints() returned %d hints, want 4", len(hints))
+	}
+}
+
+func TestAWSKeyDetector_AccessKeyIDPrefixes(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		text string
+		want int
+	}{
+		{"id=ABIA4IJJUBZ7XCVN5NKX end", 1},
+		{"id=ACCA4KVAPB54O5JEN3ZV end", 1},
+		{"id=AGPA4KVAPB54O5JEN3ZV end", 0},
+		{"id=XBIA4IJJUBZ7XCVN5NKX end", 0},
+	} {
+		t.Run(tc.text, func(t *testing.T) {
+			t.Parallel()
+			if got := len(NewAWSKey().Scan([]byte(tc.text))); got != tc.want {
+				t.Errorf("Scan(%q) returned %d findings, want %d", tc.text, got, tc.want)
+			}
+		})
 	}
 }
 

@@ -365,3 +365,44 @@ func TestCredentialMismatchedContainerEnds(t *testing.T) {
 		})
 	}
 }
+
+func TestCredentialAssignmentOperators(t *testing.T) {
+	t.Parallel()
+	scanner := &Credential{}
+	for _, tc := range []struct{ text, want string }{
+		{`{"api_token" => "opaque12"}`, `{"api_token" => "********"}`},
+		{`{:password=>"opaque12"}`, `{:password=>"********"}`},
+		{`    [api_token] => opaque12`, `    [api_token] => ********`},
+		{`API_TOKEN ::= "opaque12"`, `API_TOKEN ::= "********"`},
+		{`API_TOKEN :::= "opaque12"`, `API_TOKEN :::= "********"`},
+		{`API_TOKEN ?= "opaque12"`, `API_TOKEN ?= "********"`},
+		{`$apiToken .= "opaque12"`, `$apiToken .= "********"`},
+		{`token ||= "opaque12"`, `token ||= "********"`},
+		{`password += "opaque12"`, `password += "********"`},
+		{`var apiToken string = "opaque12"`, `var apiToken string = "********"`},
+		{`val apiToken: String = "opaque12"`, `val apiToken: String = "********"`},
+		{`let token: &str = "opaque12";`, `let token: &str = "********";`},
+		{`token == "opaque12"`, `token == "********"`},
+	} {
+		if got := maskCredentialFindings(tc.text, scanner.Scan([]byte(tc.text))); got != tc.want {
+			t.Errorf("Scan(%q) masked to %q, want %q", tc.text, got, tc.want)
+		}
+	}
+}
+
+func TestCredentialOperatorLookalikesStayVisible(t *testing.T) {
+	t.Parallel()
+	scanner := &Credential{}
+	for _, text := range []string{
+		`if token != nil { return }`,
+		`items[3] => done`,
+		`name string = "visible"`,
+		`string = "visible"`,
+		`items[] = visible`,
+		`list] = visible`,
+	} {
+		if got := scanner.Scan([]byte(text)); len(got) != 0 {
+			t.Errorf("Scan(%q) = %+v, want none", text, got)
+		}
+	}
+}

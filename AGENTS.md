@@ -67,6 +67,7 @@ Bech32 candidates use ASCII alphanumeric bytes; case consistency and checksum va
 - python3 scripts/quality_gate.py false-positives --cache CACHE checks checksum-pinned real logs.
 - python3 scripts/detection_changes.py --base origin/main --cache CACHE checks the findings snapshot.
 - python3 scripts/ci_benchmark.py --base origin/main --head HEAD runs the paired benchmark gate.
+- python3 scripts/gitleaks_oracle.py --cache DIR measures detection breadth against the generated gitleaks rule examples; DIR must be outside the repository because the examples look like real credentials.
 - make mutation runs full per-package mutation checks and reruns timed-out mutants alone; make mutation-diff BASE=origin/main mutates only changed lines while working; make fuzz discovers and exercises root fuzz targets.
 
 Run heavy jobs one at a time with GOMAXPROCS at most 4. Use existing commands and inspect failed evidence before repeating a job. Do not weaken a gate to accommodate a refactor. Keep benchmark evidence on the same machine with alternating revision order.

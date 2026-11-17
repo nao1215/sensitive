@@ -29,12 +29,11 @@ func redactedCredentialValue(data []byte) bool {
 // assignmentValue owns boundaries for credential-key values in text and Go fmt output.
 func assignmentValue(data []byte, start int, key string, formatted bool) (valueStart, valueEnd int) {
 	fieldStart := start
-	if start < len(data) && data[start] == '=' {
-		start++
-	} // Go's := assignment.
+	start = assignmentOperatorEnd(data, start)
 	for start < len(data) && (data[start] == ' ' || data[start] == '\t') {
 		start++
 	}
+	start = typeAnnotationEnd(data, start)
 	if start == len(data) {
 		return start, start
 	}
@@ -52,6 +51,50 @@ func assignmentValue(data []byte, start int, key string, formatted bool) (valueS
 	}
 
 	return credentialUnenclosedValue(data, start, key, formatted, markerPrefix)
+}
+
+// assignmentOperatorEnd skips the rest of a multi-byte assignment operator
+// whose first byte, data[start-1], was the separator: Go and Make :=, Make
+// ::= and :::=, and the Ruby, PHP and Perl hash arrow =>. A doubled == keeps
+// its historical treatment as an assignment.
+func assignmentOperatorEnd(data []byte, start int) int {
+	if start == 0 || start >= len(data) {
+		return start
+	}
+	if data[start-1] == '=' && data[start] == '>' {
+		return start + 1
+	}
+	at := start
+	for at < len(data) && at-start < 2 && data[start-1] == ':' && data[at] == ':' {
+		at++
+	}
+	if at < len(data) && data[at] == '=' {
+		return at + 1
+	}
+	return start
+}
+
+// typeAnnotationEnd skips a string type annotation between a key and its
+// initializer, as in TypeScript, Kotlin, Scala or Swift name: String = value.
+func typeAnnotationEnd(data []byte, start int) int {
+	for _, name := range []string{"string", "String", "str", "&str"} {
+		if !hasASCIIPrefix(data, start, name) {
+			continue
+		}
+		at := skipBlanks(data, start+len(name))
+		if hasASCIIPrefix(data, at, "=") && !hasASCIIPrefix(data, at, "==") {
+			return skipBlanks(data, at+1)
+		}
+	}
+	return start
+}
+
+// skipBlanks returns the first position at or after at that is not a space or tab.
+func skipBlanks(data []byte, at int) int {
+	for at < len(data) && (data[at] == ' ' || data[at] == '\t') {
+		at++
+	}
+	return at
 }
 
 func credentialEnclosedValue(data []byte, start int, key string) (begin, end int, ok bool) {
@@ -295,9 +338,13 @@ func credentialUnenclosedValue(data []byte, start int, key string, formatted, ma
 }
 
 func (d *Credential) credentialKey(data []byte, end int) []byte {
+	end = compoundOperatorStart(data, end)
 	key := assignmentKey(data, end)
 	if d.secretKey(key) {
 		return key
+	}
+	if typed := typedDeclarationKey(data, end, key); typed != nil && d.secretKey(typed) {
+		return typed
 	}
 	for end > 0 && (data[end-1] == ' ' || data[end-1] == '\t') {
 		end--
@@ -316,18 +363,80 @@ func (d *Credential) credentialKey(data []byte, end int) []byte {
 	return nil
 }
 
+// compoundOperatorStart moves a separator position back over the first bytes
+// of ?=, +=, ||= and PHP's spaced .= so the key before them is found.
+func compoundOperatorStart(data []byte, end int) int {
+	if end == 0 || data[end] != '=' {
+		return end
+	}
+	switch {
+	case data[end-1] == '?' || data[end-1] == '+':
+		return end - 1
+	case hasASCIIPrefix(data, end-len("||"), "||"):
+		return end - len("||")
+	case data[end-1] == '.' && end > 1 && (data[end-2] == ' ' || data[end-2] == '\t'):
+		return end - 1
+	}
+	return end
+}
+
+// typedDeclarationKey returns the name in a typed declaration such as Go's
+// var name string = value, where the word before the separator is the type.
+func typedDeclarationKey(data []byte, end int, key []byte) []byte {
+	switch string(key) {
+	case "string", "[]byte":
+	default:
+		return nil
+	}
+	for end > 0 && (data[end-1] == ' ' || data[end-1] == '\t') {
+		end--
+	}
+	start := end - len(key)
+	if start < 2 || (data[start-1] != ' ' && data[start-1] != '\t') {
+		return nil
+	}
+	return assignmentKey(data, start-1)
+}
+
+// bracketKey returns name from a key written as [name] before end, as PHP
+// print_r and var_export render array keys and form encodings nest fields.
+func bracketKey(data []byte, end int) []byte {
+	if end == 0 || data[end-1] != ']' {
+		return nil
+	}
+	start := end - 1
+	for start > 0 && data[start-1] != '[' && data[start-1] != '\n' && data[start-1] != ' ' {
+		start--
+	}
+	if start == 0 || data[start-1] != '[' || start == end-1 {
+		return nil
+	}
+	return data[start : end-1]
+}
+
+// quotedKey returns the contents of a quoted key that closes at end.
+func quotedKey(data []byte, end int) (key []byte, quoted bool) {
+	if end == 0 || (data[end-1] != '"' && data[end-1] != '\'') {
+		return nil, false
+	}
+	quote := data[end-1]
+	end--
+	start := end
+	for start > 0 && data[start-1] != quote && data[start-1] != '\n' {
+		start--
+	}
+	return data[start:end], true
+}
+
 func assignmentKey(data []byte, end int) []byte {
 	for end > 0 && (data[end-1] == ' ' || data[end-1] == '\t') {
 		end--
 	}
-	if end > 0 && (data[end-1] == '"' || data[end-1] == '\'') {
-		quote := data[end-1]
-		end--
-		start := end
-		for start > 0 && data[start-1] != quote && data[start-1] != '\n' {
-			start--
-		}
-		return data[start:end]
+	if key := bracketKey(data, end); key != nil {
+		return key
+	}
+	if key, quoted := quotedKey(data, end); quoted {
+		return key
 	}
 	start := end
 	for start > 0 && (ascii.IsAlphaNum(data[start-1]) || strings.ContainsRune("_-.", rune(data[start-1]))) {

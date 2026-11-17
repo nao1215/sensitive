@@ -79,6 +79,11 @@ func credentialSuffix(key string) bool {
 	if key == "" {
 		return false
 	}
+	// Numbered keys such as api_token_2 or password1 keep their meaning.
+	if trimmed := strings.TrimRight(key, "0123456789"); trimmed != key && trimmed != "" {
+		trimmed = strings.TrimRight(trimmed, "_.- ")
+		return trimmed != "" && credentialSuffix(trimmed)
+	}
 	var candidates []string
 	switch key[len(key)-1] | 0x20 {
 	case 'd':
@@ -89,10 +94,12 @@ func credentialSuffix(key string) bool {
 		candidates = []string{credentialTokenKey}
 	case 'l':
 		candidates = []string{string(NameCredential)}
+	case 's':
+		candidates = []string{"credentials", "creds"}
 	case 'h':
 		candidates = []string{"auth"}
 	case 'y':
-		candidates = []string{"key"}
+		candidates = []string{"key", "apikey", "accesskey", "secretkey", "privatekey"}
 	default:
 		return false
 	}

@@ -19,7 +19,7 @@ func (*Credential) Name() DetectorName { return NameCredential }
 
 // Hints returns delimiters required by every supported credential form.
 func (*Credential) Hints() [][]byte {
-	return [][]byte{[]byte(":"), []byte("="), []byte("AKIA"), []byte("ASIA"), []byte("Bearer "), []byte("Basic ")}
+	return [][]byte{[]byte(":"), []byte("="), []byte("</"), []byte("AKIA"), []byte("ASIA"), []byte("ABIA"), []byte("ACCA"), []byte("Bearer "), []byte("Basic ")}
 }
 
 // Scan returns only secret spans, never their surrounding configuration fields.
@@ -108,9 +108,7 @@ func (d *Credential) scanPlain(data []byte) []Finding {
 			i = end - 1
 		}
 	}
-	out = append(out, formattedURLPasswords(data)...)
-	out = append(out, awsSecretPair(data)...)
-	out = append(out, quotedAuthorization(data)...)
+	out = d.appendContextCredentials(out, data)
 	// Context and assignment recognizers may identify the same credential.
 	slices.SortFunc(out, func(a, b Finding) int {
 		if n := cmp.Compare(a.Start, b.Start); n != 0 {
@@ -119,6 +117,16 @@ func (d *Credential) scanPlain(data []byte) []Finding {
 		return cmp.Compare(a.End, b.End)
 	})
 	return slices.CompactFunc(out, func(a, b Finding) bool { return a.Start == b.Start && a.End == b.End })
+}
+
+// appendContextCredentials adds credentials recognized by their surrounding
+// syntax rather than by an assignment separator.
+func (d *Credential) appendContextCredentials(out []Finding, data []byte) []Finding {
+	out = append(out, formattedURLPasswords(data)...)
+	out = append(out, awsSecretPair(data)...)
+	out = append(out, quotedAuthorization(data)...)
+	out = append(out, d.xmlElementCredentials(data)...)
+	return append(out, curlUserPasswords(data)...)
 }
 
 // urlUserinfoColon advances urlIndex past URL findings starting at or before i

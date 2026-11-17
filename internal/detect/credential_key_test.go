@@ -97,3 +97,46 @@ func TestCredentialCamelAcronymBoundaries(t *testing.T) {
 		}
 	}
 }
+
+func TestCredentialNumberedKeys(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		key  string
+		want bool
+	}{
+		{"api_token_2", true},
+		{"password1", true},
+		{"DB_PASSWORD_02", true},
+		{"some_api_token_123", true},
+		{"sha256", false},
+		{"oauth2", false},
+		{"token_count_2", false},
+		{"123", false},
+	} {
+		if got := credentialSuffix(tc.key); got != tc.want {
+			t.Errorf("credentialSuffix(%q) = %v, want %v", tc.key, got, tc.want)
+		}
+	}
+}
+
+func TestCredentialPluralAndJoinedKeySegments(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		key  string
+		want bool
+	}{
+		{"credentials", true},
+		{"aws_credentials", true},
+		{"creds", true},
+		{"SUMOLOGIC_ACCESSKEY", true},
+		{"stripeSecretKey", true},
+		{"service_apikey", true},
+		{"monkeys", false},
+		{"descriptions", false},
+		{"turkey", false},
+	} {
+		if got := credentialSuffix(tc.key); got != tc.want {
+			t.Errorf("credentialSuffix(%q) = %v, want %v", tc.key, got, tc.want)
+		}
+	}
+}

@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+The default scanner now recognizes about 70 more provider credential layouts and more assignment syntax, measured against the true-positive examples of the gitleaks v8.30.0 rules: it masks 5930 of 6368 generated lines (4349 before) and 321 of 539 bare secrets (105 before). The eight pinned public log datasets produce exactly the same findings as before.
+
+### Added
+
+- `scripts/gitleaks_oracle.py --cache DIR` generates the gitleaks rule examples outside the repository and prints how many the default scanner masks; doc/credentials.md records the result and the layouts.
+
+### Detection changes
+
+- `KindServiceToken` recognizes provider layouts from DigitalOcean, Shopify, HashiCorp Vault and Terraform, Databricks, Doppler, Dynatrace, Postman, Pulumi, Sentry, Grafana, Hugging Face, New Relic, Twilio API keys, Microsoft Entra client secrets, Telegram bots, MaxMind, Mailchimp, Facebook, PlanetScale, Sourcegraph, 1Password, age, Alibaba Cloud, AWS Bedrock, more GitLab prefixes and others listed in doc/credentials.md, plus Slack workflow and trigger webhooks with or without a scheme and Microsoft Teams incoming webhooks. GitLab tokens now include dot-separated routing suffixes, and a prefix followed by one repeated byte, such as `glpat-xxxxxxxxxxxxxxxxxxxx`, is treated as a placeholder and left visible.
+- `KindAWSKey` also recognizes ABIA and ACCA access-key IDs, and `KindSlackToken` recognizes `xoxe-` tokens.
+- `KindCredential` accepts `::=`, `:::=`, `?=`, `+=`, `||=` and spaced `.=` operators, Go typed declarations (`var token string = "..."`), string type annotations (`token: String = "..."`), PHP `print_r` keys (`[api_token] => ...`), XML elements named by a credential key (`<wsse:Password>...</wsse:Password>`), curl `-u`/`--user` passwords, keys with a numeric suffix such as `api_token_2`, `credentials`, `creds` and joined `ACCESSKEY`, `SECRETKEY`, `APIKEY` or `PRIVATEKEY` segments.
+
+### Fixed
+
+- A credential written with the Ruby, Perl or PHP hash arrow (`{"api_token" => "value"}`, the default Ruby `inspect` output) or a Make `::=` operator was not masked: only the `>` or `:` after the separator was replaced and the value stayed visible.
+
 ## [0.11.0] - 2026-11-18
 
 The command-line tool is now `embargo`: by default it masks each line of files or stdin, keeping JSON lines' shape, and `embargo --report` replaces `embargo-audit`. Masking is faster with fewer allocations and unchanged output. The public library API only adds `KindUSPhone`, and the root module remains dependency-free. Upgrade every installed adapter to v0.11.0 after the adapter tags are published.

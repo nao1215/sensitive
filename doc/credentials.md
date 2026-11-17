@@ -22,6 +22,82 @@ The parser consumes original bytes so percent-encoded delimiters remain part of 
 | Azure | [Connection strings](https://learn.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string) | [KindCredential](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCredential) |
 | AWS | [Access-key pairs](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html), [query authentication](https://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html) | [KindCredential](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCredential) |
 | Twilio | [API key resource](https://www.twilio.com/docs/iam/api-keys/resource-v2010), [Auth Token](https://www.twilio.com/docs/iam/api/authtoken) | [KindCredential](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCredential) |
+| About 70 further providers | [gitleaks v8.30.0 default rules](https://github.com/gitleaks/gitleaks/tree/v8.30.0/cmd/generate/config/rules) | [KindServiceToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindServiceToken), layouts below |
+
+The layouts below follow the gitleaks rules named in the table, without the keyword that many gitleaks rules require, so each prefix must be distinctive on its own. Hex means 0-9 and a-f; alnum means ASCII letters and digits; token bytes add _ and -; base64 adds + and / and allows trailing = padding. A body made of one repeated byte is treated as a placeholder.
+
+| Provider | Layout |
+|---|---|
+| 1Password | ops_eyJ + 250 or more base64; A3- + upper-case alnum groups 6-11-5-5-5 or 6-6-5-5-5-5 |
+| Adobe | p8e- + 32 alnum |
+| age | AGE-SECRET-KEY-1 + 58 upper-case Bech32 |
+| Airtable | pat + 14 alnum + . + 64 hex |
+| Alibaba Cloud | LTAI + 20 alnum |
+| AWS Bedrock | ABSK + 109 to 269 base64; bedrock-api-key- + 20 or more base64 |
+| Clojars | CLOJARS_ + 60 alnum |
+| Cloudflare origin CA | v1.0- + 24 hex + - + 146 hex |
+| Databricks | dapi + 32 hex, optionally - and a digit |
+| Defined Networking | dnkey- + 26 token bytes or = + - + 52 more |
+| DigitalOcean | doo_v1_, dop_v1_ or dor_v1_ + 64 hex |
+| Doppler | dp.pt. + 43 alnum |
+| Duffel | duffel_test_ or duffel_live_ + 43 token bytes or = |
+| Dynatrace | dt0c01. + 24 alnum + . + 64 alnum |
+| EasyPost | EZAK or EZTK + 54 alnum |
+| Facebook | EAAM or EAAC + 100 or more alnum; app ID of 15 or 16 digits + \| + 27 to 40 token bytes |
+| Flutterwave | FLWSECK_TEST- or FLWSECK- + 32 of 0-9 and a-h + -X; FLWSECK_TEST- + 12 of them |
+| Fly.io | fo1_ + 43 token bytes; fm1a_, fm1r_ or fm2_ + 100 or more base64 |
+| Frame.io | fio-u- + 64 token bytes or = |
+| GitLab | glptt- + 40 hex; the token prefixes in KindServiceToken |
+| Grafana | glc_ + 32 to 400 base64; glsa_ + 32 alnum + _ + 8 hex; eyJrIjoi + 70 to 400 alnum |
+| Harness | pat. or sat. + 22 token bytes + . + 24 alnum + . + 20 alnum |
+| HashiCorp Terraform | 14 alnum + .atlasv1. + 60 to 70 token bytes or = |
+| HashiCorp Vault | hvs. + 90 to 300 token bytes; hvb. + 138 to 300 |
+| Heroku | HRKU-AA + 58 token bytes |
+| Hugging Face | hf_ or api_org_ + 34 letters |
+| Infracost | ico- + 32 alnum |
+| JFrog Artifactory | AKCp + 69 alnum; cmVmd + 59 alnum |
+| Linear | lin_api_ + 40 alnum |
+| Mailchimp | 32 hex + -us + 2 digits |
+| Mailgun | key- + 32 hex |
+| MaxMind | 6 alnum + _ + 29 alnum + _mmk |
+| Microsoft Entra | 3 of alnum, _, ~ or dot + a digit + Q~ + 31 to 34 of those or - |
+| Microsoft Teams | https://*.webhook.office.com/webhookb2/ path with /IncomingWebhook/ |
+| New Relic | NRAK- + 27 alnum; NRJS- + 19 hex; NRII- + 32 token bytes |
+| Notion | ntn_ + 46 alnum |
+| Octopus Deploy | API- + 26 upper-case alnum |
+| OpenAI | sk-admin- + 16 or more token bytes; sk- + 48 alnum |
+| OpenShift | sha256~ + 43 token bytes |
+| Perplexity | pplx- + 48 alnum |
+| Plaid | access-sandbox-, access-development- or access-production- + a lower-case UUID |
+| PlanetScale | pscale_tkn_, pscale_oauth_ or pscale_pw_ + 32 to 64 token bytes, = or dots |
+| Postman | PMAK- + 24 hex + - + 34 hex |
+| Prefect | pnu_ + 36 alnum |
+| Pulumi | pul- + 40 hex |
+| ReadMe | rdme_ + 70 lower-case alnum |
+| RubyGems | rubygems_ + 48 hex |
+| Scalingo | tk-us- + 48 token bytes |
+| Brevo | xkeysib- + 64 hex + - + 16 alnum |
+| Sentry | sntryu_ + 64 hex; sntrys_eyJ + 20 or more base64 or _ |
+| SettleMint | sm_aat_, sm_pat_ or sm_sat_ + 16 alnum |
+| Shippo | shippo_live_ or shippo_test_ + 40 hex of either case |
+| Shopify | shpat_, shpca_, shppa_ or shpss_ + 32 hex of either case |
+| Slack | xapp- + digit + - + alnum + - + digits + - + 32 or more alnum; workflow and trigger webhook URLs |
+| SonarQube | squ_, sqp_ or sqa_ + 40 alnum |
+| Sourcegraph | sgp_ + 16 hex + _ + 40 hex, sgp_local_ + 40 hex or sgp_ + 40 hex |
+| Telegram | bot ID of 5 to 16 digits + : + A + 34 token bytes, also after /bot in Bot API URLs |
+| Twilio | SK + 32 hex of either case |
+| Typeform | tfp_ + 59 token bytes, = or dots |
+| Yandex Cloud | AQVN + 35 to 38 token bytes |
+| 42 | s-s4t2ud- or s-s4t2af- + 64 hex |
+
+Run `python3 scripts/gitleaks_oracle.py --cache DIR` with DIR outside the repository to measure the default scanner against the true-positive lines that gitleaks validates while generating its rules: each rule's sample secret placed in 26 key-and-syntax forms, plus the secret alone after a non-credential word. The examples resemble real credentials, so they stay in the cache. On gitleaks v8.30.0 the default scanner masks:
+
+| Input | Examples masked | Rules fully masked |
+|---|---|---|
+| Generated lines with keys and syntax | 5930/6368 (93.1%) | 118/215 |
+| Bare secrets without a key | 321/539 (59.6%) | 110/215 |
+
+Version 0.11.0 masked 4349 lines covering 27 rules and 105 bare secrets covering 18 rules on the same examples. The remaining bare secrets are mostly rules whose secret is a plain hexadecimal or alphanumeric string identified only by a nearby provider name such as `discord` or `heroku`; embargo masks those values when the key itself names a credential. A bare curl user:password example also counts as missed because embargo keeps the username visible, as it does in URL userinfo. Of the 438 lines it still misses, 296 are base64-encoded JWTs without a key and 105 are Java `System.setProperty("NAME_TOKEN", "value")` calls, which are source code rather than log output.
 
 The general minimum suffix length is a conservative detector heuristic, not a vendor specification. Prefix matching does not validate token checksums or revocation. Formats can evolve; public examples are the evidence, and local synthetic tests never use real keys.
 
