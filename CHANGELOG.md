@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-The command-line tool is now `embargo`: by default it masks each line of files or stdin, keeping JSON lines' shape, and `embargo --report` replaces `embargo-audit`. Masking is faster with fewer allocations and unchanged output. The public library API is unchanged and the root module remains dependency-free.
+The command-line tool is now `embargo`: by default it masks each line of files or stdin, keeping JSON lines' shape, and `embargo --report` replaces `embargo-audit`. Masking is faster with fewer allocations and unchanged output. The public library API only adds `KindUSPhone`, and the root module remains dependency-free.
 
 ### Added
 
