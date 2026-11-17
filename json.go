@@ -132,28 +132,43 @@ func (w *jsonWalker) value(ctx context.Context, depth int, key string, hidden bo
 			return err
 		}
 	case '"':
-		raw := w.stringToken()
-		if !hidden {
-			if err := w.stringElement(ctx, raw, key); err != nil {
-				return err
-			}
+		if err := w.stringField(ctx, key, hidden); err != nil {
+			return err
 		}
 	default:
-		start := w.pos
-		for w.pos < len(w.data) {
-			c := w.data[w.pos]
-			if c == ',' || c == ']' || c == '}' || c == ' ' || c == '\n' || c == '\r' || c == '\t' {
-				break
-			}
-			w.pos++
-		}
-		if !hidden {
-			if err := w.scalar(ctx, w.data[start:w.pos], key); err != nil {
-				return err
-			}
+		if err := w.literal(ctx, key, hidden); err != nil {
+			return err
 		}
 	}
 	return w.err
+}
+
+// stringField consumes a string value and masks it unless a sensitive key
+// above it already replaced the whole value.
+func (w *jsonWalker) stringField(ctx context.Context, key string, hidden bool) error {
+	raw := w.stringToken()
+	if hidden {
+		return nil
+	}
+	return w.stringElement(ctx, raw, key)
+}
+
+// literal consumes a number, boolean or null lexeme, which ends at the first
+// structural delimiter or whitespace byte, and masks it unless hidden;
+// json.Valid owns its grammar.
+func (w *jsonWalker) literal(ctx context.Context, key string, hidden bool) error {
+	start := w.pos
+	for w.pos < len(w.data) {
+		c := w.data[w.pos]
+		if c == ',' || c == ']' || c == '}' || c == ' ' || c == '\n' || c == '\r' || c == '\t' {
+			break
+		}
+		w.pos++
+	}
+	if hidden {
+		return nil
+	}
+	return w.scalar(ctx, w.data[start:w.pos], key)
 }
 
 func (w *jsonWalker) scalar(ctx context.Context, raw []byte, key string) error {
@@ -187,36 +202,53 @@ func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidde
 		fieldContext := key
 		pathDepth := len(w.path)
 		if open == '{' {
-			raw := w.stringToken()
-			if !hidden {
-				var err error
-				fieldContext, err = w.objectKey(ctx, raw)
-				if err != nil {
-					return err
-				}
-				w.appendResult([]byte{':'})
+			var err error
+			if fieldContext, err = w.memberKey(ctx, key, hidden); err != nil {
+				return err
 			}
-			w.space()
-			w.pos++ // Colon, already checked by json.Valid.
 		}
 		if err := w.value(ctx, depth+1, fieldContext, hidden); err != nil {
 			return err
 		}
 		w.path = w.path[:pathDepth]
 		w.space()
-		if w.data[w.pos] == ',' {
-			w.pos++
-			if !hidden {
-				w.appendResult([]byte{','})
-			}
-			w.space()
-		}
+		w.elementSeparator(hidden)
 	}
 	w.pos++
 	if !hidden {
 		w.appendResult([]byte{closeByte})
 	}
 	return nil
+}
+
+// memberKey consumes an object key and its colon. A visible key is masked and
+// becomes the field context; under a hidden parent the enclosing key stays.
+func (w *jsonWalker) memberKey(ctx context.Context, key string, hidden bool) (string, error) {
+	raw := w.stringToken()
+	fieldContext := key
+	if !hidden {
+		var err error
+		fieldContext, err = w.objectKey(ctx, raw)
+		if err != nil {
+			return "", err
+		}
+		w.appendResult([]byte{':'})
+	}
+	w.space()
+	w.pos++ // Colon, already checked by json.Valid.
+	return fieldContext, nil
+}
+
+// elementSeparator consumes a comma between container elements, copying it
+// only when the container is visible.
+func (w *jsonWalker) elementSeparator(hidden bool) {
+	if w.data[w.pos] == ',' {
+		w.pos++
+		if !hidden {
+			w.appendResult([]byte{','})
+		}
+		w.space()
+	}
 }
 
 func (w *jsonWalker) stringToken() []byte {

@@ -37,12 +37,7 @@ func (s *Scanner) selectDetectors(data []byte) uint64 {
 	// A single detector benefits from the standard library substring search;
 	// walking every byte through dispatch buckets would add work for no sharing.
 	if len(s.detectors) == 1 {
-		var folded []byte
-		var ready bool
-		if matchesAnyHint(s.hintCache[0], data, &folded, &ready) {
-			return 1
-		}
-		return 0
+		return s.selectSingleDetector(data)
 	}
 	selected := s.unconditional
 	all := uint64(1)<<len(s.detectors) - 1
@@ -64,6 +59,17 @@ func (s *Scanner) selectDetectors(data []byte) uint64 {
 		}
 	}
 	return selected
+}
+
+// selectSingleDetector selects the only detector when any of its hints occurs
+// in data, using one case-folded substring search instead of dispatch buckets.
+func (s *Scanner) selectSingleDetector(data []byte) uint64 {
+	var folded []byte
+	var ready bool
+	if matchesAnyHint(s.hintCache[0], data, &folded, &ready) {
+		return 1
+	}
+	return 0
 }
 
 func foldedPrefix(data, hint []byte) bool {
