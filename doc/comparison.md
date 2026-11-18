@@ -130,7 +130,7 @@ Run `make comparison-doc` to rerun ten samples, benchstat and all generated comp
 
 ## Remaining use cases
 
-embargo cannot automatically identify arbitrary unregistered secrets; use Secret, a key rule or a custom detector. It does not return a typed masked struct copy, apply per-field partial display policies, preserve safe/unsafe provenance, or centrally enforce OTel pipelines. JSON response/export masking is covered by MaskJSON when the boundary accepts JSON bytes; callers that need a typed copy for further business logic still benefit from struct-copy libraries. Non-JSON formats, encoded binary data, unsupported phone/identity families, custom method side effects and data added downstream need separate handling and output tests. URL/DSN credentials, additional token detectors and package-wide output checks are covered by the credential and output scenario suite below. An error-wrapping helper is intentionally absent because preserving Unwrap also exposes the original error text.
+embargo cannot automatically identify arbitrary unregistered secrets; use Secret, a key rule or a custom detector. It does not return a typed masked struct copy, apply partial display per field (WithMaskFunc chooses it per kind), preserve safe/unsafe provenance, or centrally enforce OTel pipelines. JSON response/export masking is covered by MaskJSON when the boundary accepts JSON bytes; callers that need a typed copy for further business logic still benefit from struct-copy libraries. Non-JSON formats, encoded binary data, unsupported phone/identity families, custom method side effects and data added downstream need separate handling and output tests. URL/DSN credentials, additional token detectors and package-wide output checks are covered by the credential and output scenario suite below. An error-wrapping helper is intentionally absent because preserving Unwrap also exposes the original error text.
 
 [Tag migration and database/config inputs](values.md), [shared logging semantics](logging.md), [keep an existing masker and test its real output](testing-output.md), [security scan decisions](security-scans.md).
 
@@ -164,7 +164,7 @@ PIIFormatter for email/card/user/data/password/token; preserves a four-character
 
 <a id="table-explanation-2"></a>
 
-Embedded documented rules 1/2/6/16/20/35 for phone/email/card/IP; no rewritten detector regexes. It masks email/card partially, detects but deliberately does not mask IP under its default IP rule, and handles US phones rather than embargo's Japanese phone family. The table shows both Japanese and US fixtures. The US-phone fixture is a measured capability absent from embargo.
+Embedded documented rules 1/2/6/16/20/35 for phone/email/card/IP; no rewritten detector regexes. It masks email/card partially, detects but deliberately does not mask IP under its default IP rule, and handles US phones but not the Japanese phone family. The table shows both Japanese and US fixtures.
 
 <a id="table-explanation-3"></a>
 
@@ -172,18 +172,20 @@ Documented fixed string masker plus field registration for Email/Password/Recove
 
 ## Shared scenarios and setup
 
-All six libraries run the same 13 positive scenarios and two clean controls. The [full synthetic outputs](comparison-scenarios.json) record their exact released versions. The fixtures include cases outside embargo's capabilities: tag-only opaque secrets and US phone numbers. A catch means the original planted value is absent from a nonempty JSON log event; partial masks count, and absence does not imply complete redaction. The catch rate is for these configurations and scenarios, not production accuracy. The clean controls are excluded from its denominator.
+All eight libraries run the same 13 positive scenarios and two clean controls. The [full synthetic outputs](comparison-scenarios.json) record their exact released versions. The fixtures include a case outside embargo's capabilities: an opaque secret marked only by a struct tag. A catch means the original planted value is absent from a nonempty JSON log event; partial masks count, and absence does not imply complete redaction. The catch rate is for these configurations and scenarios, not production accuracy. The clean controls are excluded from its denominator.
 
 ![Scenario catch rate with individual results](images/scenario-catch.svg)
 
 | Library | Setup used by the executable probe | Measured strengths and limits |
 |---|---|---|
-| embargo | Default kinds, default confidence 0, slog wrapper | 11/13; masks keys and groups; misses tag-only secrets and US phones |
+| embargo | Default kinds, default confidence 0, slog wrapper | 12/13; masks keys, groups and both phone families; misses the tag-only secret |
+| pii-shield v3.0.0 | Default policy plus one recovery key, applied to each encoded line | 10/13; masks message text and both phone families; attribute keys, the bearer header and the tag-only secret remain |
+| ferret-scan v2.4.3 | In-process engine with its default checks, applied to each encoded line | 9/13; masks keys and groups; embedded JSON, the bearer header, the Japanese phone and the tag-only secret remain |
 | masq v0.2.3 | Two regexes, three field names, one tag; time/level allowed | 6/13; tag-only protection wins; whole-string redaction loses context |
-| go-masker v0.6.1 | Default key policy, Luhn cards, safe types, fixed tag rule | 8/13; faster slog events; tags win and embedded JSON ties; partial display values |
+| go-masker v0.6.1 | Default key policy, Luhn cards, safe types, fixed tag rule | 8/13; slightly faster on the flat event; tags win and embedded JSON ties; partial display by default |
 | slog-formatter v1.3.0 | PIIFormatter on six sensitive field names | 3/13; fixed field transforms are cheaper; arbitrary message text remains |
 | go-mask v0.6.2 | Fixed masker, six registered fields and a fixed struct tag | 3/13; tags win and typed copies aid reuse; message text remains |
-| godlp v1.2.15 | Six built-in rules; apply to string and JSON values | 5/13; US phone wins; email/labeled-card partial masking ties; opaque tokens remain |
+| godlp v1.2.15 | Six built-in rules; apply to string and JSON values | 5/13; US phone ties; email/labeled-card partial masking ties; opaque tokens remain |
 
 The labeled and unlabeled card rows expose a context difference: godlp detects the credit-card-labeled message in this fixture, while the unlabeled charge message remains visible. These setup counts describe this harness, not universal effort. No configuration contains the planted secret values. The timing event selects only email and PAN at default confidence 0 for embargo; the scenario matrix uses the default detector set and default confidence 0. The invalid-card control therefore changes, as it does for a new user. go-masker uses its default policy with opt-in Luhn card detection, so the invalid-card control stays visible; its CardRule keeps the last four digits. Its value inspection recognizes credentials inside JSON strings and free text. Its key policies and struct tags offer partial display rules that embargo lacks. TestComparisonMaskerAdapters runs its slog, zap, zerolog and HTTP paths against synthetic credentials; HTTP masks copies of headers and URLs, rather than installing an access logger.
 
