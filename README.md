@@ -251,18 +251,20 @@ Add one line to a package's tests:
 
 Guard reruns the package tests and fails when a canary (a fake secret) or a detected value appears in stdout, stderr, default slog output or child processes. The canary is matched as raw bytes, hex, standard or URL-safe base64 at any byte alignment, and standard Go/JSON-escaped forms, so that check does not depend on the detectors. It also searches the output once more after one layer of JSON backslash-u and percent escapes is decoded; MIME-wrapped base64 requires decoding before recording. [ExampleGuard](embargotest/example_test.go)
 
-For one test, a recorder checks both that the expected output exists and that no canary escaped:
+For one test, build the logger the way the service does and let a recorder check both that the expected output exists and that no canary escaped. Attributes bound after wrapping pass through embargo; ones bound to `next`, or added by handlers after it, do not, and this test fails when the wiring lets the canary through:
 
 <!-- test: doc_test.go:TestReadmeCheckOutput -->
 ```go
 func TestReadmeCheckOutput(t *testing.T) {
     t.Parallel()
     recorder := embargotest.New(t)
-    logger := slog.New(slog.NewJSONHandler(recorder.Writer("logs"), nil))
+    next := slog.NewJSONHandler(recorder.Writer("logs"), nil)
+    // Wrap next first; attributes bound with next.WithAttrs would skip embargo.
+    logger := slog.New(embargo.NewSlogHandler(next, embargo.NewScanner())).With("api_token", string(recorder.Canary()))
 
-    logger.Info("accepted", "token", embargo.NewSecret(recorder.Canary()))
+    logger.Info("accepted", "email", "alice@example.com")
 
-    recorder.ExpectJSON("logs", nil, map[string]string{"token": "[REDACTED]"}, 1)
+    recorder.ExpectJSON("logs", nil, map[string]string{"msg": "accepted", "email": "[REDACTED]"}, 1)
     recorder.Check()
 }
 ```
@@ -404,7 +406,7 @@ The same scenarios, service probe and log events run against pii-shield, ferret-
 
 ![Scenario catch rate](doc/images/scenario-catch.svg)
 
-pii-shield also runs as a Kubernetes sidecar outside the process, and ferret-scan scans documents and images; embargo stays inside the Go process where the value is written. Its default scanner masks the invalid-Luhn control too, a false positive masq shares. [Exact outputs, setup, runtime dependencies and speed](doc/comparison.md) document the strengths and limits of every configuration.
+pii-shield also runs as a Kubernetes sidecar outside the process, and ferret-scan scans documents and images; embargo stays inside the Go process where the value is written. Its default scanner keeps the invalid-Luhn control visible, because a number that fails the Luhn check is not an issued card; masq masks it. [Exact outputs, setup, runtime dependencies and speed](doc/comparison.md) document the strengths and limits of every configuration.
 
 The service probe below also checks a redirect that bypasses every logger. `embargotest.HTTP` catches that response leak:
 

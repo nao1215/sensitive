@@ -46,7 +46,7 @@ The first eight cases reproduce the original comparison probe. Both libraries re
 
 masq requires user rules to find the email and card; plain `masq.New()` does not detect them. Its standard redactor removes an entire matched message/error string; embargo keeps the surrounding context. masq can use RedactString for partial replacement or a custom censor for validation. With this configuration it leaves attribute keys, group names and custom MarshalJSON-generated data visible. Both retain struct shape; masq v0.2.3 replaces matching interface-valued map entries with null in this fixture, while embargo uses a string marker. These are observed version-specific outputs, not claims that all masq configurations behave identically.
 
-The invalid-Luhn row is a deliberate negative example. embargo uses its default minimum confidence of zero and masks this candidate. go-masker with its opt-in Luhn check keeps the invalid-card control, while masq also changes it; the matrix displays these costs beside positive catches. The [accuracy corpus](accuracy.md) covers broader detector tradeoffs; these small fixtures are not a production accuracy estimate.
+The invalid-Luhn row is a deliberate negative example. embargo keeps it, because KindPAN rejects every number that fails the Luhn check. go-masker with its opt-in Luhn check keeps the invalid-card control too, while masq changes it; the matrix displays these costs beside positive catches. The [accuracy corpus](accuracy.md) covers broader detector tradeoffs; these small fixtures are not a production accuracy estimate.
 
 ## Time and allocations
 

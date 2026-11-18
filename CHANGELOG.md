@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+No exported API changes: code that builds against v0.14.0 builds unchanged. Masked output changes are listed under Detection changes; Changed lists messages and other observable behavior.
+
 ### Detection changes
 
 - MaskJSON, the slog handler and the logger adapters mask the value of an object that keeps a setting in separate name and value members, such as `{"name":"DB_PASSWORD","value":"hunter2"}` in Kubernetes env, ECS task definitions, SSM `GetParameters` responses (`Name` may be a path such as `/prod/db/password`) and CloudFormation `ParameterKey`/`ParameterValue`. The value is masked when the name, key, ParameterKey, ParameterName, OptionName or variable member is a sensitive key, in either member order: a string, or a whole object or array, which becomes `"[REDACTED]"` as under a sensitive key. Numeric values, as in metric samples, stay visible.
