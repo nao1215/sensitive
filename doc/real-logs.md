@@ -88,7 +88,7 @@ The operations-log families were added after the LogHub baseline, so they have c
 | system (LogHub) | held | 4 | 84,357,362 | 2,773.9 | 0.0 | ca_sin, uk_nhs, us_ssn |
 | web access | development | 2 | 19,129,354 | 0.0 | 0.0 | none |
 | web access | held | 1 | 2,370,789 | 72,549.7 | 1,265.4 | ca_sin, high_entropy, swiftbic, uk_nhs, us_ssn |
-| Kubernetes audit | development | 1 | 92,794,383 | 0.0 | 0.0 | none |
+| Kubernetes audit | development | 1 | 92,794,383 | 10.8 | 0.0 | high_entropy |
 | cloud audit | development | 1 | 16,030,714 | 0.0 | 0.0 | none |
 | cloud audit | held | 2 | 17,152,480 | 81,154.4 | 39,819.3 | credential, high_entropy, in_aadhaar, mynumber |
 

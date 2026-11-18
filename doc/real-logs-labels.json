@@ -12772,6 +12772,15 @@
       "classification": "sensitive-reference",
       "rule": "network-address"
     },
+    "7694970c4cce2a63a1c2d9e2fb44cda173e8a64e0163fec632558b2af4987377": {
+      "dataset": "Kubernetes audit",
+      "line": 1387,
+      "kind": "high_entropy",
+      "start": 195,
+      "end": 369,
+      "classification": "false-positive",
+      "rule": "search-tracking-parameter"
+    },
     "77b8936e56af07509a585d0d602fd4f0a2e34d13dff7d3e65d2499d79aa46209": {
       "dataset": "OpenSSH",
       "line": 120651,
