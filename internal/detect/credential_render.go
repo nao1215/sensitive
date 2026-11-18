@@ -415,7 +415,13 @@ func bracketKey(data []byte, end int) []byte {
 	if start == 0 || data[start-1] != '[' || start == end-1 {
 		return nil
 	}
-	return data[start : end-1]
+	key := data[start : end-1]
+	// A quoted subscript, as in os.environ["DB_PASSWORD"] or ENV['TOKEN'],
+	// names the key inside the quotes.
+	if len(key) > 2 && (key[0] == '"' || key[0] == '\'') && key[len(key)-1] == key[0] {
+		return key[1 : len(key)-1]
+	}
+	return key
 }
 
 // quotedKey returns the contents of a quoted key that closes at end.
@@ -447,4 +453,55 @@ func assignmentKey(data []byte, end int) []byte {
 		start--
 	}
 	return data[start:end]
+}
+
+// quotedArgumentPairs finds a quoted value passed right after a quoted
+// credential key in an argument or initializer list, as in Java's
+// System.setProperty("db.password", "x"), put("api_key", "x") or
+// Map.of("password", "x"). The key opens the list or follows a comma.
+func (d *Credential) quotedArgumentPairs(data []byte) []Finding {
+	var out []Finding
+	for i := 0; i < len(data); i++ {
+		if data[i] != '"' && data[i] != '\'' {
+			continue
+		}
+		keyEnd := credentialQuoteEnd(data, i+1, data[i])
+		if keyEnd == len(data) {
+			break
+		}
+		start, end, ok := d.argumentValue(data, i, keyEnd)
+		if ok {
+			out = append(out, credentialFinding(start, end))
+			keyEnd = end
+		}
+		i = keyEnd
+	}
+	return out
+}
+
+// argumentValue returns the quoted value after the key quoted from open to
+// keyEnd when the key opens an argument list or follows a comma and names a
+// credential, and a comma separates it from the value.
+func (d *Credential) argumentValue(data []byte, open, keyEnd int) (start, end int, ok bool) {
+	before := open
+	for before > 0 && (data[before-1] == ' ' || data[before-1] == '\t') {
+		before--
+	}
+	if before == 0 || !strings.ContainsRune("({,", rune(data[before-1])) || !d.secretKey(data[open+1:keyEnd]) {
+		return 0, 0, false
+	}
+	at := skipBlanks(data, keyEnd+1)
+	if at == len(data) || data[at] != ',' {
+		return 0, 0, false
+	}
+	at = skipBlanks(data, at+1)
+	if at == len(data) || (data[at] != '"' && data[at] != '\'') {
+		return 0, 0, false
+	}
+	end = credentialQuoteEnd(data, at+1, data[at])
+	start = authorizationValueStart(data, at+1, end, NormalizeCredentialKey(string(data[open+1:keyEnd])))
+	if end == start || redactedCredentialValue(data[start:end]) {
+		return 0, 0, false
+	}
+	return start, end, true
 }

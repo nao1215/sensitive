@@ -96,10 +96,10 @@ Run `python3 scripts/gitleaks_oracle.py --cache DIR` with DIR outside the reposi
 
 | Input | Examples masked | Rules fully masked |
 |---|---|---|
-| Generated lines with keys and syntax | 5930/6368 (93.1%) | 118/215 |
-| Bare secrets without a key | 321/539 (59.6%) | 110/215 |
+| Generated lines with keys and syntax | 6037/6368 (94.8%) | 200/215 |
+| Bare secrets without a key | 319/538 (59.3%) | 110/215 |
 
-Version 0.11.0 masked 4349 lines covering 27 rules and 105 bare secrets covering 18 rules on the same examples. The remaining bare secrets are mostly rules whose secret is a plain hexadecimal or alphanumeric string identified only by a nearby provider name such as `discord` or `heroku`; embargo masks those values when the key itself names a credential. A bare curl user:password example also counts as missed because embargo keeps the username visible, as it does in URL userinfo. Of the 438 lines it still misses, 296 are base64-encoded JWTs without a key and 105 are Java `System.setProperty("NAME_TOKEN", "value")` calls, which are source code rather than log output.
+Version 0.11.0 masked 4349 lines covering 27 rules and 105 bare secrets covering 18 rules on the same examples. The remaining bare secrets are mostly rules whose secret is a plain hexadecimal or alphanumeric string identified only by a nearby provider name such as `discord` or `heroku`; embargo masks those values when the key itself names a credential. A bare curl user:password example also counts as missed because embargo keeps the username visible, as it does in URL userinfo. Of the 331 lines it still misses, 296 are base64-encoded JWTs without a key; most of the rest sit under provider-specific names that do not name a credential, such as `SONAR_LOGIN` or `BUNDLE_GEMS__CONTRIBSYS__COM`. The bare count can move by one or two between runs because the generator draws new sample secrets each time.
 
 The general minimum suffix length is a conservative detector heuristic, not a vendor specification. Prefix matching does not validate token checksums or revocation. Formats can evolve; public examples are the evidence, and local synthetic tests never use real keys.
 
