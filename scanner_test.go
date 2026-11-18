@@ -700,9 +700,14 @@ func TestUnicodeCategoryMasking(t *testing.T) {
 func TestScanCanceledBetweenDetectors(t *testing.T) {
 	t.Parallel()
 	scanner := NewScanner(WithAll())
-	for checkpoint := 2; checkpoint <= len(scanner.detectors)+1; checkpoint++ {
+	input := []byte("email alice@example.com card 4111111111111111")
+	checks := 0
+	if findings := scanner.scan(input, func() error { checks++; return nil }); len(findings) == 0 || checks < 4 {
+		t.Fatalf("uncanceled scan made %d checks and found %v", checks, findings)
+	}
+	for checkpoint := 2; checkpoint <= checks; checkpoint++ {
 		calls := 0
-		findings := scanner.scan([]byte("email alice@example.com card 4111111111111111"), func() error {
+		findings := scanner.scan(input, func() error {
 			calls++
 			if calls >= checkpoint {
 				return context.Canceled
@@ -721,7 +726,7 @@ func TestCredentialRenderingProperty(t *testing.T) {
 	scanner := NewScanner(WithKinds(KindCredential))
 	for n := range 12 {
 		secret := fmt.Sprintf("opaqueFixture%02dxYz", n)
-		for _, key := range []string{credentialFixtureKey, "token", "api_key", authorizationFixtureKey, "Proxy-Authorization", "access_token", "refresh_token", "id_token", "x-api-key", "DB_PASSWORD", "Private-Token", "client_secret", "auth_token"} {
+		for _, key := range []string{credentialFixtureKey, tokenKey, "api_key", authorizationFixtureKey, "Proxy-Authorization", "access_token", "refresh_token", "id_token", "x-api-key", "DB_PASSWORD", "Private-Token", "client_secret", "auth_token"} {
 			schemes := []string{""}
 			if strings.Contains(key, authorizationFixtureKey) {
 				schemes = []string{"Bearer ", "Basic ", "bEaReR "}
@@ -1447,9 +1452,14 @@ func TestScanFieldEdges(t *testing.T) {
 		t.Fatalf("canceled field scan returned %+v", got)
 	}
 	scanner := NewScanner(WithAll())
-	for checkpoint := 2; checkpoint <= len(scanner.detectors)+2; checkpoint++ {
+	field := []byte("card: 4111111111111111 alice@example.com")
+	checks := 0
+	if findings := scanner.scanField(nil, field, len("card: "), func() error { checks++; return nil }); len(findings) == 0 || checks < 4 {
+		t.Fatalf("uncanceled field scan made %d checks and found %v", checks, findings)
+	}
+	for checkpoint := 2; checkpoint <= checks; checkpoint++ {
 		calls := 0
-		findings := scanner.scanField(nil, []byte("card: 4111111111111111 alice@example.com"), len("card: "), func() error {
+		findings := scanner.scanField(nil, field, len("card: "), func() error {
 			calls++
 			if calls >= checkpoint {
 				return context.Canceled
@@ -1473,6 +1483,8 @@ func TestScanFieldKeepsKeyContext(t *testing.T) {
 		{NewScanner(), "cvv", "123", KindCVV},
 		{NewScanner(WithSensitiveKeys("ticket")), "ticket", "opaqueTicketValue", KindCredential},
 		{NewScanner(), "bank account", "12345678", KindBankAccount},
+		// A letters-only code needs the swift keyword, which only the key holds.
+		{NewScanner(), "swift", "DEUTDEFF", KindSWIFTBIC},
 	} {
 		prefix := len(tc.key) + len(": ")
 		got := fieldFindings(tc.scanner.scanField(nil, []byte(tc.key+": "+tc.value), prefix, nil), prefix)

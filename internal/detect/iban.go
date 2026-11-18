@@ -21,6 +21,9 @@ func (d *IBAN) Hints() [][]byte {
 	return nil
 }
 
+// startBytes reports the digits of the check digits every IBAN carries.
+func (d *IBAN) startBytes() []byte { return digitStarts() }
+
 // Scan returns matches in data using the rules documented on [IBAN].
 func (d *IBAN) Scan(data []byte) []Finding {
 	var findings []Finding

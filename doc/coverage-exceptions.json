@@ -141,8 +141,8 @@
   },
   {
     "file": "scanner.go",
-    "start": 103,
-    "end": 104,
+    "start": 104,
+    "end": 105,
     "sha256": "10408a70aa419eb085325ccb1717a9c6283b5b927bc70819e4b63a3435a42fc0",
     "reason": "The pool's New function stores only *scanScratch values, so the type assertion cannot fail; the panic keeps the invariant explicit."
   }

@@ -26,6 +26,7 @@ type Scanner struct {
 	minConfidence float64
 	unconditional uint64
 	labelMask     uint64
+	keywordMask   uint64
 	credentialBit uint64
 	initialized   bool
 	allKinds      bool
@@ -183,11 +184,11 @@ func (s *Scanner) scanInput(dst []Finding, view detect.View, canceled func() err
 	selected := s.selectDetectors(view.Data)
 	findings := dst[:0]
 	for i, d := range s.detectors {
-		if scanCanceled(canceled) {
-			return nil
-		}
 		if selected&(1<<i) == 0 {
 			continue
+		}
+		if scanCanceled(canceled) {
+			return nil
 		}
 		findings = appendBuiltinFindings(findings, d, view)
 	}
@@ -200,6 +201,9 @@ func (s *Scanner) indexLabelReaders() {
 		if detect.ReadsLabel(d) {
 			s.labelMask |= 1 << i
 		}
+		if detect.KeywordHinted(d) {
+			s.keywordMask |= 1 << i
+		}
 		if d.Name() == detect.NameCredential {
 			s.credential, s.credentialBit = d, 1<<i
 		}
@@ -208,10 +212,11 @@ func (s *Scanner) indexLabelReaders() {
 
 // scanField scans a structured value after its field name: text is
 // "key: value" and prefix is the length of "key: ". Dispatch reads the value
-// and, for detectors that read labels, the key. Those detectors scan the whole
-// text, except Credential, which reads the key only when it is a credential
-// key; every other detector scans the value alone. Findings are in text
-// offsets, as from scanAppend.
+// and, for detectors whose hints are keywords, the key; a candidate start in
+// the key alone selects nothing, since only value findings are kept. Selected
+// detectors that read labels scan the whole text, except Credential, which
+// reads the key only when it is a credential key; every other detector scans
+// the value alone. Findings are in text offsets, as from scanAppend.
 func (s *Scanner) scanField(dst []Finding, text []byte, prefix int, canceled func() error) []Finding {
 	if !s.initialized {
 		return defaultScanner().scanField(dst, text, prefix, canceled)
@@ -227,20 +232,24 @@ func (s *Scanner) scanField(dst []Finding, text []byte, prefix int, canceled fun
 	var whole detect.View
 	findings := dst[:0]
 	for i, d := range s.detectors {
+		bit := uint64(1) << i
+		if selected&bit == 0 {
+			continue
+		}
 		if scanCanceled(canceled) {
 			return nil
 		}
-		bit := uint64(1) << i
-		switch {
-		case selected&bit == 0:
-		case wholeText&bit == 0:
+		if wholeText&bit == 0 {
 			findings = appendShiftedFindings(findings, d, value, prefix)
-		default:
-			if whole.Raw == nil {
-				whole = detect.NewView(text)
-			}
-			findings = appendBuiltinFindings(findings, d, whole)
+			continue
 		}
+		if !detect.HasCandidate(d, value.Data) {
+			continue
+		}
+		if whole.Raw == nil {
+			whole = detect.NewView(text)
+		}
+		findings = appendBuiltinFindings(findings, d, whole)
 	}
 	return s.finishScan(findings, text, canceled)
 }
@@ -249,13 +258,44 @@ func (s *Scanner) scanField(dst []Finding, text []byte, prefix int, canceled fun
 // that scan the whole "key: value" text rather than the value alone.
 func (s *Scanner) selectField(text []byte, prefix int, value detect.View) (selected, wholeText uint64) {
 	keyEnd := prefix - len(": ")
-	selected = s.selectDetectors(value.Data) | s.selectDetectors(text[:keyEnd])&s.labelMask
+	key, ok := s.cachedField(text[:keyEnd])
+	if !ok {
+		key = s.keyField(text, keyEnd)
+	}
+	selected = s.selectDetectors(value.Data) | key.selected
 	wholeText = s.labelMask &^ s.credentialBit
-	if detect.AssignsKey(s.credential, text, keyEnd) {
+	if key.assigns && detect.AssignsValue(key.credential, text, keyEnd) {
 		selected |= s.credentialBit
 		wholeText |= s.credentialBit
 	}
 	return selected, wholeText
+}
+
+// fieldKey is the part of a field's detector selection that depends on its
+// key alone, so repeated keys reuse it from the key cache.
+type fieldKey struct {
+	// credential is the normalized credential key name when assigns is set.
+	credential string
+	// selected holds the keyword-hinted detectors whose keywords occur in the key.
+	selected uint64
+	assigns  bool
+}
+
+// keyField computes fieldKey for the key that ends at keyEnd, where text
+// has the separator of "key: value".
+func (s *Scanner) keyField(text []byte, keyEnd int) fieldKey {
+	key := fieldKey{selected: s.selectDetectors(text[:keyEnd]) & s.keywordMask}
+	key.credential, key.assigns = detect.CredentialKeyName(s.credential, text, keyEnd)
+	return key
+}
+
+// cachedField returns the cached fieldKey of a key that maskCached has kept.
+func (s *Scanner) cachedField(key []byte) (fieldKey, bool) {
+	if !cacheableKey(s, key) {
+		return fieldKey{}, false
+	}
+	result, ok := s.keys.loadBytes(key)
+	return result.field, ok
 }
 
 // finishScan appends custom detector findings for data and validates them all.

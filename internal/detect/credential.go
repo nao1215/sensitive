@@ -132,15 +132,26 @@ func (d *Credential) appendContextCredentials(out []Finding, data []byte) []Find
 	return append(out, commandPasswords(data)...)
 }
 
-// AssignsKey reports whether d is the credential detector and the separator at
-// sep ends one of its keys, so the value after it is a credential assignment.
-func AssignsKey(d Detector, data []byte, sep int) bool {
+// CredentialKeyName returns the normalized name of the credential key that
+// ends at the separator at sep when d is the credential detector. The name
+// depends only on the bytes before sep; [AssignsValue] checks the value.
+func CredentialKeyName(d Detector, data []byte, sep int) (string, bool) {
 	credential, ok := d.(*Credential)
 	if !ok {
-		return false
+		return "", false
 	}
-	_, ok = credential.assignmentName(data, sep)
-	return ok
+	key := credential.credentialKey(data, sep)
+	if key == nil {
+		return "", false
+	}
+	return NormalizeCredentialKey(string(key)), true
+}
+
+// AssignsValue reports whether the value after the separator at sep is
+// assigned to the credential key name; a token key followed by an unquoted
+// object value names that object instead.
+func AssignsValue(name string, data []byte, sep int) bool {
+	return name != credentialTokenKey || !unquotedObjectValue(data, sep+1)
 }
 
 // urlUserinfoColon advances urlIndex past URL findings starting at or before i
@@ -162,7 +173,7 @@ func (d *Credential) assignmentName(data []byte, i int) (string, bool) {
 		return "", false
 	}
 	name := NormalizeCredentialKey(string(key))
-	if name == credentialTokenKey && unquotedObjectValue(data, i+1) {
+	if !AssignsValue(name, data, i) {
 		return "", false
 	}
 	return name, true

@@ -62,6 +62,20 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 	return findings
 }
 
+// hasCandidate reports whether value holds a code of the right shape: a
+// word of eight or eleven alphanumerics starting with a bank code and a
+// supported country. Context and exclusions need the surrounding text.
+func (d *SWIFTBIC) hasCandidate(value []byte) bool {
+	for i := range len(value) - 7 {
+		if validateSWIFTStructure(value, i) {
+			if _, ok := determineSWIFTLength(value, i); ok {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // excluded reports whether a structurally valid code at [i, end) is a
 // token, register, user, identifier or hardware fragment rather than a BIC.
 func (d *SWIFTBIC) excluded(data []byte, i, end int) bool {
@@ -121,16 +135,17 @@ func (d *SWIFTBIC) slashList(data []byte, start, end int) bool {
 // SWIFT/BIC structure: 4 alpha (bank) + 2 alpha (country) + 2 alphanumeric
 // (location), with word boundary check and ISO country code validation.
 func validateSWIFTStructure(data []byte, i int) bool {
-	if !ascii.IsAlpha(data[i]) || !ascii.IsAlpha(data[i+1]) || !ascii.IsAlpha(data[i+2]) || !ascii.IsAlpha(data[i+3]) {
+	// Most positions are inside a word, so the boundary is checked first.
+	if !ascii.IsAlpha(data[i]) || (i > 0 && ascii.IsAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i)) {
+		return false
+	}
+	if !ascii.IsAlpha(data[i+1]) || !ascii.IsAlpha(data[i+2]) || !ascii.IsAlpha(data[i+3]) {
 		return false
 	}
 	if !ascii.IsAlpha(data[i+4]) || !ascii.IsAlpha(data[i+5]) {
 		return false
 	}
 	if !ascii.IsAlphaNum(data[i+6]) || !ascii.IsAlphaNum(data[i+7]) {
-		return false
-	}
-	if !leadingBoundary(data, i, ascii.IsAlphaNum) {
 		return false
 	}
 	cc := [2]byte{ascii.ToUpper(data[i+4]), ascii.ToUpper(data[i+5])}

@@ -1,6 +1,7 @@
 package detect
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 )
@@ -235,9 +236,11 @@ func TestUKSortCodeDetector_Hints(t *testing.T) {
 	t.Parallel()
 
 	d := NewUKSortCode()
-	hints := d.Hints()
-	if len(hints) == 0 {
-		t.Error("Hints() returned empty slice, want at least one hint")
+	if d.Hints() != nil || !bytes.Equal(StartBytes(d), digitStarts()) {
+		t.Errorf("Hints() = %q, StartBytes() = %q; want no hints and the digit start bytes", d.Hints(), StartBytes(d))
+	}
+	if got := NewIBAN(); !bytes.Equal(StartBytes(got), digitStarts()) {
+		t.Errorf("IBAN StartBytes() = %q, want the digit start bytes", StartBytes(got))
 	}
 }
 

@@ -20,13 +20,13 @@ func (d *UKSortCode) Name() DetectorName {
 	return NameUKSortCode
 }
 
-// Hints returns the pre-filter substrings for [UKSortCode].
+// Hints returns nil; a sort code needs digits, which startBytes reports.
 func (d *UKSortCode) Hints() [][]byte {
-	return [][]byte{
-		[]byte("-"),
-		[]byte(" "),
-	}
+	return nil
 }
+
+// startBytes reports the digits every sort code contains.
+func (d *UKSortCode) startBytes() []byte { return digitStarts() }
 
 // isSortCodePattern checks whether data starting at position i matches the
 // DD<sep>DD<sep>DD structure where <sep> is a hyphen or space. It returns the

@@ -79,6 +79,14 @@ func ReadsLabel(d Detector) bool {
 	return !slices.Contains([]DetectorName{NameIBAN, NameBTC, NameETH, NameEmail, NameJWT, NameAWSKey, NameGitHubToken, NameSlackToken, NameGoogleAPIKey, NamePrivateKeyPEM, NamePaymentToken, nameServiceToken}, d.Name())
 }
 
+// KeywordHinted reports whether d's hints are words that name its value,
+// such as cvv or account number, rather than bytes a candidate starts with.
+// A field name selects only these detectors; the others need their hint in
+// the value, where their candidates are.
+func KeywordHinted(d Detector) bool {
+	return slices.Contains([]DetectorName{NameCVV, NameCardExpiry, NameBankAccount, NameACHTrace, NameMerchantID}, d.Name())
+}
+
 // digitStarts returns the bytes a digit candidate needs somewhere in the input:
 // ASCII digits and 0xEF, the UTF-8 lead byte of full-width digits.
 func digitStarts() []byte { return []byte("0123456789\xef") }
@@ -86,6 +94,20 @@ func digitStarts() []byte { return []byte("0123456789\xef") }
 // startByter is implemented by hintless detectors that can only match input
 // containing one of a few bytes.
 type startByter interface{ startBytes() []byte }
+
+// candidateFilter is implemented by label readers that can tell from a
+// value alone that it holds no candidate.
+type candidateFilter interface{ hasCandidate(value []byte) bool }
+
+// HasCandidate reports whether d may find a candidate in a structured value.
+// When it reports false, a scanner skips d without reading the field name
+// before the value.
+func HasCandidate(d Detector, value []byte) bool {
+	if f, ok := d.(candidateFilter); ok {
+		return f.hasCandidate(value)
+	}
+	return true
+}
 
 // StartBytes returns bytes of which any input d can match contains at least one,
 // or nil when d must run on every input. A scanner uses it to skip a hintless

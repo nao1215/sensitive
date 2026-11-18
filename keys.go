@@ -82,6 +82,7 @@ const (
 type keyResult struct {
 	key       string
 	masked    string
+	field     fieldKey
 	sensitive bool
 }
 
@@ -195,6 +196,7 @@ func (s *eventScanner) maskCached(ctx context.Context, key string) (keyResult, e
 	result := keyResult{key: key, masked: masked, sensitive: s.scanner.sensitiveKey(key)}
 	// Only clean keys are kept, so the cache never holds detected values.
 	if masked == key && cacheableKey(s.scanner, key) {
+		result.field = s.scanner.keyField(append([]byte(key), ':'), len(key))
 		s.scanner.keys.store(key, result)
 	}
 	return result, nil

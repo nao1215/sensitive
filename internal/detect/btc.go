@@ -23,6 +23,10 @@ func (d *BTC) Hints() [][]byte {
 	return nil
 }
 
+// startBytes reports the bytes every address contains: legacy addresses
+// start with 1 or 3, and bech32 addresses carry the separator 1 after bc.
+func (d *BTC) startBytes() []byte { return []byte("13") }
+
 // Scan returns matches in data using the rules documented on [BTC].
 func (d *BTC) Scan(data []byte) []Finding {
 	var findings []Finding
