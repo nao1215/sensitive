@@ -23,14 +23,17 @@ func TestOptionsCopyAndOrder(t *testing.T) {
 	}
 }
 
+// unknownKindPanic is the message for an unknown kind that is not a misspelling.
+const unknownKindPanic = "embargo: unknown built-in kind"
+
 func TestWithKindsPanicNamesOnlyMisspellings(t *testing.T) {
 	t.Parallel()
 	for kind, want := range map[embargo.Kind]string{
 		"emial":               `embargo: unknown built-in kind "emial" (did you mean "email"?)`,
 		"pa":                  `embargo: unknown built-in kind "pa" (did you mean "pan"?)`,
-		"IPADDR":              "embargo: unknown built-in kind",
-		"opaqueFixtureValue1": "embargo: unknown built-in kind",
-		"":                    "embargo: unknown built-in kind",
+		"IPADDR":              unknownKindPanic,
+		"opaqueFixtureValue1": unknownKindPanic,
+		"":                    unknownKindPanic,
 	} {
 		func() {
 			defer func() {

@@ -131,8 +131,8 @@
 <text x="730" y="530" font-size="14">144 / 544</text>
 <text x="20" y="560" font-size="14">mynumber</text>
 <rect x="205" y="546" width="150" height="14" fill="#edf0f4"/>
-<rect x="205" y="546" width="122.70" height="14" fill="#1877b8"/>
-<text x="363" y="559" font-size="14">81.8%</text>
+<rect x="205" y="546" width="150.00" height="14" fill="#1877b8"/>
+<text x="363" y="559" font-size="14">100.0%</text>
 <rect x="435" y="546" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="546" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="559" font-size="14">100.0%</text>

@@ -238,39 +238,39 @@ func TestLargeJSONSnapshot(t *testing.T) {
 }
 
 // reachableStrings walks v the way method-free printers such as go-spew do:
-// through fields and pointers, without calling String or GoString.
+// through fields, elements and pointers, without calling String or GoString.
 func reachableStrings(v reflect.Value, seen map[uintptr]bool, out *[]string) {
-	switch v.Kind() {
-	case reflect.String:
+	kind := v.Kind()
+	if kind == reflect.String {
 		*out = append(*out, v.String())
-	case reflect.Pointer:
-		if v.IsNil() || seen[v.Pointer()] {
+	}
+	if (kind == reflect.Pointer || kind == reflect.Interface) && !v.IsNil() {
+		if kind == reflect.Pointer && seen[v.Pointer()] {
 			return
 		}
-		seen[v.Pointer()] = true
-		reachableStrings(v.Elem(), seen, out)
-	case reflect.Struct:
-		for i := range v.NumField() {
-			reachableStrings(v.Field(i), seen, out)
+		if kind == reflect.Pointer {
+			seen[v.Pointer()] = true
 		}
-	case reflect.Slice, reflect.Array:
+		reachableStrings(v.Elem(), seen, out)
+	}
+	if kind == reflect.Struct {
+		for _, field := range v.Fields() {
+			reachableStrings(field, seen, out)
+		}
+	}
+	if kind == reflect.Slice || kind == reflect.Array {
 		for i := range v.Len() {
 			reachableStrings(v.Index(i), seen, out)
 		}
-	case reflect.Interface:
-		if !v.IsNil() {
-			reachableStrings(v.Elem(), seen, out)
-		}
-	default:
 	}
 }
 
 func TestSecretIsUnreachableByReflection(t *testing.T) {
 	t.Parallel()
 	type config struct {
-		Name string
 		Key  Secret[string]
 		List Secret[[]string]
+		Name string
 	}
 	c := config{Name: "public", Key: NewSecret("raw-secret-value"), List: NewSecret([]string{"raw-secret-item"})}
 	var got []string

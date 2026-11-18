@@ -59,16 +59,19 @@ func TestCurlUserPasswordsAtInputEdges(t *testing.T) {
 	}
 }
 
+// fixturePassword is a synthetic command-line password.
+const fixturePassword = "hunter2"
+
 func TestCommandLinePasswords(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct{ input, want string }{
-		{"--password hunter2", "hunter2"},
-		{"run --db-password 'hunter2' --verbose", "hunter2"},
+		{"--password hunter2", fixturePassword},
+		{"run --db-password 'hunter2' --verbose", fixturePassword},
 		{"login --token\topaque-value", "opaque-value"},
-		{"mysql -u root -phunter2 shop", "hunter2"},
-		{"mysqldump -h db -p'hunter2' shop", "hunter2"},
-		{"mariadb-dump -phunter2", "hunter2"},
-		{"sshpass -p hunter2 ssh host", "hunter2"},
+		{"mysql -u root -phunter2 shop", fixturePassword},
+		{"mysqldump -h db -p'hunter2' shop", fixturePassword},
+		{"mariadb-dump -phunter2", fixturePassword},
+		{"sshpass -p hunter2 ssh host", fixturePassword},
 		{"--password", ""},
 		{"--password --verbose", ""},
 		{"--no-password true", ""},
@@ -77,6 +80,7 @@ func TestCommandLinePasswords(t *testing.T) {
 		{"--token\nnext", ""},
 		{"---- PASS ----", ""},
 		{"mysql -u root -p", ""},
+		{"mysql -u root -p shop", ""},
 		{"mysql -P3306 shop", ""},
 		{"mysql_host -prod", ""},
 		{"mkdir -p /tmp/x", ""},

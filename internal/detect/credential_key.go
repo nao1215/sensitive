@@ -14,6 +14,8 @@ const (
 	setCookieKey          = "setcookie"
 	credentialMarker      = "[REDACTED]"
 	credentialSecretKey   = "secret"
+	shortPassKey          = "pass"
+	shortPasswordKey      = "pwd"
 )
 
 // NormalizeCredentialKey removes ASCII case and key separators.
@@ -33,7 +35,7 @@ func NormalizeCredentialKey(key string) string {
 // is the working directory in environment dumps.
 func SensitiveCredentialKey(key string) bool {
 	normalized := NormalizeCredentialKey(key)
-	return credentialSuffix(key) || sensitiveNormalizedKey(normalized) || normalized == "pass" || normalized == "pwd"
+	return credentialSuffix(key) || sensitiveNormalizedKey(normalized) || normalized == shortPassKey || normalized == shortPasswordKey
 }
 
 func sensitiveNormalizedKey(key string) bool {
@@ -106,7 +108,7 @@ func credentialSuffix(key string) bool {
 	var candidates []string
 	switch key[len(key)-1] | 0x20 {
 	case 'd':
-		candidates = []string{"password", "passwd", "pwd"}
+		candidates = []string{"password", "passwd", shortPasswordKey}
 	case 'e':
 		candidates = []string{"passcode", "passphrase"}
 	case 'p':
@@ -118,7 +120,7 @@ func credentialSuffix(key string) bool {
 	case 'l':
 		candidates = []string{string(NameCredential)}
 	case 's':
-		candidates = []string{"credentials", "creds", "pass"}
+		candidates = []string{"credentials", "creds", shortPassKey}
 	case 'h':
 		candidates = []string{"auth"}
 	case 'y':
@@ -137,15 +139,9 @@ func credentialSuffixMatch(key string, candidates []string) bool {
 		if start < 0 || !strings.EqualFold(key[start:], word) || credentialSegmentStart(key) != start {
 			continue
 		}
-		if word == "pass" || word == "pwd" {
-			// Bare pass and pwd are not credentials in text; db_pass is.
-			if strings.TrimRight(key[:start], "_.- ") != "" {
-				return true
-			}
-			continue
-		}
 		if word != "key" {
-			return true
+			// Bare pass and pwd are not credentials in text; db_pass is.
+			return (word != shortPassKey && word != shortPasswordKey) || strings.TrimRight(key[:start], "_.- ") != ""
 		}
 		if start == 0 {
 			return false

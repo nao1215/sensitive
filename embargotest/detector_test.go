@@ -184,15 +184,21 @@ func TestDefaultRecorderExcludesOptInKinds(t *testing.T) {
 	}
 }
 
+// otherAddressLine is captured output with an address that differs from the sink name.
+const otherAddressLine = "user bob@example.com"
+
+// unprintableSinkFailure is the failure for an email under a rejected sink name.
+const unprintableSinkFailure = "embargotest: sensitive data appeared in captured output: a sink with an unprintable name (email)"
+
 func TestFailureNamesSinkAndKindWithoutData(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
 		name, sink, text, want string
 	}{
 		{"finding", "app.log", "user alice@example.com", "embargotest: sensitive data appeared in captured output: app.log (email)"},
-		{"sink name with a finding", "alice@example.com", "user bob@example.com", "embargotest: sensitive data appeared in captured output: a sink with an unprintable name (email)"},
-		{"sink name with spaces", "my sink", "user bob@example.com", "embargotest: sensitive data appeared in captured output: a sink with an unprintable name (email)"},
-		{"long sink name", strings.Repeat("s", 65), "user bob@example.com", "embargotest: sensitive data appeared in captured output: a sink with an unprintable name (email)"},
+		{"sink name with a finding", "alice@example.com", otherAddressLine, unprintableSinkFailure},
+		{"sink name with spaces", "my sink", otherAddressLine, unprintableSinkFailure},
+		{"long sink name", strings.Repeat("s", 65), otherAddressLine, unprintableSinkFailure},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()

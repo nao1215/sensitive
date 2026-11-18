@@ -24,6 +24,7 @@ const (
 type Recorder struct {
 	tb            testing.TB
 	allowedKinds  map[embargo.Kind]bool
+	metadataKinds map[embargo.Kind]bool
 	allowedValues map[string]bool
 	sinks         map[string]*stream
 	scanner       *embargo.Scanner
@@ -39,7 +40,6 @@ type Recorder struct {
 	mu            sync.Mutex
 	scannerFailed bool
 	detected      bool
-	metadataKinds map[embargo.Kind]bool
 	checked       bool
 	failed        bool
 	reported      bool

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/nao1215/embargo"
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 type (
@@ -95,43 +96,56 @@ func (r *Recorder) observeMetadata(data []byte) {
 // the finding kinds, never the captured bytes. Transient HTTP header values
 // and interim responses are reported as "observed HTTP headers".
 func (r *Recorder) contentReasons(captures map[string][]byte, interim [][]byte, leaked, detected, scannerFailed bool) []string {
-	var leakedIn []string
-	foundIn := map[string]map[embargo.Kind]bool{}
+	found := sinkFindings{leaked: nil, kinds: map[string]map[embargo.Kind]bool{}, failed: scannerFailed}
 	if detected {
-		foundIn[httpHeadersSink] = maps.Clone(r.metadataKinds)
+		found.kinds[httpHeadersSink] = maps.Clone(r.metadataKinds)
 	}
 	if leaked {
-		leakedIn = append(leakedIn, httpHeadersSink)
-	}
-	observe := func(name string, capture []byte) {
-		if containsCanary(capture, r.needles) {
-			leakedIn = append(leakedIn, name)
-		}
-		findings, failed := r.scanFindings(capture)
-		scannerFailed = scannerFailed || failed
-		for _, f := range findings {
-			if foundIn[name] == nil {
-				foundIn[name] = map[embargo.Kind]bool{}
-			}
-			foundIn[name][f.Kind] = true
-		}
+		found.leaked = append(found.leaked, httpHeadersSink)
 	}
 	for _, capture := range interim {
-		observe(httpHeadersSink, capture)
+		r.observeSink(&found, httpHeadersSink, capture)
 	}
 	for _, name := range slices.Sorted(maps.Keys(captures)) {
-		observe(r.printableSinkName(name), captures[name])
+		r.observeSink(&found, r.printableSinkName(name), captures[name])
 	}
+	return found.reasons(r)
+}
+
+// sinkFindings collects, per printable sink name, the canary and finding kinds.
+type sinkFindings struct {
+	kinds  map[string]map[embargo.Kind]bool
+	leaked []string
+	failed bool
+}
+
+// observeSink scans one capture into found.
+func (r *Recorder) observeSink(found *sinkFindings, name string, capture []byte) {
+	if containsCanary(capture, r.needles) {
+		found.leaked = append(found.leaked, name)
+	}
+	findings, failed := r.scanFindings(capture)
+	found.failed = found.failed || failed
+	for _, f := range findings {
+		if found.kinds[name] == nil {
+			found.kinds[name] = map[embargo.Kind]bool{}
+		}
+		found.kinds[name][f.Kind] = true
+	}
+}
+
+// reasons renders the collected sinks in sorted order.
+func (found *sinkFindings) reasons(r *Recorder) []string {
 	var reasons []string
-	if len(leakedIn) > 0 {
-		slices.Sort(leakedIn)
-		reasons = append(reasons, "the fake secret appeared in captured output: "+strings.Join(slices.Compact(leakedIn), ", "))
+	if len(found.leaked) > 0 {
+		slices.Sort(found.leaked)
+		reasons = append(reasons, "the fake secret appeared in captured output: "+strings.Join(slices.Compact(found.leaked), ", "))
 	}
-	if len(foundIn) > 0 {
-		var parts []string
-		for _, name := range slices.Sorted(maps.Keys(foundIn)) {
-			kinds := make([]string, 0, len(foundIn[name]))
-			for kind := range foundIn[name] {
+	if len(found.kinds) > 0 {
+		parts := make([]string, 0, len(found.kinds))
+		for _, name := range slices.Sorted(maps.Keys(found.kinds)) {
+			kinds := make([]string, 0, len(found.kinds[name]))
+			for kind := range found.kinds[name] {
 				kinds = append(kinds, r.printableKind(kind))
 			}
 			slices.Sort(kinds)
@@ -139,7 +153,7 @@ func (r *Recorder) contentReasons(captures map[string][]byte, interim [][]byte, 
 		}
 		reasons = append(reasons, "sensitive data appeared in captured output: "+strings.Join(parts, "; "))
 	}
-	if scannerFailed {
+	if found.failed {
 		reasons = append(reasons, "scanner failed")
 	}
 	return reasons
@@ -175,9 +189,7 @@ func printableLabel(name string) bool {
 		return false
 	}
 	for i := range len(name) {
-		c := name[i]
-		alphaNum := (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
-		if !alphaNum && !strings.ContainsRune("_./:-", rune(c)) {
+		if c := name[i]; !ascii.IsAlphaNum(c) && !strings.ContainsRune("_./:-", rune(c)) {
 			return false
 		}
 	}

@@ -3,7 +3,6 @@ package detect
 import (
 	"bytes"
 	"net"
-	"strconv"
 	"strings"
 
 	"github.com/nao1215/embargo/internal/ascii"
@@ -191,19 +190,25 @@ func parseIPv4Run(run []byte) (string, net.IP) {
 func zeroPaddedIPv4(run []byte) (string, net.IP) {
 	text := strings.TrimRight(string(run), ".")
 	parts := strings.Split(text, ".")
-	const octets, maxOctetLen, maxOctet = 4, 3, 255
+	const octets, maxOctetLen = 4, 3
 	if len(parts) != octets {
 		return "", nil
 	}
-	var value [octets]byte
 	for i, part := range parts {
-		n, err := strconv.Atoi(part)
-		if err != nil || part == "" || len(part) > maxOctetLen || n > maxOctet {
+		trimmed := strings.TrimLeft(part, "0")
+		if part == "" || len(part) > maxOctetLen || strings.Trim(part, "0123456789") != "" {
 			return "", nil
 		}
-		value[i] = byte(n)
+		if trimmed == "" {
+			trimmed = "0"
+		}
+		parts[i] = trimmed
 	}
-	return text, net.IPv4(value[0], value[1], value[2], value[3])
+	ip := net.ParseIP(strings.Join(parts, "."))
+	if ip == nil {
+		return "", nil
+	}
+	return text, ip
 }
 
 func versionLabel(data []byte, start int) bool {

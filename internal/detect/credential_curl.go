@@ -156,23 +156,29 @@ func (d *Credential) flagValues(data []byte) []Finding {
 		if at > 0 && !isShellSpace(data[at-1]) {
 			continue
 		}
-		nameEnd := i
-		for nameEnd < len(data) && (isIdentifierByte(data[nameEnd]) || data[nameEnd] == '-') {
-			nameEnd++
-		}
-		if nameEnd == i || nameEnd >= len(data) || (data[nameEnd] != ' ' && data[nameEnd] != '\t') || !d.secretKey(data[i:nameEnd]) {
-			continue
-		}
-		end := shellCommandEnd(data, nameEnd)
-		valueStart := skipShellSpace(data, nameEnd, end)
-		valueEnd := shellWordEnd(data, valueStart, end)
-		start, stop := trimShellQuotes(data, valueStart, valueEnd)
-		if start < stop && data[start] != '-' && !labelIs(data[start:stop], "true", "false") {
+		if start, stop, end, ok := d.flagValue(data, i); ok {
 			out = append(out, credentialFinding(start, stop))
+			i = end
 		}
-		i = valueEnd
 	}
 	return out
+}
+
+// flagValue returns the unquoted value word after the option name that starts
+// at name, and where the word ends.
+func (d *Credential) flagValue(data []byte, name int) (start, stop, end int, ok bool) {
+	nameEnd := name
+	for nameEnd < len(data) && (isIdentifierByte(data[nameEnd]) || data[nameEnd] == '-') {
+		nameEnd++
+	}
+	if nameEnd == name || nameEnd >= len(data) || (data[nameEnd] != ' ' && data[nameEnd] != '\t') || !d.secretKey(data[name:nameEnd]) {
+		return 0, 0, 0, false
+	}
+	line := shellCommandEnd(data, nameEnd)
+	valueStart := skipShellSpace(data, nameEnd, line)
+	end = shellWordEnd(data, valueStart, line)
+	start, stop = trimShellQuotes(data, valueStart, end)
+	return start, stop, end, start < stop && data[start] != '-' && !labelIs(data[start:stop], "true", "false")
 }
 
 // commandPasswords finds passwords passed to commands whose short -p option
@@ -183,29 +189,32 @@ func (d *Credential) flagValues(data []byte) []Finding {
 func commandPasswords(data []byte) []Finding {
 	var out []Finding
 	for i := 0; i < len(data); i++ {
-		attached, ok := passwordCommand(data, i)
-		if !ok {
+		if attached, ok := passwordCommand(data, i); ok {
+			end := shellCommandEnd(data, i)
+			out = appendPasswordOptions(out, data, i, end, attached)
+			i = end
+		}
+	}
+	return out
+}
+
+// appendPasswordOptions adds the -p values of one command line.
+func appendPasswordOptions(out []Finding, data []byte, start, end int, attached bool) []Finding {
+	for at := start; at+len("-p") < end; at++ {
+		if data[at] != '-' || data[at+1] != 'p' || (at > 0 && !isShellSpace(data[at-1])) {
 			continue
 		}
-		end := shellCommandEnd(data, i)
-		for at := i; at+len("-p") < end; at++ {
-			if data[at] != '-' || data[at+1] != 'p' || (at > 0 && !isShellSpace(data[at-1])) {
-				continue
-			}
-			valueStart := at + len("-p")
-			if !attached {
-				if !isShellSpace(data[valueStart]) {
-					continue
-				}
-				valueStart = skipShellSpace(data, valueStart, end)
-			}
-			valueEnd := shellWordEnd(data, valueStart, end)
-			if start, stop := trimShellQuotes(data, valueStart, valueEnd); start < stop {
-				out = append(out, credentialFinding(start, stop))
-			}
-			at = valueEnd
+		valueStart := at + len("-p")
+		// mysql -p alone prompts, so a separate word is a database name.
+		if isShellSpace(data[valueStart]) == attached {
+			continue
 		}
-		i = end
+		valueStart = skipShellSpace(data, valueStart, end)
+		valueEnd := shellWordEnd(data, valueStart, end)
+		if begin, stop := trimShellQuotes(data, valueStart, valueEnd); begin < stop {
+			out = append(out, credentialFinding(begin, stop))
+		}
+		at = valueEnd
 	}
 	return out
 }

@@ -67,37 +67,29 @@ func serviceTokenSpan(index *providerIndex, data []byte, i int) (start, end int)
 	if end, ok := index.match(data, i); ok {
 		return i, end
 	}
-	if end, ok := terraformTokenEnd(data, i); ok {
-		return i, end
+	for _, layout := range specialTokenEnds() {
+		if end, ok := layout(data, i); ok {
+			return i, end
+		}
 	}
-	if end, ok := azureClientSecretEnd(data, i); ok {
-		return i, end
-	}
-	if end, ok := telegramBotTokenEnd(data, i); ok {
-		return i, end
-	}
-	if end, ok := maxMindLicenseKeyEnd(data, i); ok {
-		return i, end
-	}
-	if end, ok := mailchimpKeyEnd(data, i); ok {
-		return i, end
-	}
-	if end, ok := facebookAppTokenEnd(data, i); ok {
-		return i, end
-	}
-	if start, end, ok := slackWebhookSpan(data, i); ok {
-		return start, end
-	}
-	if start, end, ok := teamsWebhookSpan(data, i); ok {
-		return start, end
-	}
-	if start, end, ok := discordWebhookSpan(data, i); ok {
-		return start, end
-	}
-	if start, end, ok := sentryDSNSpan(data, i); ok {
-		return start, end
+	for _, layout := range secretPathSpans() {
+		if start, end, ok := layout(data, i); ok {
+			return start, end
+		}
 	}
 	return i, i
+}
+
+// specialTokenEnds returns the layouts the prefix table cannot express, each
+// reporting the end of a token that starts at the given position.
+func specialTokenEnds() [6]func([]byte, int) (int, bool) {
+	return [...]func([]byte, int) (int, bool){terraformTokenEnd, azureClientSecretEnd, telegramBotTokenEnd, maxMindLicenseKeyEnd, mailchimpKeyEnd, facebookAppTokenEnd}
+}
+
+// secretPathSpans returns the URL layouts that start at the given position and
+// report only the secret part of the URL.
+func secretPathSpans() [4]func([]byte, int) (int, int, bool) {
+	return [...]func([]byte, int) (int, int, bool){slackWebhookSpan, teamsWebhookSpan, discordWebhookSpan, sentryDSNSpan}
 }
 
 // terraformTokenEnd matches a Terraform Cloud token: 14 ASCII letters or
@@ -252,22 +244,8 @@ func teamsWebhookSpan(data []byte, start int) (body, end int, ok bool) {
 // discordapp.com or their ptb and canary hosts, and reports the path after
 // /api/webhooks/: a 17 to 20 digit ID, a slash and a 60 to 80 byte token.
 func discordWebhookSpan(data []byte, start int) (body, end int, ok bool) {
-	if !hasASCIIPrefix(data, start, "https://") {
-		return start, start, false
-	}
-	host := start + len("https://")
-	for _, sub := range []string{"ptb.", "canary."} {
-		if hasASCIIPrefix(data, host, sub) {
-			host += len(sub)
-			break
-		}
-	}
-	switch {
-	case hasASCIIPrefix(data, host, "discord.com/api/webhooks/"):
-		body = host + len("discord.com/api/webhooks/")
-	case hasASCIIPrefix(data, host, "discordapp.com/api/webhooks/"):
-		body = host + len("discordapp.com/api/webhooks/")
-	default:
+	body, ok = discordWebhookBody(data, start)
+	if !ok {
 		return start, start, false
 	}
 	const minID, maxID, minToken, maxToken = 17, 20, 60, 80
@@ -282,10 +260,31 @@ func discordWebhookSpan(data []byte, start int) (body, end int, ok bool) {
 	for end < len(data) && isTokenByte(data[end]) {
 		end++
 	}
-	if end-slash-1 < minToken || end-slash-1 > maxToken {
+	if token := end - slash - 1; token < minToken || token > maxToken {
 		return start, start, false
 	}
 	return body, end, true
+}
+
+// discordWebhookBody returns where the path after https://[ptb.|canary.]
+// discord.com/api/webhooks/ or discordapp.com/api/webhooks/ starts.
+func discordWebhookBody(data []byte, start int) (int, bool) {
+	if !hasASCIIPrefix(data, start, "https://") {
+		return start, false
+	}
+	host := start + len("https://")
+	for _, sub := range []string{"ptb.", "canary."} {
+		if hasASCIIPrefix(data, host, sub) {
+			host += len(sub)
+			break
+		}
+	}
+	for _, path := range []string{"discord.com/api/webhooks/", "discordapp.com/api/webhooks/"} {
+		if hasASCIIPrefix(data, host, path) {
+			return host + len(path), true
+		}
+	}
+	return start, false
 }
 
 // sentryDSNSpan matches a Sentry DSN for the hosted service,

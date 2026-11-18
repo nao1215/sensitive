@@ -199,27 +199,11 @@ func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidde
 		}
 	}
 	w.space()
-	var pair namedValue
+	pair := namedValue{active: open == '{' && !hidden, sensitive: false, valueStart: 0, valueEnd: 0}
 	for w.data[w.pos] != closeByte {
-		fieldContext := key
-		pathDepth := len(w.path)
-		if open == '{' {
-			var err error
-			if fieldContext, err = w.memberKey(ctx, key, hidden); err != nil {
-				return err
-			}
-		}
-		w.space()
-		valueStart, resultStart := w.pos, len(w.result)
-		if err := w.value(ctx, depth+1, fieldContext, hidden); err != nil {
+		if err := w.element(ctx, depth, key, open == '{', hidden, &pair); err != nil {
 			return err
 		}
-		if open == '{' && !hidden {
-			pair.member(w, fieldContext, w.data[valueStart:w.pos], resultStart)
-		}
-		w.path = w.path[:pathDepth]
-		w.space()
-		w.elementSeparator(hidden)
 	}
 	w.pos++
 	if !hidden {
@@ -229,12 +213,35 @@ func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidde
 	return nil
 }
 
+// element walks one array element or object member and the separator after it.
+func (w *jsonWalker) element(ctx context.Context, depth int, key string, member, hidden bool, pair *namedValue) error {
+	fieldContext := key
+	pathDepth := len(w.path)
+	if member {
+		var err error
+		if fieldContext, err = w.memberKey(ctx, key, hidden); err != nil {
+			return err
+		}
+	}
+	w.space()
+	valueStart, resultStart := w.pos, len(w.result)
+	if err := w.value(ctx, depth+1, fieldContext, hidden); err != nil {
+		return err
+	}
+	pair.member(w, fieldContext, w.data[valueStart:w.pos], resultStart)
+	w.path = w.path[:pathDepth]
+	w.space()
+	w.elementSeparator(hidden)
+	return nil
+}
+
 // namedValue tracks one object that stores a setting as separate name and
 // value members, as Kubernetes env, ECS task definitions, SSM parameters and
 // CloudFormation parameters do: {"name":"DB_PASSWORD","value":"hunter2"}.
 // The value string is masked when the name is a sensitive key, in either
 // member order. Numeric values, as in metric samples, stay visible.
 type namedValue struct {
+	active     bool
 	sensitive  bool
 	valueStart int
 	valueEnd   int
@@ -243,7 +250,7 @@ type namedValue struct {
 // member records a name member whose string is a sensitive key and the
 // output span of a string value member.
 func (p *namedValue) member(w *jsonWalker, key string, raw []byte, resultStart int) {
-	if len(raw) < len(`""`) || raw[0] != '"' {
+	if !p.active || len(raw) < len(`""`) || raw[0] != '"' {
 		return
 	}
 	switch normalizeKey(key) {

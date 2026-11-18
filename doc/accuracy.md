@@ -39,7 +39,7 @@ The original 23 built-in detectors decode exactly one layer of valid `%HH` escap
 | [ipaddr](#ipaddr) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [jwt](#jwt) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [merchant_id](#merchant-id) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [mynumber](#mynumber) | 144 / 544 | 144 / 32 / 0 | 81.8% | 100.0% |
+| [mynumber](#mynumber) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [pan](#pan) | 144 / 544 | 144 / 32 / 0 | 81.8% | 100.0% |
 | [payment_token](#payment-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 144 / 544 | 144 / 32 / 0 | 81.8% | 100.0% |
@@ -70,7 +70,7 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [ipaddr](#ipaddr) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [jwt](#jwt) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [merchant_id](#merchant-id) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [mynumber](#mynumber) | 146 / 562 | 146 / 33 / 0 | 81.6% | 100.0% |
+| [mynumber](#mynumber) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [pan](#pan) | 146 / 562 | 146 / 33 / 0 | 81.6% | 100.0% |
 | [payment_token](#payment-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 146 / 562 | 146 / 32 / 0 | 82.0% | 100.0% |
@@ -465,7 +465,7 @@ The default remains 0 for all 26 default kinds. Public-log rates are sample esti
 
 | Minimum confidence | Public FP/GB | Public precision | Development precision / misses | Held precision / misses |
 |---|---:|---:|---:|---:|
-| 0.0 | 2859.7 | 99.9210% | 97.03% / 0 | 97.62% / 0 |
+| 0.0 | 2859.7 | 99.9210% | 97.81% / 0 | 98.40% / 0 |
 | 0.5 | 2859.7 | 99.9210% | 99.40% / 0 | 100.00% / 0 |
 | 0.7 | 2859.7 | 99.9210% | 99.38% / 158 | 100.00% / 156 |
 
@@ -481,7 +481,7 @@ Each split combines the original synthetic corpus, credentials and the frozen co
 | Set | Tier | Threshold | TP / FP / misses | Recall | Exposed values / bytes |
 |---|---|---:|---:|---:|---:|
 | development | critical | 0.0 | 1648 / 33 / 0 | 100.00% | 0 / 0 |
-| development | high | 0.0 | 3930 / 1089 / 0 | 100.00% | 0 / 0 |
+| development | high | 0.0 | 3930 / 1056 / 0 | 100.00% | 0 / 0 |
 | development | standard | 0.0 | 1724 / 176 / 0 | 100.00% | 0 / 0 |
 | development | critical | 0.5 | 1648 / 0 / 0 | 100.00% | 0 / 0 |
 | development | high | 0.5 | 3930 / 0 / 0 | 100.00% | 0 / 0 |
@@ -490,7 +490,7 @@ Each split combines the original synthetic corpus, credentials and the frozen co
 | development | high | 0.7 | 3164 / 0 / 766 | 80.51% | 766 / 10735 |
 | development | standard | 0.7 | 1604 / 24 / 120 | 93.04% | 120 / 4800 |
 | held | critical | 0.0 | 1632 / 32 / 0 | 100.00% | 0 / 0 |
-| held | high | 0.0 | 3920 / 1088 / 0 | 100.00% | 0 / 0 |
+| held | high | 0.0 | 3920 / 1056 / 0 | 100.00% | 0 / 0 |
 | held | standard | 0.0 | 1702 / 150 / 2 | 99.88% | 2 / 80 |
 | held | critical | 0.5 | 1632 / 0 / 0 | 100.00% | 0 / 0 |
 | held | high | 0.5 | 3920 / 0 / 0 | 100.00% | 0 / 0 |
