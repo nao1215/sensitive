@@ -75,7 +75,7 @@ Case is ignored; registry lengths are 15:NO; 16:BE; 18:DK/FI/FK/FO/GL/NL/SD; 19:
 
 ### KindIPAddr
 
-IPv4 requires 4 octets in 0–255 and token boundaries; IPv6 includes trailing dotted quads (mapped, compatible and NAT64 forms); attached version, v, ver, build or release labels exclude IPv4 candidates.
+IPv4 requires 4 octets in 0–255 and token boundaries, and accepts octets zero-padded to three digits (192.168.001.010); IPv6 includes trailing dotted quads (mapped, compatible and NAT64 forms); attached version, v, ver, build or release labels exclude IPv4 candidates.
 
 ### KindSWIFTBIC
 

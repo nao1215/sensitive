@@ -3,6 +3,8 @@ package detect
 import (
 	"bytes"
 	"net"
+	"strconv"
+	"strings"
 
 	"github.com/nao1215/embargo/internal/ascii"
 )
@@ -175,7 +177,33 @@ func parseIPv4Run(run []byte) (string, net.IP) {
 	if bytes.Count(run, []byte{'.'}) < minIPv4Dots {
 		return "", nil
 	}
-	return parseIPSentence(string(run))
+	candidate, ip := parseIPSentence(string(run))
+	if ip == nil {
+		return zeroPaddedIPv4(run)
+	}
+	return candidate, ip
+}
+
+// zeroPaddedIPv4 accepts four decimal octets of up to three digits written
+// with leading zeros, as some firewall and appliance logs print them
+// (192.168.001.010). net.ParseIP rejects that form because other parsers read
+// it as octal; a log reader still sees the address.
+func zeroPaddedIPv4(run []byte) (string, net.IP) {
+	text := strings.TrimRight(string(run), ".")
+	parts := strings.Split(text, ".")
+	const octets, maxOctetLen, maxOctet = 4, 3, 255
+	if len(parts) != octets {
+		return "", nil
+	}
+	var value [octets]byte
+	for i, part := range parts {
+		n, err := strconv.Atoi(part)
+		if err != nil || part == "" || len(part) > maxOctetLen || n > maxOctet {
+			return "", nil
+		}
+		value[i] = byte(n)
+	}
+	return text, net.IPv4(value[0], value[1], value[2], value[3])
 }
 
 func versionLabel(data []byte, start int) bool {
