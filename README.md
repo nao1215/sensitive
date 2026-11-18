@@ -33,7 +33,7 @@ Redaction in a log pipeline can still run after it; embargo stops the leak where
 Requires Go 1.26.11 or later.
 
 ```sh
-go get github.com/nao1215/embargo@v0.12.0
+go get github.com/nao1215/embargo@v0.13.0
 ```
 
 <!-- example: example_test.go:Example -->
@@ -276,7 +276,7 @@ In a sample service with planted leaks (a DSN, wrapped errors, an Authorization 
 The `embargo` command masks log files or a pipe line by line, keeps JSON lines' shape and depends only on the standard library.
 
 ```sh
-go install github.com/nao1215/embargo/cmd/embargo@v0.12.0
+go install github.com/nao1215/embargo/cmd/embargo@v0.13.0
 kubectl logs deploy/api | embargo
 embargo --report --kinds all app.log
 ```

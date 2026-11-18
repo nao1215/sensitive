@@ -4,18 +4,18 @@ These optional modules mask at the final JSON boundary, after the real logger ha
 
 ## Installation
 
-The six adapter modules are published at v0.12.0 and require root v0.12.0. Upgrade the root and every installed adapter to receive the wider provider-token and credential-syntax detection and the hash-arrow fix described in [v0.12.0](../CHANGELOG.md#0120---2026-11-18), including its Detection changes. Install the module for the logger or SDK the application uses:
+The six adapter modules are published at v0.13.0 and require root v0.13.0. Upgrade the root and every installed adapter to receive the false-positive fixes from the operations logs, the US phone boundary fix and parallel masking in the zap and zerolog writers described in [v0.13.0](../CHANGELOG.md#0130---2026-11-18), including its Detection changes. Install the module for the logger or SDK the application uses:
 
 ```sh
-go get github.com/nao1215/embargo/adapters/zap@v0.12.0
-go get github.com/nao1215/embargo/adapters/zerolog@v0.12.0
-go get github.com/nao1215/embargo/adapters/logrus@v0.12.0
-go get github.com/nao1215/embargo/adapters/grpc@v0.12.0
-go get github.com/nao1215/embargo/adapters/otel@v0.12.0
-go get github.com/nao1215/embargo/adapters/sentry@v0.12.0
+go get github.com/nao1215/embargo/adapters/zap@v0.13.0
+go get github.com/nao1215/embargo/adapters/zerolog@v0.13.0
+go get github.com/nao1215/embargo/adapters/logrus@v0.13.0
+go get github.com/nao1215/embargo/adapters/grpc@v0.13.0
+go get github.com/nao1215/embargo/adapters/otel@v0.13.0
+go get github.com/nao1215/embargo/adapters/sentry@v0.13.0
 ```
 
-For `NewHTTPHandler`, install the root module with `go get github.com/nao1215/embargo@v0.12.0`; no adapter module is needed.
+For `NewHTTPHandler`, install the root module with `go get github.com/nao1215/embargo@v0.13.0`; no adapter module is needed.
 
 Use only the module for your integration. The [zap](../adapters/zap/example_test.go), [zerolog](../adapters/zerolog/example_test.go) and [logrus](../adapters/logrus/example_test.go) Examples show complete setup and their actual JSON output.
 
