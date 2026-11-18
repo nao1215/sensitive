@@ -30,7 +30,7 @@ def event_chart(measurement):
         x = left+width*step/4
         chart.bar(round(x), 105, 1, 258, '#ccd2da')
         chart.text(round(x, 2), 386, f'{value:g}', 13, anchor='middle')
-    labels = ('slog alone', 'embargo: email, card', 'embargo: default', 'slog + pii-shield '+measurement['versions']['pii-shield'], 'slog + masq '+measurement['versions']['masq'], 'slog + go-masker '+measurement['versions']['go-masker'])
+    labels = ('slog alone', 'slog + embargo (email, card)', 'slog + embargo (default)', 'slog + pii-shield '+measurement['versions']['pii-shield'], 'slog + masq '+measurement['versions']['masq'], 'slog + go-masker '+measurement['versions']['go-masker'])
     for i, (label, value) in enumerate(zip(labels, values)):
         y = 113+i*42
         chart.text(24, y+21, label, 15)
