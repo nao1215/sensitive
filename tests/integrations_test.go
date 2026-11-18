@@ -1364,6 +1364,53 @@ func TestFreeTextHooksProperty(t *testing.T) {
 	})
 }
 
+func TestMaskFuncReachesEveryHook(t *testing.T) {
+	t.Parallel()
+	const card, kept = "4111111111111111", "****1111"
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindPAN), embargo.WithMaskFunc(func(_ embargo.Kind, value string) string {
+		return "****" + value[len(value)-4:]
+	}))
+	check := func(name string, raw []byte) {
+		t.Helper()
+		if bytes.Contains(raw, []byte(card)) || !bytes.Contains(raw, []byte(kept)) {
+			t.Errorf("%s did not keep only the last four digits: %q", name, raw)
+		}
+	}
+	for _, name := range []string{loggerSlog, loggerZap, loggerZerolog, loggerLogrus} {
+		check(name, loggerOutput(t, scanner, name, "note", "paid with "+card))
+		check(name+" number", loggerOutput(t, scanner, name, "card", int64(4111111111111111)))
+	}
+	event := sentry.NewEvent()
+	event.Message = "paid with " + card
+	encoded, err := json.Marshal(embargosentry.NewBeforeSend(scanner)(event, nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	check("Sentry", encoded)
+	var out bytes.Buffer
+	provider := sdklog.NewLoggerProvider(sdklog.WithProcessor(sdklog.NewSimpleProcessor(embargootel.NewLogExporter(&sdkLogCapture{writer: &out}, scanner))))
+	var record otellog.Record
+	record.SetBody(attribute.StringValue("paid with " + card))
+	provider.Logger("mask-func").Emit(t.Context(), record)
+	if err := provider.Shutdown(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	check("OTel log", out.Bytes())
+	sink := tracetest.NewInMemoryExporter()
+	span := tracetest.SpanStub{Name: "checkout", Attributes: []attribute.KeyValue{attribute.String("note", "paid with "+card)}}.Snapshot()
+	if err := embargootel.NewSpanExporter(sink, scanner).ExportSpans(t.Context(), []sdktrace.ReadOnlySpan{span}); err != nil {
+		t.Fatal(err)
+	}
+	if encoded, err = json.Marshal(sink.GetSpans()); err != nil {
+		t.Fatal(err)
+	}
+	check("OTel span", encoded)
+	out.Reset()
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://service.invalid/?card="+card, nil)
+	embargo.NewHTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }), slog.New(slog.NewJSONHandler(&out, nil)), scanner).ServeHTTP(httptest.NewRecorder(), request)
+	check("HTTP", out.Bytes())
+}
+
 func freeTextErrorOutput(t *testing.T, scanner *embargo.Scanner, name, input string) []byte {
 	t.Helper()
 	var out bytes.Buffer

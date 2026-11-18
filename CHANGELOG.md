@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `WithMaskFunc` sets the replacement for detected spans in log records, MaskJSON output, the HTTP handler and the logger adapters, the same callback that `MaskFunc` takes for text, so a log line can keep the last four digits of a card as `card=****1111`. Values under sensitive keys, encoded text, numbers that a finding covers only in part and records withheld on failure still become `[REDACTED]`, and a replacement that contains the value falls back to `[REDACTED]`. Without the option, output is unchanged.
+
 ## [0.15.0] - 2026-11-19
 
 No exported API changes: code that builds against v0.14.0 builds unchanged. Masked output changes are listed under Detection changes; Changed lists messages and other observable behavior.

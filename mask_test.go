@@ -2,6 +2,7 @@ package embargo
 
 import (
 	"bytes"
+	"log/slog"
 	"math/rand/v2"
 	"reflect"
 	"slices"
@@ -106,4 +107,75 @@ func TestMaskKindPreferenceAcrossInputOrder(t *testing.T) {
 		}
 		slices.Reverse(findings)
 	}
+}
+
+func lastFour(kind Kind, value string) string {
+	if kind != KindPAN {
+		return "#" + string(kind) + "#"
+	}
+	return "****" + value[len(value)-4:]
+}
+
+func TestWithMaskFuncReachesRecordsAndJSON(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindPAN, KindEmail), WithMaskFunc(lastFour))
+	for input, want := range map[string]string{
+		`{"card":"4111111111111111"}`:                    `{"card":"****1111"}`,
+		`{"card":4111111111111111}`:                      `{"card":"****1111"}`,
+		`{"msg":"paid 4111111111111111 by a@b.example"}`: `{"msg":"paid ****1111 by #email#"}`,
+		`{"msg":"paid 4111111111111111"}`:                `{"msg":"paid ****1111"}`,
+		`{"4111111111111111":1}`:                         `{"****1111":1}`,
+		`{"password":"4111111111111111"}`:                `{"password":"[REDACTED]"}`,
+		`{"card":4111111111111111.5}`:                    `{"card":4111111111111111.5}`,
+	} {
+		got, err := scanner.MaskJSON([]byte(input))
+		if err != nil {
+			t.Fatalf("%s: %v", input, err)
+		}
+		if string(got) != want {
+			t.Errorf("MaskJSON(%s) = %s, want %s", input, got, want)
+		}
+	}
+
+	var out bytes.Buffer
+	logger := slog.New(NewSlogHandler(slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: withoutTime}), scanner))
+	logger.Info("checkout", "card", int64(4111111111111111), "note", "card 4111111111111111")
+	if want := `{"level":"INFO","msg":"checkout","card":"****1111","note":"card ****1111"}` + "\n"; out.String() != want {
+		t.Fatalf("slog = %q, want %q", out.String(), want)
+	}
+}
+
+func TestWithMaskFuncFallsBackToMarker(t *testing.T) {
+	t.Parallel()
+	echo := NewScanner(WithKinds(KindPAN), WithMaskFunc(func(_ Kind, value string) string { return "<" + value + ">" }))
+	if got, err := echo.MaskJSON([]byte(`{"msg":"card 4111111111111111"}`)); err != nil || string(got) != `{"msg":"card [REDACTED]"}` {
+		t.Fatalf("a replacement containing the value = %s, %v", got, err)
+	}
+	partial := NewScanner(WithKinds(KindPAN), WithMaskFunc(lastFour))
+	got, err := partial.MaskJSON([]byte(`{"n":4.111111111111111e15}`))
+	if err != nil || string(got) != `{"n":"[REDACTED]"}` {
+		t.Fatalf("a number only partly covered by a finding = %s, %v", got, err)
+	}
+	panicking := NewScanner(WithKinds(KindPAN), WithMaskFunc(func(Kind, string) string { panic("boom") }))
+	if got, err := panicking.MaskJSON([]byte(`{"msg":"card 4111111111111111"}`)); err == nil || got != nil {
+		t.Fatalf("a panicking replacement = %s, %v", got, err)
+	}
+	var out bytes.Buffer
+	slog.New(NewSlogHandler(slog.NewJSONHandler(&out, nil), panicking)).Info("card 4111111111111111")
+	if strings.Contains(out.String(), "4111") {
+		t.Fatalf("a panicking replacement leaked through slog: %q", out.String())
+	}
+	defer func() {
+		if recover() == nil {
+			t.Fatal("WithMaskFunc(nil) did not panic")
+		}
+	}()
+	WithMaskFunc(nil)
+}
+
+func withoutTime(_ []string, a slog.Attr) slog.Attr {
+	if a.Key == slog.TimeKey {
+		return slog.Attr{}
+	}
+	return a
 }

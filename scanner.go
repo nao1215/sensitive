@@ -18,6 +18,7 @@ type Scanner struct {
 	detectors     []detect.Detector
 	hintCache     [][]hintEntry
 	custom        []Detector
+	maskFunc      func(Kind, string) string
 	scratch       *sync.Pool
 	keys          *keyCache
 	credential    detect.Detector

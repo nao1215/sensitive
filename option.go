@@ -69,6 +69,20 @@ func WithMinConfidence(threshold float64) ScannerOption {
 	return scannerOption(func(s *Scanner) { s.minConfidence = threshold })
 }
 
+// WithMaskFunc replaces each detected span in log records, MaskJSON output and
+// adapters with replace(kind, value), as MaskFunc does for text, so a log can
+// keep, for example, the last four digits of a card. Values under sensitive keys,
+// encoded text and records withheld on failure still become [REDACTED], as does a
+// detected JSON number unless one finding covers all of it. A replacement that
+// contains the value also falls back to [REDACTED]. replace must be safe for
+// concurrent calls; a panic withholds the record. A nil callback panics.
+func WithMaskFunc(replace func(kind Kind, value string) string) ScannerOption {
+	if replace == nil {
+		panic("embargo: nil replacement")
+	}
+	return scannerOption(func(s *Scanner) { s.maskFunc = replace })
+}
+
 func validScore(score float64) bool { return !math.IsNaN(score) && score >= 0 && score <= 1 }
 
 // quotedKind names a misspelled kind and its nearest built-in, as in

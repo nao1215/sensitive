@@ -237,7 +237,7 @@ Mask everything a scanner finds, or keep part of a value:
 | [Overlapping matches](example_test.go) | `token=abcdef` with `abcd cdef` → `token=[REDACTED]` |
 <!-- masking:end -->
 
-`Scanner.ScanLines` reads files and streams line by line. [Scanner options and custom replacements](doc/masking.md)
+[`WithMaskFunc`](example_test.go) gives log records, MaskJSON and the adapters the same callback, so a log line keeps `card=****0366`. `Scanner.ScanLines` reads files and streams line by line. [Scanner options and custom replacements](doc/masking.md)
 
 <!-- narrowing-line:start -->
 Pick the kinds you need: on 2.7 KB of log lines with no secret, `WithKinds(KindEmail)` returns in 0.10 µs because there is no `@` to inspect, while `WithAll()` takes 65 µs. [Per-detector benchmarks](doc/benchmarks.md)
