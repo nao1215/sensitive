@@ -415,9 +415,12 @@ func bracketKey(data []byte, end int) []byte {
 	if start == 0 || data[start-1] != '[' || start == end-1 {
 		return nil
 	}
-	key := data[start : end-1]
-	// A quoted subscript, as in os.environ["DB_PASSWORD"] or ENV['TOKEN'],
-	// names the key inside the quotes.
+	return unquotedSubscript(data[start : end-1])
+}
+
+// unquotedSubscript returns the name inside a quoted subscript, as in
+// os.environ["DB_PASSWORD"] or ENV['TOKEN'], and other subscripts unchanged.
+func unquotedSubscript(key []byte) []byte {
 	if len(key) > 2 && (key[0] == '"' || key[0] == '\'') && key[len(key)-1] == key[0] {
 		return key[1 : len(key)-1]
 	}
@@ -480,14 +483,10 @@ func (d *Credential) quotedArgumentPairs(data []byte) []Finding {
 }
 
 // argumentValue returns the quoted value after the key quoted from open to
-// keyEnd when the key opens an argument list or follows a comma and names a
-// credential, and a comma separates it from the value.
+// keyEnd when the key names a credential and opens an argument list or follows
+// a comma, and a comma separates it from the value.
 func (d *Credential) argumentValue(data []byte, open, keyEnd int) (start, end int, ok bool) {
-	before := open
-	for before > 0 && (data[before-1] == ' ' || data[before-1] == '\t') {
-		before--
-	}
-	if before == 0 || !strings.ContainsRune("({,", rune(data[before-1])) || !d.secretKey(data[open+1:keyEnd]) {
+	if !argumentListItem(data, open) || !d.secretKey(data[open+1:keyEnd]) {
 		return 0, 0, false
 	}
 	at := skipBlanks(data, keyEnd+1)
@@ -500,8 +499,15 @@ func (d *Credential) argumentValue(data []byte, open, keyEnd int) (start, end in
 	}
 	end = credentialQuoteEnd(data, at+1, data[at])
 	start = authorizationValueStart(data, at+1, end, NormalizeCredentialKey(string(data[open+1:keyEnd])))
-	if end == start || redactedCredentialValue(data[start:end]) {
-		return 0, 0, false
+	return start, end, end > start && !redactedCredentialValue(data[start:end])
+}
+
+// argumentListItem reports whether the quote at open starts an argument or
+// initializer list item: the byte before it, past blanks, is (, { or a comma.
+func argumentListItem(data []byte, open int) bool {
+	before := open
+	for before > 0 && (data[before-1] == ' ' || data[before-1] == '\t') {
+		before--
 	}
-	return start, end, true
+	return before > 0 && strings.ContainsRune("({,", rune(data[before-1]))
 }
