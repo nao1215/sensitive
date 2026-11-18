@@ -211,13 +211,6 @@
       "lines": 26
     },
     {
-      "file": "internal/detect/pan.go",
-      "name": "PAN.scanNormalized",
-      "statements": 22,
-      "cyclomatic": 9,
-      "lines": 41
-    },
-    {
       "file": "internal/detect/phone_jp.go",
       "name": "JPPhone.scanNormalized",
       "statements": 25,

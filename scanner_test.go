@@ -1418,7 +1418,7 @@ func TestScanFieldMatchesWholeTextScan(t *testing.T) {
 				text := []byte(key + ": " + value)
 				prefix := len(key) + len(": ")
 				want := fieldFindings(scanner.scanAppend(nil, text, nil), prefix)
-				got := fieldFindings(scanner.scanField(nil, text, prefix, nil), prefix)
+				got := fieldFindings(scanner.scanField(text, prefix, nil), prefix)
 				if !reflect.DeepEqual(got, want) {
 					t.Fatalf("%q: field scan %+v, whole scan %+v", text, got, want)
 				}
@@ -1431,35 +1431,35 @@ func TestScanFieldEdges(t *testing.T) {
 	t.Parallel()
 	text := []byte("note: alice@example.com")
 	var zero Scanner
-	if got, want := zero.scanField(nil, text, len("note: "), nil), defaultScanner().scanAppend(nil, text, nil); !reflect.DeepEqual(got, want) {
+	if got, want := zero.scanField(text, len("note: "), nil), defaultScanner().scanAppend(nil, text, nil); !reflect.DeepEqual(got, want) {
 		t.Fatalf("zero scanner %+v, want %+v", got, want)
 	}
-	if got, want := NewScanner().scanField(nil, text, 0, nil), NewScanner().scanAppend(nil, text, nil); !reflect.DeepEqual(got, want) {
+	if got, want := NewScanner().scanField(text, 0, nil), NewScanner().scanAppend(nil, text, nil); !reflect.DeepEqual(got, want) {
 		t.Fatalf("no prefix %+v, want %+v", got, want)
 	}
 	for _, scanner := range []*Scanner{NewScanner(WithKinds(), WithDetector(fieldProbe{t})), NewScanner(WithKinds(KindEmail), WithDetector(fieldProbe{t}))} {
-		got := scanner.scanField(nil, text, len("note: "), nil)
+		got := scanner.scanField(text, len("note: "), nil)
 		if len(got) == 0 || got[0].Kind != fieldProbeKind {
 			t.Fatalf("custom detector findings %+v", got)
 		}
 	}
 	// A key is context, not a value: an address in the key alone is not reported.
-	if got := NewScanner().scanField(nil, []byte("alice@example.com: ok"), len("alice@example.com: "), nil); len(got) != 0 {
+	if got := NewScanner().scanField([]byte("alice@example.com: ok"), len("alice@example.com: "), nil); len(got) != 0 {
 		t.Fatalf("key-only address reported: %+v", got)
 	}
 	canceled := func() error { return context.Canceled }
-	if got := NewScanner().scanField(nil, text, len("note: "), canceled); got != nil {
+	if got := NewScanner().scanField(text, len("note: "), canceled); got != nil {
 		t.Fatalf("canceled field scan returned %+v", got)
 	}
 	scanner := NewScanner(WithAll())
 	field := []byte("card: 4111111111111111 alice@example.com")
 	checks := 0
-	if findings := scanner.scanField(nil, field, len("card: "), func() error { checks++; return nil }); len(findings) == 0 || checks < 4 {
+	if findings := scanner.scanField(field, len("card: "), func() error { checks++; return nil }); len(findings) == 0 || checks < 4 {
 		t.Fatalf("uncanceled field scan made %d checks and found %v", checks, findings)
 	}
 	for checkpoint := 2; checkpoint <= checks; checkpoint++ {
 		calls := 0
-		findings := scanner.scanField(nil, field, len("card: "), func() error {
+		findings := scanner.scanField(field, len("card: "), func() error {
 			calls++
 			if calls >= checkpoint {
 				return context.Canceled
@@ -1487,7 +1487,7 @@ func TestScanFieldKeepsKeyContext(t *testing.T) {
 		{NewScanner(), "swift", "DEUTDEFF", KindSWIFTBIC},
 	} {
 		prefix := len(tc.key) + len(": ")
-		got := fieldFindings(tc.scanner.scanField(nil, []byte(tc.key+": "+tc.value), prefix, nil), prefix)
+		got := fieldFindings(tc.scanner.scanField([]byte(tc.key+": "+tc.value), prefix, nil), prefix)
 		if len(got) != 1 || got[0].Kind != tc.kind || got[0].Start != prefix || got[0].End != prefix+len(tc.value) {
 			t.Fatalf("%s: %+v, want one %s over the value", tc.key, got, tc.kind)
 		}
@@ -1504,4 +1504,23 @@ func (p fieldProbe) Scan(data []byte) []Finding {
 		p.t.Errorf("custom detector saw %q, want the whole field", data)
 	}
 	return []Finding{{Kind: fieldProbeKind, Start: 0, End: len("note"), Confidence: 1}}
+}
+
+func TestBorrowedAttributesAreCleared(t *testing.T) {
+	t.Parallel()
+	inline := make([]slog.Attr, 0, 2)
+	if attrs, pooled := borrowAttrs(inline, 2); pooled != nil || cap(attrs) != 2 {
+		t.Fatal("attributes that fit did not use the inline array")
+	}
+	attrs, pooled := borrowAttrs(inline, 3)
+	if pooled == nil || cap(attrs) < 3 {
+		t.Fatal("attributes that do not fit were not pooled")
+	}
+	attrs = append(attrs, slog.String("secret", "value"))
+	*pooled = attrs
+	returnAttrs(pooled)
+	if (*pooled)[:1][0].Key != "" {
+		t.Fatal("a returned slice kept a logged attribute")
+	}
+	returnAttrs(nil)
 }

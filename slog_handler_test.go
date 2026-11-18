@@ -735,3 +735,27 @@ func TestSlogScansByteFieldsInsideValues(t *testing.T) {
 		})
 	}
 }
+
+func TestManyAttributesUsePooledStorage(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	logger := slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+		if a.Key == slog.TimeKey {
+			return slog.Attr{}
+		}
+		return a
+	}}), embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))))
+	for round := range 2 {
+		out.Reset()
+		attrs := make([]any, 0, 40)
+		for i := range 20 {
+			attrs = append(attrs, "k"+strconv.Itoa(i), strconv.Itoa(round))
+		}
+		attrs = append(attrs, "email", "alice@example.com")
+		logger.Info("many", attrs...)
+		got := out.String()
+		if strings.Contains(got, "alice@") || !strings.Contains(got, `"k19":"`+strconv.Itoa(round)+`"`) || strings.Count(got, `":"`) != 23 {
+			t.Fatalf("round %d: %s", round, got)
+		}
+	}
+}

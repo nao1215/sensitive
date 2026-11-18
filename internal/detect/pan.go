@@ -67,35 +67,38 @@ func (d *PAN) Hints() [][]byte {
 }
 
 // Scan returns matches in data using the rules documented on [PAN].
-func (d *PAN) Scan(data []byte) []Finding {
+func (d *PAN) Scan(data []byte) []Finding { return d.appendScan(nil, data) }
+
+func (d *PAN) appendScan(dst []Finding, data []byte) []Finding {
 	// One pass decides both the ASCII fast path and the digit count that
-	// normalizeDigits and scanNormalized would otherwise each walk for.
+	// normalizeDigits and appendNormalized would otherwise each walk for.
 	digits := 0
 	for _, b := range data {
 		if b >= utf8.RuneSelf {
 			normalized, posMap := NormalizeFullWidthDigits(data)
-			return d.scanNormalized(data, normalized, posMap)
+			return d.appendNormalized(dst, data, normalized, posMap)
 		}
 		if ascii.IsDigit(b) {
 			digits++
 		}
 	}
 	if digits < panMinDigits {
-		return nil
+		return dst
 	}
-	return d.scanNormalized(data, data, nil)
+	return d.appendNormalized(dst, data, data, nil)
 }
 
-// scanNormalized performs PAN detection on normalized (half-width) data.
-// orig is the original (possibly full-width) input; posMap maps normalized
-// byte positions back to original byte positions. Context confidence uses orig.
-func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
+// appendNormalized appends the PAN findings of normalized (half-width) data
+// to dst. orig is the original (possibly full-width) input; posMap maps
+// normalized byte positions back to original byte positions. Context
+// confidence uses orig.
+func (d *PAN) appendNormalized(dst []Finding, orig, data []byte, posMap []int) []Finding {
 	// Every candidate needs at least panMinDigits digits of data, so text with
 	// fewer, such as a key with a short index, cannot produce a finding.
 	if !hasDigits(data, panMinDigits) {
-		return nil
+		return dst
 	}
-	return scanNumeric(orig, data, posMap, d.candidate, true)
+	return scanNumeric(dst, orig, data, posMap, d.candidate, true)
 }
 
 // candidate checks the card number that may start at i and returns where

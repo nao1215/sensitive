@@ -33,21 +33,23 @@ func (d *Email) Hints() [][]byte {
 // with a full-width at sign, as Japanese input methods write it, is scanned
 // with full-width ASCII folded to ASCII, so ｂｏｂ＠ｅｘａｍｐｌｅ．ｃｏｍ and
 // bob＠example.com are addresses too.
-func (d *Email) Scan(data []byte) []Finding {
+func (d *Email) Scan(data []byte) []Finding { return d.appendScan(nil, data) }
+
+func (d *Email) appendScan(dst []Finding, data []byte) []Finding {
 	if !bytes.Contains(data, []byte(fullWidthAt)) {
-		return d.scanASCII(data)
+		return d.scanASCII(dst, data)
 	}
 	folded, positions := foldFullWidthASCII(data)
-	findings := d.scanASCII(folded)
-	for i := range findings {
+	start := len(dst)
+	findings := d.scanASCII(dst, folded)
+	for i := start; i < len(findings); i++ {
 		findings[i].Start, findings[i].End = positions[findings[i].Start], positions[findings[i].End]
 	}
 	return findings
 }
 
-// scanASCII finds addresses whose at sign is the ASCII @.
-func (d *Email) scanASCII(data []byte) []Finding {
-	var findings []Finding
+// scanASCII appends the addresses whose at sign is the ASCII @ to findings.
+func (d *Email) scanASCII(findings []Finding, data []byte) []Finding {
 	boundary := 0
 	for i := 0; i < len(data); i++ {
 		next := bytes.IndexByte(data[i:], '@')

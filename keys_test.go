@@ -54,8 +54,8 @@ func TestKeyCacheFieldMatchesScan(t *testing.T) {
 		if want := cached.keyField(text, len(key)); !ok || got != want {
 			t.Fatalf("cachedField(%q) = %+v, %v; want %+v", key, got, ok, want)
 		}
-		hit := cached.scanField(nil, text, len(key)+len(": "), nil)
-		if miss := fresh.scanField(nil, text, len(key)+len(": "), nil); !slices.Equal(hit, miss) {
+		hit := cached.scanField(text, len(key)+len(": "), nil)
+		if miss := fresh.scanField(text, len(key)+len(": "), nil); !slices.Equal(hit, miss) {
 			t.Fatalf("%q: cached findings %v, want %v", key, hit, miss)
 		}
 	}

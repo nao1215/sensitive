@@ -98,12 +98,11 @@ func (d *UKSortCode) hasCandidate(value []byte) bool { return hasWideDigits(valu
 // after i, and at the number's end when it is one.
 type numericCandidate func(orig, data []byte, posMap []int, i int) (Finding, int, bool)
 
-// scanNumeric walks a normalized view and collects candidate findings. A
+// scanNumeric walks a normalized view and appends candidate findings to findings. A
 // percent escape of a separator is skipped as a unit, since its bytes cannot
 // belong to a number. With logFragments, a number that is a fragment of a log
 // value, such as a decimal tail or a hostname component, is not a finding.
-func scanNumeric(orig, data []byte, posMap []int, candidate numericCandidate, logFragments bool) []Finding {
-	var findings []Finding
+func scanNumeric(findings []Finding, orig, data []byte, posMap []int, candidate numericCandidate, logFragments bool) []Finding {
 	var logContext numericLogContext
 	for i := numericStart(data, 0); i < len(data); i = numericStart(data, i) {
 		if data[i] == '%' && normalizedEscapeSeparator(orig, posMap, len(data), i) {

@@ -28,10 +28,24 @@ type View struct {
 
 // NewView builds the shared normalised view of raw.
 func NewView(raw []byte) View {
+	if plainASCII(raw) {
+		// No layer applies: escapes need a backslash or '%', separators are non-ASCII.
+		return View{Raw: raw, Data: raw}
+	}
 	unescaped, unicodeMap := decodeUnicodeEscapes(raw)
 	decoded, percent := decodePercent(unescaped)
 	data, token := removeTokenSeparators(decoded)
 	return View{Raw: raw, Data: data, Positions: composePositions(composePositions(token, percent), unicodeMap)}
+}
+
+// plainASCII reports whether data is ASCII without a backslash or '%'.
+func plainASCII(data []byte) bool {
+	for _, b := range data {
+		if b >= utf8.RuneSelf || b == '\\' || b == '%' {
+			return false
+		}
+	}
+	return true
 }
 
 // decodeUnicodeEscapes decodes one layer of the JSON and Go escape of a
@@ -104,6 +118,29 @@ func (v View) Original(index int) int { return originalPosition(v.Positions, ind
 // the normalised text; they return findings in raw offsets.
 type viewScanner interface {
 	scanView(v View) []Finding
+}
+
+// appendScanner is a detector that appends its findings to a caller's slice,
+// so a scan that reuses one buffer allocates nothing per detector.
+type appendScanner interface {
+	appendScan(dst []Finding, data []byte) []Finding
+}
+
+// AppendScanView is ScanView that appends to dst, reusing its storage when d
+// can append.
+func AppendScanView(dst []Finding, d Detector, v View) []Finding {
+	as, ok := d.(appendScanner)
+	if _, raw := d.(viewScanner); raw || !ok {
+		return append(dst, ScanView(d, v)...)
+	}
+	start := len(dst)
+	dst = as.appendScan(dst, v.Data)
+	if v.Positions != nil {
+		for i := start; i < len(dst); i++ {
+			dst[i].Start, dst[i].End = v.Positions[dst[i].Start], v.Positions[dst[i].End]
+		}
+	}
+	return dst
 }
 
 // ScanView runs d on v and returns findings in Raw offsets. Detectors scan

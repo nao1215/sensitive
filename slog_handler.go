@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"slices"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/nao1215/embargo/internal/saferecord"
@@ -197,10 +198,8 @@ func (h *slogHandler) sanitizeRecord(ctx context.Context, record *slog.Record) (
 	}
 	// Adding every attribute in one call grows the record's storage once.
 	var inline [16]slog.Attr
-	attrs := inline[:0]
-	if record.NumAttrs() > len(inline) {
-		attrs = make([]slog.Attr, 0, record.NumAttrs())
-	}
+	attrs, pooled := borrowAttrs(inline[:0], record.NumAttrs())
+	defer returnAttrs(pooled)
 	record.Attrs(func(attr slog.Attr) bool {
 		var clean slog.Attr
 		var pathHidden bool
@@ -217,6 +216,38 @@ func (h *slogHandler) sanitizeRecord(ctx context.Context, record *slog.Record) (
 	}
 	completed = true
 	return safe, crossed, err
+}
+
+// Records with more attributes than sanitizeRecord's inline array borrow
+// their working slice here; AddAttrs copies it, so it is reused at once.
+const maxPooledAttrs = 256
+
+//nolint:gochecknoglobals // One pool of reusable attribute slices for every handler.
+var attrPool = sync.Pool{New: func() any { return new([]slog.Attr) }}
+
+// borrowAttrs returns inline when n attributes fit, and otherwise a pooled
+// slice with room for n, which the caller passes to returnAttrs.
+func borrowAttrs(inline []slog.Attr, n int) (attrs []slog.Attr, pooled *[]slog.Attr) {
+	if n <= cap(inline) {
+		return inline, nil
+	}
+	pooled, ok := attrPool.Get().(*[]slog.Attr)
+	if !ok {
+		pooled = new([]slog.Attr)
+	}
+	*pooled = slices.Grow((*pooled)[:0], n)
+	return *pooled, pooled
+}
+
+// returnAttrs clears a pooled slice so the pool keeps no logged values; nil
+// means borrowAttrs returned the caller's inline array.
+func returnAttrs(attrs *[]slog.Attr) {
+	if attrs == nil || cap(*attrs) > maxPooledAttrs {
+		return
+	}
+	clear((*attrs)[:cap(*attrs)])
+	*attrs = (*attrs)[:0]
+	attrPool.Put(attrs)
 }
 
 func (h *slogHandler) sanitizeAttrs(attrs []slog.Attr) (safe []slog.Attr, crossed bool, err error) {
@@ -360,7 +391,14 @@ func (h *slogHandler) sanitizeScalar(ctx context.Context, key, originalKey strin
 			return slog.Attr{}, slogSanitizationError()
 		}
 		representations = append(representations, string(encoded))
-	case slog.KindAny, slog.KindBool, slog.KindGroup, slog.KindInt64, slog.KindLogValuer, slog.KindUint64:
+	case slog.KindBool:
+		// The same text as value.String, which allocates for every value.
+		representations[0] = strconv.FormatBool(value.Bool())
+	case slog.KindInt64:
+		representations[0] = strconv.FormatInt(value.Int64(), 10)
+	case slog.KindUint64:
+		representations[0] = strconv.FormatUint(value.Uint64(), 10)
+	case slog.KindAny, slog.KindGroup, slog.KindLogValuer:
 		// Other kinds add no scalar encoding here; composites have separate paths.
 		representations[0] = value.String()
 	}

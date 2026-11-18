@@ -119,6 +119,10 @@ func (s *eventScanner) maskBytes(ctx context.Context, value []byte, key string) 
 		hidden, err := encodedTextSensitive(ctx, s, value, key)
 		return redactionMarker, hidden, err
 	}
+	if s.scanner.maskFunc == nil && slices.ContainsFunc(findings, func(f Finding) bool { return f.Start == 0 && f.End == len(value) }) {
+		// The marker replaces the whole value, so it need not become a string.
+		return redactionMarker, true, nil
+	}
 	text := string(value)
 	masked = maskOwned(text, findings, s.scanner.replacer())
 	return masked, masked != text, nil
@@ -143,7 +147,7 @@ func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scr
 		text = append(append(text, key...), ": "...)
 	}
 	text = append(text, value...)
-	findings := s.scanner.scanField(scratch.findings[:0], text, prefixBytes, ctx.Err)
+	findings := s.scanner.scanFieldInto(scratch.findings[:0], &scratch.detected, text, prefixBytes, ctx.Err)
 	// Keep grown storage for the next user; the returned spans alias findings.
 	scratch.text, scratch.findings = text, findings
 	if ctx.Err() != nil {
