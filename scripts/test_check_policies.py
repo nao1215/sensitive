@@ -88,6 +88,14 @@ class PolicyTests(unittest.TestCase):
                            'internal/detect/pan_test.go': "b >= '0' && b <= '9'",
                            'tests/oracle.go': "b >= 'a' && b <= 'z'"})
 
+    def test_api_additions_need_a_changelog_entry(self):
+        old = json.dumps([{'symbols': ['embargo.Mask']}])
+        new = json.dumps([{'symbols': ['embargo.Mask']}, {'symbols': ['embargo.Scanner.Redact']}, {'symbols': ['embargo --color']}])
+        with self.assertRaisesRegex(ValueError, 'api-additions: embargo.Scanner.Redact'):
+            policies.api_additions(old, new, '## [Unreleased]\n\n- `--color` shows matches.\n\n## [0.1.0]\n\n- `Redact`\n')
+        policies.api_additions(old, new, '## [Unreleased]\n\n- `Scanner.Redact` and `--color`.\n\n## [0.1.0]\n')
+        policies.api_additions(old, old, '## [Unreleased]\n\n## [0.1.0]\n')
+
     def test_root_dependencies(self):
         for manifest in ({'Require':[{'Path':'example.com/runtime'}]}, {'Tool':['example.com/tool']}):
             with patch.object(policies.subprocess, 'check_output', return_value=json.dumps(manifest)):

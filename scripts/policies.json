@@ -610,5 +610,17 @@
     "source": "Repository maintenance policy",
     "check": "cohesion",
     "where": "Verification"
+  },
+  {
+    "rule": "Each public symbol and CLI flag names its caller, the code it saves and an Example",
+    "source": "Repository maintenance policy",
+    "check": "tests/contracts/api_test.go#TestEveryPublicSymbolHasAReason",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Public API added since the last release is named in CHANGELOG [Unreleased]",
+    "source": "Repository maintenance policy",
+    "check": "api-additions",
+    "where": "Verification"
   }
 ]
