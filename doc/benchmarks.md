@@ -18,74 +18,74 @@ Use a base that contains these benchmark names and a compatible API. The first b
 ## Measured results
 
 <!-- benchmarks:start -->
-Measured 2026-11-17 with go1.26.11, linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S, GOMAXPROCS=1; median of ten 200 ms samples.
+Measured 2026-11-18 with go1.26.11, linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S, GOMAXPROCS=1; median of ten 200 ms samples.
 
 Background load: no intentional concurrent workload.
 
 | Operation | ns/op | MB/s | B/op | allocs/op |
 |---|---:|---:|---:|---:|
-| Scanner WithAll, clean | 56809.5 | 48.44 | 0 | 0 |
-| Scanner WithAll, dirty | 6167476.5 | 10.32 | 1266448 | 4463 |
-| Mask | 3089.0 | 953.14 | 8448 | 2 |
-| Writer only | 5.6 | 97918.29 | 0 | 0 |
-| Recorder + Check | 178906.0 | 3.04 | 229617 | 1678 |
-| Plain slog, clean | 414.4 | — | 16 | 1 |
-| Masked slog, clean | 1355.5 | — | 16 | 1 |
-| Plain slog, dirty | 422.8 | — | 16 | 1 |
-| Masked slog, dirty | 1576.5 | — | 64 | 2 |
+| Scanner WithAll, clean | 52642.5 | 52.28 | 0 | 0 |
+| Scanner WithAll, dirty | 6208059.0 | 10.11 | 1166864 | 3489 |
+| Mask | 3223.0 | 913.53 | 8448 | 2 |
+| Writer only | 5.7 | 94932.14 | 0 | 0 |
+| Recorder + Check | 197466.5 | 2.75 | 236425 | 1604 |
+| Plain slog, clean | 432.9 | — | 16 | 1 |
+| Masked slog, clean | 875.8 | — | 16 | 1 |
+| Plain slog, dirty | 421.5 | — | 16 | 1 |
+| Masked slog, dirty | 1195.5 | — | 64 | 2 |
 
 Parallel: ns/op is wall time per event across all goroutines.
 
 | Shared value | 1 CPU ns/op | 4 CPU ns/op | 16 CPU ns/op | Speed-up at 16 |
 |---|---:|---:|---:|---:|
-| Scanner.Scan | 3792.0 | 1052.5 | 347.8 | 10.9x |
-| slog handler | 3260.5 | 934.7 | 360.0 | 9.1x |
-| zap WriteSyncer | 6497.0 | 1833.0 | 964.5 | 6.7x |
+| Scanner.Scan | 4227.0 | 4217.5 | 4235.0 | 1.0x |
+| slog handler | 1989.5 | 2066.5 | 2085.0 | 1.0x |
+| zap WriteSyncer | 4705.0 | 5163.0 | 5318.5 | 0.9x |
 
 <details>
 <summary>Per-detector Scanner throughput</summary>
 
 | Detector | Clean MB/s | Dirty MB/s |
 |---|---:|---:|
-| aba_routing | 1149.43 | 127.61 |
-| ach_trace | 1270.49 | 10.86 |
-| all | 48.44 | 10.32 |
-| awskey | 1062.89 | 294.21 |
-| bank_account | 1174.01 | 13.35 |
-| br_cnpj | 1069.30 | 171.47 |
-| br_cpf | 1095.70 | 166.87 |
-| btc | 1618.16 | 107.62 |
-| ca_sin | 1069.82 | 162.91 |
-| card_expiry | 2019.93 | 7.86 |
-| cn_resident_id | 1487.51 | 71.14 |
-| credential | 361.61 | 70.10 |
-| cvv | 769.50 | 10.09 |
-| email | 26682.06 | 195.95 |
-| eth | 2370.80 | 363.91 |
-| github_token | 2176.77 | 405.17 |
-| google_api_key | 1860.94 | 465.08 |
-| high_entropy | 1523.93 | 114.30 |
-| iban | 535.18 | 137.81 |
-| in_aadhaar | 1114.25 | 165.62 |
-| in_pan | 1513.20 | 186.90 |
-| ipaddr | 23591.17 | 72.48 |
-| jwt | 2116.36 | 60.27 |
-| kr_rrn | 1116.68 | 123.12 |
-| merchant_id | 698.03 | 26.96 |
-| mynumber | 1164.36 | 141.68 |
-| pan | 8476.94 | 158.68 |
-| payment_token | 303.37 | 404.78 |
-| phone_jp | 22410.58 | 150.31 |
-| phone_us | 9739.88 | 148.57 |
-| private_key_pem | 1539.14 | 1514.75 |
-| service_token | 61.79 | 297.55 |
-| slack_token | 1879.79 | 222.35 |
-| swiftbic | 375.39 | 114.24 |
-| uk_nhs | 1172.28 | 170.08 |
-| uk_nino | 1080.38 | 155.05 |
-| uk_sortcode | 746.27 | 147.15 |
-| us_itin | 1088.74 | 165.64 |
-| us_ssn | 1093.55 | 175.47 |
+| aba_routing | 1725.61 | 75.72 |
+| ach_trace | 985.94 | 38.98 |
+| all | 52.28 | 10.11 |
+| awskey | 846.05 | 263.71 |
+| bank_account | 931.09 | 44.24 |
+| br_cnpj | 958.18 | 128.16 |
+| br_cpf | 956.85 | 124.56 |
+| btc | 1428.37 | 105.17 |
+| ca_sin | 931.79 | 133.48 |
+| card_expiry | 1418.54 | 17.57 |
+| cn_resident_id | 1291.59 | 56.55 |
+| credential | 327.50 | 68.31 |
+| cvv | 649.07 | 22.77 |
+| email | 18600.88 | 184.38 |
+| eth | 1604.47 | 320.87 |
+| github_token | 1501.92 | 354.37 |
+| google_api_key | 1329.43 | 401.88 |
+| high_entropy | 1462.35 | 109.72 |
+| iban | 524.42 | 126.21 |
+| in_aadhaar | 961.90 | 141.18 |
+| in_pan | 1293.03 | 135.49 |
+| ipaddr | 18667.23 | 68.23 |
+| jwt | 1454.44 | 56.32 |
+| kr_rrn | 962.12 | 103.07 |
+| merchant_id | 595.28 | 72.70 |
+| mynumber | 1716.88 | 110.80 |
+| pan | 7787.56 | 102.18 |
+| payment_token | 274.72 | 348.44 |
+| phone_jp | 15406.21 | 88.79 |
+| phone_us | 8817.94 | 138.26 |
+| private_key_pem | 1151.43 | 1249.40 |
+| service_token | 57.80 | 297.37 |
+| slack_token | 1335.32 | 194.05 |
+| swiftbic | 301.61 | 105.87 |
+| uk_nhs | 994.88 | 150.20 |
+| uk_nino | 921.76 | 114.30 |
+| uk_sortcode | 703.48 | 132.81 |
+| us_itin | 933.63 | 141.58 |
+| us_ssn | 893.56 | 141.40 |
 
 </details>
 <!-- benchmarks:end -->
@@ -103,10 +103,10 @@ WithKinds avoids running irrelevant detectors and removes their false-positive f
 <!-- narrowing:start -->
 | Selection | Clean ns/op | Dirty ns/op | Clean / dirty speedup over WithAll |
 |---|---:|---:|---|
-| all | 64,763.000 | 6,837,398.5 | 1.00× / 1.00× |
-| kinds1 | 101.000 | 22,310.0 | 641.22× / 306.47× |
-| kinds3 | 8,648.500 | 496,620.0 | 7.49× / 13.77× |
-| kinds8 | 10,173.500 | 1,541,041.5 | 6.37× / 4.44× |
+| all | 64,763 | 6,837,398 | 1.00× / 1.00× |
+| kinds1 | 101 | 22,310 | 641.22× / 306.47× |
+| kinds3 | 8,648 | 496,620 | 7.49× / 13.77× |
+| kinds8 | 10,174 | 1,541,042 | 6.37× / 4.44× |
 <!-- narrowing:end -->
 
 The one-kind set is email; three kinds add PAN and credential; eight add Japanese phone, IP address, GitHub token, service token and private-key PEM. Omitting kinds gives up their recall. Select kinds according to the application's output policy and inspect the [real-log false-positive estimates](accuracy.md#public-system-logs).

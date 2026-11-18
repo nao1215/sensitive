@@ -11,8 +11,8 @@
 <text x="685" y="81" font-size="14">Positive / negative inputs</text>
 <text x="20" y="110" font-size="14">mynumber</text>
 <rect x="205" y="96" width="150" height="14" fill="#edf0f4"/>
-<rect x="205" y="96" width="122.70" height="14" fill="#1877b8"/>
-<text x="363" y="109" font-size="14">81.8%</text>
+<rect x="205" y="96" width="150.00" height="14" fill="#1877b8"/>
+<text x="363" y="109" font-size="14">100.0%</text>
 <rect x="435" y="96" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="96" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="109" font-size="14">100.0%</text>

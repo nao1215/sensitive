@@ -1,6 +1,7 @@
 package detect
 
 import (
+	"bytes"
 	"cmp"
 	"slices"
 
@@ -19,7 +20,7 @@ func (*Credential) Name() DetectorName { return NameCredential }
 
 // Hints returns delimiters required by every supported credential form.
 func (*Credential) Hints() [][]byte {
-	return [][]byte{[]byte(":"), []byte("="), []byte("</"), []byte("AKIA"), []byte("ASIA"), []byte("ABIA"), []byte("ACCA"), []byte("Bearer "), []byte("Basic ")}
+	return [][]byte{[]byte(":"), []byte("="), []byte("</"), []byte("AKIA"), []byte("ASIA"), []byte("ABIA"), []byte("ACCA"), []byte("Bearer "), []byte("Basic "), []byte("--"), []byte("mysql"), []byte("mariadb"), []byte("sshpass")}
 }
 
 // Scan returns only secret spans, never their surrounding configuration fields.
@@ -126,7 +127,31 @@ func (d *Credential) appendContextCredentials(out []Finding, data []byte) []Find
 	out = append(out, awsSecretPair(data)...)
 	out = append(out, quotedAuthorization(data)...)
 	out = append(out, d.xmlElementCredentials(data)...)
-	return append(out, curlUserPasswords(data)...)
+	out = append(out, curlUserPasswords(data)...)
+	out = append(out, d.flagValues(data)...)
+	return append(out, commandPasswords(data)...)
+}
+
+// CredentialKeyName returns the normalized name of the credential key that
+// ends at the separator at sep when d is the credential detector. The name
+// depends only on the bytes before sep; [AssignsValue] checks the value.
+func CredentialKeyName(d Detector, data []byte, sep int) (string, bool) {
+	credential, ok := d.(*Credential)
+	if !ok {
+		return "", false
+	}
+	key := credential.credentialKey(data, sep)
+	if key == nil {
+		return "", false
+	}
+	return NormalizeCredentialKey(string(key)), true
+}
+
+// AssignsValue reports whether the value after the separator at sep is
+// assigned to the credential key name; a token key followed by an unquoted
+// object value names that object instead.
+func AssignsValue(name string, data []byte, sep int) bool {
+	return name != credentialTokenKey || !unquotedObjectValue(data, sep+1)
 }
 
 // urlUserinfoColon advances urlIndex past URL findings starting at or before i
@@ -148,7 +173,7 @@ func (d *Credential) assignmentName(data []byte, i int) (string, bool) {
 		return "", false
 	}
 	name := NormalizeCredentialKey(string(key))
-	if name == credentialTokenKey && unquotedObjectValue(data, i+1) {
+	if !AssignsValue(name, data, i) {
 		return "", false
 	}
 	return name, true
@@ -157,7 +182,27 @@ func (d *Credential) assignmentName(data []byte, i int) (string, bool) {
 // acceptedAssignmentValue rejects already redacted values, token values
 // that only reference another object, and UUID idempotency tokens.
 func acceptedAssignmentValue(data []byte, start, end int, name string) bool {
-	return !redactedCredentialValue(data[start:end]) && (name != credentialTokenKey || !objectReference(data, start, end)) && !idempotencyToken(data, start, end, name)
+	return !redactedCredentialValue(data[start:end]) && (name != credentialTokenKey || !objectReference(data, start, end)) && !idempotencyToken(data, start, end, name) && !numericSessionID(data[start:end], name)
+}
+
+// numericSessionID reports a session key whose value is an integer, decimal
+// or 0x hexadecimal, such as ZooKeeper's sessionid: 0x14edfaa86f60027. Such
+// IDs name a session to the server log; web session cookies are random text.
+func numericSessionID(value []byte, name string) bool {
+	if name != "session" && name != "sessionid" {
+		return false
+	}
+	digits := bytes.TrimPrefix(bytes.TrimPrefix(value, []byte("0x")), []byte("0X"))
+	if len(digits) == 0 {
+		return false
+	}
+	hex := len(digits) != len(value)
+	for _, b := range digits {
+		if !ascii.IsDigit(b) && (!hex || !ascii.IsHexDigit(b)) {
+			return false
+		}
+	}
+	return true
 }
 
 // idempotencyToken reports an AWS-style clientToken or idempotencyToken whose

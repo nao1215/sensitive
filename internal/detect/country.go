@@ -11,11 +11,16 @@ import (
 type Country struct {
 	name    DetectorName
 	layouts []string
+	labels  []string
+	// bareNeedsLabel marks the kinds whose check passes about one random
+	// number in ten or more, so a bare digit run alone is weak evidence.
+	bareNeedsLabel bool
 }
 
 // NewCountry prepares fixed-width layouts for a country kind; unsupported names panic.
 func NewCountry(name DetectorName) *Country {
-	return &Country{name: name, layouts: countryLayouts(name)}
+	layouts, labels, weak := countryLayouts(name)
+	return &Country{name: name, layouts: layouts, labels: labels, bareNeedsLabel: weak}
 }
 
 // Name identifies the selected national-number family, such as "ca_sin".
@@ -24,28 +29,36 @@ func (d *Country) Name() DetectorName { return d.name }
 // Hints keeps all layouts eligible before context validation.
 func (d *Country) Hints() [][]byte { return nil }
 
-func countryLayouts(name DetectorName) []string {
+// nineDigitLayout is the unseparated layout of SSN, ITIN and SIN.
+const nineDigitLayout = "#########"
+
+// countryLayouts returns a country kind's fixed-width layouts, the label
+// words that name its number, which keep a candidate under a record label
+// such as ssn_id, and whether its bare digit run needs one of them.
+func countryLayouts(name DetectorName) (layouts, labels []string, weak bool) {
 	switch string(name) {
-	case "us_ssn", "us_itin":
-		return []string{"###-##-####", "#########"}
+	case "us_ssn":
+		return []string{"###-##-####", nineDigitLayout}, []string{"ssn", "security"}, true
+	case "us_itin":
+		return []string{"###-##-####", nineDigitLayout}, []string{"itin", "taxpayer"}, true
 	case "uk_nino":
-		return []string{"AA ## ## ## A", "AA######A"}
+		return []string{"AA ## ## ## A", "AA######A"}, []string{"nino", "insurance"}, false
 	case "uk_nhs":
-		return []string{"### ### ####", "##########"}
+		return []string{"### ### ####", "##########"}, []string{"nhs"}, true
 	case "in_aadhaar":
-		return []string{"#### #### ####", "############"}
+		return []string{"#### #### ####", "############"}, []string{"aadhaar", "aadhar"}, true
 	case "in_pan":
-		return []string{"AAAAA####A"}
+		return []string{"AAAAA####A"}, []string{"pan"}, false
 	case "br_cpf":
-		return []string{"###.###.###-##", "###########"}
+		return []string{"###.###.###-##", "###########"}, []string{"cpf"}, false
 	case "br_cnpj":
-		return []string{"CC.CCC.CCC/CCCC-##", "CCCCCCCCCCCC##"}
+		return []string{"CC.CCC.CCC/CCCC-##", "CCCCCCCCCCCC##"}, []string{"cnpj"}, false
 	case "cn_resident_id":
-		return []string{"#################X"}
+		return []string{"#################X"}, []string{"resident", "身份证", "身份证号"}, false
 	case "kr_rrn":
-		return []string{"######-#######", "#############"}
+		return []string{"######-#######", "#############"}, []string{"rrn", "주민등록번호"}, false
 	case "ca_sin":
-		return []string{"###-###-###", "#########"}
+		return []string{"###-###-###", nineDigitLayout}, []string{"sin", "insurance"}, true
 	default:
 		panic("embargo: unsupported country kind")
 	}
@@ -62,18 +75,27 @@ func (d *Country) Scan(data []byte) []Finding {
 		}
 		for _, layout := range d.layouts {
 			value, end, ok := countryCandidate(normalized, start, layout)
-			if !ok || logContext.fragment(normalized, start, end) {
+			if !ok || logContext.fragment(normalized, start, end) || recordLabeled(normalized, start, d.labels...) || d.unnamedBare(normalized, start, layout) {
 				continue
 			}
 			score := countryScore(d.name, value, normalized[:start])
 			if score == 0 {
 				continue
 			}
-			result = append(result, labeledViewFinding(d.name, data, positions, start, end, score))
+			result = append(result, viewFinding(d.name, positions, start, end, score))
 			break
 		}
 	}
 	return result
+}
+
+// unnamedBare reports a bare digit run of a weak kind without a label naming
+// the number, such as ssn or social insurance number. SSN and ITIN have no
+// check digit, and the Luhn, mod 11 and Verhoeff checks of SIN, NHS and
+// Aadhaar pass one random ID in ten, so a user_id or an amount of that length
+// looks the same; the separated layouts keep their own evidence.
+func (d *Country) unnamedBare(data []byte, start int, layout string) bool {
+	return d.bareNeedsLabel && strings.Trim(layout, "#") == "" && !labelNames(data, start, d.labels...)
 }
 
 func countryCandidate(data []byte, start int, layout string) (text string, end int, ok bool) {

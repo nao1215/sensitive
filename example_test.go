@@ -813,7 +813,7 @@ func ExampleKindCanadaSIN() {
 }
 
 // Access logs usually need the client address for incident response. Leaving
-// KindIPAddress out of the selection keeps it while credentials, provider
+// KindIPAddr out of the selection keeps it while credentials, provider
 // tokens, email addresses and cards in the request line are still masked.
 func ExampleWithKinds_accessLog() {
 	scanner := embargo.NewScanner(embargo.WithKinds(

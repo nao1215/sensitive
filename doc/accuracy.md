@@ -10,11 +10,11 @@ Surroundings include logs, JSON, URLs, line endings and Japanese text. Negative 
 
 A hit requires the same kind and exact unused original byte range. Partial, duplicate and extra matches count as false positives; missing expected ranges count as false negatives. Precision is TP/(TP+FP); recall is TP/(TP+FN). Each detector runs alone.
 
-The default minimum confidence remains 0: ambiguous candidates are included. Confidence is a heuristic, not a probability. PAN, My Number and Japanese phone candidates with an attached order, invoice, tracking, version, build, serial or shipment label score 0.4. `WithMinConfidence(0.7)` excludes these candidates and can therefore miss genuine secrets under misleading business labels. A global 0.7 threshold also removes the 0.5–0.65 bank-account findings and some sort-code findings; it is not a universal accuracy setting. Both policies are measured below; the detector charts use held-out results at the default threshold.
+The default minimum confidence remains 0: ambiguous candidates are included. Confidence is a heuristic, not a probability. PAN and phone candidates under a record label, such as order_id, user_id or invoice, score 0.4, and a My Number under one is not reported. `WithMinConfidence(0.7)` excludes these candidates and can therefore miss genuine secrets under misleading record labels. A global 0.7 threshold also removes the 0.5–0.65 bank-account findings and some sort-code findings; it is not a universal accuracy setting. Both policies are measured below; the detector charts use held-out results at the default threshold.
 
 ## Encoding policy
 
-The original 23 built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in the input before detection. Findings map back to original bytes, so masking covers the escaped representation. Literal `+` and malformed percent escapes remain unchanged. Custom detectors receive the original bytes. KindCredential additionally scans up to two Go/JSON quote and backslash escape layers with original byte offsets. Base64, hexadecimal, HTML entities, full Unicode escapes and recursively percent-encoded forms are not decoded by Scanner; decode application fields explicitly when needed. The logger adapters separately decode JSON strings at their output boundary.
+The original 23 built-in detectors decode exactly one layer of valid `%HH` escapes anywhere in the input before detection. Findings map back to original bytes, so masking covers the escaped representation. Literal `+` and malformed percent escapes remain unchanged. Custom detectors receive the original bytes. KindCredential additionally scans up to four Go/JSON quote and backslash escape layers with original byte offsets. Base64, hexadecimal, HTML entities, full Unicode escapes and recursively percent-encoded forms are not decoded by Scanner; decode application fields explicitly when needed. The logger adapters separately decode JSON strings at their output boundary.
 
 [Round-trip and offset properties](../percent_test.go) exercise random partial escaping and all byte values. [Regression tests](../tests/accuracy_test.go) reject new mismatches and obsolete exceptions in both sets. Known limits retain reasons in [development](../tests/testdata/accuracy_limits.jsonl) and [held-out](../tests/testdata/accuracy_held_limits.jsonl) fixtures.
 
@@ -39,7 +39,7 @@ The original 23 built-in detectors decode exactly one layer of valid `%HH` escap
 | [ipaddr](#ipaddr) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [jwt](#jwt) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [merchant_id](#merchant-id) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [mynumber](#mynumber) | 144 / 544 | 144 / 32 / 0 | 81.8% | 100.0% |
+| [mynumber](#mynumber) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [pan](#pan) | 144 / 544 | 144 / 32 / 0 | 81.8% | 100.0% |
 | [payment_token](#payment-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 144 / 544 | 144 / 32 / 0 | 81.8% | 100.0% |
@@ -70,7 +70,7 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [ipaddr](#ipaddr) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [jwt](#jwt) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [merchant_id](#merchant-id) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [mynumber](#mynumber) | 146 / 562 | 146 / 33 / 0 | 81.6% | 100.0% |
+| [mynumber](#mynumber) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [pan](#pan) | 146 / 562 | 146 / 33 / 0 | 81.6% | 100.0% |
 | [payment_token](#payment-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 146 / 562 | 146 / 32 / 0 | 82.0% | 100.0% |
@@ -332,11 +332,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 Verified by the [mynumber format tests](../internal/detect/mynumber_test.go) and the [corpus regression check](../tests/accuracy_test.go). Independently generated MOD 11 check digits, full-width digits and Japanese text boundaries.
 
-| Set / observed limit | Input example | Why it remains |
-|---|---|---|
-| development: `mynumber/control/invoice/0` | `Invoice: 004254390645` | Explanation 1 below. |
-
-1. Business identifiers can satisfy sensitive-number shapes and checksums. Attached business labels lower confidence to 0.4, but the default threshold of 0 preserves ambiguous candidates.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## pan
 
@@ -423,7 +419,7 @@ python3 scripts/accuracy_figures.py --check
 go -C tests test -run "Test(Accuracy|GeneratedAccuracy)" .
 ```
 
-The 0.7 results improve PAN, My Number and phone precision on both sets without losing recall in these samples; the default retains their ambiguous business identifiers. Email and encoded-form recall improve on both sets. SWIFT word false positives remain: the rejected attachment rule improved development precision but failed held-out evaluation. The development suite includes regressions for reserved IBAN check digits 00, 01 and 99 and the detector rejects them before MOD 97. The four formerly held-out false positives are fixed; this historical set is now regression evidence, not unseen evaluation.
+The 0.7 results improve PAN and phone precision on both sets without losing recall in these samples; the default retains their ambiguous business identifiers. Email and encoded-form recall improve on both sets. SWIFT word false positives remain: the rejected attachment rule improved development precision but failed held-out evaluation. The development suite includes regressions for reserved IBAN check digits 00, 01 and 99 and the detector rejects them before MOD 97. The four formerly held-out false positives are fixed; this historical set is now regression evidence, not unseen evaluation.
 
 PEM samples test headers, not full private keys. Generated service tokens test syntax, not authentication. Do not use synthetic identities, account or phone values for transactions or contacting people.
 
@@ -465,11 +461,11 @@ The default remains 0 for all 26 default kinds. Public-log rates are sample esti
 
 | Minimum confidence | Public FP/GB | Public precision | Development precision / misses | Held precision / misses |
 |---|---:|---:|---:|---:|
-| 0.0 | 2859.7 | 99.9210% | 97.03% / 0 | 97.62% / 0 |
-| 0.5 | 2859.7 | 99.9210% | 99.40% / 0 | 100.00% / 0 |
-| 0.7 | 2859.7 | 99.9210% | 99.38% / 158 | 100.00% / 156 |
+| 0.0 | 20.8 | 99.9994% | 97.81% / 0 | 98.40% / 0 |
+| 0.5 | 20.8 | 99.9994% | 99.40% / 0 | 100.00% / 0 |
+| 0.7 | 20.8 | 99.9994% | 99.38% / 158 | 100.00% / 156 |
 
-Choose 0 when retaining ambiguous secrets is the priority. On these synthetic sets, 0.5 removes business-label false positives without additional misses; validate it against your own mislabeled secrets before opting in. A global 0.7 loses bank-account and sort-code positives. These thresholds do not fix the remaining public-log ABA/SWIFT false positives. Select relevant kinds and sensitive keys before raising the global cutoff; confidence is not a probability. Regenerate with make accuracy-doc and make real-log-accuracy; python3 scripts/accuracy_figures.py --check verifies this table.
+Choose 0 when retaining ambiguous secrets is the priority. On these synthetic sets, 0.5 removes record-label false positives without additional misses; validate it against your own mislabeled secrets before opting in. A global 0.7 loses bank-account and sort-code positives. These thresholds do not fix the remaining public-log ABA/SWIFT false positives. Select relevant kinds and sensitive keys before raising the global cutoff; confidence is not a probability. Regenerate with make accuracy-doc and make real-log-accuracy; python3 scripts/accuracy_figures.py --check verifies this table.
 
 
 ## Severity and residual exposure
@@ -481,22 +477,22 @@ Each split combines the original synthetic corpus, credentials and the frozen co
 | Set | Tier | Threshold | TP / FP / misses | Recall | Exposed values / bytes |
 |---|---|---:|---:|---:|---:|
 | development | critical | 0.0 | 1648 / 33 / 0 | 100.00% | 0 / 0 |
-| development | high | 0.0 | 3930 / 1089 / 0 | 100.00% | 0 / 0 |
+| development | high | 0.0 | 2970 / 0 / 960 | 75.57% | 960 / 18816 |
 | development | standard | 0.0 | 1724 / 176 / 0 | 100.00% | 0 / 0 |
 | development | critical | 0.5 | 1648 / 0 / 0 | 100.00% | 0 / 0 |
-| development | high | 0.5 | 3930 / 0 / 0 | 100.00% | 0 / 0 |
+| development | high | 0.5 | 2970 / 0 / 960 | 75.57% | 960 / 18816 |
 | development | standard | 0.5 | 1604 / 24 / 120 | 93.04% | 120 / 4800 |
 | development | critical | 0.7 | 1648 / 0 / 0 | 100.00% | 0 / 0 |
-| development | high | 0.7 | 3164 / 0 / 766 | 80.51% | 766 / 10735 |
+| development | high | 0.7 | 2588 / 0 / 1342 | 65.85% | 1342 / 22639 |
 | development | standard | 0.7 | 1604 / 24 / 120 | 93.04% | 120 / 4800 |
 | held | critical | 0.0 | 1632 / 32 / 0 | 100.00% | 0 / 0 |
-| held | high | 0.0 | 3920 / 1088 / 0 | 100.00% | 0 / 0 |
+| held | high | 0.0 | 2960 / 0 / 960 | 75.51% | 960 / 18816 |
 | held | standard | 0.0 | 1702 / 150 / 2 | 99.88% | 2 / 80 |
 | held | critical | 0.5 | 1632 / 0 / 0 | 100.00% | 0 / 0 |
-| held | high | 0.5 | 3920 / 0 / 0 | 100.00% | 0 / 0 |
+| held | high | 0.5 | 2960 / 0 / 960 | 75.51% | 960 / 18816 |
 | held | standard | 0.5 | 1584 / 0 / 120 | 92.96% | 120 / 4800 |
 | held | critical | 0.7 | 1632 / 0 / 0 | 100.00% | 0 / 0 |
-| held | high | 0.7 | 3156 / 0 / 764 | 80.51% | 764 / 10720 |
+| held | high | 0.7 | 2580 / 0 / 1340 | 65.82% | 1340 / 22624 |
 | held | standard | 0.7 | 1584 / 0 / 120 | 92.96% | 120 / 4800 |
 
 The critical gate requires the current 100% exact-span recall and zero residual bytes in each split at threshold zero. Updating a snapshot cannot relax this assertion. Unit tests inject a partial mask, overlapping ranges, missing findings and an empty corpus to check the gate and exposure calculation.
@@ -540,7 +536,7 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 | br_cnpj | 0.0 | 0.0 | 0.0 | 0.0 |
 | br_cpf | 0.0 | 0.0 | 0.0 | 0.0 |
 | btc | 0.0 | 0.0 | 0.0 | 0.0 |
-| ca_sin | 0.0 | 1,862.8 | 0.0 | 106.7 |
+| ca_sin | 0.0 | 0.0 | 0.0 | 11.9 |
 | card_expiry | 0.0 | 0.0 | 0.0 | 0.0 |
 | cn_resident_id | 0.0 | 0.0 | 0.0 | 0.0 |
 | credential | 745.1 | 0.0 | 0.0 | 0.0 |
@@ -566,15 +562,15 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 | service_token | 0.0 | 0.0 | 0.0 | 0.0 |
 | slack_token | 0.0 | 0.0 | 0.0 | 0.0 |
 | swiftbic | 739,274.8 | 0.0 | 343.8 | 0.0 |
-| uk_nhs | 0.0 | 0.0 | 0.0 | 2,287.9 |
+| uk_nhs | 0.0 | 0.0 | 0.0 | 0.0 |
 | uk_nino | 0.0 | 0.0 | 0.0 | 0.0 |
 | uk_sortcode | 0.0 | 0.0 | 0.0 | 0.0 |
 | us_itin | 0.0 | 0.0 | 0.0 | 0.0 |
-| us_ssn | 0.0 | 20,490.6 | 0.0 | 379.3 |
+| us_ssn | 0.0 | 0.0 | 0.0 | 0.0 |
 
 | Configuration | Development before / GB | Development after / GB | Held before / GB | Held after / GB |
 |---|---:|---:|---:|---:|
-| WithAll | 827,818.9 | 22,353.3 | 145,650.6 | 2,773.9 |
+| WithAll | 827,818.9 | 0.0 | 145,650.6 | 11.9 |
 | Default slog handler | 827,818.9 | 0.0 | 145,650.6 | 0.0 |
 | kinds1 | 0.0 | 0.0 | 0.0 | 0.0 |
 | kinds3 | 44,955.1 | 0.0 | 0.0 | 0.0 |
@@ -590,13 +586,13 @@ The operations-log families were added after the LogHub baseline, so they have c
 
 | Family | Split | Datasets | Bytes | WithAll FP / GB | Default FP / GB | Kinds with sampled FPs |
 |---|---|---:|---:|---:|---:|---|
-| system (LogHub) | development | 4 | 8,052,486 | 22,353.3 | 0.0 | ca_sin, us_ssn |
-| system (LogHub) | held | 4 | 84,357,362 | 2,773.9 | 0.0 | ca_sin, uk_nhs, us_ssn |
+| system (LogHub) | development | 4 | 8,052,486 | 0.0 | 0.0 | none |
+| system (LogHub) | held | 4 | 84,357,362 | 11.9 | 0.0 | ca_sin |
 | web access | development | 2 | 19,129,354 | 0.0 | 0.0 | none |
-| web access | held | 1 | 2,370,789 | 72,549.7 | 1,265.4 | ca_sin, high_entropy, swiftbic, uk_nhs, us_ssn |
+| web access | held | 1 | 2,370,789 | 65,379.1 | 1,265.4 | high_entropy, swiftbic |
 | Kubernetes audit | development | 1 | 92,794,383 | 0.0 | 0.0 | none |
 | cloud audit | development | 1 | 16,030,714 | 0.0 | 0.0 | none |
-| cloud audit | held | 2 | 17,152,480 | 81,154.4 | 39,819.3 | credential, high_entropy, in_aadhaar, mynumber |
+| cloud audit | held | 2 | 17,152,480 | 3,672.9 | 116.6 | credential, high_entropy |
 
 Each dataset/kind stratum uses the 40 lowest SHA-256 finding IDs, or every finding if there are fewer. Review labels are in [real-logs-labels.json](real-logs-labels.json); counts and sampled FP fractions are in [real-logs-summary.json](real-logs-summary.json). The estimate sums count × sampled FP fraction across datasets. Zero observed sample FPs does not establish zero population FPs. Small samples, repeated templates and this 239.9 MB source mix cannot predict a deployment’s rate. No recall estimate is possible without labeling undetected secrets.
 <!-- real-logs:end -->

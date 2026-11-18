@@ -57,7 +57,7 @@ func TestUSPhoneScoresAndName(t *testing.T) {
 	if d.Name() != NameUSPhone || len(d.Hints()) == 0 {
 		t.Fatal("name or hints missing")
 	}
-	for input, want := range map[string]float64{usPhoneFixture: 0.7, "mobile 202-555-0123": 0.9, "invoice 202-555-0123": 0.4, "fax: +1 (212) 555-0100": 0.9} {
+	for input, want := range map[string]float64{usPhoneFixture: 0.7, "mobile 202-555-0123": 0.9, "invoice 202-555-0123": 0.4, "fax: +1 (212) 555-0100": 0.9, "user_id=202-555-0123": 0.4, "contact_id=202-555-0123": 0.9, "電話: 202-555-0123": 0.9, "phone a b c 202-555-0123": 0.7} {
 		findings := d.Scan([]byte(input))
 		if len(findings) != 1 || findings[0].Confidence != want {
 			t.Errorf("%q: %+v, want confidence %v", input, findings, want)

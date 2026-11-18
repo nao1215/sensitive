@@ -139,8 +139,8 @@ func TestEmailDetector_Hints(t *testing.T) {
 
 	d := NewEmail()
 	hints := d.Hints()
-	if len(hints) != 1 || string(hints[0]) != "@" {
-		t.Errorf("Hints() = %v, want [[@]]", hints)
+	if len(hints) != 2 || string(hints[0]) != "@" || string(hints[1]) != "＠" {
+		t.Errorf("Hints() = %q, want @ and full-width ＠", hints)
 	}
 }
 
@@ -402,5 +402,55 @@ func TestEmailIgnoresURLUserinfo(t *testing.T) {
 			t.Parallel()
 			assertScanMatch(t, d, tc.input, tc.count, tc.matched)
 		})
+	}
+}
+
+func TestEmailFullWidthAtSign(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ input, want string }{
+		{"連絡先: bob＠example.com まで", "bob＠example.com"},
+		{"bob＠example.com, alice@example.org", "bob＠example.com"},
+		{"＠example.com", ""},
+		{"bob＠", ""},
+		{"bob＠localhost", ""},
+	} {
+		t.Run(tc.input, func(t *testing.T) {
+			t.Parallel()
+			got := ""
+			if findings := NewEmail().Scan([]byte(tc.input)); len(findings) > 0 {
+				got = tc.input[findings[0].Start:findings[0].End]
+			}
+			if got != tc.want {
+				t.Fatalf("got %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestEmailFullWidthDomainStart(t *testing.T) {
+	t.Parallel()
+	input := "bob＠x.jp"
+	if got := NewEmail().Scan([]byte(input)); len(got) != 1 || input[got[0].Start:got[0].End] != input {
+		t.Fatalf("Scan(%q) = %+v", input, got)
+	}
+}
+
+const fullWidthAtAddress = "bob＠example.com"
+
+func TestEmailFullWidthAddress(t *testing.T) {
+	t.Parallel()
+	d := &Email{}
+	for input, want := range map[string]string{
+		"連絡先 ｂｏｂ＠ｅｘａｍｐｌｅ．ｃｏｍ まで": "ｂｏｂ＠ｅｘａｍｐｌｅ．ｃｏｍ",
+		fullWidthAtAddress:       fullWidthAtAddress,
+		"ｂｏｂ@example.com、ｂ＠ｃ．ｊｐ": "ｂ＠ｃ．ｊｐ",
+	} {
+		findings := d.Scan([]byte(input))
+		if len(findings) == 0 || input[findings[len(findings)-1].Start:findings[len(findings)-1].End] != want {
+			t.Errorf("Scan(%q) = %+v, want %q last", input, findings, want)
+		}
+	}
+	if findings := d.Scan([]byte("ｂｏｂ＠ｅｘａｍｐｌｅ")); len(findings) != 0 {
+		t.Errorf("address without a TLD found %+v", findings)
 	}
 }

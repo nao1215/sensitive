@@ -174,6 +174,9 @@ func TestBTCDetector_Hints(t *testing.T) {
 	if d.Hints() != nil {
 		t.Error("Hints() should return nil for BTC detector")
 	}
+	if got := string(StartBytes(d)); got != "13" {
+		t.Errorf("StartBytes() = %q, want 13", got)
+	}
 }
 
 func TestBTCDetector_Scan_BytePositions(t *testing.T) {

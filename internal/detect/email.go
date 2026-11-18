@@ -1,6 +1,7 @@
 package detect
 
 import (
+	"bytes"
 	"slices"
 
 	"github.com/nao1215/embargo/internal/ascii"
@@ -24,18 +25,36 @@ func (d *Email) Name() DetectorName {
 func (d *Email) Hints() [][]byte {
 	return [][]byte{
 		[]byte("@"),
+		[]byte(fullWidthAt),
 	}
 }
 
-// Scan returns matches in data using the rules documented on [Email].
+// Scan returns matches in data using the rules documented on [Email]. Text
+// with a full-width at sign, as Japanese input methods write it, is scanned
+// with full-width ASCII folded to ASCII, so ｂｏｂ＠ｅｘａｍｐｌｅ．ｃｏｍ and
+// bob＠example.com are addresses too.
 func (d *Email) Scan(data []byte) []Finding {
+	if !bytes.Contains(data, []byte(fullWidthAt)) {
+		return d.scanASCII(data)
+	}
+	folded, positions := foldFullWidthASCII(data)
+	findings := d.scanASCII(folded)
+	for i := range findings {
+		findings[i].Start, findings[i].End = positions[findings[i].Start], positions[findings[i].End]
+	}
+	return findings
+}
+
+// scanASCII finds addresses whose at sign is the ASCII @.
+func (d *Email) scanASCII(data []byte) []Finding {
 	var findings []Finding
 	boundary := 0
-
-	for i := range data {
-		if data[i] != '@' {
-			continue
+	for i := 0; i < len(data); i++ {
+		next := bytes.IndexByte(data[i:], '@')
+		if next < 0 {
+			break
 		}
+		i += next
 
 		// An accepted domain is a boundary for the next local part. Walking
 		// through it can reject an adjacent address or create overlapping spans.
@@ -70,6 +89,9 @@ func (d *Email) Scan(data []byte) []Finding {
 
 	return findings
 }
+
+// fullWidthAt is U+FF20 FULLWIDTH COMMERCIAL AT in UTF-8.
+const fullWidthAt = "\uff20"
 
 // isSCPRemote reports whether git@host: followed by a path is an SCP-style Git
 // remote rather than an email address.

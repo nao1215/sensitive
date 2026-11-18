@@ -494,3 +494,58 @@ func luhnComplete(body string) string {
 	}
 	panic("no Luhn check digit")
 }
+
+func TestPANSkipsJANProductCodes(t *testing.T) {
+	t.Parallel()
+	// 4901234567894 passes both Luhn and the EAN-13 check digit.
+	for _, input := range []string{"JAN 4901234567894", "barcode=4901234567894", `{"jan":"4901234567894"}`} {
+		if got := NewPAN().Scan([]byte(input)); len(got) != 0 {
+			t.Errorf("Scan(%q) = %+v, want none", input, got)
+		}
+	}
+	// 4222222222222 is a published 13-digit Visa test number that fails EAN-13.
+	if got := NewPAN().Scan([]byte("card 4222222222222")); len(got) != 1 {
+		t.Fatalf("13-digit Visa lost: %+v", got)
+	}
+	if !passesEAN13([]byte("4901234567894")) || passesEAN13([]byte("4222222222222")) {
+		t.Fatal("EAN-13 check digit")
+	}
+}
+
+func TestPANDottedGroups(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		input string
+		found bool
+	}{
+		{"card 4111.1111.1111.1111", true},
+		{"card 4111.1111.1111.1111.", true},
+		{"card 4111.1111.1111.1111.5", false},
+		{"oid 4111.1111.1111.11111", false},
+		{"v 4111.1111.111.11111", false},
+		{"card 4111.1111.1111.1112", false},
+	} {
+		if got := NewPAN().Scan([]byte(tc.input)); (len(got) == 1) != tc.found {
+			t.Errorf("Scan(%q) = %+v, want found %v", tc.input, got, tc.found)
+		}
+	}
+}
+
+func TestPANDottedGroupEnds(t *testing.T) {
+	t.Parallel()
+	for input, found := range map[string]bool{
+		"4111.1111.1111.1111. ok": true,
+		"4111.1111.1111.111":      false,
+		"4111.1111.1111.1111.":    true,
+	} {
+		if got := NewPAN().Scan([]byte(input)); (len(got) == 1) != found {
+			t.Errorf("Scan(%q) = %+v, want found %v", input, got, found)
+		}
+	}
+	// Weights 1 and 3 alternate from the left; swapping them breaks these codes.
+	for _, code := range []string{"4512345678906", "4900000000108", "4522222222221"} {
+		if !passesEAN13([]byte(code)) {
+			t.Errorf("EAN-13 %s rejected", code)
+		}
+	}
+}

@@ -35,7 +35,7 @@ This inventory states the owner's active maintenance policy and maps each rule t
 | Hint dispatch agrees with exhaustive scanning | AGENTS.md | [TestDispatchDifferential](../scanner_dispatch_test.go) | MultiPlatformUnitTest |
 | Clean scanning retains deterministic allocation gates | AGENTS.md | [TestCleanScanAllocationBudget](../scanner_dispatch_test.go) | MultiPlatformUnitTest |
 | Full-width numeric positions map to original bytes | AGENTS.md | [TestNormalizationIdentityDifferential](../internal/detect/fullwidth_test.go) | MultiPlatformUnitTest |
-| Confidence is a score; business labels keep lower-confidence findings | Repository maintenance policy | [TestBusinessLabelsAtFieldBoundaries](../internal/detect/label_test.go) | MultiPlatformUnitTest |
+| Confidence is a score; record labels keep lower-confidence PAN and phone findings | Repository maintenance policy | [TestBusinessLabelsAtFieldBoundaries](../internal/detect/label_test.go) | MultiPlatformUnitTest |
 | IP unspecified and loopback addresses are excluded | Repository maintenance policy | [Test](../internal/detect/ipaddr_test.go) | MultiPlatformUnitTest |
 | Adapters stay isolated and work without local replace directives | Repository maintenance policy | [replace](../scripts/check_adapter_dependencies.py) | MultiPlatformUnitTest |
 | Generated documents have semantic and staleness checks | Repository maintenance policy | [class](../scripts/test_doc_figures.py) | MultiPlatformUnitTest |

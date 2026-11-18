@@ -95,40 +95,57 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	if !hasDigits(data, panMinDigits) {
 		return nil
 	}
-	var findings []Finding
-	var logContext numericLogContext
+	return scanNumeric(orig, data, posMap, d.candidate, true)
+}
 
-	i := 0
-	for i < len(data) {
-		// Escape bytes cannot become part of a numeric candidate.
-		if data[i] == '%' && normalizedEscapeSeparator(orig, posMap, len(data), i) {
-			i += 3
-			continue
-		}
-		// Skip non-digit characters.
-		if !ascii.IsDigit(data[i]) {
-			i++
-			continue
-		}
-
-		// Found a digit — try to extract a candidate PAN.
-		start := i
-		// Card digits fit the array; a longer run grows past it and is rejected by length.
-		var stack [panMaxDigits + 1]byte
-		digits, end := appendSeparatedDigits(data, start, stack[:0], cardSeparator)
-
-		// Check digit count: valid PANs are 13-19 digits.
-		digitLen := len(digits)
-		bounded := panBounded(orig, data, posMap, start, end)
-		if f, ok := d.evaluateCandidate(orig, posMap, digits, digitLen, start, end); ok && bounded && !logContext.fragment(data, start, end) {
-			findings = append(findings, f)
-		}
-
-		// Move past the current candidate to continue scanning.
-		i = end
+// candidate checks the card number that may start at i and returns where
+// scanning continues.
+func (d *PAN) candidate(orig, data []byte, posMap []int, i int) (Finding, int, bool) {
+	if !ascii.IsDigit(data[i]) {
+		return Finding{}, i + 1, false
 	}
+	// Card digits fit the array; a longer run grows past it and is rejected by length.
+	var stack [panMaxDigits + 1]byte
+	digits, end := cardDigits(data, i, stack[:0])
+	bounded := panBounded(orig, data, posMap, i, end)
+	f, ok := d.evaluateCandidate(orig, posMap, digits, len(digits), i, end)
+	return f, end, ok && bounded
+}
 
-	return findings
+// cardDigits extracts the digits of a candidate separated by spaces or
+// hyphens, or written in dotted groups.
+func cardDigits(data []byte, start int, digits []byte) (run []byte, end int) {
+	if dotted, dottedEnd, ok := dottedCardDigits(data, start, digits); ok {
+		return dotted, dottedEnd
+	}
+	return appendSeparatedDigits(data, start, digits, cardSeparator)
+}
+
+// dottedCardDigits accepts a card written as four dot-separated groups of
+// four digits, 4111.1111.1111.1111. Other dotted runs are versions, OIDs or
+// addresses, so the grouping must be exact and no further dotted digits follow.
+func dottedCardDigits(data []byte, start int, digits []byte) (run []byte, end int, ok bool) {
+	const width, group = len("4111.1111.1111.1111"), len("4111.")
+	end = start + width
+	if end > len(data) {
+		return nil, start, false
+	}
+	for i, c := range data[start:end] {
+		if i%group == group-1 {
+			if c != '.' {
+				return nil, start, false
+			}
+			continue
+		}
+		if !ascii.IsDigit(c) {
+			return nil, start, false
+		}
+		digits = append(digits, c)
+	}
+	if end < len(data) && (ascii.IsDigit(data[end]) || (data[end] == '.' && end+1 < len(data) && ascii.IsDigit(data[end+1]))) {
+		return nil, start, false
+	}
+	return digits, end, true
 }
 
 // panBounded reports whether [start, end) is not embedded in an identifier,
@@ -161,10 +178,38 @@ func (d *PAN) evaluateCandidate(orig []byte, posMap []int, digits []byte, digitL
 	if !passesLuhn(digits) || !isExpectedLength(brand, digitLen) {
 		return Finding{}, false
 	}
+	// Japanese JAN product codes are 13-digit EAN codes starting with 45 or
+	// 49, which collide with the obsolete 13-digit Visa length. A 13-digit
+	// candidate whose EAN check digit also holds is a product code.
+	if digitLen == eanDigits && passesEAN13(digits) {
+		return Finding{}, false
+	}
 	confidence += 0.4 // Luhn + expected length
 
-	return labeledViewFinding(d.Name(), orig, posMap, start, end, confidence), true
+	return labeledViewFinding(d.Name(), orig, posMap, start, end, confidence, cardLabels()...), true
 }
+
+// passesEAN13 validates the EAN-13 (GTIN-13) check digit: weights 1 and 3
+// alternate from the left over the first twelve digits.
+func passesEAN13(digits []byte) bool {
+	const base, oddWeight = 10, 3
+	sum := 0
+	for i, digit := range digits[:eanDigits-1] {
+		n := int(digit - '0')
+		if i%2 == 1 {
+			n *= oddWeight
+		}
+		sum += n
+	}
+	return (base-sum%base)%base == int(digits[eanDigits-1]-'0')
+}
+
+// eanDigits is the length of an EAN-13 (JAN) code.
+const eanDigits = 13
+
+// cardLabels returns the words that name a payment card, as in card_id or
+// credit card number, and keep its confidence under a record label.
+func cardLabels() []string { return []string{"card", "pan", "cc", "credit", "カード"} }
 
 // passesLuhn implements the Luhn algorithm (MOD 10) for check digit validation.
 // It processes digits from right to left, doubling every second digit.

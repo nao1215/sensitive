@@ -85,9 +85,9 @@ func selectedScanner(kinds string, minimum float64) (*embargo.Scanner, error) {
 		for kind := range strings.SplitSeq(kinds, ",") {
 			selection = append(selection, embargo.Kind(strings.TrimSpace(kind)))
 		}
-		option, ok := kindsOption(selection)
-		if !ok {
-			return nil, errors.New("embargo: --kinds must be all or a comma-separated list of kinds; see embargo --help")
+		option, message := kindsOption(selection)
+		if option == nil {
+			return nil, errors.New("embargo: --kinds must be all or a comma-separated list of kinds" + message + "; see embargo --help")
 		}
 		options = append(options, option)
 	}
@@ -96,11 +96,18 @@ func selectedScanner(kinds string, minimum float64) (*embargo.Scanner, error) {
 
 // kindsOption returns embargo.WithKinds(selection), or false when it rejects
 // an unknown kind.
-func kindsOption(selection []embargo.Kind) (option embargo.ScannerOption, ok bool) {
+// kindsOption returns the selection, or nil and the part of WithKinds' panic
+// that names the unknown kind, such as ` "emial"`.
+func kindsOption(selection []embargo.Kind) (option embargo.ScannerOption, unknown string) {
 	defer func() {
-		if recover() != nil {
-			option, ok = nil, false
+		if value := recover(); value != nil {
+			option = nil
+			if text, ok := value.(string); ok {
+				if kind, found := strings.CutPrefix(text, "embargo: unknown built-in kind"); found && kind != "" {
+					unknown = "; unknown kind" + kind
+				}
+			}
 		}
 	}()
-	return embargo.WithKinds(selection...), true
+	return embargo.WithKinds(selection...), ""
 }

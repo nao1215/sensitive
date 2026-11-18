@@ -260,8 +260,8 @@ func TestJPPhoneDetector_Hints(t *testing.T) {
 
 	d := NewJPPhone()
 	hints := d.Hints()
-	if len(hints) != 2 {
-		t.Fatalf("Hints() returned %d hints, want 2", len(hints))
+	if len(hints) != 3 || string(hints[2]) != "+81" {
+		t.Fatalf("Hints() = %q, want 0, full-width zero and +81", hints)
 	}
 	if string(hints[0]) != "0" {
 		t.Errorf("Hints()[0] = %q, want %q", hints[0], "0")
@@ -405,5 +405,64 @@ func TestPhoneJpRejectedBoundaries(t *testing.T) {
 	t.Parallel()
 	if classifyJPPhone(nil, 0) != "" || isValidLandlinePrefix(nil) {
 		t.Fatal("short phone accepted")
+	}
+}
+
+func TestJPPhoneDetector_InternationalForm(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ input, want string }{
+		{"tel +81-90-1234-5678", "+81-90-1234-5678"},
+		{"+819012345678", "+819012345678"},
+		{"call +81 (0)3-1234-5678 now", "+81 (0)3-1234-5678"},
+		{"+81 3 1234 5678", "+81 3 1234 5678"},
+		{"tel:+81-120-123-456.", "+81-120-123-456"},
+		{"x+819012345678", ""},
+		{"+81-12", ""},
+		{"+8190123456789", ""},
+		{"+81", ""},
+		{"+1-202-555-0143", ""},
+	} {
+		t.Run(tc.input, func(t *testing.T) {
+			t.Parallel()
+			got := ""
+			if findings := NewJPPhone().Scan([]byte(tc.input)); len(findings) == 1 {
+				got = tc.input[findings[0].Start:findings[0].End]
+			} else if len(findings) > 1 {
+				t.Fatalf("findings %+v", findings)
+			}
+			if got != tc.want {
+				t.Fatalf("got %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestJPPhoneInternationalNearMisses(t *testing.T) {
+	t.Parallel()
+	d := NewJPPhone()
+	for _, input := range []string{"+81 x", "+81-12", "+81-90", "+8112345678901234", "+81 1234567890"} {
+		data := []byte(input)
+		if _, next, ok := d.international(data, data, nil, 0); ok || next <= 0 {
+			t.Errorf("international(%q) = ok %v next %d", input, ok, next)
+		}
+	}
+}
+
+const parenthesizedLandline = "(03)1234-5678"
+
+func TestJPPhoneParenthesizedAreaCode(t *testing.T) {
+	t.Parallel()
+	d := NewJPPhone()
+	for input, want := range map[string]string{
+		"tel (03)1234-5678":   parenthesizedLandline,
+		parenthesizedLandline: parenthesizedLandline,
+		"tel 03(1234)5678":    "03(1234)5678",
+		"tel (03-1234-5678":   "03-1234-5678",
+		"tel ((03)1234-5678)": parenthesizedLandline,
+	} {
+		findings := d.Scan([]byte(input))
+		if len(findings) != 1 || input[findings[0].Start:findings[0].End] != want {
+			t.Errorf("Scan(%q) = %+v, want %q", input, findings, want)
+		}
 	}
 }

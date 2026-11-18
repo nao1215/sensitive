@@ -180,7 +180,7 @@
     "where": "MultiPlatformUnitTest"
   },
   {
-    "rule": "Confidence is a score; business labels keep lower-confidence findings",
+    "rule": "Confidence is a score; record labels keep lower-confidence PAN and phone findings",
     "source": "Repository maintenance policy",
     "check": "internal/detect/label_test.go#TestBusinessLabelsAtFieldBoundaries",
     "where": "MultiPlatformUnitTest"

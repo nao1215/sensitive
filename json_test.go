@@ -329,7 +329,8 @@ func TestAdversarialEncodingBoundary(t *testing.T) {
 		{"double-percent", "alice%2540example.com", false},
 		{"base64", "YWxpY2VAZXhhbXBsZS5jb20=", false},
 		{"zero-width", "alice@exam\u200bple.com", true},
-		{"homoglyph", "alice＠example.com", false},
+		{"full-width at", "alice＠example.com", true},
+		{"homoglyph", "alice\uff20example\u3002com", false},
 		{"forged-marker", "[REDACTED] alice@example.com", true},
 		{"fake-finding", "{Kind:email Start:0 End:99} alice@example.com", true},
 	} {
@@ -363,7 +364,7 @@ func TestAdversarialJSONLimits(t *testing.T) {
 			if err != nil || !json.Valid(out) {
 				t.Fatal("valid bounded tree rejected")
 			}
-		} else if out != nil || err == nil || err.Error() != "embargo: JSON size limit exceeded" {
+		} else if out != nil || err == nil || err.Error() != "embargo: JSON size or nesting limit exceeded" {
 			t.Fatal("deep tree did not fail closed")
 		}
 	}
@@ -676,7 +677,7 @@ func TestMaskJSONFixedFailureReasons(t *testing.T) {
 		canceled bool
 	}{
 		{"embargo: invalid or unmaskable JSON", []byte(`{"password":"opaqueFixture"`), false},
-		{"embargo: JSON size limit exceeded", []byte(`"` + strings.Repeat("opaqueFixture", 100000) + `"`), false},
+		{"embargo: JSON size or nesting limit exceeded", []byte(`"` + strings.Repeat("opaqueFixture", 100000) + `"`), false},
 		{"embargo: JSON masking canceled", []byte(`{"password":"opaqueFixture"}`), true},
 	} {
 		ctx, cancel := context.WithCancel(t.Context())
@@ -811,5 +812,51 @@ func TestMaskJSONContextCancellationMatchesTheContextError(t *testing.T) {
 				t.Fatalf("got %q, err %v; want errors.Is %v with the fixed text", got, err, tc.want)
 			}
 		})
+	}
+}
+
+func TestMaskJSONNamedValuePairs(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name, input, want string
+	}{
+		{name: "kubernetes env", input: `{"env":[{"name":"DB_PASSWORD","value":"hunter2"},{"name":"LOG_LEVEL","value":"debug"}]}`, want: `{"env":[{"name":"DB_PASSWORD","value":"[REDACTED]"},{"name":"LOG_LEVEL","value":"debug"}]}`},
+		{name: "value before name", input: `{"value":"hunter2","name":"api_token"}`, want: `{"value":"[REDACTED]","name":"api_token"}`},
+		{name: "ssm parameter path", input: `{"Parameters":[{"Name":"/prod/db/password","Value":"hunter2","Type":"SecureString"}]}`, want: `{"Parameters":[{"Name":"/prod/db/password","Value":"[REDACTED]","Type":"SecureString"}]}`},
+		{name: "cloudformation parameter", input: `{"ParameterKey":"DbPassword","ParameterValue":"hunter2"}`, want: `{"ParameterKey":"DbPassword","ParameterValue":"[REDACTED]"}`},
+		{name: "object value", input: `{"name":"client_secret","value":{"a":"b"}}`, want: `{"name":"client_secret","value":"[REDACTED]"}`},
+		{name: "array value", input: `{"value":["hunter2",{"x":"y"}],"name":"DB_PASSWORD"}`, want: `{"value":"[REDACTED]","name":"DB_PASSWORD"}`},
+		{name: "empty array value", input: `{"name":"DB_PASSWORD","value":[]}`, want: `{"name":"DB_PASSWORD","value":"[REDACTED]"}`},
+		{name: "object value of public name", input: `{"name":"region","value":{"a":"b"}}`, want: `{"name":"region","value":{"a":"b"}}`},
+		{name: "numeric name", input: `{"name":7,"value":"hunter2"}`, want: `{"name":7,"value":"hunter2"}`},
+		{name: "numeric metric stays", input: `{"name":"token","value":42}`, want: `{"name":"token","value":42}`},
+		{name: "empty value stays", input: `{"name":"password","value":""}`, want: `{"name":"password","value":""}`},
+		{name: "public name", input: `{"name":"region","value":"ap-northeast-1"}`, want: `{"name":"region","value":"ap-northeast-1"}`},
+		{name: "escaped name", input: `{"name":"DB_PASSWORD","value":"hunter2"}`, want: `{"name":"DB_PASSWORD","value":"[REDACTED]"}`},
+		{name: "name only in another object", input: `[{"name":"password"},{"value":"hunter2"}]`, want: `[{"name":"password"},{"value":"hunter2"}]`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := NewScanner(WithKinds()).MaskJSON([]byte(tc.input))
+			if err != nil || string(got) != tc.want {
+				t.Fatalf("got %s err %v want %s", got, err, tc.want)
+			}
+		})
+	}
+	t.Run("custom key set", func(t *testing.T) {
+		t.Parallel()
+		got, err := NewScanner(WithKinds(), WithoutDefaultSensitiveKeys(), WithSensitiveKeys("region")).MaskJSON([]byte(`{"name":"password","value":"x","n":{"name":"region","value":"y"}}`))
+		if want := `{"name":"password","value":"x","n":{"name":"region","value":"[REDACTED]"}}`; err != nil || string(got) != want {
+			t.Fatalf("got %s err %v want %s", got, err, want)
+		}
+	})
+}
+
+func TestNamedValueFieldFoldsKeys(t *testing.T) {
+	t.Parallel()
+	for key, want := range map[string]pairField{"Name": pairName, "PARAMETER_VALUE": pairValue, "Parameter-Key": pairName, "values": pairNone, "parametervalues": pairNone, "": pairNone} {
+		if got := namedValueField(key); got != want {
+			t.Errorf("namedValueField(%q) = %d, want %d", key, got, want)
+		}
 	}
 }

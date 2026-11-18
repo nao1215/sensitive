@@ -22,3 +22,27 @@ func TestOptionsCopyAndOrder(t *testing.T) {
 		t.Fatal("threshold ignored")
 	}
 }
+
+// unknownKindPanic is the message for an unknown kind that is not a misspelling.
+const unknownKindPanic = "embargo: unknown built-in kind"
+
+func TestWithKindsPanicNamesOnlyMisspellings(t *testing.T) {
+	t.Parallel()
+	for kind, want := range map[embargo.Kind]string{
+		"emial":               `embargo: unknown built-in kind "emial" (did you mean "email"?)`,
+		"pa":                  `embargo: unknown built-in kind "pa" (did you mean "pan"?)`,
+		"IPADDR":              unknownKindPanic,
+		"opaqueFixtureValue1": unknownKindPanic,
+		"zzzpan":              unknownKindPanic,
+		"":                    unknownKindPanic,
+	} {
+		func() {
+			defer func() {
+				if got := recover(); got != want {
+					t.Errorf("WithKinds(%q) panic = %v, want %q", kind, got, want)
+				}
+			}()
+			embargo.WithKinds(kind)
+		}()
+	}
+}

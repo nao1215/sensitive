@@ -386,3 +386,46 @@ func TestIPAddrSkipsThisNetworkBlock(t *testing.T) {
 		}
 	}
 }
+
+func TestIPAddrZeroPaddedOctets(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ input, want string }{
+		{"ip=192.168.001.010", "192.168.001.010"},
+		{"src 010.000.000.005.", "010.000.000.005"},
+		{"ip=192.168.001.256", ""},
+		{"ip=192.168.0001.1", ""},
+		{"ip=192.168.001", ""},
+		{"ip=192.168.001.010.5", ""},
+		{"version 1.02.003.4", ""},
+	} {
+		got := ""
+		if findings := NewIPAddr().Scan([]byte(tc.input)); len(findings) == 1 {
+			got = tc.input[findings[0].Start:findings[0].End]
+		}
+		if got != tc.want {
+			t.Errorf("Scan(%q) = %q, want %q", tc.input, got, tc.want)
+		}
+	}
+}
+
+func TestIPAddrProductVersion(t *testing.T) {
+	t.Parallel()
+	d := &IPAddr{}
+	for input, want := range map[string]bool{
+		"agent/5.1.2.3":        false,
+		"ua=\"agent/5.1.2.3\"": false,
+		"(probe-v2/1.2.3.4)":   false,
+		"ip/10.0.0.1":          true,
+		"peer/10.0.0.1":        true,
+		"/hosts/10.0.0.1":      true,
+		"x.agent/10.0.0.1":     true,
+		"2fa/10.0.0.1":         true,
+		"/10.0.0.1":            true,
+		"from 10.0.0.1":        true,
+		"agent 10.0.0.1":       true,
+	} {
+		if got := len(d.Scan([]byte(input))) == 1; got != want {
+			t.Errorf("Scan(%q) found %v, want %v", input, got, want)
+		}
+	}
+}

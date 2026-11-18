@@ -46,7 +46,7 @@ The first eight cases reproduce the original comparison probe. Both libraries re
 
 masq requires user rules to find the email and card; plain `masq.New()` does not detect them. Its standard redactor removes an entire matched message/error string; embargo keeps the surrounding context. masq can use RedactString for partial replacement or a custom censor for validation. With this configuration it leaves attribute keys, group names and custom MarshalJSON-generated data visible. Both retain struct shape; masq v0.2.3 replaces matching interface-valued map entries with null in this fixture, while embargo uses a string marker. These are observed version-specific outputs, not claims that all masq configurations behave identically.
 
-The invalid-Luhn row is a deliberate negative example. embargo uses its default minimum confidence of zero and masks this candidate. go-masker with its opt-in Luhn check keeps the invalid-card control, while masq also changes it; the matrix displays these costs beside positive catches. The [accuracy corpus](accuracy.md) covers broader detector tradeoffs; these small fixtures are not a production accuracy estimate.
+The invalid-Luhn row is a deliberate negative example. embargo keeps it, because KindPAN rejects every number that fails the Luhn check. go-masker with its opt-in Luhn check keeps the invalid-card control too, while masq changes it; the matrix displays these costs beside positive catches. The [accuracy corpus](accuracy.md) covers broader detector tradeoffs; these small fixtures are not a production accuracy estimate.
 
 ## Time and allocations
 
@@ -55,56 +55,56 @@ The invalid-Luhn row is a deliberate negative example. embargo uses its default 
 <!-- comparison:start -->
 | Benchmark | ns/op | B/op | allocs/op |
 |---|---:|---:|---:|
-| Comparison/clean/embargo | 1,002.0 | 32 | 4 |
-| Comparison/clean/embargo-default | 2,605.0 | 56 | 10 |
-| Comparison/clean/ferret-scan | 79,542.5 | 7,209 | 83 |
-| Comparison/clean/go-masker | 1,261.0 | 8 | 1 |
-| Comparison/clean/masq | 2,654.0 | 792 | 50 |
-| Comparison/clean/pii-shield | 4,257.5 | 488 | 4 |
-| Comparison/clean/plain | 399.4 | 0 | 0 |
-| Comparison/flat/embargo | 1,308.5 | 96 | 2 |
-| Comparison/flat/embargo-default | 2,856.5 | 117 | 6 |
-| Comparison/flat/ferret-scan | 110,476.5 | 53,556 | 385 |
-| Comparison/flat/go-masker | 1,332.0 | 48 | 3 |
-| Comparison/flat/masq | 2,913.0 | 672 | 32 |
-| Comparison/flat/pii-shield | 4,410.0 | 702 | 11 |
-| Comparison/flat/plain | 379.7 | 0 | 0 |
-| Comparison/large50/embargo | 13,632.5 | 6,241 | 5 |
-| Comparison/large50/embargo-default | 63,992.5 | 7,030 | 105 |
-| Comparison/large50/ferret-scan | 957,248.5 | 71,014 | 386 |
-| Comparison/large50/go-masker | 13,569.5 | 2,096 | 4 |
-| Comparison/large50/masq | 56,683.0 | 12,707 | 561 |
-| Comparison/large50/pii-shield | 59,900.0 | 8,369 | 12 |
-| Comparison/large50/plain | 3,558.0 | 2,048 | 1 |
-| Comparison/map/embargo | 3,009.5 | 674 | 18 |
-| Comparison/map/embargo-default | 5,149.0 | 704 | 24 |
-| Comparison/map/ferret-scan | 131,757.0 | 54,137 | 391 |
-| Comparison/map/go-masker | 3,288.0 | 1,448 | 29 |
-| Comparison/map/masq | 5,104.0 | 1,744 | 63 |
-| Comparison/map/pii-shield | 6,408.5 | 1,184 | 22 |
-| Comparison/map/plain | 1,125.0 | 288 | 9 |
-| Comparison/nested/embargo | 2,168.5 | 354 | 7 |
-| Comparison/nested/embargo-default | 4,345.5 | 472 | 19 |
-| Comparison/nested/ferret-scan | 138,944.0 | 47,608 | 264 |
-| Comparison/nested/go-masker | 2,751.5 | 800 | 19 |
-| Comparison/nested/masq | 4,645.5 | 1,784 | 61 |
-| Comparison/nested/pii-shield | 7,096.0 | 960 | 18 |
-| Comparison/nested/plain | 549.3 | 0 | 0 |
-| ComparisonFormatter/clean | 531.5 | 0 | 0 |
-| ComparisonFormatter/flat | 563.9 | 32 | 2 |
-| ComparisonFormatter/large50 | 7,145.5 | 7,872 | 10 |
-| ComparisonFormatter/map | 406.5 | 0 | 0 |
-| ComparisonFormatter/nested | 417.0 | 0 | 0 |
-| ComparisonStruct/embargo | 1,520.5 | 410 | 7 |
-| ComparisonStruct/go_mask | 546.2 | 328 | 7 |
-| ComparisonText/embargo | 1,609.5 | 880 | 12 |
-| ComparisonText/godlp | 28,302.0 | 11,713 | 59 |
-| StructuredPath/json_shape | 1,521.0 | 410 | 7 |
-| StructuredPath/old_string | 601.7 | 576 | 7 |
+| Comparison/clean/embargo | 1,167.0 | 32 | 4 |
+| Comparison/clean/embargo-default | 1,567.0 | 32 | 4 |
+| Comparison/clean/ferret-scan | 84,531.5 | 7,208 | 83 |
+| Comparison/clean/go-masker | 1,330.0 | 8 | 1 |
+| Comparison/clean/masq | 2,838.5 | 792 | 50 |
+| Comparison/clean/pii-shield | 4,461.5 | 488 | 4 |
+| Comparison/clean/plain | 443.5 | 0 | 0 |
+| Comparison/flat/embargo | 1,458.0 | 96 | 2 |
+| Comparison/flat/embargo-default | 2,200.5 | 96 | 2 |
+| Comparison/flat/ferret-scan | 119,696.0 | 53,556 | 385 |
+| Comparison/flat/go-masker | 1,410.0 | 48 | 3 |
+| Comparison/flat/masq | 3,112.0 | 672 | 32 |
+| Comparison/flat/pii-shield | 4,733.0 | 702 | 11 |
+| Comparison/flat/plain | 430.2 | 0 | 0 |
+| Comparison/large50/embargo | 13,896.0 | 6,242 | 5 |
+| Comparison/large50/embargo-default | 22,093.5 | 6,244 | 5 |
+| Comparison/large50/ferret-scan | 1,066,270.5 | 71,012 | 386 |
+| Comparison/large50/go-masker | 14,222.5 | 2,096 | 4 |
+| Comparison/large50/masq | 60,108.0 | 12,707 | 561 |
+| Comparison/large50/pii-shield | 65,105.5 | 8,369 | 12 |
+| Comparison/large50/plain | 3,803.0 | 2,048 | 1 |
+| Comparison/map/embargo | 3,305.5 | 674 | 18 |
+| Comparison/map/embargo-default | 4,078.5 | 674 | 18 |
+| Comparison/map/ferret-scan | 143,073.0 | 54,137 | 391 |
+| Comparison/map/go-masker | 3,479.5 | 1,448 | 29 |
+| Comparison/map/masq | 5,478.0 | 1,744 | 63 |
+| Comparison/map/pii-shield | 6,941.0 | 1,184 | 22 |
+| Comparison/map/plain | 1,242.0 | 288 | 9 |
+| Comparison/nested/embargo | 2,434.5 | 354 | 7 |
+| Comparison/nested/embargo-default | 3,090.5 | 354 | 7 |
+| Comparison/nested/ferret-scan | 148,762.0 | 47,608 | 264 |
+| Comparison/nested/go-masker | 2,942.5 | 800 | 19 |
+| Comparison/nested/masq | 5,084.5 | 1,784 | 61 |
+| Comparison/nested/pii-shield | 7,667.0 | 960 | 18 |
+| Comparison/nested/plain | 610.2 | 0 | 0 |
+| ComparisonFormatter/clean | 562.1 | 0 | 0 |
+| ComparisonFormatter/flat | 616.0 | 32 | 2 |
+| ComparisonFormatter/large50 | 7,610.0 | 7,872 | 10 |
+| ComparisonFormatter/map | 449.4 | 0 | 0 |
+| ComparisonFormatter/nested | 447.0 | 0 | 0 |
+| ComparisonStruct/embargo | 1,742.5 | 410 | 7 |
+| ComparisonStruct/go_mask | 591.2 | 328 | 7 |
+| ComparisonText/embargo | 2,103.0 | 880 | 12 |
+| ComparisonText/godlp | 32,586.5 | 11,713 | 59 |
+| StructuredPath/json_shape | 1,727.0 | 410 | 7 |
+| StructuredPath/old_string | 614.8 | 576 | 7 |
 
 Measured 2026-11-18 with go version go1.26.11 linux/amd64, Linux/amd64, AMD RYZEN AI MAX+ 395 w/ Radeon 8060S; GOMAXPROCS=1, ten 200 ms samples per case. Construction is outside the timed loop; JSON encoding and masking are included. Source and dependency fingerprints, CPU affinity and command are in [comparison.json](comparison.json).
 
-Each library is timed against an embargo configuration of similar detection breadth. masq and go-masker are given email and card rules and ferret-scan is narrowed to its EMAIL and CREDIT_CARD checks, so `embargo` selects KindEmail and KindPAN. pii-shield cannot turn its built-in detectors off, so `embargo-default` runs the default scanner against it. The scenario and leak tables use ferret-scan with every check. For these five configured events the median time ratio embargo/go-masker ranges from 0.79 to 1.00, embargo/masq from 0.24 to 0.59 and embargo/ferret-scan from 0.01 to 0.02; embargo-default/pii-shield ranges from 0.61 to 1.07. Below 1 means less time for embargo. The default scanner takes 1.71 to 4.69 times the email-and-card configuration. The structured JSON path uses 2.53 times the old string-only time. These ratios are regenerated from the same samples as the table.
+Each library is timed against an embargo configuration of similar detection breadth. masq and go-masker are given email and card rules and ferret-scan is narrowed to its EMAIL and CREDIT_CARD checks, so `embargo` selects KindEmail and KindPAN. pii-shield cannot turn its built-in detectors off, so `embargo-default` runs the default scanner against it. The scenario and leak tables use ferret-scan with every check. For these five configured events the median time ratio embargo/go-masker ranges from 0.83 to 1.03, embargo/masq from 0.23 to 0.60 and embargo/ferret-scan from 0.01 to 0.02; embargo-default/pii-shield ranges from 0.34 to 0.59. Below 1 means less time for embargo. The default scanner takes 1.23 to 1.59 times the email-and-card configuration. The structured JSON path uses 2.81 times the old string-only time. These ratios are regenerated from the same samples as the table.
 <!-- comparison:end -->
 
 The five head-to-head events are a flat email/card pair, a nested struct with opaque password and tagged recovery field, a map, a clean event, and 50 attributes (48 clean plus the flat pair). All four paths use the same io.Discard sink. masq uses its documented WithAllowedType for time.Time and slog.Level, matching embargo's decision to preserve that metadata; this avoids charging masq for an unnecessary reflection traversal. Masker/scanner construction and regex compilation are excluded for every path. The tests use prebuilt slog.Attr slices and LogAttrs to avoid attributing caller argument construction to any library.

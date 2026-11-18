@@ -141,6 +141,10 @@ func credentialScalarStop(data []byte, start, end int, key string, formatted boo
 	if key == cookieKey || key == setCookieKey {
 		return false
 	}
+	// A ;jsessionid= path parameter ends where the query starts.
+	if c == '?' && key == jsessionIDKey {
+		return true
+	}
 	return credentialFieldSeparator(data, end, formatted)
 }
 

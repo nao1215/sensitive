@@ -135,7 +135,7 @@ func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scr
 		text = append(append(text, key...), ": "...)
 	}
 	text = append(text, value...)
-	findings := s.scanner.scanAppend(scratch.findings[:0], text, ctx.Err)
+	findings := s.scanner.scanField(scratch.findings[:0], text, prefixBytes, ctx.Err)
 	// Keep grown storage for the next user; the returned spans alias findings.
 	scratch.text, scratch.findings = text, findings
 	if ctx.Err() != nil {

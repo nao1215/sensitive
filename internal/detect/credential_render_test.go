@@ -406,3 +406,17 @@ func TestCredentialOperatorLookalikesStayVisible(t *testing.T) {
 		}
 	}
 }
+
+func TestCredentialJSessionIDPathParameter(t *testing.T) {
+	t.Parallel()
+	d := &Credential{}
+	for input, want := range map[string]string{
+		"GET /app;jsessionid=ABCDEF0123456789?x=1 HTTP/1.1": "ABCDEF0123456789",
+		"session=abc?def ok": "abc?def",
+	} {
+		findings := d.Scan([]byte(input))
+		if len(findings) != 1 || input[findings[0].Start:findings[0].End] != want {
+			t.Errorf("Scan(%q) = %+v, want %q", input, findings, want)
+		}
+	}
+}

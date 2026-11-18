@@ -19,3 +19,7 @@ doc/performance/*-bench*.txt whitespace=-blank-at-eol
 
 # The README command example is compared with the atago spec line by line.
 e2e/atago/*.yaml text eol=lf
+
+# The vendored python-stdnum files are checked against the digests of the
+# wheel they came from, so their bytes must not change on checkout.
+tests/oracles/stdnum/** -text

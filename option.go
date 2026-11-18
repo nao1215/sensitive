@@ -1,8 +1,10 @@
 package embargo
 
 import (
+	"maps"
 	"math"
 	"reflect"
+	"slices"
 )
 
 // ScannerOption configures a scanner at construction time.
@@ -14,7 +16,9 @@ type (
 func (o scannerOption) apply(s *Scanner) { o(s) }
 
 // WithKinds replaces the built-in selection. No kinds selects none; custom detectors remain.
-// Unknown kinds panic. The supplied slice is copied.
+// An unknown kind panics; the message quotes it and suggests the nearest
+// built-in only when it is a likely misspelling, within two edits of one.
+// The supplied slice is copied.
 func WithKinds(kinds ...Kind) ScannerOption {
 	selected := make(map[Kind]bool, len(kinds))
 	known := make(map[Kind]bool)
@@ -23,7 +27,7 @@ func WithKinds(kinds ...Kind) ScannerOption {
 	}
 	for _, kind := range kinds {
 		if !known[kind] {
-			panic("embargo: unknown built-in kind")
+			panic("embargo: unknown built-in kind" + quotedKind(kind, known))
 		}
 		selected[kind] = true
 	}
@@ -54,8 +58,8 @@ func WithDetector(d Detector) ScannerOption {
 }
 
 // WithMinConfidence keeps findings at or above threshold; the default is 0.
-// For example, 0.7 excludes numeric candidates with attached business labels
-// (0.4), at the risk of missing mislabeled secrets.
+// For example, 0.7 excludes PAN and phone candidates under a record label such
+// as user_id (0.4), at the risk of missing mislabeled secrets.
 // It also excludes bank-account findings (0.5–0.65) and some sort codes; choose
 // thresholds for the selected kinds. Confidence is a heuristic, not a probability. Non-finite scores or values outside [0,1] panic.
 func WithMinConfidence(threshold float64) ScannerOption {
@@ -66,3 +70,41 @@ func WithMinConfidence(threshold float64) ScannerOption {
 }
 
 func validScore(score float64) bool { return !math.IsNaN(score) && score >= 0 && score <= 1 }
+
+// quotedKind names a misspelled kind and its nearest built-in, as in
+// ` "emial" (did you mean "email"?)`, when the two differ by at most two edits.
+// Other values are not repeated, so a panic never echoes arbitrary caller data.
+func quotedKind(kind Kind, known map[Kind]bool) string {
+	const maxEdits = 2
+	best, bestDistance := Kind(""), maxEdits+1
+	for _, candidate := range slices.Sorted(maps.Keys(known)) {
+		if d := editDistance(string(kind), string(candidate)); d < bestDistance {
+			best, bestDistance = candidate, d
+		}
+	}
+	if best == "" {
+		return ""
+	}
+	return ` "` + string(kind) + `" (did you mean "` + string(best) + `"?)`
+}
+
+// editDistance is the Levenshtein distance between two short ASCII names.
+func editDistance(a, b string) int {
+	previous := make([]int, len(b)+1)
+	for j := range previous {
+		previous[j] = j
+	}
+	for i := range len(a) {
+		current := make([]int, len(b)+1)
+		current[0] = i + 1
+		for j := range len(b) {
+			cost := 1
+			if a[i] == b[j] {
+				cost = 0
+			}
+			current[j+1] = min(previous[j+1]+1, current[j]+1, previous[j]+cost)
+		}
+		previous = current
+	}
+	return previous[len(b)]
+}

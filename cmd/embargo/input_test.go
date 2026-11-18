@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,11 +43,11 @@ func TestMissingFileStopsWithoutItsName(t *testing.T) {
 	missing := filepath.Join(directory, "private-name.log")
 	var out bytes.Buffer
 	err := run([]string{present, missing}, strings.NewReader(""), &out)
-	if err == nil || err.Error() != "embargo: an input file cannot be opened" || out.String() != "kept "+filterMarker+"\n" {
+	if err == nil || err.Error() != "embargo: input file 2 cannot be opened: no such file" || out.String() != "kept "+filterMarker+"\n" {
 		t.Fatalf("missing file: err=%v output=%q", err, out.String())
 	}
 	out.Reset()
-	if err := run([]string{flagFormat, formatJSON, missing}, strings.NewReader(""), &out); err == nil || err.Error() != "embargo: an input file cannot be opened" || out.Len() != 0 {
+	if err := run([]string{flagFormat, formatJSON, missing}, strings.NewReader(""), &out); err == nil || err.Error() != "embargo: input file 1 cannot be opened: no such file" || out.Len() != 0 {
 		t.Fatalf("missing file in a report: err=%v output=%q", err, out.String())
 	}
 	if run([]string{directory}, strings.NewReader(""), &out) == nil {
@@ -90,5 +91,18 @@ func TestDashReadsStdinBetweenFiles(t *testing.T) {
 	}
 	if want := "file " + filterMarker + "\nstdin " + filterMarker + "\nfile " + filterMarker + "\n"; out.String() != want {
 		t.Fatalf("got %q, want %q", out.String(), want)
+	}
+}
+
+func TestOpenReasonNamesOnlyTheCause(t *testing.T) {
+	t.Parallel()
+	for err, want := range map[error]string{
+		fs.ErrNotExist: ": no such file",
+		&fs.PathError{Op: "open", Path: "private-name.log", Err: fs.ErrPermission}: ": permission denied",
+		errors.New("private-name.log: invalid argument"):                           "",
+	} {
+		if got := openReason(err); got != want {
+			t.Errorf("openReason(%v) = %q, want %q", err, got, want)
+		}
 	}
 }

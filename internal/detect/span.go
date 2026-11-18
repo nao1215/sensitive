@@ -7,10 +7,10 @@ func viewFinding(name DetectorName, posMap []int, start, end int, confidence flo
 	return Finding{DetectorName: name, Start: origStart, End: origEnd, Confidence: confidence}
 }
 
-// labeledViewFinding is viewFinding for numeric identifiers: a business label
-// right before the original start lowers score, as businessConfidence decides.
-func labeledViewFinding(name DetectorName, orig []byte, posMap []int, start, end int, score float64) Finding {
+// labeledViewFinding is viewFinding for a number that a record label lowers,
+// as recordConfidence decides from the original input; own names the number.
+func labeledViewFinding(name DetectorName, orig []byte, posMap []int, start, end int, score float64, own ...string) Finding {
 	f := viewFinding(name, posMap, start, end, score)
-	f.Confidence = businessConfidence(orig, f.Start, score)
+	f.Confidence = recordConfidence(orig, f.Start, score, own...)
 	return f
 }

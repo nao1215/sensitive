@@ -14,6 +14,10 @@ const (
 	setCookieKey          = "setcookie"
 	credentialMarker      = "[REDACTED]"
 	credentialSecretKey   = "secret"
+	shortPassKey          = "pass"
+	// jsessionIDKey is the Java servlet session cookie and path parameter.
+	jsessionIDKey    = "jsessionid"
+	shortPasswordKey = "pwd"
 )
 
 // NormalizeCredentialKey removes ASCII case and key separators.
@@ -28,13 +32,18 @@ func NormalizeCredentialKey(key string) string {
 }
 
 // SensitiveCredentialKey implements the shared default key rule.
+// Structured keys also accept the bare abbreviations pass and pwd, which the
+// text grammar leaves alone because pass=12 reports test results and PWD=/srv
+// is the working directory in environment dumps.
 func SensitiveCredentialKey(key string) bool {
-	return credentialSuffix(key) || sensitiveNormalizedKey(NormalizeCredentialKey(key))
+	normalized := NormalizeCredentialKey(key)
+	return credentialSuffix(key) || sensitiveNormalizedKey(normalized) || normalized == shortPassKey || normalized == shortPasswordKey
 }
 
 func sensitiveNormalizedKey(key string) bool {
 	switch key {
-	case "password", "passwd", credentialSecretKey, credentialTokenKey, "apikey", authorizationKey, proxyAuthorizationKey, cookieKey, setCookieKey, "accesstoken", "refreshtoken", "idtoken", "xapikey", "dbpassword", "privatetoken", "clientsecret", "authtoken", "pgpassword":
+	case "password", "passwd", credentialSecretKey, credentialTokenKey, "apikey", authorizationKey, proxyAuthorizationKey, cookieKey, setCookieKey, "accesstoken", "refreshtoken", "idtoken", "xapikey", "dbpassword", "privatetoken", "clientsecret", "authtoken", "pgpassword",
+		"otp", "pin", "passcode", "passphrase", "session", "sessionid", "sessiontoken", jsessionIDKey, "phpsessid":
 		return true
 	}
 	return false
@@ -101,7 +110,11 @@ func credentialSuffix(key string) bool {
 	var candidates []string
 	switch key[len(key)-1] | 0x20 {
 	case 'd':
-		candidates = []string{"password", "passwd"}
+		candidates = []string{"password", "passwd", shortPasswordKey}
+	case 'e':
+		candidates = []string{"passcode", "passphrase"}
+	case 'p':
+		candidates = []string{"otp"}
 	case 't':
 		candidates = []string{credentialSecretKey}
 	case 'n':
@@ -109,7 +122,7 @@ func credentialSuffix(key string) bool {
 	case 'l':
 		candidates = []string{string(NameCredential)}
 	case 's':
-		candidates = []string{"credentials", "creds"}
+		candidates = []string{"credentials", "creds", shortPassKey}
 	case 'h':
 		candidates = []string{"auth"}
 	case 'y':
@@ -129,7 +142,8 @@ func credentialSuffixMatch(key string, candidates []string) bool {
 			continue
 		}
 		if word != "key" {
-			return true
+			// Bare pass and pwd are not credentials in text; db_pass is.
+			return (word != shortPassKey && word != shortPasswordKey) || strings.TrimRight(key[:start], "_.- ") != ""
 		}
 		if start == 0 {
 			return false
@@ -146,7 +160,7 @@ func credentialSuffixMatch(key string, candidates []string) bool {
 func qualifiedKeySuffix(head string) bool {
 	prefix := strings.TrimRight(head, "_.- ")
 	previous := prefix[credentialSegmentStart(prefix):]
-	for _, credential := range []string{"api", credentialSecretKey, "private", "access", "account"} {
+	for _, credential := range []string{"api", credentialSecretKey, "private", "access", "account", "auth", "master"} {
 		if strings.EqualFold(previous, credential) {
 			return true
 		}

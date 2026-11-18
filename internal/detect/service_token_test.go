@@ -80,6 +80,11 @@ func TestServiceTokenSpecialLayouts(t *testing.T) {
 		{"Slack trigger without scheme", "url hooks.slack.com/triggers/TFAKE/123456/" + alnum(24) + " end", "TFAKE/123456/" + alnum(24)},
 		{"Slack http", "url http://hooks.slack.com/services/TFAKE/BFAKE/" + alnum(24) + " end", "TFAKE/BFAKE/" + alnum(24)},
 		{"Teams webhook", "url https://contoso.webhook.office.com/webhookb2/" + teamsPath + " end", teamsPath},
+		{"Discord webhook", "url https://discord.com/api/webhooks/123456789012345678/" + alnum(68) + " end", "123456789012345678/" + alnum(68)},
+		{"Discord legacy host", "url https://canary.discordapp.com/api/webhooks/12345678901234567/" + alnum(60), "12345678901234567/" + alnum(60)},
+		{"Sentry DSN", "dsn https://" + hex(32) + "@o123.ingest.us.sentry.io/456 end", hex(32)},
+		{"Google access token", "token ya29." + alnum(40) + " expired", "ya29." + alnum(40)},
+		{"Google refresh token", "refresh 1//0g" + alnum(40) + " end", "1//0g" + alnum(40)},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -109,6 +114,13 @@ func TestServiceTokenSpecialLayoutNearMisses(t *testing.T) {
 		"Slack services four parts": "https://hooks.slack.com/services/TFAKE/BFAKE/CFAKE/" + alnum(24),
 		"Slack one-byte part":       "https://hooks.slack.com/services/T/BFAKE/" + alnum(24),
 		"Teams without secret path": "https://contoso.webhook.office.com/webhookb2/short",
+		"Discord short token":       "https://discord.com/api/webhooks/123456789012345678/" + alnum(20),
+		"Discord short ID":          "https://discord.com/api/webhooks/1234/" + alnum(68),
+		"Discord other host":        "https://example.com/api/webhooks/123456789012345678/" + alnum(68),
+		"Sentry self-hosted":        "https://" + synthetic(lowerHexAlphabet, 32) + "@sentry.example.com/4",
+		"Sentry short key":          "https://" + synthetic(lowerHexAlphabet, 31) + "@o1.ingest.sentry.io/4",
+		"Google short access":       "ya29." + alnum(10),
+		"date path":                 "1//02 and 1//0" + alnum(10),
 	} {
 		if got := NewServiceToken().Scan([]byte(text)); len(got) != 0 {
 			t.Errorf("%s: Scan(%q) = %+v, want none", name, text, got)
@@ -206,5 +218,35 @@ func TestServiceTokenWebhookAndPathBoundaries(t *testing.T) {
 	}
 	if !telegramBotPath([]byte("/bot12345"), 4) || telegramBotPath([]byte("bot12345"), 3) {
 		t.Error("a bot token starts right after /bot and nowhere else")
+	}
+}
+
+func TestServiceTokenWebhookAndDSNBoundaries(t *testing.T) {
+	t.Parallel()
+	alnum := func(n int) string { return synthetic(alnumAlphabet, n) }
+	hex := synthetic(lowerHexAlphabet, 32)
+	id := func(n int) string { return strings.Repeat("1", n) }
+	for _, tc := range []struct {
+		text  string
+		found bool
+	}{
+		{"https://discord.com/api/webhooks/" + id(17) + "/" + alnum(60), true},
+		{"https://discord.com/api/webhooks/" + id(20) + "/" + alnum(80), true},
+		{"https://discord.com/api/webhooks/" + id(16) + "/" + alnum(60), false},
+		{"https://discord.com/api/webhooks/" + id(21) + "/" + alnum(60), false},
+		{"https://discord.com/api/webhooks/" + id(18) + "/" + alnum(59), false},
+		{"https://discord.com/api/webhooks/" + id(18) + "/" + alnum(81), false},
+		{"https://discord.com/api/webhooks/" + id(18), false},
+		{"https://discord.com/api/webhooks/" + id(18) + "x" + alnum(60), false},
+		{"https://" + hex, false},
+		{"https://" + hex + "@o1.ingest.sentry.io", false},
+		{"https://" + hex + "@o1.ingest.sentry.io/1", true},
+		{"https://" + hex + "@o1.sentry.io/1", false},
+		{"https://" + hex + "@o1.ingest.sentry.io.example.com/1", false},
+		{"https://" + hex + "x@o1.ingest.sentry.io/1", false},
+	} {
+		if got := NewServiceToken().Scan([]byte(tc.text)); (len(got) == 1) != tc.found {
+			t.Errorf("Scan(%q) = %+v, want found %v", tc.text, got, tc.found)
+		}
 	}
 }

@@ -13,11 +13,11 @@
     "set": "development",
     "tier": "high",
     "threshold": 0,
-    "tp": 3930,
-    "fp": 1089,
-    "fn": 0,
-    "exposed_secrets": 0,
-    "residual_bytes": 0
+    "tp": 2970,
+    "fp": 0,
+    "fn": 960,
+    "exposed_secrets": 960,
+    "residual_bytes": 18816
   },
   {
     "set": "development",
@@ -43,11 +43,11 @@
     "set": "development",
     "tier": "high",
     "threshold": 0.5,
-    "tp": 3930,
+    "tp": 2970,
     "fp": 0,
-    "fn": 0,
-    "exposed_secrets": 0,
-    "residual_bytes": 0
+    "fn": 960,
+    "exposed_secrets": 960,
+    "residual_bytes": 18816
   },
   {
     "set": "development",
@@ -73,11 +73,11 @@
     "set": "development",
     "tier": "high",
     "threshold": 0.7,
-    "tp": 3164,
+    "tp": 2588,
     "fp": 0,
-    "fn": 766,
-    "exposed_secrets": 766,
-    "residual_bytes": 10735
+    "fn": 1342,
+    "exposed_secrets": 1342,
+    "residual_bytes": 22639
   },
   {
     "set": "development",
@@ -103,11 +103,11 @@
     "set": "held",
     "tier": "high",
     "threshold": 0,
-    "tp": 3920,
-    "fp": 1088,
-    "fn": 0,
-    "exposed_secrets": 0,
-    "residual_bytes": 0
+    "tp": 2960,
+    "fp": 0,
+    "fn": 960,
+    "exposed_secrets": 960,
+    "residual_bytes": 18816
   },
   {
     "set": "held",
@@ -133,11 +133,11 @@
     "set": "held",
     "tier": "high",
     "threshold": 0.5,
-    "tp": 3920,
+    "tp": 2960,
     "fp": 0,
-    "fn": 0,
-    "exposed_secrets": 0,
-    "residual_bytes": 0
+    "fn": 960,
+    "exposed_secrets": 960,
+    "residual_bytes": 18816
   },
   {
     "set": "held",
@@ -163,11 +163,11 @@
     "set": "held",
     "tier": "high",
     "threshold": 0.7,
-    "tp": 3156,
+    "tp": 2580,
     "fp": 0,
-    "fn": 764,
-    "exposed_secrets": 764,
-    "residual_bytes": 10720
+    "fn": 1340,
+    "exposed_secrets": 1340,
+    "residual_bytes": 22624
   },
   {
     "set": "held",

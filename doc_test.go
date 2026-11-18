@@ -501,10 +501,12 @@ func openExampleRoot(t *testing.T, directory string) *os.Root {
 func TestReadmeCheckOutput(t *testing.T) {
 	t.Parallel()
 	recorder := embargotest.New(t)
-	logger := slog.New(slog.NewJSONHandler(recorder.Writer("logs"), nil))
+	next := slog.NewJSONHandler(recorder.Writer("logs"), nil)
+	// Wrap next first; attributes bound with next.WithAttrs would skip embargo.
+	logger := slog.New(embargo.NewSlogHandler(next, embargo.NewScanner())).With("api_token", string(recorder.Canary()))
 
-	logger.Info("accepted", "token", embargo.NewSecret(recorder.Canary()))
-	recorder.ExpectJSON("logs", nil, map[string]string{"token": "[REDACTED]"}, 1)
+	logger.Info("accepted", "email", "alice@example.com")
+	recorder.ExpectJSON("logs", nil, map[string]string{"msg": "accepted", "email": "[REDACTED]"}, 1)
 	recorder.Check()
 }
 

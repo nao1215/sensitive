@@ -2,6 +2,7 @@ package detect
 
 import (
 	"bytes"
+	"reflect"
 	"strings"
 	"testing"
 	"unicode"
@@ -102,5 +103,19 @@ func TestUnicodeNormalizationOffsets(t *testing.T) {
 		if r > unicode.MaxASCII && strings.Contains(string(normalized), separator) {
 			t.Fatal("separator not normalized")
 		}
+	}
+}
+
+func TestFoldFullWidthASCII(t *testing.T) {
+	t.Parallel()
+	folded, positions := foldFullWidthASCII([]byte("ａ！～é"))
+	if string(folded) != "a!~é" {
+		t.Fatalf("folded %q", folded)
+	}
+	if want := []int{0, 3, 6, 9, 10, 11}; !reflect.DeepEqual(positions, want) {
+		t.Fatalf("positions %v, want %v", positions, want)
+	}
+	if folded, _ := foldFullWidthASCII([]byte("＀｟")); string(folded) != "＀｟" {
+		t.Fatalf("forms outside U+FF01..U+FF5E were folded to %q", folded)
 	}
 }

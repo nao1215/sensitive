@@ -499,7 +499,7 @@
   },
   {
     "detector": "us_ssn",
-    "text": "identity=663271262; result=ok",
+    "text": "ssn=663271262; result=ok",
     "positive": true
   },
   {
@@ -509,7 +509,7 @@
   },
   {
     "detector": "us_itin",
-    "text": "identity=984735739; result=ok",
+    "text": "itin=984735739; result=ok",
     "positive": true
   },
   {
@@ -529,7 +529,7 @@
   },
   {
     "detector": "uk_nhs",
-    "text": "identity=7694617519; result=ok",
+    "text": "nhs_number=7694617519; result=ok",
     "positive": true
   },
   {
@@ -539,7 +539,7 @@
   },
   {
     "detector": "in_aadhaar",
-    "text": "identity=258726398415; result=ok",
+    "text": "aadhaar=258726398415; result=ok",
     "positive": true
   },
   {
@@ -599,7 +599,7 @@
   },
   {
     "detector": "ca_sin",
-    "text": "identity=413643081; result=ok",
+    "text": "sin=413643081; result=ok",
     "positive": true
   },
   {

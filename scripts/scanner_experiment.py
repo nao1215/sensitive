@@ -46,7 +46,7 @@ def render(check):
     table = '| Selection | Clean ns/op | Dirty ns/op | Clean / dirty speedup over WithAll |\n|---|---:|---:|---|\n'
     for kind in ('all','kinds1','kinds3','kinds8'):
         clean,dirty = values[kind,'clean'],values[kind,'dirty']
-        table += f"| {kind} | {clean:,.3f} | {dirty:,.1f} | {values['all','clean']/clean:.2f}× / {values['all','dirty']/dirty:.2f}× |\n"
+        table += f"| {kind} | {clean:,.0f} | {dirty:,.0f} | {values['all','clean']/clean:.2f}× / {values['all','dirty']/dirty:.2f}× |\n"
     page = ROOT/'doc/benchmarks.md'
     original = page.read_text(encoding="utf-8")
     pattern = r'(?s)(<!-- narrowing:start -->\n).*?(<!-- narrowing:end -->)'

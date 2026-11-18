@@ -166,8 +166,10 @@ func TestLeanReferenceVectors(t *testing.T) {
 	for i, row := range rows {
 		switch row[0] {
 		case "pan", referenceIBANKind, "mynumber", "ca_sin", "uk_nhs", "in_aadhaar", "kr_rrn", "cn_resident_id", "br_cpf", "br_cnpj":
-			got := scanners[row[0]].ScanString(row[1])
-			valid := len(got) == 1 && got[0].Start == 0 && got[0].End == len(row[1])
+			// A bare SIN, NHS or Aadhaar needs a label naming the number.
+			label := map[string]string{"ca_sin": "sin ", "uk_nhs": "nhs ", "in_aadhaar": "aadhaar "}[row[0]]
+			got := scanners[row[0]].ScanString(label + row[1])
+			valid := len(got) == 1 && got[0].Start == len(label) && got[0].End == len(label)+len(row[1])
 			if valid != (row[2] == "true") {
 				t.Fatalf("Lean vector %d (%s) disagrees", i, row[0])
 			}

@@ -175,3 +175,18 @@ func assertScanMatch(t *testing.T, d Detector, input string, count int, matched 
 		t.Errorf("matched text = %q, want %q", input[findings[0].Start:findings[0].End], matched)
 	}
 }
+
+func TestReadsLabel(t *testing.T) {
+	t.Parallel()
+	free := []Detector{NewIBAN(), &BTC{}, &ETH{}, &Email{}, &JWT{}, NewAWSKey(), &GitHubToken{}, &SlackToken{}, &GoogleAPIKey{}, &PrivateKeyPEM{}, &PaymentToken{}, NewServiceToken()}
+	for _, d := range free {
+		if ReadsLabel(d) {
+			t.Errorf("%s reads labels, want the value alone", d.Name())
+		}
+	}
+	for _, d := range []Detector{&Credential{}, &HighEntropy{}, &CVV{}, NewSWIFTBIC(), &IPAddr{}} {
+		if !ReadsLabel(d) {
+			t.Errorf("%s does not read labels", d.Name())
+		}
+	}
+}

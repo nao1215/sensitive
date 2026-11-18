@@ -82,7 +82,7 @@ func (s *Scanner) selectDetectors(data []byte) uint64 {
 			if selected&entry.mask != 0 || len(entry.hint) > len(data)-i {
 				continue
 			}
-			if foldedPrefix(data[i:], entry.hint) {
+			if hintAt(data[i:], entry.hint) {
 				selected |= entry.mask
 			}
 		}
@@ -102,6 +102,13 @@ func (s *Scanner) selectSingleDetector(data []byte) uint64 {
 		return 1
 	}
 	return 0
+}
+
+// hintAt reports whether data, whose lowered first byte already equals the
+// hint's, starts with the lowered hint. Hints in a bucket share the first byte
+// but rarely the second, so that byte is compared before the rest.
+func hintAt(data, hint []byte) bool {
+	return len(hint) < len("ab") || (ascii.ToLower(data[1]) == hint[1] && foldedPrefix(data[2:], hint[2:]))
 }
 
 func foldedPrefix(data, hint []byte) bool {

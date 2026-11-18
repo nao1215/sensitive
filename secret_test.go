@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -233,5 +234,54 @@ func TestLargeJSONSnapshot(t *testing.T) {
 	}
 	if !bytes.Equal(want, formatted.Bytes()) {
 		t.Fatal("large JSON snapshot changed; review field structure")
+	}
+}
+
+// reachableStrings walks v the way method-free printers such as go-spew do:
+// through fields, elements and pointers, without calling String or GoString.
+func reachableStrings(v reflect.Value, seen map[uintptr]bool, out *[]string) {
+	kind := v.Kind()
+	if kind == reflect.String {
+		*out = append(*out, v.String())
+	}
+	if (kind == reflect.Pointer || kind == reflect.Interface) && !v.IsNil() {
+		if kind == reflect.Pointer && seen[v.Pointer()] {
+			return
+		}
+		if kind == reflect.Pointer {
+			seen[v.Pointer()] = true
+		}
+		reachableStrings(v.Elem(), seen, out)
+	}
+	if kind == reflect.Struct {
+		for _, field := range v.Fields() {
+			reachableStrings(field, seen, out)
+		}
+	}
+	if kind == reflect.Slice || kind == reflect.Array {
+		for i := range v.Len() {
+			reachableStrings(v.Index(i), seen, out)
+		}
+	}
+}
+
+func TestSecretIsUnreachableByReflection(t *testing.T) {
+	t.Parallel()
+	type config struct {
+		Key  Secret[string]
+		List Secret[[]string]
+		Name string
+	}
+	c := config{Name: "public", Key: NewSecret("raw-secret-value"), List: NewSecret([]string{"raw-secret-item"})}
+	var got []string
+	reachableStrings(reflect.ValueOf(c), map[uintptr]bool{}, &got)
+	if want := []string{"public"}; !slices.Equal(got, want) {
+		t.Fatalf("reflection reached %q, want %q", got, want)
+	}
+	if c.Key.Reveal() != "raw-secret-value" || c.List.Reveal()[0] != "raw-secret-item" {
+		t.Fatal("Reveal lost the wrapped value")
+	}
+	if same := c.Key; same != c.Key || NewSecret("raw-secret-value") == c.Key {
+		t.Fatal("Secret comparison changed: copies compare equal, separate wraps do not")
 	}
 }

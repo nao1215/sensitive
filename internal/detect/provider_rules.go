@@ -61,6 +61,8 @@ whsec_ t16+
 npm_ t16+
 pypi- t16+
 GOCSPX- t16+
+ya29. t20+
+1//0 t20+
 glpat- t16+ ~
 glcbt- t20+ ~
 gldt- t20+ ~

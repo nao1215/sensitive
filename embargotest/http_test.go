@@ -293,8 +293,7 @@ func TestHTTPInformationalHeadersAreScanned(t *testing.T) {
 			t.Fatalf("canary in a %d response accepted", code)
 		}
 		p.finish()
-		//nolint:goconst // Independent scenarios keep their fixture and expected error literals local.
-		if len(p.messages) != 2 || p.messages[0] != "embargotest: the fake secret appeared in captured output" || p.messages[1] != "embargotest: sensitive data appeared in captured output" {
+		if len(p.messages) != 2 || p.messages[0] != "embargotest: the fake secret appeared in captured output: observed HTTP headers" || p.messages[1] != "embargotest: sensitive data appeared in captured output: observed HTTP headers (credential)" {
 			t.Fatalf("messages = %q", p.messages)
 		}
 	}
@@ -312,7 +311,7 @@ func TestHTTPFinalHeaderLeakNamesTheSecret(t *testing.T) {
 		t.Fatal("header canary accepted")
 	}
 	p.finish()
-	if len(p.messages) != 2 || p.messages[0] != "embargotest: the fake secret appeared in captured output" || p.messages[1] != "embargotest: sensitive data appeared in captured output" {
+	if len(p.messages) != 2 || p.messages[0] != "embargotest: the fake secret appeared in captured output: http/headers, observed HTTP headers" || p.messages[1] != "embargotest: sensitive data appeared in captured output: http/headers (credential)" {
 		t.Fatalf("messages = %q", p.messages)
 	}
 }
@@ -373,7 +372,7 @@ func TestHTTPRedirectWithEscapedCanaryIsALeak(t *testing.T) {
 		t.Fatal("query-escaped canary in Location accepted")
 	}
 	p.finish()
-	if len(p.messages) == 0 || p.messages[0] != "embargotest: the fake secret appeared in captured output" {
+	if len(p.messages) == 0 || p.messages[0] != "embargotest: the fake secret appeared in captured output: http/headers, observed HTTP headers" {
 		t.Fatalf("messages = %q", p.messages)
 	}
 }

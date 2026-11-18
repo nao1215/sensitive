@@ -52,9 +52,12 @@ func TestDetectorPolicy(t *testing.T) {
 			}
 			p.finish()
 			for _, message := range p.messages {
-				if strings.Contains(message, tc.text) || strings.Contains(message, "private-sink-name") {
-					t.Fatal("failure reflected captured text or sink name")
+				if strings.Contains(message, tc.text) {
+					t.Fatal("failure reflected captured text")
 				}
+			}
+			if !tc.pass && tc.text != "accepted" && !strings.Contains(strings.Join(p.messages, "\n"), "private-sink-name") {
+				t.Fatalf("failure did not name the sink: %q", p.messages)
 			}
 		})
 	}
@@ -178,5 +181,73 @@ func TestDefaultRecorderExcludesOptInKinds(t *testing.T) {
 			t.Fatalf("all=%t returned the wrong default verdict", all)
 		}
 		probe.finish()
+	}
+}
+
+// otherAddressLine is captured output with an address that differs from the sink name.
+const otherAddressLine = "user bob@example.com"
+
+// unprintableSinkFailure is the failure for an email under a rejected sink name.
+const unprintableSinkFailure = "embargotest: sensitive data appeared in captured output: a sink with an unprintable name (email)"
+
+func TestFailureNamesSinkAndKindWithoutData(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name, sink, text, want string
+	}{
+		{"finding", "app.log", "user alice@example.com", "embargotest: sensitive data appeared in captured output: app.log (email)"},
+		{"sink name with a finding", "alice@example.com", otherAddressLine, unprintableSinkFailure},
+		{"sink name with spaces", "my sink", otherAddressLine, unprintableSinkFailure},
+		{"long sink name", strings.Repeat("s", 65), otherAddressLine, unprintableSinkFailure},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			p := &probeTB{TB: t}
+			r := New(p)
+			write(t, r, tc.sink, []byte(tc.text))
+			r.Expect(tc.sink, func([]byte) bool { return true })
+			if r.Check() {
+				t.Fatal("finding accepted")
+			}
+			p.finish()
+			if len(p.messages) != 1 || p.messages[0] != tc.want {
+				t.Fatalf("messages = %q, want %q", p.messages, tc.want)
+			}
+		})
+	}
+	t.Run("canary in the sink name", func(t *testing.T) {
+		t.Parallel()
+		p := &probeTB{TB: t}
+		r := New(p)
+		sink := string(r.Canary())
+		write(t, r, sink, r.Canary())
+		r.Expect(sink, func([]byte) bool { return true })
+		r.Check()
+		p.finish()
+		if joined := strings.Join(p.messages, "\n"); strings.Contains(joined, sink) || !strings.Contains(joined, "a sink with an unprintable name") {
+			t.Fatalf("messages = %q", p.messages)
+		}
+	})
+}
+
+type spacedKindDetector struct{}
+
+func (spacedKindDetector) Scan(data []byte) []embargo.Finding {
+	if string(data) != "opaque fixture" {
+		return nil
+	}
+	return []embargo.Finding{{Kind: "my kind", Start: 0, End: len(data), Confidence: 1}}
+}
+
+func TestFailureReplacesAnUnprintableKind(t *testing.T) {
+	t.Parallel()
+	p := &probeTB{TB: t}
+	r := New(p, WithScanner(embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(spacedKindDetector{}))))
+	write(t, r, "app.log", []byte("opaque fixture"))
+	r.Expect("app.log", func([]byte) bool { return true })
+	r.Check()
+	p.finish()
+	if want := "embargotest: sensitive data appeared in captured output: app.log (custom kind)"; len(p.messages) != 1 || p.messages[0] != want {
+		t.Fatalf("messages = %q, want %q", p.messages, want)
 	}
 }

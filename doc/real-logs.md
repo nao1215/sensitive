@@ -34,7 +34,7 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 | br_cnpj | 0.0 | 0.0 | 0.0 | 0.0 |
 | br_cpf | 0.0 | 0.0 | 0.0 | 0.0 |
 | btc | 0.0 | 0.0 | 0.0 | 0.0 |
-| ca_sin | 0.0 | 1,862.8 | 0.0 | 106.7 |
+| ca_sin | 0.0 | 0.0 | 0.0 | 11.9 |
 | card_expiry | 0.0 | 0.0 | 0.0 | 0.0 |
 | cn_resident_id | 0.0 | 0.0 | 0.0 | 0.0 |
 | credential | 745.1 | 0.0 | 0.0 | 0.0 |
@@ -60,15 +60,15 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 | service_token | 0.0 | 0.0 | 0.0 | 0.0 |
 | slack_token | 0.0 | 0.0 | 0.0 | 0.0 |
 | swiftbic | 739,274.8 | 0.0 | 343.8 | 0.0 |
-| uk_nhs | 0.0 | 0.0 | 0.0 | 2,287.9 |
+| uk_nhs | 0.0 | 0.0 | 0.0 | 0.0 |
 | uk_nino | 0.0 | 0.0 | 0.0 | 0.0 |
 | uk_sortcode | 0.0 | 0.0 | 0.0 | 0.0 |
 | us_itin | 0.0 | 0.0 | 0.0 | 0.0 |
-| us_ssn | 0.0 | 20,490.6 | 0.0 | 379.3 |
+| us_ssn | 0.0 | 0.0 | 0.0 | 0.0 |
 
 | Configuration | Development before / GB | Development after / GB | Held before / GB | Held after / GB |
 |---|---:|---:|---:|---:|
-| WithAll | 827,818.9 | 22,353.3 | 145,650.6 | 2,773.9 |
+| WithAll | 827,818.9 | 0.0 | 145,650.6 | 11.9 |
 | Default slog handler | 827,818.9 | 0.0 | 145,650.6 | 0.0 |
 | kinds1 | 0.0 | 0.0 | 0.0 | 0.0 |
 | kinds3 | 44,955.1 | 0.0 | 0.0 | 0.0 |
@@ -84,13 +84,13 @@ The operations-log families were added after the LogHub baseline, so they have c
 
 | Family | Split | Datasets | Bytes | WithAll FP / GB | Default FP / GB | Kinds with sampled FPs |
 |---|---|---:|---:|---:|---:|---|
-| system (LogHub) | development | 4 | 8,052,486 | 22,353.3 | 0.0 | ca_sin, us_ssn |
-| system (LogHub) | held | 4 | 84,357,362 | 2,773.9 | 0.0 | ca_sin, uk_nhs, us_ssn |
+| system (LogHub) | development | 4 | 8,052,486 | 0.0 | 0.0 | none |
+| system (LogHub) | held | 4 | 84,357,362 | 11.9 | 0.0 | ca_sin |
 | web access | development | 2 | 19,129,354 | 0.0 | 0.0 | none |
-| web access | held | 1 | 2,370,789 | 72,549.7 | 1,265.4 | ca_sin, high_entropy, swiftbic, uk_nhs, us_ssn |
+| web access | held | 1 | 2,370,789 | 65,379.1 | 1,265.4 | high_entropy, swiftbic |
 | Kubernetes audit | development | 1 | 92,794,383 | 0.0 | 0.0 | none |
 | cloud audit | development | 1 | 16,030,714 | 0.0 | 0.0 | none |
-| cloud audit | held | 2 | 17,152,480 | 81,154.4 | 39,819.3 | credential, high_entropy, in_aadhaar, mynumber |
+| cloud audit | held | 2 | 17,152,480 | 3,672.9 | 116.6 | credential, high_entropy |
 
 Each dataset/kind stratum uses the 40 lowest SHA-256 finding IDs, or every finding if there are fewer. Review labels are in [real-logs-labels.json](real-logs-labels.json); counts and sampled FP fractions are in [real-logs-summary.json](real-logs-summary.json). The estimate sums count × sampled FP fraction across datasets. Zero observed sample FPs does not establish zero population FPs. Small samples, repeated templates and this 239.9 MB source mix cannot predict a deployment’s rate. No recall estimate is possible without labeling undetected secrets.
 <!-- real-logs:end -->

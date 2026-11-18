@@ -939,15 +939,8 @@
     {
       "source": "synthetic/accuracy_controls.json/10",
       "input_sha256": "65437827246270530a7691fe7afc40c20f9223b0b462c60f641c48d91579e341",
-      "masked_sha256": "3ab54c1ab06d7fbcde64254372aaaff83f422534971f661b9171d3f7bf1ef2e0",
-      "findings": [
-        {
-          "Kind": "mynumber",
-          "Start": 13,
-          "End": 25,
-          "Confidence": 0.4
-        }
-      ]
+      "masked_sha256": "65437827246270530a7691fe7afc40c20f9223b0b462c60f641c48d91579e341",
+      "findings": []
     },
     {
       "source": "synthetic/accuracy_controls.json/11",

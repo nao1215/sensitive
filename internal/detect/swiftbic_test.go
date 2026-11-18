@@ -322,3 +322,16 @@ func assertSWIFTContextProperty(t *testing.T, excluded func(code string) string)
 		}
 	}
 }
+
+func TestSWIFTHasCandidate(t *testing.T) {
+	t.Parallel()
+	d := NewSWIFTBIC()
+	for value, want := range map[string]bool{"DEUTDEFF": true, "x DEUTDEFF500": true, "clean application value": false, "DEUTDEFF5": false, "1DEUTDEFF": false, "DEUTDE": false} {
+		if got := HasCandidate(d, []byte(value)); got != want {
+			t.Errorf("HasCandidate(%q) = %v, want %v", value, got, want)
+		}
+	}
+	if !HasCandidate(NewEmail(), nil) {
+		t.Error("a detector without a filter must always be scanned")
+	}
+}

@@ -78,15 +78,15 @@
   },
   {
     "file": "json.go",
-    "start": 291,
-    "end": 293,
+    "start": 391,
+    "end": 393,
     "sha256": "449238c18e2164ad2c9363aaad5a272b01b4da5226bcf50e848f30e8fc020601",
     "reason": "The public JSON entry point validates the entire input before the walker decodes a string; encoding/json cannot reject this already validated string token."
   },
   {
     "file": "json.go",
-    "start": 333,
-    "end": 334,
+    "start": 433,
+    "end": 434,
     "sha256": "601e7d43c105093b16776cf5882993ac9fe0f66e3905029b62c2d34f9f45a649",
     "reason": "encoding/json.Marshal receives a string and cannot return an error; the defensive panic never contains input data."
   },
@@ -127,22 +127,22 @@
   },
   {
     "file": "cmd/embargo/input.go",
-    "start": 58,
-    "end": 60,
+    "start": 63,
+    "end": 65,
     "sha256": "31ad98e20907482820dccd44b8e4fd28bc4ca97026fd9a8ff7c41a93228b17f8",
     "reason": "os.File reports io.EOF only on a read that returns no bytes; this keeps data a reader returns together with io.EOF, which the io.Reader contract allows."
   },
   {
     "file": "cmd/embargo/input.go",
-    "start": 73,
-    "end": 75,
+    "start": 78,
+    "end": 80,
     "sha256": "d4e76dd0ef49ab5cf048e3a2288895e5adaae1ba5b480fea275065e4b1a2ae54",
     "reason": "Closing a regular file that was only read does not fail on the supported platforms; the branch reports such a failure instead of ignoring it."
   },
   {
     "file": "scanner.go",
-    "start": 99,
-    "end": 100,
+    "start": 104,
+    "end": 105,
     "sha256": "10408a70aa419eb085325ccb1717a9c6283b5b927bc70819e4b63a3435a42fc0",
     "reason": "The pool's New function stores only *scanScratch values, so the type assertion cannot fail; the panic keeps the invariant explicit."
   }

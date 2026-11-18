@@ -260,7 +260,7 @@ scenarios:
             empty: true
           stderr:
             equals: |
-              embargo: an input file cannot be opened
+              embargo: input file 1 cannot be opened: no such file
 
   - name: option errors name the flag and never echo the value
     steps:
@@ -300,7 +300,14 @@ scenarios:
           exit_code: 1
           stderr:
             equals: |
-              embargo: unknown flag or missing flag value; see embargo --help
+              embargo: unknown flag; the flags are --kinds, --min-confidence, --format, --samples and --version; see embargo --help
+      - run:
+          command: embargo --kinds emial
+      - assert:
+          exit_code: 1
+          stderr:
+            equals: |
+              embargo: --kinds must be all or a comma-separated list of kinds; unknown kind "emial" (did you mean "email"?); see embargo --help
 
   - name: help and version exit successfully
     steps:

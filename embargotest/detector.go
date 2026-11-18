@@ -1,6 +1,12 @@
 package embargotest
 
-import "github.com/nao1215/embargo"
+import (
+	"maps"
+	"slices"
+	"strings"
+
+	"github.com/nao1215/embargo"
+)
 
 type (
 	scannerOption struct{ scanner *embargo.Scanner }
@@ -77,32 +83,109 @@ func (r *Recorder) observeMetadata(data []byte) {
 	if containsCanary(data, r.needles) {
 		r.leaked = true
 	}
-	found, failed := r.scan(data)
-	r.detected = r.detected || found
+	findings, failed := r.scanFindings(data)
+	for _, f := range findings {
+		r.metadataKinds[f.Kind] = true
+	}
+	r.detected = r.detected || len(findings) > 0
 	r.scannerFailed = r.scannerFailed || failed
 }
 
+// contentReasons names the sinks where the canary or a finding appeared and
+// the finding kinds, never the captured bytes. Transient HTTP header values
+// and interim responses are reported as "observed HTTP headers".
 func (r *Recorder) contentReasons(captures map[string][]byte, interim [][]byte, leaked, detected, scannerFailed bool) []string {
-	data := make([][]byte, 0, len(captures)+len(interim))
-	data = append(data, interim...)
-	for _, capture := range captures {
-		data = append(data, capture)
-	}
-	for _, capture := range data {
-		leaked = containsCanary(capture, r.needles) || leaked
-		found, failed := r.scan(capture)
-		detected = detected || found
-		scannerFailed = scannerFailed || failed
-	}
-	var reasons []string
-	if leaked {
-		reasons = append(reasons, "the fake secret appeared in captured output")
-	}
+	found := sinkFindings{leaked: nil, kinds: map[string]map[embargo.Kind]bool{}, failed: scannerFailed}
 	if detected {
-		reasons = append(reasons, "sensitive data appeared in captured output")
+		found.kinds[httpHeadersSink] = maps.Clone(r.metadataKinds)
 	}
-	if scannerFailed {
+	if leaked {
+		found.leaked = append(found.leaked, httpHeadersSink)
+	}
+	for _, capture := range interim {
+		r.observeSink(&found, httpHeadersSink, capture)
+	}
+	for _, name := range slices.Sorted(maps.Keys(captures)) {
+		r.observeSink(&found, r.printableSinkName(name), captures[name])
+	}
+	return found.reasons(r)
+}
+
+// sinkFindings collects, per printable sink name, the canary and finding kinds.
+type sinkFindings struct {
+	kinds  map[string]map[embargo.Kind]bool
+	leaked []string
+	failed bool
+}
+
+// observeSink scans one capture into found.
+func (r *Recorder) observeSink(found *sinkFindings, name string, capture []byte) {
+	if containsCanary(capture, r.needles) {
+		found.leaked = append(found.leaked, name)
+	}
+	findings, failed := r.scanFindings(capture)
+	found.failed = found.failed || failed
+	for _, f := range findings {
+		if found.kinds[name] == nil {
+			found.kinds[name] = map[embargo.Kind]bool{}
+		}
+		found.kinds[name][f.Kind] = true
+	}
+}
+
+// reasons renders the collected sinks in sorted order.
+func (found *sinkFindings) reasons(r *Recorder) []string {
+	var reasons []string
+	if len(found.leaked) > 0 {
+		slices.Sort(found.leaked)
+		reasons = append(reasons, "the fake secret appeared in captured output: "+strings.Join(slices.Compact(found.leaked), ", "))
+	}
+	if len(found.kinds) > 0 {
+		parts := make([]string, 0, len(found.kinds))
+		for _, name := range slices.Sorted(maps.Keys(found.kinds)) {
+			kinds := make([]string, 0, len(found.kinds[name]))
+			for kind := range found.kinds[name] {
+				kinds = append(kinds, r.printableKind(kind))
+			}
+			slices.Sort(kinds)
+			parts = append(parts, name+" ("+strings.Join(slices.Compact(kinds), ", ")+")")
+		}
+		reasons = append(reasons, "sensitive data appeared in captured output: "+strings.Join(parts, "; "))
+	}
+	if found.failed {
 		reasons = append(reasons, "scanner failed")
 	}
 	return reasons
 }
+
+// httpHeadersSink names transient header values and interim responses.
+const httpHeadersSink = "observed HTTP headers"
+
+// printableSinkName returns a sink name for a failure message. Names come
+// from test code, but one built from data could carry the value under test,
+// so a name that is long, uses bytes outside letters, digits and _ . / : -,
+// contains the canary or has a finding of its own is replaced.
+func (r *Recorder) printableSinkName(name string) string {
+	if printableLabel(name) && !containsCanary([]byte(name), r.needles) {
+		if findings, failed := r.scanFindings([]byte(name)); len(findings) == 0 && !failed {
+			return name
+		}
+	}
+	return "a sink with an unprintable name"
+}
+
+// printableKind applies the same rule to a custom detector's kind.
+func (r *Recorder) printableKind(kind embargo.Kind) string {
+	if printableLabel(string(kind)) && !containsCanary([]byte(kind), r.needles) {
+		return string(kind)
+	}
+	return "custom kind"
+}
+
+func printableLabel(name string) bool {
+	const maxLabel = 64
+	return name != "" && len(name) <= maxLabel && strings.Trim(name, printableLabelBytes) == ""
+}
+
+// printableLabelBytes are the bytes a sink name or kind may use in a failure.
+const printableLabelBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_./:-"

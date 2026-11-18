@@ -52,7 +52,7 @@ func (d *USPhone) Scan(data []byte) []Finding {
 			DetectorName: d.Name(),
 			Start:        start,
 			End:          end,
-			Confidence:   businessConfidence(data, start, usPhoneConfidence(data, start)),
+			Confidence:   recordConfidence(data, start, usPhoneConfidence(data, start), phoneLabels()...),
 		})
 		i = end - 1
 	}
@@ -168,17 +168,9 @@ func usPhoneCountryCode(data []byte, start int) int {
 // usPhoneConfidence scores a number 0.7, or 0.9 after a phone label such as
 // phone, tel, mobile or fax.
 func usPhoneConfidence(data []byte, start int) float64 {
-	prefix := labelPrefix(data, start)
-	for range 3 {
-		var word []byte
-		prefix, word = previousLabelWord(prefix)
-		if labelIs(word, "phone", "tel", "telephone", "mobile", "cell", "fax", "call", "contact") {
-			//nolint:mnd // Labeled phone numbers carry the documented higher score.
-			return 0.9
-		}
-		if len(prefix) == 0 {
-			break
-		}
+	if labelNames(data, start, phoneLabels()...) {
+		//nolint:mnd // Labeled phone numbers carry the documented higher score.
+		return 0.9
 	}
 	//nolint:mnd // Unlabeled separated numbers carry the documented base score.
 	return 0.7

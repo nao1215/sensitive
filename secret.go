@@ -10,10 +10,19 @@ import (
 // Reveal returns that copy; referenced data remains shared with the caller.
 // A Secret deliberately does not implement error. Its String method masks a
 // direct panic value, but cannot protect revealed values or memory dumps.
-type Secret[T any] struct{ value *T }
+// The value lives inside a closure, so reflection-based printers that skip
+// methods, such as go-spew and the diffs of testify and go-cmp, reach only a
+// function value.
+type Secret[T any] struct{ value *sealed[T] }
+
+// sealed keeps the pointer that makes Secret comparable while holding the
+// value where reflection cannot read it.
+type sealed[T any] struct{ reveal func() T }
 
 // NewSecret wraps v without invoking its methods or copying referenced data.
-func NewSecret[T any](v T) Secret[T] { return Secret[T]{value: &v} }
+func NewSecret[T any](v T) Secret[T] {
+	return Secret[T]{value: &sealed[T]{reveal: func() T { return v }}}
+}
 
 // Reveal returns the wrapped value, or T's zero value for a zero Secret.
 func (s Secret[T]) Reveal() T {
@@ -21,7 +30,7 @@ func (s Secret[T]) Reveal() T {
 		var zero T
 		return zero
 	}
-	return *s.value
+	return s.value.reveal()
 }
 
 // String returns the fixed redaction marker.

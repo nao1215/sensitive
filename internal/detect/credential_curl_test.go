@@ -58,3 +58,73 @@ func TestCurlUserPasswordsAtInputEdges(t *testing.T) {
 		}
 	}
 }
+
+// fixturePassword is a synthetic command-line password.
+const fixturePassword = "hunter2"
+
+func TestCommandLinePasswords(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ input, want string }{
+		{"--password hunter2", fixturePassword},
+		{"run --db-password 'hunter2' --verbose", fixturePassword},
+		{"login --token\topaque-value", "opaque-value"},
+		{"mysql -u root -phunter2 shop", fixturePassword},
+		{"mysqldump -h db -p'hunter2' shop", fixturePassword},
+		{"mariadb-dump -phunter2", fixturePassword},
+		{"sshpass -p hunter2 ssh host", fixturePassword},
+		{"--password", ""},
+		{"--password --verbose", ""},
+		{"--no-password true", ""},
+		{"--password-file /etc/secret", ""},
+		{"a--token opaque", ""},
+		{"--token\nnext", ""},
+		{"---- PASS ----", ""},
+		{"mysql -u root -p", ""},
+		{"mysql -u root -p shop", ""},
+		{"mysql -P3306 shop", ""},
+		{"mysql_host -prod", ""},
+		{"mkdir -p /tmp/x", ""},
+		{"sshpass -fpasswd ssh host", ""},
+	} {
+		t.Run(tc.input, func(t *testing.T) {
+			t.Parallel()
+			got := ""
+			for _, f := range (&Credential{}).Scan([]byte(tc.input)) {
+				got = tc.input[f.Start:f.End]
+			}
+			if got != tc.want {
+				t.Fatalf("got %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestPasswordCommandWordBoundaries(t *testing.T) {
+	t.Parallel()
+	for _, input := range []string{"xmysql -phunter2", "sshpassx -p hunter2", "run-mysql -phunter2", "mysql_cli -phunter2"} {
+		if got := commandPasswords([]byte(input)); len(got) != 0 {
+			t.Errorf("commandPasswords(%q) = %+v, want none", input, got)
+		}
+	}
+}
+
+func TestCommandLinePasswordEdges(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		input string
+		count int
+	}{
+		{"sudo mysql -phunter2", 1},
+		{"echo mysql", 0},
+		{"mysql", 0},
+		{`--password ""`, 0},
+		{`sshpass -p "" ssh host`, 0},
+		{`mysql -p""`, 0},
+		{"--token", 0},
+		{"x --token v", 1},
+	} {
+		if got := (&Credential{}).Scan([]byte(tc.input)); len(got) != tc.count {
+			t.Errorf("Scan(%q) = %+v, want %d findings", tc.input, got, tc.count)
+		}
+	}
+}

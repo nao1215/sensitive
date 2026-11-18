@@ -53,8 +53,8 @@ func TestDispatchDifferential(t *testing.T) {
 	t.Parallel()
 	// #nosec G404 -- Fixed seed for reproducible synthetic tests.
 	rng := rand.New(rand.NewPCG(72, 54))
-	parts := []string{"foo", "@", "ABC", "0123456789", " ", "\n", "銀行", "４２４２", "expiry 12/29", "CVV 123", "a+b@example.com", "SWIFT: DEUTDEFF", "%20", "bank account 12345678", "4242424242424242", "090-1234-5678", "ghp_", "\xff", "sort code 40-12-36", "|", "Q~", "-us", "sk", "PUL-", "dop_v1_", "<token>", "</token>", "curl -u a:", "=>", ":A"}
-	for _, s := range []*Scanner{NewScanner(), NewScanner(WithKinds(KindEmail)), NewScanner(WithMinConfidence(.7)), NewScanner(WithKinds())} {
+	parts := []string{"foo", "@", "ABC", "0123456789", " ", "\n", "銀行", "４２４２", "expiry 12/29", "CVV 123", "a+b@example.com", "SWIFT: DEUTDEFF", "%20", "bank account 12345678", "4242424242424242", "090-1234-5678", "ghp_", "\xff", "sort code 40-12-36", "|", "Q~", "-us", "sk", "PUL-", "dop_v1_", "<token>", "</token>", "curl -u a:", "=>", ":A", "DE89370400440532013000", "1BoatSLRHtKNngkdXEeobR76b53LETtpyT", "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq", "%31", "40 12 36"}
+	for _, s := range []*Scanner{NewScanner(), NewScanner(WithKinds(KindEmail)), NewScanner(WithMinConfidence(.7)), NewScanner(WithKinds()), NewScanner(WithAll())} {
 		for i := range 3000 {
 			var data []byte
 			for range rng.IntN(15) {

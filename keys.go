@@ -14,16 +14,24 @@ import (
 // WithSensitiveKeys adds names to the sensitive key policy; repeated options add
 // to each other and the defaults stay. Defaults are password, passwd, secret, token, api_key, authorization,
 // proxy-authorization, cookie, set-cookie, access_token, refresh_token, id_token,
-// x-api-key, DB_PASSWORD, Private-Token, client_secret, auth_token and PGPASSWORD.
+// x-api-key, DB_PASSWORD, Private-Token, client_secret, auth_token, PGPASSWORD,
+// otp, pin, passcode, passphrase, session, session_id, session_token, JSESSIONID
+// and PHPSESSID; structured keys also accept the bare pass and pwd, which text
+// assignments leave alone because pass=12 and PWD=/srv are common public text.
 // Keys also match when the last separator/camel-case segment is password, passwd,
-// secret, token, credential or auth; key requires an api, secret, private, access
-// or account segment before it. Thus SECRET_KEY, POSTGRES_PASSWORD, GITHUB_TOKEN,
+// pwd, passcode, passphrase, otp, secret, token, credential or auth, or pass after
+// another segment (DB_PASS); key requires an api, secret, private, access,
+// account, auth or master segment before it. Thus SECRET_KEY, POSTGRES_PASSWORD, GITHUB_TOKEN,
 // X-Auth-Token and spring.datasource.password match, but primary_key, sort_key
 // and token_count do not. WithoutDefaultSensitiveKeys drops the defaults and
 // this suffix rule. Matching ignores ASCII case and the separators underscore, hyphen, dot and
 // space, so apiKey and API-KEY match api_key. Names are copied at construction.
 // A match masks the entire value in slog attributes/groups and encoded JSON
-// objects, including the zap, zerolog and logrus adapters. KindCredential also
+// objects, including the zap, zerolog and logrus adapters. An object that keeps
+// a setting as separate members, such as {"name":"DB_PASSWORD","value":"x"} in
+// Kubernetes env, ECS, SSM or CloudFormation, has its value string masked when
+// the name, key, ParameterKey, ParameterName, OptionName or variable member is a
+// sensitive key; the last segment of a parameter path such as /prod/db/password counts. KindCredential also
 // uses this policy for text assignments; its URL and provider-field rules remain
 // independent. Use MaskJSON to check the complete structured key policy.
 // An empty or separator-only name panics with a fixed message.
@@ -74,6 +82,7 @@ const (
 type keyResult struct {
 	key       string
 	masked    string
+	field     fieldKey
 	sensitive bool
 }
 
@@ -187,6 +196,7 @@ func (s *eventScanner) maskCached(ctx context.Context, key string) (keyResult, e
 	result := keyResult{key: key, masked: masked, sensitive: s.scanner.sensitiveKey(key)}
 	// Only clean keys are kept, so the cache never holds detected values.
 	if masked == key && cacheableKey(s.scanner, key) {
+		result.field = s.scanner.keyField(append([]byte(key), ':'), len(key))
 		s.scanner.keys.store(key, result)
 	}
 	return result, nil

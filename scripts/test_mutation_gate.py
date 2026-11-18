@@ -1,4 +1,6 @@
 """Mutation infrastructure and package floors must fail closed."""
+import contextlib
+import io
 import subprocess
 import sys
 import unittest
@@ -47,6 +49,31 @@ class MutationGateTests(unittest.TestCase):
         for actual in ({'a': baseline['a']}, dict(baseline, a={'score': 89, 'coverage': 100}), dict(baseline, b={'score': 100, 'coverage': 79})):
             with self.assertRaises(ValueError):
                 gate.check(actual, baseline)
+
+    def test_every_failing_package_is_reported(self):
+        baseline = {'a': {'score': 90, 'coverage': 95}, 'b': {'score': 60, 'coverage': 80}, 'c': {'score': 50, 'coverage': 50}}
+        actual = dict(baseline, a={'score': 89, 'coverage': 95}, b={'score': 60, 'coverage': 79})
+        with contextlib.redirect_stdout(io.StringIO()) as printed, self.assertRaises(ValueError) as failure:
+            gate.check(actual, baseline)
+        self.assertIn('a mutation score fell: 89 < 90', str(failure.exception))
+        self.assertIn('b mutation coverage fell: 79 < 80', str(failure.exception))
+        self.assertEqual(len(printed.getvalue().splitlines()), 3)
+
+    def test_partial_runs_check_only_selected_packages(self):
+        baseline = {'a': {'score': 90, 'coverage': 95}, 'b': {'score': 60, 'coverage': 80}}
+        with contextlib.redirect_stdout(io.StringIO()):
+            gate.check({'b': baseline['b']}, baseline, ['b'])
+            for actual, selected in (({'b': baseline['b']}, ['a']), ({'z': baseline['b']}, ['z']), ({'b': {'score': 59, 'coverage': 80}}, ['b'])):
+                with self.assertRaises(ValueError):
+                    gate.check(actual, baseline, selected)
+
+    def test_package_selection(self):
+        self.assertIsNone(gate.selected_packages(None))
+        self.assertEqual(gate.selected_packages('internal/detect, .,internal/detect'), ['.', 'internal/detect'])
+        self.assertEqual(gate.selected_packages(gate.COMMAND), [gate.COMMAND])
+        for value in ('', ',', 'internal', 'internal/detect,tests'):
+            with self.assertRaises(ValueError):
+                gate.selected_packages(value)
 
     def test_missing_or_unexecuted_results_cannot_pass(self):
         for report in ({'files': []}, {'files': [{'file_name': 'a.go', 'mutations': [{'status': 'NOT COVERED'}]}]}, {'files': [{'file_name': 'a.go', 'mutations': [{'status': 'RUNNING'}]}]}, {'files': [{'file_name': '../a.go', 'mutations': []}]}):

@@ -151,12 +151,12 @@
   },
   {
     "detector": "mynumber",
-    "precision": "81.6%",
+    "precision": "100.0%",
     "recall": "100.0%",
     "positive": 146,
     "negative": 562,
     "tp": 146,
-    "fp": 33,
+    "fp": 0,
     "fn": 0
   },
   {

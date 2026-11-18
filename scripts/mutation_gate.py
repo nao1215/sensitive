@@ -22,6 +22,7 @@ DOCUMENT = ROOT/'doc/testing.md'
 # it exhausted tens of gigabytes. Capping the address space of the tool, the go
 # command and every test binary makes it fail fast as out of memory instead.
 ADDRESS_SPACE = 4 << 30
+COMMAND = 'cmd/embargo'
 PACKAGES = ('embargotest', 'internal/ascii', 'internal/detect', 'internal/output', 'internal/saferecord')
 STATUSES = {'KILLED', 'LIVED', 'NOT COVERED', 'NOT VIABLE', 'TIMED OUT'}
 # gremlins times `go test` including the build of the mutated package, so a
@@ -105,13 +106,35 @@ def validate_inventory(report, inventory):
         raise ValueError('mutation results do not contain every generated expression')
 
 
-def check(actual, baseline):
-    if set(actual) != set(baseline):
+def check(actual, baseline, selected=None):
+    """Compare every measured package with its floors and report all of them
+    before failing; selected limits the comparison to a partial run."""
+    expected = set(baseline) if selected is None else set(selected)
+    if set(actual) != expected or not expected <= set(baseline):
         raise ValueError('mutation package scope changed; review and measure every package')
-    for name, values in baseline.items():
+    failures = []
+    for name in sorted(expected):
+        row = [name]
         for metric in ('score', 'coverage'):
-            if actual[name][metric] < values[metric]:
-                raise ValueError(f'{name} mutation {metric} fell: {actual[name][metric]} < {values[metric]}')
+            got, floor = actual[name][metric], baseline[name][metric]
+            row.append(f'{metric} {got} (floor {floor})')
+            if got < floor:
+                failures.append(f'{name} mutation {metric} fell: {got} < {floor}')
+        print('  '.join(row), flush=True)
+    if failures:
+        raise ValueError('; '.join(failures))
+
+
+def selected_packages(value):
+    """Parse --packages: a comma-separated subset of the measured packages."""
+    if value is None:
+        return None
+    names = [name.strip() for name in value.split(',') if name.strip()]
+    known = ('.', *PACKAGES, COMMAND)
+    unknown = sorted(set(names) - set(known))
+    if not names or unknown:
+        raise ValueError('--packages takes a comma-separated subset of: '+', '.join(known))
+    return sorted(set(names))
 
 
 def mutation_table(packages):
@@ -273,7 +296,15 @@ def main():
     parser.add_argument('--control-only', action='store_true')
     parser.add_argument('--check-evidence', action='store_true')
     parser.add_argument('--diff', metavar='REF', help='mutate only lines changed since REF and list survivors; floors are not checked')
+    parser.add_argument('--packages', metavar='LIST', help='measure only these packages, such as internal/detect,., and check their floors; cannot record')
     args = parser.parse_args()
+    try:
+        selected = selected_packages(args.packages)
+    except ValueError as error:
+        parser.error(str(error))
+    if selected is not None and args.record:
+        parser.error('--record needs every package; omit --packages')
+    wanted = set(selected or ('.', *PACKAGES, COMMAND))
     if args.check_evidence:
         check_recorded_evidence()
         return
@@ -283,7 +314,13 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     output = args.output.resolve()
     print('EMBARGO_MUTATION_START', flush=True)
-    with tempfile.TemporaryDirectory(prefix='embargo-mutation-') as temporary:
+    # Every mutant build adds entries to the Go build cache. A private cache on
+    # disk, removed after the run, keeps them from piling up across runs
+    # (they reached hundreds of gigabytes) and out of a RAM-backed /tmp.
+    cache_root = Path(os.environ.get('XDG_CACHE_HOME') or Path.home()/'.cache')
+    cache_root.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='embargo-mutation-') as temporary, tempfile.TemporaryDirectory(prefix='embargo-mutation-gocache-', dir=cache_root) as gocache:
+        env['GOCACHE'] = gocache
         temporary = Path(temporary)
         control(temporary, args.workers, env)
         shutil.copyfile(temporary/'control.json', output/'control.json')
@@ -303,9 +340,10 @@ def main():
         # coverage run of its target, so a whole-module target made a 0.2 s
         # package wait for ten times the module's test time.
         scratch = temporary/'rerun'
-        root_report = measure(snapshot, '.', output/'root.json', args.workers, env, scratch/'root', '/', args.diff)
-        files = list(root_report['files'])
-        for package in PACKAGES:
+        files = []
+        if '.' in wanted:
+            files += measure(snapshot, '.', output/'root.json', args.workers, env, scratch/'root', '/', args.diff)['files']
+        for package in sorted(wanted & set(PACKAGES)):
             report = measure(snapshot, package, output/(package.replace('/', '-')+'.json'), args.workers, env, scratch/package, '/', args.diff)
             files += [dict(file, file_name=package+'/'+file['file_name']) for file in report['files']]
         root_report = {'files': files}
@@ -313,7 +351,13 @@ def main():
             survivors = changed_survivors(files)
             print('\n'.join(['Surviving mutants on changed lines:']+survivors) if survivors else 'Every mutant on changed lines was killed.')
             return
-        scores = package_scores(root_report)
+        scores = package_scores(root_report) if files else {}
+        if COMMAND not in wanted:
+            result = {'tool': TOOL, 'workers': args.workers, 'gomaxprocs': args.test_cpu, 'timeout_coefficient': TIMEOUT_COEFFICIENT, 'packages': scores}
+            (output/'summary.json').write_text(json.dumps(result, indent=2)+'\n')
+            check(scores, json.loads(BASELINE.read_text())['packages'], selected)
+            print('Mutation floors passed for '+', '.join(sorted(scores))+'.')
+            return
         # gremlins infers package paths from package names; nested package main
         # is mapped incorrectly. A temporary module makes the command its root.
         command = temporary/'command'
@@ -321,8 +365,8 @@ def main():
         version = subprocess.check_output(['go', '-C', str(ROOT/'tests'), 'list', '-m', '-f', '{{.Version}}', 'github.com/nao1215/embargo'], env=env, text=True).strip()
         (command/'go.mod').write_text(f'module mutationcommand\n\ngo 1.26.11\n\nrequire github.com/nao1215/embargo {version}\nreplace github.com/nao1215/embargo => {snapshot}\n')
         report = measure(command, '.', output/'command.json', args.workers, env, scratch/'command')
-        scores.update(package_scores(report, 'cmd/embargo'))
-        files = root_report['files'] + [dict(file, file_name='cmd/embargo/'+file['file_name']) for file in report['files']]
+        scores.update(package_scores(report, COMMAND))
+        files = root_report['files'] + [dict(file, file_name=COMMAND+'/'+file['file_name']) for file in report['files']]
         evidence = {'tool': TOOL, 'files': files, 'source_sha256': {file['file_name']: hashlib.sha256((snapshot/file['file_name']).read_bytes()).hexdigest() for file in files}}
         if package_scores(evidence) != scores:
             raise ValueError('combined command and root mutation scopes disagree')
@@ -335,7 +379,7 @@ def main():
         EVIDENCE.write_text(json.dumps(evidence, indent=2)+'\n')
         document_baseline(scores, write=True)
     else:
-        check(scores, json.loads(BASELINE.read_text())['packages'])
+        check(scores, json.loads(BASELINE.read_text())['packages'], selected)
     print('EMBARGO_MUTATION_SUMMARY '+json.dumps(result))
     print('Per-package mutation score and coverage floors passed; timeouts that persist when rerun alone are not kills.')
 

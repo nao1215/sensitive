@@ -32,45 +32,27 @@ func (d *ABARouting) Scan(data []byte) []Finding {
 
 // scanNormalized scans the normalized (ASCII) byte slice for ABA routing numbers.
 func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
-	var findings []Finding
+	return scanNumeric(orig, data, posMap, d.candidate, false)
+}
 
-	for i := 0; i < len(data); i++ {
-		// Escape bytes cannot become part of a numeric candidate.
-		if data[i] == '%' && normalizedEscapeSeparator(orig, posMap, len(data), i) {
-			i += 2
-			continue
-		}
-		if !ascii.IsDigit(data[i]) {
-			continue
-		}
+// abaDigits is the length of a routing number.
+const abaDigits = 9
 
-		// Word boundary: preceding character must not be alphanumeric.
-		if !abaWordStart(orig, data, posMap, i) {
-			continue
-		}
-
-		// Need exactly 9 consecutive digits.
-		end := i
-		for end < len(data) && ascii.IsDigit(data[end]) {
-			end++
-		}
-		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		if end-i != 9 {
-			i = end - 1
-			continue
-		}
-
-		if !validABACandidate(data, i, end) {
-			i = end - 1
-			continue
-		}
-		//nolint:mnd // The detector contract documents this heuristic score.
-		findings = append(findings, viewFinding(d.Name(), posMap, i, end, 0.85))
-
-		i = end - 1
+// candidate checks the nine-digit run that may start at i at a word boundary
+// and returns where scanning continues.
+func (d *ABARouting) candidate(orig, data []byte, posMap []int, i int) (Finding, int, bool) {
+	if !ascii.IsDigit(data[i]) || !abaWordStart(orig, data, posMap, i) {
+		return Finding{}, i + 1, false
 	}
-
-	return findings
+	end := i
+	for end < len(data) && ascii.IsDigit(data[end]) {
+		end++
+	}
+	if end-i != abaDigits || !validABACandidate(data, i, end) || recordLabeled(data, i, "routing", "aba", "rtn") {
+		return Finding{}, end, false
+	}
+	//nolint:mnd // The detector contract documents this heuristic score.
+	return viewFinding(d.Name(), posMap, i, end, 0.85), end, true
 }
 
 // normalizedEscapeSeparator reports whether the percent escape at i of a
@@ -91,8 +73,7 @@ func abaWordStart(orig, data []byte, posMap []int, i int) bool {
 // The formula is: 3*(d1+d4+d7) + 7*(d2+d5+d8) + (d3+d6+d9) ≡ 0 (mod 10)
 // where d1..d9 are the 9 digits of the routing number.
 func validateABAChecksum(digits []byte) bool {
-	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-	if len(digits) != 9 {
+	if len(digits) != abaDigits {
 		return false
 	}
 

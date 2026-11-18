@@ -82,8 +82,7 @@ func TestLogContextPreservesStandaloneValues(t *testing.T) {
 
 func TestUUIDGroupsAreNotIdentifiers(t *testing.T) {
 	t.Parallel()
-	const aadhaar DetectorName = "in_aadhaar"
-	detectors := map[DetectorName]Detector{NamePAN: NewPAN(), NameMyNumber: NewMyNumber(), aadhaar: NewCountry(aadhaar), NameSWIFTBIC: NewSWIFTBIC()}
+	detectors := map[DetectorName]Detector{NamePAN: NewPAN(), NameMyNumber: NewMyNumber(), aadhaarName: NewCountry(aadhaarName), NameSWIFTBIC: NewSWIFTBIC()}
 	for _, tc := range []struct {
 		detector DetectorName
 		text     string
@@ -96,8 +95,9 @@ func TestUUIDGroupsAreNotIdentifiers(t *testing.T) {
 		{NameMyNumber, `req-ea7648f5-850d-44c4-8e60-111111111118-retry`, 0},
 		{NameMyNumber, `"eventID":"ea7648f-850d-44c4-8e60-111111111118"`, 1},
 		{NameMyNumber, `"eventID":"8e60-111111111118"`, 1},
-		{aadhaar, `"requestID":"1f41f897-dafe-427b-af4e-234567890124"`, 0},
-		{aadhaar, `"requestID":"234567890124"`, 1},
+		{aadhaarName, `"requestID":"1f41f897-dafe-427b-af4e-234567890124"`, 0},
+		{aadhaarName, `"aadhaar":"234567890124"`, 1},
+		{aadhaarName, `"requestID":"234567890124"`, 0},
 		{NameSWIFTBIC, `"auditID":"abcdca12-5186-4865-bead-87b827e025f7"`, 0},
 		{NameSWIFTBIC, `"auditID":"abcdca12-5186"`, 1},
 	} {
