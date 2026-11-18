@@ -161,9 +161,30 @@ func (d *PAN) evaluateCandidate(orig []byte, posMap []int, digits []byte, digitL
 	if !passesLuhn(digits) || !isExpectedLength(brand, digitLen) {
 		return Finding{}, false
 	}
+	// Japanese JAN product codes are 13-digit EAN codes starting with 45 or
+	// 49, which collide with the obsolete 13-digit Visa length. A 13-digit
+	// candidate whose EAN check digit also holds is a product code.
+	//nolint:mnd // EAN-13 has thirteen digits.
+	if digitLen == 13 && passesEAN13(digits) {
+		return Finding{}, false
+	}
 	confidence += 0.4 // Luhn + expected length
 
 	return labeledViewFinding(d.Name(), orig, posMap, start, end, confidence), true
+}
+
+// passesEAN13 validates the EAN-13 (GTIN-13) check digit: weights 1 and 3
+// alternate from the left over the first twelve digits.
+func passesEAN13(digits []byte) bool {
+	sum := 0
+	for i, digit := range digits[:12] {
+		n := int(digit - '0')
+		if i%2 == 1 {
+			n *= 3
+		}
+		sum += n
+	}
+	return (10-sum%10)%10 == int(digits[12]-'0')
 }
 
 // passesLuhn implements the Luhn algorithm (MOD 10) for check digit validation.

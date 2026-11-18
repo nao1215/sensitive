@@ -494,3 +494,20 @@ func luhnComplete(body string) string {
 	}
 	panic("no Luhn check digit")
 }
+
+func TestPANSkipsJANProductCodes(t *testing.T) {
+	t.Parallel()
+	// 4901234567894 passes both Luhn and the EAN-13 check digit.
+	for _, input := range []string{"JAN 4901234567894", "barcode=4901234567894", `{"jan":"4901234567894"}`} {
+		if got := NewPAN().Scan([]byte(input)); len(got) != 0 {
+			t.Errorf("Scan(%q) = %+v, want none", input, got)
+		}
+	}
+	// 4222222222222 is a published 13-digit Visa test number that fails EAN-13.
+	if got := NewPAN().Scan([]byte("card 4222222222222")); len(got) != 1 {
+		t.Fatalf("13-digit Visa lost: %+v", got)
+	}
+	if !passesEAN13([]byte("4901234567894")) || passesEAN13([]byte("4222222222222")) {
+		t.Fatal("EAN-13 check digit")
+	}
+}

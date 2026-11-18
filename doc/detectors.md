@@ -47,15 +47,15 @@ Required assignment keys are password, passwd, secret, token, api_key, authoriza
 
 ### KindPAN
 
-No keyword is needed; spaces/hyphens are allowed, prefixes are 4, 51–55 or 2221–2720, 34/37, 3528–3589, 6011/644–649/65, 300–305/36/38 and 62 respectively, with Luhn-valid lengths 13/16, 16, 15, 16, 16, 14–16 and 16–19; other lengths and every number that fails Luhn are rejected, because no issued card fails it, so a 16-digit order, request or trace ID that happens to start like a card is masked only when it is also Luhn-valid.
+No keyword is needed; spaces/hyphens are allowed, prefixes are 4, 51–55 or 2221–2720, 34/37, 3528–3589, 6011/644–649/65, 300–305/36/38 and 62 respectively, with Luhn-valid lengths 13/16, 16, 15, 16, 16, 14–16 and 16–19; other lengths and every number that fails Luhn are rejected, because no issued card fails it, so a 16-digit order, request or trace ID that happens to start like a card is masked only when it is also Luhn-valid. A 13-digit number that also passes the EAN-13 check digit is a product code (Japanese JAN codes start with 45 or 49), not a card.
 
 ### KindEmail
 
-Without a keyword, require a nonempty local part without edge/consecutive dots, no leading domain dot or hyphen at label edges, and an alphabetic TLD of at least 2 letters; consecutive domain dots select the lower score, trailing dots/hyphens are trimmed, and known TLDs are com/org/net/edu/gov/mil/int/io/co/us/uk/de/fr/jp/cn/kr/au/ca/info/biz/name/pro/museum/coop/aero (case-insensitive).
+Without a keyword, require a nonempty local part without edge/consecutive dots, no leading domain dot or hyphen at label edges, and an alphabetic TLD of at least 2 letters; consecutive domain dots select the lower score, trailing dots/hyphens are trimmed, the full-width at sign ＠ (U+FF20) joins ASCII parts like @, and known TLDs are com/org/net/edu/gov/mil/int/io/co/us/uk/de/fr/jp/cn/kr/au/ca/info/biz/name/pro/museum/coop/aero (case-insensitive).
 
 ### KindJPPhone
 
-No keyword is needed; 11-digit prefixes are 090/080/070/050/020/060/0800, 0120 takes 10 digits, and other 10-digit landlines start 01–09 but exclude 020/021/050/051/057/060/070/071/080/081/090/091.
+No keyword is needed; 11-digit prefixes are 090/080/070/050/020/060/0800, 0120 takes 10 digits, and other 10-digit landlines start 01–09 but exclude 020/021/050/051/057/060/070/071/080/081/090/091. The international form +81 drops the leading 0 (+81-90-1234-5678, +819012345678) or writes it as (0); the span starts at the plus sign.
 
 ### KindUSPhone
 
@@ -63,7 +63,7 @@ The forms are (202) 555-0123, 202-555-0123, 202.555.0123 or 202 555 0123. Area c
 
 ### KindMyNumber
 
-Weights on the first 11 digits from right to left are 2,3,4,5,6,7,2,3,4,5,6; a remainder of 0 or 1 requires check digit 0, otherwise 11 minus the remainder.
+Weights on the first 11 digits from right to left are 2,3,4,5,6,7,2,3,4,5,6; a remainder of 0 or 1 requires check digit 0, otherwise 11 minus the remainder. Random 12-digit IDs pass this check about one time in ten, so a value whose attached label names a record identifier is not reported: a word ending in id (accountId, recipientAccountId, user_id), account, user, customer, order, invoice, tracking and similar English record words, number or no unless it follows my or individual, and Japanese labels containing 番号 or a business stem such as 注文 or 品番. My Number, mynumber, マイナンバー and 個人番号 keep the candidate.
 
 ### KindJWT
 
