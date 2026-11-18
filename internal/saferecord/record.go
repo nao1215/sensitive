@@ -46,8 +46,10 @@ func Canceled(ctx context.Context) error {
 
 type canceledError struct{ cause error }
 
+// Error returns ErrCanceled's fixed text, never the context's message.
 func (e canceledError) Error() string { return ErrCanceled.Error() }
 
+// Unwrap lets errors.Is and errors.As find both ErrCanceled and the context error.
 func (e canceledError) Unwrap() []error { return []error{ErrCanceled, e.cause} }
 
 // Reason classifies only trusted errors and never reads an error's text.
