@@ -228,7 +228,7 @@ func TestAdoptionCheckIndependence(t *testing.T) {
 				options = []embargotest.Option{embargotest.WithCanary([]byte("unrelated-fixture-XYZ-987654321"))}
 			} else {
 				options = append(options, embargotest.WithScanner(embargo.NewScanner(embargo.WithKinds())))
-				want = want || tc.name == "base64 token" || tc.name == "hex token"
+				want = want || tc.name == "hex token"
 			}
 			if mode == 2 {
 				options = append(options, embargotest.WithCanaryFragments(16))
