@@ -37,6 +37,9 @@ func TestHelpVersionAndExitStatus(t *testing.T) {
 	}
 }
 
+// outputWriteFailed is the fixed error for any failed output write.
+const outputWriteFailed = "embargo: output write failed"
+
 // failingInput fails its first read and then ends, so a reader loop that
 // ignored the failure would finish with success instead of reading forever.
 type failingInput struct{ failed bool }

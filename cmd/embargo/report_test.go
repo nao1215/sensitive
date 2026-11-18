@@ -131,6 +131,11 @@ func TestJSONLStopsAtFailuresAfterEarlierFindings(t *testing.T) {
 	if run([]string{flagFormat, formatJSONL}, strings.NewReader("clean\n"), failingOutput{}) != nil {
 		t.Fatal("nothing to write must not fail")
 	}
+	// One line whose findings overflow the output buffer fails while encoding.
+	crowded := strings.Repeat("card=4111111111111111 ", 4096) + "\n"
+	if err := run([]string{flagFormat, formatJSONL}, strings.NewReader(crowded), failingOutput{}); err == nil || err.Error() != outputWriteFailed {
+		t.Fatalf("buffered output failure: %v", err)
+	}
 }
 
 func TestJSONLFlushesWhenNoInputIsBuffered(t *testing.T) {

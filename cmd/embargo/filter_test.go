@@ -92,12 +92,12 @@ func TestFilterStopsBeforeOverlongLineAndReadFailure(t *testing.T) {
 func TestFilterReportsOutputFailures(t *testing.T) {
 	t.Parallel()
 	for _, input := range []string{"line\n", "a\n" + strings.Repeat("z", maximumLine+1)} {
-		if err := run(nil, strings.NewReader(input), failingOutput{}); err == nil || err.Error() != "embargo: output write failed" {
+		if err := run(nil, strings.NewReader(input), failingOutput{}); err == nil || err.Error() != outputWriteFailed {
 			t.Errorf("output failure for %d bytes: %v", len(input), err)
 		}
 	}
 	// A line larger than the output buffer reaches the writer before the flush.
-	if err := run(nil, strings.NewReader(strings.Repeat("w", 2*ioBuffer)+"\n"), &shortWriter{limit: 0}); err == nil || err.Error() != "embargo: output write failed" {
+	if err := run(nil, strings.NewReader(strings.Repeat("w", 2*ioBuffer)+"\n"), &shortWriter{limit: 0}); err == nil || err.Error() != outputWriteFailed {
 		t.Errorf("failure writing a large line: %v", err)
 	}
 }
