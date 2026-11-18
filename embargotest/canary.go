@@ -103,10 +103,11 @@ func decodeUnicodeEscapes(data []byte) []byte {
 			continue
 		}
 		if utf16.IsSurrogate(r) {
-			if low, next := unicodeEscape(data, i+width); next > 0 {
-				if pair := utf16.DecodeRune(r, low); pair != utf8.RuneError {
-					r, width = pair, width+next
-				}
+			// Without a following escape low is zero, which DecodeRune rejects.
+			low, next := unicodeEscape(data, i+width)
+			if pair := utf16.DecodeRune(r, low); pair != utf8.RuneError {
+				r = pair
+				i += next
 			}
 		}
 		decoded = utf8.AppendRune(decoded, r)

@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"unicode/utf16"
 
 	"github.com/nao1215/embargo"
 )
@@ -255,5 +256,39 @@ func TestCanaryEscapedCharacterByCharacter(t *testing.T) {
 		if containsCanary([]byte(clean), needles) {
 			t.Fatalf("unrelated output %q detected", clean)
 		}
+	}
+}
+
+func TestCanaryDecodingEdges(t *testing.T) {
+	t.Parallel()
+	jsonEscape := func(text string) string {
+		var escaped []byte
+		for _, unit := range utf16.Encode([]rune(text)) {
+			escaped = fmt.Appendf(escaped, "%cu%04x", '\\', unit)
+		}
+		return string(escaped)
+	}
+	for _, tc := range []struct{ name, canary, output string }{
+		{"surrogate pair escaped by an ASCII-only JSON encoder", "token\U0001F600value-xyz", jsonEscape("token\U0001F600value-xyz")},
+		{"lone high surrogate before the escaped canary", "public-canary-xyz", jsonEscape("\U0001F600")[:6] + jsonEscape("public-canary-xyz")},
+		{"escape ending the output", "public-canary-xyz", "state=" + jsonEscape("public-canary-xyz")},
+		{"plus as the first byte and no percent escape", "alpha beta gamma", "+alpha+beta+gamma"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if !containsCanary([]byte(tc.output), representations([]byte(tc.canary))) {
+				t.Fatalf("canary %q missed in %q", tc.canary, tc.output)
+			}
+		})
+	}
+	// Bytes past the length of a slice are not part of the output, even when
+	// they would complete an escape.
+	percent := []byte("x%41")[:3]
+	if got := string(decodePercent(percent, false)); got != "x%4" {
+		t.Fatalf("decodePercent read past the slice: %q", got)
+	}
+	unicodeText := []byte(`a\u0041`)[:6]
+	if got := string(decodeUnicodeEscapes(unicodeText)); got != `a\u004` {
+		t.Fatalf("decodeUnicodeEscapes read past the slice: %q", got)
 	}
 }

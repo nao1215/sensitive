@@ -188,6 +188,27 @@ func TestEncodedTextBoundaries(t *testing.T) {
 	}
 }
 
+func TestScalarEncodedText(t *testing.T) {
+	t.Parallel()
+	// HTTP header and query values take the scalar path rather than the JSON
+	// byte path, so it applies the same encoded-text rule.
+	encoded := base64.StdEncoding.EncodeToString([]byte("a@example.com"))
+	scanner := eventScanner{scanner: NewScanner(), remaining: maxScanBytes}
+	for value, want := range map[string]string{
+		encoded:              redactionMarker,
+		"mail a@example.com": "mail " + redactionMarker,
+		"plain-header-value": "plain-header-value",
+	} {
+		got, err := scanner.scanScalar(t.Context(), value, "X-Note")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != want {
+			t.Fatalf("scanScalar(%q) = %q, want %q", value, got, want)
+		}
+	}
+}
+
 func TestPrintableText(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
