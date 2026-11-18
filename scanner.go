@@ -149,13 +149,20 @@ func (s *Scanner) scan(data []byte, canceled func() error) []Finding {
 	return s.scanAppend(nil, data, canceled)
 }
 
+// defaultScanner is the NewScanner policy that a zero Scanner uses. It is
+// built once and shared: the policy is immutable and the built-in detectors
+// never retain input, so sharing it is what NewScanner callers already do.
+//
+//nolint:gochecknoglobals // One immutable default policy instead of a rebuild per call.
+var defaultScanner = sync.OnceValue(func() *Scanner { return NewScanner() })
+
 // scanAppend is scan that reuses dst's storage for the findings it returns.
 func (s *Scanner) scanAppend(dst []Finding, data []byte, canceled func() error) []Finding {
 	if scanCanceled(canceled) || len(data) == 0 {
 		return nil
 	}
 	if !s.initialized {
-		return NewScanner().scanAppend(dst, data, canceled)
+		return defaultScanner().scanAppend(dst, data, canceled)
 	}
 	view := detect.View{Raw: data, Data: data}
 	if len(s.detectors) > 0 {

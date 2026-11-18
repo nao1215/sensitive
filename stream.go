@@ -18,7 +18,7 @@ import (
 // [bufio.ErrTooLong]. Read errors are returned after any callbacks already made.
 func (s *Scanner) ScanLines(r io.Reader, fn func(lineNum int, line []byte, findings []Finding)) error {
 	if !s.initialized {
-		return NewScanner().ScanLines(r, fn)
+		return defaultScanner().ScanLines(r, fn)
 	}
 	sc := bufio.NewScanner(r)
 	//nolint:mnd // The documented buffer limits are 64 KiB and 1 MiB.

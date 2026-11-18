@@ -1358,3 +1358,16 @@ func TestDefaultScannerKeepsDSNUserAndHost(t *testing.T) {
 		}
 	}
 }
+
+//nolint:paralleltest // AllocsPerRun changes GOMAXPROCS while measuring.
+func TestZeroScannerSharesTheDefaultPolicy(t *testing.T) {
+	var zero Scanner
+	line := []byte("GET /health 200 in 3ms")
+	zero.Scan(line)
+	if allocs := testing.AllocsPerRun(20, func() { zero.Scan(line) }); allocs > 0 {
+		t.Fatalf("zero-value Scan allocated %.0f times per clean line", allocs)
+	}
+	if got := zero.ScanString(documentedEmail); len(got) != 1 || got[0].Kind != KindEmail {
+		t.Fatalf("zero value lost the default policy: %+v", got)
+	}
+}

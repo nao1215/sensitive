@@ -37,6 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Performance
 
+- A zero `Scanner` shares one default policy built on first use. It built a new NewScanner policy on every call, about 1,400 allocations and 200 KiB for one clean line.
 - WithKinds builds the list of known kinds once per call instead of once per kind passed.
 
 ## [0.13.0] - 2026-11-18
