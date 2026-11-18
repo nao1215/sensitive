@@ -115,6 +115,29 @@ func (projectToken) Scan(data []byte) []embargo.Finding {
 	return []embargo.Finding{{Kind: "project_token", Start: start, End: start + len(token), Confidence: 1}}
 }
 
+func ExampleWithMaskFunc() {
+	next := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.TimeKey {
+				return slog.Attr{}
+			}
+			return a
+		},
+	})
+	lastFour := func(kind embargo.Kind, value string) string {
+		if kind != embargo.KindPAN {
+			return "[" + strings.ToUpper(string(kind)) + "]"
+		}
+		return "****" + value[len(value)-4:]
+	}
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN), embargo.WithMaskFunc(lastFour))
+	logger := slog.New(embargo.NewSlogHandler(next, scanner))
+
+	logger.Info("checkout", "email", "alice@example.com", "card", "4532015112830366", "password", "hunter2")
+
+	// Output: {"level":"INFO","msg":"checkout","email":"[EMAIL]","card":"****0366","password":"[REDACTED]"}
+}
+
 func ExampleWithDetector() {
 	scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(projectToken{}))
 	text := "token=fake_project_token"

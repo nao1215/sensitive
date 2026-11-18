@@ -199,7 +199,7 @@ func TestScalarEncodedText(t *testing.T) {
 		"mail a@example.com": "mail " + redactionMarker,
 		"plain-header-value": "plain-header-value",
 	} {
-		got, err := scanner.scanScalar(t.Context(), value, "X-Note")
+		got, _, err := scanner.scanScalar(t.Context(), value, "X-Note")
 		if err != nil {
 			t.Fatal(err)
 		}

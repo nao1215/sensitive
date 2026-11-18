@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"unicode"
+	"unicode/utf8"
 )
 
 // escapedSpace is the percent escape of an ASCII space.
@@ -201,5 +203,40 @@ func TestUnicodeEscapePositionsCoverTheWholeEscape(t *testing.T) {
 	end := start + len("alice@example.com")
 	if got := raw[view.Original(start):view.Original(end)]; got != `alice\u0040example.com` {
 		t.Fatalf("mapped span %q", got)
+	}
+}
+
+func TestAppendScanViewMatchesScanView(t *testing.T) {
+	t.Parallel()
+	prior := Finding{DetectorName: NameEmail, Start: 1, End: 2, Confidence: 1}
+	for _, d := range []Detector{NewPAN(), NewEmail(), &Credential{}, NewJPPhone()} {
+		for _, raw := range []string{
+			"card 4111111111111111 mail bob@example.com",
+			"card %34111111111111111 mail bob%40example.com",
+			`card 4111111111111111`,
+			"card ４１１１１１１１１１１１１１１１ ｂｏｂ＠ｅｘａｍｐｌｅ．ｃｏｍ",
+			"password=hunter2 tel 090-1234-5678",
+			"nothing here",
+		} {
+			view := NewView([]byte(raw))
+			want := append([]Finding{prior}, ScanView(d, view)...)
+			if got := AppendScanView([]Finding{prior}, d, view); !slices.Equal(got, want) {
+				t.Errorf("%s on %q: AppendScanView = %v, want %v", d.Name(), raw, got, want)
+			}
+		}
+	}
+}
+
+func TestNewViewPlainASCIIIsIdentity(t *testing.T) {
+	t.Parallel()
+	for _, raw := range []string{"", "plain text 4111", "a\\b", "100%", "café"} {
+		view := NewView([]byte(raw))
+		plain := plainASCII([]byte(raw))
+		if plain && (view.Positions != nil || string(view.Data) != raw) {
+			t.Errorf("NewView(%q) changed plain ASCII", raw)
+		}
+		if plain == (strings.ContainsAny(raw, "\\%") || strings.IndexFunc(raw, func(r rune) bool { return r >= utf8.RuneSelf }) >= 0) {
+			t.Errorf("plainASCII(%q) = %v", raw, plain)
+		}
 	}
 }

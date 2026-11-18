@@ -150,7 +150,7 @@ fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
 ```
 
 <!-- speed-summary:start -->
-On the same five JSON slog events, go-masker takes 0.97 to 1.21 times the time of embargo given the same email and card rules. With its default scanner, embargo takes 0.34 to 0.59 times the time of pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
+On the same five JSON slog events, go-masker takes 1.06 to 1.43 times the time of embargo given the same email and card rules. With its default scanner, embargo takes 0.30 to 0.56 times the time of pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
 <!-- speed-summary:end -->
 
 ## Find and mask sensitive text
@@ -237,7 +237,7 @@ Mask everything a scanner finds, or keep part of a value:
 | [Overlapping matches](example_test.go) | `token=abcdef` with `abcd cdef` → `token=[REDACTED]` |
 <!-- masking:end -->
 
-`Scanner.ScanLines` reads files and streams line by line. [Scanner options and custom replacements](doc/masking.md)
+[`WithMaskFunc`](example_test.go) gives log records, MaskJSON and the adapters the same callback, so a log line keeps `card=****0366`. `Scanner.ScanLines` reads files and streams line by line. [Scanner options and custom replacements](doc/masking.md)
 
 <!-- narrowing-line:start -->
 Pick the kinds you need: on 2.7 KB of log lines with no secret, `WithKinds(KindEmail)` returns in 0.10 µs because there is no `@` to inspect, while `WithAll()` takes 65 µs. [Per-detector benchmarks](doc/benchmarks.md)

@@ -50,6 +50,7 @@ func NewSlogHandler(next slog.Handler, scanner *Scanner) slog.Handler
 func WithAll() ScannerOption
 func WithDetector(d Detector) ScannerOption
 func WithKinds(kinds ...Kind) ScannerOption
+func WithMaskFunc(replace func(kind Kind, value string) string) ScannerOption
 func WithMinConfidence(threshold float64) ScannerOption
 func WithSensitiveKeys(keys ...string) ScannerOption
 func WithoutDefaultSensitiveKeys() ScannerOption

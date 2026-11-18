@@ -174,12 +174,12 @@ func (w *jsonWalker) literal(ctx context.Context, key string, hidden bool) error
 }
 
 func (w *jsonWalker) scalar(ctx context.Context, raw []byte, key string) error {
-	_, hidden, err := w.scanner.maskBytes(ctx, raw, key)
+	masked, hidden, err := w.scanner.maskBytes(ctx, raw, key)
 	if err != nil {
 		return err
 	}
 	if hidden {
-		w.appendString(redactionMarker)
+		w.appendString(masked)
 	} else {
 		w.appendResult(raw)
 	}

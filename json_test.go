@@ -633,7 +633,7 @@ func TestWalkerFailureBoundaries(t *testing.T) {
 	if _, err := scanner.joinedKeySensitive(ctx, "a.b", 1); !errors.Is(err, saferecord.ErrCanceled) {
 		t.Fatal("canceled joined path accepted")
 	}
-	if _, err := scanner.scanScalar(ctx, "private", ""); !errors.Is(err, saferecord.ErrCanceled) {
+	if _, _, err := scanner.scanScalar(ctx, "private", ""); !errors.Is(err, saferecord.ErrCanceled) {
 		t.Fatal("canceled scalar accepted")
 	}
 	scanner.remaining = len("1.0e0")

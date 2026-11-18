@@ -17,6 +17,24 @@ func Mask(text string, findings []Finding) string {
 
 func redact(Kind, string) string { return redactionMarker }
 
+// replacer returns the replacement for detected spans: the marker, or the
+// WithMaskFunc callback through guardedReplace.
+func (s *Scanner) replacer() func(Kind, string) string {
+	if s.maskFunc == nil {
+		return redact
+	}
+	return s.guardedReplace
+}
+
+// guardedReplace calls the WithMaskFunc callback and keeps its result only
+// when the result does not contain the value.
+func (s *Scanner) guardedReplace(kind Kind, value string) string {
+	if out := s.maskFunc(kind, value); !strings.Contains(out, value) {
+		return out
+	}
+	return redactionMarker
+}
+
 // MaskFunc replaces each merged span with replace(kind, value), in input order.
 // The kind comes from the highest-confidence finding; ties prefer kind, start, then
 // descending end. The value covers the full merged span. Adjacent spans stay separate.

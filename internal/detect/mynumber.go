@@ -35,7 +35,7 @@ func (d *MyNumber) Scan(data []byte) []Finding {
 // scanNormalized performs My Number detection on normalized data.
 // orig is the original (possibly full-width) input used for matched text.
 func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
-	return scanNumeric(orig, data, posMap, d.candidate, true)
+	return scanNumeric(nil, orig, data, posMap, d.candidate, true)
 }
 
 // candidate checks the 12-digit number that may start at i, allowing '-' and

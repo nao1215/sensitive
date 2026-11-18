@@ -23,6 +23,10 @@ The diagram comes from the [runnable overlap Example](../example_test.go). `make
 
 See [Mask and MaskFunc Examples](../example_test.go), [overlap tests](../tests/properties_test.go), and [custom detector contracts](../scanner_test.go).
 
+## Partial masking in logs
+
+`WithMaskFunc` sets the same callback for everything the scanner masks itself: the slog handler, MaskJSON, the HTTP handler and the logger adapters. A support log can then keep the last four digits of a card while other kinds stay hidden. Some values still become `[REDACTED]`, because the callback would see only part of the risk: values under sensitive keys, encoded text that decodes to a finding, a JSON number that a finding covers only in part, and records withheld after a failure. A replacement that contains the value falls back to `[REDACTED]`; one that keeps most of the value, such as all but one digit, is the caller's choice and is not checked. The callback runs concurrently when the scanner is shared, and a panic withholds the record. See the [runnable WithMaskFunc Example](../example_test.go).
+
 ## Custom detection
 
 Implement `Detector.Scan` and pass it to `WithDetector` for an application-specific pattern. Return nonempty ranges within the input and finite confidence values between zero and one. The scanner checks these contracts; custom detectors must leave input unchanged and support concurrent calls when shared.

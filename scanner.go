@@ -18,6 +18,7 @@ type Scanner struct {
 	detectors     []detect.Detector
 	hintCache     [][]hintEntry
 	custom        []Detector
+	maskFunc      func(Kind, string) string
 	scratch       *sync.Pool
 	keys          *keyCache
 	credential    detect.Detector
@@ -86,6 +87,8 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 type scanScratch struct {
 	text     []byte
 	findings []Finding
+	// detected holds one detector's findings before conversion.
+	detected []detect.Finding
 }
 
 // Limits that keep one huge or finding-heavy scalar from pinning its storage.
@@ -109,10 +112,10 @@ func (s *Scanner) takeScratch() *scanScratch {
 
 // returnScratch keeps storage, grown by its last user, for the next scan.
 func (s *Scanner) returnScratch(scratch *scanScratch) {
-	if s.scratch == nil || cap(scratch.text) > largestPooledBuffer || cap(scratch.findings) > maxPooledFindings {
+	if s.scratch == nil || cap(scratch.text) > largestPooledBuffer || cap(scratch.findings) > maxPooledFindings || cap(scratch.detected) > maxPooledFindings {
 		return
 	}
-	scratch.text, scratch.findings = scratch.text[:0], scratch.findings[:0]
+	scratch.text, scratch.findings, scratch.detected = scratch.text[:0], scratch.findings[:0], scratch.detected[:0]
 	s.scratch.Put(scratch)
 }
 
@@ -217,9 +220,16 @@ func (s *Scanner) indexLabelReaders() {
 // detectors that read labels scan the whole text, except Credential, which
 // reads the key only when it is a credential key; every other detector scans
 // the value alone. Findings are in text offsets, as from scanAppend.
-func (s *Scanner) scanField(dst []Finding, text []byte, prefix int, canceled func() error) []Finding {
+func (s *Scanner) scanField(text []byte, prefix int, canceled func() error) []Finding {
+	var detected []detect.Finding
+	return s.scanFieldInto(nil, &detected, text, prefix, canceled)
+}
+
+// scanFieldInto is scanField that keeps each detector's raw findings in
+// *detected, whose grown storage the caller reuses for the next field.
+func (s *Scanner) scanFieldInto(dst []Finding, detected *[]detect.Finding, text []byte, prefix int, canceled func() error) []Finding {
 	if !s.initialized {
-		return defaultScanner().scanField(dst, text, prefix, canceled)
+		return defaultScanner().scanFieldInto(dst, detected, text, prefix, canceled)
 	}
 	if prefix == 0 || len(s.detectors) == 0 {
 		return s.scanAppend(dst, text, canceled)
@@ -240,7 +250,7 @@ func (s *Scanner) scanField(dst []Finding, text []byte, prefix int, canceled fun
 			return nil
 		}
 		if wholeText&bit == 0 {
-			findings = appendShiftedFindings(findings, d, value, prefix)
+			findings = appendShiftedFindings(findings, detected, d, value, prefix)
 			continue
 		}
 		if !detect.HasCandidate(d, value.Data) {
@@ -249,7 +259,7 @@ func (s *Scanner) scanField(dst []Finding, text []byte, prefix int, canceled fun
 		if whole.Raw == nil {
 			whole = detect.NewView(text)
 		}
-		findings = appendBuiltinFindings(findings, d, whole)
+		findings = appendShiftedFindings(findings, detected, d, whole, 0)
 	}
 	return s.finishScan(findings, text, canceled)
 }
@@ -372,8 +382,10 @@ func appendBuiltinFindings(findings []Finding, d detect.Detector, view detect.Vi
 }
 
 // appendShiftedFindings appends d's findings in view, moved by offset bytes.
-func appendShiftedFindings(findings []Finding, d detect.Detector, view detect.View, offset int) []Finding {
-	for _, f := range detect.ScanView(d, view) {
+// d writes them into *detected first, which keeps its storage for the next call.
+func appendShiftedFindings(findings []Finding, detected *[]detect.Finding, d detect.Detector, view detect.View, offset int) []Finding {
+	*detected = detect.AppendScanView((*detected)[:0], d, view)
+	for _, f := range *detected {
 		findings = append(findings, Finding{Kind: Kind(f.DetectorName), Start: f.Start + offset, End: f.End + offset, Confidence: f.Confidence})
 	}
 	return findings

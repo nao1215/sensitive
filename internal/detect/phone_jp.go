@@ -84,7 +84,7 @@ func (d *JPPhone) Scan(data []byte) []Finding {
 // scanNormalized performs phone number detection on normalized data.
 // orig is the original (possibly full-width) input used for matched text.
 func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
-	return scanNumeric(orig, data, posMap, d.candidate, true)
+	return scanNumeric(nil, orig, data, posMap, d.candidate, true)
 }
 
 // candidate checks the number that may start at i, in the national form

@@ -735,3 +735,37 @@ func TestSlogScansByteFieldsInsideValues(t *testing.T) {
 		})
 	}
 }
+
+func TestManyAttributesUsePooledStorage(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	logger := slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+		if a.Key == slog.TimeKey {
+			return slog.Attr{}
+		}
+		return a
+	}}), embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))))
+	for round := range 2 {
+		out.Reset()
+		attrs := make([]any, 0, 40)
+		for i := range 20 {
+			attrs = append(attrs, "k"+strconv.Itoa(i), strconv.Itoa(round))
+		}
+		attrs = append(attrs, "email", "alice@example.com")
+		logger.Info("many", attrs...)
+		got := out.String()
+		if strings.Contains(got, "alice@") || !strings.Contains(got, `"k19":"`+strconv.Itoa(round)+`"`) || strings.Count(got, `":"`) != 23 {
+			t.Fatalf("round %d: %s", round, got)
+		}
+	}
+}
+
+func TestSlogIntegerKindsAreScanned(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	logger := slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(&out, nil), embargo.NewScanner(embargo.WithKinds(embargo.KindPAN))))
+	logger.Info("card", "signed", int64(4111111111111111), "unsigned", uint64(4111111111111111), "flag", true)
+	if got := out.String(); strings.Contains(got, "4111") || !strings.Contains(got, `"unsigned":"[REDACTED]"`) || !strings.Contains(got, `"flag":true`) {
+		t.Fatalf("integer kinds were not masked: %s", got)
+	}
+}

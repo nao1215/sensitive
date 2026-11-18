@@ -32,7 +32,7 @@ func (d *ABARouting) Scan(data []byte) []Finding {
 
 // scanNormalized scans the normalized (ASCII) byte slice for ABA routing numbers.
 func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
-	return scanNumeric(orig, data, posMap, d.candidate, false)
+	return scanNumeric(nil, orig, data, posMap, d.candidate, false)
 }
 
 // abaDigits is the length of a routing number.
