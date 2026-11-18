@@ -125,3 +125,33 @@ func TestMalformedMetadataKeyCannotSupplyLevel(t *testing.T) {
 		t.Fatal("malformed key supplied metadata")
 	}
 }
+
+func TestConsoleLevelPrefixBounds(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "padded level filling the 97 byte prefix is kept",
+			input: strings.Repeat(" ", 93) + "info\tplanted-message\t{}\n",
+			want:  `{"level":"info","msg":"embargo: record withheld (masking error)","withheld_attributes":0}` + "\n",
+		},
+		{
+			name:  "level in the third console field is not a level",
+			input: "2026-01-01T00:00:00Z\tplanted-service\terror\t{}\n",
+			want:  `{"msg":"embargo: record withheld (masking error)","withheld_attributes":0}` + "\n",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			var metadata eventMetadata
+			metadata.feed([]byte(tc.input))
+			if got := string(metadata.fallback(saferecord.ErrMasking)); got != tc.want {
+				t.Fatalf("got %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
