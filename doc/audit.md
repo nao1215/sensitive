@@ -7,7 +7,7 @@ The embargo command is part of the root module, which retains zero dependencies.
 By default the command is a filter: it reads the named files in order, or stdin, and writes every line masked to stdout.
 
 ```sh
-go install github.com/nao1215/embargo/cmd/embargo@v0.15.0
+go install github.com/nao1215/embargo/cmd/embargo@v0.16.1
 kubectl logs deploy/api | embargo > masked.log
 embargo --kinds pan,credential app.log
 ```
