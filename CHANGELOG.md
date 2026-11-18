@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - The SWIFT/BIC and UK sort code context keywords (swift, bic, wire, sort code, bacs and the others) ignore ASCII case only, like every other keyword detector. They used Unicode lowering, so a non-ASCII letter such as the Kelvin sign counted as k, and a lowered character with a different byte length shifted the label check after swift.
 - Every built-in detector reads a backslash-u escape of an ASCII character (`\u0040` for `@`) as that character, as it already read one layer of percent escapes. Text that MaskJSON does not parse, such as a pretty-printed JSON document read line by line, a JSON string inside a text log line or an `embargo` input line over the 1 MiB MaskJSON limit, printed `alice\u0040example.com` unmasked. Escapes of non-ASCII characters and escapes after an escaped backslash stay literal.
-
+- MaskJSON, the slog handler, the HTTP handler and the logger adapters decode a string value of 20 bytes to 8 KiB that is padded standard base64 and scan the bytes when they are printable UTF-8 text, hiding the whole value on a finding. encoding/json, zap.Binary, zerolog, logrus and Sentry write a `[]byte` field in this form, so a token in a byte field of a struct, map or slice reached the output recoverable. Binary data and other base64 alphabets are not scanned; `Scanner.Scan` on plain text is unchanged.
 ### Removed
 
 - `embargotest.Recorder.Setenv`, `Header` and `Reader`. Each wrapped one standard call on the canary; use `t.Setenv(key, string(r.Canary()))`, `header.Set(name, string(r.Canary()))` and `bytes.NewReader(r.Canary())`.

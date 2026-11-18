@@ -3,6 +3,8 @@ package embargo
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -747,5 +749,35 @@ func TestJSONFastPathsStopOnBudgetCancellationAndOutputLimit(t *testing.T) {
 	cancel()
 	if err := walker(maxScanBytes, nil).stringElement(canceled, []byte(`"plain value"`), "note"); !errors.Is(err, saferecord.ErrCanceled) {
 		t.Fatalf("plain string after cancellation: %v", err)
+	}
+}
+
+func TestMaskJSONScansStandardBase64Text(t *testing.T) {
+	t.Parallel()
+	token := "ghp_" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	encode := base64.StdEncoding.EncodeToString
+	sum := sha256.Sum256([]byte("binary fixture"))
+	binary := append(sum[:], sum[:]...)
+	tests := []struct {
+		name, input, want string
+	}{
+		{"token bytes inside a struct", `{"payload":{"Data":"` + encode([]byte(token)) + `"}}`, `{"payload":{"Data":"[REDACTED]"}}`},
+		{"token bytes in an array", `{"parts":["` + encode([]byte("auth "+token)) + `"]}`, `{"parts":["[REDACTED]"]}`},
+		{"email in a byte field", `{"b":"` + encode([]byte("user=alice@example.com")) + `"}`, `{"b":"[REDACTED]"}`},
+		{"clean text bytes stay encoded", `{"b":"` + encode([]byte("ordinary public log text")) + `"}`, `{"b":"` + encode([]byte("ordinary public log text")) + `"}`},
+		{"binary bytes stay encoded", `{"b":"` + encode(binary) + `"}`, `{"b":"` + encode(binary) + `"}`},
+		{"unpadded or URL alphabet is not read as bytes", `{"b":"` + base64.RawURLEncoding.EncodeToString([]byte(token+"?")) + `"}`, `{"b":"` + base64.RawURLEncoding.EncodeToString([]byte(token+"?")) + `"}`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := NewScanner().MaskJSON([]byte(tt.input))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(got) != tt.want {
+				t.Fatalf("got %s, want %s", got, tt.want)
+			}
+		})
 	}
 }

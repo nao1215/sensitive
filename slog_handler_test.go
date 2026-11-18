@@ -3,6 +3,7 @@ package embargo_test
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -712,5 +713,25 @@ func TestSlogEnabledKeepsValuesAndDropsCancellation(t *testing.T) {
 			}
 		}
 		cancel()
+	}
+}
+
+func TestSlogScansByteFieldsInsideValues(t *testing.T) {
+	t.Parallel()
+	token := []byte("ghp_" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	type event struct{ Data []byte }
+	for name, value := range map[string]any{
+		"struct field": event{Data: token},
+		"map value":    map[string][]byte{"data": token},
+		"slice":        [][]byte{token},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			var out bytes.Buffer
+			slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: noTime}), embargo.NewScanner())).Info("event", "payload", value)
+			if strings.Contains(out.String(), base64.StdEncoding.EncodeToString(token)) || !strings.Contains(out.String(), "[REDACTED]") {
+				t.Fatalf("token bytes reached the output: %s", out.String())
+			}
+		})
 	}
 }
