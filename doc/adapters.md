@@ -4,18 +4,18 @@ These optional modules mask at the final JSON boundary, after the real logger ha
 
 ## Installation
 
-The six adapter modules are published at v0.14.0 and require root v0.14.0. Upgrade the root and every installed adapter to receive the base64 text scanning of byte fields, backslash-u escape decoding, the Luhn requirement for card numbers and the additive WithSensitiveKeys described in [v0.14.0](../CHANGELOG.md#0140---2026-11-18), including its Detection changes. Install the module for the logger or SDK the application uses:
+The six adapter modules are published at v0.15.0 and require root v0.15.0. Upgrade the root and every installed adapter to receive the record-label rules for cards, phones and country numbers, the new credential and service-token forms, and the faster structured-value dispatch described in [v0.15.0](../CHANGELOG.md#0150---2026-11-19), including its Detection changes. Install the module for the logger or SDK the application uses:
 
 ```sh
-go get github.com/nao1215/embargo/adapters/zap@v0.14.0
-go get github.com/nao1215/embargo/adapters/zerolog@v0.14.0
-go get github.com/nao1215/embargo/adapters/logrus@v0.14.0
-go get github.com/nao1215/embargo/adapters/grpc@v0.14.0
-go get github.com/nao1215/embargo/adapters/otel@v0.14.0
-go get github.com/nao1215/embargo/adapters/sentry@v0.14.0
+go get github.com/nao1215/embargo/adapters/zap@v0.15.0
+go get github.com/nao1215/embargo/adapters/zerolog@v0.15.0
+go get github.com/nao1215/embargo/adapters/logrus@v0.15.0
+go get github.com/nao1215/embargo/adapters/grpc@v0.15.0
+go get github.com/nao1215/embargo/adapters/otel@v0.15.0
+go get github.com/nao1215/embargo/adapters/sentry@v0.15.0
 ```
 
-For `NewHTTPHandler`, install the root module with `go get github.com/nao1215/embargo@v0.14.0`; no adapter module is needed.
+For `NewHTTPHandler`, install the root module with `go get github.com/nao1215/embargo@v0.15.0`; no adapter module is needed.
 
 Use only the module for your integration. The [zap](../adapters/zap/example_test.go), [zerolog](../adapters/zerolog/example_test.go) and [logrus](../adapters/logrus/example_test.go) Examples show complete setup and their actual JSON output.
 
