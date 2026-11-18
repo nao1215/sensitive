@@ -188,6 +188,30 @@ func TestFilterPassesBinaryBytesAndMasksLongJSONAsText(t *testing.T) {
 	}
 }
 
+func TestFilterMasksEscapedValuesWhereMaskJSONCannotRun(t *testing.T) {
+	t.Parallel()
+	escaped := `alice\u0040example.com`
+	tests := []struct {
+		name, input string
+	}{
+		{"JSON line over the 1 MiB MaskJSON limit", `{"user":"` + escaped + `","pad":"` + strings.Repeat("p", 1<<20) + `"}` + "\n"},
+		{"pretty-printed JSON is read line by line", "{\n  \"user\": \"" + escaped + "\"\n}\n"},
+		{"JSON string inside a text line", `level=info body={"user":"` + escaped + `"}` + "\n"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var out bytes.Buffer
+			if err := run(nil, strings.NewReader(tt.input), &out); err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(out.String(), "alice") || !strings.Contains(out.String(), filterMarker) {
+				t.Fatalf("escaped email reached output: %.200q", out.String())
+			}
+		})
+	}
+}
+
 func TestFilterAndReportShareTheLineLimit(t *testing.T) {
 	t.Parallel()
 	exact := strings.Repeat("z", maximumLine)

@@ -1159,6 +1159,60 @@ func TestPercentEncodedFindings(t *testing.T) {
 	}
 }
 
+func TestUnicodeEscapedFindings(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		kind          Kind
+		prefix, value string
+	}{
+		{KindEmail, "mail ", documentedEmail},
+		{KindPAN, "card ", "4111111111111111"},
+		{KindAWSKey, "key ", "AKIAIOSFODNN7EXAMPLE"},
+		{KindIPAddr, "from ", "203.0.113.7"},
+	} {
+		for _, escape := range []struct {
+			fn   func(string) string
+			name string
+		}{
+			{escapeEveryByte, "every byte"},
+			{escapePunctuation, "punctuation only"},
+		} {
+			t.Run(string(tc.kind)+"/"+escape.name, func(t *testing.T) {
+				t.Parallel()
+				value := escape.fn(tc.value)
+				text := `{"note":"` + tc.prefix + value + `"}`
+				got := NewScanner(WithKinds(tc.kind)).ScanString(text)
+				start := len(`{"note":"`) + len(tc.prefix)
+				if len(got) != 1 || got[0].Start != start || got[0].End != start+len(value) {
+					t.Fatalf("%s: original offsets %+v", text, got)
+				}
+			})
+		}
+	}
+}
+
+// escapeEveryByte writes each byte of s as a JSON escape of four hex digits.
+func escapeEveryByte(s string) string {
+	var b []byte
+	for i := range len(s) {
+		b = fmt.Appendf(b, "%cu%04x", '\\', s[i])
+	}
+	return string(b)
+}
+
+// escapePunctuation escapes only the bytes that are not letters or digits.
+func escapePunctuation(s string) string {
+	var b []byte
+	for i := range len(s) {
+		if c := s[i]; c < '0' || (c > '9' && c < 'A') || (c > 'Z' && c < 'a') || c > 'z' {
+			b = fmt.Appendf(b, "%cu%04X", '\\', c)
+			continue
+		}
+		b = append(b, s[i])
+	}
+	return string(b)
+}
+
 // Random partial escaping checks exact byte ranges after a UTF-8 prefix.
 func TestPercentRoundTripOffsets(t *testing.T) {
 	t.Parallel()

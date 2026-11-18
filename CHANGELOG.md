@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Detection changes
 
 - The SWIFT/BIC and UK sort code context keywords (swift, bic, wire, sort code, bacs and the others) ignore ASCII case only, like every other keyword detector. They used Unicode lowering, so a non-ASCII letter such as the Kelvin sign counted as k, and a lowered character with a different byte length shifted the label check after swift.
+- Every built-in detector reads a backslash-u escape of an ASCII character (`\u0040` for `@`) as that character, as it already read one layer of percent escapes. Text that MaskJSON does not parse, such as a pretty-printed JSON document read line by line, a JSON string inside a text log line or an `embargo` input line over the 1 MiB MaskJSON limit, printed `alice\u0040example.com` unmasked. Escapes of non-ASCII characters and escapes after an escaped backslash stay literal.
 
 ### Removed
 

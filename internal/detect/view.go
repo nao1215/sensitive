@@ -11,8 +11,9 @@ import (
 	"github.com/nao1215/embargo/internal/ascii"
 )
 
-// View is the text every built-in detector scans: one layer of percent escapes
-// decoded and Unicode separators inside tokens removed. Positions maps each
+// View is the text every built-in detector scans: one layer of ASCII
+// backslash-u escapes and then one layer of percent escapes decoded, and
+// Unicode separators inside tokens removed. Positions maps each
 // Data byte index to its Raw index and ends with the len(Raw) sentinel; nil
 // means Data and Raw are the same bytes. This file owns the view and every
 // offset map; detectors that normalise further compose their map with it.
@@ -27,9 +28,73 @@ type View struct {
 
 // NewView builds the shared normalised view of raw.
 func NewView(raw []byte) View {
-	decoded, percent := decodePercent(raw)
+	unescaped, unicodeMap := decodeUnicodeEscapes(raw)
+	decoded, percent := decodePercent(unescaped)
 	data, token := removeTokenSeparators(decoded)
-	return View{Raw: raw, Data: data, Positions: composePositions(token, percent)}
+	return View{Raw: raw, Data: data, Positions: composePositions(composePositions(token, percent), unicodeMap)}
+}
+
+// decodeUnicodeEscapes decodes one layer of the JSON and Go escape of a
+// backslash, u and four hex digits when the code point is ASCII, so a value
+// spelled with escaped punctuation reads as the value. Non-ASCII escapes stay
+// literal because decoding them would let names and prose in other scripts
+// reach the detectors as new text; an escaped backslash and malformed escapes
+// stay literal too. A nil map denotes identity; otherwise it includes the end
+// sentinel.
+func decodeUnicodeEscapes(data []byte) (decoded []byte, positions []int) {
+	if !bytes.Contains(data, []byte{'\\', 'u'}) {
+		return data, nil
+	}
+	for i := 0; i < len(data); {
+		c, ok := asciiUnicodeEscape(data, i)
+		if !ok {
+			width := literalWidth(data, i)
+			if decoded != nil {
+				decoded = append(decoded, data[i:i+width]...)
+				for j := range width {
+					positions = append(positions, i+j)
+				}
+			}
+			i += width
+			continue
+		}
+		if decoded == nil {
+			// The escape removes five bytes, so len(data) also holds the sentinel.
+			decoded, positions = identityPrefix(data, i, len(data))
+		}
+		decoded = append(decoded, c)
+		positions = append(positions, i)
+		i += len(`\u0000`)
+	}
+	if decoded == nil {
+		return data, nil
+	}
+	positions = append(positions, len(data))
+	return decoded, positions
+}
+
+// literalWidth is two for an escaped backslash, whose next byte is not the
+// start of an escape, and one for any other byte.
+func literalWidth(data []byte, i int) int {
+	if data[i] == '\\' && i+1 < len(data) && data[i+1] == '\\' {
+		return len(`\\`)
+	}
+	return 1
+}
+
+// asciiUnicodeEscape reports the ASCII byte escaped at data[i:i+6].
+func asciiUnicodeEscape(data []byte, i int) (byte, bool) {
+	const escapeLength = len(`\u0000`)
+	if i+escapeLength > len(data) || data[i] != '\\' || data[i+1] != 'u' || data[i+2] != '0' || data[i+3] != '0' {
+		return 0, false
+	}
+	hi, ok := ascii.DecodeHex(data[i+4])
+	lo, ok2 := ascii.DecodeHex(data[i+5])
+	const asciiHighNibble = 7
+	if !ok || !ok2 || hi > asciiHighNibble {
+		return 0, false
+	}
+	return hi<<4 | lo, true
 }
 
 // Original maps a Data index to its Raw index.

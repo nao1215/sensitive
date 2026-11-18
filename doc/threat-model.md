@@ -23,6 +23,7 @@ The same built-in inventory now includes all eleven country detectors in allocat
 | Attempt | Status | Test or limit |
 |---|---|---|
 | JSON Unicode escapes | Caught after JSON decoding | TestAdversarialEncodingBoundary |
+| JSON Unicode escapes in text that is not parsed as JSON | Caught for ASCII characters, one layer, with original-byte positions | TestUnicodeEscapedFindings |
 | One percent-encoding layer | Caught with original-byte positions | Metamorphic and Lean vector tests |
 | Double percent encoding | Limit: no recursive decoding | TestAdversarialEncodingBoundary/double-percent |
 | Base64 | Limit for arbitrary text; registered canaries include encoded forms | TestAdversarialEncodingBoundary/base64 |
