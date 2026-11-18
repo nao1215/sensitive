@@ -188,8 +188,18 @@ func (d *Credential) flagValue(data []byte, name int) (start, stop, end int, ok 
 // a parent directory elsewhere; mysql's -P port is upper-case.
 func commandPasswords(data []byte) []Finding {
 	var out []Finding
-	for i := 0; i < len(data); i++ {
-		if attached, ok := passwordCommand(data, i); ok {
+	for _, command := range []string{"mysql", "mariadb", "sshpass"} {
+		for i := 0; i < len(data); {
+			next := bytes.Index(data[i:], []byte(command))
+			if next < 0 {
+				break
+			}
+			i += next
+			attached, ok := passwordCommand(data, i)
+			if !ok {
+				i += len(command)
+				continue
+			}
 			end := shellCommandEnd(data, i)
 			out = appendPasswordOptions(out, data, i, end, attached)
 			i = end

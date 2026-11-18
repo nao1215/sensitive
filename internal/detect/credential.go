@@ -1,6 +1,7 @@
 package detect
 
 import (
+	"bytes"
 	"cmp"
 	"slices"
 
@@ -159,7 +160,27 @@ func (d *Credential) assignmentName(data []byte, i int) (string, bool) {
 // acceptedAssignmentValue rejects already redacted values, token values
 // that only reference another object, and UUID idempotency tokens.
 func acceptedAssignmentValue(data []byte, start, end int, name string) bool {
-	return !redactedCredentialValue(data[start:end]) && (name != credentialTokenKey || !objectReference(data, start, end)) && !idempotencyToken(data, start, end, name)
+	return !redactedCredentialValue(data[start:end]) && (name != credentialTokenKey || !objectReference(data, start, end)) && !idempotencyToken(data, start, end, name) && !numericSessionID(data[start:end], name)
+}
+
+// numericSessionID reports a session key whose value is an integer, decimal
+// or 0x hexadecimal, such as ZooKeeper's sessionid: 0x14edfaa86f60027. Such
+// IDs name a session to the server log; web session cookies are random text.
+func numericSessionID(value []byte, name string) bool {
+	if name != "session" && name != "sessionid" {
+		return false
+	}
+	digits := bytes.TrimPrefix(bytes.TrimPrefix(value, []byte("0x")), []byte("0X"))
+	if len(digits) == 0 {
+		return false
+	}
+	hex := len(digits) != len(value)
+	for _, b := range digits {
+		if !ascii.IsDigit(b) && (!hex || !ascii.IsHexDigit(b)) {
+			return false
+		}
+	}
+	return true
 }
 
 // idempotencyToken reports an AWS-style clientToken or idempotencyToken whose

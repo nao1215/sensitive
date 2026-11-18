@@ -177,3 +177,23 @@ func TestCredentialShortPasswordAndSessionKeys(t *testing.T) {
 		})
 	}
 }
+
+func TestCredentialNumericSessionIDsStayVisible(t *testing.T) {
+	t.Parallel()
+	for input, want := range map[string]string{
+		"Processed session termination for sessionid: 0x14edfaa86f60027": "",
+		"session=12345":           "",
+		"sessionid=abcDEF123xyz":  "abcDEF123xyz",
+		"session_id=0xZZ":         "0xZZ",
+		"JSESSIONID=9876543210":   "9876543210",
+		"session_token=123456789": "123456789",
+	} {
+		got := ""
+		for _, f := range (&Credential{}).Scan([]byte(input)) {
+			got = input[f.Start:f.End]
+		}
+		if got != want {
+			t.Errorf("Scan(%q) = %q, want %q", input, got, want)
+		}
+	}
+}
