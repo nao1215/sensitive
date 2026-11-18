@@ -11,17 +11,16 @@ import (
 	"github.com/nao1215/embargo/internal/saferecord"
 )
 
-// WithSensitiveKeys replaces the default sensitive key set. No keys disables it.
-// Defaults are password, passwd, secret, token, api_key, authorization,
+// WithSensitiveKeys adds names to the sensitive key policy; repeated options add
+// to each other and the defaults stay. Defaults are password, passwd, secret, token, api_key, authorization,
 // proxy-authorization, cookie, set-cookie, access_token, refresh_token, id_token,
 // x-api-key, DB_PASSWORD, Private-Token, client_secret, auth_token and PGPASSWORD.
 // Keys also match when the last separator/camel-case segment is password, passwd,
 // secret, token, credential or auth; key requires an api, secret, private, access
 // or account segment before it. Thus SECRET_KEY, POSTGRES_PASSWORD, GITHUB_TOKEN,
 // X-Auth-Token and spring.datasource.password match, but primary_key, sort_key
-// and token_count do not. A custom set replaces this suffix policy as well.
-// Include the application keys you need alongside your own keys.
-// Matching ignores ASCII case and the separators underscore, hyphen, dot and
+// and token_count do not. WithoutDefaultSensitiveKeys drops the defaults and
+// this suffix rule. Matching ignores ASCII case and the separators underscore, hyphen, dot and
 // space, so apiKey and API-KEY match api_key. Names are copied at construction.
 // A match masks the entire value in slog attributes/groups and encoded JSON
 // objects, including the zap, zerolog and logrus adapters. KindCredential also
@@ -37,18 +36,29 @@ func WithSensitiveKeys(keys ...string) ScannerOption {
 		}
 		selected[normalized] = struct{}{}
 	}
-	return scannerOption(func(s *Scanner) { s.sensitiveKeys = selected })
+	return scannerOption(func(s *Scanner) {
+		if s.sensitiveKeys == nil {
+			s.sensitiveKeys = make(map[string]struct{}, len(selected))
+		}
+		maps.Copy(s.sensitiveKeys, selected)
+	})
+}
+
+// WithoutDefaultSensitiveKeys drops the default names and the suffix rule, so
+// only names added with WithSensitiveKeys mask whole values; with none, the key
+// policy is off. Use it when a default name such as token holds public data, and
+// add back the names that do hold secrets.
+func WithoutDefaultSensitiveKeys() ScannerOption {
+	return scannerOption(func(s *Scanner) { s.noDefaultKeys = true })
 }
 
 func normalizeKey(key string) string { return detect.NormalizeCredentialKey(key) }
 
 func (s *Scanner) sensitiveKey(key string) bool {
-	if s.sensitiveKeys != nil {
-		key = normalizeKey(key)
-		_, ok := s.sensitiveKeys[key]
-		return ok
+	if _, ok := s.sensitiveKeys[normalizeKey(key)]; ok {
+		return true
 	}
-	return detect.SensitiveCredentialKey(key)
+	return !s.noDefaultKeys && detect.SensitiveCredentialKey(key)
 }
 
 // Field keys and log messages repeat across events, and their masked spelling and sensitivity

@@ -11,12 +11,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The SWIFT/BIC and UK sort code context keywords (swift, bic, wire, sort code, bacs and the others) ignore ASCII case only, like every other keyword detector. They used Unicode lowering, so a non-ASCII letter such as the Kelvin sign counted as k, and a lowered character with a different byte length shifted the label check after swift.
 - Every built-in detector reads a backslash-u escape of an ASCII character (`\u0040` for `@`) as that character, as it already read one layer of percent escapes. Text that MaskJSON does not parse, such as a pretty-printed JSON document read line by line, a JSON string inside a text log line or an `embargo` input line over the 1 MiB MaskJSON limit, printed `alice\u0040example.com` unmasked. Escapes of non-ASCII characters and escapes after an escaped backslash stay literal.
 - MaskJSON, the slog handler, the HTTP handler and the logger adapters decode a string value of 20 bytes to 8 KiB that is padded standard base64 and scan the bytes when they are printable UTF-8 text, hiding the whole value on a finding. encoding/json, zap.Binary, zerolog, logrus and Sentry write a `[]byte` field in this form, so a token in a byte field of a struct, map or slice reached the output recoverable. Binary data and other base64 alphabets are not scanned; `Scanner.Scan` on plain text is unchanged.
+### Added
+
+- `WithoutDefaultSensitiveKeys()` drops the default sensitive key names and suffix rule, for a public field named token or an export that must hide exactly the keys it lists.
+
 ### Removed
 
 - `embargotest.Recorder.Setenv`, `Header` and `Reader`. Each wrapped one standard call on the canary; use `t.Setenv(key, string(r.Canary()))`, `header.Set(name, string(r.Canary()))` and `bytes.NewReader(r.Canary())`.
 
 ### Changed
 
+- `WithSensitiveKeys` adds names to the default key policy instead of replacing it, and repeated options add to each other. Passing your own key used to drop password, token and the suffix rule that matches names such as POSTGRES_PASSWORD, and copying the documented defaults could not bring the suffix rule back. Use the new `WithoutDefaultSensitiveKeys()` to drop the defaults; `WithSensitiveKeys()` with no names no longer disables the policy.
 - The `embargo` command chooses its output with one flag, `--format text|json|jsonl`. `--report` is replaced by `--format json`, and `--samples` now requires it. The new `--format jsonl` prints one object per finding (kind, byte offsets, line and column, never the value) as each line is read, without a sample limit; a clean log prints nothing, so `embargo --format jsonl app.log | grep -q .` gates CI without jq.
 - `embargotest.WithLimits(maxBytes, timeout)` is split into `WithMaxBytes(n)` and `WithTimeout(d)`, so a test can raise one bound without restating the other default.
 - A file named `-` reads stdin in its place, as in cat, so `embargo header.log - footer.log` works in a pipe.

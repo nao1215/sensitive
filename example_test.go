@@ -436,7 +436,7 @@ func ExampleScanner_MaskJSON() {
 }
 
 func ExampleWithSensitiveKeys() {
-	scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithSensitiveKeys("password", "passwd", "secret", "token", "api_key", "authorization", "cookie", "set-cookie", "recovery_code"))
+	scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithSensitiveKeys("recovery_code"))
 	safe, err := scanner.MaskJSON([]byte(`{"recoveryCode":"opaque","api-key":"opaque","count":3}`))
 	if err != nil {
 		panic(err)
@@ -444,6 +444,18 @@ func ExampleWithSensitiveKeys() {
 	fmt.Println(string(safe))
 	// Output:
 	// {"recoveryCode":"[REDACTED]","api-key":"[REDACTED]","count":3}
+}
+
+func ExampleWithoutDefaultSensitiveKeys() {
+	// This API returns a public pagination cursor named token.
+	scanner := embargo.NewScanner(embargo.WithKinds(), embargo.WithoutDefaultSensitiveKeys(), embargo.WithSensitiveKeys("password"))
+	safe, err := scanner.MaskJSON([]byte(`{"token":"page-2","password":"opaque"}`))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(safe))
+	// Output:
+	// {"token":"page-2","password":"[REDACTED]"}
 }
 
 func ExampleInput_Scan() {

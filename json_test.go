@@ -97,8 +97,11 @@ func TestMaskJSONKeyPolicy(t *testing.T) {
 		opts              []ScannerOption
 	}{
 		{name: "defaults and duplicate keys", input: `{"API_key":"x","apiKey":42,"Authorization":{"a":"b"},"Password":null,"Set-Cookie":["x"],"email":"alice@example.com","n":1.20,"ok":true,"x":1,"x":2}`, want: `{"API_key":"[REDACTED]","apiKey":"[REDACTED]","Authorization":"[REDACTED]","Password":"[REDACTED]","Set-Cookie":"[REDACTED]","email":"[REDACTED]","n":1.20,"ok":true,"x":1,"x":2}`},
-		{name: "replace", input: `{"password":"public","PIN":"opaque"}`, want: `{"password":"public","PIN":"[REDACTED]"}`, opts: []ScannerOption{WithSensitiveKeys("pin")}},
-		{name: "disable", input: `{"password":"public"}`, want: `{"password":"public"}`, opts: []ScannerOption{WithSensitiveKeys()}},
+		{name: "add keeps defaults and suffix rule", input: `{"password":"opaque","POSTGRES_PASSWORD":"opaque","PIN":"opaque","n":1}`, want: `{"password":"[REDACTED]","POSTGRES_PASSWORD":"[REDACTED]","PIN":"[REDACTED]","n":1}`, opts: []ScannerOption{WithSensitiveKeys("pin")}},
+		{name: "repeated options add", input: `{"pin":"opaque","otp":"opaque"}`, want: `{"pin":"[REDACTED]","otp":"[REDACTED]"}`, opts: []ScannerOption{WithSensitiveKeys("pin"), WithSensitiveKeys("otp")}},
+		{name: "only added keys without defaults", input: `{"password":"public","PIN":"opaque"}`, want: `{"password":"public","PIN":"[REDACTED]"}`, opts: []ScannerOption{WithoutDefaultSensitiveKeys(), WithSensitiveKeys("pin")}},
+		{name: "disable", input: `{"password":"public","token":"page-2"}`, want: `{"password":"public","token":"page-2"}`, opts: []ScannerOption{WithoutDefaultSensitiveKeys()}},
+		{name: "empty add is no change", input: `{"password":"opaque"}`, want: `{"password":"[REDACTED]"}`, opts: []ScannerOption{WithSensitiveKeys()}},
 		{name: "array", input: `[{"token":"x"},"alice@example.com",null,19]`, want: `[{"token":"[REDACTED]"},"[REDACTED]",null,19]`},
 		{name: "keys", input: `{"alice@example.com":"ok"}`, want: `{"[REDACTED]":"ok"}`},
 	} {
@@ -211,7 +214,7 @@ func FuzzJSONShape(f *testing.F) {
 	for _, seed := range []string{`{"n":9007199254740993,"x":1.0e+5}`, `{"\u0074oken":"visible","array":[true,false,null,-0]}`, `["\uD800","\uD834\uDD1E","a\"b","\\", "\n", "<>&"]`, "{\"x\":\"\xff\"}"} {
 		f.Add([]byte(seed))
 	}
-	scanner := NewScanner(WithKinds(), WithSensitiveKeys())
+	scanner := NewScanner(WithKinds(), WithoutDefaultSensitiveKeys())
 	f.Fuzz(func(t *testing.T, data []byte) {
 		got, err := scanner.MaskJSON(data)
 		if err != nil {
@@ -483,7 +486,7 @@ func benchmarkAdversarialMaskRanges(b *testing.B) {
 func TestJSONExpansionStopsBeforeRetainingPastLimit(t *testing.T) {
 	t.Parallel()
 	input := []byte("[" + strings.Repeat(`"x",`, 100000) + `"x"]`)
-	scanner := NewScanner(WithKinds(), WithSensitiveKeys(), WithDetector(expandingDetector{}))
+	scanner := NewScanner(WithKinds(), WithoutDefaultSensitiveKeys(), WithDetector(expandingDetector{}))
 	walker := jsonWalker{data: input, scanner: eventScanner{scanner: scanner, remaining: maxScanBytes}}
 	if err := walker.value(t.Context(), 0, "", false); err == nil {
 		t.Fatal("expanded output accepted")
@@ -504,7 +507,7 @@ func (expandingDetector) Scan(data []byte) []Finding {
 
 func BenchmarkJSONExpansionLimit(b *testing.B) {
 	input := []byte("[" + strings.Repeat(`"x",`, 100000) + `"x"]`)
-	scanner := NewScanner(WithKinds(), WithSensitiveKeys(), WithDetector(expandingDetector{}))
+	scanner := NewScanner(WithKinds(), WithoutDefaultSensitiveKeys(), WithDetector(expandingDetector{}))
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {

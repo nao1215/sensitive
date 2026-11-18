@@ -26,6 +26,7 @@ type Scanner struct {
 	unconditional uint64
 	initialized   bool
 	allKinds      bool
+	noDefaultKeys bool
 }
 
 // hintEntry caches a detector's hint in pre-lowered form to avoid
@@ -52,7 +53,7 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 		}
 	}
 	var matchKey func(string) bool
-	if s.sensitiveKeys != nil {
+	if s.sensitiveKeys != nil || s.noDefaultKeys {
 		matchKey = s.sensitiveKey
 	}
 	for _, d := range builtins(matchKey) {

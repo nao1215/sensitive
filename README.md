@@ -107,7 +107,7 @@ fmt.Println(string(safe))
 // {"user":{"email":"[REDACTED]","password":"[REDACTED]"},"amount":125,"paid":true}
 ```
 
-Numbers and booleans keep their types. `WithSensitiveKeys` replaces the key list. [Structured values and key rules](doc/logging.md)
+Numbers and booleans keep their types. `WithSensitiveKeys` adds key names; `WithoutDefaultSensitiveKeys` drops the defaults. [Structured values and key rules](doc/logging.md)
 
 ## Loggers and services
 

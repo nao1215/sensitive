@@ -92,7 +92,7 @@ func comparisonSensitiveKeys() []string {
 // comparisonScanner selects email and card, the content rules masq and
 // go-masker are given here.
 func comparisonScanner() *embargo.Scanner {
-	return embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN), embargo.WithSensitiveKeys(comparisonSensitiveKeys()...))
+	return embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN), embargo.WithoutDefaultSensitiveKeys(), embargo.WithSensitiveKeys(comparisonSensitiveKeys()...))
 }
 
 func comparisonMasq() func([]string, slog.Attr) slog.Attr {
@@ -169,7 +169,7 @@ func comparisonHandler(mode string, out io.Writer) slog.Handler {
 	case comparisonEmbargoName:
 		return embargo.NewSlogHandler(h, comparisonScanner())
 	case comparisonEmbargoDefault:
-		return embargo.NewSlogHandler(h, embargo.NewScanner(embargo.WithSensitiveKeys(comparisonSensitiveKeys()...)))
+		return embargo.NewSlogHandler(h, embargo.NewScanner(embargo.WithoutDefaultSensitiveKeys(), embargo.WithSensitiveKeys(comparisonSensitiveKeys()...)))
 	}
 	return h
 }

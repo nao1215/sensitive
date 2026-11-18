@@ -289,11 +289,28 @@ func TestCredentialObjectSyntaxStillProtectsPasswords(t *testing.T) {
 
 func TestCustomKeyStillFindsOpaqueText(t *testing.T) {
 	t.Parallel()
-	scanner := NewScanner(WithKinds(KindCredential), WithSensitiveKeys("recovery_code"))
-	const text = "recovery_code=opaque-recovery-code password=public-label"
-	got := scanner.ScanString(text)
-	if len(got) != 1 || text[got[0].Start:got[0].End] != "opaque-recovery-code" {
-		t.Fatal("custom key did not replace the default text key selection")
+	const recovery = "opaque-recovery-code"
+	const text = "recovery_code=" + recovery + " password=public-label"
+	for _, tc := range []struct {
+		name string
+		opts []ScannerOption
+		want []string
+	}{
+		{"added key keeps the defaults", []ScannerOption{WithSensitiveKeys("recovery_code")}, []string{recovery, "public-label"}},
+		{"without defaults only the added key", []ScannerOption{WithoutDefaultSensitiveKeys(), WithSensitiveKeys("recovery_code")}, []string{recovery}},
+		{"option order does not matter", []ScannerOption{WithSensitiveKeys("recovery_code"), WithoutDefaultSensitiveKeys()}, []string{recovery}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := NewScanner(append([]ScannerOption{WithKinds(KindCredential)}, tc.opts...)...).ScanString(text)
+			values := make([]string, 0, len(got))
+			for _, f := range got {
+				values = append(values, text[f.Start:f.End])
+			}
+			if !slices.Equal(values, tc.want) {
+				t.Fatalf("values = %q, want %q", values, tc.want)
+			}
+		})
 	}
 }
 
