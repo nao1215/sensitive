@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-11-19
+
 No exported API changes: code that builds against v0.14.0 builds unchanged. Masked output changes are listed under Detection changes; Changed lists messages and other observable behavior.
 
 ### Detection changes
