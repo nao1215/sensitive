@@ -115,3 +115,96 @@ func TestServiceTokenSpecialLayoutNearMisses(t *testing.T) {
 		}
 	}
 }
+
+// TestServiceTokenLayoutLengthBoundaries pins every fixed length of the
+// special layouts at the limit, one byte inside it and one byte outside, and
+// with the token ending exactly at the end of the input.
+func TestServiceTokenLayoutLengthBoundaries(t *testing.T) {
+	t.Parallel()
+
+	rep := strings.Repeat
+	type layout func([]byte, int) (int, bool)
+	terraform := func(n int) string { return "AbCdEfGh012345.atlasv1." + rep("t", n) }
+	azure := func(n int) string { return "abc8Q~" + rep("s", n) }
+	telegram := func(id, secret int) string { return rep("1", id) + ":A" + rep("b", secret-1) }
+	facebook := func(id, secret int) string { return rep("2", id) + "|" + rep("f", secret) }
+	maxmind := "Ab12Cd_" + rep("k", 29) + "_mmk"
+	mailchimp := rep("a", 32) + "-us12"
+	for _, tc := range []struct {
+		name  string
+		match layout
+		input string
+		end   int
+		ok    bool
+	}{
+		{"terraform shortest", terraformTokenEnd, terraform(60), 83, true},
+		{"terraform too short", terraformTokenEnd, terraform(59), 0, false},
+		{"terraform longest", terraformTokenEnd, terraform(70), 93, true},
+		{"terraform too long", terraformTokenEnd, terraform(71), 0, false},
+		{"azure shortest", azureClientSecretEnd, azure(31), 37, true},
+		{"azure too short", azureClientSecretEnd, azure(30), 0, false},
+		{"azure longest", azureClientSecretEnd, azure(34), 40, true},
+		{"azure too long", azureClientSecretEnd, azure(35), 0, false},
+		{"azure trailing dots trimmed", azureClientSecretEnd, azure(31) + "..", 37, true},
+		{"telegram shortest id", telegramBotTokenEnd, telegram(5, 35), 41, true},
+		{"telegram id too short", telegramBotTokenEnd, telegram(4, 35), 0, false},
+		{"telegram longest id", telegramBotTokenEnd, telegram(16, 35), 52, true},
+		{"telegram id too long", telegramBotTokenEnd, telegram(17, 35), 0, false},
+		{"telegram secret too short", telegramBotTokenEnd, telegram(5, 34), 0, false},
+		{"telegram secret glued to more token bytes", telegramBotTokenEnd, telegram(5, 36), 0, false},
+		{"telegram ID without secret", telegramBotTokenEnd, rep("1", 5), 0, false},
+		{"facebook shortest", facebookAppTokenEnd, facebook(15, 27), 43, true},
+		{"facebook id too short", facebookAppTokenEnd, facebook(14, 27), 0, false},
+		{"facebook longest", facebookAppTokenEnd, facebook(16, 40), 57, true},
+		{"facebook id too long", facebookAppTokenEnd, facebook(17, 27), 0, false},
+		{"facebook secret too short", facebookAppTokenEnd, facebook(15, 26), 0, false},
+		{"facebook secret too long", facebookAppTokenEnd, facebook(15, 41), 0, false},
+		{"facebook ID at end of input", facebookAppTokenEnd, rep("2", 15), 0, false},
+		{"maxmind at end of input", maxMindLicenseKeyEnd, maxmind, len(maxmind), true},
+		{"maxmind glued", maxMindLicenseKeyEnd, maxmind + "x", 0, false},
+		{"mailchimp at end of input", mailchimpKeyEnd, mailchimp, len(mailchimp), true},
+		{"mailchimp glued", mailchimpKeyEnd, mailchimp + "x", 0, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			end, ok := tc.match([]byte(tc.input), 0)
+			if ok != tc.ok || (ok && end != tc.end) {
+				t.Fatalf("got end %d ok %v, want end %d ok %v", end, ok, tc.end, tc.ok)
+			}
+		})
+	}
+}
+
+func TestServiceTokenWebhookAndPathBoundaries(t *testing.T) {
+	t.Parallel()
+
+	rep := strings.Repeat
+	for _, tc := range []struct {
+		path     string
+		incoming bool
+		want     bool
+	}{
+		{"T0/B0/" + rep("s", 16), true, true},
+		{"T0/B0/" + rep("s", 15), true, false},
+		{"T/B0/" + rep("s", 16), true, false},
+		{"T0/B0/C0/" + rep("s", 16), false, true},
+		{"T0/B0/C0/" + rep("s", 16), true, false},
+	} {
+		if got := slackWebhookPath(tc.path, tc.incoming); got != tc.want {
+			t.Errorf("slackWebhookPath(%q, %v) = %v, want %v", tc.path, tc.incoming, got, tc.want)
+		}
+	}
+	teams := func(n int) string {
+		path := "a@b/IncomingWebhook/"
+		return "https://x.webhook.office.com/webhookb2/" + path + rep("p", n-len(path))
+	}
+	if body, end, ok := teamsWebhookSpan([]byte(teams(64)), 0); !ok || end-body != 64 {
+		t.Errorf("a 64-byte Teams path must match: %d %d %v", body, end, ok)
+	}
+	if _, _, ok := teamsWebhookSpan([]byte(teams(63)), 0); ok {
+		t.Error("a 63-byte Teams path must not match")
+	}
+	if !telegramBotPath([]byte("/bot12345"), 4) || telegramBotPath([]byte("bot12345"), 3) {
+		t.Error("a bot token starts right after /bot and nowhere else")
+	}
+}
