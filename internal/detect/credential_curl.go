@@ -187,6 +187,10 @@ func (d *Credential) flagValue(data []byte, name int) (start, stop, end int, ok 
 // name must begin a word on the same line, because -p means a port, a path or
 // a parent directory elsewhere; mysql's -P port is upper-case.
 func commandPasswords(data []byte) []Finding {
+	// Every recognized password follows -p; most log lines have none.
+	if !bytes.Contains(data, []byte("-p")) {
+		return nil
+	}
 	var out []Finding
 	for _, command := range []string{"mysql", "mariadb", "sshpass"} {
 		for i := 0; i < len(data); {
