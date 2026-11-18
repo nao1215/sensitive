@@ -1,6 +1,7 @@
 package detect
 
 import (
+	"bytes"
 	"slices"
 
 	"github.com/nao1215/embargo/internal/ascii"
@@ -24,6 +25,7 @@ func (d *Email) Name() DetectorName {
 func (d *Email) Hints() [][]byte {
 	return [][]byte{
 		[]byte("@"),
+		[]byte(fullWidthAt),
 	}
 }
 
@@ -33,7 +35,14 @@ func (d *Email) Scan(data []byte) []Finding {
 	boundary := 0
 
 	for i := range data {
-		if data[i] != '@' {
+		// A full-width at sign (U+FF20) joins ASCII local and domain parts in
+		// Japanese text; domainAt is the last byte of either sign.
+		domainAt := i
+		switch {
+		case data[i] == '@':
+		case data[i] == fullWidthAt[0] && bytes.HasPrefix(data[i:], []byte(fullWidthAt)):
+			domainAt = i + len(fullWidthAt) - 1
+		default:
 			continue
 		}
 
@@ -45,7 +54,7 @@ func (d *Email) Scan(data []byte) []Finding {
 			continue
 		}
 
-		domainEnd, domain, ok := findDomainEnd(data, i)
+		domainEnd, domain, ok := findDomainEnd(data, domainAt)
 		if !ok {
 			continue
 		}
@@ -70,6 +79,9 @@ func (d *Email) Scan(data []byte) []Finding {
 
 	return findings
 }
+
+// fullWidthAt is U+FF20 FULLWIDTH COMMERCIAL AT in UTF-8.
+const fullWidthAt = "\uff20"
 
 // isSCPRemote reports whether git@host: followed by a path is an SCP-style Git
 // remote rather than an email address.

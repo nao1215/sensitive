@@ -329,7 +329,8 @@ func TestAdversarialEncodingBoundary(t *testing.T) {
 		{"double-percent", "alice%2540example.com", false},
 		{"base64", "YWxpY2VAZXhhbXBsZS5jb20=", false},
 		{"zero-width", "alice@exam\u200bple.com", true},
-		{"homoglyph", "alice＠example.com", false},
+		{"full-width at", "alice＠example.com", true},
+		{"homoglyph", "alice\uff20example\u3002com", false},
 		{"forged-marker", "[REDACTED] alice@example.com", true},
 		{"fake-finding", "{Kind:email Start:0 End:99} alice@example.com", true},
 	} {

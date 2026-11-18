@@ -139,8 +139,8 @@ func TestEmailDetector_Hints(t *testing.T) {
 
 	d := NewEmail()
 	hints := d.Hints()
-	if len(hints) != 1 || string(hints[0]) != "@" {
-		t.Errorf("Hints() = %v, want [[@]]", hints)
+	if len(hints) != 2 || string(hints[0]) != "@" || string(hints[1]) != "＠" {
+		t.Errorf("Hints() = %q, want @ and full-width ＠", hints)
 	}
 }
 
@@ -401,6 +401,28 @@ func TestEmailIgnoresURLUserinfo(t *testing.T) {
 		t.Run(tc.input, func(t *testing.T) {
 			t.Parallel()
 			assertScanMatch(t, d, tc.input, tc.count, tc.matched)
+		})
+	}
+}
+
+func TestEmailFullWidthAtSign(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ input, want string }{
+		{"連絡先: bob＠example.com まで", "bob＠example.com"},
+		{"bob＠example.com, alice@example.org", "bob＠example.com"},
+		{"＠example.com", ""},
+		{"bob＠", ""},
+		{"bob＠localhost", ""},
+	} {
+		t.Run(tc.input, func(t *testing.T) {
+			t.Parallel()
+			got := ""
+			if findings := NewEmail().Scan([]byte(tc.input)); len(findings) > 0 {
+				got = tc.input[findings[0].Start:findings[0].End]
+			}
+			if got != tc.want {
+				t.Fatalf("got %q, want %q", got, tc.want)
+			}
 		})
 	}
 }
