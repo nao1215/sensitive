@@ -133,7 +133,7 @@ logger.Info("checkout", "email", "alice@example.com")
 // Output: {"level":"INFO","msg":"checkout","email":"[REDACTED]"}
 ```
 
-Limits: MaskJSON bounds encoded input/output to 1 MiB, nesting to 64 and cumulative detector input to 4 MiB; logger writers include the newline in their 1 MiB limit. Recorder WithLimits bounds retained bytes and child Run time. Input decoding has no size limit; bound its upstream reader. MarshalJSON, LogValue, String and Error run before these byte limits apply, so their time and memory are not bounded; use Secret or a LogValuer returning a bounded value. [Details](doc/logging.md#bounds-and-failures)
+Limits: MaskJSON bounds encoded input/output to 1 MiB, nesting to 64 and cumulative detector input to 4 MiB; logger writers include the newline in their 1 MiB limit. Recorder WithMaxBytes bounds retained bytes and WithTimeout bounds child Run time. Input decoding has no size limit; bound its upstream reader. MarshalJSON, LogValue, String and Error run before these byte limits apply, so their time and memory are not bounded; use Secret or a LogValuer returning a bounded value. [Details](doc/logging.md#bounds-and-failures)
 
 Every adapter and hook uses the same detectors and key rules as the slog handler. The HTTP and gRPC hooks mask what they log, not the request your service receives or the response it sends. gin, echo and Connect servers are `http.Handler`s, so `NewHTTPHandler` wraps them unchanged; [a test runs all three](tests/integrations_test.go). [Installation and limits](doc/adapters.md)
 

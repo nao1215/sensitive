@@ -16,9 +16,9 @@ func TestMain(m *testing.M) {
 	opts := []embargotest.Option{embargotest.WithScanner(embargo.NewScanner(embargo.WithKinds(embargo.KindCredential)))}
 	switch os.Getenv("GUARD_CASE") {
 	case "overflow":
-		opts = append(opts, embargotest.WithLimits(128, time.Minute))
+		opts = append(opts, embargotest.WithMaxBytes(128), embargotest.WithTimeout(time.Minute))
 	case "timeout":
-		opts = append(opts, embargotest.WithLimits(1<<20, 100*time.Millisecond))
+		opts = append(opts, embargotest.WithMaxBytes(1<<20), embargotest.WithTimeout(100*time.Millisecond))
 	}
 	os.Exit(embargotest.Guard(m, opts...))
 }

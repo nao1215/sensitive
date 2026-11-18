@@ -93,7 +93,7 @@ func TestHTTPLeaksAndLimits(t *testing.T) {
 		t.Run(where, func(t *testing.T) {
 			t.Parallel()
 			p := &probeTB{TB: t}
-			r := New(p, WithLimits(256, defaultTimeout))
+			r := New(p, WithMaxBytes(256), WithTimeout(defaultTimeout))
 			w := r.HTTP("http")
 			canary := string(r.Canary())
 			switch where {
@@ -209,7 +209,7 @@ func TestHTTPMetadataBudget(t *testing.T) {
 	t.Parallel()
 	for _, mode := range []string{"remaining", "empty-values", "many-keys"} {
 		p := &probeTB{TB: t}
-		r := New(p, WithLimits(64, defaultTimeout))
+		r := New(p, WithMaxBytes(64), WithTimeout(defaultTimeout))
 		w, ok := r.HTTP("http").(*response)
 		if !ok {
 			t.Fatal("response fixture type")

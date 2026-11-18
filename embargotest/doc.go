@@ -38,7 +38,7 @@
 // inherited. Output appends to stdout and stderr sinks, including -test.v's
 // start marker, which proves a matching test ran. Set content expectations too.
 //
-// The earlier of ctx's deadline and WithLimits' timeout supervises the child.
+// The earlier of ctx's deadline and the WithTimeout bound supervises the child.
 // Cancel kills the direct child; Wait joins os/exec's pipe-copy and watcher
 // goroutines before return. WaitDelay bounds pipes held open after child exit.
 // Helpers must not create unmanaged descendants. Cancellation, timeouts,

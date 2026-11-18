@@ -108,7 +108,7 @@ func TestDetectorSeesInformationalHeaders(t *testing.T) {
 func TestInformationalHeadersConsumeTotalBudget(t *testing.T) {
 	t.Parallel()
 	probe := &probeTB{TB: t}
-	recorder := New(probe, WithLimits(256, time.Second))
+	recorder := New(probe, WithMaxBytes(256), WithTimeout(time.Second))
 	response := recorder.HTTP("response")
 	response.Header().Set("X-Result", strings.Repeat("x", 80))
 	for range 4 {

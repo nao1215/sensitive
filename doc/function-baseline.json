@@ -36,6 +36,13 @@
       "lines": 22
     },
     {
+      "file": "cmd/embargo/options.go",
+      "name": "parseOptions",
+      "statements": 30,
+      "cyclomatic": 11,
+      "lines": 36
+    },
+    {
       "file": "embargotest/guard_names.go",
       "name": "guardTests",
       "statements": 17,
@@ -94,9 +101,9 @@
     {
       "file": "internal/detect/aba.go",
       "name": "ABARouting.scanNormalized",
-      "statements": 25,
+      "statements": 23,
       "cyclomatic": 10,
-      "lines": 49
+      "lines": 41
     },
     {
       "file": "internal/detect/aba.go",
@@ -213,9 +220,9 @@
     {
       "file": "internal/detect/phone_jp.go",
       "name": "JPPhone.scanNormalized",
-      "statements": 26,
+      "statements": 25,
       "cyclomatic": 9,
-      "lines": 50
+      "lines": 43
     },
     {
       "file": "internal/detect/phone_us.go",
