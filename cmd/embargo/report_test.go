@@ -6,6 +6,8 @@ import (
 	"io"
 	"strings"
 	"testing"
+
+	"github.com/nao1215/embargo"
 )
 
 const reportPAN = "pan"
@@ -75,7 +77,7 @@ func TestReportSelectionAndSampleLimit(t *testing.T) {
 
 func TestReportRejectsIncompleteInputAndOutputFailure(t *testing.T) {
 	t.Parallel()
-	for _, input := range []io.Reader{strings.NewReader(strings.Repeat("x", maximumLine+1)), failingInput{}} {
+	for _, input := range []io.Reader{strings.NewReader(strings.Repeat("x", maximumLine+1)), &failingInput{}} {
 		var out bytes.Buffer
 		err := run([]string{flagFormat, formatJSON}, input, &out)
 		if err == nil || out.Len() != 0 || strings.Contains(err.Error(), "private-error") {
@@ -118,7 +120,7 @@ func TestJSONLPrintsEveryFindingWithoutItsValue(t *testing.T) {
 func TestJSONLStopsAtFailuresAfterEarlierFindings(t *testing.T) {
 	t.Parallel()
 	var out bytes.Buffer
-	failing := io.MultiReader(strings.NewReader("card=4111111111111111\n"), failingInput{})
+	failing := io.MultiReader(strings.NewReader("card=4111111111111111\n"), &failingInput{})
 	err := run([]string{flagFormat, formatJSONL}, failing, &out)
 	if err == nil || err.Error() != "embargo: input read failed at line 2; output stops before it" || !strings.Contains(out.String(), `"line":1`) {
 		t.Fatalf("read failure: err=%v output=%q", err, out.String())
@@ -143,5 +145,15 @@ func TestJSONLFlushesWhenNoInputIsBuffered(t *testing.T) {
 	}
 	if strings.Count(out.String(), "\n") != 2 {
 		t.Fatalf("output %q", out.String())
+	}
+}
+
+func TestReportCountsLinesWithoutTheEmptyEnd(t *testing.T) {
+	t.Parallel()
+	for input, want := range map[string]int{"": 0, "a\n": 1, "a\nb": 2, "a\n\n": 2} {
+		got, err := collectReport(strings.NewReader(input), embargo.NewScanner(), 1)
+		if err != nil || got.Lines != want || got.Bytes != int64(len(input)) {
+			t.Errorf("%q: lines=%d bytes=%d err=%v, want %d lines", input, got.Lines, got.Bytes, err, want)
+		}
 	}
 }

@@ -82,7 +82,7 @@ func TestFilterStopsBeforeOverlongLineAndReadFailure(t *testing.T) {
 		t.Fatalf("line at the limit: err=%v length=%d", exactErr, out.Len())
 	}
 	out.Reset()
-	failing := io.MultiReader(strings.NewReader("card="+filterPAN+"\n"), failingInput{})
+	failing := io.MultiReader(strings.NewReader("card="+filterPAN+"\n"), &failingInput{})
 	err = run(nil, failing, &out)
 	if err == nil || err.Error() != "embargo: input read failed at line 2; output stops before it" || strings.Contains(out.String(), filterPAN) {
 		t.Fatalf("read failure: err=%v output=%q", err, out.String())

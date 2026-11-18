@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"io"
 	"strings"
 	"testing"
 )
@@ -36,9 +37,17 @@ func TestHelpVersionAndExitStatus(t *testing.T) {
 	}
 }
 
-type failingInput struct{}
+// failingInput fails its first read and then ends, so a reader loop that
+// ignored the failure would finish with success instead of reading forever.
+type failingInput struct{ failed bool }
 
-func (failingInput) Read([]byte) (int, error) { return 0, errors.New("private-error") }
+func (r *failingInput) Read([]byte) (int, error) {
+	if r.failed {
+		return 0, io.EOF
+	}
+	r.failed = true
+	return 0, errors.New("private-error")
+}
 
 type failingOutput struct{}
 

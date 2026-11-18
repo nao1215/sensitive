@@ -19,11 +19,7 @@ func main() { os.Exit(exitCode(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)) }
 
 func exitCode(args []string, input io.Reader, output, diagnostics io.Writer) int {
 	if err := run(args, input, output); err != nil {
-		// The failure status is already set; a diagnostic write cannot make it succeed.
-		// The failure status is already set; a diagnostic write cannot make it succeed.
-		if _, writeErr := fmt.Fprintln(diagnostics, err); writeErr != nil {
-			return 1
-		}
+		_, _ = fmt.Fprintln(diagnostics, err) //nolint:errcheck // The status is already 1; a failed diagnostic write cannot change it.
 		return 1
 	}
 	return 0
