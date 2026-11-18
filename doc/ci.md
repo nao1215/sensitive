@@ -2,7 +2,7 @@
 
 Keep observed workflow and job timing tables in PR bodies only. Workflow duration runs from creation to the final job completion and includes queue time; job duration runs from started_at to completed_at. Collect timestamps through the GitHub Actions API, identify the compared revisions in the PR and explain relevant changes without claiming that shared-runner noise proves a speedup.
 
-Run heavy local jobs one at a time with GOMAXPROCS at most 4. Mutation testing uses up to four workers with two CPUs each. Minimum and stable Go run on Linux, Windows and macOS; stable legs retain race tests. Coverage combines root and integration instrumentation and enforces the 97% root-module floor. Documentation changes still run policy, generation and prose checks. Fuzzing runs nightly; mutation and scaling run weekly. Keep security scans, dependency provenance checks and formal model/vector checks enabled.
+Run heavy local jobs one at a time with GOMAXPROCS at most 4. Mutation testing uses up to eight workers with two CPUs each. Minimum and stable Go run on Linux, Windows and macOS; stable legs retain race tests. Coverage combines root and integration instrumentation and enforces the 97% root-module floor. Documentation changes still run policy, generation and prose checks. Fuzzing runs nightly; mutation and scaling run weekly. Keep security scans, dependency provenance checks and formal model/vector checks enabled.
 
 Merge only an owned PR in this repository after required CI is green; use squash merge without force pushes. Each PR changes fewer than 100 files and includes its observed CI timing table. CodeRabbit is best effort. Release publication requires an explicit release request and runs through release.yml after an annotated root version tag.
 

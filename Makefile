@@ -52,8 +52,8 @@ race: ## Run race detection in all modules
 	@for module in zap zerolog logrus grpc otel sentry; do go -C adapters/$$module test -race ./... || exit; done
 properties: ## Run property and API contract tests
 	go -C tests test ./...
-# Two CPUs per mutation worker, at most four workers (two on a 4-CPU runner).
-MUTATION_WORKERS ?= $(shell python3 -c 'import os; print(min(4, max(1, os.cpu_count()//2)))')
+# Two CPUs per mutation worker, at most eight workers (two on a 4-CPU runner).
+MUTATION_WORKERS ?= $(shell python3 -c 'import os; print(min(8, max(1, os.cpu_count()//2)))')
 mutation: ## Mutate root module packages with gremlins
 	python3 scripts/mutation_gate.py --workers $(MUTATION_WORKERS) --test-cpu 2
 BASE ?= origin/main

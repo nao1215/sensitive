@@ -277,8 +277,8 @@ def main():
     if args.check_evidence:
         check_recorded_evidence()
         return
-    if not 1 <= args.workers <= 4 or not 1 <= args.test_cpu <= 2:
-        parser.error('use at most four mutation workers and two CPUs per test')
+    if not 1 <= args.workers <= 8 or not 1 <= args.test_cpu <= 2:
+        parser.error('use at most eight mutation workers and two CPUs per test')
     env = dict(os.environ, GOMAXPROCS=str(args.test_cpu), GOWORK='off', EMBARGO_MUTATION='1')
     args.output.mkdir(parents=True, exist_ok=True)
     output = args.output.resolve()

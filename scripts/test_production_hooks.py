@@ -35,4 +35,4 @@ class HookPolicyTests(unittest.TestCase):
         self.assertIn('--workers $(MUTATION_WORKERS)',command)
         self.assertIn('--test-cpu 2',command)
         workers=re.search(r'^MUTATION_WORKERS \?= (.+)$',makefile,re.M).group(1)
-        self.assertIn('min(4, max(1, os.cpu_count()//2))',workers)
+        self.assertIn('min(8, max(1, os.cpu_count()//2))',workers)
