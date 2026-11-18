@@ -69,6 +69,7 @@ func (d *JPPhone) Hints() [][]byte {
 	return [][]byte{
 		[]byte("0"),
 		{0xEF, 0xBC, 0x90}, // ０ full-width zero (U+FF10)
+		[]byte("+81"),
 	}
 }
 
@@ -90,6 +91,13 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		if data[i] == '%' && normalizedEscapeSeparator(orig, posMap, len(data), i) {
 			i += 3
 			continue
+		}
+		if data[i] == '+' {
+			if f, end, ok := d.international(orig, data, posMap, i, &logContext); ok {
+				findings = append(findings, f)
+				i = end
+				continue
+			}
 		}
 		if data[i] != '0' {
 			i++
@@ -122,6 +130,29 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	}
 
 	return findings
+}
+
+// international recognizes the +81 form, such as +81-90-1234-5678,
+// +819012345678 and +81 (0)3-1234-5678. The national number after the
+// country code drops its leading zero, which classification restores, and
+// the span starts at the plus sign.
+func (d *JPPhone) international(orig, data []byte, posMap []int, start int, logContext *numericLogContext) (Finding, int, bool) {
+	if start+3 >= len(data) || data[start+1] != '8' || data[start+2] != '1' || (start > 0 && isIdentifierByte(data[start-1])) {
+		return Finding{}, start + 1, false
+	}
+	digits, end := appendSeparatedDigits(data, start+3, make([]byte, 1, phoneDigitCapacity), phoneSeparator)
+	digits[0] = '0'
+	if len(digits) > 1 && digits[1] == '0' {
+		digits = digits[1:] // The (0) trunk prefix is already the leading zero.
+	}
+	if end <= start+3 || !jpPhoneWhole(data, digits, end) {
+		return Finding{}, start + 1, false
+	}
+	phoneType := classifyJPPhone(digits, len(digits))
+	if phoneType == "" || logContext.fragment(data, start, end) {
+		return Finding{}, end, false
+	}
+	return labeledViewFinding(d.Name(), orig, posMap, start, end, jpPhoneConfidence(phoneType)), end, true
 }
 
 // jpPhoneWhole reports whether a candidate does not continue with word
