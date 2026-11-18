@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-18
+
 The public-log evaluation adds seven operations logs that LogHub lacks: Nginx and Apache access logs, a 92.8 MB Kubernetes API server audit log and three AWS CloudTrail files. Their development files exposed four false-positive classes, fixed below.
 
 ### Detection changes
@@ -20,6 +22,10 @@ The public-log evaluation adds seven operations logs that LogHub lacks: Nginx an
 
 - The zap and zerolog writers mask a whole event outside their lock and only serialize the sink write, so goroutines that log at the same time mask in parallel. Before, every event went through one lock: on 16 CPUs a zap logger shared by 16 goroutines took as long per event as on one CPU. doc/benchmarks.md has a parallel table for the scanner, the slog handler and the zap writer. Output is byte-identical.
 - The IP address, MyNumber and Japanese phone detectors no longer allocate on candidates that cannot match: a digit run with fewer than three dots or a hex run with fewer than two colons skips the address parse, and digit runs go into a stack buffer. A default-scanner pass over a short JSON log line went from 30 to 3 allocations, and a clean line from 21 to 0.
+
+### Changed
+
+- The README speed comparison times each library against an embargo configuration of similar detection breadth: masq, go-masker and ferret-scan (narrowed to its EMAIL and CREDIT_CARD checks) against embargo with email and card, and pii-shield, whose built-in detectors cannot be turned off, against embargo's default scanner. ferret-scan moves from v1.10.0 to v2.4.3, the newest release that builds on Go 1.26. doc/benchmarks.md adds a parallel table for a scanner, slog handler and zap logger shared by 1, 4 and 16 goroutines.
 
 ### Added
 
