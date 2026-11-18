@@ -43,7 +43,7 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 		// Pure alpha codes require nearby context keywords to avoid
 		// false positives with common English words.
 		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		if !hasDigitInRange(data, i+6, end) && !hasSWIFTContext(data, i, end) {
+		if !hasDigits(data[i+6:end], 1) && !hasSWIFTContext(data, i, end) {
 			continue
 		}
 
@@ -152,16 +152,6 @@ func determineSWIFTLength(data []byte, i int) (end int, ok bool) {
 	}
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 	return i + 8, true
-}
-
-// hasDigitInRange reports whether data[start:end] contains at least one digit.
-func hasDigitInRange(data []byte, start, end int) bool {
-	for k := start; k < end; k++ {
-		if ascii.IsDigit(data[k]) {
-			return true
-		}
-	}
-	return false
 }
 
 // hasSWIFTContext checks whether SWIFT/BIC context keywords appear near the

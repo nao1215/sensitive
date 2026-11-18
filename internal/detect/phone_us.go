@@ -65,23 +65,6 @@ func usPhoneStart(b byte) bool {
 	return b == '(' || (b >= '2' && b <= '9')
 }
 
-// hasDigitRun reports whether data holds n consecutive ASCII digits, such as
-// the four-digit line every number ends with.
-func hasDigitRun(data []byte, n int) bool {
-	run := 0
-	for _, b := range data {
-		if !ascii.IsDigit(b) {
-			run = 0
-			continue
-		}
-		run++
-		if run == n {
-			return true
-		}
-	}
-	return false
-}
-
 // usPhoneAt matches (202) 555-0123, 202-555-0123, 202.555.0123 or 202 555 0123
 // shapes starting at i and returns its end. Separators are required, so bare digit
 // runs such as IDs and timestamps are not phone numbers.
@@ -135,15 +118,6 @@ func usPhoneArea(code []byte) bool {
 // service code such as 911.
 func usPhoneExchange(code []byte) bool {
 	return allDigits(code) && code[0] >= '2' && (code[1] != '1' || code[2] != '1')
-}
-
-func allDigits(data []byte) bool {
-	for _, b := range data {
-		if !ascii.IsDigit(b) {
-			return false
-		}
-	}
-	return true
 }
 
 // usPhoneLeadingBoundary rejects a candidate inside an identifier, a longer
