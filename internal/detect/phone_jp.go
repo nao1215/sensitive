@@ -106,7 +106,7 @@ func (d *JPPhone) candidate(orig, data []byte, posMap []int, i int) (Finding, in
 	if phoneType == "" {
 		return Finding{}, end, false
 	}
-	return labeledViewFinding(d.Name(), orig, posMap, parenthesizedStart(data, i, end), end, jpPhoneConfidence(phoneType)), end, true
+	return labeledViewFinding(d.Name(), orig, posMap, parenthesizedStart(data, i, end), end, jpPhoneConfidence(phoneType), phoneLabels()...), end, true
 }
 
 // parenthesizedStart returns i-1 when the number at data[i:end] begins with a
@@ -140,7 +140,7 @@ func (d *JPPhone) international(orig, data []byte, posMap []int, start int) (Fin
 	if phoneType == "" {
 		return Finding{}, end, false
 	}
-	return labeledViewFinding(d.Name(), orig, posMap, start, end, jpPhoneConfidence(phoneType)), end, true
+	return labeledViewFinding(d.Name(), orig, posMap, start, end, jpPhoneConfidence(phoneType), phoneLabels()...), end, true
 }
 
 // jpPhoneWhole reports whether a candidate does not continue with word

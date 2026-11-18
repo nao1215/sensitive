@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1392" viewBox="0 0 1100 1392" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1168" viewBox="0 0 1100 1168" role="img" aria-labelledby="title desc">
 <title id="title">Estimated false positives on public logs</title>
 <desc id="desc">Labeled before and after rates per decimal gigabyte, split by development and held sources. Linear bars show sample estimates, not recall.</desc>
-<rect width="1100" height="1392" fill="#101923"/>
+<rect width="1100" height="1168" fill="#101923"/>
 <g font-family="sans-serif" fill="#eff6ff"><text x="24" y="30" font-size="22">Public logs: estimated false positives per gigabyte</text>
 <text x="24" y="55" font-size="14">Lower is better. Linear axis; one gigabyte = 1,000,000,000 bytes.</text>
 <text x="24" y="78" font-size="13">LogHub before/after: 8 datasets · 819,576 lines · 92.4 MB · at most 40 sampled findings per stratum</text>
@@ -12,9 +12,9 @@
 <text x="170" y="189" font-size="13">Held after</text><rect x="330" y="174" width="0.00" height="18" fill="#b87629"/><text x="340.00" y="188" font-size="13">0.0</text>
 <text x="24" y="235" font-size="15">ca_sin</text>
 <text x="170" y="232" font-size="13">Development before</text><rect x="330" y="217" width="0.00" height="18" fill="#85b8ff"/><text x="340.00" y="231" font-size="13">0.0</text>
-<text x="170" y="255" font-size="13">Development after</text><rect x="330" y="240" width="1.39" height="18" fill="#347ac7"/><text x="341.39" y="254" font-size="13">1,862.8</text>
+<text x="170" y="255" font-size="13">Development after</text><rect x="330" y="240" width="0.00" height="18" fill="#347ac7"/><text x="340.00" y="254" font-size="13">0.0</text>
 <text x="170" y="278" font-size="13">Held before</text><rect x="330" y="263" width="0.00" height="18" fill="#ffc78a"/><text x="340.00" y="277" font-size="13">0.0</text>
-<text x="170" y="301" font-size="13">Held after</text><rect x="330" y="286" width="0.08" height="18" fill="#b87629"/><text x="340.08" y="300" font-size="13">106.7</text>
+<text x="170" y="301" font-size="13">Held after</text><rect x="330" y="286" width="0.01" height="18" fill="#b87629"/><text x="340.01" y="300" font-size="13">11.9</text>
 <text x="24" y="347" font-size="15">credential</text>
 <text x="170" y="344" font-size="13">Development before</text><rect x="330" y="329" width="0.55" height="18" fill="#85b8ff"/><text x="340.55" y="343" font-size="13">745.1</text>
 <text x="170" y="367" font-size="13">Development after</text><rect x="330" y="352" width="0.00" height="18" fill="#347ac7"/><text x="340.00" y="366" font-size="13">0.0</text>
@@ -50,15 +50,5 @@
 <text x="170" y="1039" font-size="13">Development after</text><rect x="330" y="1024" width="0.00" height="18" fill="#347ac7"/><text x="340.00" y="1038" font-size="13">0.0</text>
 <text x="170" y="1062" font-size="13">Held before</text><rect x="330" y="1047" width="0.26" height="18" fill="#ffc78a"/><text x="340.26" y="1061" font-size="13">343.8</text>
 <text x="170" y="1085" font-size="13">Held after</text><rect x="330" y="1070" width="0.00" height="18" fill="#b87629"/><text x="340.00" y="1084" font-size="13">0.0</text>
-<text x="24" y="1131" font-size="15">uk_nhs</text>
-<text x="170" y="1128" font-size="13">Development before</text><rect x="330" y="1113" width="0.00" height="18" fill="#85b8ff"/><text x="340.00" y="1127" font-size="13">0.0</text>
-<text x="170" y="1151" font-size="13">Development after</text><rect x="330" y="1136" width="0.00" height="18" fill="#347ac7"/><text x="340.00" y="1150" font-size="13">0.0</text>
-<text x="170" y="1174" font-size="13">Held before</text><rect x="330" y="1159" width="0.00" height="18" fill="#ffc78a"/><text x="340.00" y="1173" font-size="13">0.0</text>
-<text x="170" y="1197" font-size="13">Held after</text><rect x="330" y="1182" width="1.70" height="18" fill="#b87629"/><text x="341.70" y="1196" font-size="13">2,287.9</text>
-<text x="24" y="1243" font-size="15">us_ssn</text>
-<text x="170" y="1240" font-size="13">Development before</text><rect x="330" y="1225" width="0.00" height="18" fill="#85b8ff"/><text x="340.00" y="1239" font-size="13">0.0</text>
-<text x="170" y="1263" font-size="13">Development after</text><rect x="330" y="1248" width="15.24" height="18" fill="#347ac7"/><text x="355.24" y="1262" font-size="13">20,490.6</text>
-<text x="170" y="1286" font-size="13">Held before</text><rect x="330" y="1271" width="0.00" height="18" fill="#ffc78a"/><text x="340.00" y="1285" font-size="13">0.0</text>
-<text x="170" y="1309" font-size="13">Held after</text><rect x="330" y="1294" width="0.28" height="18" fill="#b87629"/><text x="340.28" y="1308" font-size="13">379.3</text>
-<text x="24" y="1372" font-size="13">Both source splits have been seen. Zero in the sample does not prove zero false positives in deployment.</text>
+<text x="24" y="1148" font-size="13">Both source splits have been seen. Zero in the sample does not prove zero false positives in deployment.</text>
 </g></svg>

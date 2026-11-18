@@ -33,36 +33,36 @@ The measurements select each kind explicitly with WithKinds. They describe enabl
 | br_cpf | 0 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
 | br_cpf | 0.5 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
 | br_cpf | 0.7 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
-| ca_sin | 0 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
-| ca_sin | 0.5 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
-| ca_sin | 0.7 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
+| ca_sin | 0 | 96 / 0 / 192 | 100.0% / 33.3% | 96 / 0 / 192 | 100.0% / 33.3% | 3456 / 3456 |
+| ca_sin | 0.5 | 96 / 0 / 192 | 100.0% / 33.3% | 96 / 0 / 192 | 100.0% / 33.3% | 3456 / 3456 |
+| ca_sin | 0.7 | 96 / 0 / 192 | 100.0% / 33.3% | 96 / 0 / 192 | 100.0% / 33.3% | 3456 / 3456 |
 | cn_resident_id | 0 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
 | cn_resident_id | 0.5 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
 | cn_resident_id | 0.7 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
-| in_aadhaar | 0 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
-| in_aadhaar | 0.5 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
-| in_aadhaar | 0.7 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
+| in_aadhaar | 0 | 96 / 0 / 192 | 100.0% / 33.3% | 96 / 0 / 192 | 100.0% / 33.3% | 4608 / 4608 |
+| in_aadhaar | 0.5 | 96 / 0 / 192 | 100.0% / 33.3% | 96 / 0 / 192 | 100.0% / 33.3% | 4608 / 4608 |
+| in_aadhaar | 0.7 | 96 / 0 / 192 | 100.0% / 33.3% | 96 / 0 / 192 | 100.0% / 33.3% | 4608 / 4608 |
 | in_pan | 0 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
 | in_pan | 0.5 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
 | in_pan | 0.7 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
 | kr_rrn | 0 | 320 / 0 / 0 | 100.0% / 100.0% | 320 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
 | kr_rrn | 0.5 | 320 / 0 / 0 | 100.0% / 100.0% | 320 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
 | kr_rrn | 0.7 | 288 / 0 / 32 | 100.0% / 90.0% | 288 / 0 / 32 | 100.0% / 90.0% | 448 / 448 |
-| uk_nhs | 0 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
-| uk_nhs | 0.5 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
-| uk_nhs | 0.7 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
+| uk_nhs | 0 | 96 / 0 / 192 | 100.0% / 33.3% | 96 / 0 / 192 | 100.0% / 33.3% | 3840 / 3840 |
+| uk_nhs | 0.5 | 96 / 0 / 192 | 100.0% / 33.3% | 96 / 0 / 192 | 100.0% / 33.3% | 3840 / 3840 |
+| uk_nhs | 0.7 | 96 / 0 / 192 | 100.0% / 33.3% | 96 / 0 / 192 | 100.0% / 33.3% | 3840 / 3840 |
 | uk_nino | 0 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
 | uk_nino | 0.5 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
 | uk_nino | 0.7 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
-| us_itin | 0 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
-| us_itin | 0.5 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
+| us_itin | 0 | 96 / 0 / 192 | 100.0% / 33.3% | 96 / 0 / 192 | 100.0% / 33.3% | 3456 / 3456 |
+| us_itin | 0.5 | 96 / 0 / 192 | 100.0% / 33.3% | 96 / 0 / 192 | 100.0% / 33.3% | 3456 / 3456 |
 | us_itin | 0.7 | 0 / 0 / 288 | n/a / 0.0% | 0 / 0 / 288 | n/a / 0.0% | 4512 / 4512 |
-| us_ssn | 0 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
-| us_ssn | 0.5 | 288 / 0 / 0 | 100.0% / 100.0% | 288 / 0 / 0 | 100.0% / 100.0% | 0 / 0 |
+| us_ssn | 0 | 96 / 0 / 192 | 100.0% / 33.3% | 96 / 0 / 192 | 100.0% / 33.3% | 3456 / 3456 |
+| us_ssn | 0.5 | 96 / 0 / 192 | 100.0% / 33.3% | 96 / 0 / 192 | 100.0% / 33.3% | 3456 / 3456 |
 | us_ssn | 0.7 | 0 / 0 / 288 | n/a / 0.0% | 0 / 0 / 288 | n/a / 0.0% | 4512 / 4512 |
 <!-- countries:end -->
 
-At threshold 0.5 the synthetic business-label false positives disappear without losing any expected value in either split. At 0.7, SSN, ITIN and modern RRN lose recall. The public scanner's threshold remains 0: older high-tier kinds still need low-confidence matches, and a genuine identifier can occur under a misleading label. Applications that choose a country-specific policy can opt into 0.5 after evaluating their own logs. No new kind joins the default set because threshold-zero held precision is below 99%, even where this small system-log cache has no findings. The admission rule requires at least 99% held precision and no observed real-log false positives, plus a review of uncovered cases; passing those finite checks would not establish deployment precision.
+The public order IDs are not false positives at any threshold, because a record label such as order_id rules a country candidate out. SSN, ITIN, SIN, NHS and Aadhaar keep only their separated thirds here: the corpus labels its positives with neutral words such as identity and subject, and a bare digit run of these kinds, plain or percent-encoded, is reported only after a label naming the number, such as ssn or social insurance number. That rule trades this recall for the real logs below, where their bare-form findings were unlabeled counters such as Android event times and lock identifiers. At 0.7, SSN, ITIN and modern RRN lose recall. The public scanner's threshold remains 0: older high-tier kinds still need low-confidence matches, and a genuine identifier can occur under a misleading label. Applications that choose a country-specific policy can opt into 0.5 after evaluating their own logs. No new kind joins the default set. The admission rule requires at least 99% held precision and no observed real-log false positives, plus a review of uncovered cases; passing those finite checks would not establish deployment precision.
 
 ## Cached real logs
 
@@ -73,17 +73,17 @@ The checksum-pinned datasets in the [manifest](real-logs-manifest.json) combine 
 |---|---:|---|---:|---:|---|---:|
 | br_cnpj | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
 | br_cpf | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
-| ca_sin | 15 | 15 / 15 | 110.3 | 14 | 14 / 14 | 134.8 |
+| ca_sin | 0 | 0 / 0 | 0.0 | 1 | 1 / 1 | 9.6 |
 | cn_resident_id | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
-| in_aadhaar | 0 | 0 / 0 | 0.0 | 648 | 40 / 40 | 6,237.9 |
+| in_aadhaar | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
 | in_pan | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
 | kr_rrn | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
-| uk_nhs | 0 | 0 / 0 | 0.0 | 194 | 41 / 41 | 1,867.5 |
+| uk_nhs | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
 | uk_nino | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
 | us_itin | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
-| us_ssn | 165 | 73 / 73 | 1,213.2 | 43 | 43 / 43 | 413.9 |
+| us_ssn | 0 | 0 / 0 | 0.0 | 0 | 0 / 0 | 0.0 |
 <!-- country-logs:end -->
 
-The sampled SSN matches are Android event times and lock identifiers, Linux inode/process values and BGL counters. SIN matches overlap those numeric fields, Zookeeper snapshot filenames and one OpenSSH hostname fragment. NHS matches are BGL epoch seconds. These are false positives for national identifiers even when a machine or user reference elsewhere on the same line could be sensitive. Zero findings for the remaining kinds only describes this corpus.
+Before a bare digit run needed a label naming the number, the sampled SSN matches were Android event times and lock identifiers, Linux inode/process values and BGL counters; SIN matches overlapped those numeric fields and Zookeeper snapshot filenames, and NHS matches were BGL epoch seconds. The one remaining SIN match is a hyphenated OpenSSH hostname fragment. These are false positives for national identifiers even when a machine or user reference elsewhere on the same line could be sensitive. Zero findings for the remaining kinds only describes this corpus.
 
 [Support maintenance](https://github.com/sponsors/nao1215).

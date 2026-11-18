@@ -43,23 +43,60 @@ func labelIs(word []byte, values ...string) bool {
 	return false
 }
 
-// businessConfidence preserves ambiguous numbers for callers that favor recall.
-// Only an attached business label lowers confidence, never a remote keyword.
-func businessConfidence(data []byte, start int, confidence float64) float64 {
-	prefix := labelPrefix(data, start)
-	for len(prefix) > 0 {
-		rest, word := previousLabelWord(prefix)
-		prefix = rest
-		if labelIs(word, "id", "number", "ref", "code") {
-			continue
-		}
-		if labelIs(word, "order", "invoice", "tracking", "version", "build", "serial", "shipment") || japaneseBusinessLabel(word) {
-			const ambiguousConfidence = .4
-			return ambiguousConfidence
-		}
-		break
+// ambiguousConfidence is the score of a number whose shape is valid but whose
+// label names a record, such as a card number under order_id.
+const ambiguousConfidence = .4
+
+// labelWords is how many label words before a candidate can name its number,
+// as in social security number.
+const labelWords = 3
+
+// phoneLabels returns the words that name a telephone number.
+func phoneLabels() []string {
+	return []string{"phone", "tel", "telephone", "mobile", "cell", "fax", "call", "contact", "電話", "携帯"}
+}
+
+// recordConfidence lowers a number under a record label, as recordLabeled
+// decides, to ambiguousConfidence. The number stays reported, because a
+// payment card or a phone number under a field such as user_id is still one.
+func recordConfidence(data []byte, start int, confidence float64, own ...string) float64 {
+	if recordLabeled(data, start, own...) {
+		return ambiguousConfidence
 	}
 	return confidence
+}
+
+// labelNames reports whether one of the label words right before start names
+// the number: an ASCII word equal to one in own, ignoring case, or a non-ASCII
+// word containing a non-ASCII one, as 電話番号 contains 電話.
+func labelNames(data []byte, start int, own ...string) bool {
+	prefix := labelPrefix(data, start)
+	for range labelWords {
+		var word []byte
+		prefix, word = previousLabelWord(prefix)
+		if ownWord(word, own) {
+			return true
+		}
+		if len(prefix) == 0 {
+			return false
+		}
+	}
+	return false
+}
+
+func ownWord(word []byte, own []string) bool {
+	if labelIs(word, own...) {
+		return true
+	}
+	if !hasNonASCII(word) {
+		return false
+	}
+	for _, label := range own {
+		if hasNonASCII([]byte(label)) && bytes.Contains(word, []byte(label)) {
+			return true
+		}
+	}
+	return false
 }
 
 // japaneseBusinessLabel reports whether a label written in Japanese names an
@@ -99,15 +136,18 @@ func identifierLabeled(data []byte, start int) bool {
 // identifier rather than the number a detector checks, so a check digit that
 // a random ID passes by chance does not mask it: a record word, or number, no
 // or num after one (order number). own lists the words that name the
-// detector's number; as the attached word or the one before it, as in
-// routing code or ssn_id, they keep the candidate.
+// detector's number; as one of the label words before start, as in routing
+// code or ssn_id, they keep the candidate.
 func recordLabeled(data []byte, start int, own ...string) bool {
+	if labelNames(data, start, own...) {
+		return false
+	}
 	rest, word := previousLabelWord(labelPrefix(data, start))
-	_, previous := previousLabelWord(rest)
 	switch {
-	case len(word) == 0, labelIs(word, own...), labelIs(previous, own...):
+	case len(word) == 0:
 		return false
 	case labelIs(word, "number", "no", "num"):
+		_, previous := previousLabelWord(rest)
 		return recordWord(previous)
 	}
 	return recordWord(word)

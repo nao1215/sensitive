@@ -25,12 +25,12 @@
     "set": "development",
     "kind": "ca_sin",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3456
   },
   {
     "set": "development",
@@ -47,12 +47,12 @@
     "set": "development",
     "kind": "in_aadhaar",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 4608
   },
   {
     "set": "development",
@@ -80,12 +80,12 @@
     "set": "development",
     "kind": "uk_nhs",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3840
   },
   {
     "set": "development",
@@ -102,23 +102,23 @@
     "set": "development",
     "kind": "us_itin",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3456
   },
   {
     "set": "development",
     "kind": "us_ssn",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3456
   },
   {
     "set": "development",
@@ -146,12 +146,12 @@
     "set": "development",
     "kind": "ca_sin",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.5,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3456
   },
   {
     "set": "development",
@@ -168,12 +168,12 @@
     "set": "development",
     "kind": "in_aadhaar",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.5,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 4608
   },
   {
     "set": "development",
@@ -201,12 +201,12 @@
     "set": "development",
     "kind": "uk_nhs",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.5,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3840
   },
   {
     "set": "development",
@@ -223,23 +223,23 @@
     "set": "development",
     "kind": "us_itin",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.5,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3456
   },
   {
     "set": "development",
     "kind": "us_ssn",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.5,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3456
   },
   {
     "set": "development",
@@ -267,12 +267,12 @@
     "set": "development",
     "kind": "ca_sin",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.7,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3456
   },
   {
     "set": "development",
@@ -289,12 +289,12 @@
     "set": "development",
     "kind": "in_aadhaar",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.7,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 4608
   },
   {
     "set": "development",
@@ -322,12 +322,12 @@
     "set": "development",
     "kind": "uk_nhs",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.7,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3840
   },
   {
     "set": "development",
@@ -388,12 +388,12 @@
     "set": "held",
     "kind": "ca_sin",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3456
   },
   {
     "set": "held",
@@ -410,12 +410,12 @@
     "set": "held",
     "kind": "in_aadhaar",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 4608
   },
   {
     "set": "held",
@@ -443,12 +443,12 @@
     "set": "held",
     "kind": "uk_nhs",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3840
   },
   {
     "set": "held",
@@ -465,23 +465,23 @@
     "set": "held",
     "kind": "us_itin",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3456
   },
   {
     "set": "held",
     "kind": "us_ssn",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3456
   },
   {
     "set": "held",
@@ -509,12 +509,12 @@
     "set": "held",
     "kind": "ca_sin",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.5,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3456
   },
   {
     "set": "held",
@@ -531,12 +531,12 @@
     "set": "held",
     "kind": "in_aadhaar",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.5,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 4608
   },
   {
     "set": "held",
@@ -564,12 +564,12 @@
     "set": "held",
     "kind": "uk_nhs",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.5,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3840
   },
   {
     "set": "held",
@@ -586,23 +586,23 @@
     "set": "held",
     "kind": "us_itin",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.5,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3456
   },
   {
     "set": "held",
     "kind": "us_ssn",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.5,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3456
   },
   {
     "set": "held",
@@ -630,12 +630,12 @@
     "set": "held",
     "kind": "ca_sin",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.7,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3456
   },
   {
     "set": "held",
@@ -652,12 +652,12 @@
     "set": "held",
     "kind": "in_aadhaar",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.7,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 4608
   },
   {
     "set": "held",
@@ -685,12 +685,12 @@
     "set": "held",
     "kind": "uk_nhs",
     "precision": "100.0%",
-    "recall": "100.0%",
+    "recall": "33.3%",
     "threshold": 0.7,
-    "tp": 288,
+    "tp": 96,
     "fp": 0,
-    "fn": 0,
-    "residual_bytes": 0
+    "fn": 192,
+    "residual_bytes": 3840
   },
   {
     "set": "held",

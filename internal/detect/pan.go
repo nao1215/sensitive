@@ -186,7 +186,7 @@ func (d *PAN) evaluateCandidate(orig []byte, posMap []int, digits []byte, digitL
 	}
 	confidence += 0.4 // Luhn + expected length
 
-	return labeledViewFinding(d.Name(), orig, posMap, start, end, confidence), true
+	return labeledViewFinding(d.Name(), orig, posMap, start, end, confidence, cardLabels()...), true
 }
 
 // passesEAN13 validates the EAN-13 (GTIN-13) check digit: weights 1 and 3
@@ -206,6 +206,10 @@ func passesEAN13(digits []byte) bool {
 
 // eanDigits is the length of an EAN-13 (JAN) code.
 const eanDigits = 13
+
+// cardLabels returns the words that name a payment card, as in card_id or
+// credit card number, and keep its confidence under a record label.
+func cardLabels() []string { return []string{"card", "pan", "cc", "credit", "カード"} }
 
 // passesLuhn implements the Luhn algorithm (MOD 10) for check digit validation.
 // It processes digits from right to left, doubling every second digit.

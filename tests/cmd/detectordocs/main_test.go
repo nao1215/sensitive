@@ -158,17 +158,17 @@ func scoreCases() map[embargo.Kind][]scoreCase {
 		embargo.KindSlackToken:      {{"bot", "xoxb-1234567890", .9}},
 		embargo.KindGoogleAPIKey:    {{"key", "AIza" + strings.Repeat("a", 35), .9}},
 		embargo.KindPrivateKeyPEM:   {{"header", "-----BEGIN PRIVATE KEY-----", .99}, {"body", "-----BEGIN RSA PRIVATE KEY-----\nsynthetic\n-----END RSA PRIVATE KEY-----", .99}},
-		embargo.KindUSSSN:           {{structureCase, "663271262", .6}},
-		embargo.KindUSITIN:          {{structureCase, "984735739", .6}},
+		embargo.KindUSSSN:           {{structureCase, "ssn 663271262", .6}},
+		embargo.KindUSITIN:          {{structureCase, "itin 984735739", .6}},
 		embargo.KindUKNINO:          {{structureCase, "ZM888570B", .7}},
-		embargo.KindUKNHS:           {{checksumCase, "7694617519", .95}},
-		embargo.KindIndiaAadhaar:    {{checksumCase, "258726398415", .95}},
+		embargo.KindUKNHS:           {{checksumCase, "nhs 7694617519", .95}},
+		embargo.KindIndiaAadhaar:    {{checksumCase, "aadhaar 258726398415", .95}},
 		embargo.KindIndiaPAN:        {{structureCase, "ATTJE9054P", .7}},
 		embargo.KindBrazilCPF:       {{checksumCase, "86017494961", .95}},
 		embargo.KindBrazilCNPJ:      {{"numeric", "40771605520366", .95}, {"alphanumeric", "12.ABC.345/01DE-35", .95}},
 		embargo.KindChinaResidentID: {{checksumCase, "510104199602017742", .95}},
 		embargo.KindKoreaRRN:        {{"legacy", "2203292878073", .95}, {"modern labeled", "rrn=2203292878074", .6}},
-		embargo.KindCanadaSIN:       {{"Luhn", "413643081", .95}},
+		embargo.KindCanadaSIN:       {{"Luhn", "sin 413643081", .95}},
 	}
 }
 

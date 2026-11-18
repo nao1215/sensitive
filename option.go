@@ -58,8 +58,8 @@ func WithDetector(d Detector) ScannerOption {
 }
 
 // WithMinConfidence keeps findings at or above threshold; the default is 0.
-// For example, 0.7 excludes PAN and phone candidates with attached business
-// labels (0.4), at the risk of missing mislabeled secrets.
+// For example, 0.7 excludes PAN and phone candidates under a record label such
+// as user_id (0.4), at the risk of missing mislabeled secrets.
 // It also excludes bank-account findings (0.5–0.65) and some sort codes; choose
 // thresholds for the selected kinds. Confidence is a heuristic, not a probability. Non-finite scores or values outside [0,1] panic.
 func WithMinConfidence(threshold float64) ScannerOption {

@@ -42,14 +42,14 @@
       "set": "development",
       "kind": "br_cnpj",
       "tp": 288,
-      "fp": 96,
+      "fp": 0,
       "fn": 0
     },
     {
       "set": "development",
       "kind": "br_cpf",
       "tp": 288,
-      "fp": 96,
+      "fp": 0,
       "fn": 0
     },
     {
@@ -62,9 +62,9 @@
     {
       "set": "development",
       "kind": "ca_sin",
-      "tp": 288,
-      "fp": 96,
-      "fn": 0
+      "tp": 96,
+      "fp": 0,
+      "fn": 192
     },
     {
       "set": "development",
@@ -77,7 +77,7 @@
       "set": "development",
       "kind": "cn_resident_id",
       "tp": 288,
-      "fp": 96,
+      "fp": 0,
       "fn": 0
     },
     {
@@ -139,15 +139,15 @@
     {
       "set": "development",
       "kind": "in_aadhaar",
-      "tp": 288,
-      "fp": 96,
-      "fn": 0
+      "tp": 96,
+      "fp": 0,
+      "fn": 192
     },
     {
       "set": "development",
       "kind": "in_pan",
       "tp": 288,
-      "fp": 96,
+      "fp": 0,
       "fn": 0
     },
     {
@@ -168,7 +168,7 @@
       "set": "development",
       "kind": "kr_rrn",
       "tp": 320,
-      "fp": 96,
+      "fp": 0,
       "fn": 0
     },
     {
@@ -244,15 +244,15 @@
     {
       "set": "development",
       "kind": "uk_nhs",
-      "tp": 288,
-      "fp": 96,
-      "fn": 0
+      "tp": 96,
+      "fp": 0,
+      "fn": 192
     },
     {
       "set": "development",
       "kind": "uk_nino",
       "tp": 288,
-      "fp": 96,
+      "fp": 0,
       "fn": 0
     },
     {
@@ -265,16 +265,16 @@
     {
       "set": "development",
       "kind": "us_itin",
-      "tp": 288,
-      "fp": 96,
-      "fn": 0
+      "tp": 96,
+      "fp": 0,
+      "fn": 192
     },
     {
       "set": "development",
       "kind": "us_ssn",
-      "tp": 288,
-      "fp": 96,
-      "fn": 0
+      "tp": 96,
+      "fp": 0,
+      "fn": 192
     },
     {
       "set": "held",
@@ -308,14 +308,14 @@
       "set": "held",
       "kind": "br_cnpj",
       "tp": 288,
-      "fp": 96,
+      "fp": 0,
       "fn": 0
     },
     {
       "set": "held",
       "kind": "br_cpf",
       "tp": 288,
-      "fp": 96,
+      "fp": 0,
       "fn": 0
     },
     {
@@ -328,9 +328,9 @@
     {
       "set": "held",
       "kind": "ca_sin",
-      "tp": 288,
-      "fp": 96,
-      "fn": 0
+      "tp": 96,
+      "fp": 0,
+      "fn": 192
     },
     {
       "set": "held",
@@ -343,7 +343,7 @@
       "set": "held",
       "kind": "cn_resident_id",
       "tp": 288,
-      "fp": 96,
+      "fp": 0,
       "fn": 0
     },
     {
@@ -405,15 +405,15 @@
     {
       "set": "held",
       "kind": "in_aadhaar",
-      "tp": 288,
-      "fp": 96,
-      "fn": 0
+      "tp": 96,
+      "fp": 0,
+      "fn": 192
     },
     {
       "set": "held",
       "kind": "in_pan",
       "tp": 288,
-      "fp": 96,
+      "fp": 0,
       "fn": 0
     },
     {
@@ -434,7 +434,7 @@
       "set": "held",
       "kind": "kr_rrn",
       "tp": 320,
-      "fp": 96,
+      "fp": 0,
       "fn": 0
     },
     {
@@ -510,15 +510,15 @@
     {
       "set": "held",
       "kind": "uk_nhs",
-      "tp": 288,
-      "fp": 96,
-      "fn": 0
+      "tp": 96,
+      "fp": 0,
+      "fn": 192
     },
     {
       "set": "held",
       "kind": "uk_nino",
       "tp": 288,
-      "fp": 96,
+      "fp": 0,
       "fn": 0
     },
     {
@@ -531,16 +531,16 @@
     {
       "set": "held",
       "kind": "us_itin",
-      "tp": 288,
-      "fp": 96,
-      "fn": 0
+      "tp": 96,
+      "fp": 0,
+      "fn": 192
     },
     {
       "set": "held",
       "kind": "us_ssn",
-      "tp": 288,
-      "fp": 96,
-      "fn": 0
+      "tp": 96,
+      "fp": 0,
+      "fn": 192
     }
   ],
   "critical_residual_bytes": 0,
@@ -590,8 +590,8 @@
     {
       "set": "development",
       "kind": "ca_sin",
-      "numerator": 2500000000,
-      "denominator": 1342081
+      "numerator": 0,
+      "denominator": 1
     },
     {
       "set": "development",
@@ -770,8 +770,8 @@
     {
       "set": "development",
       "kind": "us_ssn",
-      "numerator": 27500000000,
-      "denominator": 1342081
+      "numerator": 0,
+      "denominator": 1
     },
     {
       "set": "held",
@@ -818,7 +818,7 @@
     {
       "set": "held",
       "kind": "ca_sin",
-      "numerator": 14000000000,
+      "numerator": 1000000000,
       "denominator": 103880631
     },
     {
@@ -884,8 +884,8 @@
     {
       "set": "held",
       "kind": "in_aadhaar",
-      "numerator": 216000000000,
-      "denominator": 34626877
+      "numerator": 0,
+      "denominator": 1
     },
     {
       "set": "held",
@@ -920,8 +920,8 @@
     {
       "set": "held",
       "kind": "mynumber",
-      "numerator": 227000000000,
-      "denominator": 34626877
+      "numerator": 0,
+      "denominator": 1
     },
     {
       "set": "held",
@@ -974,8 +974,8 @@
     {
       "set": "held",
       "kind": "uk_nhs",
-      "numerator": 96500000000,
-      "denominator": 42178681
+      "numerator": 0,
+      "denominator": 1
     },
     {
       "set": "held",
@@ -998,8 +998,8 @@
     {
       "set": "held",
       "kind": "us_ssn",
-      "numerator": 43000000000,
-      "denominator": 103880631
+      "numerator": 0,
+      "denominator": 1
     }
   ],
   "speed": {

@@ -4,6 +4,8 @@ import (
 	"testing"
 )
 
+const userIDLabel = "user_id="
+
 func TestBusinessIdentifiersHaveLowerConfidence(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
@@ -61,7 +63,7 @@ func TestMyNumberIdentifierLabels(t *testing.T) {
 		{`{"recipientAccountId":"`, false},
 		{"aws_account_id=", false},
 		{"AssumeRole for account ", false},
-		{"user_id=", false},
+		{userIDLabel, false},
 		{"tracking ", false},
 		{"customer number ", false},
 		{"注文番号: ", false},
@@ -80,7 +82,7 @@ func TestMyNumberIdentifierLabels(t *testing.T) {
 func TestRecordLabeled(t *testing.T) {
 	t.Parallel()
 	for input, want := range map[string]bool{
-		"user_id=":            true,
+		userIDLabel:           true,
 		"order number: ":      true,
 		"注文番号 ":               true,
 		"customerID: ":        true,
@@ -94,6 +96,52 @@ func TestRecordLabeled(t *testing.T) {
 		data := []byte(input + "123")
 		if got := recordLabeled(data, len(input), "routing", "ssn", "security"); got != want {
 			t.Errorf("recordLabeled(%q) = %v, want %v", input, got, want)
+		}
+	}
+}
+
+func TestRecordConfidence(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		d     Detector
+		label string
+		want  float64
+	}{
+		{NewPAN(), userIDLabel, ambiguousConfidence},
+		{NewPAN(), "customer number: ", ambiguousConfidence},
+		{NewPAN(), "card_id=", 1},
+		{NewPAN(), "credit card number: ", 1},
+		{NewPAN(), "カード番号: ", 1},
+		{NewJPPhone(), "user_id: ", ambiguousConfidence},
+		{NewJPPhone(), "phone_id: ", 0.9},
+		{NewJPPhone(), "電話番号: ", 0.9},
+		{NewJPPhone(), "携帯番号=", 0.9},
+	} {
+		value := samplePAN
+		if tc.d.Name() == NameJPPhone {
+			value = sampleMobile
+		}
+		got := tc.d.Scan([]byte(tc.label + value))
+		if len(got) != 1 || got[0].Confidence != tc.want {
+			t.Errorf("%s %q: %+v, want confidence %v", tc.d.Name(), tc.label, got, tc.want)
+		}
+	}
+}
+
+func TestLabelNames(t *testing.T) {
+	t.Parallel()
+	for input, want := range map[string]bool{
+		"social security number ": true,
+		"ssn_ref_no=":             true,
+		"ssn a b c=":              false,
+		"携帯番号: ":                  true,
+		"phones: ":                false,
+		"value=":                  false,
+		"":                        false,
+	} {
+		data := []byte(input + "123")
+		if got := labelNames(data, len(input), "ssn", "security", "phone", "携帯"); got != want {
+			t.Errorf("labelNames(%q) = %v, want %v", input, got, want)
 		}
 	}
 }

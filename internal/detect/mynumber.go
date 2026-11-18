@@ -51,7 +51,7 @@ func (d *MyNumber) candidate(orig, data []byte, posMap []int, i int) (Finding, i
 		return Finding{}, end, false
 	}
 	//nolint:mnd // The detector contract documents this heuristic score.
-	return labeledViewFinding(d.Name(), orig, posMap, i, end, 0.95), end, true
+	return viewFinding(d.Name(), posMap, i, end, 0.95), end, true
 }
 
 // normalizedIdentifierStart reports whether position i of a normalized view
