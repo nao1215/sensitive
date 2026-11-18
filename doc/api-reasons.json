@@ -38,7 +38,7 @@
     "symbols": [
       "embargo.WithMinConfidence"
     ],
-    "need": "A team that sees too many low-score findings, such as labelled business numbers or lower-scored bank accounts, drops them below a threshold it chose from doc/accuracy.md.",
+    "need": "A team that sees too many low-score findings, such as labeled business numbers or lower-scored bank accounts, drops them below a threshold it chose from doc/accuracy.md.",
     "without": "Without it every caller of Scan would filter Confidence by hand, and the slog handler, MaskJSON and adapters, which mask internally, could not be tuned at all."
   },
   {
