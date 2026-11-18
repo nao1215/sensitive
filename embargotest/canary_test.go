@@ -252,7 +252,7 @@ func TestCanaryEscapedCharacterByCharacter(t *testing.T) {
 			}
 		})
 	}
-	for _, clean := range []string{"%2", "%zz canary", `\u00`, "public canary alpha"} {
+	for _, clean := range []string{"%2", "%zz canary", `\u00`, `\uzzzz canary`, "public canary alpha"} {
 		if containsCanary([]byte(clean), needles) {
 			t.Fatalf("unrelated output %q detected", clean)
 		}
