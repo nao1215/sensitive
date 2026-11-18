@@ -29,7 +29,7 @@ func exitCode(args []string, input io.Reader, output, diagnostics io.Writer) int
 	return 0
 }
 
-// run masks lines by default; --report prints finding counts instead.
+// run masks lines by default; --format json and jsonl report findings instead.
 func run(args []string, input io.Reader, output io.Writer) error {
 	parsed, err := parseOptions(args)
 	if errors.Is(err, flag.ErrHelp) {
@@ -47,10 +47,14 @@ func run(args []string, input io.Reader, output io.Writer) error {
 	}
 	source, closeInputs := openInputs(parsed.files, input)
 	defer closeInputs()
-	if parsed.report {
+	switch parsed.format {
+	case formatJSON:
 		return writeReport(source, output, scanner, parsed.samples)
+	case formatJSONL:
+		return writeFindings(source, output, scanner)
+	default:
+		return filterLines(source, output, scanner)
 	}
-	return filterLines(source, output, scanner)
 }
 
 func writeUsage(output io.Writer) error {

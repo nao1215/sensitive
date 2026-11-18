@@ -273,12 +273,13 @@ In a sample service with planted leaks (a DSN, wrapped errors, an Authorization 
 
 ## Command line
 
-The `embargo` command masks log files or a pipe line by line, keeps JSON lines' shape and depends only on the standard library.
+The `embargo` command masks a log file or a pipe line by line, keeps JSON lines' shape and depends only on the standard library.
 
 ```sh
 go install github.com/nao1215/embargo/cmd/embargo@v0.13.0
 kubectl logs deploy/api | embargo
-embargo --report --kinds all app.log
+embargo --format json app.log
+embargo --format jsonl app.log
 ```
 
 <!-- cli-example: e2e/atago/cli.atago.yaml -->
@@ -287,7 +288,7 @@ $ printf '%s\n' 'login failed for alice@example.com from 203.0.113.7' | embargo
 login failed for [REDACTED] from [REDACTED]
 ```
 
-`--report` prints per-kind counts and masked byte locations instead, without echoing the input. [Flags, limits and comparing settings](doc/audit.md)
+The masked lines are what you paste into a ticket or hand to an LLM. `--format json` prints per-kind counts with a few locations, and `--format jsonl` prints one line per finding with its line, column and kind; neither prints a matched value. Because jsonl prints nothing for a clean log, `embargo --format jsonl app.log | grep -q .` is true exactly when a log holds a secret, which is enough for a CI step. [Flags, limits and comparing settings](doc/audit.md)
 
 ## Tested outputs
 

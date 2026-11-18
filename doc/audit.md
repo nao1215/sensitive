@@ -18,27 +18,38 @@ A line that holds one JSON object or array goes through MaskJSON, so keys, types
 
 ## Measure the policy
 
-Run `--report` against a local application log before choosing scanner kinds. It counts findings, not confirmed secrets or false positives. A person must classify matched offsets against the source log and label a separate sample of missed values to estimate precision and recall. The public corpus and test count cannot supply those labels for your application.
+Run `--format json` against a local application log before choosing scanner kinds. It counts findings, not confirmed secrets or false positives. A person must classify matched offsets against the source log and label a separate sample of missed values to estimate precision and recall. The public corpus and test count cannot supply those labels for your application.
 
 ```sh
-embargo --report < app.log
-embargo --report --kinds all app.log
-embargo --report --kinds pan,credential --min-confidence 0.7 app.log
+embargo --format json < app.log
+embargo --format json --kinds all app.log
+embargo --format json --kinds pan,credential --min-confidence 0.7 app.log
 ```
 
-The default is NewScanner's 26 kinds at minimum confidence 0. `--kinds all` includes the national identifiers and entropy heuristic; a list replaces the selection. `--samples` bounds locations per kind (default 3, range 0–20) and requires `--report`; counts still cover the complete input. The report reads lines exactly as the filter does: a line may hold up to 4 MiB, and a read failure or a longer line exits nonzero with a message naming the line and without a partial report.
+The default is NewScanner's 26 kinds at minimum confidence 0. `--kinds all` includes the national identifiers and entropy heuristic; a list replaces the selection. `--samples` bounds locations per kind (default 3, range 0–20) and works only with `--format json`; counts still cover the complete input. Every format reads lines exactly as the filter does: a line may hold up to 4 MiB, and a read failure or a longer line exits nonzero with a message naming the line. `--format json` then writes no partial report; text and jsonl stop before that line.
 
 For a log containing `card=4111111111111111`, a pan finding has start 5, end 21, line 1 and column 5. Start/end are zero-based byte offsets in the original input, end-exclusive; line is one-based and column is a zero-based byte offset in that line. UTF-8 and CRLF offsets are tested. Multiple overlapping kinds can count the same bytes. Only matched spans are represented; neither matched values nor surrounding log text are printed.
 
 Each Kind includes a drop_option saying how to leave it out with `--kinds`. Excluding a Kind also excludes real secrets of that kind. No per-Kind confidence option exists. The report scans each raw line independently, so unlike the filter it does not apply MaskJSON's sensitive-key subtree policy or reassemble records and encoded values. Audit JSON masking separately through the handler or MaskJSON used by the application.
 
-## Compare settings on the same input
+## List every finding and gate CI
 
-Run `--report` once per setting on the same file and diff the two reports. Counts are complete and samples stay masked, so the diff shows which kinds a selection or threshold gains or loses without printing log text.
+`--format jsonl` prints one JSON object per finding as each line is read, with its kind, byte offsets, line and column, and never the matched value. Unlike `--format json` it has no sample limit, so a script or an LLM agent can visit every location. A clean log prints nothing, so a CI step can fail on any output:
 
 ```sh
-embargo --report --kinds pan,email app.log > before.json
-embargo --report --kinds pan,credential --min-confidence 0.7 app.log > after.json
+embargo --format jsonl app.log
+! embargo --format jsonl app.log | grep -q .
+```
+
+The exit status stays 0 when findings are printed; 1 always means a usage, input or output error.
+
+## Compare settings on the same input
+
+Run `--format json` once per setting on the same file and diff the two reports. Counts are complete and samples stay masked, so the diff shows which kinds a selection or threshold gains or loses without printing log text.
+
+```sh
+embargo --format json --kinds pan,email app.log > before.json
+embargo --format json --kinds pan,credential --min-confidence 0.7 app.log > after.json
 diff before.json after.json
 ```
 

@@ -190,7 +190,7 @@ func TestFilterAndReportShareTheLineLimit(t *testing.T) {
 	t.Parallel()
 	exact := strings.Repeat("z", maximumLine)
 	over := exact + "z"
-	for _, args := range [][]string{nil, {flagReport}} {
+	for _, args := range [][]string{nil, {flagFormat, formatJSON}} {
 		var out bytes.Buffer
 		if err := run(args, strings.NewReader(exact), &out); err != nil {
 			t.Errorf("%v: a final line of exactly 4 MiB was rejected: %v", args, err)

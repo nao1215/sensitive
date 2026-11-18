@@ -639,15 +639,35 @@ func TestReadmeCLIExampleIsPinnedByE2E(t *testing.T) {
 			t.Errorf("%s does not run or expect the README line %q", block[1], line)
 		}
 	}
-	// Every embargo command in the install block also runs in the spec.
+	// Every embargo command in the README Command line block and in the
+	// command guide also runs in the spec, through sh when it uses the shell.
 	install := regexp.MustCompile("(?s)## Command line\n.*?```sh\n(.*?)```").FindSubmatch(readme)
 	if install == nil {
 		t.Fatal("README Command line section needs an sh block")
 	}
-	for line := range strings.Lines(string(install[1])) {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "embargo ") && !strings.Contains(string(spec), "command: "+line+"\n") {
-			t.Errorf("%s does not run the README command %q", block[1], line)
+	guide, err := os.ReadFile("doc/audit.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	matches := regexp.MustCompile("(?s)```sh\n(.*?)```").FindAllSubmatch(guide, -1)
+	blocks := make([][]byte, 0, len(matches)+1)
+	blocks = append(blocks, install[1])
+	for _, match := range matches {
+		blocks = append(blocks, match[1])
+	}
+	for _, text := range blocks {
+		for line := range strings.Lines(string(text)) {
+			line = strings.TrimSpace(line)
+			if !strings.HasPrefix(line, "embargo ") && !strings.HasPrefix(line, "! embargo ") {
+				continue
+			}
+			command := line
+			if strings.ContainsAny(line, "<>|!") {
+				command = "sh -c '" + line + "'"
+			}
+			if !strings.Contains(string(spec), "command: "+command+"\n") {
+				t.Errorf("%s does not run the documented command %q", block[1], line)
+			}
 		}
 	}
 }

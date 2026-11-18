@@ -11,13 +11,14 @@ const (
 	secretArgument     = "password=opaqueFixture"
 	flagKinds          = "--kinds"
 	flagMinimum        = "--min-confidence"
-	flagReport         = "--report"
+	flagFormat         = "--format"
 	kindsAll           = "all"
 	unknownFlagMessage = "embargo: unknown flag or missing flag value; see embargo --help"
 	minimumMessage     = "embargo: --min-confidence must be a number from 0 to 1"
 	kindsMessage       = "embargo: --kinds must be all or a comma-separated list of kinds; see embargo --help"
 	flagSamples        = "--samples"
 	samplesMessage     = "embargo: --samples must be an integer from 0 to 20"
+	formatMessage      = "embargo: --format must be text, json or jsonl"
 )
 
 func TestOptionErrorsNameTheFlagAndNeverEchoTheValue(t *testing.T) {
@@ -30,16 +31,20 @@ func TestOptionErrorsNameTheFlagAndNeverEchoTheValue(t *testing.T) {
 		{args: []string{flagMinimum, "-0.1"}, want: minimumMessage},
 		{args: []string{flagMinimum, "NaN"}, want: minimumMessage},
 		{args: []string{flagMinimum, secretArgument}, want: minimumMessage},
-		{args: []string{flagReport, flagSamples, "21"}, want: samplesMessage},
-		{args: []string{flagReport, flagSamples, "-1"}, want: samplesMessage},
-		{args: []string{flagReport, flagSamples, secretArgument}, want: samplesMessage},
-		{args: []string{flagSamples, "1"}, want: "embargo: --samples requires --report"},
+		{args: []string{flagFormat, formatJSON, flagSamples, "21"}, want: samplesMessage},
+		{args: []string{flagFormat, formatJSON, flagSamples, "-1"}, want: samplesMessage},
+		{args: []string{flagFormat, formatJSON, flagSamples, secretArgument}, want: samplesMessage},
+		{args: []string{flagSamples, "1"}, want: "embargo: --samples requires --format json"},
 		{args: []string{flagKinds, "xyz"}, want: kindsMessage},
 		{args: []string{flagKinds, secretArgument}, want: kindsMessage},
 		{args: []string{flagKinds, "pan," + secretArgument}, want: kindsMessage},
 		{args: []string{"--" + secretArgument}, want: unknownFlagMessage},
 		{args: []string{flagKinds}, want: unknownFlagMessage},
 		{args: []string{"--all"}, want: unknownFlagMessage},
+		{args: []string{"--report"}, want: unknownFlagMessage},
+		{args: []string{flagFormat, "yaml"}, want: formatMessage},
+		{args: []string{flagFormat, secretArgument}, want: formatMessage},
+		{args: []string{flagFormat, formatJSONL, flagSamples, "1"}, want: "embargo: --samples requires --format json"},
 	} {
 		var out, diagnostics bytes.Buffer
 		code := exitCode(tc.args, strings.NewReader(secretArgument), &out, &diagnostics)
@@ -51,14 +56,14 @@ func TestOptionErrorsNameTheFlagAndNeverEchoTheValue(t *testing.T) {
 
 func TestOptionBoundariesAreAccepted(t *testing.T) {
 	t.Parallel()
-	for _, args := range [][]string{{flagMinimum, "0"}, {flagMinimum, "1"}, {flagReport, flagSamples, "0"}, {flagReport, flagSamples, "20"}, {flagKinds, kindsAll}, {flagKinds, " pan , email "}} {
+	for _, args := range [][]string{{flagMinimum, "0"}, {flagMinimum, "1"}, {flagFormat, formatJSON, flagSamples, "0"}, {flagFormat, formatJSON, flagSamples, "20"}, {flagKinds, kindsAll}, {flagKinds, " pan , email "}} {
 		var out, diagnostics bytes.Buffer
 		if code := exitCode(args, strings.NewReader("clean\n"), &out, &diagnostics); code != 0 || out.Len() == 0 || diagnostics.Len() != 0 {
 			t.Errorf("valid options rejected: %v stderr=%q", args, diagnostics.String())
 		}
 	}
-	parsed, err := parseOptions([]string{flagReport, fileArgument, "b.log"})
-	if err != nil || !parsed.report || parsed.samples != defaultSamples || parsed.minimum != 0 || strings.Join(parsed.files, ",") != "a.log,b.log" {
+	parsed, err := parseOptions([]string{flagFormat, formatJSON, fileArgument, "b.log"})
+	if err != nil || parsed.format != formatJSON || parsed.samples != defaultSamples || parsed.minimum != 0 || strings.Join(parsed.files, ",") != "a.log,b.log" {
 		t.Fatalf("parsed = %+v, %v", parsed, err)
 	}
 }
@@ -74,14 +79,14 @@ func TestParseConfidenceBounds(t *testing.T) {
 
 func TestFlagsAfterFilesAreRejected(t *testing.T) {
 	t.Parallel()
-	for _, args := range [][]string{{fileArgument, flagKinds, "email"}, {fileArgument, "-x"}, {fileArgument, flagReport}} {
+	for _, args := range [][]string{{fileArgument, flagKinds, "email"}, {fileArgument, "-x"}, {fileArgument, flagFormat, formatJSON}} {
 		var out, diagnostics bytes.Buffer
 		code := exitCode(args, strings.NewReader(""), &out, &diagnostics)
 		if code != 1 || out.Len() != 0 || diagnostics.String() != "embargo: flags must come before the files; see embargo --help\n" {
 			t.Errorf("%v: exit=%d stdout=%q stderr=%q", args, code, out.String(), diagnostics.String())
 		}
 	}
-	for _, args := range [][]string{{"--", "-x.log"}, {flagReport, "--", "-", "-y"}, {"-"}} {
+	for _, args := range [][]string{{"--", "-x.log"}, {flagFormat, formatJSON, "--", "-", "-y"}, {"-"}} {
 		parsed, err := parseOptions(args)
 		if err != nil {
 			t.Errorf("%v: %v", args, err)

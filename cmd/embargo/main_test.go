@@ -11,7 +11,7 @@ func TestHelpVersionAndExitStatus(t *testing.T) {
 	t.Parallel()
 	for _, args := range [][]string{{"-h"}, {"--help"}} {
 		var out, diagnostics bytes.Buffer
-		if code := exitCode(args, strings.NewReader(""), &out, &diagnostics); code != 0 || !strings.HasPrefix(out.String(), "Usage: embargo [") || !strings.Contains(out.String(), flagReport) || !strings.Contains(out.String(), kindsHelp) {
+		if code := exitCode(args, strings.NewReader(""), &out, &diagnostics); code != 0 || !strings.HasPrefix(out.String(), "Usage: embargo [") || !strings.Contains(out.String(), flagFormat) || !strings.Contains(out.String(), kindsHelp) {
 			t.Errorf("%v: code=%d output=%q", args, code, out.String())
 		}
 	}

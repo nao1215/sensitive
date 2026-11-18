@@ -31,16 +31,16 @@
     {
       "file": "cmd/embargo/main.go",
       "name": "run",
-      "statements": 15,
-      "cyclomatic": 6,
-      "lines": 22
+      "statements": 16,
+      "cyclomatic": 7,
+      "lines": 26
     },
     {
       "file": "cmd/embargo/options.go",
       "name": "parseOptions",
-      "statements": 30,
-      "cyclomatic": 11,
-      "lines": 36
+      "statements": 32,
+      "cyclomatic": 14,
+      "lines": 39
     },
     {
       "file": "embargotest/guard_names.go",

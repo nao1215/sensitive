@@ -27,7 +27,7 @@ func TestFilesAreReadInOrderLikeCat(t *testing.T) {
 		t.Fatalf("got %q, want %q", out.String(), want)
 	}
 	out.Reset()
-	if err := run([]string{flagReport, first, second}, strings.NewReader(""), &out); err != nil || !strings.Contains(out.String(), `"lines": 2`) {
+	if err := run([]string{flagFormat, formatJSON, first, second}, strings.NewReader(""), &out); err != nil || !strings.Contains(out.String(), `"lines": 2`) {
 		t.Fatalf("report over files: err=%v output=%s", err, out.String())
 	}
 }
@@ -46,7 +46,7 @@ func TestMissingFileStopsWithoutItsName(t *testing.T) {
 		t.Fatalf("missing file: err=%v output=%q", err, out.String())
 	}
 	out.Reset()
-	if err := run([]string{flagReport, missing}, strings.NewReader(""), &out); err == nil || err.Error() != "embargo: an input file cannot be opened" || out.Len() != 0 {
+	if err := run([]string{flagFormat, formatJSON, missing}, strings.NewReader(""), &out); err == nil || err.Error() != "embargo: an input file cannot be opened" || out.Len() != 0 {
 		t.Fatalf("missing file in a report: err=%v output=%q", err, out.String())
 	}
 	if run([]string{directory}, strings.NewReader(""), &out) == nil {
