@@ -1,7 +1,7 @@
 {
-  "source_sha256": "f9bc930f9e97d023144a277249ebcb9aa925e4a37b1a42f03adea7a0d2e78787",
+  "source_sha256": "5e6d567ce955914455fad26ec488545c7d0f0b3e8e73711f8939beda84dd04eb",
   "manifest_sha256": "684ba6dffcb0942d4d7ac205a2adc136318e5faf9db2bbb37cdbdb001b338d31",
-  "labels_sha256": "3773458de1ea7986103680cc555f75bf3a4c24b2e3d898ebd3258621b9a1e49c",
+  "labels_sha256": "b11537368fbfce430c8c640c1dea7cf05f3d869d73ca8a93a71586af2145b394",
   "baseline_sha256": "f7066945d56d1b3526d282f2f68efe5fe158ed71c3b845b3d9f86aa1df090ac5",
   "datasets": [
     {
@@ -2912,7 +2912,6 @@
     {
       "counts": {
         "all": {
-          "high_entropy": 1,
           "ipaddr": 91304
         },
         "default": {
@@ -2931,17 +2930,10 @@
         }
       },
       "dataset": "Kubernetes audit",
-      "findings_sha256": "0c25bf843e7e0f489c9009a9e6bf1d3cb7d9b2fe38ec56a152b14ae9c1197b22",
+      "findings_sha256": "de3b7f4074b318810346844a02b57441e65e5cdf590a0c2754d22292f75619cb",
       "bytes": 92794383,
       "lines": 94287,
       "strata": {
-        "high_entropy": {
-          "sample_ids": [
-            "7694970c4cce2a63a1c2d9e2fb44cda173e8a64e0163fec632558b2af4987377"
-          ],
-          "sample_count": 1,
-          "sample_fp": 1
-        },
         "ipaddr": {
           "sample_ids": [
             "00005e68fe5faa2021065f07be9745e3d7ac685311ed9d703b9ab4d90015bc07",
