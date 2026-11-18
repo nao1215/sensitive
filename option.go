@@ -1,8 +1,10 @@
 package embargo
 
 import (
+	"maps"
 	"math"
 	"reflect"
+	"slices"
 )
 
 // ScannerOption configures a scanner at construction time.
@@ -75,8 +77,8 @@ func validScore(score float64) bool { return !math.IsNaN(score) && score >= 0 &&
 func quotedKind(kind Kind, known map[Kind]bool) string {
 	const maxEdits = 2
 	best, bestDistance := Kind(""), maxEdits+1
-	for candidate := range known {
-		if d := editDistance(string(kind), string(candidate)); d < bestDistance || (d == bestDistance && candidate < best) {
+	for _, candidate := range slices.Sorted(maps.Keys(known)) {
+		if d := editDistance(string(kind), string(candidate)); d < bestDistance {
 			best, bestDistance = candidate, d
 		}
 	}

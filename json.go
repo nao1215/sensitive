@@ -251,7 +251,8 @@ type namedValue struct {
 // member records a name member whose string is a sensitive key and the
 // output span of a string value member.
 func (p *namedValue) member(w *jsonWalker, key string, raw []byte, resultStart int) {
-	if !p.active || len(raw) < len(`""`) || raw[0] != '"' {
+	// raw is a whole JSON value, so it is never empty.
+	if !p.active || raw[0] != '"' {
 		return
 	}
 	switch namedValueField(key) {

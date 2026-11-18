@@ -33,6 +33,7 @@ func TestWithKindsPanicNamesOnlyMisspellings(t *testing.T) {
 		"pa":                  `embargo: unknown built-in kind "pa" (did you mean "pan"?)`,
 		"IPADDR":              unknownKindPanic,
 		"opaqueFixtureValue1": unknownKindPanic,
+		"zzzpan":              unknownKindPanic,
 		"":                    unknownKindPanic,
 	} {
 		func() {
