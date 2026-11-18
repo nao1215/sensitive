@@ -148,39 +148,18 @@ func overlapsReportedDate(used map[int]int, start, end int) bool {
 }
 
 // expiryKeywords are the context keywords used to identify card expiry mentions.
-// Longer keywords are listed first so that "expiration" matches before "exp".
-// Common mixed-case variants are included to reduce false negatives from
-// case variations in real-world documents.
+// keywordSet folds ASCII case, so each English keyword is listed once.
+// Word boundaries keep "exp" from matching inside "expiration".
 func expiryKeywords() *keywordSet {
 	return newKeywordSet([][]byte{
 		[]byte("expiration date"),
-		[]byte("Expiration Date"),
-		[]byte("Expiration date"),
-		[]byte("EXPIRATION DATE"),
 		[]byte("expiration"),
-		[]byte("Expiration"),
-		[]byte("EXPIRATION"),
 		[]byte("valid through"),
-		[]byte("Valid Through"),
-		[]byte("Valid through"),
-		[]byte("VALID THROUGH"),
 		[]byte("valid thru"),
-		[]byte("Valid Thru"),
-		[]byte("Valid thru"),
-		[]byte("VALID THRU"),
 		[]byte("expires"),
-		[]byte("Expires"),
-		[]byte("EXPIRES"),
 		[]byte("expiry"),
-		[]byte("Expiry"),
-		[]byte("EXPIRY"),
 		[]byte("exp date"),
-		[]byte("Exp Date"),
-		[]byte("Exp date"),
-		[]byte("EXP DATE"),
 		[]byte("exp"),
-		[]byte("Exp"),
-		[]byte("EXP"),
 		// Japanese: 有効期限
 		{0xE6, 0x9C, 0x89, 0xE5, 0x8A, 0xB9, 0xE6, 0x9C, 0x9F, 0xE9, 0x99, 0x90},
 	})

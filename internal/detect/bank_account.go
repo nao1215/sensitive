@@ -150,25 +150,11 @@ func bankAccountKeywords() *keywordSet {
 		// 預金口座 (deposit account)
 		{0xE9, 0xA0, 0x90, 0xE9, 0x87, 0x91, 0xE5, 0x8F, 0xA3, 0xE5, 0xBA, 0xA7},
 
-		// English keywords (longer first).
-		// Common mixed-case variants are included to reduce false negatives
-		// from case variations in real-world documents.
+		// English keywords; keywordSet folds ASCII case.
 		[]byte("bank account"),
-		[]byte("Bank Account"),
-		[]byte("Bank account"),
-		[]byte("BANK ACCOUNT"),
 		[]byte("account number"),
-		[]byte("Account Number"),
-		[]byte("Account number"),
-		[]byte("ACCOUNT NUMBER"),
 		[]byte("acct no"),
-		[]byte("Acct No"),
-		[]byte("Acct no"),
-		[]byte("ACCT NO"),
 		[]byte("account no"),
-		[]byte("Account No"),
-		[]byte("Account no"),
-		[]byte("ACCOUNT NO"),
 	})
 }
 

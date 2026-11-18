@@ -76,18 +76,7 @@ func cvvKeywords() *keywordSet {
 		[]byte("CVV"),
 		[]byte("CVC"),
 		[]byte("CID"),
-		[]byte("cvv2"),
-		[]byte("cvc2"),
-		[]byte("cvv"),
-		[]byte("cvc"),
-		[]byte("cid"),
-		[]byte("Cvv"),
-		[]byte("Cvc"),
-		[]byte("Cid"),
 		[]byte("security code"),
-		[]byte("Security Code"),
-		[]byte("Security code"),
-		[]byte("SECURITY CODE"),
 		// Japanese: セキュリティコード
 		{
 			0xE3, 0x82, 0xBB, 0xE3, 0x82, 0xAD, 0xE3, 0x83, 0xA5, 0xE3,

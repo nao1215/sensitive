@@ -308,3 +308,29 @@ func TestContextRejectedBoundaries(t *testing.T) {
 		t.Fatal("empty keyword changed matches")
 	}
 }
+
+func TestKeywordTablesListEachFoldedKeywordOnce(t *testing.T) {
+	t.Parallel()
+
+	tables := map[string]*keywordSet{
+		"ach":         achKeywords(),
+		"cvv":         cvvKeywords(),
+		"card expiry": expiryKeywords(),
+		"merchant":    merchantKeywords(),
+		"terminal":    terminalKeywords(),
+		"bank":        bankAccountKeywords(),
+	}
+	for name, set := range tables {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			seen := make(map[string]string)
+			for _, e := range set.entries {
+				folded := string(e.lowered)
+				if first, ok := seen[folded]; ok {
+					t.Errorf("%q repeats %q after ASCII case folding", e.original, first)
+				}
+				seen[folded] = string(e.original)
+			}
+		})
+	}
+}

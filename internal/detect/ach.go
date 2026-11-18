@@ -71,33 +71,14 @@ func (d *ACHTrace) Scan(data []byte) []Finding {
 // traces, distributed-tracing IDs), causing false positives with nearby
 // 15-digit numbers. Only compound phrases ("trace number", "ACH trace")
 // or the acronym "ACH" itself are used.
-//
-// Common mixed-case variants (e.g., "Trace number") are included to
-// reduce false negatives from case variations in real-world documents.
+// keywordSet folds ASCII case, so each keyword is listed once.
 func achKeywords() *keywordSet {
 	return newKeywordSet([][]byte{
 		[]byte("ACH"),
-		[]byte("ach"),
-		[]byte("Ach"),
 		[]byte("ACH Trace"),
-		[]byte("ACH trace"),
-		[]byte("ACH TRACE"),
-		[]byte("ach trace"),
-		[]byte("Ach Trace"),
-		[]byte("Ach trace"),
 		[]byte("trace number"),
-		[]byte("Trace Number"),
-		[]byte("Trace number"),
-		[]byte("TRACE NUMBER"),
 		[]byte("trace no"),
-		[]byte("Trace No"),
-		[]byte("Trace no"),
-		[]byte("TRACE NO"),
 		[]byte("trace #"),
-		[]byte("Trace #"),
-		[]byte("TRACE #"),
 		[]byte("trace#"),
-		[]byte("Trace#"),
-		[]byte("TRACE#"),
 	})
 }

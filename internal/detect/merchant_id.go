@@ -120,9 +120,6 @@ func overlapsFinding(findings []Finding, start, end int) bool {
 func merchantKeywords() *keywordSet {
 	return newKeywordSet([][]byte{
 		[]byte("merchant ID"),
-		[]byte("Merchant ID"),
-		[]byte("MERCHANT ID"),
-		[]byte("merchant id"),
 		[]byte("MID:"),
 		[]byte("MID "),
 		// Japanese: 加盟店ID
@@ -136,9 +133,6 @@ func merchantKeywords() *keywordSet {
 func terminalKeywords() *keywordSet {
 	return newKeywordSet([][]byte{
 		[]byte("terminal ID"),
-		[]byte("Terminal ID"),
-		[]byte("TERMINAL ID"),
-		[]byte("terminal id"),
 		[]byte("TID:"),
 		[]byte("TID "),
 		// Japanese: 端末ID
