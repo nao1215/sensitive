@@ -596,6 +596,29 @@ func syncVisualDocument(t *testing.T, path, name, content string) {
 // TestReadmeCLIExampleIsPinnedByE2E keeps the README command example in step
 // with the atago spec that runs it: the example's input line must be fed to the
 // built command there and its output line must be what the spec expects.
+func TestInstallExamplesShareOneVersion(t *testing.T) {
+	t.Parallel()
+	files, err := filepath.Glob("doc/*.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	pin := regexp.MustCompile(`github\.com/nao1215/embargo[a-z/]*@(v\d[0-9A-Za-z.-]*)`)
+	versions := map[string][]string{}
+	for _, path := range append(files, "README.md") {
+		// #nosec G304 -- The paths are repository documentation files.
+		text, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, match := range pin.FindAllSubmatch(text, -1) {
+			versions[string(match[1])] = append(versions[string(match[1])], path)
+		}
+	}
+	if len(versions) != 1 {
+		t.Fatalf("install examples pin different versions: %v", versions)
+	}
+}
+
 func TestReadmeCLIExampleIsPinnedByE2E(t *testing.T) {
 	t.Parallel()
 	readme, err := os.ReadFile("README.md")
@@ -614,6 +637,17 @@ func TestReadmeCLIExampleIsPinnedByE2E(t *testing.T) {
 	for _, line := range [][]byte{block[2], block[3]} {
 		if !regexp.MustCompile(`(?m)^\s+` + regexp.QuoteMeta(string(line)) + `$`).Match(spec) {
 			t.Errorf("%s does not run or expect the README line %q", block[1], line)
+		}
+	}
+	// Every embargo command in the install block also runs in the spec.
+	install := regexp.MustCompile("(?s)## Command line\n.*?```sh\n(.*?)```").FindSubmatch(readme)
+	if install == nil {
+		t.Fatal("README Command line section needs an sh block")
+	}
+	for line := range strings.Lines(string(install[1])) {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "embargo ") && !strings.Contains(string(spec), "command: "+line+"\n") {
+			t.Errorf("%s does not run the README command %q", block[1], line)
 		}
 	}
 }

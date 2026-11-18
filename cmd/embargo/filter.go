@@ -26,7 +26,7 @@ func filterLines(input io.Reader, output io.Writer, scanner *embargo.Scanner) er
 	writer := bufio.NewWriterSize(output, ioBuffer)
 	for number := 1; ; number++ {
 		line, tooLong, readErr := readLine(reader)
-		if failure := readFailure(tooLong, readErr, number); failure != nil {
+		if failure := readFailure(tooLong, readErr, number, "output stops before it"); failure != nil {
 			return flushThen(writer, failure)
 		}
 		if err := writeMaskedLine(writer, scanner, line); err != nil {
@@ -42,14 +42,15 @@ func filterLines(input io.Reader, output io.Writer, scanner *embargo.Scanner) er
 	}
 }
 
-// readFailure turns a stopped read into the message for line number, or nil
-// when the line was read in full, including the final one at io.EOF.
-func readFailure(tooLong bool, readErr error, number int) error {
+// readFailure turns a stopped read into the message for line number, ending
+// with what happens to the output, or nil when the line was read in full,
+// including the final one at io.EOF.
+func readFailure(tooLong bool, readErr error, number int, consequence string) error {
 	if tooLong {
-		return fmt.Errorf("embargo: line %d exceeds the 4 MiB limit; output stops before it", number)
+		return fmt.Errorf("embargo: line %d exceeds the 4 MiB limit; %s", number, consequence)
 	}
 	if readErr != nil && !errors.Is(readErr, io.EOF) {
-		return safeInputError(readErr, fmt.Sprintf("embargo: input read failed at line %d", number))
+		return safeInputError(readErr, fmt.Sprintf("embargo: input read failed at line %d; %s", number, consequence))
 	}
 	return nil
 }

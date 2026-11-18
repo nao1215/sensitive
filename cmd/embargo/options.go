@@ -4,7 +4,9 @@ import (
 	"errors"
 	"flag"
 	"io"
+	"math"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -14,14 +16,18 @@ Masks secrets and personal data in each line of the files, or of stdin, and writ
 A line holding one JSON object or array keeps its keys, types and nesting and is written compact.
 Lines keep their endings. A read failure or a line longer than 4 MiB stops the output with an error.
 
-  --kinds KIND,...      detect only these kinds; all selects every kind (default: the 26 default kinds)
+  --kinds KIND,...      detect only these kinds; all selects every kind (default: the NewScanner defaults)
   --min-confidence N    drop findings below N, from 0 to 1 (default 0)
   --report              print per-kind counts and masked byte locations as JSON instead of masked lines
   --samples N           locations per kind in the report, from 0 to 20 (default 3; needs --report)
   --version             print the version
+  --help                print this help
+
+Flags come before the files; a file named - reads stdin, and -- ends the flags.
 `
 	maximumSamples = 20
 	defaultSamples = 3
+	kindsAllValue  = "all"
 )
 
 // options is the decoded and validated command line.
@@ -65,6 +71,30 @@ func parseOptions(args []string) (*options, error) {
 	if samplesSet && !parsed.report {
 		return nil, errors.New("embargo: --samples requires --report")
 	}
-	parsed.minimum, parsed.samples, parsed.files = minimum, samples, flags.Args()
+	files := flags.Args()
+	if lateFlag(args, files) {
+		return nil, errors.New("embargo: flags must come before the files; see embargo --help")
+	}
+	parsed.minimum, parsed.samples, parsed.files = minimum, samples, files
 	return parsed, nil
+}
+
+// lateFlag reports whether a file name looks like a flag. The flag package
+// stops at the first file, so "a.log --kinds email" would read --kinds as a
+// file; "-" is stdin, and after "--" every name is a file.
+func lateFlag(args, files []string) bool {
+	if at := len(args) - len(files) - 1; at >= 0 && args[at] == "--" {
+		return false
+	}
+	for _, name := range files {
+		if strings.HasPrefix(name, "-") && name != stdinName {
+			return true
+		}
+	}
+	return false
+}
+
+func parseConfidence(text string) (float64, bool) {
+	value, err := strconv.ParseFloat(text, 64)
+	return value, err == nil && !math.IsNaN(value) && value >= 0 && value <= 1
 }

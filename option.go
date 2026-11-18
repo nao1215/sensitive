@@ -17,15 +17,12 @@ func (o scannerOption) apply(s *Scanner) { o(s) }
 // Unknown kinds panic. The supplied slice is copied.
 func WithKinds(kinds ...Kind) ScannerOption {
 	selected := make(map[Kind]bool, len(kinds))
+	known := make(map[Kind]bool)
+	for _, d := range builtins(nil) {
+		known[Kind(d.Name())] = true
+	}
 	for _, kind := range kinds {
-		known := false
-		for _, d := range builtins(nil) {
-			if Kind(d.Name()) == kind {
-				known = true
-				break
-			}
-		}
-		if !known {
+		if !known[kind] {
 			panic("embargo: unknown built-in kind")
 		}
 		selected[kind] = true

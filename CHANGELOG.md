@@ -10,6 +10,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - The SWIFT/BIC and UK sort code context keywords (swift, bic, wire, sort code, bacs and the others) ignore ASCII case only, like every other keyword detector. They used Unicode lowering, so a non-ASCII letter such as the Kelvin sign counted as k, and a lowered character with a different byte length shifted the label check after swift.
 
+### Fixed
+
+- `embargo` rejects a flag placed after a file name instead of reading it as a file. `embargo a.log --kinds email` used to mask a.log with the default kinds and then fail on a file named `--kinds`; it now exits with `flags must come before the files`. `--` still ends the flags.
+- `embargo --report` reads lines exactly as the filter does. A final line of exactly 4 MiB was accepted by the filter and rejected by the report, and the report error did not say which line; both now accept up to 4 MiB and name the line that stops them.
+
+### Changed
+
+- A file named `-` reads stdin in its place, as in cat, so `embargo header.log - footer.log` works in a pipe.
+- The `--report` JSON no longer has the `value` field in each sample; it always held `[REDACTED]`. Each kind's `drop_option` now names the `--kinds` flag instead of the Go option.
+- `embargo --help` lists `--help` and the flag order, and the default kinds are described as NewScanner's defaults.
+
+### Performance
+
+- WithKinds builds the list of known kinds once per call instead of once per kind passed.
+
 ## [0.13.0] - 2026-11-18
 
 The public-log evaluation adds seven operations logs that LogHub lacks: Nginx and Apache access logs, a 92.8 MB Kubernetes API server audit log and three AWS CloudTrail files. Their development files exposed four false-positive classes, fixed below.

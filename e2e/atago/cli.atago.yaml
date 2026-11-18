@@ -79,10 +79,70 @@ scenarios:
             contains:
               - '"kind": "pan"'
               - '"count": 2'
-              - '"value": "[REDACTED]"'
+              - '"drop_option": "Pass --kinds with the kinds you need, leaving out pan."'
               - '"start": 5'
               - '"lines": 2'
             not_contains: "4111111111111111"
+
+  - name: --report reads files and --kinds all adds the opt-in kinds
+    steps:
+      - fixture:
+          file: app.log
+          content: |
+            ssn 123-45-6789
+            card 4111111111111111
+      - run:
+          command: embargo --report app.log
+      - assert:
+          exit_code: 0
+          stdout:
+            contains:
+              - '"kind": "pan"'
+              - '"lines": 2'
+            not_contains: '"kind": "us_ssn"'
+      - run:
+          command: embargo --kinds all app.log
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              ssn [REDACTED]
+              card [REDACTED]
+      - run:
+          command: embargo --report --kinds all app.log
+      - assert:
+          exit_code: 0
+          stdout:
+            contains:
+              - '"kind": "us_ssn"'
+              - '"kind": "pan"'
+
+  - name: a file named - reads stdin and flags after files are rejected
+    steps:
+      - fixture:
+          file: app.log
+          content: |
+            file alice@example.com
+      - run:
+          command: embargo app.log - app.log
+          stdin: |
+            stdin 4111111111111111
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              file [REDACTED]
+              stdin [REDACTED]
+              file [REDACTED]
+      - run:
+          command: embargo app.log --kinds email
+      - assert:
+          exit_code: 1
+          stdout:
+            empty: true
+          stderr:
+            equals: |
+              embargo: flags must come before the files; see embargo --help
 
   - name: a missing file fails without repeating its name
     steps:

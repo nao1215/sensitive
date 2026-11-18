@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	fileArgument       = "a.log"
 	secretArgument     = "password=opaqueFixture"
 	flagKinds          = "--kinds"
 	flagMinimum        = "--min-confidence"
@@ -56,8 +57,38 @@ func TestOptionBoundariesAreAccepted(t *testing.T) {
 			t.Errorf("valid options rejected: %v stderr=%q", args, diagnostics.String())
 		}
 	}
-	parsed, err := parseOptions([]string{flagReport, "a.log", "b.log"})
+	parsed, err := parseOptions([]string{flagReport, fileArgument, "b.log"})
 	if err != nil || !parsed.report || parsed.samples != defaultSamples || parsed.minimum != 0 || strings.Join(parsed.files, ",") != "a.log,b.log" {
 		t.Fatalf("parsed = %+v, %v", parsed, err)
+	}
+}
+
+func TestParseConfidenceBounds(t *testing.T) {
+	t.Parallel()
+	for text, want := range map[string]bool{"0": true, "1": true, "0.5": true, "-0.01": false, "1.01": false, "NaN": false, "high": false} {
+		if _, ok := parseConfidence(text); ok != want {
+			t.Errorf("parseConfidence(%q) ok = %v, want %v", text, ok, want)
+		}
+	}
+}
+
+func TestFlagsAfterFilesAreRejected(t *testing.T) {
+	t.Parallel()
+	for _, args := range [][]string{{fileArgument, flagKinds, "email"}, {fileArgument, "-x"}, {fileArgument, flagReport}} {
+		var out, diagnostics bytes.Buffer
+		code := exitCode(args, strings.NewReader(""), &out, &diagnostics)
+		if code != 1 || out.Len() != 0 || diagnostics.String() != "embargo: flags must come before the files; see embargo --help\n" {
+			t.Errorf("%v: exit=%d stdout=%q stderr=%q", args, code, out.String(), diagnostics.String())
+		}
+	}
+	for _, args := range [][]string{{"--", "-x.log"}, {flagReport, "--", "-", "-y"}, {"-"}} {
+		parsed, err := parseOptions(args)
+		if err != nil {
+			t.Errorf("%v: %v", args, err)
+			continue
+		}
+		if want := args[len(args)-len(parsed.files):]; strings.Join(parsed.files, ",") != strings.Join(want, ",") {
+			t.Errorf("%v: files %v", args, parsed.files)
+		}
 	}
 }

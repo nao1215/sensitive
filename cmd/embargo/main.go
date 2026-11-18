@@ -6,10 +6,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"runtime/debug"
-	"strconv"
 	"strings"
 
 	"github.com/nao1215/embargo"
@@ -21,6 +19,7 @@ func main() { os.Exit(exitCode(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)) }
 
 func exitCode(args []string, input io.Reader, output, diagnostics io.Writer) int {
 	if err := run(args, input, output); err != nil {
+		// The failure status is already set; a diagnostic write cannot make it succeed.
 		// The failure status is already set; a diagnostic write cannot make it succeed.
 		if _, writeErr := fmt.Fprintln(diagnostics, err); writeErr != nil {
 			return 1
@@ -72,115 +71,36 @@ func writeVersion(output io.Writer) error {
 }
 
 // selectedScanner builds the scanner for --kinds: empty is the default set and
-// all selects every kind. WithKinds rejects unknown public Kind strings; only
-// that input error becomes a fixed diagnostic, so arguments are never echoed.
-func selectedScanner(kinds string, minimum float64) (scanner *embargo.Scanner, err error) {
-	defer func() {
-		if recover() != nil {
-			scanner = nil
-			err = errors.New("embargo: --kinds must be all or a comma-separated list of kinds; see embargo --help")
-		}
-	}()
+// all selects every kind. WithKinds panics on an unknown public Kind string;
+// only that call is recovered, into a fixed diagnostic that never echoes the
+// argument, so any other panic still crashes.
+func selectedScanner(kinds string, minimum float64) (*embargo.Scanner, error) {
 	options := []embargo.ScannerOption{embargo.WithMinConfidence(minimum)}
 	switch kinds {
 	case "":
-	case "all":
+	case kindsAllValue:
 		options = append(options, embargo.WithAll())
 	default:
 		selection := make([]embargo.Kind, 0, strings.Count(kinds, ",")+1)
 		for kind := range strings.SplitSeq(kinds, ",") {
 			selection = append(selection, embargo.Kind(strings.TrimSpace(kind)))
 		}
-		options = append(options, embargo.WithKinds(selection...))
+		option, ok := kindsOption(selection)
+		if !ok {
+			return nil, errors.New("embargo: --kinds must be all or a comma-separated list of kinds; see embargo --help")
+		}
+		options = append(options, option)
 	}
 	return embargo.NewScanner(options...), nil
 }
 
-func parseConfidence(text string) (float64, bool) {
-	value, err := strconv.ParseFloat(text, 64)
-	return value, err == nil && !math.IsNaN(value) && value >= 0 && value <= 1
-}
-
-// openInputs reads the named files in order, like cat, or stdin when there are
-// none. Files open one at a time; a file that cannot be read stops the input
-// with a fixed error that does not repeat its name.
-func openInputs(names []string, stdin io.Reader) (source io.Reader, closeAll func()) {
-	if len(names) == 0 {
-		return stdin, func() {}
-	}
-	files := &fileSequence{names: names, current: nil, closeErr: nil}
-	return files, files.close
-}
-
-// inputError is a fixed message about the named input files; it never holds a
-// file name or operating-system detail, so it is shown as is.
-type inputError string
-
-// Error returns the fixed message.
-func (e inputError) Error() string { return string(e) }
-
-// safeInputError returns err's own message when it is an inputError and
-// fallback otherwise, so reader errors from other sources are never shown.
-func safeInputError(err error, fallback string) error {
-	if message, ok := errors.AsType[inputError](err); ok {
-		return message
-	}
-	return errors.New(fallback)
-}
-
-type fileSequence struct {
-	current  *os.File
-	closeErr error
-	names    []string
-}
-
-// Read reads the files in order and reports io.EOF after the last one.
-func (f *fileSequence) Read(p []byte) (int, error) {
-	for {
-		if err := f.advance(); err != nil {
-			return 0, err
+// kindsOption returns embargo.WithKinds(selection), or false when it rejects
+// an unknown kind.
+func kindsOption(selection []embargo.Kind) (option embargo.ScannerOption, ok bool) {
+	defer func() {
+		if recover() != nil {
+			option, ok = nil, false
 		}
-		n, err := f.current.Read(p)
-		if errors.Is(err, io.EOF) {
-			// The next file continues the stream, so EOF is reported only after the last.
-			f.close()
-			if n > 0 {
-				return n, nil
-			}
-			continue
-		}
-		if err != nil {
-			return n, inputError("embargo: an input file cannot be read")
-		}
-		return n, nil
-	}
-}
-
-// advance opens the next file when none is open, returning io.EOF after the
-// last one and a fixed error for a file that cannot be opened or closed.
-func (f *fileSequence) advance() error {
-	if f.closeErr != nil {
-		return inputError("embargo: an input file cannot be closed")
-	}
-	if f.current != nil {
-		return nil
-	}
-	if len(f.names) == 0 {
-		return io.EOF
-	}
-	file, err := os.Open(f.names[0])
-	if err != nil {
-		return inputError("embargo: an input file cannot be opened")
-	}
-	f.current, f.names = file, f.names[1:]
-	return nil
-}
-
-// close releases the current file; a failure is reported by the next Read.
-func (f *fileSequence) close() {
-	if f.current == nil {
-		return
-	}
-	f.closeErr = f.current.Close()
-	f.current = nil
+	}()
+	return embargo.WithKinds(selection...), true
 }
