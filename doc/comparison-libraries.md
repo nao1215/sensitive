@@ -5,7 +5,7 @@
 | `IP 192.0.2.1` | `IP 192.0.2.1` | 1 | `IP [REDACTED]` | 1 |
 | `phone 03-1234-5678` | `phone 03-1234-5678` | 0 | `phone [REDACTED]` | 1 |
 | `phone 202-555-0123` | `phone 20*-***-**23` | 1 | `phone 202-555-0123` | 0 |
-| `credit card 4111111111111112` | `credit card 4111111111111112` | 0 | `credit card [REDACTED]` | 1 |
+| `credit card 4111111111111112` | `credit card 4111111111111112` | 0 | `credit card 4111111111111112` | 0 |
 
 | Shared event | slog-formatter v1.3.0 PIIFormatter | go-mask v0.6.2 field rules |
 |---|---|---|

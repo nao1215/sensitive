@@ -10,5 +10,5 @@
 | secret_wrapper | `"Password":"[REDACTED]"` | `"Password":"[REDACTED]"` |
 | tag_or_key | `"Recovery":"[REDACTED]"` | `"Recovery":"[REDACTED]"` |
 | valid_card | `"card":"[REDACTED]"` | `"card":"[REDACTED]"` |
-| invalid_luhn | `"order":"[REDACTED]"` | `"order":"[REDACTED]"` |
+| invalid_luhn | `"order":"[REDACTED]"` | `"order":"4111111111111112"` |
 | map | `"data":{"count":17,"email":null,"password":null}` | `"data":{"count":17,"email":"[REDACTED]","password":"[REDACTED]"}` |

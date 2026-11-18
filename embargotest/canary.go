@@ -9,6 +9,8 @@ import (
 	"math/big"
 	"strconv"
 	"strings"
+	"unicode/utf16"
+	"unicode/utf8"
 )
 
 func representations(canary []byte) [][]byte {
@@ -57,13 +59,96 @@ func representations(canary []byte) [][]byte {
 	return needles
 }
 
+// containsCanary reports any representation in data, also after one layer of
+// JSON backslash-u escapes and one layer of percent escapes are decoded, so
+// output that escapes the canary character by character, as url.QueryEscape
+// and an ASCII-only JSON encoder do, is still a leak.
 func containsCanary(data []byte, needles [][]byte) bool {
-	for _, needle := range needles {
-		if len(needle) > 0 && bytes.Contains(data, needle) {
-			return true
+	for _, view := range decodedViews(data) {
+		for _, needle := range needles {
+			if len(needle) > 0 && bytes.Contains(view, needle) {
+				return true
+			}
 		}
 	}
 	return false
+}
+
+// decodedViews returns data, its backslash-u decoding, and that decoding with
+// percent escapes decoded once with plus kept and once with plus as a space.
+// Malformed escapes stay literal. A view that would equal the previous one is
+// left out.
+func decodedViews(data []byte) [][]byte {
+	views := [][]byte{data}
+	unescaped := data
+	if bytes.Contains(data, []byte{'\\', 'u'}) {
+		unescaped = decodeUnicodeEscapes(data)
+		views = append(views, unescaped)
+	}
+	if bytes.IndexByte(unescaped, '%') >= 0 || bytes.IndexByte(unescaped, '+') >= 0 {
+		views = append(views, decodePercent(unescaped, false), decodePercent(unescaped, true))
+	}
+	return views
+}
+
+// decodeUnicodeEscapes decodes every backslash, u and four hex digits as
+// encoding/json does, joining surrogate pairs; other bytes are copied.
+func decodeUnicodeEscapes(data []byte) []byte {
+	decoded := make([]byte, 0, len(data))
+	for i := 0; i < len(data); {
+		r, width := unicodeEscape(data, i)
+		if width == 0 {
+			decoded = append(decoded, data[i])
+			i++
+			continue
+		}
+		if utf16.IsSurrogate(r) {
+			// Without a following escape low is zero, which DecodeRune rejects.
+			low, next := unicodeEscape(data, i+width)
+			if pair := utf16.DecodeRune(r, low); pair != utf8.RuneError {
+				r = pair
+				i += next
+			}
+		}
+		decoded = utf8.AppendRune(decoded, r)
+		i += width
+	}
+	return decoded
+}
+
+// unicodeEscape returns the code unit escaped at data[i:] and the escape
+// length, or zero when no escape starts there.
+func unicodeEscape(data []byte, i int) (unit rune, width int) {
+	const escapeLength = len(`\u0000`)
+	if i+escapeLength > len(data) || data[i] != '\\' || data[i+1] != 'u' {
+		return 0, 0
+	}
+	value, err := strconv.ParseUint(string(data[i+2:i+escapeLength]), 16, 16)
+	if err != nil {
+		return 0, 0
+	}
+	return rune(value), escapeLength
+}
+
+// decodePercent decodes each valid %HH escape and, when plusIsSpace, reads +
+// as a space the way url.QueryUnescape does.
+func decodePercent(data []byte, plusIsSpace bool) []byte {
+	decoded := make([]byte, 0, len(data))
+	for i := 0; i < len(data); i++ {
+		if data[i] == '+' && plusIsSpace {
+			decoded = append(decoded, ' ')
+			continue
+		}
+		if data[i] == '%' && i+2 < len(data) {
+			if value, err := strconv.ParseUint(string(data[i+1:i+3]), 16, 8); err == nil {
+				decoded = append(decoded, byte(value))
+				i += 2
+				continue
+			}
+		}
+		decoded = append(decoded, data[i])
+	}
+	return decoded
 }
 
 type fragmentOption int

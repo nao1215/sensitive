@@ -11,11 +11,14 @@
 // unpadded standard and URL base64 at every byte alignment inside a larger blob,
 // JSON with and without HTML escaping, Go
 // quoting with and without ASCII escaping (%q and %+q), a decimal byte slice and
-// a big-endian decimal integer, also when it is split across writes.
-// WithCanaryFragments opts into raw contiguous pieces of at least 16 bytes.
-// MIME-wrapped base64 and full \u escaping are not matched; decode those
-// representations before recording. Smaller or derived values, mixed encodings
-// and compressed or binary exports also need explicit decoding.
+// a big-endian decimal integer, also when it is split across writes. Each of
+// these is also found after one layer of JSON \u escapes and one layer of
+// percent escapes, with + read both ways, are decoded from the output, so
+// url.QueryEscape, url.PathEscape and character-by-character escaping are
+// leaks. WithCanaryFragments opts into raw contiguous pieces of at least 16
+// bytes. MIME-wrapped base64 is not matched; decode it before recording.
+// Smaller or derived values, deeper encoding layers and compressed or binary
+// exports also need explicit decoding.
 //
 // The Recorder does not sanitize captured data. Connect every relevant output,
 // stop producers and flush SDKs before calling Check.

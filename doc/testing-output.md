@@ -37,7 +37,7 @@ These are actual outputs after the embargo masking step in [the case study](case
 | unwrapped logger | detected | detected | detected |
 | card last four | clear | clear | clear |
 | truncated card | clear | clear | clear |
-| base64 token | clear | detected | detected |
+| base64 token | clear | clear | clear |
 | hex token | clear | detected | detected |
 | split token lines | clear | clear | detected |
 <!-- check-independence:end -->

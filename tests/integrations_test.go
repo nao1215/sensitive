@@ -656,7 +656,9 @@ func checkSentryAcceptance(t *testing.T) {
 			r := embargotest.New(probe)
 			d := signingFailed()
 			transport := &bufferedTransport{w: r.Writer("sentry")}
-			client, err := sentry.NewClient(sentry.ClientOptions{Transport: transport, AttachStacktrace: true})
+			// A fixed release keeps the SDK from deriving one from git describe,
+			// whose abbreviated commit hash changes the scanned output per commit.
+			client, err := sentry.NewClient(sentry.ClientOptions{Transport: transport, AttachStacktrace: true, Release: "acceptance"})
 			if err != nil {
 				t.Fatal("client setup failed")
 			}

@@ -139,8 +139,8 @@
 <text x="730" y="560" font-size="14">144 / 544</text>
 <text x="20" y="590" font-size="14">pan</text>
 <rect x="205" y="576" width="150" height="14" fill="#edf0f4"/>
-<rect x="205" y="576" width="90.00" height="14" fill="#1877b8"/>
-<text x="363" y="589" font-size="14">60.0%</text>
+<rect x="205" y="576" width="122.70" height="14" fill="#1877b8"/>
+<text x="363" y="589" font-size="14">81.8%</text>
 <rect x="435" y="576" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="576" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="589" font-size="14">100.0%</text>

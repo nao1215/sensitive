@@ -52,6 +52,7 @@ func WithDetector(d Detector) ScannerOption
 func WithKinds(kinds ...Kind) ScannerOption
 func WithMinConfidence(threshold float64) ScannerOption
 func WithSensitiveKeys(keys ...string) ScannerOption
+func WithoutDefaultSensitiveKeys() ScannerOption
 methodset *Input[T interface{~string | ~[]byte}] func (*Input[T]).Scan(src any) error
 methodset *Input[T interface{~string | ~[]byte}] func (*Input[T]).UnmarshalJSON(data []byte) error
 methodset *Input[T interface{~string | ~[]byte}] func (*Input[T]).UnmarshalText(data []byte) error

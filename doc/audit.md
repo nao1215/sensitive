@@ -38,10 +38,10 @@ Each Kind includes a drop_option saying how to leave it out with `--kinds`. Excl
 
 ```sh
 embargo --format jsonl app.log
-! embargo --format jsonl app.log | grep -q .
+out=$(embargo --format jsonl app.log) && test -z "$out"
 ```
 
-The exit status stays 0 when findings are printed; 1 always means a usage, input or output error.
+The exit status says whether embargo ran, not whether it found something: 0 when the input was read in full, findings or not, and 1 for a usage, input or output error. The CI line above fails on both a finding and an error. `! embargo --format jsonl app.log | grep -q .` would pass when embargo cannot read the file, because the error prints nothing.
 
 ## Compare settings on the same input
 
@@ -74,7 +74,7 @@ The [executable recipe](../tests/cases_test.go) checks this JSON output, includi
 
 The default scanner already retains this request_id because its context filter excludes the candidate, but it masks the numeric order_id. This is a policy choice with a measured cost: an actual card mislabeled order_id is also skipped, because the business label lowers its confidence to 0.4. The global 0.7 threshold additionally drops checksum-failed PAN candidates and low-confidence kinds. Selecting only PAN and Credential omits email, addresses and provider tokens without credential context; add the required kinds explicitly, for example KindGitHubToken, KindServiceToken, KindAWSKey or KindJWT. Keep threshold 0 when that recall loss is unacceptable, and use nonnumeric diagnostic IDs instead.
 
-The default key list already leaves order_id and request_id out; adding them to WithSensitiveKeys would remove their entire values regardless of detector thresholds. WithSensitiveKeys replaces the key list and affects raw credential assignments as well as structured masking. It is not an exclusion list for selected paths. There is no per-field exemption that preserves a card-shaped ID solely by field path while detecting the same mislabeled card as a secret. There is also no separate minimum confidence per Kind. These limits are part of the current scanner API.
+The default key list already leaves order_id and request_id out; adding them to WithSensitiveKeys would remove their entire values regardless of detector thresholds. WithSensitiveKeys adds to the key list, WithoutDefaultSensitiveKeys drops the defaults, and both affect raw credential assignments as well as structured masking. It is not an exclusion list for selected paths. There is no per-field exemption that preserves a card-shaped ID solely by field path while detecting the same mislabeled card as a secret. There is also no separate minimum confidence per Kind. These limits are part of the current scanner API.
 
 ## Check both directions
 

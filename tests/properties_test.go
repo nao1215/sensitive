@@ -186,10 +186,9 @@ func TestPAN(t *testing.T) {
 				if got := d.Scan([]byte(raw)); got[0].Confidence < 0.99 {
 					t.Fatal("valid Luhn confidence")
 				}
-				// PAN deliberately reports invalid Luhn candidates at lower confidence.
-				bad := d.Scan([]byte(changedDigit(raw, len(raw)-1)))
-				if len(bad) != 1 || bad[0].Confidence >= 0.99 {
-					t.Fatal("invalid Luhn confidence")
+				// A digit string whose Luhn check digit fails is not a card number.
+				if bad := d.Scan([]byte(changedDigit(raw, len(raw)-1))); len(bad) != 0 {
+					t.Fatalf("invalid Luhn reported: %v", bad)
 				}
 			})
 		})

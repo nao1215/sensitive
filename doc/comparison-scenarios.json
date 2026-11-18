@@ -520,8 +520,8 @@
     {
       "results": {
         "embargo": {
-          "output": "{\"level\":\"INFO\",\"msg\":\"order [REDACTED]\"}",
-          "removed": true
+          "output": "{\"level\":\"INFO\",\"msg\":\"order 4111111111111112\"}",
+          "removed": false
         },
         "ferret-scan": {
           "output": "{\"level\":\"INFO\",\"msg\":\"order 4111111111111112\"}",

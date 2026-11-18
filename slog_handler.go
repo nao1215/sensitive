@@ -22,6 +22,11 @@ import (
 // fixed message and a withheld_attributes count; no original field survives. See the
 // [logging guide] for value handling and error observation.
 //
+// Pass the sink handler before any attributes are bound to it, and call With and
+// WithGroup on the logger built from the result. Attributes already bound with
+// next.WithAttrs or next.WithGroup, and fields next adds itself, never pass through
+// embargo: they are written unmasked, also beside a withheld diagnostic.
+//
 // [logging guide]: https://github.com/nao1215/embargo/blob/main/doc/logging.md
 func NewSlogHandler(next slog.Handler, scanner *Scanner) slog.Handler {
 	if next == nil {

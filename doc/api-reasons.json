@@ -38,7 +38,7 @@
     "symbols": [
       "embargo.WithMinConfidence"
     ],
-    "need": "A team that sees too many low-score findings, such as PAN checksum failures or labelled business numbers, drops them below a threshold it chose from doc/accuracy.md.",
+    "need": "A team that sees too many low-score findings, such as labeled business numbers or lower-scored bank accounts, drops them below a threshold it chose from doc/accuracy.md.",
     "without": "Without it every caller of Scan would filter Confidence by hand, and the slog handler, MaskJSON and adapters, which mask internally, could not be tuned at all."
   },
   {
@@ -52,8 +52,15 @@
     "symbols": [
       "embargo.WithSensitiveKeys"
     ],
-    "need": "A team whose payloads name secrets with its own keys, such as x_partner_sig, replaces the key list so values under those keys are hidden whatever they contain.",
+    "need": "A team whose payloads name secrets with its own keys, such as x_partner_sig, adds those keys so values under them are hidden whatever they contain, keeping the default names.",
     "without": "Without it values under unusual key names would be masked only when a detector recognized the value, and opaque signatures that match no detector would leak."
+  },
+  {
+    "symbols": [
+      "embargo.WithoutDefaultSensitiveKeys"
+    ],
+    "need": "A team whose API returns a public pagination cursor named token, or whose export must hide exactly the keys a contract lists, drops the default names and suffix rule.",
+    "without": "Without it every value under token, secret or a *_password key is replaced, so the team would post-process the masked output or stop using the structured masking."
   },
   {
     "symbols": [

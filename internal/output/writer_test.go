@@ -2,6 +2,7 @@ package output
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"io"
 	"os"
@@ -348,5 +349,19 @@ func TestDiagnosticFlushPreservesSinkFailure(t *testing.T) {
 				t.Fatal("close lost diagnostic sink failure")
 			}
 		})
+	}
+}
+
+func TestWriterScansBinaryFieldsAsText(t *testing.T) {
+	t.Parallel()
+	var sink bytes.Buffer
+	w := NewWriter(&sink, embargo.NewScanner())
+	// zap.Binary and zerolog write []byte as padded standard base64.
+	encoded := base64.StdEncoding.EncodeToString([]byte("ghp_" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
+	if _, err := w.Write([]byte(`{"level":"info","payload":"` + encoded + `"}` + "\n")); err != nil {
+		t.Fatal(err)
+	}
+	if sink.String() != `{"level":"info","payload":"[REDACTED]"}`+"\n" {
+		t.Fatalf("binary field kept its token: %q", sink.String())
 	}
 }

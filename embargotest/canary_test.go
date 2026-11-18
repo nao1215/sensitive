@@ -8,9 +8,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"net/url"
 	"strconv"
 	"strings"
 	"testing"
+	"unicode/utf16"
 
 	"github.com/nao1215/embargo"
 )
@@ -186,10 +188,11 @@ func TestCanaryExplicitDecodingBoundaries(t *testing.T) {
 		}
 	}
 	needles := representations(canary)
-	for _, text := range []string{wrapped.String(), escaped.String()} {
-		if containsCanary([]byte(text), needles) {
-			t.Fatal("unsupported encoding contract changed")
-		}
+	if containsCanary([]byte(wrapped.String()), needles) {
+		t.Fatal("unsupported encoding contract changed")
+	}
+	if !containsCanary([]byte(escaped.String()), needles) {
+		t.Fatal("canary escaped character by character missed")
 	}
 	decoded, err := base64.StdEncoding.DecodeString(wrapped.String())
 	if err != nil {
@@ -216,5 +219,76 @@ func TestCanaryGoByteRenderingProperty(t *testing.T) {
 				t.Fatal("Go hexadecimal byte list escaped the canary check")
 			}
 		}
+	}
+}
+
+func TestCanaryEscapedCharacterByCharacter(t *testing.T) {
+	t.Parallel()
+	canary := []byte("public+canary&alpha beta/qrstuvwx")
+	var every, upper, unicodeEscaped, mixed []byte
+	for i, b := range canary {
+		every = fmt.Appendf(every, "%%%02x", b)
+		upper = fmt.Appendf(upper, "%%%02X", b)
+		unicodeEscaped = fmt.Appendf(unicodeEscaped, "%cu%04x", '\\', b)
+		if i%2 == 0 {
+			mixed = fmt.Appendf(mixed, "%%%02X", b)
+		} else {
+			mixed = append(mixed, b)
+		}
+	}
+	needles := representations(canary)
+	for _, tc := range []struct{ name, output string }{
+		{"url.QueryEscape", "/callback?state=" + url.QueryEscape(string(canary))},
+		{"url.PathEscape", "/files/" + url.PathEscape(string(canary))},
+		{"every byte percent-encoded", string(every)},
+		{"upper-case percent escapes", string(upper)},
+		{"JSON escape of every byte", `{"state":"` + string(unicodeEscaped) + `"}`},
+		{"every other byte percent-encoded", string(mixed)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if !containsCanary([]byte(tc.output), needles) {
+				t.Fatalf("canary missed in %q", tc.output)
+			}
+		})
+	}
+	for _, clean := range []string{"%2", "%zz canary", `\u00`, `\uzzzz canary`, "public canary alpha"} {
+		if containsCanary([]byte(clean), needles) {
+			t.Fatalf("unrelated output %q detected", clean)
+		}
+	}
+}
+
+func TestCanaryDecodingEdges(t *testing.T) {
+	t.Parallel()
+	jsonEscape := func(text string) string {
+		var escaped []byte
+		for _, unit := range utf16.Encode([]rune(text)) {
+			escaped = fmt.Appendf(escaped, "%cu%04x", '\\', unit)
+		}
+		return string(escaped)
+	}
+	for _, tc := range []struct{ name, canary, output string }{
+		{"surrogate pair escaped by an ASCII-only JSON encoder", "token\U0001F600value-xyz", jsonEscape("token\U0001F600value-xyz")},
+		{"lone high surrogate before the escaped canary", "public-canary-xyz", jsonEscape("\U0001F600")[:6] + jsonEscape("public-canary-xyz")},
+		{"escape ending the output", "public-canary-xyz", "state=" + jsonEscape("public-canary-xyz")},
+		{"plus as the first byte and no percent escape", "alpha beta gamma", "+alpha+beta+gamma"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if !containsCanary([]byte(tc.output), representations([]byte(tc.canary))) {
+				t.Fatalf("canary %q missed in %q", tc.canary, tc.output)
+			}
+		})
+	}
+	// Bytes past the length of a slice are not part of the output, even when
+	// they would complete an escape.
+	percent := []byte("x%41")[:3]
+	if got := string(decodePercent(percent, false)); got != "x%4" {
+		t.Fatalf("decodePercent read past the slice: %q", got)
+	}
+	unicodeText := []byte(`a\u0041`)[:6]
+	if got := string(decodeUnicodeEscapes(unicodeText)); got != `a\u004` {
+		t.Fatalf("decodeUnicodeEscapes read past the slice: %q", got)
 	}
 }

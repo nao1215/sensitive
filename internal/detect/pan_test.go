@@ -197,7 +197,7 @@ func TestPANDetector_Brands(t *testing.T) {
 		{name: "Mastercard 2-series low", input: "2221000000000009", wantBrand: BrandMastercard},
 		{name: "Mastercard 2-series high", input: "2720990000000007", wantBrand: BrandMastercard},
 		{name: "Discover 65 prefix", input: "6500000000000002", wantBrand: BrandDiscover},
-		{name: "Discover 644 prefix", input: "6440000000000007", wantBrand: BrandDiscover},
+		{name: "Discover 644 prefix", input: "6440000000000005", wantBrand: BrandDiscover},
 		{name: "UnionPay 62 prefix", input: "6200000000000005", wantBrand: BrandUnionPay},
 		{name: "Diners 300 prefix", input: "30000000000004", wantBrand: BrandDiners},
 		{name: "Diners 36 prefix", input: "36000000000008", wantBrand: BrandDiners},
@@ -236,13 +236,15 @@ func TestPANDetector_LuhnFailLowerConfidence(t *testing.T) {
 	t.Parallel()
 
 	d := NewPAN()
-	// Visa-prefixed 16 digits but Luhn fails — still detected with lower confidence.
-	findings := d.Scan([]byte("4532015112830360"))
-	if len(findings) != 1 {
-		t.Fatalf("got %d findings, want 1", len(findings))
+	// Every issued card number satisfies Luhn, so Visa-prefixed digits that
+	// fail it are an order, request or trace ID, not a card.
+	for _, text := range []string{"4532015112830360", "order_id=4532015112830360", "dd.span_id=5206839345487757220"} {
+		if findings := d.Scan([]byte(text)); len(findings) != 0 {
+			t.Errorf("%s: got %v, want no finding for a failed Luhn check", text, findings)
+		}
 	}
-	if findings[0].Confidence >= 0.9 {
-		t.Errorf("Confidence = %f, want < 0.9 for failed Luhn", findings[0].Confidence)
+	if findings := d.Scan([]byte("4532015112830366")); len(findings) != 1 || findings[0].Confidence != 1.0 {
+		t.Fatalf("Luhn-valid Visa: got %v, want one finding at 1.0", findings)
 	}
 }
 
@@ -289,11 +291,11 @@ func TestPANDetector_Visa13Digits(t *testing.T) {
 	t.Parallel()
 
 	d := NewPAN()
-	findings := d.Scan([]byte("4222222222225"))
+	findings := d.Scan([]byte("4222222222222"))
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	digits := testDigits([]byte("4222222222225"[findings[0].Start:findings[0].End]))
+	digits := testDigits([]byte("4222222222222"[findings[0].Start:findings[0].End]))
 	if identifyBrand(digits) != BrandVisa {
 		t.Errorf("Brand = %q, want %q", identifyBrand(digits), BrandVisa)
 	}
@@ -306,11 +308,11 @@ func TestPANDetector_UnionPayLong(t *testing.T) {
 	t.Parallel()
 
 	d := NewPAN()
-	findings := d.Scan([]byte("6200000000000000003"))
+	findings := d.Scan([]byte("6200000000000000000"))
 	if len(findings) != 1 {
 		t.Fatalf("got %d findings, want 1", len(findings))
 	}
-	digits := testDigits([]byte("6200000000000000003"[findings[0].Start:findings[0].End]))
+	digits := testDigits([]byte("6200000000000000000"[findings[0].Start:findings[0].End]))
 	if identifyBrand(digits) != BrandUnionPay {
 		t.Errorf("Brand = %q, want %q", identifyBrand(digits), BrandUnionPay)
 	}
@@ -439,7 +441,7 @@ func TestPANPrefixAndLengthEdges(t *testing.T) {
 		{"649", BrandDiscover},
 		{"650", BrandDiscover},
 	} {
-		raw := tc.prefix + strings.Repeat("0", 16-len(tc.prefix))
+		raw := luhnComplete(tc.prefix + strings.Repeat("0", 15-len(tc.prefix)))
 		got := NewPAN().Scan([]byte(raw))
 		if tc.brand == "" {
 			if len(got) != 0 {
@@ -481,4 +483,14 @@ func TestPANChecksumSingleDigitChanges(t *testing.T) {
 		}
 		digits[i] = original
 	}
+}
+
+// luhnComplete appends the check digit that makes body pass Luhn.
+func luhnComplete(body string) string {
+	for check := '0'; check <= '9'; check++ {
+		if candidate := body + string(check); passesLuhn([]byte(candidate)) {
+			return candidate
+		}
+	}
+	panic("no Luhn check digit")
 }

@@ -6,6 +6,8 @@ import (
 	"io"
 	"strings"
 	"testing"
+
+	"github.com/nao1215/embargo"
 )
 
 const (
@@ -186,6 +188,30 @@ func TestFilterPassesBinaryBytesAndMasksLongJSONAsText(t *testing.T) {
 	}
 }
 
+func TestFilterMasksEscapedValuesWhereMaskJSONCannotRun(t *testing.T) {
+	t.Parallel()
+	escaped := `alice\u0040example.com`
+	tests := []struct {
+		name, input string
+	}{
+		{"JSON line over the 1 MiB MaskJSON limit", `{"user":"` + escaped + `","pad":"` + strings.Repeat("p", 1<<20) + `"}` + "\n"},
+		{"pretty-printed JSON is read line by line", "{\n  \"user\": \"" + escaped + "\"\n}\n"},
+		{"JSON string inside a text line", `level=info body={"user":"` + escaped + `"}` + "\n"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var out bytes.Buffer
+			if err := run(nil, strings.NewReader(tt.input), &out); err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(out.String(), "alice") || !strings.Contains(out.String(), filterMarker) {
+				t.Fatalf("escaped email reached output: %.200q", out.String())
+			}
+		})
+	}
+}
+
 func TestFilterAndReportShareTheLineLimit(t *testing.T) {
 	t.Parallel()
 	exact := strings.Repeat("z", maximumLine)
@@ -200,5 +226,68 @@ func TestFilterAndReportShareTheLineLimit(t *testing.T) {
 		if err == nil || !strings.HasPrefix(err.Error(), "embargo: line 2 exceeds the 4 MiB limit; ") {
 			t.Errorf("%v: over-long line: %v", args, err)
 		}
+	}
+}
+
+func TestFilterMasksPEMBlockLinesLikeScanLines(t *testing.T) {
+	t.Parallel()
+	begin, end := "-----BEGIN "+"PRIVATE KEY-----", "-----END PRIVATE KEY-----"
+	body := "MIIEvQIBADANBgkqhkiG9w0BAQEFAASC"
+	tests := []struct {
+		name, input string
+	}{
+		{"closed block leaves the following lines alone", "before\n" + begin + "\n" + body + "\n" + body + "\n" + end + "\nafter " + filterEmail + "\n"},
+		{"block without END covers the rest of the input", begin + "\n" + body + "\nlater words " + filterEmail + "\n"},
+		{"text after END is masked by value", begin + "\n" + body + "\n" + end + " trailing " + filterEmail + "\nplain\n"},
+		{"one-line block does not open the next line", begin + " " + body + " " + end + "\nplain words\n"},
+		{"public key block is not a secret", "-----BEGIN PUBLIC KEY-----\n" + body + "\n-----END PUBLIC KEY-----\n"},
+		{"CRLF endings are kept", begin + "\r\n" + body + "\r\n" + end + "\r\nplain\r\n"},
+		{"second block opens after the first closes", begin + "\n" + body + "\n" + end + "\nplain\n" + begin + "\n" + body + "\n"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var out bytes.Buffer
+			if err := run(nil, strings.NewReader(tt.input), &out); err != nil {
+				t.Fatal(err)
+			}
+			if got, want := out.String(), maskedByScanLines(t, tt.input); got != want {
+				t.Fatalf("filter disagrees with ScanLines:\ngot  %q\nwant %q", got, want)
+			}
+			if strings.HasPrefix(tt.name, "public") == !strings.Contains(out.String(), body) {
+				t.Fatalf("key body masking wrong: %q", out.String())
+			}
+		})
+	}
+}
+
+// maskedByScanLines is the filter output that Scanner.ScanLines implies for
+// text input: each line with findings masked, every other line unchanged.
+func maskedByScanLines(t *testing.T, input string) string {
+	t.Helper()
+	found := map[int][]embargo.Finding{}
+	if err := embargo.NewScanner().ScanLines(strings.NewReader(input), func(number int, _ []byte, findings []embargo.Finding) {
+		found[number] = findings
+	}); err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.SplitAfter(input, "\n")
+	for i, line := range lines {
+		text := strings.TrimRight(line, "\r\n")
+		lines[i] = embargo.Mask(text, found[i+1]) + line[len(text):]
+	}
+	return strings.Join(lines, "")
+}
+
+func TestFilterKeepsPEMBlockOpenedInsideJSONLine(t *testing.T) {
+	t.Parallel()
+	body := "MIIEvQIBADANBgkqhkiG9w0BAQEFAASC"
+	input := `{"key":"-----BEGIN ` + `PRIVATE KEY-----"}` + "\n" + body + "\n"
+	var out bytes.Buffer
+	if err := run(nil, strings.NewReader(input), &out); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(out.String(), body) {
+		t.Fatalf("key body after a JSON-looking header leaked: %q", out.String())
 	}
 }

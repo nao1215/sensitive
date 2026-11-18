@@ -19,7 +19,7 @@ func TestOutputMaskJSONNumberLexemes(t *testing.T) {
 		`{"card":4111111111111111.0}`,   // Python json.dumps(float)
 		`{"card":4.111111111111111E15}`, // Java Double.toString / Jackson
 		`{"card":4111111111111111e0}`,
-		`{"card":4.000000000000000001e18}`,
+		`{"card":6.200000000000000018e18}`,
 		`{"card":411111111111111100e-2}`,
 	} {
 		out, err := s.MaskJSON([]byte(in))

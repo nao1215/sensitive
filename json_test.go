@@ -3,6 +3,8 @@ package embargo
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -95,8 +97,11 @@ func TestMaskJSONKeyPolicy(t *testing.T) {
 		opts              []ScannerOption
 	}{
 		{name: "defaults and duplicate keys", input: `{"API_key":"x","apiKey":42,"Authorization":{"a":"b"},"Password":null,"Set-Cookie":["x"],"email":"alice@example.com","n":1.20,"ok":true,"x":1,"x":2}`, want: `{"API_key":"[REDACTED]","apiKey":"[REDACTED]","Authorization":"[REDACTED]","Password":"[REDACTED]","Set-Cookie":"[REDACTED]","email":"[REDACTED]","n":1.20,"ok":true,"x":1,"x":2}`},
-		{name: "replace", input: `{"password":"public","PIN":"opaque"}`, want: `{"password":"public","PIN":"[REDACTED]"}`, opts: []ScannerOption{WithSensitiveKeys("pin")}},
-		{name: "disable", input: `{"password":"public"}`, want: `{"password":"public"}`, opts: []ScannerOption{WithSensitiveKeys()}},
+		{name: "add keeps defaults and suffix rule", input: `{"password":"opaque","POSTGRES_PASSWORD":"opaque","PIN":"opaque","n":1}`, want: `{"password":"[REDACTED]","POSTGRES_PASSWORD":"[REDACTED]","PIN":"[REDACTED]","n":1}`, opts: []ScannerOption{WithSensitiveKeys("pin")}},
+		{name: "repeated options add", input: `{"pin":"opaque","otp":"opaque"}`, want: `{"pin":"[REDACTED]","otp":"[REDACTED]"}`, opts: []ScannerOption{WithSensitiveKeys("pin"), WithSensitiveKeys("otp")}},
+		{name: "only added keys without defaults", input: `{"password":"public","PIN":"opaque"}`, want: `{"password":"public","PIN":"[REDACTED]"}`, opts: []ScannerOption{WithoutDefaultSensitiveKeys(), WithSensitiveKeys("pin")}},
+		{name: "disable", input: `{"password":"public","token":"page-2"}`, want: `{"password":"public","token":"page-2"}`, opts: []ScannerOption{WithoutDefaultSensitiveKeys()}},
+		{name: "empty add is no change", input: `{"password":"opaque"}`, want: `{"password":"[REDACTED]"}`, opts: []ScannerOption{WithSensitiveKeys()}},
 		{name: "array", input: `[{"token":"x"},"alice@example.com",null,19]`, want: `[{"token":"[REDACTED]"},"[REDACTED]",null,19]`},
 		{name: "keys", input: `{"alice@example.com":"ok"}`, want: `{"[REDACTED]":"ok"}`},
 	} {
@@ -209,7 +214,7 @@ func FuzzJSONShape(f *testing.F) {
 	for _, seed := range []string{`{"n":9007199254740993,"x":1.0e+5}`, `{"\u0074oken":"visible","array":[true,false,null,-0]}`, `["\uD800","\uD834\uDD1E","a\"b","\\", "\n", "<>&"]`, "{\"x\":\"\xff\"}"} {
 		f.Add([]byte(seed))
 	}
-	scanner := NewScanner(WithKinds(), WithSensitiveKeys())
+	scanner := NewScanner(WithKinds(), WithoutDefaultSensitiveKeys())
 	f.Fuzz(func(t *testing.T, data []byte) {
 		got, err := scanner.MaskJSON(data)
 		if err != nil {
@@ -481,7 +486,7 @@ func benchmarkAdversarialMaskRanges(b *testing.B) {
 func TestJSONExpansionStopsBeforeRetainingPastLimit(t *testing.T) {
 	t.Parallel()
 	input := []byte("[" + strings.Repeat(`"x",`, 100000) + `"x"]`)
-	scanner := NewScanner(WithKinds(), WithSensitiveKeys(), WithDetector(expandingDetector{}))
+	scanner := NewScanner(WithKinds(), WithoutDefaultSensitiveKeys(), WithDetector(expandingDetector{}))
 	walker := jsonWalker{data: input, scanner: eventScanner{scanner: scanner, remaining: maxScanBytes}}
 	if err := walker.value(t.Context(), 0, "", false); err == nil {
 		t.Fatal("expanded output accepted")
@@ -502,7 +507,7 @@ func (expandingDetector) Scan(data []byte) []Finding {
 
 func BenchmarkJSONExpansionLimit(b *testing.B) {
 	input := []byte("[" + strings.Repeat(`"x",`, 100000) + `"x"]`)
-	scanner := NewScanner(WithKinds(), WithSensitiveKeys(), WithDetector(expandingDetector{}))
+	scanner := NewScanner(WithKinds(), WithoutDefaultSensitiveKeys(), WithDetector(expandingDetector{}))
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
@@ -747,5 +752,64 @@ func TestJSONFastPathsStopOnBudgetCancellationAndOutputLimit(t *testing.T) {
 	cancel()
 	if err := walker(maxScanBytes, nil).stringElement(canceled, []byte(`"plain value"`), "note"); !errors.Is(err, saferecord.ErrCanceled) {
 		t.Fatalf("plain string after cancellation: %v", err)
+	}
+}
+
+func TestMaskJSONScansStandardBase64Text(t *testing.T) {
+	t.Parallel()
+	token := "ghp_" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	encode := base64.StdEncoding.EncodeToString
+	sum := sha256.Sum256([]byte("binary fixture"))
+	binary := append(sum[:], sum[:]...)
+	tests := []struct {
+		name, input, want string
+	}{
+		{"token bytes inside a struct", `{"payload":{"Data":"` + encode([]byte(token)) + `"}}`, `{"payload":{"Data":"[REDACTED]"}}`},
+		{"token bytes in an array", `{"parts":["` + encode([]byte("auth "+token)) + `"]}`, `{"parts":["[REDACTED]"]}`},
+		{"email in a byte field", `{"b":"` + encode([]byte("user=alice@example.com")) + `"}`, `{"b":"[REDACTED]"}`},
+		{"clean text bytes stay encoded", `{"b":"` + encode([]byte("ordinary public log text")) + `"}`, `{"b":"` + encode([]byte("ordinary public log text")) + `"}`},
+		{"binary bytes stay encoded", `{"b":"` + encode(binary) + `"}`, `{"b":"` + encode(binary) + `"}`},
+		{"unpadded or URL alphabet is not read as bytes", `{"b":"` + base64.RawURLEncoding.EncodeToString([]byte(token+"?")) + `"}`, `{"b":"` + base64.RawURLEncoding.EncodeToString([]byte(token+"?")) + `"}`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := NewScanner().MaskJSON([]byte(tt.input))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(got) != tt.want {
+				t.Fatalf("got %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMaskJSONContextCancellationMatchesTheContextError(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		want error
+		ctx  func(t *testing.T) context.Context
+		name string
+	}{
+		{context.Canceled, func(*testing.T) context.Context {
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
+			return ctx
+		}, "canceled"},
+		{context.DeadlineExceeded, func(t *testing.T) context.Context {
+			t.Helper()
+			ctx, stop := context.WithDeadline(context.Background(), time.Unix(0, 0))
+			t.Cleanup(stop)
+			return ctx
+		}, "deadline"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := NewScanner().MaskJSONContext(tc.ctx(t), []byte(`{"a":1}`))
+			if got != nil || !errors.Is(err, tc.want) || err.Error() != "embargo: JSON masking canceled" {
+				t.Fatalf("got %q, err %v; want errors.Is %v with the fixed text", got, err, tc.want)
+			}
+		})
 	}
 }

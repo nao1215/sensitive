@@ -32,7 +32,7 @@ const (
 	KindHighEntropy Kind = "high_entropy"
 	// KindCredential locates nonempty assignment values, Authorization credentials and URL/DSN passwords; delimiter and quoting checks give 0.95, preserving labels, initial auth schemes, usernames and hosts. Full rules: https://github.com/nao1215/embargo/blob/main/doc/detectors.md#kindcredential (NewScanner default: on).
 	KindCredential Kind = "credential"
-	// KindPAN finds 13–19 digits with Visa, Mastercard, Amex, JCB, Discover, Diners or UnionPay prefixes; Luhn plus issuer length scores 1.0, a failed checksum 0.6, and an attached business label 0.4. Full rules: https://github.com/nao1215/embargo/blob/main/doc/detectors.md#kindpan (NewScanner default: on).
+	// KindPAN finds 13–19 digits with Visa, Mastercard, Amex, JCB, Discover, Diners or UnionPay prefixes; Luhn plus issuer length scores 1.0 and an attached business label 0.4; a failed checksum is not a card. Full rules: https://github.com/nao1215/embargo/blob/main/doc/detectors.md#kindpan (NewScanner default: on).
 	KindPAN Kind = "pan"
 	// KindEmail extracts ASCII local parts using letters, digits and .+-_ before @ and dotted domains using letters, digits and .-; structure checks score 0.7 or 0.8 for an unknown TLD and 0.9 or 1.0 for a known TLD. Full rules: https://github.com/nao1215/embargo/blob/main/doc/detectors.md#kindemail (NewScanner default: on).
 	KindEmail Kind = "email"

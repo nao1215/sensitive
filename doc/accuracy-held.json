@@ -161,12 +161,12 @@
   },
   {
     "detector": "pan",
-    "precision": "60.0%",
+    "precision": "81.8%",
     "recall": "100.0%",
     "positive": 144,
     "negative": 544,
     "tp": 144,
-    "fp": 96,
+    "fp": 32,
     "fn": 0
   },
   {

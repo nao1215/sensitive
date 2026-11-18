@@ -164,3 +164,42 @@ func TestFirstNonASCIIFindsEveryPositionAcrossWords(t *testing.T) {
 		}
 	}
 }
+
+func TestUnicodeEscapeDecodingPolicy(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name, raw, want string
+	}{
+		{"ASCII escape is decoded", `alice\u0040example.com`, emailUserinfoFixture},
+		{"hex digits of either case", `a\u002Eb\u002ec`, "a.b.c"},
+		{"every character escaped", `\u0061\u0040\u0062`, "a@b"},
+		{"non-ASCII escape stays literal", `caf\u00e9`, `caf\u00e9`},
+		{"escaped backslash is not an escape", `a\\u0040b`, `a\\u0040b`},
+		{"odd backslash run decodes its last escape", `a\\\u0040b`, `a\\@b`},
+		{"short or invalid escape stays literal", `\u004 \u00zz \u`, `\u004 \u00zz \u`},
+		{"text without escapes is the same slice", "plain", "plain"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			view := NewView([]byte(tt.raw))
+			if string(view.Data) != tt.want {
+				t.Fatalf("NewView(%q).Data = %q, want %q", tt.raw, view.Data, tt.want)
+			}
+			if len(view.Positions) > 0 && (len(view.Positions) != len(view.Data)+1 || view.Positions[len(view.Data)] != len(tt.raw)) {
+				t.Fatalf("positions %v lack the end sentinel", view.Positions)
+			}
+		})
+	}
+}
+
+func TestUnicodeEscapePositionsCoverTheWholeEscape(t *testing.T) {
+	t.Parallel()
+	raw := `mail alice\u0040example.com end`
+	view := NewView([]byte(raw))
+	start := bytes.Index(view.Data, []byte("alice"))
+	end := start + len("alice@example.com")
+	if got := raw[view.Original(start):view.Original(end)]; got != `alice\u0040example.com` {
+		t.Fatalf("mapped span %q", got)
+	}
+}

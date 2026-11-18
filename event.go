@@ -2,9 +2,12 @@ package embargo
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"slices"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/nao1215/embargo/internal/ascii"
 	"github.com/nao1215/embargo/internal/saferecord"
@@ -81,6 +84,11 @@ func (s *eventScanner) scanScalar(ctx context.Context, value, key string) (strin
 	if err != nil {
 		return "", err
 	}
+	if len(findings) == 0 {
+		if hidden, err := encodedTextSensitive(ctx, s, value, key); err != nil || hidden {
+			return redactionMarker, err
+		}
+	}
 	return maskOwned(value, findings, redact), nil
 }
 
@@ -96,8 +104,12 @@ func (s *eventScanner) maskBytes(ctx context.Context, value []byte, key string) 
 	scratch := s.scanner.takeScratch()
 	defer s.scanner.returnScratch(scratch)
 	findings, err := scalarFindings(ctx, s, scratch, value, key)
-	if err != nil || len(findings) == 0 {
+	if err != nil {
 		return "", false, err
+	}
+	if len(findings) == 0 {
+		hidden, err := encodedTextSensitive(ctx, s, value, key)
+		return redactionMarker, hidden, err
 	}
 	text := string(value)
 	masked = maskOwned(text, findings, redact)
@@ -161,4 +173,61 @@ func (s *eventScanner) joinedKeySensitive(ctx context.Context, path string, boun
 		}
 	}
 	return false, nil
+}
+
+// encoding/json and zap.Binary write a []byte as padded standard base64, so a
+// byte field holding a token reaches the scalar policy as an opaque string.
+// Values of this length range are decoded and scanned when the bytes are text;
+// binary data such as an image is not text and is never scanned.
+const (
+	minEncodedText = 20
+	maxEncodedText = 8 << 10
+)
+
+// encodedTextSensitive reports findings in value decoded as padded standard
+// base64, charged to the scan budget, when the decoded bytes are printable
+// UTF-8 text.
+func encodedTextSensitive[T string | []byte](ctx context.Context, s *eventScanner, value T, key string) (bool, error) {
+	if !standardBase64(value) {
+		return false, nil
+	}
+	decoded := make([]byte, base64.StdEncoding.DecodedLen(len(value)))
+	n, err := base64.StdEncoding.Decode(decoded, []byte(value))
+	if err != nil || !printableText(decoded[:n]) {
+		return false, nil
+	}
+	scratch := s.scanner.takeScratch()
+	defer s.scanner.returnScratch(scratch)
+	findings, err := scalarFindings(ctx, s, scratch, decoded[:n], key)
+	return len(findings) > 0, err
+}
+
+// standardBase64 reports a length and alphabet that padded standard base64
+// can have; the decoder checks the padding.
+func standardBase64[T string | []byte](value T) bool {
+	const quantum = 4
+	if len(value) < minEncodedText || len(value) > maxEncodedText || len(value)%quantum != 0 {
+		return false
+	}
+	for i := range len(value) {
+		if c := value[i]; !ascii.IsAlphaNum(c) && c != '+' && c != '/' && c != '=' {
+			return false
+		}
+	}
+	return true
+}
+
+// printableText reports valid UTF-8 whose runes are printable or tab, CR and LF.
+func printableText(data []byte) bool {
+	for len(data) > 0 {
+		r, size := utf8.DecodeRune(data)
+		if r == utf8.RuneError && size <= 1 {
+			return false
+		}
+		if !unicode.IsPrint(r) && r != '\t' && r != '\n' && r != '\r' {
+			return false
+		}
+		data = data[size:]
+	}
+	return true
 }

@@ -269,8 +269,8 @@
 <text x="1040.0" y="775" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
 <path d="M24,781 L1090,781" stroke="#526472"/>
 <text x="24" y="803" font-size="14" fill="#172033" text-anchor="start">Invalid card control</text>
-<rect x="292" y="786" width="95.00" height="23" rx="2" fill="#f0e5de"/>
-<text x="340.0" y="802" font-size="12" fill="#62351c" text-anchor="middle">changed</text>
+<rect x="292" y="786" width="95.00" height="23" rx="2" fill="#d7eee8"/>
+<text x="340.0" y="802" font-size="12" fill="#173d35" text-anchor="middle">kept</text>
 <rect x="392" y="786" width="95.00" height="23" rx="2" fill="#d7eee8"/>
 <text x="440.0" y="802" font-size="12" fill="#173d35" text-anchor="middle">kept</text>
 <rect x="492" y="786" width="95.00" height="23" rx="2" fill="#d7eee8"/>

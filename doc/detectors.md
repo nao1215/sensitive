@@ -15,7 +15,7 @@ Confidence ranks evidence used by a detector, not the probability that a value i
 | `swift DEUTDEFF` | Context distinguishes an all-letter bank code from an ordinary word | [KindSWIFTBIC](https://pkg.go.dev/github.com/nao1215/embargo@main#KindSWIFTBIC) |
 | A public random request identifier | Removing its label can make it indistinguishable from an opaque secret | [KindHighEntropy](https://pkg.go.dev/github.com/nao1215/embargo@main#KindHighEntropy) |
 
-The numeric tiers live in godoc, where they are tested against representative scans. [PAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN) retains checksum failures, [JWT](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJWT) distinguishes header evidence from signature presence, and [ETH](https://pkg.go.dev/github.com/nao1215/embargo@main#KindETH) treats uniform and mixed case differently. A single threshold therefore has different effects across families; the [exact-span accuracy measurements](accuracy.md) and [country evaluation](countries.md) show those tradeoffs on fixed data.
+The numeric tiers live in godoc, where they are tested against representative scans. [PAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN) keeps a business-labeled card at 0.4, [JWT](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJWT) distinguishes header evidence from signature presence, and [ETH](https://pkg.go.dev/github.com/nao1215/embargo@main#KindETH) treats uniform and mixed case differently. A single threshold therefore has different effects across families; the [exact-span accuracy measurements](accuracy.md) and [country evaluation](countries.md) show those tradeoffs on fixed data.
 
 ## Parser boundaries
 
@@ -31,7 +31,7 @@ Numeric parsers reject decimal tails, some hostname fragments and groups inside 
 
 The Kind godoc states what each detector matches, how it is checked and its scores. The rules below complete the longer entries: prefix and keyword lists, exclusions and accepted layouts.
 
-Rules shared by several kinds: a business label means order, invoice, tracking, version, build, serial or shipment immediately before a candidate in the same field, within 48 bytes, optionally followed by id, number, ref or code; ASCII case is ignored. Numeric normalization accepts full-width digits and Unicode dash variants for PAN, JPPhone, MyNumber, ABARouting, BankAccount and the eleven country kinds. Built-ins except Credential ignore interior non-ASCII Unicode Pd, Zs, Cf and Sm intersected with Dash in token runs, while ASCII space and hyphen remain delimiters; U+30FC remains a legacy numeric hyphen, and [the normalization policy](policies.md) has the allow list. Scan decodes one percent-encoding layer for every built-in except Credential.
+Rules shared by several kinds: a business label means order, invoice, tracking, version, build, serial or shipment immediately before a candidate in the same field, within 48 bytes, optionally followed by id, number, ref or code; ASCII case is ignored. Numeric normalization accepts full-width digits and Unicode dash variants for PAN, JPPhone, MyNumber, ABARouting, BankAccount and the eleven country kinds. Built-ins except Credential ignore interior non-ASCII Unicode Pd, Zs, Cf and Sm intersected with Dash in token runs, while ASCII space and hyphen remain delimiters; U+30FC remains a legacy numeric hyphen, and [the normalization policy](policies.md) has the allow list. Scan decodes one layer of `\u00XX` escapes of ASCII characters and then one percent-encoding layer for every built-in except Credential.
 
 ### KindServiceToken
 
@@ -39,7 +39,7 @@ ASCII letters, digits, _ and - form bodies of at least 16 bytes after sk-proj-, 
 
 ### KindHighEntropy
 
-No keyword is required; slash/backslash-adjacent or dotted path components and assignments to id, requestid, traceid, spanid, commit, sha, hash, checksum or uuid (case and key separators ignored) and lowercase Kubernetes generated names ending in a five-character random suffix are excluded.
+No keyword is required; slash/backslash-adjacent or dotted path components and assignments to id, requestid, traceid, spanid, commit, sha, hash, checksum, uuid, continue or a key ending in cursor (case and key separators ignored) and lowercase Kubernetes generated names ending in a five-character random suffix are excluded.
 
 ### KindCredential
 
@@ -47,7 +47,7 @@ Required assignment keys are password, passwd, secret, token, api_key, authoriza
 
 ### KindPAN
 
-No keyword is needed; spaces/hyphens are allowed, prefixes are 4, 51–55 or 2221–2720, 34/37, 3528–3589, 6011/644–649/65, 300–305/36/38 and 62 respectively, with Luhn-valid lengths 13/16, 16, 15, 16, 16, 14–16 and 16–19; other Luhn-valid lengths are rejected.
+No keyword is needed; spaces/hyphens are allowed, prefixes are 4, 51–55 or 2221–2720, 34/37, 3528–3589, 6011/644–649/65, 300–305/36/38 and 62 respectively, with Luhn-valid lengths 13/16, 16, 15, 16, 16, 14–16 and 16–19; other lengths and every number that fails Luhn are rejected, because no issued card fails it, so a 16-digit order, request or trace ID that happens to start like a card is masked only when it is also Luhn-valid.
 
 ### KindEmail
 

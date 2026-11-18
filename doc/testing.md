@@ -31,7 +31,7 @@ The generator rejects incomplete mutation/fuzz runs and records source-log hashe
 
 ## Package mutation gate
 
-`make mutation` runs [Gremlins v0.6.0](https://github.com/go-gremlins/gremlins/releases/tag/v0.6.0) through the tools module; the root module has no tool dependency. The scheduled/manual heavy workflow checks every root package and the audit command, one gremlins run per package so each timeout is ten times that package's own test time; `make mutation` uses up to four workers (two on a 4-CPU runner) with GOMAXPROCS=2 each, a 4 GiB address-space cap that turns runaway allocation into a fast out-of-memory failure, and EMBARGO_MUTATION=1 to skip the README compile check, whose examples' Output assertions still run. It rejects scores or mutation coverage below [the recorded package floors](mutation-baseline.json). gremlins times the build of each mutated package together with its tests, so a mutant compiled while other workers hold the CPU can time out without being slower. The wrapper therefore rebuilds every timed-out mutant alone, with the same operator replacement supplied through a Go build overlay, and times only its test binary against ten times the unmutated binary's run (at least 10 s). A mutant that fails is killed, one that passes lived, and one that still times out, such as a loop whose counter now moves away from its bound, stays timed out. Timeouts that persist count as un-killed executed mutants: score = killed / (killed + lived + timed out). Mutation coverage divides that executed count by executed plus uncovered mutants. The older dated summary below uses the tool's killed / (killed + lived) efficacy; it is not the new gate's denominator.
+`make mutation` runs [Gremlins v0.6.0](https://github.com/go-gremlins/gremlins/releases/tag/v0.6.0) through the tools module; the root module has no tool dependency. The scheduled/manual heavy workflow checks every root package and the audit command, one gremlins run per package so each timeout is ten times that package's own test time; `make mutation` uses up to eight workers (two on a 4-CPU runner) with GOMAXPROCS=2 each, a 4 GiB address-space cap that turns runaway allocation into a fast out-of-memory failure, and EMBARGO_MUTATION=1 to skip the README compile check, whose examples' Output assertions still run. It rejects scores or mutation coverage below [the recorded package floors](mutation-baseline.json). gremlins times the build of each mutated package together with its tests, so a mutant compiled while other workers hold the CPU can time out without being slower. The wrapper therefore rebuilds every timed-out mutant alone, with the same operator replacement supplied through a Go build overlay, and times only its test binary against ten times the unmutated binary's run (at least 10 s). A mutant that fails is killed, one that passes lived, and one that still times out, such as a loop whose counter now moves away from its bound, stays timed out. Timeouts that persist count as un-killed executed mutants: score = killed / (killed + lived + timed out). Mutation coverage divides that executed count by executed plus uncovered mutants. The older dated summary below uses the tool's killed / (killed + lived) efficacy; it is not the new gate's denominator.
 
 `make mutation-diff BASE=origin/main` mutates only lines changed since BASE and lists surviving, timed-out and uncovered mutants on them; it checks no floors and is meant for work in progress. Every run first verifies a known killed expression and a known surviving expression, then compares all measured expression coordinates with a fresh dry-run inventory. The wrapper clears the Go test cache after inventory collection so the campaign timeout comes from an actual test run. This prevents missing files, truncated reports or a failing test launcher from creating a passing score. v0.6.0 mispasses its own --test-cpu flag, so the wrapper sets GOMAXPROCS instead. Its nested package-main mapping is also incorrect; the audit command runs as a temporary root module with the same command source, tests and scanner snapshot. No third-party source is patched.
 
@@ -40,13 +40,13 @@ The generator rejects incomplete mutation/fuzz runs and records source-log hashe
 <!-- mutation-baseline:start -->
 | Package | Score floor | Mutation coverage floor | Killed | Lived | Timed out | Uncovered |
 |---|---:|---:|---:|---:|---:|---:|
-| . | 83.33% | 99.78% | 370 | 58 | 16 | 1 |
-| cmd/embargo | 96.92% | 100.00% | 63 | 1 | 1 | 0 |
-| embargotest | 90.98% | 98.79% | 222 | 19 | 3 | 3 |
-| internal/ascii | 100.00% | 100.00% | 58 | 0 | 0 | 0 |
-| internal/detect | 87.56% | 92.35% | 1872 | 233 | 33 | 177 |
-| internal/output | 82.35% | 100.00% | 56 | 10 | 2 | 0 |
-| internal/saferecord | 100.00% | 100.00% | 5 | 0 | 0 | 0 |
+| . | 84.29% | 99.79% | 397 | 58 | 16 | 1 |
+| cmd/embargo | 98.08% | 100.00% | 102 | 2 | 0 | 0 |
+| embargotest | 92.34% | 98.92% | 253 | 19 | 2 | 3 |
+| internal/ascii | 100.00% | 100.00% | 63 | 0 | 0 | 0 |
+| internal/detect | 87.83% | 93.57% | 2288 | 276 | 41 | 179 |
+| internal/output | 86.08% | 100.00% | 68 | 8 | 3 | 0 |
+| internal/saferecord | 100.00% | 100.00% | 7 | 0 | 0 | 0 |
 <!-- mutation-baseline:end -->
 
 ## Coverage triage and changed statements

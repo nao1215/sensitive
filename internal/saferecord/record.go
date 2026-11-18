@@ -34,6 +34,24 @@ func (e SanitizationError) Error() string {
 	}
 }
 
+// Canceled returns ErrCanceled that errors.Is also matches with the error of
+// ctx, such as context.Canceled or context.DeadlineExceeded, keeping the fixed
+// text. Without a context error it returns ErrCanceled.
+func Canceled(ctx context.Context) error {
+	if ctx == nil || ctx.Err() == nil {
+		return ErrCanceled
+	}
+	return canceledError{cause: ctx.Err()}
+}
+
+type canceledError struct{ cause error }
+
+// Error returns ErrCanceled's fixed text, never the context's message.
+func (e canceledError) Error() string { return ErrCanceled.Error() }
+
+// Unwrap lets errors.Is and errors.As find both ErrCanceled and the context error.
+func (e canceledError) Unwrap() []error { return []error{ErrCanceled, e.cause} }
+
 // Reason classifies only trusted errors and never reads an error's text.
 func Reason(ctx context.Context, err error) SanitizationError {
 	if ctx.Err() != nil {

@@ -289,11 +289,28 @@ func TestCredentialObjectSyntaxStillProtectsPasswords(t *testing.T) {
 
 func TestCustomKeyStillFindsOpaqueText(t *testing.T) {
 	t.Parallel()
-	scanner := NewScanner(WithKinds(KindCredential), WithSensitiveKeys("recovery_code"))
-	const text = "recovery_code=opaque-recovery-code password=public-label"
-	got := scanner.ScanString(text)
-	if len(got) != 1 || text[got[0].Start:got[0].End] != "opaque-recovery-code" {
-		t.Fatal("custom key did not replace the default text key selection")
+	const recovery = "opaque-recovery-code"
+	const text = "recovery_code=" + recovery + " password=public-label"
+	for _, tc := range []struct {
+		name string
+		opts []ScannerOption
+		want []string
+	}{
+		{"added key keeps the defaults", []ScannerOption{WithSensitiveKeys("recovery_code")}, []string{recovery, "public-label"}},
+		{"without defaults only the added key", []ScannerOption{WithoutDefaultSensitiveKeys(), WithSensitiveKeys("recovery_code")}, []string{recovery}},
+		{"option order does not matter", []ScannerOption{WithSensitiveKeys("recovery_code"), WithoutDefaultSensitiveKeys()}, []string{recovery}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := NewScanner(append([]ScannerOption{WithKinds(KindCredential)}, tc.opts...)...).ScanString(text)
+			values := make([]string, 0, len(got))
+			for _, f := range got {
+				values = append(values, text[f.Start:f.End])
+			}
+			if !slices.Equal(values, tc.want) {
+				t.Fatalf("values = %q, want %q", values, tc.want)
+			}
+		})
 	}
 }
 
@@ -1159,6 +1176,60 @@ func TestPercentEncodedFindings(t *testing.T) {
 	}
 }
 
+func TestUnicodeEscapedFindings(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		kind          Kind
+		prefix, value string
+	}{
+		{KindEmail, "mail ", documentedEmail},
+		{KindPAN, "card ", "4111111111111111"},
+		{KindAWSKey, "key ", "AKIAIOSFODNN7EXAMPLE"},
+		{KindIPAddr, "from ", "203.0.113.7"},
+	} {
+		for _, escape := range []struct {
+			fn   func(string) string
+			name string
+		}{
+			{escapeEveryByte, "every byte"},
+			{escapePunctuation, "punctuation only"},
+		} {
+			t.Run(string(tc.kind)+"/"+escape.name, func(t *testing.T) {
+				t.Parallel()
+				value := escape.fn(tc.value)
+				text := `{"note":"` + tc.prefix + value + `"}`
+				got := NewScanner(WithKinds(tc.kind)).ScanString(text)
+				start := len(`{"note":"`) + len(tc.prefix)
+				if len(got) != 1 || got[0].Start != start || got[0].End != start+len(value) {
+					t.Fatalf("%s: original offsets %+v", text, got)
+				}
+			})
+		}
+	}
+}
+
+// escapeEveryByte writes each byte of s as a JSON escape of four hex digits.
+func escapeEveryByte(s string) string {
+	var b []byte
+	for i := range len(s) {
+		b = fmt.Appendf(b, "%cu%04x", '\\', s[i])
+	}
+	return string(b)
+}
+
+// escapePunctuation escapes only the bytes that are not letters or digits.
+func escapePunctuation(s string) string {
+	var b []byte
+	for i := range len(s) {
+		if c := s[i]; c < '0' || (c > '9' && c < 'A') || (c > 'Z' && c < 'a') || c > 'z' {
+			b = fmt.Appendf(b, "%cu%04X", '\\', c)
+			continue
+		}
+		b = append(b, s[i])
+	}
+	return string(b)
+}
+
 // Random partial escaping checks exact byte ranges after a UTF-8 prefix.
 func TestPercentRoundTripOffsets(t *testing.T) {
 	t.Parallel()
@@ -1285,5 +1356,18 @@ func TestDefaultScannerKeepsDSNUserAndHost(t *testing.T) {
 		if got := Mask(input, scanner.ScanString(input)); got != want {
 			t.Errorf("Mask(%q) = %q, want %q", input, got, want)
 		}
+	}
+}
+
+//nolint:paralleltest // AllocsPerRun changes GOMAXPROCS while measuring.
+func TestZeroScannerSharesTheDefaultPolicy(t *testing.T) {
+	var zero Scanner
+	line := []byte("GET /health 200 in 3ms")
+	zero.Scan(line)
+	if allocs := testing.AllocsPerRun(20, func() { zero.Scan(line) }); allocs > 0 {
+		t.Fatalf("zero-value Scan allocated %.0f times per clean line", allocs)
+	}
+	if got := zero.ScanString(documentedEmail); len(got) != 1 || got[0].Kind != KindEmail {
+		t.Fatalf("zero value lost the default policy: %+v", got)
 	}
 }

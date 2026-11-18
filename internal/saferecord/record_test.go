@@ -86,3 +86,31 @@ func TestUnknownReasonUsesFixedMaskingMessage(t *testing.T) {
 		t.Fatal("unknown reason exposed an unstable diagnostic")
 	}
 }
+
+func TestCanceledKeepsFixedTextAndContextCause(t *testing.T) {
+	t.Parallel()
+	if err := Canceled(nil); err != ErrCanceled { //nolint:staticcheck,errorlint // Canceled documents nil; the sentinel itself is the contract.
+		t.Fatalf("nil context: got %v, want the ErrCanceled sentinel", err)
+	}
+	if err := Canceled(t.Context()); err != ErrCanceled { //nolint:errorlint // The sentinel itself is the contract.
+		t.Fatalf("live context: got %v, want the ErrCanceled sentinel", err)
+	}
+	canceled, cancel := context.WithCancel(t.Context())
+	cancel()
+	expired, stop := context.WithDeadline(t.Context(), time.Unix(0, 0))
+	defer stop()
+	for _, err := range []error{Canceled(canceled), Canceled(expired)} {
+		if !errors.Is(err, ErrCanceled) {
+			t.Fatalf("%v does not match ErrCanceled", err)
+		}
+		if err.Error() != ErrCanceled.Error() {
+			t.Fatalf("text %q, want the fixed %q", err.Error(), ErrCanceled.Error())
+		}
+	}
+	if !errors.Is(Canceled(canceled), context.Canceled) {
+		t.Fatal("canceled context cause lost")
+	}
+	if !errors.Is(Canceled(expired), context.DeadlineExceeded) {
+		t.Fatal("deadline cause lost")
+	}
+}

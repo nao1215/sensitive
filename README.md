@@ -92,7 +92,7 @@ logger.Info("signup", "user", User{Name: "carol", Email: "carol@example.com", Pa
 // Output: {"level":"INFO","msg":"signup","user":{"Name":"carol","Email":"[REDACTED]","Password":"[REDACTED]"}}
 ```
 
-`next` is the handler your logger already uses. The same rules apply to JSON that never reaches a logger, such as an API response or an audit export:
+`next` is the handler your logger writes to, before any `With` or `WithGroup`: attributes bound to it earlier never pass through embargo, so add them to the logger built on the result. The same rules apply to JSON that never reaches a logger, such as an API response or an audit export:
 
 <!-- example: example_test.go:ExampleScanner_MaskJSON -->
 ```go
@@ -107,7 +107,7 @@ fmt.Println(string(safe))
 // {"user":{"email":"[REDACTED]","password":"[REDACTED]"},"amount":125,"paid":true}
 ```
 
-Numbers and booleans keep their types. `WithSensitiveKeys` replaces the key list. [Structured values and key rules](doc/logging.md)
+Numbers and booleans keep their types. `WithSensitiveKeys` adds key names; `WithoutDefaultSensitiveKeys` drops the defaults. [Structured values and key rules](doc/logging.md)
 
 ## Loggers and services
 
@@ -150,7 +150,7 @@ fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
 ```
 
 <!-- speed-summary:start -->
-On the same five JSON slog events, go-masker takes 0.98 to 1.31 times the time of embargo given the same email and card rules. With its default scanner, embargo takes 0.60 to 1.06 times the time of pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
+On the same five JSON slog events, go-masker takes 1.00 to 1.27 times the time of embargo given the same email and card rules. With its default scanner, embargo takes 0.61 to 1.07 times the time of pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
 <!-- speed-summary:end -->
 
 ## Find and mask sensitive text
@@ -185,7 +185,7 @@ The cells excerpt each constant's godoc; follow the Kind link for the full rule 
 | [KindServiceToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindServiceToken) | covers provider-prefixed secrets and webhook credential paths | prefix, alphabet and length checks yield 0.95 without a keyword or remote authentication | on |
 | [KindHighEntropy](https://pkg.go.dev/github.com/nao1215/embargo@main#KindHighEntropy) | looks for unlabeled runs of 32–256 ASCII letters, digits, _, - or + | Shannon entropy of at least 4.5 bits per byte and three of lowercase, uppercase, digit and symbol classes yield 0.3 | off |
 | [KindCredential](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCredential) | locates nonempty assignment values, Authorization credentials and URL/DSN passwords | delimiter and quoting checks give 0.95, preserving labels, initial auth schemes, usernames and hosts | on |
-| [KindPAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN) | finds 13–19 digits with Visa, Mastercard, Amex, JCB, Discover, Diners or UnionPay prefixes | Luhn plus issuer length scores 1.0, a failed checksum 0.6, and an attached business label 0.4 | on |
+| [KindPAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN) | finds 13–19 digits with Visa, Mastercard, Amex, JCB, Discover, Diners or UnionPay prefixes | Luhn plus issuer length scores 1.0 and an attached business label 0.4; a failed checksum is not a card | on |
 | [KindEmail](https://pkg.go.dev/github.com/nao1215/embargo@main#KindEmail) | extracts ASCII local parts using letters, digits and .+-_ before @ and dotted domains using letters, digits and .- | structure checks score 0.7 or 0.8 for an unknown TLD and 0.9 or 1.0 for a known TLD | on |
 | [KindJPPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJPPhone) | recognizes 10- or 11-digit Japanese numbers beginning with 0, allowing spaces, hyphens and parentheses | prefix/length checks score landlines 0.8, other accepted types 0.9, and business labels 0.4 | on |
 | [KindUSPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSPhone) | recognizes separated ten-digit North American numbers such as (202) 555-0123 or 202.555.0123, with an optional +1 or … | numbering-plan and matching-separator checks score 0.7, 0.9 after a phone, tel, mobile, cell, fax, call or contact … | on |
@@ -249,7 +249,7 @@ Add one line to a package's tests:
 
 `func TestMain(m *testing.M) { os.Exit(embargotest.Guard(m)) }`
 
-Guard reruns the package tests and fails when a canary (a fake secret) or a detected value appears in stdout, stderr, default slog output or child processes. The canary is matched as raw bytes, hex, standard or URL-safe base64 at any byte alignment, and standard Go/JSON-escaped forms, so that check does not depend on the detectors. MIME-wrapped base64 and full Unicode escaping require decoding before recording. [ExampleGuard](embargotest/example_test.go)
+Guard reruns the package tests and fails when a canary (a fake secret) or a detected value appears in stdout, stderr, default slog output or child processes. The canary is matched as raw bytes, hex, standard or URL-safe base64 at any byte alignment, and standard Go/JSON-escaped forms, so that check does not depend on the detectors. It also searches the output once more after one layer of JSON backslash-u and percent escapes is decoded; MIME-wrapped base64 requires decoding before recording. [ExampleGuard](embargotest/example_test.go)
 
 For one test, a recorder checks both that the expected output exists and that no canary escaped:
 
@@ -288,7 +288,7 @@ $ printf '%s\n' 'login failed for alice@example.com from 203.0.113.7' | embargo
 login failed for [REDACTED] from [REDACTED]
 ```
 
-The masked lines are what you paste into a ticket or hand to an LLM. `--format json` prints per-kind counts with a few locations, and `--format jsonl` prints one line per finding with its line, column and kind; neither prints a matched value. Because jsonl prints nothing for a clean log, `embargo --format jsonl app.log | grep -q .` is true exactly when a log holds a secret, which is enough for a CI step. [Flags, limits and comparing settings](doc/audit.md)
+The masked lines are what you paste into a ticket or hand to an LLM. `--format json` prints per-kind counts with a few locations, and `--format jsonl` prints one line per finding with its line, column and kind; neither prints a matched value. Because jsonl prints nothing for a clean log, `out=$(embargo --format jsonl app.log) && test -z "$out"` fails a CI step on a finding and on an unreadable input alike; the exit status alone only says whether embargo ran. [Flags, limits and comparing settings](doc/audit.md)
 
 ## Tested outputs
 
@@ -306,8 +306,8 @@ Each link opens the test that produces and checks the shown output.
 | [zap JSON core](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L171-L177) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
 | [zerolog JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L178-L182) | `{"level":"info","token":"[REDACTED]","message":"event"}` |
 | [logrus JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L183-L189) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
-| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L986-L1074) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
-| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L650-L733) | `"signing":{"key":"[REDACTED]"}` |
+| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L988-L1076) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
+| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L650-L735) | `"signing":{"key":"[REDACTED]"}` |
 | [HTTP](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L230-L252) | `[REDACTED]` |
 | [Child panic](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L254-L264) | `panic: [REDACTED]` |
 <!-- tested-outputs:end -->

@@ -9,6 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Detection changes
 
 - The SWIFT/BIC and UK sort code context keywords (swift, bic, wire, sort code, bacs and the others) ignore ASCII case only, like every other keyword detector. They used Unicode lowering, so a non-ASCII letter such as the Kelvin sign counted as k, and a lowered character with a different byte length shifted the label check after swift.
+- Every built-in detector reads a backslash-u escape of an ASCII character (`\u0040` for `@`) as that character, as it already read one layer of percent escapes. Text that MaskJSON does not parse, such as a pretty-printed JSON document read line by line, a JSON string inside a text log line or an `embargo` input line over the 1 MiB MaskJSON limit, printed `alice\u0040example.com` unmasked. Escapes of non-ASCII characters and escapes after an escaped backslash stay literal.
+- KindPAN no longer reports digits that fail the Luhn check. Every issued card satisfies it; the 0.6 candidates were order, request and trace IDs, Snowflake IDs and decimal span IDs that start like a card, about 28% of random 16-digit IDs and 27% of decimal 64-bit trace IDs. On the frozen accuracy corpus the critical tier keeps every true positive with no misses and drops false positives from 97 to 33; PAN precision rises from 60.1% to 81.6% with recall at 100%. A mistyped card number is no longer masked.
+- KindHighEntropy skips values assigned to `continue` or a key ending in `cursor`, such as the Kubernetes list `continue` parameter, `next_cursor` and the GraphQL `endCursor`. These pagination cursors carry list state, not credentials; a Kubernetes audit log in the public evaluation showed one once escape decoding moved the boundary after it.
+- MaskJSON, the slog handler, the HTTP handler and the logger adapters decode a string value of 20 bytes to 8 KiB that is padded standard base64 and scan the bytes when they are printable UTF-8 text, hiding the whole value on a finding. encoding/json, zap.Binary, zerolog, logrus and Sentry write a `[]byte` field in this form, so a token in a byte field of a struct, map or slice reached the output recoverable. Binary data and other base64 alphabets are not scanned; `Scanner.Scan` on plain text is unchanged.
+### Added
+
+- `WithoutDefaultSensitiveKeys()` drops the default sensitive key names and suffix rule, for a public field named token or an export that must hide exactly the keys it lists.
 
 ### Removed
 
@@ -16,7 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- The `embargo` command chooses its output with one flag, `--format text|json|jsonl`. `--report` is replaced by `--format json`, and `--samples` now requires it. The new `--format jsonl` prints one object per finding (kind, byte offsets, line and column, never the value) as each line is read, without a sample limit; a clean log prints nothing, so `embargo --format jsonl app.log | grep -q .` gates CI without jq.
+- `WithSensitiveKeys` adds names to the default key policy instead of replacing it, and repeated options add to each other. Passing your own key used to drop password, token and the suffix rule that matches names such as POSTGRES_PASSWORD, and copying the documented defaults could not bring the suffix rule back. Use the new `WithoutDefaultSensitiveKeys()` to drop the defaults; `WithSensitiveKeys()` with no names no longer disables the policy.
+- The `embargo` command chooses its output with one flag, `--format text|json|jsonl`. `--report` is replaced by `--format json`, and `--samples` now requires it. The new `--format jsonl` prints one object per finding (kind, byte offsets, line and column, never the value) as each line is read, without a sample limit; a clean log prints nothing, so `out=$(embargo --format jsonl app.log) && test -z "$out"` gates CI without jq and also fails when the input cannot be read.
 - `embargotest.WithLimits(maxBytes, timeout)` is split into `WithMaxBytes(n)` and `WithTimeout(d)`, so a test can raise one bound without restating the other default.
 - A file named `-` reads stdin in its place, as in cat, so `embargo header.log - footer.log` works in a pipe.
 - The `--format json` report no longer has the `value` field in each sample; it always held `[REDACTED]`. Each kind's `drop_option` now names the `--kinds` flag instead of the Go option.
@@ -25,10 +33,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - `embargo` rejects a flag placed after a file name instead of reading it as a file. `embargo a.log --kinds email` used to mask a.log with the default kinds and then fail on a file named `--kinds`; it now exits with `flags must come before the files`. `--` still ends the flags.
+- embargotest finds the canary after one layer of JSON `\u` escapes and one layer of percent escapes are decoded from the output. A canary passed through `url.QueryEscape` or `url.PathEscape`, for example into a redirect `Location`, or written by an encoder that escapes every character, passed Check.
+- `embargo` masks every line of a multi-line PEM or PGP private key block, as `Scanner.ScanLines` does. It scanned each line alone, so only the BEGIN line was masked and the key body and END line were printed; `--format json` and `--format jsonl` did not count them either. A block without its END line covers the rest of the input.
+- `MaskJSONContext` returns a cancellation error that `errors.Is` matches with the context error, `context.Canceled` or `context.DeadlineExceeded`, keeping its fixed text. It used an internal type that callers could not classify.
 - The report reads lines exactly as the filter does. A final line of exactly 4 MiB was accepted by the filter and rejected by the report, and the report error did not say which line; both now accept up to 4 MiB and name the line that stops them.
 
 ### Performance
 
+- A zero `Scanner` shares one default policy built on first use. It built a new NewScanner policy on every call, about 1,400 allocations and 200 KiB for one clean line.
 - WithKinds builds the list of known kinds once per call instead of once per kind passed.
 
 ## [0.13.0] - 2026-11-18

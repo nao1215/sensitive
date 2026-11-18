@@ -10,7 +10,7 @@ Surroundings include logs, JSON, URLs, line endings and Japanese text. Negative 
 
 A hit requires the same kind and exact unused original byte range. Partial, duplicate and extra matches count as false positives; missing expected ranges count as false negatives. Precision is TP/(TP+FP); recall is TP/(TP+FN). Each detector runs alone.
 
-The default minimum confidence remains 0: ambiguous candidates are included. Confidence is a heuristic, not a probability. PAN checksum failures score 0.6; PAN, My Number and Japanese phone candidates with an attached order, invoice, tracking, version, build, serial or shipment label score 0.4. `WithMinConfidence(0.7)` excludes these candidates and can therefore miss genuine secrets under misleading business labels. A global 0.7 threshold also removes the 0.5–0.65 bank-account findings and some sort-code findings; it is not a universal accuracy setting. Both policies are measured below; the detector charts use held-out results at the default threshold.
+The default minimum confidence remains 0: ambiguous candidates are included. Confidence is a heuristic, not a probability. PAN, My Number and Japanese phone candidates with an attached order, invoice, tracking, version, build, serial or shipment label score 0.4. `WithMinConfidence(0.7)` excludes these candidates and can therefore miss genuine secrets under misleading business labels. A global 0.7 threshold also removes the 0.5–0.65 bank-account findings and some sort-code findings; it is not a universal accuracy setting. Both policies are measured below; the detector charts use held-out results at the default threshold.
 
 ## Encoding policy
 
@@ -40,7 +40,7 @@ The original 23 built-in detectors decode exactly one layer of valid `%HH` escap
 | [jwt](#jwt) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [merchant_id](#merchant-id) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [mynumber](#mynumber) | 144 / 544 | 144 / 32 / 0 | 81.8% | 100.0% |
-| [pan](#pan) | 144 / 544 | 144 / 96 / 0 | 60.0% | 100.0% |
+| [pan](#pan) | 144 / 544 | 144 / 32 / 0 | 81.8% | 100.0% |
 | [payment_token](#payment-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 144 / 544 | 144 / 32 / 0 | 81.8% | 100.0% |
 | [phone_us](#phone-us) | 144 / 64 | 144 / 0 / 0 | 100.0% | 100.0% |
@@ -71,7 +71,7 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [jwt](#jwt) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [merchant_id](#merchant-id) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [mynumber](#mynumber) | 146 / 562 | 146 / 33 / 0 | 81.6% | 100.0% |
-| [pan](#pan) | 146 / 562 | 146 / 97 / 0 | 60.1% | 100.0% |
+| [pan](#pan) | 146 / 562 | 146 / 33 / 0 | 81.6% | 100.0% |
 | [payment_token](#payment-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 146 / 562 | 146 / 32 / 0 | 82.0% | 100.0% |
 | [phone_us](#phone-us) | 144 / 64 | 144 / 0 / 0 | 100.0% | 100.0% |
@@ -102,7 +102,7 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [jwt](#jwt) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [merchant_id](#merchant-id) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [mynumber](#mynumber) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [pan](#pan) | 144 / 544 | 144 / 64 / 0 | 69.2% | 100.0% |
+| [pan](#pan) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [payment_token](#payment-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [phone_us](#phone-us) | 144 / 64 | 144 / 0 / 0 | 100.0% | 100.0% |
@@ -133,7 +133,7 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [jwt](#jwt) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [merchant_id](#merchant-id) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [mynumber](#mynumber) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [pan](#pan) | 146 / 562 | 146 / 64 / 0 | 69.5% | 100.0% |
+| [pan](#pan) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [payment_token](#payment-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [phone_us](#phone-us) | 144 / 64 | 144 / 0 / 0 | 100.0% | 100.0% |
@@ -347,11 +347,8 @@ Verified by the [pan format tests](../internal/detect/pan_test.go) and the [corp
 | Set / observed limit | Input example | Why it remains |
 |---|---|---|
 | development: `pan/control/order/0` | `Order ID: 4327088982216106` | Explanation 1 below. |
-| development: `pan/negative/0/japanese` | `処理結果【card-like 4865015899549583】を記録しました` | Explanation 2 below. |
 
 1. Business identifiers can satisfy sensitive-number shapes and checksums. Attached business labels lower confidence to 0.4, but the default threshold of 0 preserves ambiguous candidates.
-
-2. PAN deliberately returns BIN/length candidates with a failing Luhn checksum at lower confidence; default confidence accepts them.
 
 ## payment token
 
@@ -459,7 +456,7 @@ Negative controls are reported by category in the verbose test output. Public ra
 
 ## Default policy decision
 
-Scanner, slog, adapters and embargotest keep threshold 0. NewScanner and the zero Scanner now omit KindHighEntropy; WithAll or WithKinds(KindHighEntropy) enables it. The historical credential held set gave entropy 50.0% precision and 98.3% recall: public random IDs share the token distribution. The real-log study removed 273 path findings but cannot establish that a bare random token is a secret. Opt-in keeps that trade-off visible instead of disguising it with a confidence adjustment. Slog and adapters honor the explicit Scanner supplied by the caller, while embargotest favors finding forgotten values. Threshold 0.5 removes business-label candidates but retains PAN checksum failures and loses every unlabeled entropy finding. Threshold 0.7 additionally loses bank-account and some sort-code findings. Neither becomes a hidden default. Choose a threshold explicitly for the selected kinds; confidence is not probability. SWIFT development precision remains 54.9%; changing the global threshold does not repair ambiguous alphabetic bank codes.
+Scanner, slog, adapters and embargotest keep threshold 0. NewScanner and the zero Scanner now omit KindHighEntropy; WithAll or WithKinds(KindHighEntropy) enables it. The historical credential held set gave entropy 50.0% precision and 98.3% recall: public random IDs share the token distribution. The real-log study removed 273 path findings but cannot establish that a bare random token is a secret. Opt-in keeps that trade-off visible instead of disguising it with a confidence adjustment. Slog and adapters honor the explicit Scanner supplied by the caller, while embargotest favors finding forgotten values. Threshold 0.5 removes business-label candidates and loses every unlabeled entropy finding. Threshold 0.7 additionally loses bank-account and some sort-code findings. Neither becomes a hidden default. Choose a threshold explicitly for the selected kinds; confidence is not probability. SWIFT development precision remains 54.9%; changing the global threshold does not repair ambiguous alphabetic bank codes.
 
 
 ## Choosing a threshold
@@ -468,8 +465,8 @@ The default remains 0 for all 26 default kinds. Public-log rates are sample esti
 
 | Minimum confidence | Public FP/GB | Public precision | Development precision / misses | Held precision / misses |
 |---|---:|---:|---:|---:|
-| 0.0 | 2859.7 | 99.9210% | 95.54% / 0 | 96.09% / 0 |
-| 0.5 | 2859.7 | 99.9210% | 97.84% / 0 | 98.40% / 0 |
+| 0.0 | 2859.7 | 99.9210% | 97.03% / 0 | 97.62% / 0 |
+| 0.5 | 2859.7 | 99.9210% | 99.40% / 0 | 100.00% / 0 |
 | 0.7 | 2859.7 | 99.9210% | 99.38% / 158 | 100.00% / 156 |
 
 Choose 0 when retaining ambiguous secrets is the priority. On these synthetic sets, 0.5 removes business-label false positives without additional misses; validate it against your own mislabeled secrets before opting in. A global 0.7 loses bank-account and sort-code positives. These thresholds do not fix the remaining public-log ABA/SWIFT false positives. Select relevant kinds and sensitive keys before raising the global cutoff; confidence is not a probability. Regenerate with make accuracy-doc and make real-log-accuracy; python3 scripts/accuracy_figures.py --check verifies this table.
@@ -483,19 +480,19 @@ Each split combines the original synthetic corpus, credentials and the frozen co
 
 | Set | Tier | Threshold | TP / FP / misses | Recall | Exposed values / bytes |
 |---|---|---:|---:|---:|---:|
-| development | critical | 0.0 | 1648 / 97 / 0 | 100.00% | 0 / 0 |
+| development | critical | 0.0 | 1648 / 33 / 0 | 100.00% | 0 / 0 |
 | development | high | 0.0 | 3930 / 1089 / 0 | 100.00% | 0 / 0 |
 | development | standard | 0.0 | 1724 / 176 / 0 | 100.00% | 0 / 0 |
-| development | critical | 0.5 | 1648 / 64 / 0 | 100.00% | 0 / 0 |
+| development | critical | 0.5 | 1648 / 0 / 0 | 100.00% | 0 / 0 |
 | development | high | 0.5 | 3930 / 0 / 0 | 100.00% | 0 / 0 |
 | development | standard | 0.5 | 1604 / 24 / 120 | 93.04% | 120 / 4800 |
 | development | critical | 0.7 | 1648 / 0 / 0 | 100.00% | 0 / 0 |
 | development | high | 0.7 | 3164 / 0 / 766 | 80.51% | 766 / 10735 |
 | development | standard | 0.7 | 1604 / 24 / 120 | 93.04% | 120 / 4800 |
-| held | critical | 0.0 | 1632 / 96 / 0 | 100.00% | 0 / 0 |
+| held | critical | 0.0 | 1632 / 32 / 0 | 100.00% | 0 / 0 |
 | held | high | 0.0 | 3920 / 1088 / 0 | 100.00% | 0 / 0 |
 | held | standard | 0.0 | 1702 / 150 / 2 | 99.88% | 2 / 80 |
-| held | critical | 0.5 | 1632 / 64 / 0 | 100.00% | 0 / 0 |
+| held | critical | 0.5 | 1632 / 0 / 0 | 100.00% | 0 / 0 |
 | held | high | 0.5 | 3920 / 0 / 0 | 100.00% | 0 / 0 |
 | held | standard | 0.5 | 1584 / 0 / 120 | 92.96% | 120 / 4800 |
 | held | critical | 0.7 | 1632 / 0 / 0 | 100.00% | 0 / 0 |
