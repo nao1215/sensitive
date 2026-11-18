@@ -155,32 +155,7 @@ func TestPAN(t *testing.T) {
 			t.Parallel()
 			rapid.Check(t, func(t *rapid.T) {
 				n := rapid.SampledFrom(spec.lengths).Draw(t, "PAN length")
-				prefix := spec.prefix
-				switch prefix {
-				case "51":
-					prefix = strconv.Itoa(rapid.IntRange(51, 55).Draw(t, "Mastercard prefix"))
-				case "2221":
-					prefix = strconv.Itoa(rapid.IntRange(2221, 2720).Draw(t, "Mastercard 2-series prefix"))
-				case "3528":
-					prefix = strconv.Itoa(rapid.IntRange(3528, 3589).Draw(t, "JCB prefix"))
-				case "300":
-					prefix = strconv.Itoa(rapid.IntRange(300, 305).Draw(t, "Diners prefix"))
-				case "644":
-					prefix = strconv.Itoa(rapid.IntRange(644, 649).Draw(t, "Discover prefix"))
-				}
-				raw := prefix + digits(t, n-len(prefix)-1)
-				sum := 0
-				for i := len(raw) - 1; i >= 0; i-- {
-					v := int(raw[i] - '0')
-					if (len(raw)-1-i)%2 == 0 {
-						v *= 2
-						if v > 9 {
-							v -= 9
-						}
-					}
-					sum += v
-				}
-				raw += strconv.Itoa((10 - sum%10) % 10)
+				raw := luhnPAN(t, drawPANPrefix(t, spec.prefix), n)
 				if n == 13 && eanCheckDigitHolds(raw) {
 					// A 13-digit number that is also a valid EAN-13 is a product code.
 					t.Skip("EAN-13 product code")
@@ -1127,6 +1102,41 @@ func TestNumericLookingStringGrammar(t *testing.T) {
 			rt.Fatalf("numeric-looking string changed: %s => %s (%v)", input, masked, err)
 		}
 	})
+}
+
+// drawPANPrefix widens a range's first prefix to a random prefix in the range.
+func drawPANPrefix(t *rapid.T, prefix string) string {
+	switch prefix {
+	case "51":
+		return strconv.Itoa(rapid.IntRange(51, 55).Draw(t, "Mastercard prefix"))
+	case "2221":
+		return strconv.Itoa(rapid.IntRange(2221, 2720).Draw(t, "Mastercard 2-series prefix"))
+	case "3528":
+		return strconv.Itoa(rapid.IntRange(3528, 3589).Draw(t, "JCB prefix"))
+	case "300":
+		return strconv.Itoa(rapid.IntRange(300, 305).Draw(t, "Diners prefix"))
+	case "644":
+		return strconv.Itoa(rapid.IntRange(644, 649).Draw(t, "Discover prefix"))
+	default:
+		return prefix
+	}
+}
+
+// luhnPAN draws an n-digit number after prefix and appends its Luhn check digit.
+func luhnPAN(t *rapid.T, prefix string, n int) string {
+	raw := prefix + digits(t, n-len(prefix)-1)
+	sum := 0
+	for i := len(raw) - 1; i >= 0; i-- {
+		v := int(raw[i] - '0')
+		if (len(raw)-1-i)%2 == 0 {
+			v *= 2
+			if v > 9 {
+				v -= 9
+			}
+		}
+		sum += v
+	}
+	return raw + strconv.Itoa((10-sum%10)%10)
 }
 
 // eanCheckDigitHolds reports whether a 13-digit string has a valid EAN-13
