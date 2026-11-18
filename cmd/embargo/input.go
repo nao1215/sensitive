@@ -2,7 +2,9 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
+	"io/fs"
 	"os"
 )
 
@@ -11,8 +13,9 @@ const stdinName = "-"
 
 // openInputs reads the named files in order, like cat, or stdin when there are
 // none; the name "-" reads stdin in its place. Files open one at a time; a file
-// that cannot be read stops the input with a fixed error that does not repeat
-// its name.
+// that cannot be read stops the input with an error that gives its position
+// among the named files, such as "input file 2 cannot be opened: no such file",
+// but does not repeat its name.
 func openInputs(names []string, stdin io.Reader) (source io.Reader, closeAll func()) {
 	if len(names) == 0 {
 		return stdin, func() {}
@@ -21,11 +24,12 @@ func openInputs(names []string, stdin io.Reader) (source io.Reader, closeAll fun
 	return files, files.close
 }
 
-// inputError is a fixed message about the named input files; it never holds a
-// file name or operating-system detail, so it is shown as is.
+// inputError is a message about the named input files; it holds at most a
+// file position and a fixed cause, never a file name or operating-system
+// detail, so it is shown as is.
 type inputError string
 
-// Error returns the fixed message.
+// Error returns the message.
 func (e inputError) Error() string { return string(e) }
 
 // safeInputError returns err's own message when it is an inputError and
@@ -43,6 +47,7 @@ type fileSequence struct {
 	file     *os.File
 	closeErr error
 	names    []string
+	opened   int
 }
 
 // Read reads the files in order and reports io.EOF after the last one.
@@ -81,6 +86,7 @@ func (f *fileSequence) advance() error {
 	}
 	name := f.names[0]
 	f.names = f.names[1:]
+	f.opened++
 	if name == stdinName {
 		f.current = f.stdin
 		return nil
@@ -88,10 +94,23 @@ func (f *fileSequence) advance() error {
 	// #nosec G304 -- The user names the files to read on the command line.
 	file, err := os.Open(name)
 	if err != nil {
-		return inputError("embargo: an input file cannot be opened")
+		return inputError(fmt.Sprintf("embargo: input file %d cannot be opened%s", f.opened, openReason(err)))
 	}
 	f.current, f.file = file, file
 	return nil
+}
+
+// openReason names the common causes without the operating-system text,
+// which repeats the path.
+func openReason(err error) string {
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		return ": no such file"
+	case errors.Is(err, fs.ErrPermission):
+		return ": permission denied"
+	default:
+		return ""
+	}
 }
 
 // close releases the current file; a failure is reported by the next Read.

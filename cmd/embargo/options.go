@@ -64,7 +64,7 @@ func parseOptions(args []string) (*options, error) {
 		if errors.Is(err, flag.ErrHelp) {
 			return nil, err
 		}
-		return nil, errors.New("embargo: unknown flag or missing flag value; see embargo --help")
+		return nil, flagError(err)
 	}
 	minimum, ok := parseConfidence(minimumText)
 	if !ok {
@@ -108,4 +108,20 @@ func lateFlag(args, files []string) bool {
 func parseConfidence(text string) (float64, bool) {
 	value, err := strconv.ParseFloat(text, 64)
 	return value, err == nil && !math.IsNaN(value) && value >= 0 && value <= 1
+}
+
+// flagError names the flag when the flag package reports a defined one, as in
+// "flag needs an argument: -kinds"; an undefined name is what was typed, so it
+// is not repeated and the defined flags are listed instead.
+func flagError(err error) error {
+	text := err.Error()
+	for _, name := range []string{"kinds", "min-confidence", "format", "samples", "version"} {
+		if strings.HasSuffix(text, ": -"+name) || strings.Contains(text, " for -"+name+":") {
+			if strings.HasPrefix(text, "flag needs an argument") {
+				return errors.New("embargo: --" + name + " needs a value; see embargo --help")
+			}
+			return errors.New("embargo: --" + name + " has an invalid value; see embargo --help")
+		}
+	}
+	return errors.New("embargo: unknown flag; the flags are --kinds, --min-confidence, --format, --samples and --version; see embargo --help")
 }

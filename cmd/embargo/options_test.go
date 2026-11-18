@@ -13,7 +13,7 @@ const (
 	flagMinimum        = "--min-confidence"
 	flagFormat         = "--format"
 	kindsAll           = "all"
-	unknownFlagMessage = "embargo: unknown flag or missing flag value; see embargo --help"
+	unknownFlagMessage = "embargo: unknown flag; the flags are --kinds, --min-confidence, --format, --samples and --version; see embargo --help"
 	minimumMessage     = "embargo: --min-confidence must be a number from 0 to 1"
 	kindsMessage       = "embargo: --kinds must be all or a comma-separated list of kinds; see embargo --help"
 	flagSamples        = "--samples"
@@ -39,7 +39,9 @@ func TestOptionErrorsNameTheFlagAndNeverEchoTheValue(t *testing.T) {
 		{args: []string{flagKinds, secretArgument}, want: kindsMessage},
 		{args: []string{flagKinds, "pan," + secretArgument}, want: kindsMessage},
 		{args: []string{"--" + secretArgument}, want: unknownFlagMessage},
-		{args: []string{flagKinds}, want: unknownFlagMessage},
+		{args: []string{flagKinds}, want: "embargo: --kinds needs a value; see embargo --help"},
+		{args: []string{"--version=maybe"}, want: "embargo: --version has an invalid value; see embargo --help"},
+		{args: []string{flagKinds, "emial"}, want: "embargo: --kinds must be all or a comma-separated list of kinds; unknown kind \"emial\" (did you mean \"email\"?); see embargo --help"},
 		{args: []string{"--all"}, want: unknownFlagMessage},
 		{args: []string{"--report"}, want: unknownFlagMessage},
 		{args: []string{flagFormat, "yaml"}, want: formatMessage},

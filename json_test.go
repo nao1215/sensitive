@@ -364,7 +364,7 @@ func TestAdversarialJSONLimits(t *testing.T) {
 			if err != nil || !json.Valid(out) {
 				t.Fatal("valid bounded tree rejected")
 			}
-		} else if out != nil || err == nil || err.Error() != "embargo: JSON size limit exceeded" {
+		} else if out != nil || err == nil || err.Error() != "embargo: JSON size or nesting limit exceeded" {
 			t.Fatal("deep tree did not fail closed")
 		}
 	}
@@ -677,7 +677,7 @@ func TestMaskJSONFixedFailureReasons(t *testing.T) {
 		canceled bool
 	}{
 		{"embargo: invalid or unmaskable JSON", []byte(`{"password":"opaqueFixture"`), false},
-		{"embargo: JSON size limit exceeded", []byte(`"` + strings.Repeat("opaqueFixture", 100000) + `"`), false},
+		{"embargo: JSON size or nesting limit exceeded", []byte(`"` + strings.Repeat("opaqueFixture", 100000) + `"`), false},
 		{"embargo: JSON masking canceled", []byte(`{"password":"opaqueFixture"}`), true},
 	} {
 		ctx, cancel := context.WithCancel(t.Context())

@@ -24,7 +24,7 @@ const (
 func (e SanitizationError) Error() string {
 	switch e {
 	case ErrSizeLimit:
-		return "embargo: JSON size limit exceeded"
+		return "embargo: JSON size or nesting limit exceeded"
 	case ErrCanceled:
 		return "embargo: JSON masking canceled"
 	case ErrMasking:

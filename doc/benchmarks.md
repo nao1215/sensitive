@@ -103,10 +103,10 @@ WithKinds avoids running irrelevant detectors and removes their false-positive f
 <!-- narrowing:start -->
 | Selection | Clean ns/op | Dirty ns/op | Clean / dirty speedup over WithAll |
 |---|---:|---:|---|
-| all | 64,763.000 | 6,837,398.5 | 1.00× / 1.00× |
-| kinds1 | 101.000 | 22,310.0 | 641.22× / 306.47× |
-| kinds3 | 8,648.500 | 496,620.0 | 7.49× / 13.77× |
-| kinds8 | 10,173.500 | 1,541,041.5 | 6.37× / 4.44× |
+| all | 64,763 | 6,837,398 | 1.00× / 1.00× |
+| kinds1 | 101 | 22,310 | 641.22× / 306.47× |
+| kinds3 | 8,648 | 496,620 | 7.49× / 13.77× |
+| kinds8 | 10,174 | 1,541,042 | 6.37× / 4.44× |
 <!-- narrowing:end -->
 
 The one-kind set is email; three kinds add PAN and credential; eight add Japanese phone, IP address, GitHub token, service token and private-key PEM. Omitting kinds gives up their recall. Select kinds according to the application's output policy and inspect the [real-log false-positive estimates](accuracy.md#public-system-logs).

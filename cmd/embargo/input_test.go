@@ -42,11 +42,11 @@ func TestMissingFileStopsWithoutItsName(t *testing.T) {
 	missing := filepath.Join(directory, "private-name.log")
 	var out bytes.Buffer
 	err := run([]string{present, missing}, strings.NewReader(""), &out)
-	if err == nil || err.Error() != "embargo: an input file cannot be opened" || out.String() != "kept "+filterMarker+"\n" {
+	if err == nil || err.Error() != "embargo: input file 2 cannot be opened: no such file" || out.String() != "kept "+filterMarker+"\n" {
 		t.Fatalf("missing file: err=%v output=%q", err, out.String())
 	}
 	out.Reset()
-	if err := run([]string{flagFormat, formatJSON, missing}, strings.NewReader(""), &out); err == nil || err.Error() != "embargo: an input file cannot be opened" || out.Len() != 0 {
+	if err := run([]string{flagFormat, formatJSON, missing}, strings.NewReader(""), &out); err == nil || err.Error() != "embargo: input file 1 cannot be opened: no such file" || out.Len() != 0 {
 		t.Fatalf("missing file in a report: err=%v output=%q", err, out.String())
 	}
 	if run([]string{directory}, strings.NewReader(""), &out) == nil {

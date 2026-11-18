@@ -137,7 +137,7 @@ Limits: MaskJSON bounds encoded input/output to 1 MiB, nesting to 64 and cumulat
 
 Every adapter and hook uses the same detectors and key rules as the slog handler. The HTTP and gRPC hooks mask what they log, not the request your service receives or the response it sends. gin, echo and Connect servers are `http.Handler`s, so `NewHTTPHandler` wraps them unchanged; [a test runs all three](tests/integrations_test.go). [Installation and limits](doc/adapters.md)
 
-Access logs usually need the client address. Select kinds without `KindIPAddress` to keep it while tokens and addresses in the request line are still masked:
+Access logs usually need the client address. Select kinds without `KindIPAddr` to keep it while tokens and addresses in the request line are still masked:
 
 <!-- example: example_test.go:ExampleWithKinds_accessLog -->
 ```go
@@ -381,10 +381,10 @@ Recorded scanner medians (ten interleaved samples):
 
 | Selection | Clean ns/op | Dirty ns/op | Clean / dirty speedup over WithAll |
 |---|---:|---:|---|
-| all | 64,763.000 | 6,837,398.5 | 1.00× / 1.00× |
-| kinds1 | 101.000 | 22,310.0 | 641.22× / 306.47× |
-| kinds3 | 8,648.500 | 496,620.0 | 7.49× / 13.77× |
-| kinds8 | 10,173.500 | 1,541,041.5 | 6.37× / 4.44× |
+| all | 64,763 | 6,837,398 | 1.00× / 1.00× |
+| kinds1 | 101 | 22,310 | 641.22× / 306.47× |
+| kinds3 | 8,648 | 496,620 | 7.49× / 13.77× |
+| kinds8 | 10,174 | 1,541,042 | 6.37× / 4.44× |
 
 [kinds1/3/8 definitions, input sizes and uncertainty](doc/benchmarks.md#choose-the-kinds-the-application-needs). Narrower selection avoids irrelevant detections and gives up their recall.
 <!-- narrowing-summary:end -->
