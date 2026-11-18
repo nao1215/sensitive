@@ -1,8 +1,6 @@
 package detect
 
 import (
-	"bytes"
-
 	"github.com/nao1215/embargo/internal/ascii"
 )
 
@@ -196,27 +194,17 @@ func isSortCodeDateLike(d1h, d1l, d2h, d2l, d3h, d3l byte) bool {
 // confidence rather than being silently rejected.
 func hasSortCodeContext(data []byte, start, end int) bool {
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-	searchStart := max(start-40, 0)
-	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-	searchEnd := min(end+40, len(data))
-	window := bytes.ToLower(data[searchStart:searchEnd])
-	for _, kw := range sortCodeContextKeywords() {
-		if bytes.Contains(window, kw) {
-			return true
-		}
-	}
-	return false
+	return containsFoldNear(data, start, end, 40, sortCodeContextKeywords)
 }
 
 // sortCodeContextKeywords are keywords that indicate a sort code context.
-// All values are lowercase because the search window is lowered before matching.
-func sortCodeContextKeywords() [][]byte {
-	return [][]byte{
-		[]byte("sort code"),
-		[]byte("sort-code"),
-		[]byte("sortcode"),
-		[]byte("sort_code"),
-		[]byte("sc:"),
-		[]byte("bacs"),
-	}
+// They are lowercase because containsFoldNear folds only the data. The table
+// is read-only.
+var sortCodeContextKeywords = [][]byte{
+	[]byte("sort code"),
+	[]byte("sort-code"),
+	[]byte("sortcode"),
+	[]byte("sort_code"),
+	[]byte("sc:"),
+	[]byte("bacs"),
 }

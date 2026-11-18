@@ -68,7 +68,7 @@ func (d *BankAccount) scanNormalized(data []byte, posMap []int) []Finding {
 			// Check for holder name keywords near this specific digit sequence
 			// (within 50 bytes), not anywhere in the entire input.
 			//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-			if containsAnyNear(data, seq.start, seq.end, 50, holderNameKeywords()) {
+			if containsNear(data, seq.start, seq.end, 50, holderNameKeywords) {
 				confidence = 0.65
 			}
 
@@ -84,55 +84,6 @@ func (d *BankAccount) scanNormalized(data []byte, posMap []int) []Finding {
 	}
 
 	return findings
-}
-
-// containsAny reports whether data contains any of the given byte sequences.
-func containsAny(data []byte, keywords [][]byte) bool {
-	for _, kw := range keywords {
-		if containsBytes(data, kw) {
-			return true
-		}
-	}
-	return false
-}
-
-// containsAnyNear reports whether any of the given byte sequences appear
-// within the specified radius of the byte range [regionStart, regionEnd).
-// This enables proximity-based keyword matching instead of whole-input scanning.
-func containsAnyNear(data []byte, regionStart, regionEnd, radius int, keywords [][]byte) bool {
-	start := max(regionStart-radius, 0)
-	end := min(regionEnd+radius, len(data))
-	region := data[start:end]
-	for _, kw := range keywords {
-		if containsBytes(region, kw) {
-			return true
-		}
-	}
-	return false
-}
-
-// containsBytes is a simple bytes.Contains implementation to avoid importing bytes
-// in this file (it's already imported in context.go where bytes is used).
-func containsBytes(data, sub []byte) bool {
-	if len(sub) == 0 {
-		return true
-	}
-	if len(sub) > len(data) {
-		return false
-	}
-	for i := 0; i <= len(data)-len(sub); i++ {
-		match := true
-		for j := range sub {
-			if data[i+j] != sub[j] {
-				match = false
-				break
-			}
-		}
-		if match {
-			return true
-		}
-	}
-	return false
 }
 
 // bankAccountKeywords are the context keywords for bank account detection.
@@ -159,16 +110,15 @@ func bankAccountKeywords() *keywordSet {
 }
 
 // holderNameKeywords are keywords indicating holder/beneficiary name context.
-// Their presence near a bank account number increases confidence.
-func holderNameKeywords() [][]byte {
-	return [][]byte{
-		// 名義 (holder name)
-		{0xE5, 0x90, 0x8D, 0xE7, 0xBE, 0xA9},
-		// 名義人 (account holder)
-		{0xE5, 0x90, 0x8D, 0xE7, 0xBE, 0xA9, 0xE4, 0xBA, 0xBA},
-		[]byte("holder"),
-		[]byte("Holder"),
-		[]byte("beneficiary"),
-		[]byte("Beneficiary"),
-	}
+// Their presence near a bank account number increases confidence. They match
+// byte for byte. The table is read-only.
+var holderNameKeywords = [][]byte{
+	// 名義 (holder name)
+	{0xE5, 0x90, 0x8D, 0xE7, 0xBE, 0xA9},
+	// 名義人 (account holder)
+	{0xE5, 0x90, 0x8D, 0xE7, 0xBE, 0xA9, 0xE4, 0xBA, 0xBA},
+	[]byte("holder"),
+	[]byte("Holder"),
+	[]byte("beneficiary"),
+	[]byte("Beneficiary"),
 }

@@ -127,6 +127,30 @@ func findKeywordPositions(data []byte, keywords [][]byte) []keywordMatch {
 	return newKeywordSet(keywords).findPositions(data)
 }
 
+// containsNear reports whether any keyword occurs byte for byte within radius
+// bytes of data[start:end].
+func containsNear(data []byte, start, end, radius int, keywords [][]byte) bool {
+	window := data[max(start-radius, 0):min(end+radius, len(data))]
+	for _, kw := range keywords {
+		if bytes.Contains(window, kw) {
+			return true
+		}
+	}
+	return false
+}
+
+// containsFoldNear is containsNear ignoring ASCII case in data; keywords must
+// be lowercase, and non-ASCII bytes match only themselves as in keywordSet.
+func containsFoldNear(data []byte, start, end, radius int, keywords [][]byte) bool {
+	window := data[max(start-radius, 0):min(end+radius, len(data))]
+	for _, kw := range keywords {
+		if ascii.ContainsFold(window, kw) {
+			return true
+		}
+	}
+	return false
+}
+
 // extractDigitsNear finds all digit sequences within the given byte radius
 // of a position. Only sequences with digit count between minDigits and maxDigits
 // (inclusive) are returned. The position is typically the end of a keyword match.

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Detection changes
+
+- The SWIFT/BIC and UK sort code context keywords (swift, bic, wire, sort code, bacs and the others) ignore ASCII case only, like every other keyword detector. They used Unicode lowering, so a non-ASCII letter such as the Kelvin sign counted as k, and a lowered character with a different byte length shifted the label check after swift.
+
 ## [0.13.0] - 2026-11-18
 
 The public-log evaluation adds seven operations logs that LogHub lacks: Nginx and Apache access logs, a 92.8 MB Kubernetes API server audit log and three AWS CloudTrail files. Their development files exposed four false-positive classes, fixed below.

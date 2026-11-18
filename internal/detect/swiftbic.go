@@ -173,9 +173,11 @@ func hasSWIFTContext(data []byte, start, end int) bool {
 	searchStart := max(start-50, 0)
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 	searchEnd := min(end+50, len(data))
-	window := bytes.ToLower(data[searchStart:searchEnd])
+	// The window is at most 50+11+50 bytes, so it is lowered on the stack.
+	var buf [128]byte
+	window := ascii.AppendLower(buf[:0], data[searchStart:searchEnd])
 
-	for _, kw := range swiftContextKeywords() {
+	for _, kw := range swiftContextKeywords {
 		if swiftKeywordInWindow(window, kw, start-searchStart) {
 			return true
 		}
@@ -211,13 +213,12 @@ func swiftKeywordInWindow(window, kw []byte, codeStart int) bool {
 }
 
 // swiftContextKeywords are lowercase keywords that indicate SWIFT/BIC context.
-func swiftContextKeywords() [][]byte {
-	return [][]byte{
-		[]byte("swift"),
-		[]byte("bic"),
-		[]byte("bank identifier"),
-		[]byte("wire"),
-	}
+// The table is read-only.
+var swiftContextKeywords = [][]byte{
+	[]byte("swift"),
+	[]byte("bic"),
+	[]byte("bank identifier"),
+	[]byte("wire"),
 }
 
 // isSWIFTCountry checks the supported ISO 3166-1 alpha-2 country codes.

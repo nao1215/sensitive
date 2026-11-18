@@ -1,7 +1,6 @@
 package detect
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -398,13 +397,6 @@ func TestPhoneConfidenceAndContainsEdges(t *testing.T) {
 		got := NewJPPhone().Scan([]byte(tc.raw))
 		if len(got) != 1 || got[0].Confidence != tc.confidence {
 			t.Fatal(tc.raw, got)
-		}
-	}
-	for _, data := range []string{"", "a", "aa", "abc"} {
-		for _, sub := range []string{"", "a", "aa", "abc", "abcd"} {
-			if containsBytes([]byte(data), []byte(sub)) != strings.Contains(data, sub) {
-				t.Fatal("contains", data, sub)
-			}
 		}
 	}
 }

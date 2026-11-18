@@ -44,11 +44,37 @@ func IsHexDigit(b byte) bool {
 // LowerCopy returns a new byte slice with all ASCII uppercase letters
 // converted to lowercase. Non-ASCII bytes are copied unchanged.
 func LowerCopy(data []byte) []byte {
-	out := make([]byte, len(data))
-	for i, b := range data {
-		out[i] = ToLower(b)
+	return AppendLower(make([]byte, 0, len(data)), data)
+}
+
+// AppendLower appends data to dst with ASCII uppercase letters lowered, so a
+// caller can lower a short window into a stack buffer.
+func AppendLower(dst, data []byte) []byte {
+	for _, b := range data {
+		dst = append(dst, ToLower(b))
 	}
-	return out
+	return dst
+}
+
+// ContainsFold reports whether data contains lower, ignoring ASCII case in
+// data. lower must already be lowercase; non-ASCII bytes match only themselves.
+func ContainsFold(data, lower []byte) bool {
+	for i := 0; i+len(lower) <= len(data); i++ {
+		if hasPrefixFold(data[i:], lower) {
+			return true
+		}
+	}
+	return false
+}
+
+// hasPrefixFold reports whether data starts with lower, ignoring ASCII case in data.
+func hasPrefixFold(data, lower []byte) bool {
+	for j, b := range lower {
+		if ToLower(data[j]) != b {
+			return false
+		}
+	}
+	return true
 }
 
 // ToLower converts an ASCII uppercase letter to lowercase.
