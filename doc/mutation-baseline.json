@@ -5,65 +5,64 @@
   "timeout_coefficient": 10,
   "packages": {
     ".": {
-      "score": 83.33,
-      "coverage": 99.78,
+      "score": 84.29,
+      "coverage": 99.79,
       "counts": {
-        "KILLED": 370,
+        "KILLED": 397,
         "LIVED": 58,
         "NOT COVERED": 1,
         "TIMED OUT": 16
       }
     },
     "embargotest": {
-      "score": 90.98,
-      "coverage": 98.79,
+      "score": 92.34,
+      "coverage": 98.92,
       "counts": {
-        "KILLED": 222,
+        "KILLED": 253,
         "LIVED": 19,
         "NOT COVERED": 3,
-        "TIMED OUT": 3
+        "TIMED OUT": 2
       }
     },
     "internal/ascii": {
       "score": 100.0,
       "coverage": 100.0,
       "counts": {
-        "KILLED": 58
+        "KILLED": 63
       }
     },
     "internal/detect": {
-      "score": 87.56,
-      "coverage": 92.35,
+      "score": 87.83,
+      "coverage": 93.57,
       "counts": {
-        "KILLED": 1872,
-        "LIVED": 233,
-        "NOT COVERED": 177,
-        "TIMED OUT": 33
+        "KILLED": 2288,
+        "LIVED": 276,
+        "NOT COVERED": 179,
+        "TIMED OUT": 41
       }
     },
     "internal/output": {
-      "score": 82.35,
+      "score": 86.08,
       "coverage": 100.0,
       "counts": {
-        "KILLED": 56,
-        "LIVED": 10,
-        "TIMED OUT": 2
+        "KILLED": 68,
+        "LIVED": 8,
+        "TIMED OUT": 3
       }
     },
     "internal/saferecord": {
       "score": 100.0,
       "coverage": 100.0,
       "counts": {
-        "KILLED": 5
+        "KILLED": 7
       }
     },
     "cmd/embargo": {
-      "score": 96.92,
+      "score": 98.08,
       "coverage": 100.0,
       "counts": {
-        "KILLED": 63,
-        "LIVED": 1,
-        "TIMED OUT": 1
+        "KILLED": 102,
+        "LIVED": 2
       }
     }
   }

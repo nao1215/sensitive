@@ -40,13 +40,13 @@ The generator rejects incomplete mutation/fuzz runs and records source-log hashe
 <!-- mutation-baseline:start -->
 | Package | Score floor | Mutation coverage floor | Killed | Lived | Timed out | Uncovered |
 |---|---:|---:|---:|---:|---:|---:|
-| . | 83.33% | 99.78% | 370 | 58 | 16 | 1 |
-| cmd/embargo | 96.92% | 100.00% | 63 | 1 | 1 | 0 |
-| embargotest | 90.98% | 98.79% | 222 | 19 | 3 | 3 |
-| internal/ascii | 100.00% | 100.00% | 58 | 0 | 0 | 0 |
-| internal/detect | 87.56% | 92.35% | 1872 | 233 | 33 | 177 |
-| internal/output | 82.35% | 100.00% | 56 | 10 | 2 | 0 |
-| internal/saferecord | 100.00% | 100.00% | 5 | 0 | 0 | 0 |
+| . | 84.29% | 99.79% | 397 | 58 | 16 | 1 |
+| cmd/embargo | 98.08% | 100.00% | 102 | 2 | 0 | 0 |
+| embargotest | 92.34% | 98.92% | 253 | 19 | 2 | 3 |
+| internal/ascii | 100.00% | 100.00% | 63 | 0 | 0 | 0 |
+| internal/detect | 87.83% | 93.57% | 2288 | 276 | 41 | 179 |
+| internal/output | 86.08% | 100.00% | 68 | 8 | 3 | 0 |
+| internal/saferecord | 100.00% | 100.00% | 7 | 0 | 0 | 0 |
 <!-- mutation-baseline:end -->
 
 ## Coverage triage and changed statements
