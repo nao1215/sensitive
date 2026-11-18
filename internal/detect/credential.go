@@ -19,7 +19,7 @@ func (*Credential) Name() DetectorName { return NameCredential }
 
 // Hints returns delimiters required by every supported credential form.
 func (*Credential) Hints() [][]byte {
-	return [][]byte{[]byte(":"), []byte("="), []byte("</"), []byte("AKIA"), []byte("ASIA"), []byte("ABIA"), []byte("ACCA"), []byte("Bearer "), []byte("Basic ")}
+	return [][]byte{[]byte(":"), []byte("="), []byte("</"), []byte("AKIA"), []byte("ASIA"), []byte("ABIA"), []byte("ACCA"), []byte("Bearer "), []byte("Basic "), []byte("--"), []byte("mysql"), []byte("mariadb"), []byte("sshpass")}
 }
 
 // Scan returns only secret spans, never their surrounding configuration fields.
@@ -126,7 +126,9 @@ func (d *Credential) appendContextCredentials(out []Finding, data []byte) []Find
 	out = append(out, awsSecretPair(data)...)
 	out = append(out, quotedAuthorization(data)...)
 	out = append(out, d.xmlElementCredentials(data)...)
-	return append(out, curlUserPasswords(data)...)
+	out = append(out, curlUserPasswords(data)...)
+	out = append(out, d.flagValues(data)...)
+	return append(out, commandPasswords(data)...)
 }
 
 // urlUserinfoColon advances urlIndex past URL findings starting at or before i

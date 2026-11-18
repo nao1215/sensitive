@@ -1,6 +1,10 @@
 package detect
 
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/nao1215/embargo/internal/ascii"
+)
 
 // curlUserPasswords finds the password in curl -u or --user arguments written
 // as user:password, including quoted words and backslash-continued command
@@ -135,3 +139,96 @@ func trimShellQuotes(data []byte, start, end int) (trimmedStart, trimmedEnd int)
 }
 
 func isShellSpace(b byte) bool { return b == ' ' || b == '\t' || b == '\n' || b == '\r' }
+
+// flagValues finds the value of a long option whose name is a sensitive key
+// when the value is a separate word: --password hunter2 or --db-password 'x'.
+// The --password=x form is an assignment. A following option (a word that
+// starts with -) and the words true and false are not values.
+func (d *Credential) flagValues(data []byte) []Finding {
+	var out []Finding
+	for i := 0; i < len(data); {
+		next := bytes.Index(data[i:], []byte("--"))
+		if next < 0 {
+			break
+		}
+		at := i + next
+		i = at + len("--")
+		if at > 0 && !isShellSpace(data[at-1]) {
+			continue
+		}
+		nameEnd := i
+		for nameEnd < len(data) && (isIdentifierByte(data[nameEnd]) || data[nameEnd] == '-') {
+			nameEnd++
+		}
+		if nameEnd == i || nameEnd >= len(data) || (data[nameEnd] != ' ' && data[nameEnd] != '\t') || !d.secretKey(data[i:nameEnd]) {
+			continue
+		}
+		end := shellCommandEnd(data, nameEnd)
+		valueStart := skipShellSpace(data, nameEnd, end)
+		valueEnd := shellWordEnd(data, valueStart, end)
+		start, stop := trimShellQuotes(data, valueStart, valueEnd)
+		if start < stop && data[start] != '-' && !labelIs(data[start:stop], "true", "false") {
+			out = append(out, credentialFinding(start, stop))
+		}
+		i = valueEnd
+	}
+	return out
+}
+
+// commandPasswords finds passwords passed to commands whose short -p option
+// takes one: mysql and mariadb clients (mysqldump, mysqladmin and others)
+// attach it as -phunter2, and sshpass takes it as the next word. The command
+// name must begin a word on the same line, because -p means a port, a path or
+// a parent directory elsewhere; mysql's -P port is upper-case.
+func commandPasswords(data []byte) []Finding {
+	var out []Finding
+	for i := 0; i < len(data); i++ {
+		attached, ok := passwordCommand(data, i)
+		if !ok {
+			continue
+		}
+		end := shellCommandEnd(data, i)
+		for at := i; at+len("-p") < end; at++ {
+			if data[at] != '-' || data[at+1] != 'p' || (at > 0 && !isShellSpace(data[at-1])) {
+				continue
+			}
+			valueStart := at + len("-p")
+			if !attached {
+				if !isShellSpace(data[valueStart]) {
+					continue
+				}
+				valueStart = skipShellSpace(data, valueStart, end)
+			}
+			valueEnd := shellWordEnd(data, valueStart, end)
+			if start, stop := trimShellQuotes(data, valueStart, valueEnd); start < stop {
+				out = append(out, credentialFinding(start, stop))
+			}
+			at = valueEnd
+		}
+		i = end
+	}
+	return out
+}
+
+// passwordCommand reports whether a mysql, mariadb or sshpass command word
+// starts at i, and whether its -p option takes an attached value.
+func passwordCommand(data []byte, i int) (attached, ok bool) {
+	if i > 0 && (isIdentifierByte(data[i-1]) || data[i-1] == '-') {
+		return false, false
+	}
+	end := i
+	for end < len(data) && (ascii.IsLower(data[end]) || data[end] == '-') {
+		end++
+	}
+	if end < len(data) && !isShellSpace(data[end]) {
+		return false, false
+	}
+	word := data[i:end]
+	switch {
+	case bytes.HasPrefix(word, []byte("mysql")), bytes.HasPrefix(word, []byte("mariadb")):
+		return true, true
+	case string(word) == "sshpass":
+		return false, true
+	}
+	return false, false
+}

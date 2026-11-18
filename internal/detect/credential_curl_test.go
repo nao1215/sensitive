@@ -58,3 +58,39 @@ func TestCurlUserPasswordsAtInputEdges(t *testing.T) {
 		}
 	}
 }
+
+func TestCommandLinePasswords(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ input, want string }{
+		{"--password hunter2", "hunter2"},
+		{"run --db-password 'hunter2' --verbose", "hunter2"},
+		{"login --token\topaque-value", "opaque-value"},
+		{"mysql -u root -phunter2 shop", "hunter2"},
+		{"mysqldump -h db -p'hunter2' shop", "hunter2"},
+		{"mariadb-dump -phunter2", "hunter2"},
+		{"sshpass -p hunter2 ssh host", "hunter2"},
+		{"--password", ""},
+		{"--password --verbose", ""},
+		{"--no-password true", ""},
+		{"--password-file /etc/secret", ""},
+		{"a--token opaque", ""},
+		{"--token\nnext", ""},
+		{"---- PASS ----", ""},
+		{"mysql -u root -p", ""},
+		{"mysql -P3306 shop", ""},
+		{"mysql_host -prod", ""},
+		{"mkdir -p /tmp/x", ""},
+		{"sshpass -fpasswd ssh host", ""},
+	} {
+		t.Run(tc.input, func(t *testing.T) {
+			t.Parallel()
+			got := ""
+			for _, f := range (&Credential{}).Scan([]byte(tc.input)) {
+				got = tc.input[f.Start:f.End]
+			}
+			if got != tc.want {
+				t.Fatalf("got %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
