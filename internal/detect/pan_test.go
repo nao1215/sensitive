@@ -511,3 +511,22 @@ func TestPANSkipsJANProductCodes(t *testing.T) {
 		t.Fatal("EAN-13 check digit")
 	}
 }
+
+func TestPANDottedGroups(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		input string
+		found bool
+	}{
+		{"card 4111.1111.1111.1111", true},
+		{"card 4111.1111.1111.1111.", true},
+		{"card 4111.1111.1111.1111.5", false},
+		{"oid 4111.1111.1111.11111", false},
+		{"v 4111.1111.111.11111", false},
+		{"card 4111.1111.1111.1112", false},
+	} {
+		if got := NewPAN().Scan([]byte(tc.input)); (len(got) == 1) != tc.found {
+			t.Errorf("Scan(%q) = %+v, want found %v", tc.input, got, tc.found)
+		}
+	}
+}

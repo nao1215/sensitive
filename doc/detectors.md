@@ -47,7 +47,7 @@ Required assignment keys are password, passwd, secret, token, api_key, authoriza
 
 ### KindPAN
 
-No keyword is needed; spaces/hyphens are allowed, prefixes are 4, 51–55 or 2221–2720, 34/37, 3528–3589, 6011/644–649/65, 300–305/36/38 and 62 respectively, with Luhn-valid lengths 13/16, 16, 15, 16, 16, 14–16 and 16–19; other lengths and every number that fails Luhn are rejected, because no issued card fails it, so a 16-digit order, request or trace ID that happens to start like a card is masked only when it is also Luhn-valid. A 13-digit number that also passes the EAN-13 check digit is a product code (Japanese JAN codes start with 45 or 49), not a card.
+No keyword is needed; spaces/hyphens are allowed, as are dots in exactly four groups of four digits (4111.1111.1111.1111), prefixes are 4, 51–55 or 2221–2720, 34/37, 3528–3589, 6011/644–649/65, 300–305/36/38 and 62 respectively, with Luhn-valid lengths 13/16, 16, 15, 16, 16, 14–16 and 16–19; other lengths and every number that fails Luhn are rejected, because no issued card fails it, so a 16-digit order, request or trace ID that happens to start like a card is masked only when it is also Luhn-valid. A 13-digit number that also passes the EAN-13 check digit is a product code (Japanese JAN codes start with 45 or 49), not a card.
 
 ### KindEmail
 

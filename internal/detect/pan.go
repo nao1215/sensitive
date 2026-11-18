@@ -116,6 +116,9 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		// Card digits fit the array; a longer run grows past it and is rejected by length.
 		var stack [panMaxDigits + 1]byte
 		digits, end := appendSeparatedDigits(data, start, stack[:0], cardSeparator)
+		if dotted, dottedEnd, ok := dottedCardDigits(data, start, stack[:0]); ok {
+			digits, end = dotted, dottedEnd
+		}
 
 		// Check digit count: valid PANs are 13-19 digits.
 		digitLen := len(digits)
@@ -129,6 +132,33 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	}
 
 	return findings
+}
+
+// dottedCardDigits accepts a card written as four dot-separated groups of
+// four digits, 4111.1111.1111.1111. Other dotted runs are versions, OIDs or
+// addresses, so the grouping must be exact and no further dotted digits follow.
+func dottedCardDigits(data []byte, start int, digits []byte) ([]byte, int, bool) {
+	const groups, groupLen = 4, 4
+	at := start
+	for group := range groups {
+		if group > 0 {
+			if at >= len(data) || data[at] != '.' {
+				return nil, start, false
+			}
+			at++
+		}
+		for range groupLen {
+			if at >= len(data) || !ascii.IsDigit(data[at]) {
+				return nil, start, false
+			}
+			digits = append(digits, data[at])
+			at++
+		}
+	}
+	if at < len(data) && (ascii.IsDigit(data[at]) || (data[at] == '.' && at+1 < len(data) && ascii.IsDigit(data[at+1]))) {
+		return nil, start, false
+	}
+	return digits, at, true
 }
 
 // panBounded reports whether [start, end) is not embedded in an identifier,
