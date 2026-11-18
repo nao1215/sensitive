@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -90,5 +91,18 @@ func TestDashReadsStdinBetweenFiles(t *testing.T) {
 	}
 	if want := "file " + filterMarker + "\nstdin " + filterMarker + "\nfile " + filterMarker + "\n"; out.String() != want {
 		t.Fatalf("got %q, want %q", out.String(), want)
+	}
+}
+
+func TestOpenReasonNamesOnlyTheCause(t *testing.T) {
+	t.Parallel()
+	for err, want := range map[error]string{
+		fs.ErrNotExist: ": no such file",
+		&fs.PathError{Op: "open", Path: "private-name.log", Err: fs.ErrPermission}: ": permission denied",
+		errors.New("private-name.log: invalid argument"):                           "",
+	} {
+		if got := openReason(err); got != want {
+			t.Errorf("openReason(%v) = %q, want %q", err, got, want)
+		}
 	}
 }

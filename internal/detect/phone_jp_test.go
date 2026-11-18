@@ -436,3 +436,15 @@ func TestJPPhoneDetector_InternationalForm(t *testing.T) {
 		})
 	}
 }
+
+func TestJPPhoneInternationalNearMisses(t *testing.T) {
+	t.Parallel()
+	d := NewJPPhone()
+	for _, input := range []string{"+81 x", "+81-12", "+81-90", "+8112345678901234", "+81 1234567890"} {
+		data := []byte(input)
+		var logContext numericLogContext
+		if _, next, ok := d.international(data, data, nil, 0, &logContext); ok || next <= 0 {
+			t.Errorf("international(%q) = ok %v next %d", input, ok, next)
+		}
+	}
+}

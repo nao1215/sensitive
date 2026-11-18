@@ -197,3 +197,10 @@ func TestCredentialNumericSessionIDsStayVisible(t *testing.T) {
 		}
 	}
 }
+
+func TestCredentialEmptyHexSessionIsASecret(t *testing.T) {
+	t.Parallel()
+	if got := (&Credential{}).Scan([]byte("session=0x")); len(got) != 1 {
+		t.Fatalf("Scan(session=0x) = %+v, want one finding", got)
+	}
+}

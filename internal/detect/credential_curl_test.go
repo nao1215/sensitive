@@ -98,3 +98,12 @@ func TestCommandLinePasswords(t *testing.T) {
 		})
 	}
 }
+
+func TestPasswordCommandWordBoundaries(t *testing.T) {
+	t.Parallel()
+	for _, input := range []string{"xmysql -phunter2", "sshpassx -p hunter2", "run-mysql -phunter2", "mysql_cli -phunter2"} {
+		if got := commandPasswords([]byte(input)); len(got) != 0 {
+			t.Errorf("commandPasswords(%q) = %+v, want none", input, got)
+		}
+	}
+}

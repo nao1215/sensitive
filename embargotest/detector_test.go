@@ -229,3 +229,25 @@ func TestFailureNamesSinkAndKindWithoutData(t *testing.T) {
 		}
 	})
 }
+
+type spacedKindDetector struct{}
+
+func (spacedKindDetector) Scan(data []byte) []embargo.Finding {
+	if string(data) != "opaque fixture" {
+		return nil
+	}
+	return []embargo.Finding{{Kind: "my kind", Start: 0, End: len(data), Confidence: 1}}
+}
+
+func TestFailureReplacesAnUnprintableKind(t *testing.T) {
+	t.Parallel()
+	p := &probeTB{TB: t}
+	r := New(p, WithScanner(embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(spacedKindDetector{}))))
+	write(t, r, "app.log", []byte("opaque fixture"))
+	r.Expect("app.log", func([]byte) bool { return true })
+	r.Check()
+	p.finish()
+	if want := "embargotest: sensitive data appeared in captured output: app.log (custom kind)"; len(p.messages) != 1 || p.messages[0] != want {
+		t.Fatalf("messages = %q, want %q", p.messages, want)
+	}
+}
