@@ -4,18 +4,18 @@ These optional modules mask at the final JSON boundary, after the real logger ha
 
 ## Installation
 
-The six adapter modules are published at v0.15.0 and require root v0.15.0. Upgrade the root and every installed adapter to receive the record-label rules for cards, phones and country numbers, the new credential and service-token forms, and the faster structured-value dispatch described in [v0.15.0](../CHANGELOG.md#0150---2026-11-19), including its Detection changes. Install the module for the logger or SDK the application uses:
+The six adapter modules are published at v0.16.1 and require root v0.16.1. Upgrade the root and every installed adapter to receive `WithMaskFunc` partial masking in each adapter, the credential forms in quoted argument lists and subscripts, and the allocation-free record path described in [v0.16.0](../CHANGELOG.md#0160---2026-11-19), plus the [v0.16.1](../CHANGELOG.md#0161---2026-11-19) fix for dot-joined provider tokens. Install the module for the logger or SDK the application uses:
 
 ```sh
-go get github.com/nao1215/embargo/adapters/zap@v0.15.0
-go get github.com/nao1215/embargo/adapters/zerolog@v0.15.0
-go get github.com/nao1215/embargo/adapters/logrus@v0.15.0
-go get github.com/nao1215/embargo/adapters/grpc@v0.15.0
-go get github.com/nao1215/embargo/adapters/otel@v0.15.0
-go get github.com/nao1215/embargo/adapters/sentry@v0.15.0
+go get github.com/nao1215/embargo/adapters/zap@v0.16.1
+go get github.com/nao1215/embargo/adapters/zerolog@v0.16.1
+go get github.com/nao1215/embargo/adapters/logrus@v0.16.1
+go get github.com/nao1215/embargo/adapters/grpc@v0.16.1
+go get github.com/nao1215/embargo/adapters/otel@v0.16.1
+go get github.com/nao1215/embargo/adapters/sentry@v0.16.1
 ```
 
-For `NewHTTPHandler`, install the root module with `go get github.com/nao1215/embargo@v0.15.0`; no adapter module is needed.
+For `NewHTTPHandler`, install the root module with `go get github.com/nao1215/embargo@v0.16.1`; no adapter module is needed.
 
 Use only the module for your integration. The [zap](../adapters/zap/example_test.go), [zerolog](../adapters/zerolog/example_test.go) and [logrus](../adapters/logrus/example_test.go) Examples show complete setup and their actual JSON output.
 
