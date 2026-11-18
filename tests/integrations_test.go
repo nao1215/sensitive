@@ -1392,13 +1392,13 @@ func TestMaskFuncReachesEveryHook(t *testing.T) {
 	var record otellog.Record
 	record.SetBody(attribute.StringValue("paid with " + card))
 	provider.Logger("mask-func").Emit(t.Context(), record)
-	if err := provider.Shutdown(t.Context()); err != nil {
+	if err = provider.Shutdown(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 	check("OTel log", out.Bytes())
 	sink := tracetest.NewInMemoryExporter()
 	span := tracetest.SpanStub{Name: "checkout", Attributes: []attribute.KeyValue{attribute.String("note", "paid with "+card)}}.Snapshot()
-	if err := embargootel.NewSpanExporter(sink, scanner).ExportSpans(t.Context(), []sdktrace.ReadOnlySpan{span}); err != nil {
+	if err = embargootel.NewSpanExporter(sink, scanner).ExportSpans(t.Context(), []sdktrace.ReadOnlySpan{span}); err != nil {
 		t.Fatal(err)
 	}
 	if encoded, err = json.Marshal(sink.GetSpans()); err != nil {
