@@ -55,7 +55,7 @@ properties: ## Run property and API contract tests
 # Two CPUs per mutation worker, at most eight workers (two on a 4-CPU runner).
 MUTATION_WORKERS ?= $(shell python3 -c 'import os; print(min(8, max(1, os.cpu_count()//2)))')
 mutation: ## Mutate root module packages with gremlins
-	python3 scripts/mutation_gate.py --workers $(MUTATION_WORKERS) --test-cpu 2
+	python3 scripts/mutation_gate.py --workers $(MUTATION_WORKERS) --test-cpu 2 $(if $(MUTATION_PACKAGES),--packages $(MUTATION_PACKAGES))
 BASE ?= origin/main
 mutation-diff: ## Mutate lines changed since BASE and list survivors
 	python3 scripts/mutation_gate.py --workers $(MUTATION_WORKERS) --test-cpu 2 --diff $(BASE)
