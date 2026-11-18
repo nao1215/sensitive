@@ -784,3 +784,32 @@ func TestMaskJSONScansStandardBase64Text(t *testing.T) {
 		})
 	}
 }
+
+func TestMaskJSONContextCancellationMatchesTheContextError(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		want error
+		ctx  func(t *testing.T) context.Context
+		name string
+	}{
+		{context.Canceled, func(*testing.T) context.Context {
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
+			return ctx
+		}, "canceled"},
+		{context.DeadlineExceeded, func(t *testing.T) context.Context {
+			t.Helper()
+			ctx, stop := context.WithDeadline(context.Background(), time.Unix(0, 0))
+			t.Cleanup(stop)
+			return ctx
+		}, "deadline"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := NewScanner().MaskJSONContext(tc.ctx(t), []byte(`{"a":1}`))
+			if got != nil || !errors.Is(err, tc.want) || err.Error() != "embargo: JSON masking canceled" {
+				t.Fatalf("got %q, err %v; want errors.Is %v with the fixed text", got, err, tc.want)
+			}
+		})
+	}
+}

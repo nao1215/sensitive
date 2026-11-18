@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"unicode/utf8"
 
 	"github.com/nao1215/embargo/internal/saferecord"
@@ -25,11 +26,16 @@ func (s *Scanner) MaskJSON(data []byte) ([]byte, error) {
 }
 
 // MaskJSONContext applies MaskJSON's policy while checking ctx before and between
-// scalar scans. A canceled or nil context returns no bytes and a fixed error.
+// scalar scans. A canceled or nil context returns no bytes and a fixed error,
+// which errors.Is matches with the context's error, such as context.Canceled.
 // An already running detector cannot be interrupted.
 // Use it for request-scoped or telemetry work that should stop after cancellation.
 func (s *Scanner) MaskJSONContext(ctx context.Context, data []byte) ([]byte, error) {
-	return s.maskJSON(ctx, data, "", false)
+	masked, err := s.maskJSON(ctx, data, "", false)
+	if errors.Is(err, saferecord.ErrCanceled) {
+		err = saferecord.Canceled(ctx)
+	}
+	return masked, err
 }
 
 // maskJSON masks one document. encoded is true only for encoding/json output,
