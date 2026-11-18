@@ -29,6 +29,6 @@ Implement `Detector.Scan` and pass it to `WithDetector` for an application-speci
 
 ## Choosing a policy
 
-Confidence is a format heuristic, not a probability that a value is sensitive. For example, a card-shaped number failing Luhn is still a lower-confidence candidate. `WithMinConfidence(0.7)` excludes checksum failures and business-labeled numeric candidates, including real secrets under misleading labels; it also drops lower-scored bank accounts and some sort codes. Review the [synthetic accuracy cases](accuracy.md) before selecting a threshold or allowing fixture values.
+Confidence is a format heuristic, not a probability that a value is sensitive. For example, a card number under an order or invoice label is a lower-confidence candidate. `WithMinConfidence(0.7)` excludes business-labeled numeric candidates, including real secrets under misleading labels; it also drops lower-scored bank accounts and some sort codes. Review the [synthetic accuracy cases](accuracy.md) before selecting a threshold or allowing fixture values.
 
 [Support maintenance](https://github.com/sponsors/nao1215).

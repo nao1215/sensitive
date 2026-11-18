@@ -134,7 +134,7 @@ func scoreCases() map[embargo.Kind][]scoreCase {
 		embargo.KindServiceToken:    {{"provider", "sk-proj-abcdefghijklmnop", .95}, {"webhook", "https://hooks.slack.com/services/T0/B0/abcdefghijklmnop", .95}},
 		embargo.KindHighEntropy:     {{"unlabeled", "aB3dE6gH9jK2mN5pQ8sT1vW4yZ7cF0iL", .3}},
 		embargo.KindCredential:      {{"assignment", "password=synthetic", .95}, {"dsn", "postgres://alice:synthetic@localhost/db", .95}},
-		embargo.KindPAN:             {{"Luhn", "4111111111111111", 1}, {"checksum failure", "4111111111111112", .6}, {businessLabelCase, "order_id=4111111111111111", .4}},
+		embargo.KindPAN:             {{"Luhn", "4111111111111111", 1}, {businessLabelCase, "order_id=4111111111111111", .4}},
 		embargo.KindEmail:           {{"known TLD", "alice@example.com", 1}, {"unknown TLD", "alice@example.zzzz", .8}, {"known TLD doubled dot", "alice@ex..ample.com", .9}, {"unknown TLD doubled dot", "alice@ex..ample.zzzz", .7}},
 		embargo.KindJPPhone:         {{"mobile", "09012345678", .9}, {"landline", "0312345678", .8}, {businessLabelCase, "order_id=09012345678", .4}},
 		embargo.KindUSPhone:         {{"unlabeled", "202-555-0123", .7}, {"phone label", "phone: (202) 555-0123", .9}, {businessLabelCase, "order_id=202-555-0123", .4}},
