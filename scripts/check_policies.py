@@ -168,8 +168,21 @@ def unreleased(changelog):
     return changelog.split('## [Unreleased]', 1)[1].split('\n## [', 1)[0]
 
 
-def api_additions(previous=None, current=None, changelog=None):
-    """A public symbol added since the last release tag must be named in CHANGELOG [Unreleased]."""
+def untagged_release(changelog, tag):
+    """Return the first version section after [Unreleased] when it is not the
+    latest tag, as in a release PR that has cut the section but not tagged it."""
+    after = changelog.split('## [Unreleased]', 1)[1].split('\n## [', 1)
+    if tag is None or len(after) < 2:
+        return ''
+    version, _, body = after[1].partition(']')
+    if 'v' + version == tag:
+        return ''
+    return body.split('\n## [', 1)[0]
+
+
+def api_additions(previous=None, current=None, changelog=None, tag=None):
+    """A public symbol added since the last release tag must be named in CHANGELOG
+    [Unreleased], or in the version section a release PR cut from it."""
     if previous is None:
         tag = subprocess.run(['git', 'describe', '--tags', '--abbrev=0', '--match', 'v[0-9]*'], cwd=ROOT, capture_output=True, text=True, check=False).stdout.strip()
         shown = subprocess.run(['git', 'show', f'{tag}:doc/api-reasons.json'], cwd=ROOT, capture_output=True, text=True, check=False) if tag else None
@@ -177,7 +190,10 @@ def api_additions(previous=None, current=None, changelog=None):
             return
         previous = shown.stdout
     current = read('doc/api-reasons.json') if current is None else current
-    notes = unreleased(read('CHANGELOG.md') if changelog is None else changelog)
+    changelog = read('CHANGELOG.md') if changelog is None else changelog
+    # A release PR moves the notes from [Unreleased] into the new version's
+    # section, which no tag names yet; the symbols must be named in either.
+    notes = unreleased(changelog) + untagged_release(changelog, tag)
     for symbol in sorted(api_symbols(current) - api_symbols(previous)):
         name = symbol.split(' ', 1)[1] if symbol.startswith('embargo --') else symbol.rsplit('.', 1)[-1]
         require(re.search(r'`[^`\n]*(?<![\w-])' + re.escape(name) + r'(?:\(\))?`', notes), f'api-additions: {symbol} is new public API; name it in CHANGELOG [Unreleased] with the reason from doc/api-reasons.json')
