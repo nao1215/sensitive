@@ -92,36 +92,36 @@
   },
   {
     "file": "slog_handler.go",
-    "start": 280,
-    "end": 282,
+    "start": 311,
+    "end": 313,
     "sha256": "5b18a53d7a8b8b34c0d858072174b0f41ff262deff392942a98f7410355a4300",
     "reason": "Cancellation must arrive after the key scanner final cancellation check but before this adjacent check; ordinary canceled contexts and cancellation during scanning are covered, but no deterministic portable scheduler can target this gap."
   },
   {
     "file": "slog_handler.go",
-    "start": 413,
-    "end": 415,
+    "start": 449,
+    "end": 451,
     "sha256": "da67528e3953916c88a9e124e62a881ea200624773983d04e4568551dc3ad49b",
     "reason": "Cancellation must arrive between the preceding context check and entry into LogValue resolution; tests assert cancellation caused by LogValue and by scanners without relying on scheduler timing."
   },
   {
     "file": "slog_handler.go",
-    "start": 300,
-    "end": 301,
+    "start": 331,
+    "end": 332,
     "sha256": "8f4bc62f79c322849541349a9b394487810c9f83e708f26de46697be5c7886a9",
     "reason": "LogValue resolution loops until Kind is no longer KindLogValuer; it returns on depth limits or panic before the switch. The defensive fallback rejects a malformed value."
   },
   {
     "file": "slog_handler.go",
-    "start": 303,
-    "end": 303,
+    "start": 334,
+    "end": 334,
     "sha256": "d0500ff13f80504d1f6f7ef28e8836aeb3de821a6fb1214f3aa83a31e9d473f8",
     "reason": "Every public slog.Value constructor produces a handled Kind; reaching an unknown kind requires unsafe corruption of private standard-library state."
   },
   {
     "file": "slog_handler.go",
-    "start": 402,
-    "end": 404,
+    "start": 438,
+    "end": 440,
     "sha256": "c83c2af07ed5ec04f71d2d073cadbff734a8543e6c68b91bd941cc89131bc88c",
     "reason": "encoding/json.Marshal receives a byte slice and always succeeds, including invalid UTF-8 bytes; the defensive failure path cannot arise for this type."
   },
@@ -141,9 +141,16 @@
   },
   {
     "file": "scanner.go",
-    "start": 104,
-    "end": 105,
+    "start": 107,
+    "end": 108,
     "sha256": "10408a70aa419eb085325ccb1717a9c6283b5b927bc70819e4b63a3435a42fc0",
     "reason": "The pool's New function stores only *scanScratch values, so the type assertion cannot fail; the panic keeps the invariant explicit."
+  },
+  {
+    "file": "slog_handler.go",
+    "start": 235,
+    "end": 236,
+    "sha256": "b45ebdaa2c7a8af741b5c79292984e9cd92ff56b67d58965ad1576f9c1de0f9f",
+    "reason": "The pool's New function stores only *[]slog.Attr values, so the type assertion cannot fail; the panic keeps the invariant explicit."
   }
 ]

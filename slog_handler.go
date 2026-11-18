@@ -233,7 +233,7 @@ func borrowAttrs(inline []slog.Attr, n int) (attrs []slog.Attr, pooled *[]slog.A
 	}
 	pooled, ok := attrPool.Get().(*[]slog.Attr)
 	if !ok {
-		pooled = new([]slog.Attr)
+		panic("embargo: invalid attribute pool value")
 	}
 	*pooled = slices.Grow((*pooled)[:0], n)
 	return *pooled, pooled
@@ -377,7 +377,8 @@ func (h *slogHandler) sanitizeScalar(ctx context.Context, key, originalKey strin
 	var storage [2]string
 	representations := storage[:1]
 	switch value.Kind() {
-	case slog.KindString:
+	case slog.KindString, slog.KindAny, slog.KindGroup, slog.KindLogValuer:
+		// Composites have separate paths and never reach this switch.
 		representations[0] = value.String()
 	case slog.KindTime:
 		representations = append(storage[:0], value.Time().Format(time.RFC3339Nano), value.Time().Format("2006-01-02T15:04:05.000Z07:00"))
@@ -398,9 +399,6 @@ func (h *slogHandler) sanitizeScalar(ctx context.Context, key, originalKey strin
 		representations[0] = strconv.FormatInt(value.Int64(), 10)
 	case slog.KindUint64:
 		representations[0] = strconv.FormatUint(value.Uint64(), 10)
-	case slog.KindAny, slog.KindGroup, slog.KindLogValuer:
-		// Other kinds add no scalar encoding here; composites have separate paths.
-		representations[0] = value.String()
 	}
 	scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
 	for _, text := range representations {

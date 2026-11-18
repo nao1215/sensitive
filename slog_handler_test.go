@@ -759,3 +759,13 @@ func TestManyAttributesUsePooledStorage(t *testing.T) {
 		}
 	}
 }
+
+func TestSlogIntegerKindsAreScanned(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	logger := slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(&out, nil), embargo.NewScanner(embargo.WithKinds(embargo.KindPAN))))
+	logger.Info("card", "signed", int64(4111111111111111), "unsigned", uint64(4111111111111111), "flag", true)
+	if got := out.String(); strings.Contains(got, "4111") || !strings.Contains(got, `"unsigned":"[REDACTED]"`) || !strings.Contains(got, `"flag":true`) {
+		t.Fatalf("integer kinds were not masked: %s", got)
+	}
+}
