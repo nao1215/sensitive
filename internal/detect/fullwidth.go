@@ -76,7 +76,7 @@ func normalizeDigits(data []byte) (normalized []byte, positions []int) {
 // byte indexes to original indexes and ends with the len(data) sentinel.
 func foldFullWidthASCII(data []byte) (folded []byte, positions []int) {
 	folded = make([]byte, 0, len(data))
-	positions = make([]int, 0, len(data)+1)
+	positions = make([]int, 0, normalizationMapSize(len(data)))
 	for i := 0; i < len(data); {
 		r, size := utf8.DecodeRune(data[i:])
 		if r >= '！' && r <= '～' {
