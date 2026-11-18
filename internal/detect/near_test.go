@@ -34,8 +34,10 @@ func TestNearRuleDeduplicationModes(t *testing.T) {
 	keywords := newKeywordSet([][]byte{[]byte("id"), []byte("no")})
 	data := []byte("id no 12345678")
 	calls := 0
-	rule := nearRule{keywords: keywords, class: ascii.IsDigit, radius: 30, minLen: 8, maxLen: 8,
-		accept: func([]byte, digitSequence) (float64, bool) { calls++; return 0.5, calls > 1 }}
+	rule := nearRule{
+		keywords: keywords, class: ascii.IsDigit, radius: 30, minLen: 8, maxLen: 8,
+		accept: func([]byte, digitSequence) (float64, bool) { calls++; return 0.5, calls > 1 },
+	}
 	got := rule.scan(nil, NameCVV, data, nil)
 	if len(got) != 1 || got[0].Start != 6 || got[0].End != 14 || calls != 2 {
 		t.Fatalf("start mode: %+v after %d accept calls", got, calls)
