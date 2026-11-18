@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"net/url"
 	"strconv"
 	"strings"
 	"testing"
@@ -186,10 +187,11 @@ func TestCanaryExplicitDecodingBoundaries(t *testing.T) {
 		}
 	}
 	needles := representations(canary)
-	for _, text := range []string{wrapped.String(), escaped.String()} {
-		if containsCanary([]byte(text), needles) {
-			t.Fatal("unsupported encoding contract changed")
-		}
+	if containsCanary([]byte(wrapped.String()), needles) {
+		t.Fatal("unsupported encoding contract changed")
+	}
+	if !containsCanary([]byte(escaped.String()), needles) {
+		t.Fatal("canary escaped character by character missed")
 	}
 	decoded, err := base64.StdEncoding.DecodeString(wrapped.String())
 	if err != nil {
@@ -215,6 +217,43 @@ func TestCanaryGoByteRenderingProperty(t *testing.T) {
 			if !containsCanary([]byte(fmt.Sprintf("%#v", value)), representations(canary)) {
 				t.Fatal("Go hexadecimal byte list escaped the canary check")
 			}
+		}
+	}
+}
+
+func TestCanaryEscapedCharacterByCharacter(t *testing.T) {
+	t.Parallel()
+	canary := []byte("public+canary&alpha beta/qrstuvwx")
+	var every, upper, unicodeEscaped, mixed []byte
+	for i, b := range canary {
+		every = fmt.Appendf(every, "%%%02x", b)
+		upper = fmt.Appendf(upper, "%%%02X", b)
+		unicodeEscaped = fmt.Appendf(unicodeEscaped, "%cu%04x", '\\', b)
+		if i%2 == 0 {
+			mixed = fmt.Appendf(mixed, "%%%02X", b)
+		} else {
+			mixed = append(mixed, b)
+		}
+	}
+	needles := representations(canary)
+	for _, tc := range []struct{ name, output string }{
+		{"url.QueryEscape", "/callback?state=" + url.QueryEscape(string(canary))},
+		{"url.PathEscape", "/files/" + url.PathEscape(string(canary))},
+		{"every byte percent-encoded", string(every)},
+		{"upper-case percent escapes", string(upper)},
+		{"JSON escape of every byte", `{"state":"` + string(unicodeEscaped) + `"}`},
+		{"every other byte percent-encoded", string(mixed)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if !containsCanary([]byte(tc.output), needles) {
+				t.Fatalf("canary missed in %q", tc.output)
+			}
+		})
+	}
+	for _, clean := range []string{"%2", "%zz canary", `\u00`, "public canary alpha"} {
+		if containsCanary([]byte(clean), needles) {
+			t.Fatalf("unrelated output %q detected", clean)
 		}
 	}
 }

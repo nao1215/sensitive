@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
@@ -358,4 +359,21 @@ func TestHTTPRepeatedCheckAndLateTrailers(t *testing.T) {
 		t.Fatal("changed trailer accepted")
 	}
 	p.finish()
+}
+
+func TestHTTPRedirectWithEscapedCanaryIsALeak(t *testing.T) {
+	t.Parallel()
+	p := &probeTB{TB: t}
+	r := New(p, WithCanary([]byte("public+canary&alpha beta/qrstuvwx")))
+	w := r.HTTP("http")
+	w.Header().Set("Location", "/callback?state="+url.QueryEscape(string(r.Canary())))
+	w.WriteHeader(http.StatusFound)
+	r.Expect("http/status", func(b []byte) bool { return string(b) == "302" })
+	if r.Check() {
+		t.Fatal("query-escaped canary in Location accepted")
+	}
+	p.finish()
+	if len(p.messages) == 0 || p.messages[0] != "embargotest: the fake secret appeared in captured output" {
+		t.Fatalf("messages = %q", p.messages)
+	}
 }
