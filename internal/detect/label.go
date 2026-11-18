@@ -1,6 +1,9 @@
 package detect
 
-import "bytes"
+import (
+	"bytes"
+	"unicode/utf8"
+)
 
 // labelPrefix confines contextual evidence to the current field and line.
 func labelPrefix(data []byte, start int) []byte {
@@ -66,6 +69,9 @@ func businessConfidence(data []byte, start int, confidence float64) float64 {
 // order, invoice, shipment, product or version, such as 注文番号 or 品番. Japanese
 // text puts no space before the label, so any word containing a stem counts.
 func japaneseBusinessLabel(word []byte) bool {
+	if !hasNonASCII(word) {
+		return false
+	}
 	for _, stem := range []string{"注文", "請求", "追跡", "伝票", "配送", "問い合わせ", "問合せ", "受付", "予約", "型番", "品番", "製造", "シリアル", "商品", "バージョン"} {
 		if bytes.Contains(word, []byte(stem)) {
 			return true
@@ -99,4 +105,15 @@ func identifierLabeled(data []byte, start int) bool {
 // myNumberLabel reports whether one label word names a My Number.
 func myNumberLabel(word []byte) bool {
 	return labelIs(word, "mynumber", "kojinbango") || bytes.Contains(word, []byte("マイナンバー")) || bytes.Contains(word, []byte("個人番号"))
+}
+
+// hasNonASCII reports whether word has a byte outside ASCII, so ASCII labels
+// skip the Japanese stem search.
+func hasNonASCII(word []byte) bool {
+	for _, b := range word {
+		if b >= utf8.RuneSelf {
+			return true
+		}
+	}
+	return false
 }

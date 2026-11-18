@@ -34,16 +34,12 @@ func (d *Email) Scan(data []byte) []Finding {
 	var findings []Finding
 	boundary := 0
 
-	for i := range data {
-		// A full-width at sign (U+FF20) joins ASCII local and domain parts in
-		// Japanese text; domainAt is the last byte of either sign.
-		domainAt := i
-		switch {
-		case data[i] == '@':
-		case data[i] == fullWidthAt[0] && bytes.HasPrefix(data[i:], []byte(fullWidthAt)):
-			domainAt = i + len(fullWidthAt) - 1
-		default:
-			continue
+	fullWidth := bytes.Contains(data, []byte(fullWidthAt))
+	for i := 0; i < len(data); i++ {
+		var domainAt int
+		var ok bool
+		if i, domainAt, ok = nextAtSign(data, i, fullWidth); !ok {
+			break
 		}
 
 		// An accepted domain is a boundary for the next local part. Walking
@@ -78,6 +74,25 @@ func (d *Email) Scan(data []byte) []Finding {
 	}
 
 	return findings
+}
+
+// nextAtSign returns the position of the next at sign from i and the last
+// byte of the sign. A full-width at sign (U+FF20) joins ASCII local and
+// domain parts in Japanese text; inputs without one jump between ASCII @.
+func nextAtSign(data []byte, i int, fullWidth bool) (at, domainAt int, ok bool) {
+	if !fullWidth {
+		next := bytes.IndexByte(data[i:], '@')
+		return i + next, i + next, next >= 0
+	}
+	for ; i < len(data); i++ {
+		if data[i] == '@' {
+			return i, i, true
+		}
+		if bytes.HasPrefix(data[i:], []byte(fullWidthAt)) {
+			return i, i + len(fullWidthAt) - 1, true
+		}
+	}
+	return 0, 0, false
 }
 
 // fullWidthAt is U+FF20 FULLWIDTH COMMERCIAL AT in UTF-8.
