@@ -74,7 +74,8 @@ class PolicyTests(unittest.TestCase):
         bad = {'internal/detect/pan.go': "func isDigit(b byte) bool { return b >= '0' && b <= '9' }",
                'scanner.go': 'if c, ok := d.(*detect.Credential); ok {}',
                'internal/detect/two.go': 'func (d *A) Scan(data []byte) []Finding {}\nfunc (d *B) Scan(data []byte) []Finding {}',
-               'internal/detect/fullwidth.go': 'func composePositions(child, parent []int) []int {}'}
+               'internal/detect/fullwidth.go': 'func composePositions(child, parent []int) []int {}',
+               'scanner_dispatch.go': 'case KindMyNumber:'}
         for name, text in bad.items():
             with self.subTest(name=name):
                 with self.assertRaisesRegex(ValueError, 'cohesion'):

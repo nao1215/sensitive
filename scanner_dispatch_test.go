@@ -565,6 +565,20 @@ func TestBuiltInDispatchHintsAreNonempty(t *testing.T) {
 	}
 }
 
+func TestBuiltInsFitTheSelectionMask(t *testing.T) {
+	t.Parallel()
+	// selectDetectors keeps one bit per selected built-in in a uint64.
+	if n := len(builtins(nil)); n > 64 {
+		t.Fatalf("%d built-ins exceed the 64-bit selection mask", n)
+	}
+	scanner := NewScanner(WithAll())
+	for i, d := range scanner.detectors {
+		if len(scanner.hintCache[i]) == 0 && detect.StartBytes(d) == nil && scanner.unconditional&(1<<i) == 0 {
+			t.Errorf("%s has no hints or start bytes but is not unconditional", d.Name())
+		}
+	}
+}
+
 // The test oracle checks every raw span independently, without the production
 // merge cursor. Raw delimiters win unless a decoded value fully contains them.
 func credentialViewOracle(d detect.Detector, raw, decoded []byte, positions []int) []detect.Finding {

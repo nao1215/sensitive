@@ -69,6 +69,24 @@ type Detector interface {
 	Scan(data []byte) []Finding
 }
 
+// digitStarts are the bytes a digit candidate needs somewhere in the input:
+// ASCII digits and 0xEF, the UTF-8 lead byte of full-width digits.
+var digitStarts = []byte("0123456789\xef")
+
+// startByter is implemented by hintless detectors that can only match input
+// containing one of a few bytes.
+type startByter interface{ startBytes() []byte }
+
+// StartBytes returns bytes of which any input d can match contains at least one,
+// or nil when d must run on every input. A scanner uses it to skip a hintless
+// detector without a detector-specific branch.
+func StartBytes(d Detector) []byte {
+	if s, ok := d.(startByter); ok {
+		return s.startBytes()
+	}
+	return nil
+}
+
 // Finding describes a match in the original input using a half-open byte range [Start:End), not rune indexes.
 type Finding struct {
 	// DetectorName identifies the detector that produced the match.

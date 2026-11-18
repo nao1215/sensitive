@@ -232,6 +232,8 @@ def cohesion(files=None):
             violations.append(name + ': ASCII class outside internal/ascii')
         if not name.startswith('internal/detect/') and re.search(r'\.\(\*?detect\.', text):
             violations.append(name + ': detector-specific type assertion')
+        if name == 'scanner_dispatch.go' and re.search(r'\bKind[A-Z]\w*', text):
+            violations.append(name + ': dispatch names a detector kind')
         if name.startswith('internal/detect/'):
             receivers = set(re.findall(r'^func \(\w+ \*?(\w+)\) Scan\(data \[\]byte\) \[\]Finding', text, re.M))
             if len(receivers) > 1:
