@@ -288,7 +288,7 @@ $ printf '%s\n' 'login failed for alice@example.com from 203.0.113.7' | embargo
 login failed for [REDACTED] from [REDACTED]
 ```
 
-The masked lines are what you paste into a ticket or hand to an LLM. `--format json` prints per-kind counts with a few locations, and `--format jsonl` prints one line per finding with its line, column and kind; neither prints a matched value. Because jsonl prints nothing for a clean log, `embargo --format jsonl app.log | grep -q .` is true exactly when a log holds a secret, which is enough for a CI step. [Flags, limits and comparing settings](doc/audit.md)
+The masked lines are what you paste into a ticket or hand to an LLM. `--format json` prints per-kind counts with a few locations, and `--format jsonl` prints one line per finding with its line, column and kind; neither prints a matched value. Because jsonl prints nothing for a clean log, `out=$(embargo --format jsonl app.log) && test -z "$out"` fails a CI step on a finding and on an unreadable input alike; the exit status alone only says whether embargo ran. [Flags, limits and comparing settings](doc/audit.md)
 
 ## Tested outputs
 

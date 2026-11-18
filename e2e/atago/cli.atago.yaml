@@ -188,7 +188,7 @@ scenarios:
           stdout:
             empty: true
 
-  - name: a CI step fails when a log holds a secret
+  - name: a CI step fails when a log holds a secret or cannot be read
     steps:
       - fixture:
           file: leaky.log
@@ -199,13 +199,17 @@ scenarios:
           content: |
             request served in 12 ms
       - run:
-          command: sh -c '! embargo --format jsonl leaky.log | grep -q .'
+          command: sh -c 'out=$(embargo --format jsonl leaky.log) && test -z "$out"'
       - assert:
           exit_code: 1
       - run:
-          command: sh -c '! embargo --format jsonl clean.log | grep -q .'
+          command: sh -c 'out=$(embargo --format jsonl clean.log) && test -z "$out"'
       - assert:
           exit_code: 0
+      - run:
+          command: sh -c 'out=$(embargo --format jsonl missing.log) && test -z "$out"'
+      - assert:
+          exit_code: 1
 
   - name: the commands in doc/audit.md run as written
     steps:
@@ -234,7 +238,7 @@ scenarios:
       - assert:
           exit_code: 0
       - run:
-          command: sh -c '! embargo --format jsonl app.log | grep -q .'
+          command: sh -c 'out=$(embargo --format jsonl app.log) && test -z "$out"'
       - assert:
           exit_code: 1
       - run:

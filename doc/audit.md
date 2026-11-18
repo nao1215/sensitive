@@ -38,10 +38,10 @@ Each Kind includes a drop_option saying how to leave it out with `--kinds`. Excl
 
 ```sh
 embargo --format jsonl app.log
-! embargo --format jsonl app.log | grep -q .
+out=$(embargo --format jsonl app.log) && test -z "$out"
 ```
 
-The exit status stays 0 when findings are printed; 1 always means a usage, input or output error.
+The exit status says whether embargo ran, not whether it found something: 0 when the input was read in full, findings or not, and 1 for a usage, input or output error. The CI line above fails on both a finding and an error. `! embargo --format jsonl app.log | grep -q .` would pass when embargo cannot read the file, because the error prints nothing.
 
 ## Compare settings on the same input
 
