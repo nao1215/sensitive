@@ -359,12 +359,17 @@ func placeholderBody(body []byte) bool {
 }
 
 // routingSuffixEnd extends a token over dot-separated ASCII letter or digit
-// parts, which routable GitLab tokens append after the random body.
+// parts, which routable GitLab tokens append after the random body. A part
+// that runs into - or _ starts another token, as in two tokens joined by a
+// dot, so it ends the suffix before its dot.
 func routingSuffixEnd(data []byte, pos int) int {
 	for pos+1 < len(data) && data[pos] == '.' && ascii.IsAlphaNum(data[pos+1]) {
 		next := pos + 1
 		for next < len(data) && ascii.IsAlphaNum(data[next]) {
 			next++
+		}
+		if next < len(data) && isTokenByte(data[next]) {
+			break
 		}
 		pos = next
 	}
