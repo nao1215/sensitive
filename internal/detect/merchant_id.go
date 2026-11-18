@@ -5,13 +5,17 @@ import "github.com/nao1215/embargo/internal/ascii"
 // MerchantID implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindMerchantID.
 type MerchantID struct {
-	merchantKeywords *keywordSet
-	terminalKeywords *keywordSet
+	merchant nearRule
+	terminal nearRule
 }
 
 // NewMerchantID selects merchant and terminal identifier grammars from nearby keywords.
 func NewMerchantID() *MerchantID {
-	return &MerchantID{merchantKeywords: merchantKeywords(), terminalKeywords: terminalKeywords()}
+	//nolint:mnd // Literal field widths and scores follow the format rules documented on this detector.
+	return &MerchantID{
+		merchant: nearRule{keywords: merchantKeywords(), class: ascii.IsAlphaNum, accept: fixedConfidence(0.7), radius: 30, minLen: 15, maxLen: 15, overlap: true},
+		terminal: nearRule{keywords: terminalKeywords(), class: ascii.IsDigit, accept: wholeTerminalToken, radius: 30, minLen: 8, maxLen: 8, overlap: true},
+	}
 }
 
 // Name returns "merchant_id".
@@ -34,86 +38,17 @@ func (d *MerchantID) Hints() [][]byte {
 }
 
 // Scan returns matches in data using the rules documented on [MerchantID].
+// Terminal IDs never overlap an earlier merchant ID.
 func (d *MerchantID) Scan(data []byte) []Finding {
-	var findings []Finding
-
-	// Check merchant keywords.
-	findings = d.appendMerchantIDs(findings, data)
-
-	// Check terminal keywords.
-	return d.appendTerminalIDs(findings, data)
+	return d.terminal.scan(d.merchant.scan(nil, d.Name(), data, nil), d.Name(), data, nil)
 }
 
-// appendMerchantIDs reports alphanumeric merchant IDs near merchant keywords.
-func (d *MerchantID) appendMerchantIDs(findings []Finding, data []byte) []Finding {
-	merchantMatches := d.merchantKeywords.findPositions(data)
-	for _, m := range merchantMatches {
-		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		seqs := extractAlphaNumNear(data, m.end, 30, 15, 15)
-		for _, seq := range seqs {
-			if overlapsFinding(findings, seq.start, seq.end) {
-				continue
-			}
-
-			findings = append(findings, Finding{
-				DetectorName: d.Name(),
-				Start:        seq.start,
-				End:          seq.end,
-				//nolint:mnd // The detector contract documents this heuristic score.
-				Confidence: 0.7,
-			})
-		}
-	}
-	return findings
-}
-
-// appendTerminalIDs reports whole-token numeric terminal IDs near terminal
-// keywords that do not overlap an earlier finding.
-func (d *MerchantID) appendTerminalIDs(findings []Finding, data []byte) []Finding {
-	terminalMatches := d.terminalKeywords.findPositions(data)
-	for _, m := range terminalMatches {
-		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		seqs := extractDigitsNear(data, m.end, 30, 8, 8)
-		for _, seq := range seqs {
-			// Do not expose a keyword by masking only the numeric portion of
-			// an alphanumeric token; terminal identifiers are whole tokens.
-			if !isWholeTerminalToken(data, seq.start, seq.end) {
-				continue
-			}
-
-			if overlapsFinding(findings, seq.start, seq.end) {
-				continue
-			}
-
-			findings = append(findings, Finding{
-				DetectorName: d.Name(),
-				Start:        seq.start,
-				End:          seq.end,
-				//nolint:mnd // The detector contract documents this heuristic score.
-				Confidence: 0.7,
-			})
-		}
-	}
-	return findings
-}
-
-// isWholeTerminalToken reports whether [start, end) is not embedded in a longer
-// alphanumeric token, allowing an encoded separator before it.
-func isWholeTerminalToken(data []byte, start, end int) bool {
-	return leadingBoundary(data, start, ascii.IsAlphaNum) &&
-		(end >= len(data) || !ascii.IsAlphaNum(data[end]))
-}
-
-// overlapsFinding reports whether [start, end) overlaps any existing finding.
-// A digit run inside an already reported merchant ID (e.g., "00000000" in
-// "A00000000A00000") must not be reported again as a terminal ID.
-func overlapsFinding(findings []Finding, start, end int) bool {
-	for _, f := range findings {
-		if start < f.End && end > f.Start {
-			return true
-		}
-	}
-	return false
+// wholeTerminalToken accepts a terminal ID that is not embedded in a longer
+// alphanumeric token, allowing an encoded separator before it. Masking only the
+// digits of such a token would expose the rest of it.
+func wholeTerminalToken(data []byte, seq digitSequence) (float64, bool) {
+	//nolint:mnd // The score is documented on this detector.
+	return 0.7, leadingBoundary(data, seq.start, ascii.IsAlphaNum) && trailingBoundary(data, seq.end, ascii.IsAlphaNum)
 }
 
 // merchantKeywords are context keywords for merchant ID detection.

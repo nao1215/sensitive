@@ -22,7 +22,7 @@ func (d *ABARouting) Hints() [][]byte {
 }
 
 // startBytes reports that every candidate contains an ASCII or full-width digit.
-func (d *ABARouting) startBytes() []byte { return digitStarts }
+func (d *ABARouting) startBytes() []byte { return digitStarts() }
 
 // Scan returns matches in data using the rules documented on [ABARouting].
 func (d *ABARouting) Scan(data []byte) []Finding {

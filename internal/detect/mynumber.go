@@ -24,7 +24,7 @@ func (d *MyNumber) Hints() [][]byte {
 }
 
 // startBytes reports that every candidate contains an ASCII or full-width digit.
-func (d *MyNumber) startBytes() []byte { return digitStarts }
+func (d *MyNumber) startBytes() []byte { return digitStarts() }
 
 // Scan returns matches in data using the rules documented on [MyNumber].
 func (d *MyNumber) Scan(data []byte) []Finding {

@@ -1,14 +1,20 @@
 package detect
 
+import "github.com/nao1215/embargo/internal/ascii"
+
 // BankAccount implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindBankAccount.
 type BankAccount struct {
-	bankAccountKeywords *keywordSet
+	holders [][]byte
+	rule    nearRule
 }
 
 // NewBankAccount finds account-shaped digits near banking labels without assuming a universal checksum.
 func NewBankAccount() *BankAccount {
-	return &BankAccount{bankAccountKeywords: bankAccountKeywords()}
+	d := &BankAccount{holders: holderNameKeywords()}
+	//nolint:mnd // Literal field widths follow the format rules documented on this detector.
+	d.rule = nearRule{keywords: bankAccountKeywords(), class: ascii.IsDigit, accept: d.confidence, radius: 50, minLen: 4, maxLen: 17}
+	return d
 }
 
 // Name returns "bank_account".
@@ -45,45 +51,18 @@ func (d *BankAccount) Scan(data []byte) []Finding {
 
 // scanNormalized performs bank account detection on normalized data.
 func (d *BankAccount) scanNormalized(data []byte, posMap []int) []Finding {
-	matches := d.bankAccountKeywords.findPositions(data)
-	if len(matches) == 0 {
-		return nil
+	return d.rule.scan(nil, d.Name(), data, posMap)
+}
+
+// confidence raises the score when holder context appears within 50
+// bytes of this digit sequence, not anywhere in the input.
+func (d *BankAccount) confidence(data []byte, seq digitSequence) (float64, bool) {
+	//nolint:mnd // The radius and scores are documented on this detector.
+	if containsNear(data, seq.start, seq.end, 50, d.holders) {
+		return 0.65, true
 	}
-
-	var findings []Finding
-	used := make(map[int]struct{}) // track digit sequence start positions already reported
-
-	for _, m := range matches {
-		// Search for digit sequences near the keyword in normalized data.
-		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		seqs := extractDigitsNear(data, m.end, 50, 4, 17)
-		for _, seq := range seqs {
-			if _, ok := used[seq.start]; ok {
-				continue
-			}
-
-			used[seq.start] = struct{}{}
-
-			confidence := 0.50
-			// Check for holder name keywords near this specific digit sequence
-			// (within 50 bytes), not anywhere in the entire input.
-			//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-			if containsNear(data, seq.start, seq.end, 50, holderNameKeywords) {
-				confidence = 0.65
-			}
-
-			origStart, origEnd := mapOriginalRange(posMap, seq.start, seq.end)
-
-			findings = append(findings, Finding{
-				DetectorName: d.Name(),
-				Start:        origStart,
-				End:          origEnd,
-				Confidence:   confidence,
-			})
-		}
-	}
-
-	return findings
+	//nolint:mnd // The score is documented on this detector.
+	return 0.50, true
 }
 
 // bankAccountKeywords are the context keywords for bank account detection.
@@ -111,14 +90,16 @@ func bankAccountKeywords() *keywordSet {
 
 // holderNameKeywords are keywords indicating holder/beneficiary name context.
 // Their presence near a bank account number increases confidence. They match
-// byte for byte. The table is read-only.
-var holderNameKeywords = [][]byte{
-	// 名義 (holder name)
-	{0xE5, 0x90, 0x8D, 0xE7, 0xBE, 0xA9},
-	// 名義人 (account holder)
-	{0xE5, 0x90, 0x8D, 0xE7, 0xBE, 0xA9, 0xE4, 0xBA, 0xBA},
-	[]byte("holder"),
-	[]byte("Holder"),
-	[]byte("beneficiary"),
-	[]byte("Beneficiary"),
+// byte for byte.
+func holderNameKeywords() [][]byte {
+	return [][]byte{
+		// 名義 (holder name)
+		{0xE5, 0x90, 0x8D, 0xE7, 0xBE, 0xA9},
+		// 名義人 (account holder)
+		{0xE5, 0x90, 0x8D, 0xE7, 0xBE, 0xA9, 0xE4, 0xBA, 0xBA},
+		[]byte("holder"),
+		[]byte("Holder"),
+		[]byte("beneficiary"),
+		[]byte("Beneficiary"),
+	}
 }

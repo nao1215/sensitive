@@ -1,14 +1,17 @@
 package detect
 
+import "github.com/nao1215/embargo/internal/ascii"
+
 // ACHTrace implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindACHTrace.
 type ACHTrace struct {
-	achKeywords *keywordSet
+	rule nearRule
 }
 
 // NewACHTrace uses ACH context and routing prefixes to find transaction trace numbers.
 func NewACHTrace() *ACHTrace {
-	return &ACHTrace{achKeywords: achKeywords()}
+	//nolint:mnd // Literal field widths follow the format rules documented on this detector.
+	return &ACHTrace{rule: nearRule{keywords: achKeywords(), class: ascii.IsDigit, accept: achPrefix, radius: 50, minLen: 15, maxLen: 15}}
 }
 
 // Name returns "ach_trace".
@@ -26,43 +29,14 @@ func (d *ACHTrace) Hints() [][]byte {
 
 // Scan returns matches in data using the rules documented on [ACHTrace].
 func (d *ACHTrace) Scan(data []byte) []Finding {
-	matches := d.achKeywords.findPositions(data)
-	if len(matches) == 0 {
-		return nil
-	}
+	return d.rule.scan(nil, d.Name(), data, nil)
+}
 
-	var findings []Finding
-	used := make(map[int]struct{})
-
-	for _, m := range matches {
-		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		seqs := extractDigitsNear(data, m.end, 50, 15, 15)
-		for _, seq := range seqs {
-			if _, ok := used[seq.start]; ok {
-				continue
-			}
-
-			digits := data[seq.start:seq.end]
-
-			// Validate that the first 2 digits are a valid Federal Reserve
-			// routing symbol range.
-			if !validABAPrefix(digits[:9]) {
-				continue
-			}
-
-			used[seq.start] = struct{}{}
-
-			findings = append(findings, Finding{
-				DetectorName: d.Name(),
-				Start:        seq.start,
-				End:          seq.end,
-				//nolint:mnd // The detector contract documents this heuristic score.
-				Confidence: 0.75,
-			})
-		}
-	}
-
-	return findings
+// achPrefix accepts a trace number whose first two digits are a valid Federal
+// Reserve routing symbol range.
+func achPrefix(data []byte, seq digitSequence) (float64, bool) {
+	//nolint:mnd // The routing prefix is the first nine digits; the score is documented on this detector.
+	return 0.75, validABAPrefix(data[seq.start : seq.start+9])
 }
 
 // achKeywords are the context keywords for ACH trace number detection.

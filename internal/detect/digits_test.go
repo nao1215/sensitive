@@ -48,7 +48,7 @@ func TestAppendSeparatedDigits(t *testing.T) {
 		{"card groups", "4111 1111-1111 1111 x", cardSeparator, "4111111111111111", 19},
 		{"trailing separators stay outside", "0312 ", cardSeparator, "0312", 4},
 		{"card rejects parentheses", "(03)1234", cardSeparator, "", 0},
-		{"phone parentheses", "(03)1234-5678)", phoneSeparator, "0312345678", 13},
+		{"phone parentheses", "(03)1234-5679)", phoneSeparator, "0312345679", 13},
 		{"letters end the run", "12ab34", phoneSeparator, "12", 2},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

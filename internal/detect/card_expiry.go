@@ -37,9 +37,9 @@ func (d *CardExpiry) Scan(data []byte) []Finding {
 
 	var findings []Finding
 	// used maps the start of each reported date to its end. One place in the
-	// text is often matched by several keywords ("exp", "Exp" and "EXP" are
-	// all compared case-insensitively), so the same range is searched more
-	// than once. Only parsed date candidates need an overlap lookup; ordinary
+	// text can be near several keywords ("exp date" and "expiry" in one field),
+	// so the same range is searched more than once. Only parsed date
+	// candidates need an overlap lookup; ordinary
 	// bytes cannot overlap a reported date in a way that creates a finding.
 	used := make(map[int]int)
 

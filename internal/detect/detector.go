@@ -69,9 +69,9 @@ type Detector interface {
 	Scan(data []byte) []Finding
 }
 
-// digitStarts are the bytes a digit candidate needs somewhere in the input:
+// digitStarts returns the bytes a digit candidate needs somewhere in the input:
 // ASCII digits and 0xEF, the UTF-8 lead byte of full-width digits.
-var digitStarts = []byte("0123456789\xef")
+func digitStarts() []byte { return []byte("0123456789\xef") }
 
 // startByter is implemented by hintless detectors that can only match input
 // containing one of a few bytes.
