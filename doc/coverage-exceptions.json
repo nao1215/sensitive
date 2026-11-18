@@ -78,15 +78,15 @@
   },
   {
     "file": "json.go",
-    "start": 389,
-    "end": 391,
+    "start": 391,
+    "end": 393,
     "sha256": "449238c18e2164ad2c9363aaad5a272b01b4da5226bcf50e848f30e8fc020601",
     "reason": "The public JSON entry point validates the entire input before the walker decodes a string; encoding/json cannot reject this already validated string token."
   },
   {
     "file": "json.go",
-    "start": 431,
-    "end": 432,
+    "start": 433,
+    "end": 434,
     "sha256": "601e7d43c105093b16776cf5882993ac9fe0f66e3905029b62c2d34f9f45a649",
     "reason": "encoding/json.Marshal receives a string and cannot return an error; the defensive panic never contains input data."
   },
@@ -141,8 +141,8 @@
   },
   {
     "file": "scanner.go",
-    "start": 99,
-    "end": 100,
+    "start": 103,
+    "end": 104,
     "sha256": "10408a70aa419eb085325ccb1717a9c6283b5b927bc70819e4b63a3435a42fc0",
     "reason": "The pool's New function stores only *scanScratch values, so the type assertion cannot fail; the panic keeps the invariant explicit."
   }
