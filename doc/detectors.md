@@ -39,7 +39,7 @@ ASCII letters, digits, _ and - form bodies of at least 16 bytes after sk-proj-, 
 
 ### KindHighEntropy
 
-No keyword is required; slash/backslash-adjacent or dotted path components and assignments to id, requestid, traceid, spanid, commit, sha, hash, checksum or uuid (case and key separators ignored) and lowercase Kubernetes generated names ending in a five-character random suffix are excluded.
+No keyword is required; slash/backslash-adjacent or dotted path components and assignments to id, requestid, traceid, spanid, commit, sha, hash, checksum, uuid, continue or a key ending in cursor (case and key separators ignored) and lowercase Kubernetes generated names ending in a five-character random suffix are excluded.
 
 ### KindCredential
 

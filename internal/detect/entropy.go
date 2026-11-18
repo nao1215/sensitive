@@ -116,7 +116,10 @@ func ordinaryIDContext(data []byte, start int) bool {
 	case "id", "requestid", "traceid", "spanid", "commit", "sha", "hash", "checksum", "uuid":
 		return true
 	}
-	return false
+	// Pagination cursors, such as the Kubernetes continue parameter and the
+	// GraphQL endCursor, encode server-side list state that the same client
+	// sends back; they are opaque but not credentials.
+	return key == "continue" || strings.HasSuffix(key, "cursor")
 }
 
 // kubernetesRandomAlphabet is the alphabet of Kubernetes generated name
