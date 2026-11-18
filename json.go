@@ -239,8 +239,9 @@ func (w *jsonWalker) element(ctx context.Context, depth int, key string, member,
 // namedValue tracks one object that stores a setting as separate name and
 // value members, as Kubernetes env, ECS task definitions, SSM parameters and
 // CloudFormation parameters do: {"name":"DB_PASSWORD","value":"hunter2"}.
-// The value string is masked when the name is a sensitive key, in either
-// member order. Numeric values, as in metric samples, stay visible.
+// The value is masked when the name is a sensitive key, in either member
+// order: a string, or a whole object or array as under a sensitive key.
+// Numeric values, as in metric samples, stay visible.
 type namedValue struct {
 	active     bool
 	sensitive  bool
@@ -249,10 +250,9 @@ type namedValue struct {
 }
 
 // member records a name member whose string is a sensitive key and the
-// output span of a string value member.
+// output span of a value member that is a non-empty string or a container.
 func (p *namedValue) member(w *jsonWalker, key string, raw []byte, resultStart int) {
-	// raw is a whole JSON value, so it is never empty.
-	if !p.active || raw[0] != '"' {
+	if !p.active {
 		return
 	}
 	switch namedValueField(key) {
@@ -262,7 +262,8 @@ func (p *namedValue) member(w *jsonWalker, key string, raw []byte, resultStart i
 			p.sensitive = true
 		}
 	case pairValue:
-		if len(raw) > len(`""`) {
+		// raw is a whole JSON value, so it is never empty.
+		if raw[0] == '{' || raw[0] == '[' || (raw[0] == '"' && len(raw) > len(`""`)) {
 			p.valueStart, p.valueEnd = resultStart, len(w.result)
 		}
 	case pairNone:

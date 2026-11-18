@@ -434,3 +434,23 @@ func TestEmailFullWidthDomainStart(t *testing.T) {
 		t.Fatalf("Scan(%q) = %+v", input, got)
 	}
 }
+
+const fullWidthAtAddress = "bob＠example.com"
+
+func TestEmailFullWidthAddress(t *testing.T) {
+	t.Parallel()
+	d := &Email{}
+	for input, want := range map[string]string{
+		"連絡先 ｂｏｂ＠ｅｘａｍｐｌｅ．ｃｏｍ まで": "ｂｏｂ＠ｅｘａｍｐｌｅ．ｃｏｍ",
+		fullWidthAtAddress:       fullWidthAtAddress,
+		"ｂｏｂ@example.com、ｂ＠ｃ．ｊｐ": "ｂ＠ｃ．ｊｐ",
+	} {
+		findings := d.Scan([]byte(input))
+		if len(findings) == 0 || input[findings[len(findings)-1].Start:findings[len(findings)-1].End] != want {
+			t.Errorf("Scan(%q) = %+v, want %q last", input, findings, want)
+		}
+	}
+	if findings := d.Scan([]byte("ｂｏｂ＠ｅｘａｍｐｌｅ")); len(findings) != 0 {
+		t.Errorf("address without a TLD found %+v", findings)
+	}
+}

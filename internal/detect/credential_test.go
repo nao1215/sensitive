@@ -256,3 +256,16 @@ func TestCredentialSkipsUUIDIdempotencyTokens(t *testing.T) {
 		}
 	}
 }
+
+func TestCredentialAssignsKey(t *testing.T) {
+	t.Parallel()
+	if AssignsKey(&Email{}, []byte("password: x"), len("password")) {
+		t.Fatal("email detector assigned a key")
+	}
+	d := &Credential{}
+	for text, want := range map[string]bool{"password: x": true, "db_pass: x": true, "field12: x": false, "token: TokenStore@1a2b3c": false, "token: abc": true} {
+		if got := AssignsKey(d, []byte(text), strings.IndexByte(text, ':')); got != want {
+			t.Errorf("AssignsKey(%q) = %v, want %v", text, got, want)
+		}
+	}
+}

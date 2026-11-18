@@ -314,3 +314,22 @@ func TestABARoutingSymbolRanges(t *testing.T) {
 		}
 	}
 }
+
+func TestABARoutingIdentifierLabels(t *testing.T) {
+	t.Parallel()
+	d := NewABARouting()
+	for input, want := range map[string]bool{
+		"user_id=657204589":         false,
+		"order id: 021000021":       false,
+		"routing code: 021000021":   true,
+		"ABA number 021000021":      true,
+		"aba routing id: 021000021": true,
+		"rtn=021000021":             true,
+		"routing: 021000021":        true,
+		"021000021":                 true,
+	} {
+		if got := len(d.Scan([]byte(input))) == 1; got != want {
+			t.Errorf("Scan(%q) found %v, want %v", input, got, want)
+		}
+	}
+}

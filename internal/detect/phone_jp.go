@@ -1,5 +1,7 @@
 package detect
 
+import "bytes"
+
 // JPPhoneType classifies a Japanese phone number; see the JPPhoneType* constants.
 type JPPhoneType string
 
@@ -82,31 +84,14 @@ func (d *JPPhone) Scan(data []byte) []Finding {
 // scanNormalized performs phone number detection on normalized data.
 // orig is the original (possibly full-width) input used for matched text.
 func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
-	var findings []Finding
-	var logContext numericLogContext
-
-	i := 0
-	for i < len(data) {
-		// Escape bytes cannot become part of a numeric candidate.
-		if data[i] == '%' && normalizedEscapeSeparator(orig, posMap, len(data), i) {
-			i += 3
-			continue
-		}
-		f, next, ok := d.candidate(orig, data, posMap, i, &logContext)
-		if ok {
-			findings = append(findings, f)
-		}
-		i = next
-	}
-
-	return findings
+	return scanNumeric(orig, data, posMap, d.candidate, true)
 }
 
 // candidate checks the number that may start at i, in the national form
 // starting with 0 or the +81 form, and returns where scanning continues.
-func (d *JPPhone) candidate(orig, data []byte, posMap []int, i int, logContext *numericLogContext) (Finding, int, bool) {
+func (d *JPPhone) candidate(orig, data []byte, posMap []int, i int) (Finding, int, bool) {
 	if data[i] == '+' {
-		return d.international(orig, data, posMap, i, logContext)
+		return d.international(orig, data, posMap, i)
 	}
 	// Check that '0' is not part of a longer word-like token. Underscores
 	// are word characters, so identifiers like _09012345678 do not match.
@@ -118,17 +103,27 @@ func (d *JPPhone) candidate(orig, data []byte, posMap []int, i int, logContext *
 		return Finding{}, end, false
 	}
 	phoneType := classifyJPPhone(digits, len(digits))
-	if phoneType == "" || logContext.fragment(data, i, end) {
+	if phoneType == "" {
 		return Finding{}, end, false
 	}
-	return labeledViewFinding(d.Name(), orig, posMap, i, end, jpPhoneConfidence(phoneType)), end, true
+	return labeledViewFinding(d.Name(), orig, posMap, parenthesizedStart(data, i, end), end, jpPhoneConfidence(phoneType)), end, true
+}
+
+// parenthesizedStart returns i-1 when the number at data[i:end] begins with a
+// parenthesized area code, as in (03)1234-5678, so the opening parenthesis is
+// masked with the number it opens.
+func parenthesizedStart(data []byte, i, end int) int {
+	if i == 0 || data[i-1] != '(' || bytes.IndexByte(data[i:end], ')') < 0 || bytes.IndexByte(data[i:end], '(') >= 0 {
+		return i
+	}
+	return i - 1
 }
 
 // international recognizes the +81 form, such as +81-90-1234-5678,
 // +819012345678 and +81 (0)3-1234-5678. The national number after the
 // country code drops its leading zero, which classification restores, and
 // the span starts at the plus sign.
-func (d *JPPhone) international(orig, data []byte, posMap []int, start int, logContext *numericLogContext) (Finding, int, bool) {
+func (d *JPPhone) international(orig, data []byte, posMap []int, start int) (Finding, int, bool) {
 	national := start + len("+81")
 	if national >= len(data) || data[start+1] != '8' || data[start+2] != '1' || (start > 0 && isIdentifierByte(data[start-1])) {
 		return Finding{}, start + 1, false
@@ -142,7 +137,7 @@ func (d *JPPhone) international(orig, data []byte, posMap []int, start int, logC
 		return Finding{}, start + 1, false
 	}
 	phoneType := classifyJPPhone(digits, len(digits))
-	if phoneType == "" || logContext.fragment(data, start, end) {
+	if phoneType == "" {
 		return Finding{}, end, false
 	}
 	return labeledViewFinding(d.Name(), orig, posMap, start, end, jpPhoneConfidence(phoneType)), end, true

@@ -95,40 +95,21 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	if !hasDigits(data, panMinDigits) {
 		return nil
 	}
-	var findings []Finding
-	var logContext numericLogContext
+	return scanNumeric(orig, data, posMap, d.candidate, true)
+}
 
-	i := 0
-	for i < len(data) {
-		// Escape bytes cannot become part of a numeric candidate.
-		if data[i] == '%' && normalizedEscapeSeparator(orig, posMap, len(data), i) {
-			i += 3
-			continue
-		}
-		// Skip non-digit characters.
-		if !ascii.IsDigit(data[i]) {
-			i++
-			continue
-		}
-
-		// Found a digit — try to extract a candidate PAN.
-		start := i
-		// Card digits fit the array; a longer run grows past it and is rejected by length.
-		var stack [panMaxDigits + 1]byte
-		digits, end := cardDigits(data, start, stack[:0])
-
-		// Check digit count: valid PANs are 13-19 digits.
-		digitLen := len(digits)
-		bounded := panBounded(orig, data, posMap, start, end)
-		if f, ok := d.evaluateCandidate(orig, posMap, digits, digitLen, start, end); ok && bounded && !logContext.fragment(data, start, end) {
-			findings = append(findings, f)
-		}
-
-		// Move past the current candidate to continue scanning.
-		i = end
+// candidate checks the card number that may start at i and returns where
+// scanning continues.
+func (d *PAN) candidate(orig, data []byte, posMap []int, i int) (Finding, int, bool) {
+	if !ascii.IsDigit(data[i]) {
+		return Finding{}, i + 1, false
 	}
-
-	return findings
+	// Card digits fit the array; a longer run grows past it and is rejected by length.
+	var stack [panMaxDigits + 1]byte
+	digits, end := cardDigits(data, i, stack[:0])
+	bounded := panBounded(orig, data, posMap, i, end)
+	f, ok := d.evaluateCandidate(orig, posMap, digits, len(digits), i, end)
+	return f, end, ok && bounded
 }
 
 // cardDigits extracts the digits of a candidate separated by spaces or

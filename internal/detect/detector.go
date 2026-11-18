@@ -1,5 +1,7 @@
 package detect
 
+import "slices"
+
 // DetectorName identifies a detector; built-ins use Name* constants and custom detectors may choose their own names.
 type DetectorName string
 
@@ -67,6 +69,14 @@ type Detector interface {
 
 	// Scan returns findings with original byte offsets. It must handle arbitrary input, including calls without hint filtering; use dedicated parsers and domain validation where practical.
 	Scan(data []byte) []Finding
+}
+
+// ReadsLabel reports whether d reads text before a candidate, such as a field
+// name or a nearby keyword. A structured value is scanned after its field
+// name only by these detectors; the others find the same spans in the value
+// alone.
+func ReadsLabel(d Detector) bool {
+	return !slices.Contains([]DetectorName{NameIBAN, NameBTC, NameETH, NameEmail, NameJWT, NameAWSKey, NameGitHubToken, NameSlackToken, NameGoogleAPIKey, NamePrivateKeyPEM, NamePaymentToken, nameServiceToken}, d.Name())
 }
 
 // digitStarts returns the bytes a digit candidate needs somewhere in the input:

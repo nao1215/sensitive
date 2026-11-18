@@ -29,18 +29,32 @@ func (d *Email) Hints() [][]byte {
 	}
 }
 
-// Scan returns matches in data using the rules documented on [Email].
+// Scan returns matches in data using the rules documented on [Email]. Text
+// with a full-width at sign, as Japanese input methods write it, is scanned
+// with full-width ASCII folded to ASCII, so ｂｏｂ＠ｅｘａｍｐｌｅ．ｃｏｍ and
+// bob＠example.com are addresses too.
 func (d *Email) Scan(data []byte) []Finding {
+	if !bytes.Contains(data, []byte(fullWidthAt)) {
+		return d.scanASCII(data)
+	}
+	folded, positions := foldFullWidthASCII(data)
+	findings := d.scanASCII(folded)
+	for i := range findings {
+		findings[i].Start, findings[i].End = positions[findings[i].Start], positions[findings[i].End]
+	}
+	return findings
+}
+
+// scanASCII finds addresses whose at sign is the ASCII @.
+func (d *Email) scanASCII(data []byte) []Finding {
 	var findings []Finding
 	boundary := 0
-
-	fullWidth := bytes.Contains(data, []byte(fullWidthAt))
 	for i := 0; i < len(data); i++ {
-		var domainAt int
-		var ok bool
-		if i, domainAt, ok = nextAtSign(data, i, fullWidth); !ok {
+		next := bytes.IndexByte(data[i:], '@')
+		if next < 0 {
 			break
 		}
+		i += next
 
 		// An accepted domain is a boundary for the next local part. Walking
 		// through it can reject an adjacent address or create overlapping spans.
@@ -50,7 +64,7 @@ func (d *Email) Scan(data []byte) []Finding {
 			continue
 		}
 
-		domainEnd, domain, ok := findDomainEnd(data, domainAt)
+		domainEnd, domain, ok := findDomainEnd(data, i)
 		if !ok {
 			continue
 		}
@@ -74,25 +88,6 @@ func (d *Email) Scan(data []byte) []Finding {
 	}
 
 	return findings
-}
-
-// nextAtSign returns the position of the next at sign from i and the last
-// byte of the sign. A full-width at sign (U+FF20) joins ASCII local and
-// domain parts in Japanese text; inputs without one jump between ASCII @.
-func nextAtSign(data []byte, i int, fullWidth bool) (at, domainAt int, ok bool) {
-	if !fullWidth {
-		next := bytes.IndexByte(data[i:], '@')
-		return i + next, i + next, next >= 0
-	}
-	for ; i < len(data); i++ {
-		if data[i] == '@' {
-			return i, i, true
-		}
-		if bytes.HasPrefix(data[i:], []byte(fullWidthAt)) {
-			return i, i + len(fullWidthAt) - 1, true
-		}
-	}
-	return 0, 0, false
 }
 
 // fullWidthAt is U+FF20 FULLWIDTH COMMERCIAL AT in UTF-8.

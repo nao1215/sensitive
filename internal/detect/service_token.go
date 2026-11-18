@@ -18,8 +18,11 @@ func NewServiceToken() *ServiceToken {
 	return &ServiceToken{index: newProviderIndex()}
 }
 
+// nameServiceToken is the provider token detector, which has no exported name.
+const nameServiceToken DetectorName = "service_token"
+
 // Name returns the service token family.
-func (*ServiceToken) Name() DetectorName { return "service_token" }
+func (*ServiceToken) Name() DetectorName { return nameServiceToken }
 
 // Hints returns every table prefix plus a substring that each special layout
 // contains, so the list is exhaustive by construction.

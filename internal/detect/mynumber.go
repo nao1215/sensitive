@@ -35,44 +35,23 @@ func (d *MyNumber) Scan(data []byte) []Finding {
 // scanNormalized performs My Number detection on normalized data.
 // orig is the original (possibly full-width) input used for matched text.
 func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
-	var findings []Finding
-	var logContext numericLogContext
+	return scanNumeric(orig, data, posMap, d.candidate, true)
+}
 
-	i := 0
-	for i < len(data) {
-		if data[i] == '%' && normalizedEscapeSeparator(orig, posMap, len(data), i) {
-			i += 3
-			continue
-		}
-		if !ascii.IsDigit(data[i]) {
-			i++
-			continue
-		}
-
-		// Check that this digit is not part of a longer alphanumeric token.
-		if !normalizedIdentifierStart(orig, data, posMap, i) {
-			i++
-			continue
-		}
-
-		// Extract digits, allowing '-' and ' ' as separators.
-		start := i
-		digits, end := appendSeparatedDigits(data, start, make([]byte, 0, phoneDigitCapacity), cardSeparator)
-
-		// Must be exactly 12 digits, not followed by more digits.
-		if !myNumberWhole(data, digits, end) {
-			i = end
-			continue
-		}
-
-		if isValidMyNumber(digits) && !logContext.fragment(data, start, end) && !arnAccount(data, start, end) && !identifierLabeled(data, start) {
-			//nolint:mnd // The detector contract documents this heuristic score.
-			findings = append(findings, labeledViewFinding(d.Name(), orig, posMap, start, end, 0.95))
-		}
-		i = end
+// candidate checks the 12-digit number that may start at i, allowing '-' and
+// ' ' between digits, and returns where scanning continues.
+func (d *MyNumber) candidate(orig, data []byte, posMap []int, i int) (Finding, int, bool) {
+	// The digit must not continue a longer alphanumeric token.
+	if !ascii.IsDigit(data[i]) || !normalizedIdentifierStart(orig, data, posMap, i) {
+		return Finding{}, i + 1, false
 	}
-
-	return findings
+	digits, end := appendSeparatedDigits(data, i, make([]byte, 0, phoneDigitCapacity), cardSeparator)
+	// Must be exactly 12 digits, not followed by more digits.
+	if !myNumberWhole(data, digits, end) || !isValidMyNumber(digits) || arnAccount(data, i, end) || identifierLabeled(data, i) {
+		return Finding{}, end, false
+	}
+	//nolint:mnd // The detector contract documents this heuristic score.
+	return labeledViewFinding(d.Name(), orig, posMap, i, end, 0.95), end, true
 }
 
 // normalizedIdentifierStart reports whether position i of a normalized view

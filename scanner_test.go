@@ -1371,3 +1371,109 @@ func TestZeroScannerSharesTheDefaultPolicy(t *testing.T) {
 		t.Fatalf("zero value lost the default policy: %+v", got)
 	}
 }
+
+// fieldFindings returns the value findings of a "key: value" scan, as
+// scalarFindings keeps them.
+func fieldFindings(findings []Finding, prefix int) []Finding {
+	var kept []Finding
+	for _, f := range findings {
+		if f.End > prefix {
+			kept = append(kept, f)
+		}
+	}
+	return kept
+}
+
+func TestScanFieldMatchesWholeTextScan(t *testing.T) {
+	t.Parallel()
+	keys := []string{"field12", "msg", "user_id", "order_id", credentialFixtureKey, "db_pass", "api_token", "cvv", "security code", "card_number", "exp", "phone", "tel", "version", "bank account", "merchant", "swift", "sort code", "マイナンバー", "session", "aws_access_key_id", "ip"}
+	values := []string{
+		"clean application value", "657204589", "123", "4111 1111 1111 1111", "4111111111111111", "12/29",
+		"090-1234-5678", "(212) 555-0118", "+81 90-1234-5678", "123456789018", "203.0.113.9", "2001:db8::5", "1.2.3.4",
+		documentedEmail, "GB82WEST12345698765432", "DEUTDEFF", "12-34-56", "021000021", "12345678",
+		"AKIAIOSFODNN7EXAMPLE", "ghp_" + strings.Repeat("a", 36), "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.c2ln",
+		"password=hunter2hunter2", "https://bob:s3cretpass@example.com/x", "curl -u bob:s3cretpass https://x", "",
+		"bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4", "0x52908400098527886E0F7030069857D2E4169EE7", "{\"a\":1}",
+	}
+	for _, scanner := range []*Scanner{NewScanner(), NewScanner(WithAll()), NewScanner(WithKinds(KindCredential)), NewScanner(WithSensitiveKeys("field12"))} {
+		for _, key := range keys {
+			for _, value := range values {
+				text := []byte(key + ": " + value)
+				prefix := len(key) + len(": ")
+				want := fieldFindings(scanner.scanAppend(nil, text, nil), prefix)
+				got := fieldFindings(scanner.scanField(nil, text, prefix, nil), prefix)
+				if !reflect.DeepEqual(got, want) {
+					t.Fatalf("%q: field scan %+v, whole scan %+v", text, got, want)
+				}
+			}
+		}
+	}
+}
+
+func TestScanFieldEdges(t *testing.T) {
+	t.Parallel()
+	text := []byte("note: alice@example.com")
+	var zero Scanner
+	if got, want := zero.scanField(nil, text, len("note: "), nil), defaultScanner().scanAppend(nil, text, nil); !reflect.DeepEqual(got, want) {
+		t.Fatalf("zero scanner %+v, want %+v", got, want)
+	}
+	if got, want := NewScanner().scanField(nil, text, 0, nil), NewScanner().scanAppend(nil, text, nil); !reflect.DeepEqual(got, want) {
+		t.Fatalf("no prefix %+v, want %+v", got, want)
+	}
+	for _, scanner := range []*Scanner{NewScanner(WithKinds(), WithDetector(fieldProbe{t})), NewScanner(WithKinds(KindEmail), WithDetector(fieldProbe{t}))} {
+		got := scanner.scanField(nil, text, len("note: "), nil)
+		if len(got) == 0 || got[0].Kind != fieldProbeKind {
+			t.Fatalf("custom detector findings %+v", got)
+		}
+	}
+	canceled := func() error { return context.Canceled }
+	if got := NewScanner().scanField(nil, text, len("note: "), canceled); got != nil {
+		t.Fatalf("canceled field scan returned %+v", got)
+	}
+	scanner := NewScanner(WithAll())
+	for checkpoint := 2; checkpoint <= len(scanner.detectors)+2; checkpoint++ {
+		calls := 0
+		findings := scanner.scanField(nil, []byte("card: 4111111111111111 alice@example.com"), len("card: "), func() error {
+			calls++
+			if calls >= checkpoint {
+				return context.Canceled
+			}
+			return nil
+		})
+		if len(findings) != 0 || calls != checkpoint {
+			t.Fatalf("checkpoint %d returned %d findings after %d cancellation checks", checkpoint, len(findings), calls)
+		}
+	}
+}
+
+func TestScanFieldKeepsKeyContext(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		scanner *Scanner
+		key     string
+		value   string
+		kind    Kind
+	}{
+		{NewScanner(), "cvv", "123", KindCVV},
+		{NewScanner(WithSensitiveKeys("ticket")), "ticket", "opaqueTicketValue", KindCredential},
+		{NewScanner(), "bank account", "12345678", KindBankAccount},
+	} {
+		prefix := len(tc.key) + len(": ")
+		got := fieldFindings(tc.scanner.scanField(nil, []byte(tc.key+": "+tc.value), prefix, nil), prefix)
+		if len(got) != 1 || got[0].Kind != tc.kind || got[0].Start != prefix || got[0].End != prefix+len(tc.value) {
+			t.Fatalf("%s: %+v, want one %s over the value", tc.key, got, tc.kind)
+		}
+	}
+}
+
+const fieldProbeKind Kind = "field_probe"
+
+// fieldProbe requires the whole "note: " field and reports its key.
+type fieldProbe struct{ t *testing.T }
+
+func (p fieldProbe) Scan(data []byte) []Finding {
+	if !bytes.HasPrefix(data, []byte("note: ")) {
+		p.t.Errorf("custom detector saw %q, want the whole field", data)
+	}
+	return []Finding{{Kind: fieldProbeKind, Start: 0, End: len("note"), Confidence: 1}}
+}

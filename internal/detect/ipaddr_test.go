@@ -407,3 +407,25 @@ func TestIPAddrZeroPaddedOctets(t *testing.T) {
 		}
 	}
 }
+
+func TestIPAddrProductVersion(t *testing.T) {
+	t.Parallel()
+	d := &IPAddr{}
+	for input, want := range map[string]bool{
+		"agent/5.1.2.3":        false,
+		"ua=\"agent/5.1.2.3\"": false,
+		"(probe-v2/1.2.3.4)":   false,
+		"ip/10.0.0.1":          true,
+		"peer/10.0.0.1":        true,
+		"/hosts/10.0.0.1":      true,
+		"x.agent/10.0.0.1":     true,
+		"2fa/10.0.0.1":         true,
+		"/10.0.0.1":            true,
+		"from 10.0.0.1":        true,
+		"agent 10.0.0.1":       true,
+	} {
+		if got := len(d.Scan([]byte(input))) == 1; got != want {
+			t.Errorf("Scan(%q) found %v, want %v", input, got, want)
+		}
+	}
+}

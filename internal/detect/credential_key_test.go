@@ -204,3 +204,12 @@ func TestCredentialEmptyHexSessionIsASecret(t *testing.T) {
 		t.Fatalf("Scan(session=0x) = %+v, want one finding", got)
 	}
 }
+
+func TestCredentialQualifiedAuthKeys(t *testing.T) {
+	t.Parallel()
+	for key, want := range map[string]bool{"X-Auth-Key": true, "auth_key": true, "master_key": true, "MasterKey": true, "cache_key": false, "primary_key": false} {
+		if got := SensitiveCredentialKey(key); got != want {
+			t.Errorf("SensitiveCredentialKey(%q) = %v, want %v", key, got, want)
+		}
+	}
+}

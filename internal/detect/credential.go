@@ -132,6 +132,17 @@ func (d *Credential) appendContextCredentials(out []Finding, data []byte) []Find
 	return append(out, commandPasswords(data)...)
 }
 
+// AssignsKey reports whether d is the credential detector and the separator at
+// sep ends one of its keys, so the value after it is a credential assignment.
+func AssignsKey(d Detector, data []byte, sep int) bool {
+	credential, ok := d.(*Credential)
+	if !ok {
+		return false
+	}
+	_, ok = credential.assignmentName(data, sep)
+	return ok
+}
+
 // urlUserinfoColon advances urlIndex past URL findings starting at or before i
 // and reports whether the colon at i separates URL userinfo, not an assignment.
 func urlUserinfoColon(data []byte, urls []Finding, urlIndex, i int) (int, bool) {

@@ -86,7 +86,7 @@ func (d *IPAddr) tryIPv4(data []byte, i int) (Finding, int, bool) {
 
 	candidate, ip := parseIPv4Run(data[i:j])
 	end := i + len(candidate)
-	if ip == nil || ip.To4() == nil || ip.To4()[0] == 0 || ip.IsLoopback() || versionLabel(data, i) {
+	if ip == nil || ip.To4() == nil || ip.To4()[0] == 0 || ip.IsLoopback() || versionNumber(data, i) {
 		return Finding{}, j, false
 	}
 
@@ -209,6 +209,30 @@ func zeroPaddedIPv4(run []byte) (string, net.IP) {
 		return "", nil
 	}
 	return text, ip
+}
+
+// versionNumber reports an address-shaped number that a label or a product
+// name before start marks as a version.
+func versionNumber(data []byte, start int) bool {
+	return versionLabel(data, start) || productVersion(data, start)
+}
+
+// productVersion reports an address-shaped number written as a product
+// version, as in agent/5.1.2.3 of a User-Agent: a word that starts with a
+// letter at a field boundary and ends with the slash before start. Words that
+// name an address, such as ip/ or peer/, keep the address.
+func productVersion(data []byte, start int) bool {
+	if start == 0 || data[start-1] != '/' {
+		return false
+	}
+	begin := start - 1
+	for begin > 0 && (ascii.IsAlphaNum(data[begin-1]) || data[begin-1] == '-' || data[begin-1] == '_') {
+		begin--
+	}
+	if begin == start-1 || !ascii.IsAlpha(data[begin]) || (begin > 0 && !strings.ContainsRune(" \t\"'(", rune(data[begin-1]))) {
+		return false
+	}
+	return !labelIs(data[begin:start-1], "ip", "ipv4", "host", "addr", "address", "src", "dst", "peer", "client", "server", "remote", "proxy", "from", "to")
 }
 
 func versionLabel(data []byte, start int) bool {

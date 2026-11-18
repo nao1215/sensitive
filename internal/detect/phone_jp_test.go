@@ -442,9 +442,27 @@ func TestJPPhoneInternationalNearMisses(t *testing.T) {
 	d := NewJPPhone()
 	for _, input := range []string{"+81 x", "+81-12", "+81-90", "+8112345678901234", "+81 1234567890"} {
 		data := []byte(input)
-		var logContext numericLogContext
-		if _, next, ok := d.international(data, data, nil, 0, &logContext); ok || next <= 0 {
+		if _, next, ok := d.international(data, data, nil, 0); ok || next <= 0 {
 			t.Errorf("international(%q) = ok %v next %d", input, ok, next)
+		}
+	}
+}
+
+const parenthesizedLandline = "(03)1234-5678"
+
+func TestJPPhoneParenthesizedAreaCode(t *testing.T) {
+	t.Parallel()
+	d := NewJPPhone()
+	for input, want := range map[string]string{
+		"tel (03)1234-5678":   parenthesizedLandline,
+		parenthesizedLandline: parenthesizedLandline,
+		"tel 03(1234)5678":    "03(1234)5678",
+		"tel (03-1234-5678":   "03-1234-5678",
+		"tel ((03)1234-5678)": parenthesizedLandline,
+	} {
+		findings := d.Scan([]byte(input))
+		if len(findings) != 1 || input[findings[0].Start:findings[0].End] != want {
+			t.Errorf("Scan(%q) = %+v, want %q", input, findings, want)
 		}
 	}
 }

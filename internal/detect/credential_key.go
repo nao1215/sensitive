@@ -15,7 +15,9 @@ const (
 	credentialMarker      = "[REDACTED]"
 	credentialSecretKey   = "secret"
 	shortPassKey          = "pass"
-	shortPasswordKey      = "pwd"
+	// jsessionIDKey is the Java servlet session cookie and path parameter.
+	jsessionIDKey    = "jsessionid"
+	shortPasswordKey = "pwd"
 )
 
 // NormalizeCredentialKey removes ASCII case and key separators.
@@ -41,7 +43,7 @@ func SensitiveCredentialKey(key string) bool {
 func sensitiveNormalizedKey(key string) bool {
 	switch key {
 	case "password", "passwd", credentialSecretKey, credentialTokenKey, "apikey", authorizationKey, proxyAuthorizationKey, cookieKey, setCookieKey, "accesstoken", "refreshtoken", "idtoken", "xapikey", "dbpassword", "privatetoken", "clientsecret", "authtoken", "pgpassword",
-		"otp", "pin", "passcode", "passphrase", "session", "sessionid", "sessiontoken", "jsessionid", "phpsessid":
+		"otp", "pin", "passcode", "passphrase", "session", "sessionid", "sessiontoken", jsessionIDKey, "phpsessid":
 		return true
 	}
 	return false
@@ -158,7 +160,7 @@ func credentialSuffixMatch(key string, candidates []string) bool {
 func qualifiedKeySuffix(head string) bool {
 	prefix := strings.TrimRight(head, "_.- ")
 	previous := prefix[credentialSegmentStart(prefix):]
-	for _, credential := range []string{"api", credentialSecretKey, "private", "access", "account"} {
+	for _, credential := range []string{"api", credentialSecretKey, "private", "access", "account", "auth", "master"} {
 		if strings.EqualFold(previous, credential) {
 			return true
 		}

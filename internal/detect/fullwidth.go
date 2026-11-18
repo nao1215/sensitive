@@ -2,6 +2,7 @@ package detect
 
 import (
 	"unicode"
+	"unicode/utf8"
 )
 
 // NormalizeFullWidthDigits converts full-width digits and Unicode dash separators to ASCII. Interior non-ASCII Pd, Zs, Cf and Sm intersected with Dash are ignored. The returned map translates normalized byte indexes to original indexes, including an end sentinel equal to len(data).
@@ -68,4 +69,27 @@ func normalizeDigits(data []byte) (normalized []byte, positions []int) {
 		}
 	}
 	return data, nil
+}
+
+// foldFullWidthASCII converts the full-width forms of printable ASCII, U+FF01
+// to U+FF5E, to ASCII and copies every other byte. The map translates folded
+// byte indexes to original indexes and ends with the len(data) sentinel.
+func foldFullWidthASCII(data []byte) (folded []byte, positions []int) {
+	folded = make([]byte, 0, len(data))
+	positions = make([]int, 0, len(data)+1)
+	for i := 0; i < len(data); {
+		r, size := utf8.DecodeRune(data[i:])
+		if r >= '！' && r <= '～' {
+			positions = append(positions, i)
+			folded = append(folded, byte(r-'！'+'!'))
+			i += size
+			continue
+		}
+		for k := range size {
+			positions = append(positions, i+k)
+			folded = append(folded, data[i+k])
+		}
+		i += size
+	}
+	return folded, append(positions, len(data))
 }

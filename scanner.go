@@ -20,10 +20,13 @@ type Scanner struct {
 	custom        []Detector
 	scratch       *sync.Pool
 	keys          *keyCache
+	credential    detect.Detector
 	hintIndex     [256][]dispatchHint
 	follow        [256]byteSet
 	minConfidence float64
 	unconditional uint64
+	labelMask     uint64
+	credentialBit uint64
 	initialized   bool
 	allKinds      bool
 	noDefaultKeys bool
@@ -62,6 +65,7 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 		}
 	}
 	s.hintCache = buildHintCache(s.detectors)
+	s.indexLabelReaders()
 	if len(s.detectors) > 1 {
 		s.buildDispatch()
 	}
@@ -187,16 +191,85 @@ func (s *Scanner) scanInput(dst []Finding, view detect.View, canceled func() err
 		}
 		findings = appendBuiltinFindings(findings, d, view)
 	}
-	for _, d := range s.custom {
-		if scanCanceled(canceled) {
-			return nil
+	return s.finishScan(findings, view.Raw, canceled)
+}
+
+// indexLabelReaders marks the detectors that read a field name before a value.
+func (s *Scanner) indexLabelReaders() {
+	for i, d := range s.detectors {
+		if detect.ReadsLabel(d) {
+			s.labelMask |= 1 << i
 		}
-		findings = append(findings, d.Scan(view.Raw)...)
+		if d.Name() == detect.NameCredential {
+			s.credential, s.credentialBit = d, 1<<i
+		}
+	}
+}
+
+// scanField scans a structured value after its field name: text is
+// "key: value" and prefix is the length of "key: ". Dispatch reads the value
+// and, for detectors that read labels, the key. Those detectors scan the whole
+// text, except Credential, which reads the key only when it is a credential
+// key; every other detector scans the value alone. Findings are in text
+// offsets, as from scanAppend.
+func (s *Scanner) scanField(dst []Finding, text []byte, prefix int, canceled func() error) []Finding {
+	if !s.initialized {
+		return defaultScanner().scanField(dst, text, prefix, canceled)
+	}
+	if prefix == 0 || len(s.detectors) == 0 {
+		return s.scanAppend(dst, text, canceled)
 	}
 	if scanCanceled(canceled) {
 		return nil
 	}
-	return s.filterFindings(findings, len(view.Raw))
+	value := detect.NewView(text[prefix:])
+	selected, wholeText := s.selectField(text, prefix, value)
+	var whole detect.View
+	findings := dst[:0]
+	for i, d := range s.detectors {
+		if scanCanceled(canceled) {
+			return nil
+		}
+		bit := uint64(1) << i
+		switch {
+		case selected&bit == 0:
+		case wholeText&bit == 0:
+			findings = appendShiftedFindings(findings, d, value, prefix)
+		default:
+			if whole.Raw == nil {
+				whole = detect.NewView(text)
+			}
+			findings = appendBuiltinFindings(findings, d, whole)
+		}
+	}
+	return s.finishScan(findings, text, canceled)
+}
+
+// selectField returns the detectors a field selects and, among them, those
+// that scan the whole "key: value" text rather than the value alone.
+func (s *Scanner) selectField(text []byte, prefix int, value detect.View) (selected, wholeText uint64) {
+	keyEnd := prefix - len(": ")
+	selected = s.selectDetectors(value.Data) | s.selectDetectors(text[:keyEnd])&s.labelMask
+	wholeText = s.labelMask &^ s.credentialBit
+	if detect.AssignsKey(s.credential, text, keyEnd) {
+		selected |= s.credentialBit
+		wholeText |= s.credentialBit
+	}
+	return selected, wholeText
+}
+
+// finishScan appends custom detector findings for data and validates them all.
+func (s *Scanner) finishScan(findings []Finding, data []byte, canceled func() error) []Finding {
+	for _, d := range s.custom {
+		if scanCanceled(canceled) {
+			return nil
+		}
+		findings = append(findings, d.Scan(data)...)
+	}
+	if scanCanceled(canceled) {
+		return nil
+	}
+	return s.filterFindings(findings, len(data))
 }
 
 // ScanString scans the bytes of text.
@@ -254,6 +327,14 @@ func scanCanceled(canceled func() error) bool {
 func appendBuiltinFindings(findings []Finding, d detect.Detector, view detect.View) []Finding {
 	for _, f := range detect.ScanView(d, view) {
 		findings = append(findings, Finding{Kind: Kind(f.DetectorName), Start: f.Start, End: f.End, Confidence: f.Confidence})
+	}
+	return findings
+}
+
+// appendShiftedFindings appends d's findings in view, moved by offset bytes.
+func appendShiftedFindings(findings []Finding, d detect.Detector, view detect.View, offset int) []Finding {
+	for _, f := range detect.ScanView(d, view) {
+		findings = append(findings, Finding{Kind: Kind(f.DetectorName), Start: f.Start + offset, End: f.End + offset, Confidence: f.Confidence})
 	}
 	return findings
 }
