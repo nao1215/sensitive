@@ -39,7 +39,7 @@ The layouts below follow the gitleaks rules named in the table, without the keyw
 | Databricks | dapi + 32 hex, optionally - and a digit |
 | Defined Networking | dnkey- + 26 token bytes or = + - + 52 more |
 | DigitalOcean | doo_v1_, dop_v1_ or dor_v1_ + 64 hex |
-| Discord | https://discord.com/api/webhooks/ (also discordapp.com, ptb. and canary.) path: a 17 to 20 digit ID and a 60 to 80 byte token |
+| Discord | discord.com/api/webhooks/ (or discordapp.com, ptb., canary.) + 17 to 20 digit ID + / + 60 to 80 byte token |
 | Doppler | dp.pt. + 43 alnum |
 | Duffel | duffel_test_ or duffel_live_ + 43 token bytes or = |
 | Dynatrace | dt0c01. + 24 alnum + . + 64 alnum |
@@ -79,7 +79,7 @@ The layouts below follow the gitleaks rules named in the table, without the keyw
 | RubyGems | rubygems_ + 48 hex |
 | Scalingo | tk-us- + 48 token bytes |
 | Brevo | xkeysib- + 64 hex + - + 16 alnum |
-| Sentry | sntryu_ + 64 hex; sntrys_eyJ + 20 or more base64 or _; the 32 hex key of a hosted DSN, https://KEY@o*.ingest*.sentry.io/PROJECT |
+| Sentry | sntryu_ + 64 hex; sntrys_eyJ + 20+ base64 or _; hosted DSN https://KEY@o*.ingest*.sentry.io/ with a 32 hex KEY |
 | SettleMint | sm_aat_, sm_pat_ or sm_sat_ + 16 alnum |
 | Shippo | shippo_live_ or shippo_test_ + 40 hex of either case |
 | Shopify | shpat_, shpca_, shppa_ or shpss_ + 32 hex of either case |
