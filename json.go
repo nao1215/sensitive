@@ -11,37 +11,31 @@ import (
 
 func jsonFailure() error { return saferecord.ErrMasking }
 
-// MaskJSON masks one JSON document using this scanner's detectors and sensitive
-// key policy. It preserves object order, duplicate keys, arrays, nulls, booleans
-// and clean numbers without rounding. Sensitive numbers become marker strings;
-// a sensitive key replaces its entire value, including containers, with a marker.
-// The returned compact JSON owns its bytes and has no trailing newline.
-// Input and output are limited to 1 MiB, nesting to 64, and cumulative detector
-// input to 4 MiB. Invalid input, exceeded limits and panics return no bytes and a
-// fixed error without input data. It does not modify the source document.
-// These bounds apply to already encoded bytes, not the caller's encoder or
-// upstream reader. MarshalJSON, LogValue, String and Error may run before this
-// boundary; their execution time and memory are not bounded. Use Secret or a
-// LogValuer returning a bounded value for such types.
-// Use it before sending JSON API responses, exports or audit records.
-// Fractional and exponent number lexemes are also checked as exact integers when
-// possible, without floating-point rounding; a detected number is replaced whole.
-func (scanner *Scanner) MaskJSON(data []byte) (masked []byte, err error) {
-	return scanner.MaskJSONContext(context.Background(), data)
+// MaskJSON returns a compact copy of one JSON document with sensitive values masked,
+// keeping object order, duplicate keys, types and clean numbers exactly; a value under
+// a sensitive key becomes a marker, and a sensitive number becomes a marker string.
+// Input and output are limited to 1 MiB and nesting to 64. Invalid input or an
+// exceeded limit returns no bytes and a fixed error that contains no input data.
+// Use it before sending JSON API responses, exports or audit records; the
+// [logging guide] describes the remaining bounds.
+//
+// [logging guide]: https://github.com/nao1215/embargo/blob/main/doc/logging.md#bounds-and-failures
+func (s *Scanner) MaskJSON(data []byte) ([]byte, error) {
+	return s.MaskJSONContext(context.Background(), data)
 }
 
 // MaskJSONContext applies MaskJSON's policy while checking ctx before and between
 // scalar scans. A canceled or nil context returns no bytes and a fixed error.
 // An already running detector cannot be interrupted.
 // Use it for request-scoped or telemetry work that should stop after cancellation.
-func (scanner *Scanner) MaskJSONContext(ctx context.Context, data []byte) ([]byte, error) {
-	return scanner.maskJSON(ctx, data, "", false)
+func (s *Scanner) MaskJSONContext(ctx context.Context, data []byte) ([]byte, error) {
+	return s.maskJSON(ctx, data, "", false)
 }
 
 // maskJSON masks one document. encoded is true only for encoding/json output,
 // which that package has already validated and compacted, so json.Valid would
 // repeat its work.
-func (scanner *Scanner) maskJSON(ctx context.Context, data []byte, key string, encoded bool) (masked []byte, err error) {
+func (s *Scanner) maskJSON(ctx context.Context, data []byte, key string, encoded bool) (masked []byte, err error) {
 	complete := false
 	defer func() {
 		_ = recover() //nolint:errcheck // Discard panic values, including panic(nil) compatibility mode.
@@ -58,12 +52,12 @@ func (scanner *Scanner) maskJSON(ctx context.Context, data []byte, key string, e
 	if len(data) > maxEventBytes {
 		return nil, saferecord.ErrSizeLimit
 	}
-	if scanner == nil || len(data) == 0 || (!encoded && !json.Valid(data)) {
+	if s == nil || len(data) == 0 || (!encoded && !json.Valid(data)) {
 		return nil, jsonFailure()
 	}
 
 	data = bytes.TrimSpace(data)
-	walker := jsonWalker{data: data, result: make([]byte, 0, len(data)), scanner: eventScanner{scanner: scanner, remaining: maxScanBytes}}
+	walker := jsonWalker{data: data, result: make([]byte, 0, len(data)), scanner: eventScanner{scanner: s, remaining: maxScanBytes}}
 	if err := walker.value(ctx, 0, key, false); err != nil {
 		return nil, err
 	}

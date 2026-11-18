@@ -13,21 +13,14 @@ import (
 	"github.com/nao1215/embargo/internal/saferecord"
 )
 
-// NewSlogHandler scans messages, keys, groups and values before forwarding to next.
-// Both arguments must be non-nil; invalid dependencies panic.
-// The supplied scanner controls selection: NewScanner omits unlabelled entropy tokens.
-// Supplying a scanner with WithKinds reduces per-event detection work when only known formats matter.
-// See https://github.com/nao1215/embargo/blob/main/doc/benchmarks.md for scan costs, excluding encoding.
-// Any values keep their encoded JSON shape; errors keep their Error text.
-// Plain and named byte slices are scanned before base64 encoding.
-// Group-qualified keys are checked as TextHandler writes them.
-// Clean scalars and record metadata keep their types; WithAttrs freezes values.
+// NewSlogHandler masks messages, keys, groups and values with scanner before forwarding
+// records to next. Any values keep their JSON shape and clean scalars keep their types.
+// Each encoded value is limited to 1 MiB and nesting depth 64. Both arguments must be
+// non-nil; nil panics.
 //
-// Masking errors, size limits and cancellation emit a withheld record with the
-// same time and level, a fixed reason and withheld_attributes; no original fields
-// or groups survive. Handle also returns a fixed error, which slog.Logger ignores.
-// Values added by downstream handlers need their own output check.
-// See the [logging guide] for value handling and error observation.
+// A record that cannot be masked is replaced by one with the same time and level, a
+// fixed message and a withheld_attributes count; no original field survives. See the
+// [logging guide] for value handling and error observation.
 //
 // [logging guide]: https://github.com/nao1215/embargo/blob/main/doc/logging.md
 func NewSlogHandler(next slog.Handler, scanner *Scanner) slog.Handler {

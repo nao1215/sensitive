@@ -33,7 +33,7 @@ The production package inventory below is checked against go list in the root an
 
 A finding is a half-open byte span [Start, End) in the caller's original input, with kind and confidence. It never uses rune indexes. Internal detector findings contain only those four facts; validation helpers own checksum, issuer and BIN decisions. The root translates internal names to public kinds, validates findings, applies the inclusive confidence threshold and sorts stably. Custom detectors receive original bytes.
 
-A normalized view carries an optional boundary map: nil means identity, and every non-nil map includes the exclusive end sentinel. ComposePositions in internal/detect/fullwidth.go composes view maps in place. Root percent decoding runs once and preserves literal plus and malformed escapes. Unicode token-separator normalization, numeric full-width normalization and credential quote decoding keep their distinct encoding rules but use original byte offsets. Credential.ScanViews keeps raw URL/DSN delimiter ownership while also checking normalized assignments. Quote decoding remains eager and bounded to four layers.
+A normalized view carries an optional boundary map: nil means identity, and every non-nil map includes the exclusive end sentinel. composePositions in internal/detect/view.go composes view maps in place. Percent decoding in internal/detect/view.go runs once and preserves literal plus and malformed escapes. Unicode token-separator normalization, numeric full-width normalization and credential quote decoding keep their distinct encoding rules but use original byte offsets. Credential.scanView in credential.go keeps raw URL/DSN delimiter ownership while also checking normalized assignments. Quote decoding remains eager and bounded to four layers.
 
 Credential rendering is split into key normalization and matching policy (credential_key.go), key parsing and assignment/Go fmt grammar (credential_render.go), Authorization (credential_authorization.go), URL/DSN and formatted URL values (credential_url.go), and escape views (credential_escape.go). credential.go coordinates recognition and deduplication. credentialQuoteEnd and credentialContainerEnd own quote escaping and nested container ends for rendered credentials and Authorization. The rendering parser owns enclosing delimiters, while findings cover the enclosed values; a less-escaped accepted span prevents a later decode from reinterpreting its interior.
 
@@ -45,16 +45,16 @@ Boundary families have deliberate differences. ASCII word boundaries treat under
 
 | Rule | Owner | Users and distinction |
 |---|---|---|
-| ASCII word | boundary.go: isAlphaNum, isWordBoundary | Keyword labels, AWS, ABA and Bech32 candidate bytes |
+| ASCII word | internal/ascii: IsAlphaNum; boundary.go: isWordBoundary | Keyword labels, AWS, ABA and Bech32 candidate bytes |
 | Identifier byte | boundary.go: isIdentifierByte | PAN, BTC, ETH, phone, My Number, IP, country IDs, service/payment leading boundaries and GitHub bodies |
 | Token byte | boundary.go: isTokenByte | Google, service/payment, entropy, developer/JWT and email local-part candidates |
 | Encoded separator | boundary.go: encodedSeparatorBefore | Detector leading boundaries recognize only the documented percent-encoded separators |
 | Label | label.go | Numeric/business confidence and labeled IP context; field words remain distinct from token bytes |
 | Numeric log context | log_context.go | PAN/phone fragments and SWIFT/ABA register, user, hardware, exception and sequence exclusions |
 | URL delimiter | credential_url.go: urlDelimiter | URL/DSN credentials and the email SCP-remote exclusion share this delimiter set |
-| Hex digit | internal/ascii: DecodeHex; boundary.go: isHexDigit | Percent escapes, Ethereum, IPv6 and numeric log context share one ASCII alphabet |
+| Hex digit | internal/ascii: DecodeHex, IsHexDigit | Percent escapes, Ethereum, IPv6 and numeric log context share one ASCII alphabet |
 
-Bech32 candidates use ASCII alphanumeric bytes; case consistency and checksum validation remain separate. IP sentence punctuation remains in ipaddr.go; ARN account context remains in mynumber.go. These domain rules do not become generic delimiters. Named boundaries must keep existing detection and masking semantics when code moves.
+Bech32 candidates use ASCII alphanumeric bytes; case consistency and checksum validation remain separate. IP sentence punctuation remains in ipaddr.go; ARN account context remains in log_context.go. These domain rules do not become generic delimiters. Named boundaries must keep existing detection and masking semantics when code moves.
 
 ## Development commands
 

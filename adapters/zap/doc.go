@@ -16,10 +16,9 @@
 // wrap such values in embargo.Secret before logging. Zap's separate ErrorOutput
 // and any other sinks are outside this adapter's scope.
 //
-// Failed masking omits unproven input timestamps and emits an allowlisted level, a fixed withheld message and an attribute
-// count, without original fields. See the logging guide for count definitions,
-// byte-writer metadata limitations and cooperative cancellation budgets:
-// https://github.com/nao1215/embargo/blob/main/doc/logging.md.
+// If masking fails, the adapter writes a fixed diagnostic with a recognized level and
+// an attribute count instead of the original fields; the logging guide explains it:
+// https://github.com/nao1215/embargo/blob/main/doc/logging.md#bounds-and-failures.
 // MarshalJSON, LogValue, String and Error can run before byte limits apply; their
 // time and memory are not bounded. Prefer Secret or a bounded LogValuer.
 package embargozap

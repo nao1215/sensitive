@@ -1,6 +1,10 @@
 // Package embargotest records application outputs and checks them for a fake
 // secret, configured detector findings and expected content.
 //
+// Create a Recorder with New, connect its writers (Writer, HTTP, Run) to the code
+// under test, then call Check: it fails the test when the canary, or a value a
+// configured detector finds, appears in any recorded output.
+//
 // # Canary representations
 //
 // Check finds the canary as raw bytes, lower and upper case hex, padded and

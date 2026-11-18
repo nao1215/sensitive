@@ -18,18 +18,15 @@ import (
 )
 
 func ExampleNew() {
-	passed := false
-	testing.Benchmark(func(b *testing.B) {
-		b.Helper()
-		recorder := embargotest.New(b)
+	fmt.Println(runExample(func(tb testing.TB) bool {
+		tb.Helper()
+		recorder := embargotest.New(tb)
 		logger := slog.New(slog.NewJSONHandler(recorder.Writer("logs"), nil))
 		logger.Info("accepted", "key", embargo.NewSecret(recorder.Canary()))
 		//nolint:goconst // Self-contained examples show the actual display contract.
 		recorder.ExpectJSON("logs", nil, map[string]string{"key": "[REDACTED]"}, 1)
-		passed = recorder.Check()
-	})
-
-	fmt.Println(passed)
+		return recorder.Check()
+	}))
 
 	// Output: true
 }

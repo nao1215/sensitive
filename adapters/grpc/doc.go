@@ -4,10 +4,9 @@
 // not recorded. Service inputs, status codes, error details and wire bytes are untouched.
 // Scanner failures emit a safe diagnostic record. Later logger additions need their own check.
 //
-// Failed masking emits time/level, a fixed withheld message and an attribute
-// count, without original fields. See the logging guide for count definitions,
-// byte-writer metadata limitations and cooperative cancellation budgets:
-// https://github.com/nao1215/embargo/blob/main/doc/logging.md.
+// If masking fails, the adapter writes a fixed diagnostic with the time, level and
+// an attribute count instead of the original fields; the logging guide explains it:
+// https://github.com/nao1215/embargo/blob/main/doc/logging.md#bounds-and-failures.
 // MarshalJSON, LogValue, String and Error can run before byte limits apply; their
 // time and memory are not bounded. Prefer Secret or a bounded LogValuer.
 package embargogrpc
