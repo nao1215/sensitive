@@ -8,6 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/nao1215/embargo/internal/ascii"
 	"github.com/nao1215/embargo/internal/saferecord"
 )
 
@@ -253,17 +254,52 @@ func (p *namedValue) member(w *jsonWalker, key string, raw []byte, resultStart i
 	if !p.active || len(raw) < len(`""`) || raw[0] != '"' {
 		return
 	}
-	switch normalizeKey(key) {
-	case "name", "key", "parameterkey", "parametername", "optionname", "variable":
+	switch namedValueField(key) {
+	case pairName:
 		var name string
 		if json.Unmarshal(raw, &name) == nil && w.scanner.scanner.cachedSensitiveKey(settingName(name)) {
 			p.sensitive = true
 		}
-	case "value", "parametervalue":
+	case pairValue:
 		if len(raw) > len(`""`) {
 			p.valueStart, p.valueEnd = resultStart, len(w.result)
 		}
+	case pairNone:
 	}
+}
+
+// pairField classifies a member of a name and value pair.
+type pairField uint8
+
+const (
+	pairNone pairField = iota
+	pairName
+	pairValue
+)
+
+// namedValueField lowers a short member key and drops separators, as
+// normalizeKey does, without allocating; longer keys are never pair members.
+func namedValueField(key string) pairField {
+	var folded [len("parametervalue")]byte
+	n := 0
+	for i := range len(key) {
+		c := key[i]
+		if c == '_' || c == '-' || c == '.' || c == ' ' {
+			continue
+		}
+		if n == len(folded) {
+			return pairNone
+		}
+		folded[n] = ascii.ToLower(c)
+		n++
+	}
+	switch string(folded[:n]) {
+	case "name", "key", "parameterkey", "parametername", "optionname", "variable":
+		return pairName
+	case "value", "parametervalue":
+		return pairValue
+	}
+	return pairNone
 }
 
 // mask hides the recorded value span once both members were seen.

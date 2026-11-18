@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Detection changes
+
+- MaskJSON, the slog handler and the logger adapters mask the value of an object that keeps a setting in separate name and value members, such as `{"name":"DB_PASSWORD","value":"hunter2"}` in Kubernetes env, ECS task definitions, SSM `GetParameters` responses (`Name` may be a path such as `/prod/db/password`) and CloudFormation `ParameterKey`/`ParameterValue`. The value string is masked when the name, key, ParameterKey, ParameterName, OptionName or variable member is a sensitive key, in either member order; numeric values, as in metric samples, stay visible.
+- The default sensitive keys add otp, pin, passcode, passphrase, session, session_id, session_token, JSESSIONID and PHPSESSID, and the suffix rule adds pwd, passcode, passphrase, otp and pass after another segment (DB_PASS). Bare pass and pwd count only as structured keys, because text such as `--- PASS: TestX`, `pass=12 fail=0` and `PWD=/srv` is public.
+- KindMyNumber no longer reports a 12-digit value whose attached label names a record identifier: a word ending in id (accountId, recipientAccountId, user_id), account, user, customer, order, invoice, tracking and similar record words, number or no unless it follows my or individual, and Japanese labels containing 番号 or a business stem such as 注文. Random 12-digit IDs, including AWS account IDs, pass the check digit about one time in ten; on the accuracy corpus My Number precision rises from 81.8% to 100% with recall unchanged. My Number, mynumber, マイナンバー and 個人番号 labels keep the candidate.
+- KindPAN no longer reports a 13-digit number that also passes the EAN-13 check digit, such as a JAN product code starting with 45 or 49; about one valid JAN code in ten used to be masked as a card at confidence 1.0. Card numbers written as four dot-separated groups of four digits are now recognized.
+- Japanese business labels such as 注文番号, 品番 and バージョン lower PAN, Japanese phone and US phone confidence to 0.4, like order and invoice.
+- KindJPPhone recognizes the +81 international form, such as `+81-90-1234-5678`, `+819012345678` and `+81 (0)3-1234-5678`.
+- KindEmail recognizes an address written with the full-width at sign ＠ between ASCII parts.
+- KindServiceToken recognizes Google OAuth access tokens (`ya29.`) and refresh tokens (`1//0`), Discord webhook URLs (reporting the ID and token path) and the key of a hosted Sentry DSN.
+- KindCredential reports the value of a long option named by a sensitive key when it is a separate word (`--password hunter2`), the attached `-p` value of mysql and mariadb clients (`mysql -phunter2`) and the word after sshpass `-p`.
+- KindIPAddr recognizes IPv4 addresses with octets zero-padded to three digits, such as `192.168.001.010`.
+
+### Changed
+
+- embargotest Check failures name the sinks and finding kinds, for example `sensitive data appeared in captured output: app.log (email)`. Captured bytes still never appear, and a sink name longer than 64 bytes, with other bytes than ASCII letters, digits and `_ . / : -`, or with a finding or the canary of its own is written as `a sink with an unprintable name`.
+- `WithKinds` and the `embargo --kinds` flag name a misspelled kind and suggest the nearest built-in one, as in `unknown built-in kind "emial" (did you mean "email"?)`; other unknown values are still not repeated. The `embargo` command names a defined flag that lacks a value, lists the flags for an unknown one, and gives the position and cause of a file it cannot open (`input file 2 cannot be opened: no such file`) without its name.
+- The JSON limit error reads `embargo: JSON size or nesting limit exceeded`, because nesting deeper than 64 levels returns it too.
+
+### Fixed
+
+- A `Secret` value no longer appears in printers that walk struct fields without calling String, such as go-spew and the failure diffs of testify `assert.Equal`. The value now lives in a closure, so reflection reaches only a function value; Secret stays comparable.
+- The README access-log example and its runnable example name `KindIPAddr`, not the nonexistent `KindIPAddress`, and the kind-selection benchmark table prints whole nanoseconds.
+
 ## [0.14.0] - 2026-11-18
 
 ### Detection changes

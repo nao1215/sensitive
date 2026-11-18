@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/nao1215/embargo"
-	"github.com/nao1215/embargo/internal/ascii"
 )
 
 type (
@@ -185,13 +184,8 @@ func (r *Recorder) printableKind(kind embargo.Kind) string {
 
 func printableLabel(name string) bool {
 	const maxLabel = 64
-	if name == "" || len(name) > maxLabel {
-		return false
-	}
-	for i := range len(name) {
-		if c := name[i]; !ascii.IsAlphaNum(c) && !strings.ContainsRune("_./:-", rune(c)) {
-			return false
-		}
-	}
-	return true
+	return name != "" && len(name) <= maxLabel && strings.Trim(name, printableLabelBytes) == ""
 }
+
+// printableLabelBytes are the bytes a sink name or kind may use in a failure.
+const printableLabelBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_./:-"
