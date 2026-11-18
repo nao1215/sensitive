@@ -92,7 +92,7 @@ logger.Info("signup", "user", User{Name: "carol", Email: "carol@example.com", Pa
 // Output: {"level":"INFO","msg":"signup","user":{"Name":"carol","Email":"[REDACTED]","Password":"[REDACTED]"}}
 ```
 
-`next` is the handler your logger already uses. The same rules apply to JSON that never reaches a logger, such as an API response or an audit export:
+`next` is the handler your logger writes to, before any `With` or `WithGroup`: attributes bound to it earlier never pass through embargo, so add them to the logger built on the result. The same rules apply to JSON that never reaches a logger, such as an API response or an audit export:
 
 <!-- example: example_test.go:ExampleScanner_MaskJSON -->
 ```go
