@@ -24,7 +24,7 @@ func (*ServiceToken) Name() DetectorName { return "service_token" }
 // Hints returns every table prefix plus a substring that each special layout
 // contains, so the list is exhaustive by construction.
 func (*ServiceToken) Hints() [][]byte {
-	special := []string{"hooks.slack.com/", "hooks.slack-gov.com/", "webhook.office.com/webhookb2/", ".atlasv1.", "Q~", ":A", "_mmk", "-us", "|"}
+	special := []string{"hooks.slack.com/", "hooks.slack-gov.com/", "webhook.office.com/webhookb2/", "/api/webhooks/", ".sentry.io/", ".atlasv1.", "Q~", ":A", "_mmk", "-us", "|"}
 	seen := map[string]bool{}
 	var out [][]byte
 	for _, layout := range providerLayouts() {
@@ -89,6 +89,12 @@ func serviceTokenSpan(index *providerIndex, data []byte, i int) (start, end int)
 		return start, end
 	}
 	if start, end, ok := teamsWebhookSpan(data, i); ok {
+		return start, end
+	}
+	if start, end, ok := discordWebhookSpan(data, i); ok {
+		return start, end
+	}
+	if start, end, ok := sentryDSNSpan(data, i); ok {
 		return start, end
 	}
 	return i, i
@@ -237,6 +243,72 @@ func teamsWebhookSpan(data []byte, start int) (body, end int, ok bool) {
 	}
 	const minPath = 64
 	if end-body < minPath || !bytes.Contains(data[body:end], []byte("/IncomingWebhook/")) {
+		return start, start, false
+	}
+	return body, end, true
+}
+
+// discordWebhookSpan matches a Discord webhook URL on discord.com,
+// discordapp.com or their ptb and canary hosts, and reports the path after
+// /api/webhooks/: a 17 to 20 digit ID, a slash and a 60 to 80 byte token.
+func discordWebhookSpan(data []byte, start int) (body, end int, ok bool) {
+	if !hasASCIIPrefix(data, start, "https://") {
+		return start, start, false
+	}
+	host := start + len("https://")
+	for _, sub := range []string{"ptb.", "canary."} {
+		if hasASCIIPrefix(data, host, sub) {
+			host += len(sub)
+			break
+		}
+	}
+	switch {
+	case hasASCIIPrefix(data, host, "discord.com/api/webhooks/"):
+		body = host + len("discord.com/api/webhooks/")
+	case hasASCIIPrefix(data, host, "discordapp.com/api/webhooks/"):
+		body = host + len("discordapp.com/api/webhooks/")
+	default:
+		return start, start, false
+	}
+	const minID, maxID, minToken, maxToken = 17, 20, 60, 80
+	slash := body
+	for slash < len(data) && ascii.IsDigit(data[slash]) {
+		slash++
+	}
+	if slash-body < minID || slash-body > maxID || slash >= len(data) || data[slash] != '/' {
+		return start, start, false
+	}
+	end = slash + 1
+	for end < len(data) && isTokenByte(data[end]) {
+		end++
+	}
+	if end-slash-1 < minToken || end-slash-1 > maxToken {
+		return start, start, false
+	}
+	return body, end, true
+}
+
+// sentryDSNSpan matches a Sentry DSN for the hosted service,
+// https://<32 hex>@o<org>.ingest[.<region>].sentry.io/<project>, and reports
+// the 32-digit key. Self-hosted DSNs use arbitrary hosts and are left to the
+// URL credential rules.
+func sentryDSNSpan(data []byte, start int) (body, end int, ok bool) {
+	if !hasASCIIPrefix(data, start, "https://") {
+		return start, start, false
+	}
+	const keyLen = 32
+	body = start + len("https://")
+	end = body + keyLen
+	if end >= len(data) || data[end] != '@' || !allBytes(data, body, end, ascii.IsHexDigit) {
+		return start, start, false
+	}
+	host := end + 1
+	slash := host
+	for slash < len(data) && (ascii.IsAlphaNum(data[slash]) || data[slash] == '.' || data[slash] == '-') {
+		slash++
+	}
+	name := string(data[host:slash])
+	if slash >= len(data) || data[slash] != '/' || !strings.HasSuffix(name, ".sentry.io") || !strings.Contains(name, ".ingest.") {
 		return start, start, false
 	}
 	return body, end, true
