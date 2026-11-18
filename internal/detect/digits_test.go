@@ -1,6 +1,9 @@
 package detect
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestHasDigitsCountsOnlyASCIIDigits(t *testing.T) {
 	t.Parallel()
@@ -68,5 +71,24 @@ func TestAllDigits(t *testing.T) {
 		if got := allDigits([]byte(input)); got != want {
 			t.Errorf("allDigits(%q) = %v, want %v", input, got, want)
 		}
+	}
+}
+
+func TestNumericHasCandidate(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		d   Detector
+		min int
+	}{{NewPAN(), panMinDigits}, {NewMyNumber(), myNumberDigits}, {NewJPPhone(), jpPhoneMinDigits}, {NewUSPhone(), usPhoneDigits}, {NewABARouting(), abaDigits}, {NewUKSortCode(), sortCodeDigits}} {
+		short := strings.Repeat("1-", tc.min-1)
+		if HasCandidate(tc.d, []byte(short)) || !HasCandidate(tc.d, []byte(short+"1")) {
+			t.Errorf("%s: want a candidate from exactly %d digits", tc.d.Name(), tc.min)
+		}
+		if !HasCandidate(tc.d, []byte(short+"１")) {
+			t.Errorf("%s: a full-width digit must count", tc.d.Name())
+		}
+	}
+	if hasWideDigits([]byte("\xef\xbc"), 1) || hasWideDigits([]byte("\xef\xbc\x9a"), 1) || hasWideDigits([]byte("\xef\xbd\x90"), 1) || hasWideDigits([]byte("\xef\xbc\x8f"), 1) {
+		t.Error("only U+FF10 to U+FF19 are full-width digits")
 	}
 }
