@@ -560,26 +560,30 @@ func TestAdversarialSharedSuffixScaling(t *testing.T) {
 	for _, tc := range sharedSuffixInputs() {
 		t.Run(string(tc.kind), func(t *testing.T) {
 			scanner := NewScanner(WithKinds(tc.kind))
-			measure := func(count int) time.Duration {
-				data := []byte(strings.Repeat(tc.unit, count) + tc.suffix)
-				best := time.Hour
-				for range 3 {
-					start := time.Now()
-					calls := 0
-					var elapsed time.Duration
-					// Batch beyond coarse platform clocks before comparing per-call costs.
-					for elapsed < 20*time.Millisecond {
-						if got := scanner.Scan(data); len(got) != 0 {
-							t.Fatalf("unexpected findings: %v", got)
-						}
-						calls++
-						elapsed = time.Since(start)
+			// perCall batches enough calls to pass coarse platform clocks and to
+			// average out one preempted call on a shared runner.
+			perCall := func(data []byte) time.Duration {
+				start := time.Now()
+				calls := 0
+				var elapsed time.Duration
+				for elapsed < 20*time.Millisecond || calls < 8 {
+					if got := scanner.Scan(data); len(got) != 0 {
+						t.Fatalf("unexpected findings: %v", got)
 					}
-					best = min(best, elapsed/time.Duration(calls))
+					calls++
+					elapsed = time.Since(start)
 				}
-				return best
+				return elapsed / time.Duration(calls)
 			}
-			small, large := measure(256), measure(4096)
+			smallData := []byte(strings.Repeat(tc.unit, 256) + tc.suffix)
+			largeData := []byte(strings.Repeat(tc.unit, 4096) + tc.suffix)
+			// Alternate the sizes so both see the same machine conditions, and
+			// keep the best round of each.
+			small, large := time.Hour, time.Hour
+			for range 5 {
+				small = min(small, perCall(smallData))
+				large = min(large, perCall(largeData))
+			}
 			t.Logf("small=%s large=%s ratio=%.2f", small, large, float64(large)/float64(small))
 			// Sixteen times the input permits four times linear cost, but not quadratic growth.
 			if large > 64*small+time.Millisecond {
