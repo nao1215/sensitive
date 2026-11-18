@@ -46,8 +46,9 @@ func writeReport(input io.Reader, output io.Writer, scanner *embargo.Scanner, sa
 
 func collectReport(input io.Reader, scanner *embargo.Scanner, sampleLimit int) (report, error) {
 	groups := make(map[embargo.Kind]*kindReport)
+	scanned := &lineScanner{scanner: scanner}
 	lines, size, err := eachLine(bufio.NewReaderSize(input, ioBuffer), "no report is written", func(number int, offset int64, body []byte) error {
-		for _, finding := range scanner.Scan(body) {
+		for _, finding := range scanned.scan(body) {
 			addFinding(groups, finding, offset, number, sampleLimit)
 		}
 		return nil
@@ -74,8 +75,9 @@ func writeFindings(input io.Reader, output io.Writer, scanner *embargo.Scanner) 
 	reader := bufio.NewReaderSize(input, ioBuffer)
 	writer := bufio.NewWriterSize(output, ioBuffer)
 	encoder := json.NewEncoder(writer)
+	scanned := &lineScanner{scanner: scanner}
 	_, _, err := eachLine(reader, "output stops before it", func(number int, offset int64, body []byte) error {
-		for _, f := range scanner.Scan(body) {
+		for _, f := range scanned.scan(body) {
 			at := newLocation(f, offset, number)
 			value := foundValue{Kind: f.Kind, Start: at.Start, End: at.End, Line: at.Line, Column: at.Column}
 			if encoder.Encode(value) != nil {

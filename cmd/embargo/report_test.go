@@ -162,3 +162,29 @@ func TestReportCountsLinesWithoutTheEmptyEnd(t *testing.T) {
 		}
 	}
 }
+
+func TestReportAndJSONLCountEveryLineOfAnOpenPEMBlock(t *testing.T) {
+	t.Parallel()
+	input := "-----BEGIN " + "PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASC\n-----END PRIVATE KEY-----\nplain\n"
+	var out bytes.Buffer
+	if err := run([]string{flagFormat, formatJSONL}, strings.NewReader(input), &out); err != nil {
+		t.Fatal(err)
+	}
+	want := `{"kind":"private_key_pem","start":0,"end":27,"line":1,"column":0}` + "\n" +
+		`{"kind":"private_key_pem","start":28,"end":60,"line":2,"column":0}` + "\n" +
+		`{"kind":"private_key_pem","start":61,"end":86,"line":3,"column":0}` + "\n"
+	if out.String() != want {
+		t.Fatalf("got\n%s\nwant\n%s", out.String(), want)
+	}
+	out.Reset()
+	if err := run([]string{flagFormat, formatJSON}, strings.NewReader(input), &out); err != nil {
+		t.Fatal(err)
+	}
+	var got report
+	if err := json.Unmarshal(out.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Findings) != 1 || got.Findings[0].Count != 3 {
+		t.Fatalf("report did not count the block lines: %s", out.String())
+	}
+}

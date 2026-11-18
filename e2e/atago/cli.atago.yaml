@@ -35,6 +35,26 @@ scenarios:
           stdout:
             equals: "card=[REDACTED]\r\nplain\nlast [REDACTED]"
 
+  - name: a private key block masks every line until its END line
+    steps:
+      - run:
+          command: embargo
+          stdin: |
+            loading key
+            -----BEGIN PRIVATE KEY-----
+            MIIEvQIBADANBgkqhkiG9w0BAQEFAASC
+            YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4
+            loaded for alice@example.com
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              loading key
+              [REDACTED]
+              [REDACTED]
+              [REDACTED]
+              [REDACTED]
+
   - name: files are read in order like cat
     steps:
       - fixture:

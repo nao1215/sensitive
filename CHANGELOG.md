@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - `embargo` rejects a flag placed after a file name instead of reading it as a file. `embargo a.log --kinds email` used to mask a.log with the default kinds and then fail on a file named `--kinds`; it now exits with `flags must come before the files`. `--` still ends the flags.
+- `embargo` masks every line of a multi-line PEM or PGP private key block, as `Scanner.ScanLines` does. It scanned each line alone, so only the BEGIN line was masked and the key body and END line were printed; `--format json` and `--format jsonl` did not count them either. A block without its END line covers the rest of the input.
 - The report reads lines exactly as the filter does. A final line of exactly 4 MiB was accepted by the filter and rejected by the report, and the report error did not say which line; both now accept up to 4 MiB and name the line that stops them.
 
 ### Performance
