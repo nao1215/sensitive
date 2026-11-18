@@ -67,7 +67,7 @@ func TestBenchmarkTable(t *testing.T) {
 	for _, procs := range procsList {
 		printLine("%d CPU ns/op | ", procs)
 	}
-	printLine("Speed-up at %d |\n|---|%s---:|\n", procsList[len(procsList)-1], strings.Repeat("---:|", len(procsList)))
+	printLine("%d CPU vs 1 CPU |\n|---|%s---:|\n", procsList[len(procsList)-1], strings.Repeat("---:|", len(procsList)))
 	for _, row := range []struct{ label, name string }{
 		{label: "Scanner.Scan", name: parallelScanner},
 		{label: "slog handler", name: loggerSlog},
@@ -86,7 +86,7 @@ func TestBenchmarkTable(t *testing.T) {
 			last = values["ns/op"]
 			printLine("%.1f | ", values["ns/op"])
 		}
-		printLine("%.1fx |\n", first/last)
+		printLine("%s |\n", speedFactor(first, last))
 	}
 	printLine("\n<details>\n<summary>Per-detector Scanner throughput</summary>\n\n| Detector | Clean MB/s | Dirty MB/s |\n|---|---:|---:|\n")
 	var names []string
@@ -104,6 +104,20 @@ func TestBenchmarkTable(t *testing.T) {
 	syncDocTable(t, "../doc/benchmarks.md", "benchmarks", table.String())
 	summary := "![Time per log event](doc/images/log-event-time.svg)\n\nThe same event through slog alone, embargo with the email and card rules masq and go-masker are given, embargo's default scanner against pii-shield's default policy, masq and go-masker. [Configurations, medians and allocations](doc/comparison.md) · [Full scanner benchmark plot](doc/benchmarks.md).\n"
 	syncReadmeTable(t, "benchmarks", summary)
+}
+
+// speedFactor states how much faster the after time is than before, with a
+// factor of one or more: "1.4x faster", "1.1x slower" or "same" within 5%.
+func speedFactor(before, after float64) string {
+	const tolerance = 1.05
+	switch {
+	case before >= after*tolerance:
+		return fmt.Sprintf("%.1fx faster", before/after)
+	case after >= before*tolerance:
+		return fmt.Sprintf("%.1fx slower", after/before)
+	default:
+		return "same"
+	}
 }
 
 func checkBenchmarkSamples(t *testing.T, medians map[string]map[string]float64) {

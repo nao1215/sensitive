@@ -123,13 +123,11 @@ def rendered(raw, meta):
     for name, values in rows.items():
         text += f"| {name.removeprefix('Benchmark')} | {values['ns/op']:,.1f} | {values['B/op']:,.0f} | {values['allocs/op']:,.0f} |\n"
     text += f"\nMeasured {meta['date']} with {meta['go']}, Linux/amd64, {meta['cpu']}; GOMAXPROCS=1, ten 200 ms samples per case. Construction is outside the timed loop; JSON encoding and masking are included. Source and dependency fingerprints, CPU affinity and command are in [comparison.json](comparison.json).\n"
-    def ratio_range(other, mine="embargo"):
-        ratios = [rows[f"BenchmarkComparison/{event}/{mine}"]["ns/op"] / rows[f"BenchmarkComparison/{event}/{other}"]["ns/op"] for event in ("flat", "nested", "map", "clean", "large50")]
-        return f"{min(ratios):.2f} to {max(ratios):.2f}"
     shape_ratio = rows["BenchmarkStructuredPath/json_shape"]["ns/op"] / rows["BenchmarkStructuredPath/old_string"]["ns/op"]
+    default_cost = [1 / factor for factor in time_factors(rows, "embargo", "embargo-default")]
     text += ("\nEach library is timed against an embargo configuration of similar detection breadth. masq and go-masker are given email and card rules and ferret-scan is narrowed to its EMAIL and CREDIT_CARD checks, so `embargo` selects KindEmail and KindPAN. pii-shield cannot turn its built-in detectors off, so `embargo-default` runs the default scanner against it. The scenario and leak tables use ferret-scan with every check. "
-             f"For these five configured events the median time ratio embargo/go-masker ranges from {ratio_range('go-masker')}, embargo/masq from {ratio_range('masq')} and embargo/ferret-scan from {ratio_range('ferret-scan')}; embargo-default/pii-shield ranges from {ratio_range('pii-shield', 'embargo-default')}. Below 1 means less time for embargo. "
-             f"The default scanner takes {ratio_range('embargo', 'embargo-default')} times the email-and-card configuration. The structured JSON path uses {shape_ratio:.2f} times the old string-only time. These ratios are regenerated from the same samples as the table.\n")
+             f"For these five configured events, from the median times, {speed_phrase(time_factors(rows, 'go-masker'), 'embargo', 'go-masker')}, {speed_phrase(time_factors(rows, 'masq'), 'embargo', 'masq').removeprefix('embargo is ')} and {speed_phrase(time_factors(rows, 'ferret-scan'), 'embargo', 'ferret-scan').removeprefix('embargo is ')}; {speed_phrase(time_factors(rows, 'pii-shield', 'embargo-default'), 'embargo-default', 'pii-shield')}. "
+             f"The default scanner takes {min(default_cost):.2f} to {max(default_cost):.2f} times as long as the email-and-card configuration, and the structured JSON path takes {shape_ratio:.2f} times as long as the old string-only path. These factors are regenerated from the same samples as the table.\n")
     modes = ('plain', 'embargo', 'embargo-default', 'pii-shield', 'masq', 'go-masker')
     events = ('flat', 'nested', 'map', 'clean', 'large50')
     maximum = max(rows[f"BenchmarkComparison/{event}/{mode}"]["ns/op"]/1000 for event in events for mode in modes)
@@ -157,18 +155,31 @@ def rendered(raw, meta):
 
 
 
+def speed_phrase(factors, subject, other):
+    """Describe how much faster subject is than other, given other/subject time
+    ratios, always with factors of one or more: "N to M times faster" or slower."""
+    low, high = min(factors), max(factors)
+    def number(value):
+        return f"{value:.0f}" if value >= 10 else f"{value:.2f}"
+    if low >= 1:
+        return f"{subject} is {number(low)} to {number(high)} times faster than {other}"
+    if high <= 1:
+        return f"{subject} is {number(1/high)} to {number(1/low)} times slower than {other}"
+    return f"{subject} ranges from {number(1/low)} times slower to {number(high)} times faster than {other}"
+
+
+def time_factors(rows, other, mine="embargo"):
+    """other/mine time per event for the five comparison events."""
+    return [rows[f"BenchmarkComparison/{event}/{other}"]["ns/op"] / rows[f"BenchmarkComparison/{event}/{mine}"]["ns/op"]
+            for event in ("flat", "nested", "map", "clean", "large50")]
+
+
 def speed_summary(rows):
-    """One README sentence with the measured time ratios, so it cannot go stale."""
-    events = ("flat", "nested", "map", "clean", "large50")
-    def ratios(other):
-        values = [rows[f"BenchmarkComparison/{event}/{other}"]["ns/op"] / rows[f"BenchmarkComparison/{event}/embargo"]["ns/op"] for event in events]
-        return min(values), max(values)
-    def default_ratios(other):
-        values = [rows[f"BenchmarkComparison/{event}/embargo-default"]["ns/op"] / rows[f"BenchmarkComparison/{event}/{other}"]["ns/op"] for event in events]
-        return min(values), max(values)
-    masker, shield = ratios("go-masker"), default_ratios("pii-shield")
-    return (f"On the same five JSON slog events, go-masker takes {masker[0]:.2f} to {masker[1]:.2f} times the time of embargo given the same email and card rules. "
-            f"With its default scanner, embargo takes {shield[0]:.2f} to {shield[1]:.2f} times the time of pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)\n")
+    """One README sentence with the measured speed factors, so it cannot go stale."""
+    masker = speed_phrase(time_factors(rows, "go-masker"), "embargo", "go-masker")
+    shield = speed_phrase(time_factors(rows, "pii-shield", "embargo-default"), "embargo's default scanner", "pii-shield's default policy")
+    return (f"On the same five JSON slog events, {masker} given the same email and card rules, and {shield}. "
+            "[Time per event](doc/comparison.md#time-and-allocations)\n")
 
 
 def replace_block(text, name, content):
