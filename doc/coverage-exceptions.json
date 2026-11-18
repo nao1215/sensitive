@@ -1,8 +1,8 @@
 [
   {
     "file": "cmd/embargo/main.go",
-    "start": 20,
-    "end": 20,
+    "start": 18,
+    "end": 18,
     "sha256": "b2849765c2b6e4020fe6008f325bbc591a90fd2a587d912e0c4722eefdaed6c4",
     "reason": "The os.Exit entry point is exercised by the installed command subprocess; exitCode and run are fully covered in-process. Child profiles are not merged into this profile."
   },
@@ -71,71 +71,71 @@
   },
   {
     "file": "http_handler.go",
-    "start": 110,
-    "end": 112,
+    "start": 103,
+    "end": 105,
     "sha256": "2c19588e72beb5a23bef34bcd2a6b6eef5127b99ae976411fb04cb903433c364",
     "reason": "The header map contains only strings and string slices; encoding/json.Marshal cannot fail for these types."
   },
   {
     "file": "json.go",
-    "start": 291,
-    "end": 293,
+    "start": 285,
+    "end": 287,
     "sha256": "449238c18e2164ad2c9363aaad5a272b01b4da5226bcf50e848f30e8fc020601",
     "reason": "The public JSON entry point validates the entire input before the walker decodes a string; encoding/json cannot reject this already validated string token."
   },
   {
     "file": "json.go",
-    "start": 333,
-    "end": 334,
+    "start": 327,
+    "end": 328,
     "sha256": "601e7d43c105093b16776cf5882993ac9fe0f66e3905029b62c2d34f9f45a649",
     "reason": "encoding/json.Marshal receives a string and cannot return an error; the defensive panic never contains input data."
   },
   {
     "file": "slog_handler.go",
-    "start": 282,
-    "end": 284,
+    "start": 275,
+    "end": 277,
     "sha256": "5b18a53d7a8b8b34c0d858072174b0f41ff262deff392942a98f7410355a4300",
     "reason": "Cancellation must arrive after the key scanner final cancellation check but before this adjacent check; ordinary canceled contexts and cancellation during scanning are covered, but no deterministic portable scheduler can target this gap."
   },
   {
     "file": "slog_handler.go",
-    "start": 415,
-    "end": 417,
+    "start": 408,
+    "end": 410,
     "sha256": "da67528e3953916c88a9e124e62a881ea200624773983d04e4568551dc3ad49b",
     "reason": "Cancellation must arrive between the preceding context check and entry into LogValue resolution; tests assert cancellation caused by LogValue and by scanners without relying on scheduler timing."
   },
   {
     "file": "slog_handler.go",
-    "start": 302,
-    "end": 303,
+    "start": 295,
+    "end": 296,
     "sha256": "8f4bc62f79c322849541349a9b394487810c9f83e708f26de46697be5c7886a9",
     "reason": "LogValue resolution loops until Kind is no longer KindLogValuer; it returns on depth limits or panic before the switch. The defensive fallback rejects a malformed value."
   },
   {
     "file": "slog_handler.go",
-    "start": 305,
-    "end": 305,
+    "start": 298,
+    "end": 298,
     "sha256": "d0500ff13f80504d1f6f7ef28e8836aeb3de821a6fb1214f3aa83a31e9d473f8",
     "reason": "Every public slog.Value constructor produces a handled Kind; reaching an unknown kind requires unsafe corruption of private standard-library state."
   },
   {
     "file": "slog_handler.go",
-    "start": 404,
-    "end": 406,
+    "start": 397,
+    "end": 399,
     "sha256": "c83c2af07ed5ec04f71d2d073cadbff734a8543e6c68b91bd941cc89131bc88c",
     "reason": "encoding/json.Marshal receives a byte slice and always succeeds, including invalid UTF-8 bytes; the defensive failure path cannot arise for this type."
   },
   {
-    "file": "cmd/embargo/main.go",
-    "start": 147,
-    "end": 149,
+    "file": "cmd/embargo/input.go",
+    "start": 58,
+    "end": 60,
     "sha256": "31ad98e20907482820dccd44b8e4fd28bc4ca97026fd9a8ff7c41a93228b17f8",
     "reason": "os.File reports io.EOF only on a read that returns no bytes; this keeps data a reader returns together with io.EOF, which the io.Reader contract allows."
   },
   {
-    "file": "cmd/embargo/main.go",
-    "start": 162,
-    "end": 164,
+    "file": "cmd/embargo/input.go",
+    "start": 73,
+    "end": 75,
     "sha256": "d4e76dd0ef49ab5cf048e3a2288895e5adaae1ba5b480fea275065e4b1a2ae54",
     "reason": "Closing a regular file that was only read does not fail on the supported platforms; the branch reports such a failure instead of ignoring it."
   },
