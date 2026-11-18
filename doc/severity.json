@@ -14,7 +14,7 @@
     "tier": "high",
     "threshold": 0,
     "tp": 3930,
-    "fp": 1056,
+    "fp": 0,
     "fn": 0,
     "exposed_secrets": 0,
     "residual_bytes": 0
@@ -104,7 +104,7 @@
     "tier": "high",
     "threshold": 0,
     "tp": 3920,
-    "fp": 1056,
+    "fp": 0,
     "fn": 0,
     "exposed_secrets": 0,
     "residual_bytes": 0

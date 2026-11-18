@@ -477,7 +477,7 @@ Each split combines the original synthetic corpus, credentials and the frozen co
 | Set | Tier | Threshold | TP / FP / misses | Recall | Exposed values / bytes |
 |---|---|---:|---:|---:|---:|
 | development | critical | 0.0 | 1648 / 33 / 0 | 100.00% | 0 / 0 |
-| development | high | 0.0 | 3930 / 1056 / 0 | 100.00% | 0 / 0 |
+| development | high | 0.0 | 3930 / 0 / 0 | 100.00% | 0 / 0 |
 | development | standard | 0.0 | 1724 / 176 / 0 | 100.00% | 0 / 0 |
 | development | critical | 0.5 | 1648 / 0 / 0 | 100.00% | 0 / 0 |
 | development | high | 0.5 | 3930 / 0 / 0 | 100.00% | 0 / 0 |
@@ -486,7 +486,7 @@ Each split combines the original synthetic corpus, credentials and the frozen co
 | development | high | 0.7 | 3164 / 0 / 766 | 80.51% | 766 / 10735 |
 | development | standard | 0.7 | 1604 / 24 / 120 | 93.04% | 120 / 4800 |
 | held | critical | 0.0 | 1632 / 32 / 0 | 100.00% | 0 / 0 |
-| held | high | 0.0 | 3920 / 1056 / 0 | 100.00% | 0 / 0 |
+| held | high | 0.0 | 3920 / 0 / 0 | 100.00% | 0 / 0 |
 | held | standard | 0.0 | 1702 / 150 / 2 | 99.88% | 2 / 80 |
 | held | critical | 0.5 | 1632 / 0 / 0 | 100.00% | 0 / 0 |
 | held | high | 0.5 | 3920 / 0 / 0 | 100.00% | 0 / 0 |

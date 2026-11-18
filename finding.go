@@ -83,26 +83,26 @@ const (
 )
 
 const (
-	// KindUSSSN recognizes 9 digits, either contiguous or grouped 3-2-4 with hyphens; field checks yield 0.6, or 0.4 under a business label, with no keyword or checksum required. Area 000, 666 and 900–999, group 00 and serial 0000 are rejected (NewScanner default: off).
+	// KindUSSSN recognizes 9 digits, either contiguous or grouped 3-2-4 with hyphens; field checks yield 0.6, none under a record label such as order_id, with no keyword or checksum required. Area 000, 666 and 900–999, group 00 and serial 0000 are rejected (NewScanner default: off).
 	KindUSSSN Kind = "us_ssn"
-	// KindUSITIN finds 9 digits starting with 9, optionally hyphenated 3-2-4; middle-group validation gives 0.6, or 0.4 under a business label, without a keyword or checksum. The fourth/fifth digits must be 50–65, 70–88, 90–92 or 94–99 (NewScanner default: off).
+	// KindUSITIN finds 9 digits starting with 9, optionally hyphenated 3-2-4; middle-group validation gives 0.6, none under a record label such as order_id, without a keyword or checksum. The fourth/fifth digits must be 50–65, 70–88, 90–92 or 94–99 (NewScanner default: off).
 	KindUSITIN Kind = "us_itin"
-	// KindUKNINO accepts two uppercase ASCII letters, six digits and a suffix A–D, optionally spaced into groups of 2 letters, 2/2/2 digits and 1 letter; prefix checks score 0.7, reduced to 0.4 by a business label, without requiring context or a checksum. Both prefix letters exclude D/F/I/Q/U/V, the second also excludes O, and BG/GB/KN/NK/NT/TN/ZZ are forbidden (NewScanner default: off).
+	// KindUKNINO accepts two uppercase ASCII letters, six digits and a suffix A–D, optionally spaced into groups of 2 letters, 2/2/2 digits and 1 letter; prefix checks score 0.7, none under a record label such as order_id, without requiring context or a checksum. Both prefix letters exclude D/F/I/Q/U/V, the second also excludes O, and BG/GB/KN/NK/NT/TN/ZZ are forbidden (NewScanner default: off).
 	KindUKNINO Kind = "uk_nino"
-	// KindUKNHS collects 10 digits, contiguous or spaced 3-3-4; weighted MOD 11 validation yields 0.95, or 0.4 with a business label, and needs no keyword. The first 9 digits use weights 10 down to 2, a check value of 10 is rejected, and repeated single-digit values are excluded (NewScanner default: off).
+	// KindUKNHS collects 10 digits, contiguous or spaced 3-3-4; weighted MOD 11 validation yields 0.95, none under a record label such as order_id, and needs no keyword. The first 9 digits use weights 10 down to 2, a check value of 10 is rejected, and repeated single-digit values are excluded (NewScanner default: off).
 	KindUKNHS Kind = "uk_nhs"
-	// KindIndiaAadhaar accepts 12 digits beginning 2–9, contiguous or spaced 4-4-4; Verhoeff checksum validation gives 0.95, lowered to 0.4 by business context, without a keyword. Repeated single-digit values are rejected (NewScanner default: off).
+	// KindIndiaAadhaar accepts 12 digits beginning 2–9, contiguous or spaced 4-4-4; Verhoeff checksum validation gives 0.95, none under a record label such as order_id, without a keyword. Repeated single-digit values are rejected (NewScanner default: off).
 	KindIndiaAadhaar Kind = "in_aadhaar"
-	// KindIndiaPAN recognizes five uppercase ASCII letters, four digits and one final uppercase letter; holder-type and nonzero-serial checks score 0.7, or 0.4 under a business label, with no keyword or checksum. The fourth letter must be P/C/H/A/B/G/J/L/F/T and the four digits cannot be 0000 (NewScanner default: off).
+	// KindIndiaPAN recognizes five uppercase ASCII letters, four digits and one final uppercase letter; holder-type and nonzero-serial checks score 0.7, none under a record label such as order_id, with no keyword or checksum. The fourth letter must be P/C/H/A/B/G/J/L/F/T and the four digits cannot be 0000 (NewScanner default: off).
 	KindIndiaPAN Kind = "in_pan"
-	// KindBrazilCPF takes 11 digits, contiguous or formatted DDD.DDD.DDD-DD; both MOD 11 check digits must pass for 0.95, or 0.4 under a business label, without a keyword. Repeated digits are rejected; the first check weights the initial 9 digits from 10 down to 2 and the second weights the first 10 from 11 down to 2 (NewScanner default: off).
+	// KindBrazilCPF takes 11 digits, contiguous or formatted DDD.DDD.DDD-DD; both MOD 11 check digits must pass for 0.95, none under a record label such as order_id, without a keyword. Repeated digits are rejected; the first check weights the initial 9 digits from 10 down to 2 and the second weights the first 10 from 11 down to 2 (NewScanner default: off).
 	KindBrazilCPF Kind = "br_cpf"
-	// KindBrazilCNPJ admits 12 uppercase ASCII alphanumerics and two digits, contiguous or formatted CC.CCC.CCC/CCCC-DD; two MOD 11 checks give 0.95, or 0.4 with a business label, without requiring a keyword. Character values are ASCII minus 48, right-to-left weights cycle 2–9, and repeated single-character values are rejected (NewScanner default: off).
+	// KindBrazilCNPJ admits 12 uppercase ASCII alphanumerics and two digits, contiguous or formatted CC.CCC.CCC/CCCC-DD; two MOD 11 checks give 0.95, none under a record label such as order_id, without requiring a keyword. Character values are ASCII minus 48, right-to-left weights cycle 2–9, and repeated single-character values are rejected (NewScanner default: off).
 	KindBrazilCNPJ Kind = "br_cnpj"
-	// KindChinaResidentID requires 17 digits followed by a digit or uppercase X, including a YYYYMMDD birth date; province, date, sequence and MOD 11-2 checks yield 0.95, or 0.4 under a business label, with no keyword. Full rules: https://github.com/nao1215/embargo/blob/main/doc/detectors.md#kindchinaresidentid (NewScanner default: off).
+	// KindChinaResidentID requires 17 digits followed by a digit or uppercase X, including a YYYYMMDD birth date; province, date, sequence and MOD 11-2 checks yield 0.95, none under a record label such as order_id, with no keyword. Full rules: https://github.com/nao1215/embargo/blob/main/doc/detectors.md#kindchinaresidentid (NewScanner default: off).
 	KindChinaResidentID Kind = "cn_resident_id"
-	// KindKoreaRRN reads 13 digits, contiguous or hyphenated 6-7, with a birth date and century/sex digit; the legacy weighted MOD 11 check scores 0.95, labeled check failures 0.6, and business labels 0.4. Full rules: https://github.com/nao1215/embargo/blob/main/doc/detectors.md#kindkorearrn (NewScanner default: off).
+	// KindKoreaRRN reads 13 digits, contiguous or hyphenated 6-7, with a birth date and century/sex digit; the legacy weighted MOD 11 check scores 0.95, labeled check failures 0.6, and none under a record label such as order_id. Full rules: https://github.com/nao1215/embargo/blob/main/doc/detectors.md#kindkorearrn (NewScanner default: off).
 	KindKoreaRRN Kind = "kr_rrn"
-	// KindCanadaSIN finds 9 digits starting with 1–7 or 9, contiguous or hyphenated 3-3-3; Luhn checksum validation yields 0.95, or 0.4 under a business label, without a keyword. Repeated single-digit values are excluded (NewScanner default: off).
+	// KindCanadaSIN finds 9 digits starting with 1–7 or 9, contiguous or hyphenated 3-3-3; Luhn checksum validation yields 0.95, none under a record label such as order_id, without a keyword. Repeated single-digit values are excluded (NewScanner default: off).
 	KindCanadaSIN Kind = "ca_sin"
 )
