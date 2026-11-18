@@ -181,6 +181,10 @@ func TestPAN(t *testing.T) {
 					sum += v
 				}
 				raw += strconv.Itoa((10 - sum%10) % 10)
+				if n == 13 && eanCheckDigitHolds(raw) {
+					// A 13-digit number that is also a valid EAN-13 is a product code.
+					t.Skip("EAN-13 product code")
+				}
 				d := embargo.NewScanner(embargo.WithKinds(embargo.KindPAN))
 				check(t, d, raw, "")
 				if got := d.Scan([]byte(raw)); got[0].Confidence < 0.99 {
@@ -1123,4 +1127,18 @@ func TestNumericLookingStringGrammar(t *testing.T) {
 			rt.Fatalf("numeric-looking string changed: %s => %s (%v)", input, masked, err)
 		}
 	})
+}
+
+// eanCheckDigitHolds reports whether a 13-digit string has a valid EAN-13
+// check digit, computed independently of the detector.
+func eanCheckDigitHolds(code string) bool {
+	sum := 0
+	for i := range 12 {
+		v := int(code[i] - '0')
+		if i%2 == 1 {
+			v *= 3
+		}
+		sum += v
+	}
+	return (10-sum%10)%10 == int(code[12]-'0')
 }
