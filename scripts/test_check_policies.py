@@ -95,6 +95,13 @@ class PolicyTests(unittest.TestCase):
             policies.api_additions(old, new, '## [Unreleased]\n\n- `--color` shows matches.\n\n## [0.1.0]\n\n- `Redact`\n')
         policies.api_additions(old, new, '## [Unreleased]\n\n- `Scanner.Redact` and `--color`.\n\n## [0.1.0]\n')
         policies.api_additions(old, old, '## [Unreleased]\n\n## [0.1.0]\n')
+        # A release PR names the symbols in the section it cut, which no tag names yet.
+        cut = '## [Unreleased]\n\n## [0.2.0] - 2026-01-01\n\n- `Scanner.Redact` and `--color`.\n\n## [0.1.0]\n'
+        policies.api_additions(old, new, cut, tag='v0.1.0')
+        with self.assertRaisesRegex(ValueError, 'api-additions'):
+            policies.api_additions(old, new, cut, tag='v0.2.0')
+        with self.assertRaisesRegex(ValueError, 'api-additions'):
+            policies.api_additions(old, new, '## [Unreleased]\n', tag='v0.1.0')
 
     def test_root_dependencies(self):
         for manifest in ({'Require':[{'Path':'example.com/runtime'}]}, {'Tool':['example.com/tool']}):
