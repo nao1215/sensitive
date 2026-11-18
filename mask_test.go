@@ -127,6 +127,7 @@ func TestWithMaskFuncReachesRecordsAndJSON(t *testing.T) {
 		`{"4111111111111111":1}`:                         `{"****1111":1}`,
 		`{"password":"4111111111111111"}`:                `{"password":"[REDACTED]"}`,
 		`{"card":4111111111111111.5}`:                    `{"card":4111111111111111.5}`,
+		`{"email":"a@b.example"}`:                        `{"email":"#email#"}`,
 	} {
 		got, err := scanner.MaskJSON([]byte(input))
 		if err != nil {
@@ -178,4 +179,18 @@ func withoutTime(_ []string, a slog.Attr) slog.Attr {
 		return slog.Attr{}
 	}
 	return a
+}
+
+func TestMaskJSONMarksSpansThatTouchOneEnd(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindEmail))
+	for input, want := range map[string]string{
+		`{"msg":"mail a@b.example"}`: `{"msg":"mail [REDACTED]"}`,
+		`{"msg":"a@b.example ok"}`:   `{"msg":"[REDACTED] ok"}`,
+		`{"msg":"a@b.example"}`:      `{"msg":"[REDACTED]"}`,
+	} {
+		if got, err := scanner.MaskJSON([]byte(input)); err != nil || string(got) != want {
+			t.Errorf("MaskJSON(%s) = %s, %v; want %s", input, got, err, want)
+		}
+	}
 }

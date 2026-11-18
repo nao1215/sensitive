@@ -1353,8 +1353,19 @@ func TestScanBuffersAreNotReusedForCustomDetectors(t *testing.T) {
 	many := builtin.takeScratch()
 	many.findings = make([]Finding, 1, maxPooledFindings+1)
 	builtin.returnScratch(many)
-	if len(huge.text) != 1 || len(many.findings) != 1 {
+	detected := builtin.takeScratch()
+	detected.detected = make([]detect.Finding, 1, maxPooledFindings+1)
+	builtin.returnScratch(detected)
+	if len(huge.text) != 1 || len(many.findings) != 1 || len(detected.detected) != 1 {
 		t.Fatal("oversized scratch must be dropped, not reset and pooled")
+	}
+	limit := builtin.takeScratch()
+	limit.text = make([]byte, 1, largestPooledBuffer)
+	limit.findings = make([]Finding, 1, maxPooledFindings)
+	limit.detected = make([]detect.Finding, 1, maxPooledFindings)
+	builtin.returnScratch(limit)
+	if len(limit.text) != 0 || len(limit.findings) != 0 || len(limit.detected) != 0 {
+		t.Fatal("scratch at the size limits must be reset and pooled")
 	}
 	var zero Scanner
 	if fresh := zero.takeScratch(); fresh == nil || len(fresh.text) != 0 {
@@ -1523,4 +1534,12 @@ func TestBorrowedAttributesAreCleared(t *testing.T) {
 		t.Fatal("a returned slice kept a logged attribute")
 	}
 	returnAttrs(nil)
+	for _, size := range []int{maxPooledAttrs, maxPooledAttrs + 1} {
+		full := make([]slog.Attr, 1, size)
+		full[0] = slog.String("secret", "value")
+		returnAttrs(&full)
+		if cleared := full[:1][0].Key == ""; cleared != (size == maxPooledAttrs) {
+			t.Fatalf("a slice of capacity %d cleared = %v", size, cleared)
+		}
+	}
 }
