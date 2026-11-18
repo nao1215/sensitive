@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- The slog handler no longer allocates for the clean and flat comparison events: detectors append findings to reused storage, plain ASCII values skip the escape and separator passes, and slog Bool, Int64 and Uint64 values are formatted without allocating. A record with more than 16 attributes reuses its working slice.
+- The slog handler no longer allocates for the clean and flat comparison events: detectors append findings to reused storage, plain ASCII values skip the escape and separator passes, and slog Bool, Int64 and Uint64 values are formatted without allocating. A record with more than 16 attributes reuses its working slice. With the email and card rules, go-masker now takes 1.06 to 1.43 times the time of embargo on all five comparison events (0.97 to 1.21 in 0.15.0, where flat was slower), and the default scanner takes 0.30 to 0.56 times the time of pii-shield (0.34 to 0.59).
 
 ## [0.15.0] - 2026-11-19
 
