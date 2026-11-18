@@ -1438,6 +1438,10 @@ func TestScanFieldEdges(t *testing.T) {
 			t.Fatalf("custom detector findings %+v", got)
 		}
 	}
+	// A key is context, not a value: an address in the key alone is not reported.
+	if got := NewScanner().scanField(nil, []byte("alice@example.com: ok"), len("alice@example.com: "), nil); len(got) != 0 {
+		t.Fatalf("key-only address reported: %+v", got)
+	}
 	canceled := func() error { return context.Canceled }
 	if got := NewScanner().scanField(nil, text, len("note: "), canceled); got != nil {
 		t.Fatalf("canceled field scan returned %+v", got)
