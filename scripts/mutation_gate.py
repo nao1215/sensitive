@@ -314,7 +314,13 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     output = args.output.resolve()
     print('EMBARGO_MUTATION_START', flush=True)
-    with tempfile.TemporaryDirectory(prefix='embargo-mutation-') as temporary:
+    # Every mutant build adds entries to the Go build cache. A private cache on
+    # disk, removed after the run, keeps them from piling up across runs
+    # (they reached hundreds of gigabytes) and out of a RAM-backed /tmp.
+    cache_root = Path(os.environ.get('XDG_CACHE_HOME') or Path.home()/'.cache')
+    cache_root.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='embargo-mutation-') as temporary, tempfile.TemporaryDirectory(prefix='embargo-mutation-gocache-', dir=cache_root) as gocache:
+        env['GOCACHE'] = gocache
         temporary = Path(temporary)
         control(temporary, args.workers, env)
         shutil.copyfile(temporary/'control.json', output/'control.json')
