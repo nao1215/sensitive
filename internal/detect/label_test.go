@@ -76,3 +76,24 @@ func TestMyNumberIdentifierLabels(t *testing.T) {
 		})
 	}
 }
+
+func TestRecordLabeled(t *testing.T) {
+	t.Parallel()
+	for input, want := range map[string]bool{
+		"user_id=":            true,
+		"order number: ":      true,
+		"注文番号 ":               true,
+		"customerID: ":        true,
+		"routing code: ":      false,
+		"ssn_id=":             false,
+		"social security id ": false,
+		"phone number ":       false,
+		"value=":              false,
+		"":                    false,
+	} {
+		data := []byte(input + "123")
+		if got := recordLabeled(data, len(input), "routing", "ssn", "security"); got != want {
+			t.Errorf("recordLabeled(%q) = %v, want %v", input, got, want)
+		}
+	}
+}

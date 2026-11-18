@@ -20,8 +20,8 @@ import (
 // assignments leave alone because pass=12 and PWD=/srv are common public text.
 // Keys also match when the last separator/camel-case segment is password, passwd,
 // pwd, passcode, passphrase, otp, secret, token, credential or auth, or pass after
-// another segment (DB_PASS); key requires an api, secret, private, access
-// or account segment before it. Thus SECRET_KEY, POSTGRES_PASSWORD, GITHUB_TOKEN,
+// another segment (DB_PASS); key requires an api, secret, private, access,
+// account, auth or master segment before it. Thus SECRET_KEY, POSTGRES_PASSWORD, GITHUB_TOKEN,
 // X-Auth-Token and spring.datasource.password match, but primary_key, sort_key
 // and token_count do not. WithoutDefaultSensitiveKeys drops the defaults and
 // this suffix rule. Matching ignores ASCII case and the separators underscore, hyphen, dot and

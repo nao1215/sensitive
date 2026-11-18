@@ -97,7 +97,8 @@ func TestUUIDGroupsAreNotIdentifiers(t *testing.T) {
 		{NameMyNumber, `"eventID":"ea7648f-850d-44c4-8e60-111111111118"`, 1},
 		{NameMyNumber, `"eventID":"8e60-111111111118"`, 1},
 		{aadhaar, `"requestID":"1f41f897-dafe-427b-af4e-234567890124"`, 0},
-		{aadhaar, `"requestID":"234567890124"`, 1},
+		{aadhaar, `"payload":"234567890124"`, 1},
+		{aadhaar, `"requestID":"234567890124"`, 0},
 		{NameSWIFTBIC, `"auditID":"abcdca12-5186-4865-bead-87b827e025f7"`, 0},
 		{NameSWIFTBIC, `"auditID":"abcdca12-5186"`, 1},
 	} {

@@ -35,14 +35,6 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	return scanNumeric(orig, data, posMap, d.candidate, false)
 }
 
-// routingLabeled reports a label that names a routing number, such as
-// routing code or ABA number, which an identifier label word does not override.
-func routingLabeled(data []byte, start int) bool {
-	rest, word := previousLabelWord(labelPrefix(data, start))
-	_, previous := previousLabelWord(rest)
-	return labelIs(word, "routing", "aba", "rtn") || labelIs(previous, "routing", "aba")
-}
-
 // abaDigits is the length of a routing number.
 const abaDigits = 9
 
@@ -56,7 +48,7 @@ func (d *ABARouting) candidate(orig, data []byte, posMap []int, i int) (Finding,
 	for end < len(data) && ascii.IsDigit(data[end]) {
 		end++
 	}
-	if end-i != abaDigits || !validABACandidate(data, i, end) || (identifierLabeled(data, i) && !routingLabeled(data, i)) {
+	if end-i != abaDigits || !validABACandidate(data, i, end) || recordLabeled(data, i, "routing", "aba", "rtn") {
 		return Finding{}, end, false
 	}
 	//nolint:mnd // The detector contract documents this heuristic score.

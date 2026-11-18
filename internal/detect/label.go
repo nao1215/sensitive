@@ -91,12 +91,39 @@ func identifierLabeled(data []byte, start int) bool {
 	case labelIs(word, "number", "no", "num"):
 		_, previous := previousLabelWord(rest)
 		return !labelIs(previous, "my", "individual", "kojin")
+	}
+	return recordWord(word)
+}
+
+// recordLabeled reports whether the label attached to start names a record
+// identifier rather than the number a detector checks, so a check digit that
+// a random ID passes by chance does not mask it: a record word, or number, no
+// or num after one (order number). own lists the words that name the
+// detector's number; as the attached word or the one before it, as in
+// routing code or ssn_id, they keep the candidate.
+func recordLabeled(data []byte, start int, own ...string) bool {
+	rest, word := previousLabelWord(labelPrefix(data, start))
+	_, previous := previousLabelWord(rest)
+	switch {
+	case len(word) == 0, labelIs(word, own...), labelIs(previous, own...):
+		return false
+	case labelIs(word, "number", "no", "num"):
+		return recordWord(previous)
+	}
+	return recordWord(word)
+}
+
+// recordWord reports one label word that names a record: a word ending in id
+// or ID, account, user, order and similar record words, or a Japanese word
+// containing 番号 or a business stem.
+func recordWord(word []byte) bool {
+	switch {
 	case len(word) >= len("id") && labelIs(word[len(word)-len("id"):], "id"):
 		return true
 	case labelIs(word, "account", "acct", "user", "customer", "member", "order", "invoice", "tracking", "serial", "version", "build", "shipment", "ref", "code", "request", "trace", "transaction", "ticket", "job"):
 		return true
 	}
-	return japaneseBusinessLabel(word) || bytes.Contains(word, []byte("番号")) || bytes.HasSuffix(word, []byte("ID"))
+	return japaneseBusinessLabel(word) || bytes.Contains(word, []byte("番号"))
 }
 
 // myNumberLabel reports whether one label word names a My Number.

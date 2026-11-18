@@ -11,11 +11,13 @@ import (
 type Country struct {
 	name    DetectorName
 	layouts []string
+	labels  []string
 }
 
 // NewCountry prepares fixed-width layouts for a country kind; unsupported names panic.
 func NewCountry(name DetectorName) *Country {
-	return &Country{name: name, layouts: countryLayouts(name)}
+	layouts, labels := countryLayouts(name)
+	return &Country{name: name, layouts: layouts, labels: labels}
 }
 
 // Name identifies the selected national-number family, such as "ca_sin".
@@ -24,28 +26,36 @@ func (d *Country) Name() DetectorName { return d.name }
 // Hints keeps all layouts eligible before context validation.
 func (d *Country) Hints() [][]byte { return nil }
 
-func countryLayouts(name DetectorName) []string {
+// nineDigitLayout is the unseparated layout of SSN, ITIN and SIN.
+const nineDigitLayout = "#########"
+
+// countryLayouts returns a country kind's fixed-width layouts and the label
+// words that name its number, which keep a candidate under a record label
+// such as ssn_id.
+func countryLayouts(name DetectorName) (layouts, labels []string) {
 	switch string(name) {
-	case "us_ssn", "us_itin":
-		return []string{"###-##-####", "#########"}
+	case "us_ssn":
+		return []string{"###-##-####", nineDigitLayout}, []string{"ssn", "security"}
+	case "us_itin":
+		return []string{"###-##-####", nineDigitLayout}, []string{"itin", "taxpayer"}
 	case "uk_nino":
-		return []string{"AA ## ## ## A", "AA######A"}
+		return []string{"AA ## ## ## A", "AA######A"}, []string{"nino", "insurance"}
 	case "uk_nhs":
-		return []string{"### ### ####", "##########"}
+		return []string{"### ### ####", "##########"}, []string{"nhs"}
 	case "in_aadhaar":
-		return []string{"#### #### ####", "############"}
+		return []string{"#### #### ####", "############"}, []string{"aadhaar", "aadhar"}
 	case "in_pan":
-		return []string{"AAAAA####A"}
+		return []string{"AAAAA####A"}, []string{"pan"}
 	case "br_cpf":
-		return []string{"###.###.###-##", "###########"}
+		return []string{"###.###.###-##", "###########"}, []string{"cpf"}
 	case "br_cnpj":
-		return []string{"CC.CCC.CCC/CCCC-##", "CCCCCCCCCCCC##"}
+		return []string{"CC.CCC.CCC/CCCC-##", "CCCCCCCCCCCC##"}, []string{"cnpj"}
 	case "cn_resident_id":
-		return []string{"#################X"}
+		return []string{"#################X"}, []string{"resident", "身份证", "身份证号"}
 	case "kr_rrn":
-		return []string{"######-#######", "#############"}
+		return []string{"######-#######", "#############"}, []string{"rrn", "주민등록번호"}
 	case "ca_sin":
-		return []string{"###-###-###", "#########"}
+		return []string{"###-###-###", nineDigitLayout}, []string{"sin", "insurance"}
 	default:
 		panic("embargo: unsupported country kind")
 	}
@@ -62,7 +72,7 @@ func (d *Country) Scan(data []byte) []Finding {
 		}
 		for _, layout := range d.layouts {
 			value, end, ok := countryCandidate(normalized, start, layout)
-			if !ok || logContext.fragment(normalized, start, end) {
+			if !ok || logContext.fragment(normalized, start, end) || recordLabeled(normalized, start, d.labels...) {
 				continue
 			}
 			score := countryScore(d.name, value, normalized[:start])
