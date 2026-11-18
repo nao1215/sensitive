@@ -160,6 +160,29 @@ def api_boundaries():
     require('func (s Secret[T]) Reveal() T' in read('secret.go'), 'Reveal must remain explicit')
 
 
+def api_symbols(text):
+    return {symbol for entry in json.loads(text) for symbol in entry['symbols']}
+
+
+def unreleased(changelog):
+    return changelog.split('## [Unreleased]', 1)[1].split('\n## [', 1)[0]
+
+
+def api_additions(previous=None, current=None, changelog=None):
+    """A public symbol added since the last release tag must be named in CHANGELOG [Unreleased]."""
+    if previous is None:
+        tag = subprocess.run(['git', 'describe', '--tags', '--abbrev=0', '--match', 'v[0-9]*'], cwd=ROOT, capture_output=True, text=True, check=False).stdout.strip()
+        shown = subprocess.run(['git', 'show', f'{tag}:doc/api-reasons.json'], cwd=ROOT, capture_output=True, text=True, check=False) if tag else None
+        if not shown or shown.returncode != 0:
+            return
+        previous = shown.stdout
+    current = read('doc/api-reasons.json') if current is None else current
+    notes = unreleased(read('CHANGELOG.md') if changelog is None else changelog)
+    for symbol in sorted(api_symbols(current) - api_symbols(previous)):
+        name = symbol.split(' ', 1)[1] if symbol.startswith('embargo --') else symbol.rsplit('.', 1)[-1]
+        require(re.search(r'`[^`\n]*(?<![\w-])' + re.escape(name) + r'(?:\(\))?`', notes), f'api-additions: {symbol} is new public API; name it in CHANGELOG [Unreleased] with the reason from doc/api-reasons.json')
+
+
 def schedules():
     text=read('.github/workflows/fuzz.yml')
     require('schedule:' in text and '-fuzz ' in text, 'continuous fuzz search missing')
@@ -232,6 +255,8 @@ def cohesion(files=None):
             violations.append(name + ': ASCII class outside internal/ascii')
         if not name.startswith('internal/detect/') and re.search(r'\.\(\*?detect\.', text):
             violations.append(name + ': detector-specific type assertion')
+        if name == 'scanner_dispatch.go' and re.search(r'\bKind[A-Z]\w*', text):
+            violations.append(name + ': dispatch names a detector kind')
         if name.startswith('internal/detect/'):
             receivers = set(re.findall(r'^func \(\w+ \*?(\w+)\) Scan\(data \[\]byte\) \[\]Finding', text, re.M))
             if len(receivers) > 1:
@@ -243,7 +268,7 @@ def cohesion(files=None):
 
 def mapping():
     rows=json.loads(read('scripts/policies.json'))
-    checks={'function-growth':function_growth,'documentation-contract':documentation_contract,'repository-traces':repository_traces,'test-file-budget':test_file_budget,'root-module':root_module,'workflow-security':workflows,'branding':branding,'lint-config':lint_rules,'api-boundary':api_boundaries,'schedules':schedules,'pr-metadata':pr_metadata,'technique-links':linked_tests, 'evidence':evidence, 'detector-docs':detector_docs, 'cohesion':cohesion}
+    checks={'function-growth':function_growth,'documentation-contract':documentation_contract,'repository-traces':repository_traces,'test-file-budget':test_file_budget,'root-module':root_module,'workflow-security':workflows,'branding':branding,'lint-config':lint_rules,'api-boundary':api_boundaries,'schedules':schedules,'pr-metadata':pr_metadata,'technique-links':linked_tests, 'evidence':evidence, 'detector-docs':detector_docs, 'cohesion':cohesion, 'api-additions':api_additions}
     for row in rows:
         require(row['source'] and row['rule'] and row['where'], 'policy mapping is incomplete')
         if row['check'] in checks:

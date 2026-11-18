@@ -1,25 +1,27 @@
 package embargo
 
-import "github.com/nao1215/embargo/internal/ascii"
+import (
+	"github.com/nao1215/embargo/internal/ascii"
+	"github.com/nao1215/embargo/internal/detect"
+)
 
 type dispatchHint struct {
 	hint []byte
 	mask uint64
 }
 
-// buildDispatch compiles immutable first-byte buckets once per scanner.
+// buildDispatch compiles immutable first-byte buckets once per scanner. The
+// selection mask has one bit per built-in, so there can be at most 64.
 func (s *Scanner) buildDispatch() {
 	for i, entries := range s.hintCache {
 		mask := uint64(1) << i
 		if len(entries) == 0 {
-			switch Kind(s.detectors[i].Name()) { //nolint:exhaustive // Only hintless numeric detectors need extra dispatch constraints.
-			case KindMyNumber, KindABARouting, KindUKSortCode:
-				for b := byte('0'); b <= '9'; b++ {
-					s.hintIndex[b] = append(s.hintIndex[b], dispatchHint{mask: mask})
-				}
-				s.hintIndex[0xef] = append(s.hintIndex[0xef], dispatchHint{mask: mask})
-			default:
+			starts := detect.StartBytes(s.detectors[i])
+			if starts == nil {
 				s.unconditional |= mask
+			}
+			for _, b := range starts {
+				s.hintIndex[b] = append(s.hintIndex[b], dispatchHint{mask: mask})
 			}
 		}
 		for _, entry := range entries {

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -18,18 +17,15 @@ import (
 )
 
 func ExampleNew() {
-	passed := false
-	testing.Benchmark(func(b *testing.B) {
-		b.Helper()
-		recorder := embargotest.New(b)
+	fmt.Println(runExample(func(tb testing.TB) bool {
+		tb.Helper()
+		recorder := embargotest.New(tb)
 		logger := slog.New(slog.NewJSONHandler(recorder.Writer("logs"), nil))
 		logger.Info("accepted", "key", embargo.NewSecret(recorder.Canary()))
 		//nolint:goconst // Self-contained examples show the actual display contract.
 		recorder.ExpectJSON("logs", nil, map[string]string{"key": "[REDACTED]"}, 1)
-		passed = recorder.Check()
-	})
-
-	fmt.Println(passed)
+		return recorder.Check()
+	}))
 
 	// Output: true
 }
@@ -72,10 +68,23 @@ func ExampleWithCanary() {
 	// Output: true
 }
 
-func ExampleWithLimits() {
+func ExampleWithMaxBytes() {
 	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
-		r := embargotest.New(tb, embargotest.WithLimits(4096, time.Second))
+		r := embargotest.New(tb, embargotest.WithMaxBytes(4096))
+		r.Expect("out", func(data []byte) bool { return string(data) == "ok" })
+
+		fmt.Fprint(r.Writer("out"), "ok")
+		return r.Check()
+	}))
+
+	// Output: true
+}
+
+func ExampleWithTimeout() {
+	fmt.Println(runExample(func(tb testing.TB) bool {
+		tb.Helper()
+		r := embargotest.New(tb, embargotest.WithTimeout(time.Minute))
 		r.Expect("out", func(data []byte) bool { return string(data) == "ok" })
 
 		fmt.Fprint(r.Writer("out"), "ok")
@@ -171,7 +180,7 @@ func ExampleRecorder() {
 func ExampleOption() {
 	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
-		options := []embargotest.Option{embargotest.WithLimits(4096, time.Second)}
+		options := []embargotest.Option{embargotest.WithMaxBytes(4096), embargotest.WithTimeout(time.Second)}
 		recorder := embargotest.New(tb, options...)
 
 		fmt.Fprint(recorder.Writer("out"), "accepted")
@@ -295,17 +304,6 @@ func ExampleCheckValue() {
 	})) // Output: true
 }
 
-func ExampleRecorder_Setenv() {
-	fmt.Println(runExample(func(tb testing.TB) bool {
-		tb.Helper()
-		r := embargotest.New(tb)
-		r.Setenv("EMBARGO_EXAMPLE_PASSWORD")
-		r.Expect("out", func(data []byte) bool { return string(data) == "[REDACTED]" })
-		fmt.Fprint(r.Writer("out"), embargo.NewSecret(os.Getenv("EMBARGO_EXAMPLE_PASSWORD")))
-		return r.Check()
-	})) // Output: true
-}
-
 func ExampleRecorder_File() {
 	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
@@ -313,31 +311,6 @@ func ExampleRecorder_File() {
 		path := r.File("password")
 		// #nosec G304 -- Path was returned by the canary file helper in the private test directory.
 		data, err := os.ReadFile(path)
-		if err != nil {
-			return false
-		}
-		r.Expect("out", func(data []byte) bool { return string(data) == "[REDACTED]" })
-		fmt.Fprint(r.Writer("out"), embargo.NewSecret(data))
-		return r.Check()
-	})) // Output: true
-}
-
-func ExampleRecorder_Header() {
-	fmt.Println(runExample(func(tb testing.TB) bool {
-		tb.Helper()
-		r := embargotest.New(tb)
-		header := r.Header("Authorization")
-		r.Expect("out", func(data []byte) bool { return string(data) == "[REDACTED]" })
-		fmt.Fprint(r.Writer("out"), embargo.NewSecret(header.Get("Authorization")))
-		return r.Check()
-	})) // Output: true
-}
-
-func ExampleRecorder_Reader() {
-	fmt.Println(runExample(func(tb testing.TB) bool {
-		tb.Helper()
-		r := embargotest.New(tb)
-		data, err := io.ReadAll(r.Reader())
 		if err != nil {
 			return false
 		}

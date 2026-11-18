@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nao1215/atago/v0.26.0/schema/atago.schema.json
 # Black-box behaviour of the embargo command: the pipe filter, file input,
-# the --report mode, exit codes and option errors. scripts/run_e2e.sh builds
+# --format json and jsonl, a CI gate, exit codes and option errors. scripts/run_e2e.sh builds
 # the command from this checkout and puts it first on PATH.
 # The first scenario pins the command output shown in the README.
 version: "1"
@@ -66,10 +66,10 @@ scenarios:
             equals: |
               alice@example.com [REDACTED]
 
-  - name: --report prints counts and masked locations without input bytes
+  - name: --format json prints counts and locations without input bytes
     steps:
       - run:
-          command: embargo --report --samples 1
+          command: embargo --format json --samples 1
           stdin: |
             card=4111111111111111
             card=4111111111111111
@@ -79,10 +79,152 @@ scenarios:
             contains:
               - '"kind": "pan"'
               - '"count": 2'
-              - '"value": "[REDACTED]"'
+              - '"drop_option": "Pass --kinds with the kinds you need, leaving out pan."'
               - '"start": 5'
               - '"lines": 2'
             not_contains: "4111111111111111"
+
+  - name: --format json reads files and --kinds all adds the opt-in kinds
+    steps:
+      - fixture:
+          file: app.log
+          content: |
+            ssn 123-45-6789
+            card 4111111111111111
+      - run:
+          command: embargo --format json app.log
+      - assert:
+          exit_code: 0
+          stdout:
+            contains:
+              - '"kind": "pan"'
+              - '"lines": 2'
+            not_contains: '"kind": "us_ssn"'
+      - run:
+          command: embargo --kinds all app.log
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              ssn [REDACTED]
+              card [REDACTED]
+      - run:
+          command: embargo --format json --kinds all app.log
+      - assert:
+          exit_code: 0
+          stdout:
+            contains:
+              - '"kind": "us_ssn"'
+              - '"kind": "pan"'
+
+  - name: a file named - reads stdin and flags after files are rejected
+    steps:
+      - fixture:
+          file: app.log
+          content: |
+            file alice@example.com
+      - run:
+          command: embargo app.log - app.log
+          stdin: |
+            stdin 4111111111111111
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              file [REDACTED]
+              stdin [REDACTED]
+              file [REDACTED]
+      - run:
+          command: embargo app.log --kinds email
+      - assert:
+          exit_code: 1
+          stdout:
+            empty: true
+          stderr:
+            equals: |
+              embargo: flags must come before the files; see embargo --help
+
+  - name: --format jsonl prints one location per finding and nothing for clean input
+    steps:
+      - fixture:
+          file: app.log
+          content: |
+            clean
+            card=4111111111111111 mail alice@example.com
+      - run:
+          command: embargo --format jsonl app.log
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              {"kind":"pan","start":11,"end":27,"line":2,"column":5}
+              {"kind":"email","start":33,"end":50,"line":2,"column":27}
+      - run:
+          command: embargo --format jsonl
+          stdin: |
+            nothing sensitive here
+      - assert:
+          exit_code: 0
+          stdout:
+            empty: true
+
+  - name: a CI step fails when a log holds a secret
+    steps:
+      - fixture:
+          file: leaky.log
+          content: |
+            password=hunter2
+      - fixture:
+          file: clean.log
+          content: |
+            request served in 12 ms
+      - run:
+          command: sh -c '! embargo --format jsonl leaky.log | grep -q .'
+      - assert:
+          exit_code: 1
+      - run:
+          command: sh -c '! embargo --format jsonl clean.log | grep -q .'
+      - assert:
+          exit_code: 0
+
+  - name: the commands in doc/audit.md run as written
+    steps:
+      - fixture:
+          file: app.log
+          content: |
+            card=4111111111111111 password=hunter2
+      - run:
+          command: embargo --kinds pan,credential app.log
+      - assert:
+          exit_code: 0
+      - run:
+          command: sh -c 'embargo --format json < app.log'
+      - assert:
+          exit_code: 0
+      - run:
+          command: embargo --format json --kinds all app.log
+      - assert:
+          exit_code: 0
+      - run:
+          command: embargo --format json --kinds pan,credential --min-confidence 0.7 app.log
+      - assert:
+          exit_code: 0
+      - run:
+          command: embargo --format jsonl app.log
+      - assert:
+          exit_code: 0
+      - run:
+          command: sh -c '! embargo --format jsonl app.log | grep -q .'
+      - assert:
+          exit_code: 1
+      - run:
+          command: sh -c 'embargo --format json --kinds pan,email app.log > before.json'
+      - assert:
+          exit_code: 0
+      - run:
+          command: sh -c 'embargo --format json --kinds pan,credential --min-confidence 0.7 app.log > after.json'
+      - assert:
+          exit_code: 0
 
   - name: a missing file fails without repeating its name
     steps:
@@ -120,7 +262,14 @@ scenarios:
           exit_code: 1
           stderr:
             equals: |
-              embargo: --samples requires --report
+              embargo: --samples requires --format json
+      - run:
+          command: embargo --format yaml
+      - assert:
+          exit_code: 1
+          stderr:
+            equals: |
+              embargo: --format must be text, json or jsonl
       - run:
           command: embargo --password=hunter2
       - assert:
@@ -137,8 +286,8 @@ scenarios:
           exit_code: 0
           stdout:
             contains:
-              - "Usage: embargo [--kinds all|KIND,...]"
-              - "--report"
+              - "Usage: embargo [--format text|json|jsonl]"
+              - "--format F"
       - run:
           command: embargo --version
       - assert:

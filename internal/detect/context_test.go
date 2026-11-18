@@ -308,3 +308,83 @@ func TestContextRejectedBoundaries(t *testing.T) {
 		t.Fatal("empty keyword changed matches")
 	}
 }
+
+func TestKeywordTablesListEachFoldedKeywordOnce(t *testing.T) {
+	t.Parallel()
+
+	tables := map[string]*keywordSet{
+		"ach":         achKeywords(),
+		"cvv":         cvvKeywords(),
+		"card expiry": expiryKeywords(),
+		"merchant":    merchantKeywords(),
+		"terminal":    terminalKeywords(),
+		"bank":        bankAccountKeywords(),
+	}
+	for name, set := range tables {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			seen := make(map[string]string)
+			for _, e := range set.entries {
+				folded := string(e.lowered)
+				if first, ok := seen[folded]; ok {
+					t.Errorf("%q repeats %q after ASCII case folding", e.original, first)
+				}
+				seen[folded] = string(e.original)
+			}
+		})
+	}
+}
+
+func TestContainsNear(t *testing.T) {
+	t.Parallel()
+
+	data := []byte("account number 12345678 holder John")
+	keywords := [][]byte{[]byte("holder")}
+
+	// "holder" starts at byte 24, digit sequence "12345678" is at [15,23).
+	// Within radius 50 of region [15,23) → should be found.
+	if !containsNear(data, 15, 23, 50, keywords) {
+		t.Error("containsNear should find 'holder' within radius 50 of digit sequence")
+	}
+
+	// With a very small radius (1 byte), "holder" is too far away.
+	if containsNear(data, 15, 23, 1, keywords) {
+		t.Error("containsNear should not find 'holder' within radius 1 of digit sequence")
+	}
+
+	// Keyword far away in a long string.
+	farData := []byte("account number 12345678" + strings.Repeat(" ", 200) + "holder")
+	if containsNear(farData, 15, 23, 50, keywords) {
+		t.Error("containsNear should not find 'holder' when it is 200+ bytes away")
+	}
+}
+
+func TestContainsFoldNear(t *testing.T) {
+	t.Parallel()
+
+	keywords := [][]byte{[]byte("sort code"), []byte("bacs")}
+	data := []byte("SORT CODE: 20-00-00")
+	if !containsFoldNear(data, 11, 19, 40, keywords) {
+		t.Error("an uppercase keyword inside the radius must match")
+	}
+	if containsFoldNear(data, 11, 19, 2, keywords) {
+		t.Error("a keyword outside the radius must not match")
+	}
+	// U+212A KELVIN SIGN is not ASCII, so it does not fold to k.
+	if containsFoldNear([]byte("ba\u212as 20-00-00"), 8, 16, 40, [][]byte{[]byte("baks")}) {
+		t.Error("non-ASCII letters must match only themselves")
+	}
+}
+
+func TestContainsNearMatchesBytesContains(t *testing.T) {
+	t.Parallel()
+
+	for _, data := range []string{"", "a", "aa", "abc"} {
+		for _, sub := range []string{"", "a", "aa", "abc", "abcd"} {
+			got := containsNear([]byte(data), 0, len(data), 0, [][]byte{[]byte(sub)})
+			if got != strings.Contains(data, sub) {
+				t.Fatal("contains", data, sub)
+			}
+		}
+	}
+}

@@ -36,3 +36,25 @@ func TestCurlUserPasswordsIgnoresOtherCommands(t *testing.T) {
 		}
 	}
 }
+
+func TestCurlUserPasswordsAtInputEdges(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ text, want string }{
+		{"curl -u ab:cd", "curl -u ab:**"},
+		{"curl -u ab:cd:ef https://example.com", "curl -u ab:***** https://example.com"},
+		{"curl -u \\\n  ab:cd", "curl -u \\\n  ab:**"},
+		{`curl -u 'ab:c\' x`, `curl -u 'ab:**' x`},
+		{`curl -u "ab:cd`, `curl -u "ab:**`},
+		{"run curl -u ab:cd\ncurl -u ef:gh", "run curl -u ab:**\ncurl -u ef:**"},
+	} {
+		got := maskCredentialFindings(tc.text, curlUserPasswords([]byte(tc.text)))
+		if got != tc.want {
+			t.Errorf("curlUserPasswords(%q) masked to %q, want %q", tc.text, got, tc.want)
+		}
+	}
+	for _, text := range []string{"curl", "x curl", "curl -u", "curl --user=", "curl -u   ", "curl -u \\", `curl -u "":""`, "curlx -u ab:cd", "xcurl -u ab:cd"} {
+		if got := curlUserPasswords([]byte(text)); len(got) != 0 {
+			t.Errorf("curlUserPasswords(%q) = %+v, want none", text, got)
+		}
+	}
+}

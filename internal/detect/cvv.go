@@ -1,14 +1,17 @@
 package detect
 
+import "github.com/nao1215/embargo/internal/ascii"
+
 // CVV implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindCVV.
 type CVV struct {
-	cvvKeywords *keywordSet
+	rule nearRule
 }
 
 // NewCVV requires card-verification context around three or four digits.
 func NewCVV() *CVV {
-	return &CVV{cvvKeywords: cvvKeywords()}
+	//nolint:mnd // Literal field widths and the score follow the format rules documented on this detector.
+	return &CVV{rule: nearRule{keywords: cvvKeywords(), class: ascii.IsDigit, accept: fixedConfidence(0.85), radius: 30, minLen: 3, maxLen: 4}}
 }
 
 // Name returns "cvv".
@@ -34,36 +37,7 @@ func (d *CVV) Hints() [][]byte {
 
 // Scan returns matches in data using the rules documented on [CVV].
 func (d *CVV) Scan(data []byte) []Finding {
-	matches := d.cvvKeywords.findPositions(data)
-	if len(matches) == 0 {
-		return nil
-	}
-
-	var findings []Finding
-	used := make(map[int]struct{}) // track digit sequence start positions already reported
-
-	for _, m := range matches {
-		// Search for digit sequences near the keyword.
-		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		seqs := extractDigitsNear(data, m.end, 30, 3, 4)
-		for _, seq := range seqs {
-			if _, ok := used[seq.start]; ok {
-				continue
-			}
-
-			used[seq.start] = struct{}{}
-
-			findings = append(findings, Finding{
-				DetectorName: d.Name(),
-				Start:        seq.start,
-				End:          seq.end,
-				//nolint:mnd // The detector contract documents this heuristic score.
-				Confidence: 0.85,
-			})
-		}
-	}
-
-	return findings
+	return d.rule.scan(nil, d.Name(), data, nil)
 }
 
 // cvvKeywords are the context keywords used to identify CVV/CVC/CID mentions.
@@ -76,18 +50,7 @@ func cvvKeywords() *keywordSet {
 		[]byte("CVV"),
 		[]byte("CVC"),
 		[]byte("CID"),
-		[]byte("cvv2"),
-		[]byte("cvc2"),
-		[]byte("cvv"),
-		[]byte("cvc"),
-		[]byte("cid"),
-		[]byte("Cvv"),
-		[]byte("Cvc"),
-		[]byte("Cid"),
 		[]byte("security code"),
-		[]byte("Security Code"),
-		[]byte("Security code"),
-		[]byte("SECURITY CODE"),
 		// Japanese: セキュリティコード
 		{
 			0xE3, 0x82, 0xBB, 0xE3, 0x82, 0xAD, 0xE3, 0x83, 0xA5, 0xE3,

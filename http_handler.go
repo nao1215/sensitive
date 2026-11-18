@@ -15,21 +15,14 @@ import (
 	"github.com/nao1215/embargo/internal/saferecord"
 )
 
-// NewHTTPHandler writes masked access records after next handles each request.
-// Authorization, Proxy-Authorization, Cookie and Set-Cookie values are always hidden;
-// other header and query keys follow WithSensitiveKeys. Redirects use the same rules.
-// Query keys and values are decoded, scanned once with the original key context,
-// and logged without re-encoding. Service requests and responses remain unchanged.
-// Bodies are not logged. ResponseController operations delegate to the original
-// writer; unsupported operations return ErrNotSupported. All arguments are required.
-// Access logging keeps the request context unless it is already canceled when the
-// record is built; only then it uses context.WithoutCancel with a 100 ms timeout.
-// Masking failures retain time, level, status, duration, a fixed reason and an
-// attribute count. No request content survives. A panic before any final response
-// logs status 0 and response_written=false, then propagates unchanged. Normal
-// returns without an explicit write log the implicit 200. Duration is elapsed time
-// through the handler, excluding masking. Callbacks and sink I/O cannot be forcibly
-// stopped. Fields introduced downstream require their own masking boundary.
+// NewHTTPHandler writes one masked access record to logger after next handles each request.
+// Authorization, Proxy-Authorization, Cookie and Set-Cookie values are always hidden,
+// other header and query keys follow WithSensitiveKeys, and bodies are not logged;
+// requests and responses pass through unchanged. All arguments are required.
+// If masking fails, the record keeps only time, level, status, duration and a fixed
+// reason. The [logging guide] covers contexts, panics and the failure record.
+//
+// [logging guide]: https://github.com/nao1215/embargo/blob/main/doc/logging.md#bounds-and-failures
 func NewHTTPHandler(next http.Handler, logger *slog.Logger, scanner *Scanner) http.Handler {
 	if next == nil || nilHTTPHandler(next) || logger == nil || scanner == nil {
 		panic("embargo: nil HTTP dependency")

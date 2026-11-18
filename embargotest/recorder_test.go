@@ -165,7 +165,7 @@ func TestRecorderLifecycle(t *testing.T) {
 
 func TestRecorderOptions(t *testing.T) {
 	t.Parallel()
-	for _, option := range []Option{WithCanary(make([]byte, 15)), WithCanary(make([]byte, 1025)), WithLimits(0, time.Second), WithLimits(1, 0), WithLimits(1, -time.Second)} {
+	for _, option := range []Option{WithCanary(make([]byte, 15)), WithCanary(make([]byte, 1025)), WithMaxBytes(0), WithMaxBytes(-1), WithTimeout(0), WithTimeout(-time.Second)} {
 		p := &probeTB{TB: t}
 		r := New(p, option)
 		if p.errors == 0 {
@@ -181,7 +181,7 @@ func TestRecorderOptions(t *testing.T) {
 		o := WithCanary(c)
 		c[0] = 'y'
 		p := &probeTB{TB: t}
-		r := New(p, o, WithLimits(1, time.Nanosecond))
+		r := New(p, o, WithMaxBytes(1), WithTimeout(time.Nanosecond))
 		if r.Canary()[0] != 'x' {
 			t.Fatal("option aliases input")
 		}
@@ -318,7 +318,7 @@ func TestQuintRecorderReplay(t *testing.T) {
 	t.Parallel()
 	for _, trace := range modelTraces[recorderState](t, "recorder") {
 		probe := &probeTB{TB: t}
-		recorder := New(probe, WithLimits(4, time.Second), WithScanner(embargo.NewScanner(embargo.WithKinds())))
+		recorder := New(probe, WithMaxBytes(4), WithTimeout(time.Second), WithScanner(embargo.NewScanner(embargo.WithKinds())))
 		for _, state := range trace {
 			switch state.Op {
 			case "init":

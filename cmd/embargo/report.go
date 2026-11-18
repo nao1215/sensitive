@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"slices"
@@ -11,11 +12,10 @@ import (
 )
 
 type location struct {
-	Value  string `json:"value"`
-	Start  int64  `json:"start"`
-	End    int64  `json:"end"`
-	Line   int    `json:"line"`
-	Column int    `json:"column"`
+	Start  int64 `json:"start"`
+	End    int64 `json:"end"`
+	Line   int   `json:"line"`
+	Column int   `json:"column"`
 }
 
 type kindReport struct {
@@ -31,7 +31,7 @@ type report struct {
 	Lines    int          `json:"lines"`
 }
 
-// writeReport prints per-kind counts and masked locations. Each line is
+// writeReport prints per-kind counts and finding locations for --format json. Each line is
 // discarded after scanning, so memory stays bounded, and input bytes are never
 // printed. Incomplete input produces no report.
 func writeReport(input io.Reader, output io.Writer, scanner *embargo.Scanner, sampleLimit int) error {
@@ -46,39 +46,90 @@ func writeReport(input io.Reader, output io.Writer, scanner *embargo.Scanner, sa
 
 func collectReport(input io.Reader, scanner *embargo.Scanner, sampleLimit int) (report, error) {
 	groups := make(map[embargo.Kind]*kindReport)
-	lines := bufio.NewScanner(input)
-	lines.Buffer(make([]byte, bufio.MaxScanTokenSize), maximumLine)
-	var bytesRead, lineStart int64
-	lineCount := 0
-	lines.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		advance, token, err = bufio.ScanLines(data, atEOF)
-		// Before a token is ready advance is 0, which leaves both offsets in place.
-		lineStart = bytesRead
-		bytesRead += int64(advance)
-		return advance, token, err
+	lines, size, err := eachLine(bufio.NewReaderSize(input, ioBuffer), "no report is written", func(number int, offset int64, body []byte) error {
+		for _, finding := range scanner.Scan(body) {
+			addFinding(groups, finding, offset, number, sampleLimit)
+		}
+		return nil
 	})
-	for lines.Scan() {
-		lineCount++
-		for _, finding := range scanner.Scan(lines.Bytes()) {
-			addFinding(groups, finding, lineStart, lineCount, sampleLimit)
+	if err != nil {
+		return report{}, err
+	}
+	return report{Findings: sortedKinds(groups), Bytes: size, Lines: lines}, nil
+}
+
+// foundValue is one --format jsonl line: where a finding is, never its value.
+type foundValue struct {
+	Kind   embargo.Kind `json:"kind"`
+	Start  int64        `json:"start"`
+	End    int64        `json:"end"`
+	Line   int          `json:"line"`
+	Column int          `json:"column"`
+}
+
+// writeFindings prints one JSON object per finding as each line is scanned and
+// flushes whenever no more input is buffered, so tail -f works as with the
+// filter. A read failure stops before that line, after the earlier findings.
+func writeFindings(input io.Reader, output io.Writer, scanner *embargo.Scanner) error {
+	reader := bufio.NewReaderSize(input, ioBuffer)
+	writer := bufio.NewWriterSize(output, ioBuffer)
+	encoder := json.NewEncoder(writer)
+	_, _, err := eachLine(reader, "output stops before it", func(number int, offset int64, body []byte) error {
+		for _, f := range scanner.Scan(body) {
+			at := newLocation(f, offset, number)
+			value := foundValue{Kind: f.Kind, Start: at.Start, End: at.End, Line: at.Line, Column: at.Column}
+			if encoder.Encode(value) != nil {
+				return errors.New("embargo: output write failed")
+			}
+		}
+		if reader.Buffered() == 0 && writer.Flush() != nil {
+			return errors.New("embargo: output write failed")
+		}
+		return nil
+	})
+	return flushThen(writer, err)
+}
+
+// eachLine reads lines exactly as the filter does and calls fn with each
+// line's number, the byte offset where it starts and its body without the
+// ending. It returns the line count and total size, or the first read failure,
+// whose message ends with consequence, or fn's error.
+func eachLine(reader *bufio.Reader, consequence string, fn func(number int, offset int64, body []byte) error) (lines int, size int64, err error) {
+	for number := 1; ; number++ {
+		line, tooLong, readErr := readLine(reader)
+		if failure := readFailure(tooLong, readErr, number, consequence); failure != nil {
+			return lines, size, failure
+		}
+		if len(line) > 0 {
+			lines++
+			body, _ := splitEnding(line)
+			if err := fn(number, size, body); err != nil {
+				return lines, size, err
+			}
+			size += int64(len(line))
+		}
+		if errors.Is(readErr, io.EOF) {
+			return lines, size, nil
 		}
 	}
-	if err := lines.Err(); err != nil {
-		return report{}, safeInputError(err, "embargo: input read failed or a line reached the 4 MiB limit; no report was written")
-	}
-	return report{Findings: sortedKinds(groups), Bytes: bytesRead, Lines: lineCount}, nil
 }
 
 func addFinding(groups map[embargo.Kind]*kindReport, finding embargo.Finding, lineStart int64, line, sampleLimit int) {
 	group := groups[finding.Kind]
 	if group == nil {
-		group = &kindReport{Kind: finding.Kind, DropOption: fmt.Sprintf("Use embargo.WithKinds with required kinds, omitting embargo.Kind(%q).", finding.Kind), Samples: []location{}, Count: 0}
+		group = &kindReport{Kind: finding.Kind, DropOption: fmt.Sprintf("Pass --kinds with the kinds you need, leaving out %s.", finding.Kind), Samples: []location{}, Count: 0}
 		groups[finding.Kind] = group
 	}
 	group.Count++
 	if len(group.Samples) < sampleLimit {
-		group.Samples = append(group.Samples, location{Value: "[REDACTED]", Start: lineStart + int64(finding.Start), End: lineStart + int64(finding.End), Line: line, Column: finding.Start})
+		group.Samples = append(group.Samples, newLocation(finding, lineStart, line))
 	}
+}
+
+// newLocation places finding, found in the line that starts at byte offset
+// lineStart, in the whole input.
+func newLocation(finding embargo.Finding, lineStart int64, line int) location {
+	return location{Start: lineStart + int64(finding.Start), End: lineStart + int64(finding.End), Line: line, Column: finding.Start}
 }
 
 func sortedKinds(groups map[embargo.Kind]*kindReport) []kindReport {

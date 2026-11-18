@@ -56,12 +56,10 @@ type expectation struct {
 
 // Option configures a Recorder without exposing mutable configuration.
 type (
-	Option       interface{ apply(*Recorder) bool }
-	canaryOption []byte
-	limitsOption struct {
-		maxBytes int64
-		timeout  time.Duration
-	}
+	Option         interface{ apply(*Recorder) bool }
+	canaryOption   []byte
+	maxBytesOption int64
+	timeoutOption  time.Duration
 )
 
 // WithCanary copies a fake secret of 16 through 1024 bytes. Never use a real
@@ -78,20 +76,31 @@ func (c canaryOption) apply(r *Recorder) bool {
 	return true
 }
 
-// WithLimits sets positive bounds for total retained output and each Run.
-// maxBytes bounds bytes retained across sinks, not bytes allocated or produced
-// before a Write. timeout supervises each Run child process, not in-process
-// encoding, input decoding or scanner callbacks. MarshalJSON, LogValue, String
-// and Error can run in an encoder before this limit applies; their time and
-// memory are not bounded. Prefer Secret or a LogValuer returning a bounded value.
-// Neither bound can be disabled. The sink count and WaitDelay stay fixed.
-func WithLimits(maxBytes int64, timeout time.Duration) Option { return limitsOption{maxBytes, timeout} }
+// WithMaxBytes sets a positive bound on the bytes retained across all sinks,
+// 1 MiB by default; output past it fails Check. It bounds retained bytes, not
+// bytes an encoder allocates before a Write, so MarshalJSON, LogValue, String
+// and Error stay unbounded. Prefer Secret or a LogValuer returning a bounded value.
+func WithMaxBytes(n int64) Option { return maxBytesOption(n) }
 
-func (o limitsOption) apply(r *Recorder) bool {
-	if o.maxBytes < 1 || o.timeout <= 0 {
+func (o maxBytesOption) apply(r *Recorder) bool {
+	if o < 1 {
 		return false
 	}
-	r.maxBytes, r.timeout = o.maxBytes, o.timeout
+	r.maxBytes = int64(o)
+	return true
+}
+
+// WithTimeout sets a positive bound on each Run child process, 5 seconds by
+// default, and on the whole test binary under Guard, 5 minutes by default. Run
+// also stops at its context's deadline when that comes first. It does not
+// interrupt in-process encoding or scanner callbacks.
+func WithTimeout(d time.Duration) Option { return timeoutOption(d) }
+
+func (o timeoutOption) apply(r *Recorder) bool {
+	if o <= 0 {
+		return false
+	}
+	r.timeout = time.Duration(o)
 	return true
 }
 

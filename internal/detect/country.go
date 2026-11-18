@@ -69,8 +69,7 @@ func (d *Country) Scan(data []byte) []Finding {
 			if score == 0 {
 				continue
 			}
-			a, b := mapOriginalRange(positions, start, end)
-			result = append(result, Finding{DetectorName: d.name, Start: a, End: b, Confidence: businessConfidence(data, a, score)})
+			result = append(result, labeledViewFinding(d.name, data, positions, start, end, score))
 			break
 		}
 	}

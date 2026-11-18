@@ -31,9 +31,16 @@
     {
       "file": "cmd/embargo/main.go",
       "name": "run",
-      "statements": 15,
-      "cyclomatic": 6,
-      "lines": 22
+      "statements": 16,
+      "cyclomatic": 7,
+      "lines": 26
+    },
+    {
+      "file": "cmd/embargo/options.go",
+      "name": "parseOptions",
+      "statements": 32,
+      "cyclomatic": 14,
+      "lines": 39
     },
     {
       "file": "embargotest/guard_names.go",
@@ -94,9 +101,9 @@
     {
       "file": "internal/detect/aba.go",
       "name": "ABARouting.scanNormalized",
-      "statements": 25,
+      "statements": 23,
       "cyclomatic": 10,
-      "lines": 49
+      "lines": 41
     },
     {
       "file": "internal/detect/aba.go",
@@ -165,21 +172,21 @@
       "file": "internal/detect/ipaddr.go",
       "name": "IPAddr.tryIPv4",
       "statements": 12,
-      "cyclomatic": 15,
+      "cyclomatic": 12,
       "lines": 32
     },
     {
       "file": "internal/detect/ipaddr.go",
       "name": "IPAddr.tryIPv6",
       "statements": 14,
-      "cyclomatic": 14,
+      "cyclomatic": 12,
       "lines": 36
     },
     {
       "file": "internal/detect/jwt.go",
       "name": "extractJWTToken",
       "statements": 16,
-      "cyclomatic": 14,
+      "cyclomatic": 12,
       "lines": 37
     },
     {
@@ -213,9 +220,23 @@
     {
       "file": "internal/detect/phone_jp.go",
       "name": "JPPhone.scanNormalized",
-      "statements": 26,
+      "statements": 25,
       "cyclomatic": 9,
-      "lines": 50
+      "lines": 43
+    },
+    {
+      "file": "internal/detect/phone_us.go",
+      "name": "usPhoneAreaCode",
+      "statements": 14,
+      "cyclomatic": 14,
+      "lines": 21
+    },
+    {
+      "file": "internal/output/metadata.go",
+      "name": "eventMetadata.byte",
+      "statements": 17,
+      "cyclomatic": 14,
+      "lines": 33
     },
     {
       "file": "json.go",

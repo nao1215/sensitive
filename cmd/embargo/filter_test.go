@@ -82,9 +82,9 @@ func TestFilterStopsBeforeOverlongLineAndReadFailure(t *testing.T) {
 		t.Fatalf("line at the limit: err=%v length=%d", exactErr, out.Len())
 	}
 	out.Reset()
-	failing := io.MultiReader(strings.NewReader("card="+filterPAN+"\n"), failingInput{})
+	failing := io.MultiReader(strings.NewReader("card="+filterPAN+"\n"), &failingInput{})
 	err = run(nil, failing, &out)
-	if err == nil || err.Error() != "embargo: input read failed at line 2" || strings.Contains(out.String(), filterPAN) {
+	if err == nil || err.Error() != "embargo: input read failed at line 2; output stops before it" || strings.Contains(out.String(), filterPAN) {
 		t.Fatalf("read failure: err=%v output=%q", err, out.String())
 	}
 }
@@ -92,12 +92,12 @@ func TestFilterStopsBeforeOverlongLineAndReadFailure(t *testing.T) {
 func TestFilterReportsOutputFailures(t *testing.T) {
 	t.Parallel()
 	for _, input := range []string{"line\n", "a\n" + strings.Repeat("z", maximumLine+1)} {
-		if err := run(nil, strings.NewReader(input), failingOutput{}); err == nil || err.Error() != "embargo: output write failed" {
+		if err := run(nil, strings.NewReader(input), failingOutput{}); err == nil || err.Error() != outputWriteFailed {
 			t.Errorf("output failure for %d bytes: %v", len(input), err)
 		}
 	}
 	// A line larger than the output buffer reaches the writer before the flush.
-	if err := run(nil, strings.NewReader(strings.Repeat("w", 2*ioBuffer)+"\n"), &shortWriter{limit: 0}); err == nil || err.Error() != "embargo: output write failed" {
+	if err := run(nil, strings.NewReader(strings.Repeat("w", 2*ioBuffer)+"\n"), &shortWriter{limit: 0}); err == nil || err.Error() != outputWriteFailed {
 		t.Errorf("failure writing a large line: %v", err)
 	}
 }
@@ -166,5 +166,39 @@ func TestFilterFlushesWhenNoInputIsBuffered(t *testing.T) {
 	}
 	if out.String() != "first\nsecond\n" {
 		t.Fatalf("output %q", out.String())
+	}
+}
+
+func TestFilterPassesBinaryBytesAndMasksLongJSONAsText(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	binary := "nul\x00 " + filterPAN + " \xff\xfe end\n"
+	if err := run(nil, strings.NewReader(binary), &out); err != nil || out.String() != "nul\x00 "+filterMarker+" \xff\xfe end\n" {
+		t.Fatalf("binary line: err=%v output=%q", err, out.String())
+	}
+	out.Reset()
+	// MaskJSON accepts at most 1 MiB, so a longer JSON line is masked as text
+	// and keeps its original spacing.
+	long := `{"card": "` + filterPAN + `", "pad": "` + strings.Repeat("p", 1<<20) + `"}` + "\n"
+	want := `{"card": "` + filterMarker + `", "pad": "` + strings.Repeat("p", 1<<20) + `"}` + "\n"
+	if err := run(nil, strings.NewReader(long), &out); err != nil || out.String() != want {
+		t.Fatalf("long JSON line: err=%v length=%d", err, out.Len())
+	}
+}
+
+func TestFilterAndReportShareTheLineLimit(t *testing.T) {
+	t.Parallel()
+	exact := strings.Repeat("z", maximumLine)
+	over := exact + "z"
+	for _, args := range [][]string{nil, {flagFormat, formatJSON}} {
+		var out bytes.Buffer
+		if err := run(args, strings.NewReader(exact), &out); err != nil {
+			t.Errorf("%v: a final line of exactly 4 MiB was rejected: %v", args, err)
+		}
+		out.Reset()
+		err := run(args, strings.NewReader("ok\n"+over), &out)
+		if err == nil || !strings.HasPrefix(err.Error(), "embargo: line 2 exceeds the 4 MiB limit; ") {
+			t.Errorf("%v: over-long line: %v", args, err)
+		}
 	}
 }

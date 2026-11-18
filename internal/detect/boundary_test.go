@@ -145,3 +145,52 @@ func TestIdentifierByteAlphabet(t *testing.T) {
 		}
 	}
 }
+
+func TestLeadingAndTrailingBoundary(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name     string
+		data     string
+		at       int
+		leading  bool
+		trailing bool
+	}{
+		{"input edges", "ab", 0, true, false},
+		{"glued identifier", "xAB", 1, false, false},
+		{"space separated", "x AB", 2, true, false},
+		{"encoded space", "x%20AB", 4, true, false},
+		{"encoded letter", "x%41AB", 4, false, false},
+		{"end of input", "AB", 2, false, true},
+		{"next byte outside class", "AB-", 2, false, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			data := []byte(tc.data)
+			if tc.at < len(data) {
+				if got := leadingBoundary(data, tc.at, isIdentifierByte); got != tc.leading {
+					t.Errorf("leadingBoundary = %v, want %v", got, tc.leading)
+				}
+			}
+			if got := trailingBoundary(data, tc.at, isIdentifierByte); got != tc.trailing {
+				t.Errorf("trailingBoundary = %v, want %v", got, tc.trailing)
+			}
+		})
+	}
+}
+
+func TestLeadingBoundaryViewReadsEncodedSeparatorInOriginal(t *testing.T) {
+	t.Parallel()
+
+	// The view "x1" drops the %20 of the original, so the encoded space sits
+	// before original offset 4 while the view byte before the candidate is x.
+	orig := []byte("x%201")
+	view := []byte("x1")
+	posMap := []int{0, 4, 5}
+	if !leadingBoundaryView(orig, posMap, view, 1, isIdentifierByte) {
+		t.Error("an encoded separator in the original input must open a boundary")
+	}
+	if leadingBoundaryView([]byte("x1"), nil, view, 1, isIdentifierByte) {
+		t.Error("a glued identifier byte must close the boundary")
+	}
+}

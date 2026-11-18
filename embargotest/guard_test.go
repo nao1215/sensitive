@@ -205,11 +205,11 @@ func (*panickingGuardDetector) Scan([]byte) []embargo.Finding { panic("must not 
 
 func TestGuardNamesAndPolicy(t *testing.T) {
 	t.Parallel()
-	policy := guardPolicy([]Option{nil, WithLimits(16, time.Second)})
+	policy := guardPolicy([]Option{nil, WithMaxBytes(16), WithTimeout(time.Second)})
 	if policy.failed || policy.maxBytes != 16 || policy.timeout != time.Second {
 		t.Fatal("guard options lost")
 	}
-	if !guardPolicy([]Option{WithLimits(-1, time.Second)}).failed {
+	if !guardPolicy([]Option{WithMaxBytes(-1)}).failed {
 		t.Fatal("invalid guard option accepted")
 	}
 }
@@ -343,7 +343,7 @@ func TestQuintGuardReplay(t *testing.T) {
 			}
 			cmd := exec.CommandContext(ctx, executable, "-test.run=^TestGuardModelChild$")
 			cmd.Env = append(os.Environ(), "EMBARGO_MODEL_CHILD="+string(raw))
-			policy := guardPolicy([]Option{WithLimits(128, time.Second)})
+			policy := guardPolicy([]Option{WithMaxBytes(128), WithTimeout(time.Second)})
 			if last.ScannerFailed {
 				policy.scanner = embargo.NewScanner(embargo.WithKinds(), embargo.WithDetector(&panickingGuardDetector{}))
 			}

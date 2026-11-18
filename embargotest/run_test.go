@@ -100,7 +100,7 @@ func TestRunFailures(t *testing.T) {
 		t.Run(mode, func(t *testing.T) {
 			t.Parallel()
 			p := &probeTB{TB: t}
-			r := New(p, WithLimits(1024, 100*time.Millisecond))
+			r := New(p, WithMaxBytes(1024), WithTimeout(100*time.Millisecond))
 			ctx := context.Background()
 			helper := "TestChildSafe"
 			want := 0

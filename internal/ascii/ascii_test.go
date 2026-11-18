@@ -183,3 +183,35 @@ func TestRuneClassesIgnoreNonASCII(t *testing.T) {
 		}
 	}
 }
+
+func TestAppendLowerKeepsPrefixAndLength(t *testing.T) {
+	t.Parallel()
+	got := ascii.AppendLower([]byte("Pre:"), []byte("ABC-\xe2\x80\x90Zz"))
+	if string(got) != "Pre:abc-\xe2\x80\x90zz" {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestContainsFold(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		data, lower string
+		want        bool
+	}{
+		{"Sort Code: 20-00-00", "sort code", true},
+		{"SORT-CODE", "sort-code", true},
+		{"sort", "sort code", false},
+		{"", "", true},
+		{"abc", "", true},
+		{"BACS", "bacs", true},
+		{"ba\u212as", "baks", false},
+		{"bac", "bacs", false},
+	} {
+		if got := ascii.ContainsFold([]byte(tc.data), []byte(tc.lower)); got != tc.want {
+			t.Errorf("ContainsFold(%q, %q) = %v, want %v", tc.data, tc.lower, got, tc.want)
+		}
+		if want := strings.Contains(string(ascii.LowerCopy([]byte(tc.data))), tc.lower); want != tc.want {
+			t.Errorf("oracle disagrees for %q", tc.data)
+		}
+	}
+}

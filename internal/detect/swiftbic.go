@@ -9,11 +9,13 @@ import (
 
 // SWIFTBIC implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindSWIFTBIC.
-type SWIFTBIC struct{}
+type SWIFTBIC struct {
+	context [][]byte
+}
 
 // NewSWIFTBIC validates country and code shape without checking institution assignment.
 func NewSWIFTBIC() *SWIFTBIC {
-	return &SWIFTBIC{}
+	return &SWIFTBIC{context: swiftContextKeywords()}
 }
 
 // Name returns "swiftbic".
@@ -36,14 +38,13 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 		}
 
 		end, ok := determineSWIFTLength(data, i)
-		if !ok || swiftExcluded(data, i, end) {
+		if !ok || d.excluded(data, i, end) {
 			continue
 		}
 
 		// Pure alpha codes require nearby context keywords to avoid
 		// false positives with common English words.
-		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		if !hasDigitInRange(data, i+6, end) && !hasSWIFTContext(data, i, end) {
+		if !hasDigits(data[i+6:end], 1) && !d.hasContext(data, i, end) {
 			continue
 		}
 
@@ -61,13 +62,13 @@ func (d *SWIFTBIC) Scan(data []byte) []Finding {
 	return findings
 }
 
-// swiftExcluded reports whether a structurally valid code at [i, end) is a
+// excluded reports whether a structurally valid code at [i, end) is a
 // token, register, user, identifier or hardware fragment rather than a BIC.
-func swiftExcluded(data []byte, i, end int) bool {
+func (d *SWIFTBIC) excluded(data []byte, i, end int) bool {
 	if uuidComponent(data, i, end) {
 		return true
 	}
-	if entropyLocation(data, i, end) && !swiftSlashList(data, i, end) {
+	if entropyLocation(data, i, end) && !d.slashList(data, i, end) {
 		return true
 	}
 
@@ -88,8 +89,8 @@ func swiftExcluded(data []byte, i, end int) bool {
 
 // A contextual slash-separated list can contain several bank identifiers.
 // Requiring an adjacent complete code keeps ordinary source paths excluded.
-func swiftSlashList(data []byte, start, end int) bool {
-	if !hasSWIFTContext(data, start, end) {
+func (d *SWIFTBIC) slashList(data []byte, start, end int) bool {
+	if !d.hasContext(data, start, end) {
 		return false
 	}
 	codeEnd := func(at int) int {
@@ -129,7 +130,7 @@ func validateSWIFTStructure(data []byte, i int) bool {
 	if !ascii.IsAlphaNum(data[i+6]) || !ascii.IsAlphaNum(data[i+7]) {
 		return false
 	}
-	if i > 0 && ascii.IsAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
+	if !leadingBoundary(data, i, ascii.IsAlphaNum) {
 		return false
 	}
 	cc := [2]byte{ascii.ToUpper(data[i+4]), ascii.ToUpper(data[i+5])}
@@ -154,28 +155,20 @@ func determineSWIFTLength(data []byte, i int) (end int, ok bool) {
 	return i + 8, true
 }
 
-// hasDigitInRange reports whether data[start:end] contains at least one digit.
-func hasDigitInRange(data []byte, start, end int) bool {
-	for k := start; k < end; k++ {
-		if ascii.IsDigit(data[k]) {
-			return true
-		}
-	}
-	return false
-}
-
-// hasSWIFTContext checks whether SWIFT/BIC context keywords appear near the
+// hasContext checks whether SWIFT/BIC context keywords appear near the
 // candidate code. This is used to reduce false positives for pure-alpha codes
 // (no digits in location/branch) that could be normal English words.
-func hasSWIFTContext(data []byte, start, end int) bool {
+func (d *SWIFTBIC) hasContext(data []byte, start, end int) bool {
 	// Search within 50 bytes before and after the candidate.
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 	searchStart := max(start-50, 0)
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
 	searchEnd := min(end+50, len(data))
-	window := bytes.ToLower(data[searchStart:searchEnd])
+	// The window is at most 50+11+50 bytes, so it is lowered on the stack.
+	var buf [128]byte
+	window := ascii.AppendLower(buf[:0], data[searchStart:searchEnd])
 
-	for _, kw := range swiftContextKeywords() {
+	for _, kw := range d.context {
 		if swiftKeywordInWindow(window, kw, start-searchStart) {
 			return true
 		}

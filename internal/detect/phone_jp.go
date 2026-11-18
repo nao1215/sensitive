@@ -1,7 +1,5 @@
 package detect
 
-import "github.com/nao1215/embargo/internal/ascii"
-
 // JPPhoneType classifies a Japanese phone number; see the JPPhoneType* constants.
 type JPPhoneType string
 
@@ -107,7 +105,7 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		}
 
 		start := i
-		digits, end := phoneDigits(data, start, make([]byte, 0, phoneDigitCapacity))
+		digits, end := appendSeparatedDigits(data, start, make([]byte, 0, phoneDigitCapacity), phoneSeparator)
 		if !jpPhoneWhole(data, digits, end) {
 			i = end
 			continue
@@ -119,14 +117,7 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			continue
 		}
 
-		origStart, origEnd := mapOriginalRange(posMap, start, end)
-
-		findings = append(findings, Finding{
-			DetectorName: d.Name(),
-			Start:        origStart,
-			End:          origEnd,
-			Confidence:   businessConfidence(orig, origStart, jpPhoneConfidence(phoneType)),
-		})
+		findings = append(findings, labeledViewFinding(d.Name(), orig, posMap, start, end, jpPhoneConfidence(phoneType)))
 		i = end
 	}
 
@@ -153,12 +144,6 @@ func jpPhoneConfidence(phoneType JPPhoneType) float64 {
 		confidence = 0.9
 	}
 	return confidence
-}
-
-// isPhoneSepChar reports whether b is a digit or phone number separator.
-// Space is included to support formats like "090 1234 5678".
-func isPhoneSepChar(b byte) bool {
-	return ascii.IsDigit(b) || b == '-' || b == '(' || b == ')' || b == ' '
 }
 
 // classifyJPPhone returns the phone type based on the prefix and digit count,
@@ -213,22 +198,3 @@ func isValidLandlinePrefix(digits []byte) bool {
 // phoneDigitCapacity sizes the digit buffer of a phone or MyNumber candidate,
 // so a run of typical length stays on the stack.
 const phoneDigitCapacity = 32
-
-func phoneDigits(data []byte, start int, digits []byte) (run []byte, end int) {
-	// Extract digit sequence with separators.
-	j := start
-	for j < len(data) && isPhoneSepChar(data[j]) {
-		if ascii.IsDigit(data[j]) {
-			digits = append(digits, data[j])
-		}
-		j++
-	}
-	end = j
-
-	// Trim trailing non-digit separators (e.g., trailing spaces) so that
-	// the boundary check and matched text do not include them.
-	for end > start && !ascii.IsDigit(data[end-1]) {
-		end--
-	}
-	return digits, end
-}

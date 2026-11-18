@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/nao1215/embargo"
 )
@@ -78,6 +79,37 @@ func TestWriterBoundariesAndLifecycle(t *testing.T) {
 	})
 }
 
+func TestWriterFramesEveryNewline(t *testing.T) {
+	t.Parallel()
+	scanner := embargo.NewScanner(embargo.WithKinds())
+	t.Run("leading empty line is its own withheld record", func(t *testing.T) {
+		t.Parallel()
+		var sink bytes.Buffer
+		w := NewWriter(&sink, scanner)
+		if _, err := w.Write([]byte("\n{\"msg\":\"a\"}\n")); err != nil {
+			t.Fatal(err)
+		}
+		want := `{"msg":"embargo: record withheld (masking error)","withheld_attributes":0}` + "\n" + `{"msg":"a"}` + "\n"
+		if sink.String() != want {
+			t.Fatalf("got %q, want %q", sink.String(), want)
+		}
+	})
+	t.Run("record of exactly the limit split across writes passes", func(t *testing.T) {
+		t.Parallel()
+		var sink bytes.Buffer
+		w := NewWriter(&sink, scanner)
+		input := "{\"x\":\"" + strings.Repeat("a", maxEventBytes-len("{\"x\":\"\"}\n")) + "\"}\n"
+		for _, part := range []string{input[:10], input[10:]} {
+			if _, err := w.Write([]byte(part)); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if sink.String() != input {
+			t.Fatalf("split record at the limit changed: %d bytes", sink.Len())
+		}
+	})
+}
+
 func TestWriterConcurrentWholeEvents(t *testing.T) {
 	t.Parallel()
 	var sink bytes.Buffer
@@ -112,6 +144,21 @@ func (d gateDetector) Scan([]byte) []embargo.Finding {
 	return nil
 }
 
+// await fails the test when fewer than count scans start in time, so a writer
+// that never reaches the detector fails instead of hanging the test binary.
+func (d gateDetector) await(t *testing.T, count int) {
+	t.Helper()
+	deadline := time.After(5 * time.Second)
+	for range count {
+		select {
+		case <-d.entered:
+		case <-deadline:
+			close(d.release)
+			t.Fatalf("fewer than %d scans started", count)
+		}
+	}
+}
+
 func TestWriterMasksWholeEventsOutsideTheLock(t *testing.T) {
 	t.Parallel()
 	gate := gateDetector{entered: make(chan struct{}, 4), release: make(chan struct{})}
@@ -125,8 +172,7 @@ func TestWriterMasksWholeEventsOutsideTheLock(t *testing.T) {
 			}
 		})
 	}
-	<-gate.entered
-	<-gate.entered
+	gate.await(t, 2)
 	close(gate.release)
 	group.Wait()
 	if sink.String() != "{\"msg\":\"public\"}\n{\"msg\":\"public\"}\n" {
@@ -144,9 +190,17 @@ func TestWriterDropsEventMaskedAcrossClose(t *testing.T) {
 		_, err := w.Write([]byte("{\"msg\":\"public\"}\n"))
 		done <- err
 	}()
-	<-gate.entered
-	if err := w.Close(); err != nil {
-		t.Fatal(err)
+	gate.await(t, 1)
+	closed := make(chan error, 1)
+	go func() { closed <- w.Close() }()
+	select {
+	case err := <-closed:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(5 * time.Second):
+		close(gate.release)
+		t.Fatal("Close waited for an event being masked")
 	}
 	close(gate.release)
 	if err := <-done; !errors.Is(err, io.ErrClosedPipe) || sink.Len() != 0 {

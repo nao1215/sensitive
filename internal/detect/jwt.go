@@ -96,7 +96,7 @@ func extractJWTToken(data []byte, i int) (end int, parts [][]byte, ok bool) {
 	// Leading boundary: reject if preceded by a base64url character
 	// (alphanumeric, '-', or '_'). This prevents false positives when
 	// "eyJ" appears inside a longer base64url-encoded string.
-	if i > 0 && isTokenByte(data[i-1]) && !encodedSeparatorBefore(data, i) {
+	if !leadingBoundary(data, i, isTokenByte) {
 		return i + 1, nil, false
 	}
 

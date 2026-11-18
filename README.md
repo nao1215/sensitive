@@ -133,7 +133,7 @@ logger.Info("checkout", "email", "alice@example.com")
 // Output: {"level":"INFO","msg":"checkout","email":"[REDACTED]"}
 ```
 
-Limits: MaskJSON bounds encoded input/output to 1 MiB, nesting to 64 and cumulative detector input to 4 MiB; logger writers include the newline in their 1 MiB limit. Recorder WithLimits bounds retained bytes and child Run time. Input decoding has no size limit; bound its upstream reader. MarshalJSON, LogValue, String and Error run before these byte limits apply, so their time and memory are not bounded; use Secret or a LogValuer returning a bounded value. [Details](doc/logging.md#bounds-and-failures)
+Limits: MaskJSON bounds encoded input/output to 1 MiB, nesting to 64 and cumulative detector input to 4 MiB; logger writers include the newline in their 1 MiB limit. Recorder WithMaxBytes bounds retained bytes and WithTimeout bounds child Run time. Input decoding has no size limit; bound its upstream reader. MarshalJSON, LogValue, String and Error run before these byte limits apply, so their time and memory are not bounded; use Secret or a LogValuer returning a bounded value. [Details](doc/logging.md#bounds-and-failures)
 
 Every adapter and hook uses the same detectors and key rules as the slog handler. The HTTP and gRPC hooks mask what they log, not the request your service receives or the response it sends. gin, echo and Connect servers are `http.Handler`s, so `NewHTTPHandler` wraps them unchanged; [a test runs all three](tests/integrations_test.go). [Installation and limits](doc/adapters.md)
 
@@ -150,7 +150,7 @@ fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
 ```
 
 <!-- speed-summary:start -->
-On the same five JSON slog events, go-masker takes 1.04 to 1.33 times the time of embargo given the same email and card rules. With its default scanner, embargo takes 0.59 to 0.99 times the time of pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
+On the same five JSON slog events, go-masker takes 0.98 to 1.31 times the time of embargo given the same email and card rules. With its default scanner, embargo takes 0.60 to 1.06 times the time of pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
 <!-- speed-summary:end -->
 
 ## Find and mask sensitive text
@@ -188,7 +188,7 @@ The cells excerpt each constant's godoc; follow the Kind link for the full rule 
 | [KindPAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN) | finds 13–19 digits with Visa, Mastercard, Amex, JCB, Discover, Diners or UnionPay prefixes | Luhn plus issuer length scores 1.0, a failed checksum 0.6, and an attached business label 0.4 | on |
 | [KindEmail](https://pkg.go.dev/github.com/nao1215/embargo@main#KindEmail) | extracts ASCII local parts using letters, digits and .+-_ before @ and dotted domains using letters, digits and .- | structure checks score 0.7 or 0.8 for an unknown TLD and 0.9 or 1.0 for a known TLD | on |
 | [KindJPPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJPPhone) | recognizes 10- or 11-digit Japanese numbers beginning with 0, allowing spaces, hyphens and parentheses | prefix/length checks score landlines 0.8, other accepted types 0.9, and business labels 0.4 | on |
-| [KindUSPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSPhone) | recognizes separated ten-digit North American numbers such as (202) 555-0123, 202-555-0123, 202.555.0123 or 202 555 … | area and exchange codes are checked against the numbering plan (area 2–9 then 0–8, exchange 2–9 and not N11) and the … | on |
+| [KindUSPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSPhone) | recognizes separated ten-digit North American numbers such as (202) 555-0123 or 202.555.0123, with an optional +1 or … | numbering-plan and matching-separator checks score 0.7, 0.9 after a phone, tel, mobile, cell, fax, call or contact … | on |
 | [KindMyNumber](https://pkg.go.dev/github.com/nao1215/embargo@main#KindMyNumber) | recognizes 12 digits with optional spaces or hyphens as Japanese individual-number candidates | the weighted MOD 11 check gives 0.95, or 0.4 under a business label, without requiring a keyword; only a contiguous … | on |
 | [KindJWT](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJWT) | parses eyJ-prefixed base64url text with exactly two dots and nonempty header and payload segments | header checks yield 0.5, 0.7 or 0.8 with an empty signature, and 0.7, 0.9 or 1.0 otherwise | on |
 | [KindAWSKey](https://pkg.go.dev/github.com/nao1215/embargo@main#KindAWSKey) | identifies AKIA (long-term), ASIA (temporary), ABIA (STS service bearer) or ACCA (context-specific) followed by … | length, alphabet and alphanumeric boundary checks give 0.95 without a context keyword or authentication | on |
@@ -273,12 +273,13 @@ In a sample service with planted leaks (a DSN, wrapped errors, an Authorization 
 
 ## Command line
 
-The `embargo` command masks log files or a pipe line by line, keeps JSON lines' shape and depends only on the standard library.
+The `embargo` command masks a log file or a pipe line by line, keeps JSON lines' shape and depends only on the standard library.
 
 ```sh
 go install github.com/nao1215/embargo/cmd/embargo@v0.13.0
 kubectl logs deploy/api | embargo
-embargo --report --kinds all app.log
+embargo --format json app.log
+embargo --format jsonl app.log
 ```
 
 <!-- cli-example: e2e/atago/cli.atago.yaml -->
@@ -287,7 +288,7 @@ $ printf '%s\n' 'login failed for alice@example.com from 203.0.113.7' | embargo
 login failed for [REDACTED] from [REDACTED]
 ```
 
-`--report` prints per-kind counts and masked byte locations instead, without echoing the input. [Flags, limits and comparing settings](doc/audit.md)
+The masked lines are what you paste into a ticket or hand to an LLM. `--format json` prints per-kind counts with a few locations, and `--format jsonl` prints one line per finding with its line, column and kind; neither prints a matched value. Because jsonl prints nothing for a clean log, `embargo --format jsonl app.log | grep -q .` is true exactly when a log holds a secret, which is enough for a CI step. [Flags, limits and comparing settings](doc/audit.md)
 
 ## Tested outputs
 

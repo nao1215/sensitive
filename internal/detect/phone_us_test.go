@@ -70,12 +70,3 @@ func TestUSPhoneScoresAndName(t *testing.T) {
 		t.Errorf("country code start: %+v", got)
 	}
 }
-
-func TestHasDigitRunNeedsConsecutiveDigits(t *testing.T) {
-	t.Parallel()
-	for input, want := range map[string]bool{"1234": true, "a12b34": false, "12 3456": true, "123": false} {
-		if got := hasDigitRun([]byte(input), 4); got != want {
-			t.Errorf("hasDigitRun(%q, 4) = %v, want %v", input, got, want)
-		}
-	}
-}

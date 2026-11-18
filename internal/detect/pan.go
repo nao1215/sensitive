@@ -34,20 +34,6 @@ const (
 	panMaxDigits = 19
 )
 
-// hasDigits reports whether data contains at least n ASCII digits.
-func hasDigits(data []byte, n int) bool {
-	count := 0
-	for _, b := range data {
-		if ascii.IsDigit(b) {
-			count++
-			if count == n {
-				return true
-			}
-		}
-	}
-	return false
-}
-
 // PAN implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN.
 type PAN struct{}
@@ -129,7 +115,7 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		start := i
 		// Card digits fit the array; a longer run grows past it and is rejected by length.
 		var stack [panMaxDigits + 1]byte
-		digits, end := extractSeparatedDigits(data, start, stack[:0])
+		digits, end := appendSeparatedDigits(data, start, stack[:0], cardSeparator)
 
 		// Check digit count: valid PANs are 13-19 digits.
 		digitLen := len(digits)
@@ -145,32 +131,12 @@ func (d *PAN) scanNormalized(orig, data []byte, posMap []int) []Finding {
 	return findings
 }
 
-// extractSeparatedDigits appends the digits of the run at start to digits,
-// allowing '-' and ' ' separators, and returns the end trimmed to the last
-// digit. Card numbers and My Number share this run grammar.
-func extractSeparatedDigits(data []byte, start int, digits []byte) (run []byte, end int) {
-	j := start
-	for j < len(data) && (ascii.IsDigit(data[j]) || data[j] == '-' || data[j] == ' ') {
-		if ascii.IsDigit(data[j]) {
-			digits = append(digits, data[j])
-		}
-		j++
-	}
-	// Trim trailing separators (spaces, hyphens) so the end position
-	// points to the character after the last digit.
-	end = j
-	for end > start && !ascii.IsDigit(data[end-1]) {
-		end--
-	}
-	return digits, end
-}
-
 // panBounded reports whether [start, end) is not embedded in an identifier,
 // allowing an encoded separator before the original start.
 func panBounded(orig, data []byte, posMap []int, start, end int) bool {
-	leadingBoundary := start == 0 || !isIdentifierByte(data[start-1]) || encodedSeparatorBefore(orig, originalPosition(posMap, start))
-	trailingBoundary := end == len(data) || !isIdentifierByte(data[end])
-	return leadingBoundary && trailingBoundary
+	leading := leadingBoundaryView(orig, posMap, data, start, isIdentifierByte)
+	trailing := trailingBoundary(data, end, isIdentifierByte)
+	return leading && trailing
 }
 
 // evaluateCandidate checks whether a digit sequence is a valid PAN and returns
@@ -208,14 +174,7 @@ func (d *PAN) evaluateCandidate(orig []byte, posMap []int, digits []byte, digitL
 		return Finding{}, false
 	}
 
-	origStart, origEnd := mapOriginalRange(posMap, start, end)
-
-	return Finding{
-		DetectorName: d.Name(),
-		Start:        origStart,
-		End:          origEnd,
-		Confidence:   businessConfidence(orig, origStart, confidence),
-	}, true
+	return labeledViewFinding(d.Name(), orig, posMap, start, end, confidence), true
 }
 
 // passesLuhn implements the Luhn algorithm (MOD 10) for check digit validation.

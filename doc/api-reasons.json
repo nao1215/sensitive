@@ -1,0 +1,614 @@
+[
+  {
+    "symbols": [
+      "embargo.NewScanner"
+    ],
+    "need": "Every caller that masks text, JSON or log records builds one Scanner with the detectors and threshold its data needs and shares it across goroutines.",
+    "without": "Without a constructor each call site would have to pass the kind list and threshold to every Mask, slog and adapter call, and could not share the compiled dispatch tables."
+  },
+  {
+    "symbols": [
+      "embargo.Scanner"
+    ],
+    "need": "Handlers, adapters, embargotest and the CLI all take the same *Scanner so one configuration decides what is masked everywhere in a program.",
+    "without": "Without a shared type each hook would take its own option list, and a team could configure the HTTP log and the slog handler differently by mistake."
+  },
+  {
+    "symbols": [
+      "embargo.ScannerOption"
+    ],
+    "need": "NewScanner takes a sealed option type so callers choose kinds, threshold, custom detectors and sensitive keys in one call that later options cannot break.",
+    "without": "Without an option type NewScanner would need a config struct whose zero values are ambiguous (zero threshold versus unset) and whose fields could not be validated in one place."
+  },
+  {
+    "symbols": [
+      "embargo.WithKinds"
+    ],
+    "need": "A service that handles only email and cards selects those kinds, which removes false positives from unrelated detectors and lowers the scan cost.",
+    "without": "Without it a caller could only use the default 26 kinds and would filter findings afterwards, paying for every detector and still masking with WithAll's opt-in kinds unavailable."
+  },
+  {
+    "symbols": [
+      "embargo.WithAll"
+    ],
+    "need": "A service that stores identifiers from several countries enables every national ID kind and the entropy heuristic in one option, including kinds added in later releases.",
+    "without": "Without it the caller would list all 38 kinds in WithKinds and would silently miss any kind a later release adds."
+  },
+  {
+    "symbols": [
+      "embargo.WithMinConfidence"
+    ],
+    "need": "A team that sees too many low-score findings, such as PAN checksum failures or labelled business numbers, drops them below a threshold it chose from doc/accuracy.md.",
+    "without": "Without it every caller of Scan would filter Confidence by hand, and the slog handler, MaskJSON and adapters, which mask internally, could not be tuned at all."
+  },
+  {
+    "symbols": [
+      "embargo.WithDetector"
+    ],
+    "need": "An application with its own identifier format, such as an internal customer number, adds a detector that every hook and embargotest then uses like a built-in.",
+    "without": "Without it the application would mask its own format in a separate pass after each hook, and slog, MaskJSON and the adapters would never see the custom kind."
+  },
+  {
+    "symbols": [
+      "embargo.WithSensitiveKeys"
+    ],
+    "need": "A team whose payloads name secrets with its own keys, such as x_partner_sig, replaces the key list so values under those keys are hidden whatever they contain.",
+    "without": "Without it values under unusual key names would be masked only when a detector recognized the value, and opaque signatures that match no detector would leak."
+  },
+  {
+    "symbols": [
+      "embargo.Detector"
+    ],
+    "need": "An application that implements WithDetector needs the method set its custom detector must satisfy, and the documented contract for spans and scores.",
+    "without": "Without a named interface WithDetector would take a bare function and the contract (terminate, no mutation, valid spans) would have nowhere to be documented."
+  },
+  {
+    "symbols": [
+      "embargo.Detector.Scan"
+    ],
+    "need": "A custom detector returns its findings for one input; this is the single method the scanner calls on it.",
+    "without": "Without a method on the interface there would be no way for the scanner to call the custom detector on the bytes it already normalized and bounded."
+  },
+  {
+    "symbols": [
+      "embargo.Finding"
+    ],
+    "need": "Callers of Scan need each match's kind, byte range and score to mask, count or report it, as the audit CLI and custom report code do.",
+    "without": "Without a result type Scan could only return masked text, and callers could not count by kind, keep some kinds visible or write their own report."
+  },
+  {
+    "symbols": [
+      "embargo.Finding.Kind"
+    ],
+    "need": "Callers of Scan read Finding.Kind to group findings by kind, keep a kind visible or report counts per kind.",
+    "without": "Without the field the caller would have to rescan or reparse the matched text to recover the same information, which the detector already computed."
+  },
+  {
+    "symbols": [
+      "embargo.Finding.Start"
+    ],
+    "need": "Callers of Scan read Finding.Start to slice the original input, highlight the match or report a column without copying the value.",
+    "without": "Without the field the caller would have to rescan or reparse the matched text to recover the same information, which the detector already computed."
+  },
+  {
+    "symbols": [
+      "embargo.Finding.End"
+    ],
+    "need": "Callers of Scan read Finding.End to slice the original input and know where the match stops, which Mask needs to merge overlaps.",
+    "without": "Without the field the caller would have to rescan or reparse the matched text to recover the same information, which the detector already computed."
+  },
+  {
+    "symbols": [
+      "embargo.Finding.Confidence"
+    ],
+    "need": "Callers of Scan read Finding.Confidence to apply their own threshold per kind or show how certain a match is, as doc/audit.md does.",
+    "without": "Without the field the caller would have to rescan or reparse the matched text to recover the same information, which the detector already computed."
+  },
+  {
+    "symbols": [
+      "embargo.Kind"
+    ],
+    "need": "Findings, WithKinds, WithAllowedKinds and custom detectors all name a detector by a typed string so a typo in a kind fails WithKinds instead of matching nothing.",
+    "without": "Without a named type kinds would be plain strings and a misspelled kind passed to WithKinds or WithAllowedKinds would silently select nothing."
+  },
+  {
+    "symbols": [
+      "embargo.KindABARouting",
+      "embargo.KindACHTrace",
+      "embargo.KindAWSKey",
+      "embargo.KindBTC",
+      "embargo.KindBankAccount",
+      "embargo.KindBrazilCNPJ",
+      "embargo.KindBrazilCPF",
+      "embargo.KindCVV",
+      "embargo.KindCanadaSIN",
+      "embargo.KindCardExpiry",
+      "embargo.KindChinaResidentID",
+      "embargo.KindCredential",
+      "embargo.KindETH",
+      "embargo.KindEmail",
+      "embargo.KindGitHubToken",
+      "embargo.KindGoogleAPIKey",
+      "embargo.KindHighEntropy",
+      "embargo.KindIBAN",
+      "embargo.KindIPAddr",
+      "embargo.KindIndiaAadhaar",
+      "embargo.KindIndiaPAN",
+      "embargo.KindJPPhone",
+      "embargo.KindJWT",
+      "embargo.KindKoreaRRN",
+      "embargo.KindMerchantID",
+      "embargo.KindMyNumber",
+      "embargo.KindPAN",
+      "embargo.KindPaymentToken",
+      "embargo.KindPrivateKeyPEM",
+      "embargo.KindSWIFTBIC",
+      "embargo.KindServiceToken",
+      "embargo.KindSlackToken",
+      "embargo.KindUKNHS",
+      "embargo.KindUKNINO",
+      "embargo.KindUKSortCode",
+      "embargo.KindUSITIN",
+      "embargo.KindUSPhone",
+      "embargo.KindUSSSN"
+    ],
+    "need": "Each constant names one built-in detector so a caller can select it in WithKinds, allow it in embargotest or compare Finding.Kind against it.",
+    "without": "Without constants callers would type the string values, and a renamed or misspelled kind would compile and then select or allow nothing."
+  },
+  {
+    "symbols": [
+      "embargo.Scanner.Scan"
+    ],
+    "need": "Code that already holds bytes, such as a request body or a buffered log line, gets the findings without converting to a string.",
+    "without": "Without it the caller would convert to a string for ScanString, copying the input on every call in the hot path of a log writer."
+  },
+  {
+    "symbols": [
+      "embargo.Scanner.ScanString"
+    ],
+    "need": "Code that holds a string, such as an error message or a formatted log line, gets the findings for Mask without converting to bytes.",
+    "without": "Without it the caller would write scanner.Scan([]byte(s)) and pay a copy on every call, as the README example would show."
+  },
+  {
+    "symbols": [
+      "embargo.Scanner.ScanLines"
+    ],
+    "need": "A program that audits a log file or a stream reports each finding with its line number without loading the whole input or splitting lines itself.",
+    "without": "Without it the caller would write a bufio loop, handle CRLF, long lines and PEM blocks that span lines, which ScanLines already gets right."
+  },
+  {
+    "symbols": [
+      "embargo.Scanner.MaskJSON"
+    ],
+    "need": "Code that sends JSON to a support system, an audit export or an API log masks it while keeping keys, numbers, booleans and nesting.",
+    "without": "Without it the caller would decode into any, walk the tree, scan each string and re-encode, and would lose number precision and key order on the way."
+  },
+  {
+    "symbols": [
+      "embargo.Scanner.MaskJSONContext"
+    ],
+    "need": "Request-scoped work, such as masking a large response body in an HTTP middleware or OpenTelemetry export, stops when the request or export is cancelled.",
+    "without": "Without it a cancelled request would keep scanning a large document to the end, and the OpenTelemetry adapter could not honour the exporter's deadline."
+  },
+  {
+    "symbols": [
+      "embargo.Mask"
+    ],
+    "need": "Code that writes a log line or error message replaces every finding with [REDACTED], merging overlapping spans correctly.",
+    "without": "Without it every caller would sort findings, merge overlaps and handle invalid ranges itself, and a wrong merge would print part of a secret."
+  },
+  {
+    "symbols": [
+      "embargo.MaskFunc"
+    ],
+    "need": "A team that must keep a different marker per kind, such as [EMAIL] or a hash for joining records, replaces each merged span through its own function.",
+    "without": "Without it the team would reimplement the overlap merge of Mask to write its own marker, and a mistake there prints part of the secret."
+  },
+  {
+    "symbols": [
+      "embargo.NewSlogHandler"
+    ],
+    "need": "A service that logs through log/slog wraps its existing handler so structs, errors and strings are masked while keys, types and nesting stay the same.",
+    "without": "Without it every log call would wrap values by hand, and any field added later to a logged struct would be printed until someone remembered to mask it."
+  },
+  {
+    "symbols": [
+      "embargo.NewHTTPHandler"
+    ],
+    "need": "A net/http server writes one access log record per request with tokens and personal data masked in the path, query and headers.",
+    "without": "Without it the server would build its own access log middleware and mask the request line itself, which is where reset tokens and emails usually leak."
+  },
+  {
+    "symbols": [
+      "embargo.NewSecret"
+    ],
+    "need": "Code that loads an API key or password wraps it once so fmt, JSON, XML, templates and loggers print [REDACTED] instead of the value.",
+    "without": "Without it the value would be a plain string and any log call, error wrap or %+v of the enclosing struct would print it."
+  },
+  {
+    "symbols": [
+      "embargo.Secret"
+    ],
+    "need": "Structs that hold a credential declare the field as Secret[string] so the type itself prevents printing, including inside unexported fields.",
+    "without": "Without a type the struct field would be a string and printing the struct, or marshalling it to JSON, would expose the credential."
+  },
+  {
+    "symbols": [
+      "embargo.Secret.Reveal"
+    ],
+    "need": "The one place that needs the real credential, such as an HTTP client setting a header, reads it explicitly and visibly in code review.",
+    "without": "Without it the value could not be read back at all, or it would need an accessor whose name hides that the secret leaves its wrapper."
+  },
+  {
+    "symbols": [
+      "embargo.Input"
+    ],
+    "need": "A request or config DTO declares a field as Input[string] so the decoded password or token is a Secret from the moment it is read.",
+    "without": "Without it the DTO would decode into a string field and the plain value would live in the struct, where a log of the request prints it."
+  },
+  {
+    "symbols": [
+      "embargo.Input.Secret"
+    ],
+    "need": "After decoding a DTO, the handler takes the decoded value as a Secret to pass on, which is the only way to get the value out of Input.",
+    "without": "Without it the decoded value would be unreachable, or Input would need Reveal and the explicit hand-off to a Secret would be lost."
+  },
+  {
+    "symbols": [
+      "embargo.Secret.Format"
+    ],
+    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Secret, so the output is [REDACTED].",
+    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Secret exists to prevent.",
+    "implements": "fmt.Formatter"
+  },
+  {
+    "symbols": [
+      "embargo.Secret.GoString"
+    ],
+    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Secret, so the output is [REDACTED].",
+    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Secret exists to prevent.",
+    "implements": "fmt.GoStringer"
+  },
+  {
+    "symbols": [
+      "embargo.Secret.String"
+    ],
+    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Secret, so the output is [REDACTED].",
+    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Secret exists to prevent.",
+    "implements": "fmt.Stringer"
+  },
+  {
+    "symbols": [
+      "embargo.Secret.LogValue"
+    ],
+    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Secret, so the output is [REDACTED].",
+    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Secret exists to prevent.",
+    "implements": "slog.LogValuer"
+  },
+  {
+    "symbols": [
+      "embargo.Secret.MarshalJSON"
+    ],
+    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Secret, so the output is [REDACTED].",
+    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Secret exists to prevent.",
+    "implements": "json.Marshaler"
+  },
+  {
+    "symbols": [
+      "embargo.Secret.MarshalText"
+    ],
+    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Secret, so the output is [REDACTED].",
+    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Secret exists to prevent.",
+    "implements": "encoding.TextMarshaler"
+  },
+  {
+    "symbols": [
+      "embargo.Input.Format"
+    ],
+    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Input, so the output is [REDACTED].",
+    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Input exists to prevent.",
+    "implements": "fmt.Formatter"
+  },
+  {
+    "symbols": [
+      "embargo.Input.GoString"
+    ],
+    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Input, so the output is [REDACTED].",
+    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Input exists to prevent.",
+    "implements": "fmt.GoStringer"
+  },
+  {
+    "symbols": [
+      "embargo.Input.String"
+    ],
+    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Input, so the output is [REDACTED].",
+    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Input exists to prevent.",
+    "implements": "fmt.Stringer"
+  },
+  {
+    "symbols": [
+      "embargo.Input.LogValue"
+    ],
+    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Input, so the output is [REDACTED].",
+    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Input exists to prevent.",
+    "implements": "slog.LogValuer"
+  },
+  {
+    "symbols": [
+      "embargo.Input.MarshalJSON"
+    ],
+    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Input, so the output is [REDACTED].",
+    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Input exists to prevent.",
+    "implements": "json.Marshaler"
+  },
+  {
+    "symbols": [
+      "embargo.Input.MarshalText"
+    ],
+    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Input, so the output is [REDACTED].",
+    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Input exists to prevent.",
+    "implements": "encoding.TextMarshaler"
+  },
+  {
+    "symbols": [
+      "embargo.Input.UnmarshalJSON"
+    ],
+    "need": "encoding/json calls this method when a request body or config file is decoded into a DTO with an Input field, so the value goes straight into a Secret.",
+    "without": "Without it the JSON decoder could not fill an Input field and the DTO would need a plain string field that holds the secret in the clear.",
+    "implements": "json.Unmarshaler"
+  },
+  {
+    "symbols": [
+      "embargo.Input.UnmarshalText"
+    ],
+    "need": "Text decoders such as encoding/xml attributes, flag values and environment config libraries call this method to fill an Input from a string.",
+    "without": "Without it those decoders could not fill an Input field and the secret would be read into a plain string first.",
+    "implements": "encoding.TextUnmarshaler"
+  },
+  {
+    "symbols": [
+      "embargo.Input.Scan"
+    ],
+    "need": "database/sql calls this method when a row column is scanned into an Input, so a stored token or password is a Secret as soon as it is read.",
+    "without": "Without it the caller would scan into a string or []byte, which the driver may reuse, and wrap it by hand after the plain value already existed.",
+    "implements": "sql.Scanner"
+  },
+  {
+    "symbols": [
+      "embargotest.New"
+    ],
+    "need": "A test creates a Recorder that holds a fake canary secret and captures every output the code under test writes, then checks that the canary never appears.",
+    "without": "Without it a test would plant its own fake secret, capture each output by hand and search them, and would miss encoded or split forms the Recorder checks."
+  },
+  {
+    "symbols": [
+      "embargotest.Recorder"
+    ],
+    "need": "Tests pass the Recorder's writers, HTTP recorder and canary to the code under test and call Check at the end; the type holds that state.",
+    "without": "Without a type the captures and canary would be loose variables and the test could not attach expectations or one final check."
+  },
+  {
+    "symbols": [
+      "embargotest.Option"
+    ],
+    "need": "New and Guard take sealed options so a test changes the canary, scanner, allowances and limits in one call that is validated at once.",
+    "without": "Without an option type New would need a config struct whose zero values are ambiguous, such as zero bytes meaning unlimited or unset."
+  },
+  {
+    "symbols": [
+      "embargotest.Recorder.Canary"
+    ],
+    "need": "The test passes the fake secret into the code under test through any input, such as t.Setenv, a header or a request body.",
+    "without": "Without it the test could not feed the Recorder's canary into the code, and would invent its own value that the Recorder does not search for."
+  },
+  {
+    "symbols": [
+      "embargotest.Recorder.Writer"
+    ],
+    "need": "The test gives the code under test a named io.Writer as its log or stdout sink, so its output is captured and searched for the canary.",
+    "without": "Without it the test would capture output in a bytes.Buffer and search it itself, missing the escaped, encoded and split forms the Recorder checks."
+  },
+  {
+    "symbols": [
+      "embargotest.Recorder.HTTP"
+    ],
+    "need": "A handler test writes the response into a named recorder so status, headers, body and trailers are all searched for the canary.",
+    "without": "Without it the test would use httptest.ResponseRecorder and check the body only, and secrets in headers or trailers would pass."
+  },
+  {
+    "symbols": [
+      "embargotest.Recorder.File"
+    ],
+    "need": "Code that reads a secret from a file path, such as a mounted credential file, gets a private temporary file holding the canary.",
+    "without": "Without it each test would create, chmod and clean up its own temp file with the canary, and could leave it world-readable."
+  },
+  {
+    "symbols": [
+      "embargotest.Recorder.Run"
+    ],
+    "need": "Code that leaks through a child process, os.Exit or a panic is run as a helper in a child so its real stdout and stderr are searched.",
+    "without": "Without it the test could not capture output written after the process exits or panics, which is where crash dumps print secrets."
+  },
+  {
+    "symbols": [
+      "embargotest.Recorder.Expect"
+    ],
+    "need": "A test also requires that the useful diagnostic, such as an error code, reached the sink, so masking that removes everything fails.",
+    "without": "Without it a test that passes because the log is empty would look the same as one that logged a masked record, and over-masking would go unnoticed."
+  },
+  {
+    "symbols": [
+      "embargotest.Recorder.ExpectJSON"
+    ],
+    "need": "A test of JSON logs requires count records at a path with given field values, such as {\"code\": \"signing_failed\"}, so the record survived masking.",
+    "without": "Without it the test would parse NDJSON by hand inside Expect for each log assertion, which every structured-log test needs."
+  },
+  {
+    "symbols": [
+      "embargotest.Recorder.Check"
+    ],
+    "need": "The test ends with one call that searches every capture for the canary and other findings and fails with the leaking sink named.",
+    "without": "Without it there would be no point where the captures are complete and searched, and leaks in late writes would be missed."
+  },
+  {
+    "symbols": [
+      "embargotest.Guard"
+    ],
+    "need": "A package's TestMain runs every test under a supervisor that searches real stdout, stderr, t.Log and panics for findings, without changing each test.",
+    "without": "Without it each test would need its own Recorder and still could not see output written by t.Log, panics or goroutines that outlive the test."
+  },
+  {
+    "symbols": [
+      "embargotest.CheckValue"
+    ],
+    "need": "A test checks that a type holding a secret, such as a config struct, prints no canary through fmt, JSON, XML, templates, slog or wrapped errors.",
+    "without": "Without it the test would print the value through each of those paths itself and would likely skip XML, templates or error wrapping."
+  },
+  {
+    "symbols": [
+      "embargotest.WithCanary"
+    ],
+    "need": "A test whose code validates input format, such as a key with a fixed prefix, supplies its own fake canary that the code accepts.",
+    "without": "Without it the Recorder's random canary would be rejected by the code under test, and the test could not reach the logging path."
+  },
+  {
+    "symbols": [
+      "embargotest.WithScanner"
+    ],
+    "need": "A test checks output with the same Scanner configuration the application uses, such as opt-in national IDs or a custom detector.",
+    "without": "Without it the Recorder would search with the default 26 kinds only and would miss leaks of kinds the application enabled."
+  },
+  {
+    "symbols": [
+      "embargotest.WithAllowedKinds"
+    ],
+    "need": "A test whose fixtures contain fake data of a kind, such as sample IP addresses in access logs, stops those findings from failing the check.",
+    "without": "Without it every test with realistic fixtures would fail on findings that are not leaks, and teams would turn the check off."
+  },
+  {
+    "symbols": [
+      "embargotest.WithAllowedValues"
+    ],
+    "need": "A test allows exact fixture values, such as a documented sample email, while other findings of the same kind still fail.",
+    "without": "Without it the test could only allow the whole kind through WithAllowedKinds and would then miss a real leak of that kind."
+  },
+  {
+    "symbols": [
+      "embargotest.WithCanaryFragments"
+    ],
+    "need": "A test of code that truncates or splits values across lines also fails when a long piece of the canary appears.",
+    "without": "Without it a log that prints the first 40 bytes of a token, or one half per line, would pass because the whole canary never appears."
+  },
+  {
+    "symbols": [
+      "embargotest.WithMaxBytes"
+    ],
+    "need": "A test that produces large output raises the capture limit, or a memory-bound test lowers it, without changing the timeout.",
+    "without": "Without it the test would hit the default capture limit and fail on truncation, with no way to raise only that bound."
+  },
+  {
+    "symbols": [
+      "embargotest.WithTimeout"
+    ],
+    "need": "A test whose child helper or validator runs long raises the deadline, or a fast suite lowers it, without changing the capture limit.",
+    "without": "Without it a slow helper under Run would time out at the default deadline, with no way to raise only that bound."
+  },
+  {
+    "symbols": [
+      "embargozap.NewWriteSyncer"
+    ],
+    "need": "A service that logs through zap wraps its WriteSyncer so every encoded entry is masked before it is written, with no change to log calls.",
+    "without": "Without it the service would write its own WriteSyncer that parses each JSON entry, masks it and forwards it, or move its logging to slog."
+  },
+  {
+    "symbols": [
+      "embargozerolog.NewWriter"
+    ],
+    "need": "A service that logs through zerolog wraps its output writer so every JSON event is masked before it is written, with no change to log calls.",
+    "without": "Without it the service would write its own io.Writer that splits events, masks them and forwards them, or move its logging to slog."
+  },
+  {
+    "symbols": [
+      "embargologrus.NewFormatter"
+    ],
+    "need": "A service that logs through logrus wraps its formatter so every entry is masked after formatting, with no change to log calls.",
+    "without": "Without it the service would write its own logrus.Formatter that masks fields and messages, or move its logging to slog."
+  },
+  {
+    "symbols": [
+      "embargogrpc.NewUnaryServerInterceptor"
+    ],
+    "need": "A gRPC server logs one masked record per unary call, with tokens and personal data in metadata and errors hidden.",
+    "without": "Without it the server would write its own interceptor and mask metadata and status messages, which is where bearer tokens usually leak."
+  },
+  {
+    "symbols": [
+      "embargogrpc.NewStreamServerInterceptor"
+    ],
+    "need": "A gRPC server logs one masked record per streaming call, with tokens and personal data in metadata and errors hidden.",
+    "without": "Without it the server would write its own stream interceptor and mask metadata and status messages, which is where bearer tokens usually leak."
+  },
+  {
+    "symbols": [
+      "embargootel.NewLogExporter"
+    ],
+    "need": "A service that exports logs through the OpenTelemetry SDK masks each record's body and attributes before they leave the process.",
+    "without": "Without it the service would wrap the exporter itself and walk every log record value, or rely on a collector after the data has left the process."
+  },
+  {
+    "symbols": [
+      "embargootel.NewSpanExporter"
+    ],
+    "need": "A service that exports traces masks span names, attributes, events and status messages, where SQL text and URLs often carry secrets.",
+    "without": "Without it the service would wrap the span exporter itself and copy every read-only span to mask it, which the SDK makes awkward."
+  },
+  {
+    "symbols": [
+      "embargosentry.NewBeforeSend"
+    ],
+    "need": "A service that reports errors to Sentry masks each event's message, exception, breadcrumbs, request and extra data before it is sent.",
+    "without": "Without it the service would write its own BeforeSend that walks every event field, and new fields Sentry adds would leak until it was updated."
+  },
+  {
+    "symbols": [
+      "embargo --format"
+    ],
+    "need": "An LLM agent or CI step picks the masked text, a summary document or one JSON object per finding with a single flag instead of one flag per output.",
+    "without": "Without it the command would need a separate flag for each output, as --report was, and a script could not ask for per-finding JSON lines at all."
+  },
+  {
+    "symbols": [
+      "embargo --kinds"
+    ],
+    "need": "An audit of one log source checks only the kinds that source can hold, or adds the opt-in national IDs with all, matching WithKinds in the library.",
+    "without": "Without it the command would always run the default 26 kinds, and an audit could not include the opt-in kinds or exclude noisy ones."
+  },
+  {
+    "symbols": [
+      "embargo --min-confidence"
+    ],
+    "need": "An audit that wants only strong findings drops low-score ones, matching WithMinConfidence, before counting or failing a CI step.",
+    "without": "Without it every script would filter the JSON output by confidence itself, and the default text output could not be tuned at all."
+  },
+  {
+    "symbols": [
+      "embargo --samples"
+    ],
+    "need": "A json report shows up to N locations per kind so a reviewer can open the lines, or zero for counts only in a CI log.",
+    "without": "Without it the report would always print a fixed number of locations, too many for a CI log or too few to review a noisy kind."
+  },
+  {
+    "symbols": [
+      "embargo --version"
+    ],
+    "need": "A bug report or CI log records which release of the command produced the output, since detection changes between minor versions.",
+    "without": "Without it a user could not tell which detector rules produced a finding, and go version -m on the binary is not something users know."
+  },
+  {
+    "symbols": [
+      "embargo --help"
+    ],
+    "need": "A user or an LLM agent reads the flags, formats and input rules from the command itself before running it on real logs.",
+    "without": "Without it the only documentation would be the README, which an agent in a shell or an offline machine may not have."
+  }
+]

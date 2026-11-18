@@ -8,8 +8,8 @@ import (
 	"reflect"
 )
 
-// Input decodes a string or byte slice during initialization. Do not decode or
-// display the same Input concurrently. Publish its Secret snapshot afterwards.
+// Input is a DTO field that decodes JSON, text or SQL into a Secret; call Secret
+// after decoding. Do not decode or display the same Input concurrently.
 // Decode into a fresh DTO: outer JSON syntax errors and absent fields bypass
 // these methods. Discard the entire DTO when its decoder fails.
 type Input[T interface{ ~string | ~[]byte }] struct{ secret Secret[T] }

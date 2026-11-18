@@ -1,6 +1,10 @@
 // Package embargotest records application outputs and checks them for a fake
 // secret, configured detector findings and expected content.
 //
+// Create a Recorder with New, connect its writers (Writer, HTTP, Run) to the code
+// under test, then call Check: it fails the test when the canary, or a value a
+// configured detector finds, appears in any recorded output.
+//
 // # Canary representations
 //
 // Check finds the canary as raw bytes, lower and upper case hex, padded and
@@ -34,7 +38,7 @@
 // inherited. Output appends to stdout and stderr sinks, including -test.v's
 // start marker, which proves a matching test ran. Set content expectations too.
 //
-// The earlier of ctx's deadline and WithLimits' timeout supervises the child.
+// The earlier of ctx's deadline and the WithTimeout bound supervises the child.
 // Cancel kills the direct child; Wait joins os/exec's pipe-copy and watcher
 // goroutines before return. WaitDelay bounds pipes held open after child exit.
 // Helpers must not create unmanaged descendants. Cancellation, timeouts,

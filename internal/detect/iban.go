@@ -79,7 +79,7 @@ func ibanPrefixAt(data []byte, i int) bool {
 	}
 
 	// Check that it's not part of a longer word.
-	return i == 0 || !ascii.IsAlphaNum(data[i-1]) || encodedSeparatorBefore(data, i)
+	return leadingBoundary(data, i, ascii.IsAlphaNum)
 }
 
 // validateIBANMod97 validates an IBAN using the MOD 97 algorithm (ISO 7064).

@@ -41,7 +41,7 @@ func (d *PaymentToken) Scan(data []byte) []Finding {
 
 	for i := 0; i < len(data); i++ {
 		// Word boundary: preceding character must not be alphanumeric or underscore.
-		if i > 0 && isIdentifierByte(data[i-1]) && !encodedSeparatorBefore(data, i) {
+		if !leadingBoundary(data, i, isIdentifierByte) {
 			continue
 		}
 

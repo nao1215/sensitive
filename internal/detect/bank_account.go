@@ -1,14 +1,20 @@
 package detect
 
+import "github.com/nao1215/embargo/internal/ascii"
+
 // BankAccount implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindBankAccount.
 type BankAccount struct {
-	bankAccountKeywords *keywordSet
+	holders [][]byte
+	rule    nearRule
 }
 
 // NewBankAccount finds account-shaped digits near banking labels without assuming a universal checksum.
 func NewBankAccount() *BankAccount {
-	return &BankAccount{bankAccountKeywords: bankAccountKeywords()}
+	d := &BankAccount{holders: holderNameKeywords()}
+	//nolint:mnd // Literal field widths follow the format rules documented on this detector.
+	d.rule = nearRule{keywords: bankAccountKeywords(), class: ascii.IsDigit, accept: d.confidence, radius: 50, minLen: 4, maxLen: 17}
+	return d
 }
 
 // Name returns "bank_account".
@@ -45,94 +51,18 @@ func (d *BankAccount) Scan(data []byte) []Finding {
 
 // scanNormalized performs bank account detection on normalized data.
 func (d *BankAccount) scanNormalized(data []byte, posMap []int) []Finding {
-	matches := d.bankAccountKeywords.findPositions(data)
-	if len(matches) == 0 {
-		return nil
-	}
-
-	var findings []Finding
-	used := make(map[int]struct{}) // track digit sequence start positions already reported
-
-	for _, m := range matches {
-		// Search for digit sequences near the keyword in normalized data.
-		//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-		seqs := extractDigitsNear(data, m.end, 50, 4, 17)
-		for _, seq := range seqs {
-			if _, ok := used[seq.start]; ok {
-				continue
-			}
-
-			used[seq.start] = struct{}{}
-
-			confidence := 0.50
-			// Check for holder name keywords near this specific digit sequence
-			// (within 50 bytes), not anywhere in the entire input.
-			//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-			if containsAnyNear(data, seq.start, seq.end, 50, holderNameKeywords()) {
-				confidence = 0.65
-			}
-
-			origStart, origEnd := mapOriginalRange(posMap, seq.start, seq.end)
-
-			findings = append(findings, Finding{
-				DetectorName: d.Name(),
-				Start:        origStart,
-				End:          origEnd,
-				Confidence:   confidence,
-			})
-		}
-	}
-
-	return findings
+	return d.rule.scan(nil, d.Name(), data, posMap)
 }
 
-// containsAny reports whether data contains any of the given byte sequences.
-func containsAny(data []byte, keywords [][]byte) bool {
-	for _, kw := range keywords {
-		if containsBytes(data, kw) {
-			return true
-		}
+// confidence raises the score when holder context appears within 50
+// bytes of this digit sequence, not anywhere in the input.
+func (d *BankAccount) confidence(data []byte, seq digitSequence) (float64, bool) {
+	//nolint:mnd // The radius and scores are documented on this detector.
+	if containsNear(data, seq.start, seq.end, 50, d.holders) {
+		return 0.65, true
 	}
-	return false
-}
-
-// containsAnyNear reports whether any of the given byte sequences appear
-// within the specified radius of the byte range [regionStart, regionEnd).
-// This enables proximity-based keyword matching instead of whole-input scanning.
-func containsAnyNear(data []byte, regionStart, regionEnd, radius int, keywords [][]byte) bool {
-	start := max(regionStart-radius, 0)
-	end := min(regionEnd+radius, len(data))
-	region := data[start:end]
-	for _, kw := range keywords {
-		if containsBytes(region, kw) {
-			return true
-		}
-	}
-	return false
-}
-
-// containsBytes is a simple bytes.Contains implementation to avoid importing bytes
-// in this file (it's already imported in context.go where bytes is used).
-func containsBytes(data, sub []byte) bool {
-	if len(sub) == 0 {
-		return true
-	}
-	if len(sub) > len(data) {
-		return false
-	}
-	for i := 0; i <= len(data)-len(sub); i++ {
-		match := true
-		for j := range sub {
-			if data[i+j] != sub[j] {
-				match = false
-				break
-			}
-		}
-		if match {
-			return true
-		}
-	}
-	return false
+	//nolint:mnd // The score is documented on this detector.
+	return 0.50, true
 }
 
 // bankAccountKeywords are the context keywords for bank account detection.
@@ -150,30 +80,17 @@ func bankAccountKeywords() *keywordSet {
 		// 預金口座 (deposit account)
 		{0xE9, 0xA0, 0x90, 0xE9, 0x87, 0x91, 0xE5, 0x8F, 0xA3, 0xE5, 0xBA, 0xA7},
 
-		// English keywords (longer first).
-		// Common mixed-case variants are included to reduce false negatives
-		// from case variations in real-world documents.
+		// English keywords; keywordSet folds ASCII case.
 		[]byte("bank account"),
-		[]byte("Bank Account"),
-		[]byte("Bank account"),
-		[]byte("BANK ACCOUNT"),
 		[]byte("account number"),
-		[]byte("Account Number"),
-		[]byte("Account number"),
-		[]byte("ACCOUNT NUMBER"),
 		[]byte("acct no"),
-		[]byte("Acct No"),
-		[]byte("Acct no"),
-		[]byte("ACCT NO"),
 		[]byte("account no"),
-		[]byte("Account No"),
-		[]byte("Account no"),
-		[]byte("ACCOUNT NO"),
 	})
 }
 
 // holderNameKeywords are keywords indicating holder/beneficiary name context.
-// Their presence near a bank account number increases confidence.
+// Their presence near a bank account number increases confidence. They match
+// byte for byte.
 func holderNameKeywords() [][]byte {
 	return [][]byte{
 		// 名義 (holder name)

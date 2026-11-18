@@ -21,6 +21,9 @@ func (d *ABARouting) Hints() [][]byte {
 	return nil
 }
 
+// startBytes reports that every candidate contains an ASCII or full-width digit.
+func (d *ABARouting) startBytes() []byte { return digitStarts() }
+
 // Scan returns matches in data using the rules documented on [ABARouting].
 func (d *ABARouting) Scan(data []byte) []Finding {
 	normalized, posMap := normalizeDigits(data)
@@ -61,16 +64,8 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			i = end - 1
 			continue
 		}
-		confidence := 0.85
-
-		origStart, origEnd := mapOriginalRange(posMap, i, end)
-
-		findings = append(findings, Finding{
-			DetectorName: d.Name(),
-			Start:        origStart,
-			End:          origEnd,
-			Confidence:   confidence,
-		})
+		//nolint:mnd // The detector contract documents this heuristic score.
+		findings = append(findings, viewFinding(d.Name(), posMap, i, end, 0.85))
 
 		i = end - 1
 	}
@@ -89,7 +84,7 @@ func normalizedEscapeSeparator(orig []byte, posMap []int, n, i int) bool {
 // abaWordStart reports whether a digit at i begins a word: the preceding byte
 // is not alphanumeric unless an encoded separator precedes the original byte.
 func abaWordStart(orig, data []byte, posMap []int, i int) bool {
-	return i == 0 || !ascii.IsAlphaNum(data[i-1]) || encodedSeparatorBefore(orig, originalPosition(posMap, i))
+	return leadingBoundaryView(orig, posMap, data, i, ascii.IsAlphaNum)
 }
 
 // validateABAChecksum validates the ABA routing number checksum.

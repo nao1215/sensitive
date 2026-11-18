@@ -16,8 +16,9 @@ import (
 func TestCanaryHTTPInputs(t *testing.T) {
 	t.Parallel()
 	r := New(t)
-	request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "http://example.com/", r.Reader())
-	request.Header = r.Header("Authorization")
+	// Standard library types carry the canary into HTTP inputs.
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "http://example.com/", bytes.NewReader(r.Canary()))
+	request.Header.Set("Authorization", string(r.Canary()))
 	body, err := io.ReadAll(request.Body)
 	if err != nil {
 		t.Fatal(err)

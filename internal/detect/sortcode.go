@@ -1,18 +1,18 @@
 package detect
 
 import (
-	"bytes"
-
 	"github.com/nao1215/embargo/internal/ascii"
 )
 
 // UKSortCode implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKSortCode.
-type UKSortCode struct{}
+type UKSortCode struct {
+	context [][]byte
+}
 
 // NewUKSortCode requires separators and context only for date-like candidates.
 func NewUKSortCode() *UKSortCode {
-	return &UKSortCode{}
+	return &UKSortCode{context: sortCodeContextKeywords()}
 }
 
 // Name returns "uk_sortcode".
@@ -70,7 +70,7 @@ func isValidSortCodeBoundary(data []byte, i, end int, sep byte) bool {
 // or by another separated digit pair.
 func sortCodeLeadingBoundary(data []byte, i int, sep byte) bool {
 	// Word boundary: preceding character must not be a digit or letter.
-	if i > 0 && ascii.IsAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
+	if !leadingBoundary(data, i, ascii.IsAlphaNum) {
 		return false
 	}
 
@@ -144,7 +144,7 @@ func (d *UKSortCode) Scan(data []byte) []Finding {
 		// pattern could be a calendar date. If sort code context keywords
 		// are nearby, accept with reduced confidence. Otherwise reject.
 		if isSortCodeDateLike(data[i], data[i+1], data[i+3], data[i+4], data[i+6], data[i+7]) {
-			if !hasSortCodeContext(data, i, end) {
+			if !d.hasContext(data, i, end) {
 				continue
 			}
 			confidence = 0.55
@@ -191,25 +191,17 @@ func isSortCodeDateLike(d1h, d1l, d2h, d2l, d3h, d3l byte) bool {
 	return false
 }
 
-// hasSortCodeContext checks for sort code-related keywords near the candidate.
+// hasContext checks for sort code-related keywords near the candidate.
 // When a date-like pattern has sort code context, it is accepted with reduced
 // confidence rather than being silently rejected.
-func hasSortCodeContext(data []byte, start, end int) bool {
+func (d *UKSortCode) hasContext(data []byte, start, end int) bool {
 	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-	searchStart := max(start-40, 0)
-	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-	searchEnd := min(end+40, len(data))
-	window := bytes.ToLower(data[searchStart:searchEnd])
-	for _, kw := range sortCodeContextKeywords() {
-		if bytes.Contains(window, kw) {
-			return true
-		}
-	}
-	return false
+	return containsFoldNear(data, start, end, 40, d.context)
 }
 
 // sortCodeContextKeywords are keywords that indicate a sort code context.
-// All values are lowercase because the search window is lowered before matching.
+// They are lowercase because containsFoldNear folds only the data. The table
+// is built once per detector.
 func sortCodeContextKeywords() [][]byte {
 	return [][]byte{
 		[]byte("sort code"),

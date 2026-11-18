@@ -25,6 +25,26 @@ func encodedSeparatorBefore(data []byte, start int) bool {
 	}
 }
 
+// leadingBoundary reports whether a candidate may start at data[i]: i is the
+// start of data, the previous byte is outside class, or a documented
+// percent-encoded separator ends at i.
+func leadingBoundary(data []byte, i int, class func(byte) bool) bool {
+	return i == 0 || !class(data[i-1]) || encodedSeparatorBefore(data, i)
+}
+
+// leadingBoundaryView is leadingBoundary for a normalized view: the previous
+// byte is read in data, and the encoded separator in orig at the original
+// position posMap gives for i.
+func leadingBoundaryView(orig []byte, posMap []int, data []byte, i int, class func(byte) bool) bool {
+	return i == 0 || !class(data[i-1]) || encodedSeparatorBefore(orig, originalPosition(posMap, i))
+}
+
+// trailingBoundary reports whether a candidate may end at data[end]: end is
+// the end of data or the next byte is outside class.
+func trailingBoundary(data []byte, end int, class func(byte) bool) bool {
+	return end == len(data) || !class(data[end])
+}
+
 // isWordBoundary reports whether the keyword match at data[pos:end] sits at
 // word boundaries. A boundary violation occurs when the keyword edge byte is
 // ASCII alphanumeric and the adjacent data byte is also ASCII alphanumeric,

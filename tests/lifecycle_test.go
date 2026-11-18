@@ -81,7 +81,7 @@ func TestRunJoinsChildGoroutines(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			probe := &failedCapture{TB: t}
-			recorder := embargotest.New(probe, embargotest.WithLimits(1<<20, tc.timeout))
+			recorder := embargotest.New(probe, embargotest.WithMaxBytes(1<<20), embargotest.WithTimeout(tc.timeout))
 			recorder.Expect("stdout", func(data []byte) bool { return len(data) > 0 })
 			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()

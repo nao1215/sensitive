@@ -74,7 +74,8 @@ class PolicyTests(unittest.TestCase):
         bad = {'internal/detect/pan.go': "func isDigit(b byte) bool { return b >= '0' && b <= '9' }",
                'scanner.go': 'if c, ok := d.(*detect.Credential); ok {}',
                'internal/detect/two.go': 'func (d *A) Scan(data []byte) []Finding {}\nfunc (d *B) Scan(data []byte) []Finding {}',
-               'internal/detect/fullwidth.go': 'func composePositions(child, parent []int) []int {}'}
+               'internal/detect/fullwidth.go': 'func composePositions(child, parent []int) []int {}',
+               'scanner_dispatch.go': 'case KindMyNumber:'}
         for name, text in bad.items():
             with self.subTest(name=name):
                 with self.assertRaisesRegex(ValueError, 'cohesion'):
@@ -86,6 +87,14 @@ class PolicyTests(unittest.TestCase):
                            'internal/detect/pan.go': 'func (d *PAN) Scan(data []byte) []Finding {}',
                            'internal/detect/pan_test.go': "b >= '0' && b <= '9'",
                            'tests/oracle.go': "b >= 'a' && b <= 'z'"})
+
+    def test_api_additions_need_a_changelog_entry(self):
+        old = json.dumps([{'symbols': ['embargo.Mask']}])
+        new = json.dumps([{'symbols': ['embargo.Mask']}, {'symbols': ['embargo.Scanner.Redact']}, {'symbols': ['embargo --color']}])
+        with self.assertRaisesRegex(ValueError, 'api-additions: embargo.Scanner.Redact'):
+            policies.api_additions(old, new, '## [Unreleased]\n\n- `--color` shows matches.\n\n## [0.1.0]\n\n- `Redact`\n')
+        policies.api_additions(old, new, '## [Unreleased]\n\n- `Scanner.Redact` and `--color`.\n\n## [0.1.0]\n')
+        policies.api_additions(old, old, '## [Unreleased]\n\n## [0.1.0]\n')
 
     def test_root_dependencies(self):
         for manifest in ({'Require':[{'Path':'example.com/runtime'}]}, {'Tool':['example.com/tool']}):

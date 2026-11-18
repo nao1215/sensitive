@@ -596,6 +596,29 @@ func syncVisualDocument(t *testing.T, path, name, content string) {
 // TestReadmeCLIExampleIsPinnedByE2E keeps the README command example in step
 // with the atago spec that runs it: the example's input line must be fed to the
 // built command there and its output line must be what the spec expects.
+func TestInstallExamplesShareOneVersion(t *testing.T) {
+	t.Parallel()
+	files, err := filepath.Glob("doc/*.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	pin := regexp.MustCompile(`github\.com/nao1215/embargo[a-z/]*@(v\d[0-9A-Za-z.-]*)`)
+	versions := map[string][]string{}
+	for _, path := range append(files, "README.md") {
+		// #nosec G304 -- The paths are repository documentation files.
+		text, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, match := range pin.FindAllSubmatch(text, -1) {
+			versions[string(match[1])] = append(versions[string(match[1])], path)
+		}
+	}
+	if len(versions) != 1 {
+		t.Fatalf("install examples pin different versions: %v", versions)
+	}
+}
+
 func TestReadmeCLIExampleIsPinnedByE2E(t *testing.T) {
 	t.Parallel()
 	readme, err := os.ReadFile("README.md")
@@ -614,6 +637,37 @@ func TestReadmeCLIExampleIsPinnedByE2E(t *testing.T) {
 	for _, line := range [][]byte{block[2], block[3]} {
 		if !regexp.MustCompile(`(?m)^\s+` + regexp.QuoteMeta(string(line)) + `$`).Match(spec) {
 			t.Errorf("%s does not run or expect the README line %q", block[1], line)
+		}
+	}
+	// Every embargo command in the README Command line block and in the
+	// command guide also runs in the spec, through sh when it uses the shell.
+	install := regexp.MustCompile("(?s)## Command line\n.*?```sh\n(.*?)```").FindSubmatch(readme)
+	if install == nil {
+		t.Fatal("README Command line section needs an sh block")
+	}
+	guide, err := os.ReadFile("doc/audit.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	matches := regexp.MustCompile("(?s)```sh\n(.*?)```").FindAllSubmatch(guide, -1)
+	blocks := make([][]byte, 0, len(matches)+1)
+	blocks = append(blocks, install[1])
+	for _, match := range matches {
+		blocks = append(blocks, match[1])
+	}
+	for _, text := range blocks {
+		for line := range strings.Lines(string(text)) {
+			line = strings.TrimSpace(line)
+			if !strings.HasPrefix(line, "embargo ") && !strings.HasPrefix(line, "! embargo ") {
+				continue
+			}
+			command := line
+			if strings.ContainsAny(line, "<>|!") {
+				command = "sh -c '" + line + "'"
+			}
+			if !strings.Contains(string(spec), "command: "+command+"\n") {
+				t.Errorf("%s does not run the documented command %q", block[1], line)
+			}
 		}
 	}
 }

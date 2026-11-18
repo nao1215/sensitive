@@ -23,6 +23,9 @@ func (d *MyNumber) Hints() [][]byte {
 	return nil
 }
 
+// startBytes reports that every candidate contains an ASCII or full-width digit.
+func (d *MyNumber) startBytes() []byte { return digitStarts() }
+
 // Scan returns matches in data using the rules documented on [MyNumber].
 func (d *MyNumber) Scan(data []byte) []Finding {
 	normalized, posMap := normalizeDigits(data)
@@ -54,7 +57,7 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 
 		// Extract digits, allowing '-' and ' ' as separators.
 		start := i
-		digits, end := extractSeparatedDigits(data, start, make([]byte, 0, phoneDigitCapacity))
+		digits, end := appendSeparatedDigits(data, start, make([]byte, 0, phoneDigitCapacity), cardSeparator)
 
 		// Must be exactly 12 digits, not followed by more digits.
 		if !myNumberWhole(data, digits, end) {
@@ -63,15 +66,8 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		}
 
 		if isValidMyNumber(digits) && !logContext.fragment(data, start, end) && !arnAccount(data, start, end) {
-			origStart, origEnd := mapOriginalRange(posMap, start, end)
-
-			findings = append(findings, Finding{
-				DetectorName: d.Name(),
-				Start:        origStart,
-				End:          origEnd,
-				//nolint:mnd // The detector contract documents this heuristic score.
-				Confidence: businessConfidence(orig, origStart, 0.95),
-			})
+			//nolint:mnd // The detector contract documents this heuristic score.
+			findings = append(findings, labeledViewFinding(d.Name(), orig, posMap, start, end, 0.95))
 		}
 		i = end
 	}
@@ -83,7 +79,7 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 // starts an identifier: the preceding byte is not an identifier byte unless an
 // encoded separator precedes the original byte.
 func normalizedIdentifierStart(orig, data []byte, posMap []int, i int) bool {
-	return i == 0 || !isIdentifierByte(data[i-1]) || encodedSeparatorBefore(orig, originalPosition(posMap, i))
+	return leadingBoundaryView(orig, posMap, data, i, isIdentifierByte)
 }
 
 // myNumberWhole reports whether a candidate has exactly 12 digits and is not
