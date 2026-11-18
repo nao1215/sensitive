@@ -68,7 +68,7 @@ func isValidSortCodeBoundary(data []byte, i, end int, sep byte) bool {
 // or by another separated digit pair.
 func sortCodeLeadingBoundary(data []byte, i int, sep byte) bool {
 	// Word boundary: preceding character must not be a digit or letter.
-	if i > 0 && ascii.IsAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
+	if !leadingBoundary(data, i, ascii.IsAlphaNum) {
 		return false
 	}
 

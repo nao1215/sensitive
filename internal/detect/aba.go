@@ -92,7 +92,7 @@ func normalizedEscapeSeparator(orig []byte, posMap []int, n, i int) bool {
 // abaWordStart reports whether a digit at i begins a word: the preceding byte
 // is not alphanumeric unless an encoded separator precedes the original byte.
 func abaWordStart(orig, data []byte, posMap []int, i int) bool {
-	return i == 0 || !ascii.IsAlphaNum(data[i-1]) || encodedSeparatorBefore(orig, originalPosition(posMap, i))
+	return leadingBoundaryView(orig, posMap, data, i, ascii.IsAlphaNum)
 }
 
 // validateABAChecksum validates the ABA routing number checksum.

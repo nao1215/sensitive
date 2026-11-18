@@ -77,7 +77,7 @@ func (d *ETH) Scan(data []byte) []Finding {
 // ethWordStart reports whether an address may start at i: the preceding byte is
 // not an identifier byte unless an encoded separator precedes the prefix.
 func ethWordStart(data []byte, i int) bool {
-	return i == 0 || !isIdentifierByte(data[i-1]) || encodedSeparatorBefore(data, i)
+	return leadingBoundary(data, i, isIdentifierByte)
 }
 
 // ethConfidence scores the 40 hex digits of an address: uniform case has no

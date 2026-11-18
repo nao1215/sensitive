@@ -73,7 +73,7 @@ func (d *IPAddr) Scan(data []byte) []Finding {
 // Returns the finding, the advance position, and whether a valid IPv4 was found.
 func (d *IPAddr) tryIPv4(data []byte, i int) (Finding, int, bool) {
 	// Word boundary: reject if preceded by alphanumeric, '.', or '_'.
-	if i > 0 && (isIdentifierByte(data[i-1]) || data[i-1] == '.') && !encodedSeparatorBefore(data, i) {
+	if !leadingBoundary(data, i, isIPv4LeadingByte) {
 		return Finding{}, i + 1, false
 	}
 
@@ -104,6 +104,10 @@ func (d *IPAddr) tryIPv4(data []byte, i int) (Finding, int, bool) {
 	}, j, true
 }
 
+// isIPv4LeadingByte rejects an IPv4 candidate glued to an identifier or to a
+// dot, which would make it the tail of a longer dotted value.
+func isIPv4LeadingByte(b byte) bool { return isIdentifierByte(b) || b == '.' }
+
 // isIPTokenSuffix distinguishes identifiers from punctuation and IP ranges.
 func isIPTokenSuffix(data []byte, at int) bool {
 	b := data[at]
@@ -123,7 +127,7 @@ func isIPTokenSuffix(data []byte, at int) bool {
 // Returns the finding, the advance position, and whether a valid IPv6 was found.
 func (d *IPAddr) tryIPv6(data []byte, i int) (Finding, int, bool) {
 	// Word boundary: reject if preceded by alphanumeric or '_'.
-	if i > 0 && isIdentifierByte(data[i-1]) && !encodedSeparatorBefore(data, i) {
+	if !leadingBoundary(data, i, isIdentifierByte) {
 		return Finding{}, i + 1, false
 	}
 

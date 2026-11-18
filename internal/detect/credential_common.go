@@ -43,7 +43,7 @@ func scanCharset(data []byte, start int, allow func(byte) bool) (end, n int) {
 
 // credStartBoundary rejects impossible prefixes before traversing a token body.
 func credStartBoundary(data []byte, start int) bool {
-	return start == 0 || !isTokenByte(data[start-1]) || encodedSeparatorBefore(data, start)
+	return leadingBoundary(data, start, isTokenByte)
 }
 
 // allBytes reports whether every byte in data[start:end] satisfies allow.

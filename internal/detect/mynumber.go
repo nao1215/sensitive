@@ -86,7 +86,7 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 // starts an identifier: the preceding byte is not an identifier byte unless an
 // encoded separator precedes the original byte.
 func normalizedIdentifierStart(orig, data []byte, posMap []int, i int) bool {
-	return i == 0 || !isIdentifierByte(data[i-1]) || encodedSeparatorBefore(orig, originalPosition(posMap, i))
+	return leadingBoundaryView(orig, posMap, data, i, isIdentifierByte)
 }
 
 // myNumberWhole reports whether a candidate has exactly 12 digits and is not

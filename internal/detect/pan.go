@@ -168,9 +168,9 @@ func extractSeparatedDigits(data []byte, start int, digits []byte) (run []byte, 
 // panBounded reports whether [start, end) is not embedded in an identifier,
 // allowing an encoded separator before the original start.
 func panBounded(orig, data []byte, posMap []int, start, end int) bool {
-	leadingBoundary := start == 0 || !isIdentifierByte(data[start-1]) || encodedSeparatorBefore(orig, originalPosition(posMap, start))
-	trailingBoundary := end == len(data) || !isIdentifierByte(data[end])
-	return leadingBoundary && trailingBoundary
+	leading := leadingBoundaryView(orig, posMap, data, start, isIdentifierByte)
+	trailing := trailingBoundary(data, end, isIdentifierByte)
+	return leading && trailing
 }
 
 // evaluateCandidate checks whether a digit sequence is a valid PAN and returns

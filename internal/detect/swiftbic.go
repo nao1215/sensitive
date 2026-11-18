@@ -129,7 +129,7 @@ func validateSWIFTStructure(data []byte, i int) bool {
 	if !ascii.IsAlphaNum(data[i+6]) || !ascii.IsAlphaNum(data[i+7]) {
 		return false
 	}
-	if i > 0 && ascii.IsAlphaNum(data[i-1]) && !encodedSeparatorBefore(data, i) {
+	if !leadingBoundary(data, i, ascii.IsAlphaNum) {
 		return false
 	}
 	cc := [2]byte{ascii.ToUpper(data[i+4]), ascii.ToUpper(data[i+5])}

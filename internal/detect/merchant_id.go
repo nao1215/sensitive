@@ -100,7 +100,7 @@ func (d *MerchantID) appendTerminalIDs(findings []Finding, data []byte) []Findin
 // isWholeTerminalToken reports whether [start, end) is not embedded in a longer
 // alphanumeric token, allowing an encoded separator before it.
 func isWholeTerminalToken(data []byte, start, end int) bool {
-	return (start == 0 || !ascii.IsAlphaNum(data[start-1]) || encodedSeparatorBefore(data, start)) &&
+	return leadingBoundary(data, start, ascii.IsAlphaNum) &&
 		(end >= len(data) || !ascii.IsAlphaNum(data[end]))
 }
 

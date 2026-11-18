@@ -109,7 +109,7 @@ func (d *CardExpiry) searchRange(data []byte, start, end int, used map[int]int, 
 		}
 
 		// Word boundary: no digit before or after.
-		if i > 0 && ascii.IsDigit(data[i-1]) && !encodedSeparatorBefore(data, i) {
+		if !leadingBoundary(data, i, ascii.IsDigit) {
 			continue
 		}
 		if c.dateEnd < len(data) && ascii.IsDigit(data[c.dateEnd]) {
