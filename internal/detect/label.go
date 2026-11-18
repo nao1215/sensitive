@@ -1,9 +1,6 @@
 package detect
 
-import (
-	"bytes"
-	"unicode/utf8"
-)
+import "bytes"
 
 // labelPrefix confines contextual evidence to the current field and line.
 func labelPrefix(data []byte, start int) []byte {
@@ -111,7 +108,7 @@ func myNumberLabel(word []byte) bool {
 // skip the Japanese stem search.
 func hasNonASCII(word []byte) bool {
 	for _, b := range word {
-		if b >= utf8.RuneSelf {
+		if b&0x80 != 0 {
 			return true
 		}
 	}

@@ -107,3 +107,24 @@ func TestPasswordCommandWordBoundaries(t *testing.T) {
 		}
 	}
 }
+
+func TestCommandLinePasswordEdges(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		input string
+		count int
+	}{
+		{"sudo mysql -phunter2", 1},
+		{"echo mysql", 0},
+		{"mysql", 0},
+		{`--password ""`, 0},
+		{`sshpass -p "" ssh host`, 0},
+		{`mysql -p""`, 0},
+		{"--token", 0},
+		{"x --token v", 1},
+	} {
+		if got := (&Credential{}).Scan([]byte(tc.input)); len(got) != tc.count {
+			t.Errorf("Scan(%q) = %+v, want %d findings", tc.input, got, tc.count)
+		}
+	}
+}

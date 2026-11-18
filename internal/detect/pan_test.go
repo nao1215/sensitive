@@ -530,3 +530,22 @@ func TestPANDottedGroups(t *testing.T) {
 		}
 	}
 }
+
+func TestPANDottedGroupEnds(t *testing.T) {
+	t.Parallel()
+	for input, found := range map[string]bool{
+		"4111.1111.1111.1111. ok": true,
+		"4111.1111.1111.111":      false,
+		"4111.1111.1111.1111.":    true,
+	} {
+		if got := NewPAN().Scan([]byte(input)); (len(got) == 1) != found {
+			t.Errorf("Scan(%q) = %+v, want found %v", input, got, found)
+		}
+	}
+	// Weights 1 and 3 alternate from the left; swapping them breaks these codes.
+	for _, code := range []string{"4512345678906", "4900000000108", "4522222222221"} {
+		if !passesEAN13([]byte(code)) {
+			t.Errorf("EAN-13 %s rejected", code)
+		}
+	}
+}

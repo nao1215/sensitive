@@ -220,3 +220,33 @@ func TestServiceTokenWebhookAndPathBoundaries(t *testing.T) {
 		t.Error("a bot token starts right after /bot and nowhere else")
 	}
 }
+
+func TestServiceTokenWebhookAndDSNBoundaries(t *testing.T) {
+	t.Parallel()
+	alnum := func(n int) string { return synthetic(alnumAlphabet, n) }
+	hex := synthetic(lowerHexAlphabet, 32)
+	id := func(n int) string { return strings.Repeat("1", n) }
+	for _, tc := range []struct {
+		text  string
+		found bool
+	}{
+		{"https://discord.com/api/webhooks/" + id(17) + "/" + alnum(60), true},
+		{"https://discord.com/api/webhooks/" + id(20) + "/" + alnum(80), true},
+		{"https://discord.com/api/webhooks/" + id(16) + "/" + alnum(60), false},
+		{"https://discord.com/api/webhooks/" + id(21) + "/" + alnum(60), false},
+		{"https://discord.com/api/webhooks/" + id(18) + "/" + alnum(59), false},
+		{"https://discord.com/api/webhooks/" + id(18) + "/" + alnum(81), false},
+		{"https://discord.com/api/webhooks/" + id(18), false},
+		{"https://discord.com/api/webhooks/" + id(18) + "x" + alnum(60), false},
+		{"https://" + hex, false},
+		{"https://" + hex + "@o1.ingest.sentry.io", false},
+		{"https://" + hex + "@o1.ingest.sentry.io/1", true},
+		{"https://" + hex + "@o1.sentry.io/1", false},
+		{"https://" + hex + "@o1.ingest.sentry.io.example.com/1", false},
+		{"https://" + hex + "x@o1.ingest.sentry.io/1", false},
+	} {
+		if got := NewServiceToken().Scan([]byte(tc.text)); (len(got) == 1) != tc.found {
+			t.Errorf("Scan(%q) = %+v, want found %v", tc.text, got, tc.found)
+		}
+	}
+}

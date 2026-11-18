@@ -426,3 +426,11 @@ func TestEmailFullWidthAtSign(t *testing.T) {
 		})
 	}
 }
+
+func TestEmailFullWidthDomainStart(t *testing.T) {
+	t.Parallel()
+	input := "bob＠x.jp"
+	if got := NewEmail().Scan([]byte(input)); len(got) != 1 || input[got[0].Start:got[0].End] != input {
+		t.Fatalf("Scan(%q) = %+v", input, got)
+	}
+}
