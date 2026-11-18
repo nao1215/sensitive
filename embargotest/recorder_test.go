@@ -269,7 +269,7 @@ func TestRecorderReportsFixedReasonsOnce(t *testing.T) {
 			write(t, r, "logs", append([]byte("signing failed "), r.Canary()...))
 			r.Expect("logs", func(data []byte) bool { return bytes.Contains(data, []byte("signing failed")) })
 			//nolint:goconst // Independent scenarios keep their fixture and expected error literals local.
-		}, "embargotest: the fake secret appeared in captured output"},
+		}, "embargotest: the fake secret appeared in captured output: logs"},
 		"expectation": {func(r *Recorder) {
 			write(t, r, "logs", []byte("ok"))
 			r.Expect("logs", func([]byte) bool { return false })
@@ -290,8 +290,8 @@ func TestRecorderReportsFixedReasonsOnce(t *testing.T) {
 				t.Fatalf("messages = %q", p.messages)
 			}
 			for _, m := range p.messages {
-				if strings.Contains(m, "logs") || strings.Contains(m, string(r.Canary())) {
-					t.Fatal("payload or label reflected")
+				if strings.Contains(m, string(r.Canary())) {
+					t.Fatal("payload reflected")
 				}
 			}
 		})

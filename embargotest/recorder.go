@@ -39,6 +39,7 @@ type Recorder struct {
 	mu            sync.Mutex
 	scannerFailed bool
 	detected      bool
+	metadataKinds map[embargo.Kind]bool
 	checked       bool
 	failed        bool
 	reported      bool
@@ -109,7 +110,7 @@ func (o timeoutOption) apply(r *Recorder) bool {
 // do nothing. The default scanner omits unlabelled entropy tokens; use WithScanner to choose kinds. Invalid options fail the test and leave Check unable to succeed.
 func New(tb testing.TB, opts ...Option) *Recorder {
 	tb.Helper()
-	r := &Recorder{minFragment: 0, detected: false, scannerFailed: false, responses: nil, mu: sync.Mutex{}, needles: nil, retained: 0, expectations: nil, checked: false, failed: false, reported: false, leaked: false, running: 0, scanner: embargo.NewScanner(), allowedKinds: map[embargo.Kind]bool{}, allowedValues: map[string]bool{}, tb: tb, canary: []byte(defaultCanary), maxBytes: defaultMaxBytes, timeout: defaultTimeout, sinks: make(map[string]*stream)}
+	r := &Recorder{minFragment: 0, detected: false, scannerFailed: false, responses: nil, mu: sync.Mutex{}, needles: nil, retained: 0, expectations: nil, checked: false, failed: false, reported: false, leaked: false, running: 0, scanner: embargo.NewScanner(), metadataKinds: map[embargo.Kind]bool{}, allowedKinds: map[embargo.Kind]bool{}, allowedValues: map[string]bool{}, tb: tb, canary: []byte(defaultCanary), maxBytes: defaultMaxBytes, timeout: defaultTimeout, sinks: make(map[string]*stream)}
 	for _, o := range opts {
 		if o != nil && !o.apply(r) {
 			r.failed = true
@@ -210,6 +211,11 @@ func (r *Recorder) Expect(name string, validate func([]byte) bool) {
 // Check scans every capture for the canary and non-allowed detector findings, then evaluates expectations.
 // It never waits for producers. Missing sinks, no expectations, incomplete runs,
 // truncation and failed validators report fixed test errors and return false.
+// A leak names the sinks and, for findings, their kinds, such as
+// "sensitive data appeared in captured output: app.log (email)"; captured
+// bytes never appear. A sink name that is longer than 64 bytes, uses bytes
+// other than ASCII letters, digits and _ . / : -, or has a finding or the
+// canary of its own is written as "a sink with an unprintable name".
 func (r *Recorder) Check() bool {
 	r.tb.Helper()
 	r.mu.Lock()
@@ -220,8 +226,8 @@ func (r *Recorder) Check() bool {
 		response.finalize()
 	}
 	r.checked = true
-	// Each reason is a fixed sentence: captured bytes and sink names never
-	// reach the test log.
+	// Reasons name sinks and finding kinds; captured bytes never reach the
+	// test log.
 	var reasons []string
 	interim := make([][]byte, 0, len(r.responses))
 	for _, response := range r.responses {

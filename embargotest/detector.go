@@ -1,6 +1,12 @@
 package embargotest
 
-import "github.com/nao1215/embargo"
+import (
+	"maps"
+	"slices"
+	"strings"
+
+	"github.com/nao1215/embargo"
+)
 
 type (
 	scannerOption struct{ scanner *embargo.Scanner }
@@ -77,32 +83,103 @@ func (r *Recorder) observeMetadata(data []byte) {
 	if containsCanary(data, r.needles) {
 		r.leaked = true
 	}
-	found, failed := r.scan(data)
-	r.detected = r.detected || found
+	findings, failed := r.scanFindings(data)
+	for _, f := range findings {
+		r.metadataKinds[f.Kind] = true
+	}
+	r.detected = r.detected || len(findings) > 0
 	r.scannerFailed = r.scannerFailed || failed
 }
 
+// contentReasons names the sinks where the canary or a finding appeared and
+// the finding kinds, never the captured bytes. Transient HTTP header values
+// and interim responses are reported as "observed HTTP headers".
 func (r *Recorder) contentReasons(captures map[string][]byte, interim [][]byte, leaked, detected, scannerFailed bool) []string {
-	data := make([][]byte, 0, len(captures)+len(interim))
-	data = append(data, interim...)
-	for _, capture := range captures {
-		data = append(data, capture)
+	var leakedIn []string
+	foundIn := map[string]map[embargo.Kind]bool{}
+	if detected {
+		foundIn[httpHeadersSink] = maps.Clone(r.metadataKinds)
 	}
-	for _, capture := range data {
-		leaked = containsCanary(capture, r.needles) || leaked
-		found, failed := r.scan(capture)
-		detected = detected || found
+	if leaked {
+		leakedIn = append(leakedIn, httpHeadersSink)
+	}
+	observe := func(name string, capture []byte) {
+		if containsCanary(capture, r.needles) {
+			leakedIn = append(leakedIn, name)
+		}
+		findings, failed := r.scanFindings(capture)
 		scannerFailed = scannerFailed || failed
+		for _, f := range findings {
+			if foundIn[name] == nil {
+				foundIn[name] = map[embargo.Kind]bool{}
+			}
+			foundIn[name][f.Kind] = true
+		}
+	}
+	for _, capture := range interim {
+		observe(httpHeadersSink, capture)
+	}
+	for _, name := range slices.Sorted(maps.Keys(captures)) {
+		observe(r.printableSinkName(name), captures[name])
 	}
 	var reasons []string
-	if leaked {
-		reasons = append(reasons, "the fake secret appeared in captured output")
+	if len(leakedIn) > 0 {
+		slices.Sort(leakedIn)
+		reasons = append(reasons, "the fake secret appeared in captured output: "+strings.Join(slices.Compact(leakedIn), ", "))
 	}
-	if detected {
-		reasons = append(reasons, "sensitive data appeared in captured output")
+	if len(foundIn) > 0 {
+		var parts []string
+		for _, name := range slices.Sorted(maps.Keys(foundIn)) {
+			kinds := make([]string, 0, len(foundIn[name]))
+			for kind := range foundIn[name] {
+				kinds = append(kinds, r.printableKind(kind))
+			}
+			slices.Sort(kinds)
+			parts = append(parts, name+" ("+strings.Join(slices.Compact(kinds), ", ")+")")
+		}
+		reasons = append(reasons, "sensitive data appeared in captured output: "+strings.Join(parts, "; "))
 	}
 	if scannerFailed {
 		reasons = append(reasons, "scanner failed")
 	}
 	return reasons
+}
+
+// httpHeadersSink names transient header values and interim responses.
+const httpHeadersSink = "observed HTTP headers"
+
+// printableSinkName returns a sink name for a failure message. Names come
+// from test code, but one built from data could carry the value under test,
+// so a name that is long, uses bytes outside letters, digits and _ . / : -,
+// contains the canary or has a finding of its own is replaced.
+func (r *Recorder) printableSinkName(name string) string {
+	if printableLabel(name) && !containsCanary([]byte(name), r.needles) {
+		if findings, failed := r.scanFindings([]byte(name)); len(findings) == 0 && !failed {
+			return name
+		}
+	}
+	return "a sink with an unprintable name"
+}
+
+// printableKind applies the same rule to a custom detector's kind.
+func (r *Recorder) printableKind(kind embargo.Kind) string {
+	if printableLabel(string(kind)) && !containsCanary([]byte(kind), r.needles) {
+		return string(kind)
+	}
+	return "custom kind"
+}
+
+func printableLabel(name string) bool {
+	const maxLabel = 64
+	if name == "" || len(name) > maxLabel {
+		return false
+	}
+	for i := range len(name) {
+		c := name[i]
+		alphaNum := (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+		if !alphaNum && !strings.ContainsRune("_./:-", rune(c)) {
+			return false
+		}
+	}
+	return true
 }

@@ -52,9 +52,12 @@ func TestDetectorPolicy(t *testing.T) {
 			}
 			p.finish()
 			for _, message := range p.messages {
-				if strings.Contains(message, tc.text) || strings.Contains(message, "private-sink-name") {
-					t.Fatal("failure reflected captured text or sink name")
+				if strings.Contains(message, tc.text) {
+					t.Fatal("failure reflected captured text")
 				}
+			}
+			if !tc.pass && tc.text != "accepted" && !strings.Contains(strings.Join(p.messages, "\n"), "private-sink-name") {
+				t.Fatalf("failure did not name the sink: %q", p.messages)
 			}
 		})
 	}
@@ -179,4 +182,44 @@ func TestDefaultRecorderExcludesOptInKinds(t *testing.T) {
 		}
 		probe.finish()
 	}
+}
+
+func TestFailureNamesSinkAndKindWithoutData(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name, sink, text, want string
+	}{
+		{"finding", "app.log", "user alice@example.com", "embargotest: sensitive data appeared in captured output: app.log (email)"},
+		{"sink name with a finding", "alice@example.com", "user bob@example.com", "embargotest: sensitive data appeared in captured output: a sink with an unprintable name (email)"},
+		{"sink name with spaces", "my sink", "user bob@example.com", "embargotest: sensitive data appeared in captured output: a sink with an unprintable name (email)"},
+		{"long sink name", strings.Repeat("s", 65), "user bob@example.com", "embargotest: sensitive data appeared in captured output: a sink with an unprintable name (email)"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			p := &probeTB{TB: t}
+			r := New(p)
+			write(t, r, tc.sink, []byte(tc.text))
+			r.Expect(tc.sink, func([]byte) bool { return true })
+			if r.Check() {
+				t.Fatal("finding accepted")
+			}
+			p.finish()
+			if len(p.messages) != 1 || p.messages[0] != tc.want {
+				t.Fatalf("messages = %q, want %q", p.messages, tc.want)
+			}
+		})
+	}
+	t.Run("canary in the sink name", func(t *testing.T) {
+		t.Parallel()
+		p := &probeTB{TB: t}
+		r := New(p)
+		sink := string(r.Canary())
+		write(t, r, sink, r.Canary())
+		r.Expect(sink, func([]byte) bool { return true })
+		r.Check()
+		p.finish()
+		if joined := strings.Join(p.messages, "\n"); strings.Contains(joined, sink) || !strings.Contains(joined, "a sink with an unprintable name") {
+			t.Fatalf("messages = %q", p.messages)
+		}
+	})
 }
