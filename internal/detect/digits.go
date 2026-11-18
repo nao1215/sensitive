@@ -73,7 +73,7 @@ type numericCandidate func(orig, data []byte, posMap []int, i int) (Finding, int
 func scanNumeric(orig, data []byte, posMap []int, candidate numericCandidate, logFragments bool) []Finding {
 	var findings []Finding
 	var logContext numericLogContext
-	for i := 0; i < len(data); {
+	for i := numericStart(data, 0); i < len(data); i = numericStart(data, i) {
 		if data[i] == '%' && normalizedEscapeSeparator(orig, posMap, len(data), i) {
 			i += len("%20")
 			continue
@@ -85,6 +85,17 @@ func scanNumeric(orig, data []byte, posMap []int, candidate numericCandidate, lo
 		i = next
 	}
 	return findings
+}
+
+// numericStart returns the first index from i that can start a numeric
+// candidate or a percent escape: a digit, '+' for international phone
+// numbers, or '%'. Skipping other bytes here keeps the per-candidate call off
+// the bytes of words and punctuation.
+func numericStart(data []byte, i int) int {
+	for i < len(data) && !ascii.IsDigit(data[i]) && data[i] != '+' && data[i] != '%' {
+		i++
+	}
+	return i
 }
 
 // cardSeparator reports the separators PAN and My Number allow between digits.
