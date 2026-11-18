@@ -9,6 +9,11 @@ import statistics
 import subprocess
 
 root = pathlib.Path(__file__).resolve().parents[1]
+# The parallel benchmarks run up to 16 goroutines with matching GOMAXPROCS;
+# pinned to fewer CPUs they would publish a speed-up that does not exist.
+PARALLEL_CPUS = 16
+if hasattr(os, "sched_getaffinity") and len(os.sched_getaffinity(0)) < PARALLEL_CPUS:
+    raise SystemExit(f"benchmark-doc needs at least {PARALLEL_CPUS} CPUs in its affinity for the parallel table; do not pin it with taskset")
 command = ["go", "-C", "tests", "test", "-run", "^$", "-bench", "^BenchmarkPublished", "-benchmem", "-benchtime=200ms", "-count=10", "."]
 environment = dict(os.environ, GOMAXPROCS="1", GOTOOLCHAIN="go1.26.11")
 result = subprocess.run(command, cwd=root, env=environment, text=True, stdout=subprocess.PIPE, check=True)

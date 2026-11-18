@@ -7,558 +7,581 @@
   "command": "GOMAXPROCS=1 GOTOOLCHAIN=go1.26.11 go -C tests test -run ^$ -bench ^BenchmarkPublished -benchmem -benchtime=200ms -count=10 .",
   "samples": 10,
   "cpu_affinity": [
-    12
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
   ],
   "background_load": "no intentional concurrent workload",
   "benchmarks": {
     "BenchmarkPublishedMask": {
-      "ns/op": 3230.0,
-      "MB/s": 911.365,
+      "ns/op": 3239.5,
+      "MB/s": 908.7,
       "B/op": 8448.0,
       "allocs/op": 2.0
     },
     "BenchmarkPublishedParallel/scanner/16procs": {
-      "ns/op": 4581.5,
+      "ns/op": 477.95,
       "B/op": 96.0,
       "allocs/op": 2.0
     },
     "BenchmarkPublishedParallel/scanner/1procs": {
-      "ns/op": 4458.0,
+      "ns/op": 4798.0,
       "B/op": 96.0,
       "allocs/op": 2.0
     },
     "BenchmarkPublishedParallel/scanner/4procs": {
-      "ns/op": 4497.0,
+      "ns/op": 1257.0,
       "B/op": 96.0,
       "allocs/op": 2.0
     },
     "BenchmarkPublishedParallel/slog/16procs": {
-      "ns/op": 1817.0,
+      "ns/op": 231.89999999999998,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedParallel/slog/1procs": {
-      "ns/op": 1788.5,
+      "ns/op": 1804.0,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedParallel/slog/4procs": {
-      "ns/op": 1802.5,
+      "ns/op": 552.25,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedParallel/zap/16procs": {
-      "ns/op": 5135.0,
+      "ns/op": 1140.0,
       "B/op": 417.0,
       "allocs/op": 6.0
     },
     "BenchmarkPublishedParallel/zap/1procs": {
-      "ns/op": 4500.0,
+      "ns/op": 5235.0,
       "B/op": 415.0,
       "allocs/op": 6.0
     },
     "BenchmarkPublishedParallel/zap/4procs": {
-      "ns/op": 4790.0,
+      "ns/op": 2022.0,
       "B/op": 416.0,
       "allocs/op": 6.0
     },
     "BenchmarkPublishedRecorder/checked": {
-      "ns/op": 200958.0,
-      "MB/s": 2.705,
-      "B/op": 236632.0,
+      "ns/op": 239464.0,
+      "MB/s": 2.275,
+      "B/op": 236637.5,
       "allocs/op": 1608.0
     },
     "BenchmarkPublishedRecorder/plain": {
-      "ns/op": 5.727,
-      "MB/s": 94985.53,
+      "ns/op": 6.4425,
+      "MB/s": 84435.41,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/aba_routing/clean": {
-      "ns/op": 2619.5,
-      "MB/s": 1050.56,
+      "ns/op": 2479.5,
+      "MB/s": 1110.01,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/aba_routing/dirty": {
-      "ns/op": 8629.0,
-      "MB/s": 74.165,
+      "ns/op": 8499.0,
+      "MB/s": 75.305,
       "B/op": 11584.0,
       "allocs/op": 14.0
     },
     "BenchmarkPublishedScanner/ach_trace/clean": {
-      "ns/op": 3540.5,
-      "MB/s": 777.355,
+      "ns/op": 3442.5,
+      "MB/s": 799.355,
       "B/op": 3072.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedScanner/ach_trace/dirty": {
-      "ns/op": 46027.5,
-      "MB/s": 36.15,
+      "ns/op": 44762.5,
+      "MB/s": 37.175,
       "B/op": 31752.0,
       "allocs/op": 159.0
     },
     "BenchmarkPublishedScanner/all/clean": {
-      "ns/op": 54676.5,
-      "MB/s": 50.33,
+      "ns/op": 62022.0,
+      "MB/s": 44.37,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/all/dirty": {
-      "ns/op": 6283157.0,
-      "MB/s": 9.99,
+      "ns/op": 6861085.0,
+      "MB/s": 9.15,
       "B/op": 1166864.0,
       "allocs/op": 3489.0
     },
     "BenchmarkPublishedScanner/awskey/clean": {
-      "ns/op": 3987.5,
-      "MB/s": 690.155,
+      "ns/op": 3766.5,
+      "MB/s": 730.65,
       "B/op": 3072.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedScanner/awskey/dirty": {
-      "ns/op": 5638.0,
-      "MB/s": 238.39,
+      "ns/op": 5414.0,
+      "MB/s": 248.255,
       "B/op": 12992.0,
       "allocs/op": 15.0
     },
     "BenchmarkPublishedScanner/bank_account/clean": {
-      "ns/op": 3712.0,
-      "MB/s": 741.365,
+      "ns/op": 3521.0,
+      "MB/s": 781.555,
       "B/op": 3072.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedScanner/bank_account/dirty": {
-      "ns/op": 34628.5,
-      "MB/s": 40.66,
+      "ns/op": 33474.5,
+      "MB/s": 42.06,
       "B/op": 24904.0,
       "allocs/op": 94.0
     },
     "BenchmarkPublishedScanner/br_cnpj/clean": {
-      "ns/op": 3631.5,
-      "MB/s": 757.85,
+      "ns/op": 3653.0,
+      "MB/s": 753.3199999999999,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/br_cnpj/dirty": {
-      "ns/op": 17984.0,
-      "MB/s": 124.555,
+      "ns/op": 17864.0,
+      "MB/s": 125.39,
       "B/op": 12608.0,
       "allocs/op": 78.0
     },
     "BenchmarkPublishedScanner/br_cpf/clean": {
-      "ns/op": 3630.0,
-      "MB/s": 758.13,
+      "ns/op": 3462.5,
+      "MB/s": 794.845,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/br_cpf/dirty": {
-      "ns/op": 16940.5,
-      "MB/s": 120.895,
+      "ns/op": 16347.0,
+      "MB/s": 125.285,
       "B/op": 12608.0,
       "allocs/op": 78.0
     },
     "BenchmarkPublishedScanner/btc/clean": {
-      "ns/op": 2494.5,
-      "MB/s": 1103.255,
+      "ns/op": 2390.5,
+      "MB/s": 1151.085,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/btc/dirty": {
-      "ns/op": 17721.5,
-      "MB/s": 101.125,
+      "ns/op": 17013.5,
+      "MB/s": 105.33,
       "B/op": 13632.0,
       "allocs/op": 78.0
     },
     "BenchmarkPublishedScanner/ca_sin/clean": {
-      "ns/op": 3685.0,
-      "MB/s": 746.8050000000001,
+      "ns/op": 3519.5,
+      "MB/s": 781.925,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/ca_sin/dirty": {
-      "ns/op": 12618.5,
-      "MB/s": 126.795,
+      "ns/op": 12155.0,
+      "MB/s": 131.63,
       "B/op": 12608.0,
       "allocs/op": 78.0
     },
     "BenchmarkPublishedScanner/card_expiry/clean": {
-      "ns/op": 2686.0,
-      "MB/s": 1024.565,
+      "ns/op": 2569.5,
+      "MB/s": 1071.1750000000002,
       "B/op": 3072.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedScanner/card_expiry/dirty": {
-      "ns/op": 48057.0,
-      "MB/s": 17.31,
+      "ns/op": 46849.0,
+      "MB/s": 17.76,
       "B/op": 19816.0,
       "allocs/op": 30.0
     },
     "BenchmarkPublishedScanner/cn_resident_id/clean": {
-      "ns/op": 2805.0,
-      "MB/s": 981.245,
+      "ns/op": 2701.5,
+      "MB/s": 1018.735,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/cn_resident_id/dirty": {
-      "ns/op": 42156.5,
-      "MB/s": 59.21,
+      "ns/op": 40052.5,
+      "MB/s": 62.32,
       "B/op": 49984.0,
       "allocs/op": 142.0
     },
     "BenchmarkPublishedScanner/credential/clean": {
-      "ns/op": 10590.5,
-      "MB/s": 259.85,
+      "ns/op": 10164.5,
+      "MB/s": 270.745,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/credential/dirty": {
-      "ns/op": 18794.0,
-      "MB/s": 64.7,
+      "ns/op": 18281.0,
+      "MB/s": 66.52,
       "B/op": 12096.0,
       "allocs/op": 78.0
     },
     "BenchmarkPublishedScanner/cvv/clean": {
-      "ns/op": 4985.0,
-      "MB/s": 552.0550000000001,
+      "ns/op": 4766.5,
+      "MB/s": 577.38,
       "B/op": 3072.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedScanner/cvv/dirty": {
-      "ns/op": 26835.0,
-      "MB/s": 21.465000000000003,
+      "ns/op": 25957.0,
+      "MB/s": 22.19,
       "B/op": 31080.0,
       "allocs/op": 155.0
     },
     "BenchmarkPublishedScanner/email/clean": {
-      "ns/op": 857.7,
-      "MB/s": 3208.61,
+      "ns/op": 817.65,
+      "MB/s": 3365.805,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/email/dirty": {
-      "ns/op": 6649.5,
-      "MB/s": 173.24,
+      "ns/op": 6465.5,
+      "MB/s": 178.185,
       "B/op": 11584.0,
       "allocs/op": 14.0
     },
     "BenchmarkPublishedScanner/eth/clean": {
-      "ns/op": 2468.0,
-      "MB/s": 1115.065,
+      "ns/op": 2344.5,
+      "MB/s": 1174.02,
       "B/op": 3072.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedScanner/eth/dirty": {
-      "ns/op": 9370.5,
-      "MB/s": 293.685,
+      "ns/op": 8839.0,
+      "MB/s": 311.345,
       "B/op": 17728.0,
       "allocs/op": 79.0
     },
     "BenchmarkPublishedScanner/github_token/clean": {
-      "ns/op": 2594.0,
-      "MB/s": 1060.895,
+      "ns/op": 2449.5,
+      "MB/s": 1123.615,
       "B/op": 3072.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedScanner/github_token/dirty": {
-      "ns/op": 8122.0,
-      "MB/s": 323.065,
+      "ns/op": 7740.0,
+      "MB/s": 339.03,
       "B/op": 14272.0,
       "allocs/op": 15.0
     },
     "BenchmarkPublishedScanner/google_api_key/clean": {
-      "ns/op": 2805.0,
-      "MB/s": 981.105,
+      "ns/op": 2682.0,
+      "MB/s": 1026.245,
       "B/op": 3072.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedScanner/google_api_key/dirty": {
-      "ns/op": 6946.0,
-      "MB/s": 368.54999999999995,
+      "ns/op": 6653.5,
+      "MB/s": 384.775,
       "B/op": 14272.0,
       "allocs/op": 15.0
     },
     "BenchmarkPublishedScanner/high_entropy/clean": {
-      "ns/op": 2563.5,
-      "MB/s": 1073.495,
+      "ns/op": 2448.0,
+      "MB/s": 1124.2350000000001,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/high_entropy/dirty": {
-      "ns/op": 19624.0,
-      "MB/s": 107.625,
+      "ns/op": 18831.0,
+      "MB/s": 112.155,
       "B/op": 15600.0,
       "allocs/op": 77.0
     },
     "BenchmarkPublishedScanner/iban/clean": {
-      "ns/op": 6011.0,
-      "MB/s": 457.825,
+      "ns/op": 5795.0,
+      "MB/s": 474.895,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/iban/dirty": {
-      "ns/op": 11909.5,
-      "MB/s": 123.6,
+      "ns/op": 11415.0,
+      "MB/s": 128.95499999999998,
       "B/op": 13120.0,
       "allocs/op": 78.0
     },
     "BenchmarkPublishedScanner/in_aadhaar/clean": {
-      "ns/op": 3599.0,
-      "MB/s": 764.615,
+      "ns/op": 3441.5,
+      "MB/s": 799.69,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/in_aadhaar/dirty": {
-      "ns/op": 14835.5,
-      "MB/s": 138.05,
+      "ns/op": 14389.5,
+      "MB/s": 142.32999999999998,
       "B/op": 12608.0,
       "allocs/op": 78.0
     },
     "BenchmarkPublishedScanner/in_pan/clean": {
-      "ns/op": 2802.0,
-      "MB/s": 982.1199999999999,
+      "ns/op": 2676.5,
+      "MB/s": 1028.2649999999999,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/in_pan/dirty": {
-      "ns/op": 15421.5,
-      "MB/s": 128.65499999999997,
+      "ns/op": 14758.5,
+      "MB/s": 134.425,
       "B/op": 12608.0,
       "allocs/op": 78.0
     },
     "BenchmarkPublishedScanner/ipaddr/clean": {
-      "ns/op": 856.0999999999999,
-      "MB/s": 3214.505,
+      "ns/op": 811.7,
+      "MB/s": 3390.5299999999997,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/ipaddr/dirty": {
-      "ns/op": 9718.5,
-      "MB/s": 65.85499999999999,
+      "ns/op": 9453.0,
+      "MB/s": 67.705,
       "B/op": 13632.0,
       "allocs/op": 142.0
     },
     "BenchmarkPublishedScanner/jwt/clean": {
-      "ns/op": 2620.0,
-      "MB/s": 1050.365,
+      "ns/op": 2506.0,
+      "MB/s": 1098.04,
       "B/op": 3072.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedScanner/jwt/dirty": {
-      "ns/op": 47323.5,
-      "MB/s": 56.8,
+      "ns/op": 46067.0,
+      "MB/s": 58.345,
       "B/op": 59840.0,
       "allocs/op": 847.0
     },
     "BenchmarkPublishedScanner/kr_rrn/clean": {
-      "ns/op": 3590.5,
-      "MB/s": 766.4649999999999,
+      "ns/op": 3437.0,
+      "MB/s": 800.78,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/kr_rrn/dirty": {
-      "ns/op": 22267.5,
-      "MB/s": 97.72,
+      "ns/op": 21200.0,
+      "MB/s": 102.64,
       "B/op": 12608.0,
       "allocs/op": 78.0
     },
     "BenchmarkPublishedScanner/merchant_id/clean": {
-      "ns/op": 5345.0,
-      "MB/s": 514.87,
+      "ns/op": 5178.0,
+      "MB/s": 531.5,
       "B/op": 3072.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedScanner/merchant_id/dirty": {
-      "ns/op": 25679.0,
-      "MB/s": 69.785,
+      "ns/op": 24788.5,
+      "MB/s": 72.28999999999999,
       "B/op": 20976.0,
       "allocs/op": 86.0
     },
     "BenchmarkPublishedScanner/mynumber/clean": {
-      "ns/op": 2582.5,
-      "MB/s": 1065.63,
+      "ns/op": 2464.5,
+      "MB/s": 1116.8049999999998,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/mynumber/dirty": {
-      "ns/op": 7759.5,
-      "MB/s": 107.22,
+      "ns/op": 7441.5,
+      "MB/s": 111.805,
       "B/op": 11584.0,
       "allocs/op": 14.0
     },
     "BenchmarkPublishedScanner/pan/clean": {
-      "ns/op": 1060.0,
-      "MB/s": 2596.665,
+      "ns/op": 1011.5,
+      "MB/s": 2721.545,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/pan/dirty": {
-      "ns/op": 11104.5,
-      "MB/s": 97.98,
+      "ns/op": 10640.5,
+      "MB/s": 102.25,
       "B/op": 11584.0,
       "allocs/op": 14.0
     },
     "BenchmarkPublishedScanner/payment_token/clean": {
-      "ns/op": 10761.5,
-      "MB/s": 255.73000000000002,
+      "ns/op": 10300.5,
+      "MB/s": 267.16999999999996,
       "B/op": 3072.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedScanner/payment_token/dirty": {
-      "ns/op": 6789.0,
-      "MB/s": 311.1,
+      "ns/op": 6499.0,
+      "MB/s": 324.98,
       "B/op": 13888.0,
       "allocs/op": 15.0
     },
     "BenchmarkPublishedScanner/phone_jp/clean": {
-      "ns/op": 875.35,
-      "MB/s": 3143.795,
+      "ns/op": 833.6,
+      "MB/s": 3301.34,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/phone_jp/dirty": {
-      "ns/op": 10423.5,
-      "MB/s": 85.96000000000001,
+      "ns/op": 9968.5,
+      "MB/s": 89.88499999999999,
       "B/op": 11584.0,
       "allocs/op": 14.0
     },
     "BenchmarkPublishedScanner/phone_us/clean": {
-      "ns/op": 1022.0,
-      "MB/s": 2693.2,
+      "ns/op": 973.05,
+      "MB/s": 2828.25,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/phone_us/dirty": {
-      "ns/op": 10088.5,
-      "MB/s": 133.22,
+      "ns/op": 9663.5,
+      "MB/s": 139.07999999999998,
       "B/op": 11584.0,
       "allocs/op": 14.0
     },
     "BenchmarkPublishedScanner/private_key_pem/clean": {
-      "ns/op": 3104.5,
-      "MB/s": 886.495,
+      "ns/op": 2990.5,
+      "MB/s": 920.155,
       "B/op": 3072.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedScanner/private_key_pem/dirty": {
-      "ns/op": 2159.5,
-      "MB/s": 948.34,
+      "ns/op": 2682.0,
+      "MB/s": 763.6949999999999,
       "B/op": 2144.0,
       "allocs/op": 3.0
     },
     "BenchmarkPublishedScanner/service_token/clean": {
-      "ns/op": 48484.5,
-      "MB/s": 56.760000000000005,
+      "ns/op": 47648.5,
+      "MB/s": 57.76,
       "B/op": 3072.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedScanner/service_token/dirty": {
-      "ns/op": 11511.0,
-      "MB/s": 272.445,
+      "ns/op": 11887.0,
+      "MB/s": 263.815,
       "B/op": 14784.0,
       "allocs/op": 15.0
     },
     "BenchmarkPublishedScanner/slack_token/clean": {
-      "ns/op": 2793.5,
-      "MB/s": 985.1700000000001,
+      "ns/op": 2832.0,
+      "MB/s": 971.77,
       "B/op": 3072.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedScanner/slack_token/dirty": {
-      "ns/op": 5569.5,
-      "MB/s": 183.85000000000002,
+      "ns/op": 5664.0,
+      "MB/s": 180.785,
       "B/op": 12608.0,
       "allocs/op": 15.0
     },
     "BenchmarkPublishedScanner/swiftbic/clean": {
-      "ns/op": 9586.0,
-      "MB/s": 287.085,
+      "ns/op": 9539.5,
+      "MB/s": 288.48,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/swiftbic/dirty": {
-      "ns/op": 5595.5,
-      "MB/s": 102.94,
+      "ns/op": 6022.0,
+      "MB/s": 95.65,
       "B/op": 11584.0,
       "allocs/op": 14.0
     },
     "BenchmarkPublishedScanner/uk_nhs/clean": {
-      "ns/op": 3491.0,
-      "MB/s": 788.325,
+      "ns/op": 3848.0,
+      "MB/s": 715.22,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/uk_nhs/dirty": {
-      "ns/op": 15027.5,
-      "MB/s": 140.54000000000002,
+      "ns/op": 16673.5,
+      "MB/s": 126.67,
       "B/op": 12608.0,
       "allocs/op": 78.0
     },
     "BenchmarkPublishedScanner/uk_nino/clean": {
-      "ns/op": 3662.5,
-      "MB/s": 751.355,
+      "ns/op": 3535.5,
+      "MB/s": 778.4200000000001,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/uk_nino/dirty": {
-      "ns/op": 17424.0,
-      "MB/s": 110.195,
+      "ns/op": 19575.5,
+      "MB/s": 98.10499999999999,
       "B/op": 12608.0,
       "allocs/op": 78.0
     },
     "BenchmarkPublishedScanner/uk_sortcode/clean": {
-      "ns/op": 4565.0,
-      "MB/s": 602.8050000000001,
+      "ns/op": 5241.0,
+      "MB/s": 525.105,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/uk_sortcode/dirty": {
-      "ns/op": 4491.5,
-      "MB/s": 128.25,
+      "ns/op": 5267.0,
+      "MB/s": 109.37,
       "B/op": 11584.0,
       "allocs/op": 14.0
     },
     "BenchmarkPublishedScanner/us_itin/clean": {
-      "ns/op": 3654.0,
-      "MB/s": 753.0699999999999,
+      "ns/op": 4181.0,
+      "MB/s": 658.21,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/us_itin/dirty": {
-      "ns/op": 12353.5,
-      "MB/s": 134.7,
+      "ns/op": 14476.0,
+      "MB/s": 114.95,
       "B/op": 12608.0,
       "allocs/op": 78.0
     },
     "BenchmarkPublishedScanner/us_ssn/clean": {
-      "ns/op": 3663.5,
-      "MB/s": 751.21,
+      "ns/op": 4405.5,
+      "MB/s": 624.72,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkPublishedScanner/us_ssn/dirty": {
-      "ns/op": 11648.0,
-      "MB/s": 137.36,
+      "ns/op": 13976.0,
+      "MB/s": 114.485,
       "B/op": 12608.0,
       "allocs/op": 78.0
     },
     "BenchmarkPublishedSlog/masked-clean": {
-      "ns/op": 853.15,
+      "ns/op": 1015.0,
       "B/op": 16.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedSlog/masked-dirty": {
-      "ns/op": 1101.5,
+      "ns/op": 1165.0,
       "B/op": 16.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedSlog/plain-clean": {
-      "ns/op": 432.0,
+      "ns/op": 509.7,
       "B/op": 16.0,
       "allocs/op": 1.0
     },
     "BenchmarkPublishedSlog/plain-dirty": {
-      "ns/op": 432.04999999999995,
+      "ns/op": 425.3,
       "B/op": 16.0,
       "allocs/op": 1.0
     }

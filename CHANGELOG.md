@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- The parallel table in doc/benchmarks.md showed no speed-up from 1 to 16 CPUs since 0.15.0, because the benchmarks ran pinned to one CPU; re-measured on 24 CPUs, 16 goroutines are 10.0 times faster than one through Scanner.Scan, 7.8 times through the slog handler and 4.6 times through the zap WriteSyncer. `make benchmark-doc` now refuses to run with fewer than 16 CPUs in its affinity. Speed comparisons in the README, doc/comparison.md, doc/benchmarks.md and earlier release notes now say how many times faster or slower, instead of a fraction of the other library's time.
+
 ## [0.16.1] - 2026-11-19
 
 ### Fixed
@@ -24,7 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- The slog handler no longer allocates for the clean and flat comparison events: detectors append findings to reused storage, plain ASCII values skip the escape and separator passes, and slog Bool, Int64 and Uint64 values are formatted without allocating. A record with more than 16 attributes reuses its working slice. With the email and card rules, go-masker now takes 1.06 to 1.43 times the time of embargo on all five comparison events (0.97 to 1.21 in 0.15.0, where flat was slower), and the default scanner takes 0.30 to 0.56 times the time of pii-shield (0.34 to 0.59).
+- The slog handler no longer allocates for the clean and flat comparison events: detectors append findings to reused storage, plain ASCII values skip the escape and separator passes, and slog Bool, Int64 and Uint64 values are formatted without allocating. A record with more than 16 attributes reuses its working slice. With the email and card rules, embargo is now 1.06 to 1.43 times faster than go-masker on all five comparison events (in 0.15.0 it ranged from 1.03 times slower on flat to 1.21 times faster), and the default scanner is 1.79 to 3.33 times faster than pii-shield (1.69 to 2.94 times in 0.15.0).
 
 ## [0.15.0] - 2026-11-19
 
@@ -48,7 +52,7 @@ No exported API changes: code that builds against v0.14.0 builds unchanged. Mask
 
 ### Changed
 
-- Structured values (MaskJSON, the slog handler and the logger adapters) are dispatched on the value. The field name selects only detectors whose hints are keywords, such as cvv or account number, and a repeated clean key reuses its selection from the key cache. A detector that reads the field name skips the `key: value` text when the value cannot hold its candidate: too few digits for a card, phone, My Number, ABA or sort code, or no word shaped like a SWIFT code. IBAN, sort codes and BTC need digits in the text. On the JSON slog comparison events, embargo with the default kinds takes 0.34 to 0.59 times the time of pii-shield, from 0.61 to 1.07 times in v0.14.0, and on the large50 event 0.37 times the time of masq, from 1.13 times. Masked output is unchanged.
+- Structured values (MaskJSON, the slog handler and the logger adapters) are dispatched on the value. The field name selects only detectors whose hints are keywords, such as cvv or account number, and a repeated clean key reuses its selection from the key cache. A detector that reads the field name skips the `key: value` text when the value cannot hold its candidate: too few digits for a card, phone, My Number, ABA or sort code, or no word shaped like a SWIFT code. IBAN, sort codes and BTC need digits in the text. On the JSON slog comparison events, embargo with the default kinds is 1.69 to 2.94 times faster than pii-shield, where v0.14.0 ranged from 1.07 times slower to 1.64 times faster, and on the large50 event it is 2.70 times faster than masq, where v0.14.0 was 1.13 times slower. Masked output is unchanged.
 - embargotest Check failures name the sinks and finding kinds, for example `sensitive data appeared in captured output: app.log (email)`. Captured bytes still never appear, and a sink name longer than 64 bytes, with other bytes than ASCII letters, digits and `_ . / : -`, or with a finding or the canary of its own is written as `a sink with an unprintable name`.
 - `WithKinds` and the `embargo --kinds` flag name a misspelled kind and suggest the nearest built-in one, as in `unknown built-in kind "emial" (did you mean "email"?)`; other unknown values are still not repeated. The `embargo` command names a defined flag that lacks a value, lists the flags for an unknown one, and gives the position and cause of a file it cannot open (`input file 2 cannot be opened: no such file`) without its name.
 - The JSON limit error reads `embargo: JSON size or nesting limit exceeded`, because nesting deeper than 64 levels returns it too.

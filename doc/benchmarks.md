@@ -24,68 +24,68 @@ Background load: no intentional concurrent workload.
 
 | Operation | ns/op | MB/s | B/op | allocs/op |
 |---|---:|---:|---:|---:|
-| Scanner WithAll, clean | 54676.5 | 50.33 | 0 | 0 |
-| Scanner WithAll, dirty | 6283157.0 | 9.99 | 1166864 | 3489 |
-| Mask | 3230.0 | 911.37 | 8448 | 2 |
-| Writer only | 5.7 | 94985.53 | 0 | 0 |
-| Recorder + Check | 200958.0 | 2.71 | 236632 | 1608 |
-| Plain slog, clean | 432.0 | — | 16 | 1 |
-| Masked slog, clean | 853.1 | — | 16 | 1 |
-| Plain slog, dirty | 432.0 | — | 16 | 1 |
-| Masked slog, dirty | 1101.5 | — | 16 | 1 |
+| Scanner WithAll, clean | 62022.0 | 44.37 | 0 | 0 |
+| Scanner WithAll, dirty | 6861085.0 | 9.15 | 1166864 | 3489 |
+| Mask | 3239.5 | 908.70 | 8448 | 2 |
+| Writer only | 6.4 | 84435.41 | 0 | 0 |
+| Recorder + Check | 239464.0 | 2.27 | 236638 | 1608 |
+| Plain slog, clean | 509.7 | — | 16 | 1 |
+| Masked slog, clean | 1015.0 | — | 16 | 1 |
+| Plain slog, dirty | 425.3 | — | 16 | 1 |
+| Masked slog, dirty | 1165.0 | — | 16 | 1 |
 
 Parallel: ns/op is wall time per event across all goroutines.
 
-| Shared value | 1 CPU ns/op | 4 CPU ns/op | 16 CPU ns/op | Speed-up at 16 |
+| Shared value | 1 CPU ns/op | 4 CPU ns/op | 16 CPU ns/op | 16 CPU vs 1 CPU |
 |---|---:|---:|---:|---:|
-| Scanner.Scan | 4458.0 | 4497.0 | 4581.5 | 1.0x |
-| slog handler | 1788.5 | 1802.5 | 1817.0 | 1.0x |
-| zap WriteSyncer | 4500.0 | 4790.0 | 5135.0 | 0.9x |
+| Scanner.Scan | 4798.0 | 1257.0 | 477.9 | 10.0x faster |
+| slog handler | 1804.0 | 552.2 | 231.9 | 7.8x faster |
+| zap WriteSyncer | 5235.0 | 2022.0 | 1140.0 | 4.6x faster |
 
 <details>
 <summary>Per-detector Scanner throughput</summary>
 
 | Detector | Clean MB/s | Dirty MB/s |
 |---|---:|---:|
-| aba_routing | 1050.56 | 74.17 |
-| ach_trace | 777.36 | 36.15 |
-| all | 50.33 | 9.99 |
-| awskey | 690.15 | 238.39 |
-| bank_account | 741.37 | 40.66 |
-| br_cnpj | 757.85 | 124.56 |
-| br_cpf | 758.13 | 120.89 |
-| btc | 1103.26 | 101.12 |
-| ca_sin | 746.81 | 126.80 |
-| card_expiry | 1024.57 | 17.31 |
-| cn_resident_id | 981.25 | 59.21 |
-| credential | 259.85 | 64.70 |
-| cvv | 552.06 | 21.47 |
-| email | 3208.61 | 173.24 |
-| eth | 1115.07 | 293.69 |
-| github_token | 1060.89 | 323.06 |
-| google_api_key | 981.11 | 368.55 |
-| high_entropy | 1073.49 | 107.62 |
-| iban | 457.82 | 123.60 |
-| in_aadhaar | 764.62 | 138.05 |
-| in_pan | 982.12 | 128.65 |
-| ipaddr | 3214.51 | 65.85 |
-| jwt | 1050.37 | 56.80 |
-| kr_rrn | 766.46 | 97.72 |
-| merchant_id | 514.87 | 69.78 |
-| mynumber | 1065.63 | 107.22 |
-| pan | 2596.66 | 97.98 |
-| payment_token | 255.73 | 311.10 |
-| phone_jp | 3143.80 | 85.96 |
-| phone_us | 2693.20 | 133.22 |
-| private_key_pem | 886.50 | 948.34 |
-| service_token | 56.76 | 272.44 |
-| slack_token | 985.17 | 183.85 |
-| swiftbic | 287.08 | 102.94 |
-| uk_nhs | 788.33 | 140.54 |
-| uk_nino | 751.36 | 110.19 |
-| uk_sortcode | 602.81 | 128.25 |
-| us_itin | 753.07 | 134.70 |
-| us_ssn | 751.21 | 137.36 |
+| aba_routing | 1110.01 | 75.31 |
+| ach_trace | 799.36 | 37.17 |
+| all | 44.37 | 9.15 |
+| awskey | 730.65 | 248.25 |
+| bank_account | 781.55 | 42.06 |
+| br_cnpj | 753.32 | 125.39 |
+| br_cpf | 794.85 | 125.28 |
+| btc | 1151.09 | 105.33 |
+| ca_sin | 781.92 | 131.63 |
+| card_expiry | 1071.18 | 17.76 |
+| cn_resident_id | 1018.74 | 62.32 |
+| credential | 270.75 | 66.52 |
+| cvv | 577.38 | 22.19 |
+| email | 3365.80 | 178.19 |
+| eth | 1174.02 | 311.35 |
+| github_token | 1123.62 | 339.03 |
+| google_api_key | 1026.24 | 384.77 |
+| high_entropy | 1124.24 | 112.16 |
+| iban | 474.89 | 128.95 |
+| in_aadhaar | 799.69 | 142.33 |
+| in_pan | 1028.26 | 134.43 |
+| ipaddr | 3390.53 | 67.70 |
+| jwt | 1098.04 | 58.34 |
+| kr_rrn | 800.78 | 102.64 |
+| merchant_id | 531.50 | 72.29 |
+| mynumber | 1116.80 | 111.81 |
+| pan | 2721.55 | 102.25 |
+| payment_token | 267.17 | 324.98 |
+| phone_jp | 3301.34 | 89.88 |
+| phone_us | 2828.25 | 139.08 |
+| private_key_pem | 920.15 | 763.69 |
+| service_token | 57.76 | 263.81 |
+| slack_token | 971.77 | 180.78 |
+| swiftbic | 288.48 | 95.65 |
+| uk_nhs | 715.22 | 126.67 |
+| uk_nino | 778.42 | 98.10 |
+| uk_sortcode | 525.11 | 109.37 |
+| us_itin | 658.21 | 114.95 |
+| us_ssn | 624.72 | 114.48 |
 
 </details>
 <!-- benchmarks:end -->
