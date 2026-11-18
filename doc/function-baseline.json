@@ -165,21 +165,21 @@
       "file": "internal/detect/ipaddr.go",
       "name": "IPAddr.tryIPv4",
       "statements": 12,
-      "cyclomatic": 15,
+      "cyclomatic": 12,
       "lines": 32
     },
     {
       "file": "internal/detect/ipaddr.go",
       "name": "IPAddr.tryIPv6",
       "statements": 14,
-      "cyclomatic": 14,
+      "cyclomatic": 12,
       "lines": 36
     },
     {
       "file": "internal/detect/jwt.go",
       "name": "extractJWTToken",
       "statements": 16,
-      "cyclomatic": 14,
+      "cyclomatic": 12,
       "lines": 37
     },
     {
@@ -216,6 +216,20 @@
       "statements": 26,
       "cyclomatic": 9,
       "lines": 50
+    },
+    {
+      "file": "internal/detect/phone_us.go",
+      "name": "usPhoneAreaCode",
+      "statements": 14,
+      "cyclomatic": 14,
+      "lines": 21
+    },
+    {
+      "file": "internal/output/metadata.go",
+      "name": "eventMetadata.byte",
+      "statements": 17,
+      "cyclomatic": 14,
+      "lines": 33
     },
     {
       "file": "json.go",
