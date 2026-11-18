@@ -90,7 +90,7 @@ The operations-log families were added after the LogHub baseline, so they have c
 | web access | held | 1 | 2,370,789 | 72,549.7 | 1,265.4 | ca_sin, high_entropy, swiftbic, uk_nhs, us_ssn |
 | Kubernetes audit | development | 1 | 92,794,383 | 0.0 | 0.0 | none |
 | cloud audit | development | 1 | 16,030,714 | 0.0 | 0.0 | none |
-| cloud audit | held | 2 | 17,152,480 | 81,154.4 | 39,819.3 | credential, high_entropy, in_aadhaar, mynumber |
+| cloud audit | held | 2 | 17,152,480 | 41,451.7 | 116.6 | credential, high_entropy, in_aadhaar |
 
 Each dataset/kind stratum uses the 40 lowest SHA-256 finding IDs, or every finding if there are fewer. Review labels are in [real-logs-labels.json](real-logs-labels.json); counts and sampled FP fractions are in [real-logs-summary.json](real-logs-summary.json). The estimate sums count × sampled FP fraction across datasets. Zero observed sample FPs does not establish zero population FPs. Small samples, repeated templates and this 239.9 MB source mix cannot predict a deployment’s rate. No recall estimate is possible without labeling undetected secrets.
 <!-- real-logs:end -->

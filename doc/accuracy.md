@@ -332,11 +332,7 @@ At the default threshold, no misses or false alarms appeared in either set.
 
 Verified by the [mynumber format tests](../internal/detect/mynumber_test.go) and the [corpus regression check](../tests/accuracy_test.go). Independently generated MOD 11 check digits, full-width digits and Japanese text boundaries.
 
-| Set / observed limit | Input example | Why it remains |
-|---|---|---|
-| development: `mynumber/control/invoice/0` | `Invoice: 004254390645` | Explanation 1 below. |
-
-1. Business identifiers can satisfy sensitive-number shapes and checksums. Attached business labels lower confidence to 0.4, but the default threshold of 0 preserves ambiguous candidates.
+At the default threshold, no misses or false alarms appeared in either set.
 
 ## pan
 
@@ -465,9 +461,9 @@ The default remains 0 for all 26 default kinds. Public-log rates are sample esti
 
 | Minimum confidence | Public FP/GB | Public precision | Development precision / misses | Held precision / misses |
 |---|---:|---:|---:|---:|
-| 0.0 | 2859.7 | 99.9210% | 97.81% / 0 | 98.40% / 0 |
-| 0.5 | 2859.7 | 99.9210% | 99.40% / 0 | 100.00% / 0 |
-| 0.7 | 2859.7 | 99.9210% | 99.38% / 158 | 100.00% / 156 |
+| 0.0 | 20.8 | 99.9994% | 97.81% / 0 | 98.40% / 0 |
+| 0.5 | 20.8 | 99.9994% | 99.40% / 0 | 100.00% / 0 |
+| 0.7 | 20.8 | 99.9994% | 99.38% / 158 | 100.00% / 156 |
 
 Choose 0 when retaining ambiguous secrets is the priority. On these synthetic sets, 0.5 removes business-label false positives without additional misses; validate it against your own mislabeled secrets before opting in. A global 0.7 loses bank-account and sort-code positives. These thresholds do not fix the remaining public-log ABA/SWIFT false positives. Select relevant kinds and sensitive keys before raising the global cutoff; confidence is not a probability. Regenerate with make accuracy-doc and make real-log-accuracy; python3 scripts/accuracy_figures.py --check verifies this table.
 
@@ -596,7 +592,7 @@ The operations-log families were added after the LogHub baseline, so they have c
 | web access | held | 1 | 2,370,789 | 72,549.7 | 1,265.4 | ca_sin, high_entropy, swiftbic, uk_nhs, us_ssn |
 | Kubernetes audit | development | 1 | 92,794,383 | 0.0 | 0.0 | none |
 | cloud audit | development | 1 | 16,030,714 | 0.0 | 0.0 | none |
-| cloud audit | held | 2 | 17,152,480 | 81,154.4 | 39,819.3 | credential, high_entropy, in_aadhaar, mynumber |
+| cloud audit | held | 2 | 17,152,480 | 41,451.7 | 116.6 | credential, high_entropy, in_aadhaar |
 
 Each dataset/kind stratum uses the 40 lowest SHA-256 finding IDs, or every finding if there are fewer. Review labels are in [real-logs-labels.json](real-logs-labels.json); counts and sampled FP fractions are in [real-logs-summary.json](real-logs-summary.json). The estimate sums count × sampled FP fraction across datasets. Zero observed sample FPs does not establish zero population FPs. Small samples, repeated templates and this 239.9 MB source mix cannot predict a deployment’s rate. No recall estimate is possible without labeling undetected secrets.
 <!-- real-logs:end -->
