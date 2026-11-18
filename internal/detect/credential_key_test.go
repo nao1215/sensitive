@@ -140,3 +140,40 @@ func TestCredentialPluralAndJoinedKeySegments(t *testing.T) {
 		}
 	}
 }
+
+func TestCredentialShortPasswordAndSessionKeys(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		key              string
+		structured, text bool
+	}{
+		{"pass", true, false},
+		{"PWD", true, false},
+		{"DB_PASS", true, true},
+		{"db_pwd", true, true},
+		{"--- PASS", true, false},
+		{"bypass", false, false},
+		{"compass", false, false},
+		{"otp", true, true},
+		{"sms_otp", true, true},
+		{"pin", true, true},
+		{"passcode", true, true},
+		{"ssh_passphrase", true, true},
+		{"session", true, true},
+		{"JSESSIONID", true, true},
+		{"PHPSESSID", true, true},
+		{"session_count", false, false},
+		{"spin", false, false},
+	} {
+		t.Run(tc.key, func(t *testing.T) {
+			t.Parallel()
+			if got := SensitiveCredentialKey(tc.key); got != tc.structured {
+				t.Fatalf("structured key %q = %v, want %v", tc.key, got, tc.structured)
+			}
+			input := tc.key + "=opaqueFixture1"
+			if got := (&Credential{}).Scan([]byte(input)); (len(got) == 1 && input[got[0].Start:got[0].End] == "opaqueFixture1") != tc.text {
+				t.Fatalf("text key %q findings %+v, want %v", tc.key, got, tc.text)
+			}
+		})
+	}
+}

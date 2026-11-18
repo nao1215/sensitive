@@ -813,3 +813,36 @@ func TestMaskJSONContextCancellationMatchesTheContextError(t *testing.T) {
 		})
 	}
 }
+
+func TestMaskJSONNamedValuePairs(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name, input, want string
+	}{
+		{name: "kubernetes env", input: `{"env":[{"name":"DB_PASSWORD","value":"hunter2"},{"name":"LOG_LEVEL","value":"debug"}]}`, want: `{"env":[{"name":"DB_PASSWORD","value":"[REDACTED]"},{"name":"LOG_LEVEL","value":"debug"}]}`},
+		{name: "value before name", input: `{"value":"hunter2","name":"api_token"}`, want: `{"value":"[REDACTED]","name":"api_token"}`},
+		{name: "ssm parameter path", input: `{"Parameters":[{"Name":"/prod/db/password","Value":"hunter2","Type":"SecureString"}]}`, want: `{"Parameters":[{"Name":"/prod/db/password","Value":"[REDACTED]","Type":"SecureString"}]}`},
+		{name: "cloudformation parameter", input: `{"ParameterKey":"DbPassword","ParameterValue":"hunter2"}`, want: `{"ParameterKey":"DbPassword","ParameterValue":"[REDACTED]"}`},
+		{name: "object value", input: `{"name":"client_secret","value":{"a":"b"}}`, want: `{"name":"client_secret","value":{"a":"b"}}`},
+		{name: "numeric metric stays", input: `{"name":"token","value":42}`, want: `{"name":"token","value":42}`},
+		{name: "empty value stays", input: `{"name":"password","value":""}`, want: `{"name":"password","value":""}`},
+		{name: "public name", input: `{"name":"region","value":"ap-northeast-1"}`, want: `{"name":"region","value":"ap-northeast-1"}`},
+		{name: "escaped name", input: `{"name":"DB_PASSWORD","value":"hunter2"}`, want: `{"name":"DB_PASSWORD","value":"[REDACTED]"}`},
+		{name: "name only in another object", input: `[{"name":"password"},{"value":"hunter2"}]`, want: `[{"name":"password"},{"value":"hunter2"}]`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := NewScanner(WithKinds()).MaskJSON([]byte(tc.input))
+			if err != nil || string(got) != tc.want {
+				t.Fatalf("got %s err %v want %s", got, err, tc.want)
+			}
+		})
+	}
+	t.Run("custom key set", func(t *testing.T) {
+		t.Parallel()
+		got, err := NewScanner(WithKinds(), WithoutDefaultSensitiveKeys(), WithSensitiveKeys("region")).MaskJSON([]byte(`{"name":"password","value":"x","n":{"name":"region","value":"y"}}`))
+		if want := `{"name":"password","value":"x","n":{"name":"region","value":"[REDACTED]"}}`; err != nil || string(got) != want {
+			t.Fatalf("got %s err %v want %s", got, err, want)
+		}
+	})
+}

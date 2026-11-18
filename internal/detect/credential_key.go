@@ -28,13 +28,18 @@ func NormalizeCredentialKey(key string) string {
 }
 
 // SensitiveCredentialKey implements the shared default key rule.
+// Structured keys also accept the bare abbreviations pass and pwd, which the
+// text grammar leaves alone because pass=12 reports test results and PWD=/srv
+// is the working directory in environment dumps.
 func SensitiveCredentialKey(key string) bool {
-	return credentialSuffix(key) || sensitiveNormalizedKey(NormalizeCredentialKey(key))
+	normalized := NormalizeCredentialKey(key)
+	return credentialSuffix(key) || sensitiveNormalizedKey(normalized) || normalized == "pass" || normalized == "pwd"
 }
 
 func sensitiveNormalizedKey(key string) bool {
 	switch key {
-	case "password", "passwd", credentialSecretKey, credentialTokenKey, "apikey", authorizationKey, proxyAuthorizationKey, cookieKey, setCookieKey, "accesstoken", "refreshtoken", "idtoken", "xapikey", "dbpassword", "privatetoken", "clientsecret", "authtoken", "pgpassword":
+	case "password", "passwd", credentialSecretKey, credentialTokenKey, "apikey", authorizationKey, proxyAuthorizationKey, cookieKey, setCookieKey, "accesstoken", "refreshtoken", "idtoken", "xapikey", "dbpassword", "privatetoken", "clientsecret", "authtoken", "pgpassword",
+		"otp", "pin", "passcode", "passphrase", "session", "sessionid", "sessiontoken", "jsessionid", "phpsessid":
 		return true
 	}
 	return false
@@ -101,7 +106,11 @@ func credentialSuffix(key string) bool {
 	var candidates []string
 	switch key[len(key)-1] | 0x20 {
 	case 'd':
-		candidates = []string{"password", "passwd"}
+		candidates = []string{"password", "passwd", "pwd"}
+	case 'e':
+		candidates = []string{"passcode", "passphrase"}
+	case 'p':
+		candidates = []string{"otp"}
 	case 't':
 		candidates = []string{credentialSecretKey}
 	case 'n':
@@ -109,7 +118,7 @@ func credentialSuffix(key string) bool {
 	case 'l':
 		candidates = []string{string(NameCredential)}
 	case 's':
-		candidates = []string{"credentials", "creds"}
+		candidates = []string{"credentials", "creds", "pass"}
 	case 'h':
 		candidates = []string{"auth"}
 	case 'y':
@@ -126,6 +135,13 @@ func credentialSuffixMatch(key string, candidates []string) bool {
 	for _, word := range candidates {
 		start := len(key) - len(word)
 		if start < 0 || !strings.EqualFold(key[start:], word) || credentialSegmentStart(key) != start {
+			continue
+		}
+		if word == "pass" || word == "pwd" {
+			// Bare pass and pwd are not credentials in text; db_pass is.
+			if strings.TrimRight(key[:start], "_.- ") != "" {
+				return true
+			}
 			continue
 		}
 		if word != "key" {

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/nao1215/embargo/internal/saferecord"
@@ -198,6 +199,7 @@ func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidde
 		}
 	}
 	w.space()
+	var pair namedValue
 	for w.data[w.pos] != closeByte {
 		fieldContext := key
 		pathDepth := len(w.path)
@@ -207,8 +209,13 @@ func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidde
 				return err
 			}
 		}
+		w.space()
+		valueStart, resultStart := w.pos, len(w.result)
 		if err := w.value(ctx, depth+1, fieldContext, hidden); err != nil {
 			return err
+		}
+		if open == '{' && !hidden {
+			pair.member(w, fieldContext, w.data[valueStart:w.pos], resultStart)
 		}
 		w.path = w.path[:pathDepth]
 		w.space()
@@ -216,9 +223,57 @@ func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidde
 	}
 	w.pos++
 	if !hidden {
+		pair.mask(w)
 		w.appendResult([]byte{closeByte})
 	}
 	return nil
+}
+
+// namedValue tracks one object that stores a setting as separate name and
+// value members, as Kubernetes env, ECS task definitions, SSM parameters and
+// CloudFormation parameters do: {"name":"DB_PASSWORD","value":"hunter2"}.
+// The value string is masked when the name is a sensitive key, in either
+// member order. Numeric values, as in metric samples, stay visible.
+type namedValue struct {
+	sensitive  bool
+	valueStart int
+	valueEnd   int
+}
+
+// member records a name member whose string is a sensitive key and the
+// output span of a string value member.
+func (p *namedValue) member(w *jsonWalker, key string, raw []byte, resultStart int) {
+	if len(raw) < len(`""`) || raw[0] != '"' {
+		return
+	}
+	switch normalizeKey(key) {
+	case "name", "key", "parameterkey", "parametername", "optionname", "variable":
+		var name string
+		if json.Unmarshal(raw, &name) == nil && w.scanner.scanner.cachedSensitiveKey(settingName(name)) {
+			p.sensitive = true
+		}
+	case "value", "parametervalue":
+		if len(raw) > len(`""`) {
+			p.valueStart, p.valueEnd = resultStart, len(w.result)
+		}
+	}
+}
+
+// mask hides the recorded value span once both members were seen.
+func (p *namedValue) mask(w *jsonWalker) {
+	if !p.sensitive || p.valueEnd == 0 || w.err != nil {
+		return
+	}
+	if w.pathMasks == nil {
+		w.pathMasks = make(map[int]Finding)
+	}
+	w.pathMasks[p.valueStart] = Finding{Start: p.valueStart, End: p.valueEnd}
+}
+
+// settingName keeps the last segment of a parameter path such as
+// /prod/db/password, so the key rule sees the setting rather than the path.
+func settingName(name string) string {
+	return name[strings.LastIndexByte(name, '/')+1:]
 }
 
 // memberKey consumes an object key and its colon. A visible key is masked and
