@@ -2,6 +2,7 @@ package embargo
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"log/slog"
 	"math"
@@ -150,5 +151,62 @@ func TestMaskBytesMatchesMaskScalar(t *testing.T) {
 				t.Errorf("maskBytes(%q, %q) = %q, %v, %v; maskScalar = %q, %v", value, key, got, changed, err, want, wantErr)
 			}
 		}
+	}
+}
+
+func TestEncodedTextBoundaries(t *testing.T) {
+	t.Parallel()
+	encode := func(text string) string { return base64.StdEncoding.EncodeToString([]byte(text)) }
+	email := "a@example.com"
+	atMax := email + strings.Repeat(" ", maxEncodedText/4*3-len(email))
+	overMax := atMax + "   "
+	tests := []struct {
+		name, value string
+		hidden      bool
+	}{
+		{"shortest scanned length", encode(email), true},
+		{"shorter values are not scanned", encode("a@b.co"), false},
+		{"longest scanned length", encode(atMax), true},
+		{"one quantum longer is not scanned", encode(overMax), false},
+		{"plus and slash belong to the alphabet", encode(email + "  ???>>>"), true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := NewScanner().MaskJSON([]byte(`{"b":"` + tt.value + `"}`))
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := `{"b":"` + tt.value + `"}`
+			if tt.hidden {
+				want = `{"b":"[REDACTED]"}`
+			}
+			if string(got) != want {
+				t.Fatalf("len %d: got %.80s, want %.80s", len(tt.value), got, want)
+			}
+		})
+	}
+}
+
+func TestPrintableText(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name, data string
+		want       bool
+	}{
+		{"ASCII", "plain", true},
+		{"tab, newline and carriage return", "a\tb\nc\rd", true},
+		{"encoded replacement character", "\uFFFD", true},
+		{"control byte", "a\x01b", false},
+		{"invalid UTF-8", "a\xffb", false},
+		{"truncated sequence", "a\xc3", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := printableText([]byte(tt.data)); got != tt.want {
+				t.Fatalf("printableText(%q) = %v, want %v", tt.data, got, tt.want)
+			}
+		})
 	}
 }
