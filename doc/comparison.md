@@ -182,7 +182,7 @@ All eight libraries run the same 13 positive scenarios and two clean controls. T
 | pii-shield v3.0.0 | Default policy plus one recovery key, applied to each encoded line | 10/13; masks message text and both phone families; attribute keys, the bearer header and the tag-only secret remain |
 | ferret-scan v2.4.3 | In-process engine with its default checks, applied to each encoded line | 9/13; masks keys and groups; embedded JSON, the bearer header, the Japanese phone and the tag-only secret remain |
 | masq v0.2.3 | Two regexes, three field names, one tag; time/level allowed | 6/13; tag-only protection wins; whole-string redaction loses context |
-| go-masker v0.6.1 | Default key policy, Luhn cards, safe types, fixed tag rule | 8/13; slightly faster on the flat event; tags win and embedded JSON ties; partial display by default |
+| go-masker v0.6.1 | Default key policy, Luhn cards, safe types, fixed tag rule | 8/13; tags win and embedded JSON ties; partial display by default |
 | slog-formatter v1.3.0 | PIIFormatter on six sensitive field names | 3/13; fixed field transforms are cheaper; arbitrary message text remains |
 | go-mask v0.6.2 | Fixed masker, six registered fields and a fixed struct tag | 3/13; tags win and typed copies aid reuse; message text remains |
 | godlp v1.2.15 | Six built-in rules; apply to string and JSON values | 5/13; US phone ties; email/labeled-card partial masking ties; opaque tokens remain |
