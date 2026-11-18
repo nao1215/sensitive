@@ -64,16 +64,8 @@ func (d *ABARouting) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			i = end - 1
 			continue
 		}
-		confidence := 0.85
-
-		origStart, origEnd := mapOriginalRange(posMap, i, end)
-
-		findings = append(findings, Finding{
-			DetectorName: d.Name(),
-			Start:        origStart,
-			End:          origEnd,
-			Confidence:   confidence,
-		})
+		//nolint:mnd // The detector contract documents this heuristic score.
+		findings = append(findings, viewFinding(d.Name(), posMap, i, end, 0.85))
 
 		i = end - 1
 	}

@@ -174,14 +174,7 @@ func (d *PAN) evaluateCandidate(orig []byte, posMap []int, digits []byte, digitL
 		return Finding{}, false
 	}
 
-	origStart, origEnd := mapOriginalRange(posMap, start, end)
-
-	return Finding{
-		DetectorName: d.Name(),
-		Start:        origStart,
-		End:          origEnd,
-		Confidence:   businessConfidence(orig, origStart, confidence),
-	}, true
+	return labeledViewFinding(d.Name(), orig, posMap, start, end, confidence), true
 }
 
 // passesLuhn implements the Luhn algorithm (MOD 10) for check digit validation.

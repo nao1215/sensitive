@@ -44,8 +44,7 @@ func (r *nearRule) scan(dst []Finding, name DetectorName, data []byte, posMap []
 			if used != nil {
 				used[seq.start] = struct{}{}
 			}
-			start, end := mapOriginalRange(posMap, seq.start, seq.end)
-			dst = append(dst, Finding{DetectorName: name, Start: start, End: end, Confidence: confidence})
+			dst = append(dst, viewFinding(name, posMap, seq.start, seq.end, confidence))
 		}
 	}
 	return dst

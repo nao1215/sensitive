@@ -66,15 +66,8 @@ func (d *MyNumber) scanNormalized(orig, data []byte, posMap []int) []Finding {
 		}
 
 		if isValidMyNumber(digits) && !logContext.fragment(data, start, end) && !arnAccount(data, start, end) {
-			origStart, origEnd := mapOriginalRange(posMap, start, end)
-
-			findings = append(findings, Finding{
-				DetectorName: d.Name(),
-				Start:        origStart,
-				End:          origEnd,
-				//nolint:mnd // The detector contract documents this heuristic score.
-				Confidence: businessConfidence(orig, origStart, 0.95),
-			})
+			//nolint:mnd // The detector contract documents this heuristic score.
+			findings = append(findings, labeledViewFinding(d.Name(), orig, posMap, start, end, 0.95))
 		}
 		i = end
 	}

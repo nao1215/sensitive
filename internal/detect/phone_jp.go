@@ -117,14 +117,7 @@ func (d *JPPhone) scanNormalized(orig, data []byte, posMap []int) []Finding {
 			continue
 		}
 
-		origStart, origEnd := mapOriginalRange(posMap, start, end)
-
-		findings = append(findings, Finding{
-			DetectorName: d.Name(),
-			Start:        origStart,
-			End:          origEnd,
-			Confidence:   businessConfidence(orig, origStart, jpPhoneConfidence(phoneType)),
-		})
+		findings = append(findings, labeledViewFinding(d.Name(), orig, posMap, start, end, jpPhoneConfidence(phoneType)))
 		i = end
 	}
 
