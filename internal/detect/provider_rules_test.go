@@ -171,6 +171,10 @@ func TestRoutingSuffixEnd(t *testing.T) {
 		{". next", 0},
 		{"..x", 0},
 		{"", 0},
+		// A part that runs into - or _ starts another token, not a routing part.
+		{".glpat-next", 0},
+		{".01.glpat-next", 3},
+		{".01_x", 0},
 	} {
 		if got := routingSuffixEnd([]byte(tc.text), 0); got != tc.want {
 			t.Errorf("routingSuffixEnd(%q) = %d, want %d", tc.text, got, tc.want)
@@ -242,5 +246,18 @@ func TestParseLayoutNotation(t *testing.T) {
 		if _, err := parseLayout(layout); err == nil {
 			t.Errorf("parseLayout(%+v) accepted invalid notation", layout)
 		}
+	}
+}
+
+func TestServiceTokensJoinedByADot(t *testing.T) {
+	t.Parallel()
+	first, second := "glpat-"+synthetic(alnumAlphabet, 36), "glrt-"+synthetic(alnumAlphabet, 30)
+	text := first + "." + second
+	got := make([]string, 0, 2)
+	for _, f := range NewServiceToken().Scan([]byte(text)) {
+		got = append(got, text[f.Start:f.End])
+	}
+	if len(got) != 2 || got[0] != first || got[1] != second {
+		t.Fatalf("Scan(%q) = %q, want both tokens", text, got)
 	}
 }

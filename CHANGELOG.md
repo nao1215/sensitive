@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- KindServiceToken no longer leaves the first of two dot-joined provider tokens visible, as in `glpat-….glpat-…`: the routing suffix of a GitLab token stopped at the second token's prefix, the boundary check then rejected the first token, and only the second was masked. A routing part that runs into `-` or `_` now ends the suffix before its dot.
+
 ## [0.16.0] - 2026-11-19
 
 ### Added
