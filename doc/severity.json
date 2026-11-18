@@ -4,7 +4,7 @@
     "tier": "critical",
     "threshold": 0,
     "tp": 1648,
-    "fp": 97,
+    "fp": 33,
     "fn": 0,
     "exposed_secrets": 0,
     "residual_bytes": 0
@@ -34,7 +34,7 @@
     "tier": "critical",
     "threshold": 0.5,
     "tp": 1648,
-    "fp": 64,
+    "fp": 0,
     "fn": 0,
     "exposed_secrets": 0,
     "residual_bytes": 0
@@ -94,7 +94,7 @@
     "tier": "critical",
     "threshold": 0,
     "tp": 1632,
-    "fp": 96,
+    "fp": 32,
     "fn": 0,
     "exposed_secrets": 0,
     "residual_bytes": 0
@@ -124,7 +124,7 @@
     "tier": "critical",
     "threshold": 0.5,
     "tp": 1632,
-    "fp": 64,
+    "fp": 0,
     "fn": 0,
     "exposed_secrets": 0,
     "residual_bytes": 0

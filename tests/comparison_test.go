@@ -213,7 +213,7 @@ func comparisonCases() []comparisonCase {
 			l.Info("request", "user", comparisonUser{ID: comparisonID, Recovery: comparisonOpaque})
 		}, `"Recovery":"[REDACTED]"`, `"Recovery":"[REDACTED]"`},
 		{"valid_card", func(l *slog.Logger) { l.Info("request", "card", "4111111111111111") }, `"card":"[REDACTED]"`, `"card":"[REDACTED]"`},
-		{comparisonInvalidCard, func(l *slog.Logger) { l.Info("request", "order", "4111111111111112") }, `"order":"[REDACTED]"`, `"order":"[REDACTED]"`},
+		{comparisonInvalidCard, func(l *slog.Logger) { l.Info("request", "order", "4111111111111112") }, `"order":"[REDACTED]"`, `"order":"4111111111111112"`},
 		{comparisonMap, func(l *slog.Logger) {
 			l.Info("request", "data", map[string]any{comparisonPasswordKey: comparisonOpaque, comparisonEmailKey: comparisonEmail, "count": 17})
 		}, `"data":{"count":17,"email":null,"password":null}`, `"data":{"count":17,"email":"[REDACTED]","password":"[REDACTED]"}`},
@@ -835,8 +835,8 @@ func TestComparisonScenarios(t *testing.T) {
 				t.Fatal(err)
 			}
 			row.Results[mode] = catchObservation{Output: string(data), Removed: !strings.Contains(string(data), scenario.needle)}
-			if mode == comparisonEmbargoName && scenario.name == comparisonInvalidCard && !row.Results[mode].Removed {
-				t.Fatal("comparison no longer represents default card masking")
+			if mode == comparisonEmbargoName && scenario.name == comparisonInvalidCard && row.Results[mode].Removed {
+				t.Fatal("embargo masked an order number that fails the Luhn check")
 			}
 		}
 		report.Rows = append(report.Rows, row)

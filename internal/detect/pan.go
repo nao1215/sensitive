@@ -155,24 +155,13 @@ func (d *PAN) evaluateCandidate(orig []byte, posMap []int, digits []byte, digitL
 	}
 	confidence += 0.3 // known BIN prefix
 
-	luhnOK := passesLuhn(digits)
-	if luhnOK {
-		if isExpectedLength(brand, digitLen) {
-			confidence += 0.4 // Luhn + expected length
-		} else {
-			// Luhn passes but length does not match the brand.
-			// In financial contexts this is almost certainly not
-			// a genuine card of this brand. Drop confidence below
-			// the detection threshold.
-			confidence = 0.4
-		}
-	}
-
-	// Only report findings with BIN match (confidence >= 0.6).
-	//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
-	if confidence < 0.6 {
+	// Every issued card satisfies Luhn and its brand's lengths, so digits
+	// that fail either are an order, request or trace ID that starts like a
+	// card, not a card.
+	if !passesLuhn(digits) || !isExpectedLength(brand, digitLen) {
 		return Finding{}, false
 	}
+	confidence += 0.4 // Luhn + expected length
 
 	return labeledViewFinding(d.Name(), orig, posMap, start, end, confidence), true
 }

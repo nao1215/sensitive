@@ -40,7 +40,7 @@ The original 23 built-in detectors decode exactly one layer of valid `%HH` escap
 | [jwt](#jwt) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [merchant_id](#merchant-id) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [mynumber](#mynumber) | 144 / 544 | 144 / 32 / 0 | 81.8% | 100.0% |
-| [pan](#pan) | 144 / 544 | 144 / 96 / 0 | 60.0% | 100.0% |
+| [pan](#pan) | 144 / 544 | 144 / 32 / 0 | 81.8% | 100.0% |
 | [payment_token](#payment-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 144 / 544 | 144 / 32 / 0 | 81.8% | 100.0% |
 | [phone_us](#phone-us) | 144 / 64 | 144 / 0 / 0 | 100.0% | 100.0% |
@@ -71,7 +71,7 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [jwt](#jwt) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [merchant_id](#merchant-id) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [mynumber](#mynumber) | 146 / 562 | 146 / 33 / 0 | 81.6% | 100.0% |
-| [pan](#pan) | 146 / 562 | 146 / 97 / 0 | 60.1% | 100.0% |
+| [pan](#pan) | 146 / 562 | 146 / 33 / 0 | 81.6% | 100.0% |
 | [payment_token](#payment-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 146 / 562 | 146 / 32 / 0 | 82.0% | 100.0% |
 | [phone_us](#phone-us) | 144 / 64 | 144 / 0 / 0 | 100.0% | 100.0% |
@@ -102,7 +102,7 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [jwt](#jwt) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [merchant_id](#merchant-id) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [mynumber](#mynumber) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
-| [pan](#pan) | 144 / 544 | 144 / 64 / 0 | 69.2% | 100.0% |
+| [pan](#pan) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [payment_token](#payment-token) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 144 / 544 | 144 / 0 / 0 | 100.0% | 100.0% |
 | [phone_us](#phone-us) | 144 / 64 | 144 / 0 / 0 | 100.0% | 100.0% |
@@ -133,7 +133,7 @@ PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 de
 | [jwt](#jwt) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [merchant_id](#merchant-id) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [mynumber](#mynumber) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
-| [pan](#pan) | 146 / 562 | 146 / 64 / 0 | 69.5% | 100.0% |
+| [pan](#pan) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [payment_token](#payment-token) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [phone_jp](#phone-jp) | 146 / 562 | 146 / 0 / 0 | 100.0% | 100.0% |
 | [phone_us](#phone-us) | 144 / 64 | 144 / 0 / 0 | 100.0% | 100.0% |
@@ -468,8 +468,8 @@ The default remains 0 for all 26 default kinds. Public-log rates are sample esti
 
 | Minimum confidence | Public FP/GB | Public precision | Development precision / misses | Held precision / misses |
 |---|---:|---:|---:|---:|
-| 0.0 | 2859.7 | 99.9210% | 95.54% / 0 | 96.09% / 0 |
-| 0.5 | 2859.7 | 99.9210% | 97.84% / 0 | 98.40% / 0 |
+| 0.0 | 2859.7 | 99.9210% | 97.03% / 0 | 97.62% / 0 |
+| 0.5 | 2859.7 | 99.9210% | 99.40% / 0 | 100.00% / 0 |
 | 0.7 | 2859.7 | 99.9210% | 99.38% / 158 | 100.00% / 156 |
 
 Choose 0 when retaining ambiguous secrets is the priority. On these synthetic sets, 0.5 removes business-label false positives without additional misses; validate it against your own mislabeled secrets before opting in. A global 0.7 loses bank-account and sort-code positives. These thresholds do not fix the remaining public-log ABA/SWIFT false positives. Select relevant kinds and sensitive keys before raising the global cutoff; confidence is not a probability. Regenerate with make accuracy-doc and make real-log-accuracy; python3 scripts/accuracy_figures.py --check verifies this table.
@@ -483,19 +483,19 @@ Each split combines the original synthetic corpus, credentials and the frozen co
 
 | Set | Tier | Threshold | TP / FP / misses | Recall | Exposed values / bytes |
 |---|---|---:|---:|---:|---:|
-| development | critical | 0.0 | 1648 / 97 / 0 | 100.00% | 0 / 0 |
+| development | critical | 0.0 | 1648 / 33 / 0 | 100.00% | 0 / 0 |
 | development | high | 0.0 | 3930 / 1089 / 0 | 100.00% | 0 / 0 |
 | development | standard | 0.0 | 1724 / 176 / 0 | 100.00% | 0 / 0 |
-| development | critical | 0.5 | 1648 / 64 / 0 | 100.00% | 0 / 0 |
+| development | critical | 0.5 | 1648 / 0 / 0 | 100.00% | 0 / 0 |
 | development | high | 0.5 | 3930 / 0 / 0 | 100.00% | 0 / 0 |
 | development | standard | 0.5 | 1604 / 24 / 120 | 93.04% | 120 / 4800 |
 | development | critical | 0.7 | 1648 / 0 / 0 | 100.00% | 0 / 0 |
 | development | high | 0.7 | 3164 / 0 / 766 | 80.51% | 766 / 10735 |
 | development | standard | 0.7 | 1604 / 24 / 120 | 93.04% | 120 / 4800 |
-| held | critical | 0.0 | 1632 / 96 / 0 | 100.00% | 0 / 0 |
+| held | critical | 0.0 | 1632 / 32 / 0 | 100.00% | 0 / 0 |
 | held | high | 0.0 | 3920 / 1088 / 0 | 100.00% | 0 / 0 |
 | held | standard | 0.0 | 1702 / 150 / 2 | 99.88% | 2 / 80 |
-| held | critical | 0.5 | 1632 / 64 / 0 | 100.00% | 0 / 0 |
+| held | critical | 0.5 | 1632 / 0 / 0 | 100.00% | 0 / 0 |
 | held | high | 0.5 | 3920 / 0 / 0 | 100.00% | 0 / 0 |
 | held | standard | 0.5 | 1584 / 0 / 120 | 92.96% | 120 / 4800 |
 | held | critical | 0.7 | 1632 / 0 / 0 | 100.00% | 0 / 0 |
