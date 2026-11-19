@@ -122,7 +122,7 @@ fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
 The HTTP and gRPC hooks mask what they log, not the request or response. [Adapters](doc/adapters.md) · [Size limits and failure records](doc/logging.md#bounds-and-failures)
 
 <!-- speed-summary:start -->
-On the same five JSON slog events, embargo is 1.07 to 1.45 times faster than go-masker given the same email and card rules, and embargo's default scanner is 1.69 to 3.25 times faster than pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
+On the same five JSON slog events, embargo is 1.10 to 1.41 times faster than go-masker given the same email and card rules, and embargo's default scanner is 1.88 to 4.05 times faster than pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
 <!-- speed-summary:end -->
 
 ## Find and mask sensitive text

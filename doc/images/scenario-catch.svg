@@ -5,8 +5,8 @@
 <text x="24" y="34" font-size="25" fill="#172033" text-anchor="start">Scenario catch rate</text>
 <text x="24" y="60" font-size="16" fill="#172033" text-anchor="start">Same 13 positive scenarios for every library; matrix shows all results and clean controls.</text>
 <text x="24" y="101" font-size="14" fill="#172033" text-anchor="start">embargo</text>
-<rect x="245" y="84" width="553.85" height="23" rx="2" fill="#087f75"/>
-<text x="810.85" y="101" font-size="14" fill="#172033" text-anchor="start">12 / 13</text>
+<rect x="245" y="84" width="461.54" height="23" rx="2" fill="#087f75"/>
+<text x="718.54" y="101" font-size="14" fill="#172033" text-anchor="start">10 / 13</text>
 <text x="24" y="133" font-size="14" fill="#172033" text-anchor="start">pii-shield v3.0.0</text>
 <rect x="245" y="116" width="461.54" height="23" rx="2" fill="#8a6d00"/>
 <text x="718.54" y="133" font-size="14" fill="#172033" text-anchor="start">10 / 13</text>
@@ -234,8 +234,8 @@
 <rect x="992" y="705" width="95.00" height="23" rx="2" fill="#f0e5de"/>
 <text x="1040.0" y="721" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
 <text x="24" y="749" font-size="14" fill="#172033" text-anchor="start">Japanese phone</text>
-<rect x="292" y="732" width="95.00" height="23" rx="2" fill="#d7eee8"/>
-<text x="340.0" y="748" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="292" y="732" width="95.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="340.0" y="748" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
 <rect x="392" y="732" width="95.00" height="23" rx="2" fill="#d7eee8"/>
 <text x="440.0" y="748" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
 <rect x="492" y="732" width="95.00" height="23" rx="2" fill="#f0e5de"/>
@@ -251,8 +251,8 @@
 <rect x="992" y="732" width="95.00" height="23" rx="2" fill="#f0e5de"/>
 <text x="1040.0" y="748" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
 <text x="24" y="776" font-size="14" fill="#172033" text-anchor="start">US phone</text>
-<rect x="292" y="759" width="95.00" height="23" rx="2" fill="#d7eee8"/>
-<text x="340.0" y="775" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
+<rect x="292" y="759" width="95.00" height="23" rx="2" fill="#f0e5de"/>
+<text x="340.0" y="775" font-size="12" fill="#62351c" text-anchor="middle">visible</text>
 <rect x="392" y="759" width="95.00" height="23" rx="2" fill="#d7eee8"/>
 <text x="440.0" y="775" font-size="12" fill="#173d35" text-anchor="middle">masked</text>
 <rect x="492" y="759" width="95.00" height="23" rx="2" fill="#d7eee8"/>
