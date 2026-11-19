@@ -293,4 +293,50 @@ func TestJoinedPathCache(t *testing.T) {
 	if scanner.paths.size() != 1 {
 		t.Fatal("a path with findings was cached")
 	}
+	// Paths up to the key cache's length limit are cached, longer ones not.
+	for _, n := range []int{maxCachedKeyBytes, maxCachedKeyBytes + 1} {
+		path := []byte(strings.Repeat("a", n-len(".b")) + ".b")
+		if _, err := scan.joinedKeySensitive(t.Context(), path, n-len(".b")); err != nil {
+			t.Fatal(err)
+		}
+		if _, cached := scanner.paths.loadBytes(path); cached != (n <= maxCachedKeyBytes) {
+			t.Errorf("path of %d bytes cached = %v", n, cached)
+		}
+	}
+}
+
+func TestSlogPairsHideValues(t *testing.T) {
+	t.Parallel()
+	var out strings.Builder
+	logger := slog.New(NewSlogHandler(slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+		if len(groups) == 0 && a.Key == slog.TimeKey {
+			return slog.Attr{}
+		}
+		return a
+	}}), NewScanner()))
+	logger.Info("m", slog.Group("env", "other", "kept", "name", "DB_PASSWORD", "value", "hunter2"), "name", 7, "value", "visible")
+	want := `{"level":"INFO","msg":"m","env":{"other":"kept","name":"DB_PASSWORD","value":"[REDACTED]"},"name":7,"value":"visible"}`
+	if got := strings.TrimSpace(out.String()); got != want {
+		t.Fatalf("got  %s\nwant %s", got, want)
+	}
+}
+
+func TestPooledScratchLimits(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner()
+	for _, tc := range []struct {
+		keys, members int
+		pooled        bool
+	}{
+		{largestPooledBuffer, maxPooledMembers, true},
+		{largestPooledBuffer + 1, 0, false},
+		{0, maxPooledMembers + 1, false},
+	} {
+		scratch := &scanScratch{text: nil, findings: nil, keys: make([]byte, tc.keys), members: make([]pathMember, tc.members)}
+		scanner.returnScratch(scratch)
+		// Pooled storage is truncated for its next user; dropped storage is not.
+		if pooled := len(scratch.keys) == 0 && len(scratch.members) == 0; pooled != tc.pooled {
+			t.Errorf("keys %d members %d: pooled %v", tc.keys, tc.members, pooled)
+		}
+	}
 }

@@ -176,7 +176,7 @@ func pathKey(key memberKey) string {
 type namedPair[H any] struct {
 	first     H
 	values    []H
-	count     int
+	seen      bool
 	sensitive bool
 }
 
@@ -204,17 +204,16 @@ func (n *namedPair[H]) value(shape valueShape, handle H) {
 	if shape == shapeOther {
 		return
 	}
-	if n.count == 0 {
-		n.first = handle
+	if !n.seen {
+		n.first, n.seen = handle, true
 	} else {
 		n.values = append(n.values, handle)
 	}
-	n.count++
 }
 
 // hidden calls hide for every value member to write as the marker.
 func (n *namedPair[H]) hidden(hide func(H)) {
-	if !n.sensitive || n.count == 0 {
+	if !n.sensitive || !n.seen {
 		return
 	}
 	hide(n.first)
@@ -225,16 +224,16 @@ func (n *namedPair[H]) hidden(hide func(H)) {
 
 // jsonValueShape classifies an encoded JSON value as a pair value member.
 func jsonValueShape(raw []byte) valueShape {
-	switch {
-	case len(raw) == 0:
-		return shapeOther
-	case raw[0] == '{' || raw[0] == '[':
-		return shapeContainer
-	case raw[0] == '"' && len(raw) > len(`""`):
-		return shapeText
-	default:
+	if len(raw) == 0 {
 		return shapeOther
 	}
+	if raw[0] == '{' || raw[0] == '[' {
+		return shapeContainer
+	}
+	if raw[0] == '"' && len(raw) > len(`""`) {
+		return shapeText
+	}
+	return shapeOther
 }
 
 // jsonName returns the text of an encoded JSON string, for a name member.

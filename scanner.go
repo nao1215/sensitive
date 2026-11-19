@@ -109,7 +109,7 @@ type scanScratch struct {
 const (
 	largestPooledBuffer = 64 << 10
 	maxPooledFindings   = 64
-	maxPooledMembers    = 2*maxDepth + 2
+	maxPooledMembers    = 64
 )
 
 // takeScratch returns empty scratch storage. Scanners with custom detectors and
