@@ -11,7 +11,7 @@ import (
 
 const (
 	defaultCanary         = "embargo-fake-secret-0123456789ab"
-	defaultMaxBytes int64 = 1048576 // 1 MiB
+	defaultMaxBytes int64 = 1 << 20
 	defaultTimeout        = 5 * time.Second
 	maxSinks              = 16
 	maxNameBytes          = 128

@@ -399,3 +399,11 @@ func TestGuardParentChild(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestGuardWithoutExecutable(t *testing.T) {
+	t.Parallel()
+	unavailable := func() (string, error) { return "", errors.New("no executable") }
+	if code := guardSupervise(&testing.M{}, unavailable, nil); code != 1 {
+		t.Fatalf("exit code %d, want 1", code)
+	}
+}

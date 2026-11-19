@@ -34,18 +34,24 @@ func Guard(m *testing.M, opts ...Option) int {
 	if os.Getenv(childEnv) == "child" {
 		return m.Run()
 	}
+	return guardSupervise(m, os.Executable, opts)
+}
+
+// guardSupervise starts the parent side of Guard; executable locates the test
+// binary to rerun.
+func guardSupervise(m *testing.M, executable func() (string, error), opts []Option) int {
 	policy := guardPolicy(opts)
 	if m == nil || policy.invalid {
 		guardMessage("embargotest: invalid package guard options")
 		return 1
 	}
-	executable, err := os.Executable()
+	path, err := executable()
 	if err != nil {
 		guardMessage("embargotest: guard executable unavailable")
 		return 1
 	}
 	args := append([]string{"-test.v=true"}, os.Args[1:]...)
-	return guardParent(executable, args, policy, os.Stdout, os.Stderr)
+	return guardParent(path, args, policy, os.Stdout, os.Stderr)
 }
 
 func guardParent(executable string, args []string, policy *policy, stdout, stderr io.Writer) int {

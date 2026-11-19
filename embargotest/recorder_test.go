@@ -274,7 +274,8 @@ func TestRecorderReportsFixedReasonsOnce(t *testing.T) {
 			write(t, r, "logs", []byte("ok"))
 			r.Expect("logs", func([]byte) bool { return false })
 		}, "embargotest: a content expectation was not met"},
-		"empty": {func(*Recorder) {}, "embargotest: no output or no content expectation was registered"},
+		"empty":                    {func(*Recorder) {}, "embargotest: no output or no content expectation was registered"},
+		"sink without expectation": {func(r *Recorder) { r.Writer("logs") }, "embargotest: no output or no content expectation was registered"},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -295,6 +296,21 @@ func TestRecorderReportsFixedReasonsOnce(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestRecorderExpectationWithoutSink(t *testing.T) {
+	t.Parallel()
+	p := &probeTB{TB: t}
+	r := New(p)
+	r.Expect("logs", func([]byte) bool { return true })
+	if r.Check() {
+		t.Fatal("an expectation without any sink was accepted")
+	}
+	p.finish()
+	want := []string{"embargotest: no output or no content expectation was registered", "embargotest: a content expectation was not met"}
+	if !slices.Equal(p.messages, want) {
+		t.Fatalf("messages = %q, want %q", p.messages, want)
 	}
 }
 
