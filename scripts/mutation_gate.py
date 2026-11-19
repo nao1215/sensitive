@@ -24,6 +24,8 @@ DOCUMENT = ROOT/'doc/testing.md'
 ADDRESS_SPACE = 4 << 30
 COMMAND = 'cmd/embargo'
 PACKAGES = ('embargotest', 'internal/ascii', 'internal/detect', 'internal/output', 'internal/saferecord')
+# Each adapter is its own released module and gets its own floor.
+ADAPTERS = tuple(sorted('adapters/'+path.parent.name for path in (ROOT/'adapters').glob('*/go.mod')))
 STATUSES = {'KILLED', 'LIVED', 'NOT COVERED', 'NOT VIABLE', 'TIMED OUT'}
 # gremlins times `go test` including the build of the mutated package, so a
 # mutant compiled while other workers compete for the CPU can exceed ten times
@@ -130,7 +132,7 @@ def selected_packages(value):
     if value is None:
         return None
     names = [name.strip() for name in value.split(',') if name.strip()]
-    known = ('.', *PACKAGES, COMMAND)
+    known = ('.', *PACKAGES, COMMAND, *ADAPTERS)
     unknown = sorted(set(names) - set(known))
     if not names or unknown:
         raise ValueError('--packages takes a comma-separated subset of: '+', '.join(known))
@@ -304,7 +306,7 @@ def main():
         parser.error(str(error))
     if selected is not None and args.record:
         parser.error('--record needs every package; omit --packages')
-    wanted = set(selected or ('.', *PACKAGES, COMMAND))
+    wanted = set(selected or ('.', *PACKAGES, COMMAND, *ADAPTERS))
     if args.check_evidence:
         check_recorded_evidence()
         return
@@ -346,6 +348,11 @@ def main():
         for package in sorted(wanted & set(PACKAGES)):
             report = measure(snapshot, package, output/(package.replace('/', '-')+'.json'), args.workers, env, scratch/package, '/', args.diff)
             files += [dict(file, file_name=package+'/'+file['file_name']) for file in report['files']]
+        # An adapter module's go.mod replaces the root module with ../.., so
+        # it builds against the snapshot.
+        for adapter in sorted(wanted & set(ADAPTERS)):
+            report = measure(snapshot/adapter, '.', output/(adapter.replace('/', '-')+'.json'), args.workers, env, scratch/adapter, '/', args.diff)
+            files += [dict(file, file_name=adapter+'/'+file['file_name']) for file in report['files']]
         root_report = {'files': files}
         if args.diff:
             survivors = changed_survivors(files)
@@ -374,7 +381,9 @@ def main():
     (output/'summary.json').write_text(json.dumps(result, indent=2)+'\n')
     if args.record:
         if BASELINE.exists():
-            check(scores, json.loads(BASELINE.read_text())['packages'])
+            # A package measured for the first time records its first floor.
+            previous = json.loads(BASELINE.read_text())['packages']
+            check({name: score for name, score in scores.items() if name in previous}, previous)
         BASELINE.write_text(json.dumps(result, indent=2)+'\n')
         EVIDENCE.write_text(json.dumps(evidence, indent=2)+'\n')
         document_baseline(scores, write=True)

@@ -16,14 +16,21 @@ def run(command, **kwargs):
     return subprocess.check_output(command,text=True,**kwargs)
 
 
+# Raw scanning, MaskJSON (the engine of every logger adapter) and the slog
+# handler, so a regression in any shipped path fails the gate.
+WORKLOADS = ('clean', 'dirty', 'json', 'slog')
+
+
 def default_gate(base, head):
-    """Require ten paired samples for both default workloads; compare medians."""
+    """Require ten paired samples for every workload; compare medians."""
     measured = {}
     for label, text in [('base', base), ('head', head)]:
-        workloads = {'clean': [], 'dirty': []}
+        workloads = {name: [] for name in WORKLOADS}
         for line in text.splitlines():
-            match = re.match(r'^BenchmarkCIDefault/(clean|dirty)(?:-\d+)?\s+\d+\s+(\S+)\s+ns/op\b', line)
+            match = re.match(r'^BenchmarkCIDefault/([a-z]+)(?:-\d+)?\s+\d+\s+(\S+)\s+ns/op\b', line)
             if match:
+                if match[1] not in workloads:
+                    raise ValueError('unknown benchmark workload: '+match[1])
                 value = float(match[2])
                 if not math.isfinite(value) or value <= 0:
                     raise ValueError('nonpositive or nonfinite default-scanner measurement')
@@ -32,7 +39,7 @@ def default_gate(base, head):
             raise ValueError('each default workload requires exactly ten samples per revision')
         measured[label] = {name: statistics.median(values) for name, values in workloads.items()}
     rows = [{'workload': name, 'base_ns': measured['base'][name], 'head_ns': measured['head'][name],
-             'ratio': measured['head'][name]/measured['base'][name]} for name in ('clean', 'dirty')]
+             'ratio': measured['head'][name]/measured['base'][name]} for name in WORKLOADS]
     return {'maximum_ratio': 1.2, 'samples': 10, 'passed': all(row['ratio'] <= 1.2 for row in rows), 'workloads': rows}
 
 
@@ -76,10 +83,10 @@ def main():
     print(summary)
     print(json.dumps(gate,indent=2))
     if os.environ.get('GITHUB_STEP_SUMMARY'):
-        with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as output:output.write('Base and head ran on this runner in alternating order. Each default-scanner median must stay within +20%; allocation contracts remain hard test gates.\n\n```text\n'+summary+'\n```\n\n```json\n'+json.dumps(gate,indent=2)+'\n```\n')
+        with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as output:output.write('Base and head ran on this runner in alternating order. Each workload median (raw scan, MaskJSON and slog) must stay within +20%; allocation contracts remain hard test gates.\n\n```text\n'+summary+'\n```\n\n```json\n'+json.dumps(gate,indent=2)+'\n```\n')
 
     if not gate['passed']:
-        raise SystemExit('default scanner median exceeded the 20% regression budget')
+        raise SystemExit('a workload median exceeded the 20% regression budget')
 
 
 if __name__=='__main__':main()

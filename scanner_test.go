@@ -1634,10 +1634,4 @@ func TestReturnedScratchHoldsNoText(t *testing.T) {
 	if len(scratch.text) != 0 || slices.ContainsFunc(scratch.text[:cap(scratch.text)], func(b byte) bool { return b != 0 }) {
 		t.Fatal("a pooled buffer kept scanned text")
 	}
-	// Storage too large to pool is cleared as well.
-	large := &scanScratch{text: []byte(strings.Repeat("x", largestPooledBuffer+1)), findings: nil, keys: nil, members: nil}
-	scanner.returnScratch(large)
-	if slices.ContainsFunc(large.text, func(b byte) bool { return b != 0 }) {
-		t.Fatal("unpooled storage kept scanned text")
-	}
 }

@@ -12,23 +12,33 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # The wait for the tagged commit's other checks can take most of this.
+    timeout-minutes: 45
     outputs:
       # base64 of checksums.txt: the subjects the SLSA provenance job attests.
       hashes: ${{ steps.hash.outputs.hashes }}
     # id-token: keyless cosign signing and provenance through GitHub OIDC.
     # attestations: build provenance for the release archives.
     # contents: create the GitHub Release and upload its assets.
+    # checks and actions: read the tagged commit's check runs and this run's
+    # own check suite before publishing.
     permissions:
       contents: write
       id-token: write
       attestations: write
+      checks: read
+      actions: read
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Require every other check on the tagged commit to pass
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/require_tag_checks.py --repository "$GITHUB_REPOSITORY" --sha "$GITHUB_SHA" --run-id "$GITHUB_RUN_ID"
 
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0

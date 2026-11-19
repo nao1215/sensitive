@@ -31,6 +31,11 @@ class MutationGateTests(unittest.TestCase):
         listed = {Path(path).relative_to(gate.ROOT).as_posix() for path in listed} - {'.', 'cmd/embargo'}
         self.assertEqual(set(gate.PACKAGES), listed)
 
+    def test_every_adapter_module_is_mutated(self):
+        modules = {path.parent.relative_to(gate.ROOT).as_posix() for path in (gate.ROOT/'adapters').glob('*/go.mod')}
+        self.assertEqual(set(gate.ADAPTERS), modules)
+        self.assertTrue(modules)
+
     def test_memory_cap_applies_to_child_processes(self):
         script = 'import resource; print(resource.getrlimit(resource.RLIMIT_AS)[0])'
         out = subprocess.check_output([sys.executable, '-c', script], preexec_fn=gate.limit_memory, text=True)

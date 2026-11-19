@@ -303,9 +303,8 @@ type slogMembers struct {
 }
 
 // add sanitizes one top-level attribute, which the caller stores at index.
-// Each one has its own scan budget, as one encoded value does.
+// The record's attributes share one scan budget, as one encoded event does.
 func (m *slogMembers) add(ctx context.Context, attr slog.Attr, depth, index int) (slog.Attr, error) {
-	m.policy.scan.remaining = maxScanBytes
 	clean, err := m.handler.sanitizeAttr(ctx, &m.policy, attr, depth)
 	if err != nil {
 		return slog.Attr{}, err

@@ -267,3 +267,30 @@ func TestOversizedGroupNameIsWithheld(t *testing.T) {
 		t.Fatalf("oversized group name: %.200s", out.String())
 	}
 }
+
+func TestJoinedPathCache(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(KindEmail))
+	scan := eventScanner{scanner: scanner, remaining: maxScanBytes}
+	for range 2 {
+		before := scan.remaining
+		if crossed, err := scan.joinedKeySensitive(t.Context(), []byte("request.user"), len("request")); err != nil || crossed {
+			t.Fatal("clean path crossed")
+		}
+		if before-scan.remaining != len("request.user") {
+			t.Fatal("a cached path did not pay its budget")
+		}
+	}
+	if scanner.paths.size() != 1 {
+		t.Fatalf("clean path cached %d times", scanner.paths.size())
+	}
+	// A path with a finding is scanned every time and never cached.
+	for range 2 {
+		if crossed, err := scan.joinedKeySensitive(t.Context(), []byte("alice@example.com"), len("alice@example")); err != nil || !crossed {
+			t.Fatal("detected path did not cross")
+		}
+	}
+	if scanner.paths.size() != 1 {
+		t.Fatal("a path with findings was cached")
+	}
+}

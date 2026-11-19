@@ -175,12 +175,22 @@ func (s *eventScanner) joinedKeySensitive(ctx context.Context, path []byte, boun
 		return false, saferecord.ErrSizeLimit
 	}
 	s.remaining -= len(path)
+	// A path without findings repeats across records and cannot cross a join.
+	cacheable := s.scanner.paths != nil && len(path) <= maxCachedKeyBytes
+	if cacheable {
+		if _, ok := s.scanner.paths.loadBytes(path); ok {
+			return false, nil
+		}
+	}
 	scratch := s.scanner.takeScratch()
 	defer s.scanner.returnScratch(scratch)
 	findings := s.scanner.scanAppend(scratch.findings[:0], path, ctx.Err)
 	scratch.findings = findings
 	if ctx.Err() != nil {
 		return false, saferecord.ErrCanceled
+	}
+	if cacheable && len(findings) == 0 {
+		s.scanner.paths.store(string(path), keyResult{key: "", masked: "", field: fieldKey{}, sensitive: false})
 	}
 	for _, f := range findings {
 		if f.Start < boundary && f.End > boundary+1 {
