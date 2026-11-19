@@ -387,11 +387,18 @@ func (h *slogHandler) sanitizeValue(ctx context.Context, policy *fieldPolicy, ke
 		return slog.Value{}, err
 	}
 	switch value.Kind() {
+	case slog.KindString:
+		text := value.String()
+		masked, err := policy.scan.maskScalar(ctx, text, key)
+		if err != nil || masked == text {
+			return value, err
+		}
+		return slog.StringValue(masked), nil
 	case slog.KindGroup:
 		return h.sanitizeGroup(ctx, policy, value.Group(), depth)
 	case slog.KindAny:
 		return h.sanitizeAny(ctx, policy, key, value.Any())
-	case slog.KindString, slog.KindBool, slog.KindDuration, slog.KindFloat64, slog.KindInt64, slog.KindTime, slog.KindUint64:
+	case slog.KindBool, slog.KindDuration, slog.KindFloat64, slog.KindInt64, slog.KindTime, slog.KindUint64:
 		return sanitizeScalar(ctx, policy, key, value)
 	case slog.KindLogValuer:
 	}
