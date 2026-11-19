@@ -26,8 +26,8 @@ The same built-in inventory now includes all eleven country detectors in allocat
 | JSON Unicode escapes in text that is not parsed as JSON | Caught for ASCII characters, one layer, with original-byte positions | TestUnicodeEscapedFindings |
 | One percent-encoding layer | Caught with original-byte positions | Metamorphic and Lean vector tests |
 | Double percent encoding | Limit: no recursive decoding | TestAdversarialEncodingBoundary/double-percent |
-| Base64 | Limit for arbitrary text; registered canaries include encoded forms | TestAdversarialEncodingBoundary/base64 |
-| Zero-width text | Limit: characters are not removed | TestAdversarialEncodingBoundary/zero-width |
+| Base64 | Limit for Scan on arbitrary text; MaskJSON, the log handlers and the adapters decode one layer of padded standard base64 text, and registered canaries include encoded forms | TestAdversarialEncodingBoundary/base64 |
+| Zero-width text | Caught: format characters inside a token are removed before detection | TestAdversarialEncodingBoundary/zero-width |
 | Letter homoglyphs | Limit: confusable letters are not normalized | TestAdversarialEncodingBoundary/homoglyph |
 | Full-width numeric digits | Caught by numeric normalization | internal/detect/fullwidth_test.go |
 | A forged redaction marker or finding label | Does not bypass scanning adjacent secrets | TestAdversarialEncodingBoundary |

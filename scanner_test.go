@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -1576,4 +1577,50 @@ func TestBorrowedAttributesAreCleared(t *testing.T) {
 			t.Fatalf("a slice of capacity %d cleared = %v", size, cleared)
 		}
 	}
+}
+
+// TestDocumentedKindCounts derives the counts that prose states from the
+// built-in table, so a new or reclassified kind cannot leave a stale number.
+func TestDocumentedKindCounts(t *testing.T) {
+	t.Parallel()
+	total, defaults, countries := 0, 0, 0
+	for _, detector := range builtins(nil) {
+		total++
+		kind := Kind(detector.Name())
+		if defaultKind(kind) {
+			defaults++
+		}
+		if countryKind(kind) {
+			countries++
+		}
+	}
+	for _, path := range []string{"doc/masking.md", "doc/testing-output.md", "embargotest/detector.go"} {
+		// #nosec G304 -- Fixed repository documentation paths.
+		text, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, required := range []string{fmt.Sprintf("%d built-ins", defaults), strconv.Itoa(total)} {
+			if !strings.Contains(string(text), required) {
+				t.Errorf("%s omits the derived count %q", path, required)
+			}
+		}
+	}
+	text, err := os.ReadFile("doc/countries.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	words := map[int]string{10: "ten", 11: "eleven", 12: "twelve"}
+	if word := words[countries]; word == "" || strings.Count(string(text), word+" ") < 2 || regexp.MustCompile(`\b\d+-family\b`).Match(text) {
+		t.Errorf("doc/countries.md does not state the %d country kinds, or restates a default count", countries)
+	}
+}
+
+// countryKind reports one country's national identifiers.
+func countryKind(kind Kind) bool {
+	switch kind { //nolint:exhaustive // Only national identifiers.
+	case KindUSSSN, KindUSITIN, KindUKNINO, KindUKNHS, KindIndiaAadhaar, KindIndiaPAN, KindBrazilCPF, KindBrazilCNPJ, KindChinaResidentID, KindKoreaRRN, KindCanadaSIN:
+		return true
+	}
+	return false
 }

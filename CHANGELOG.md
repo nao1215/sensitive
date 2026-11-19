@@ -11,6 +11,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Tests check the `Mask` guarantee that, for fixed valid findings, the output depends only on the bytes outside them. They run the real function on every combination of up to three ranges over texts of up to seven bytes, the exact spans a `MaskFunc` callback receives, and that findings on valid UTF-8 never split a character.
 - The Lean reference proofs no longer model masking. That model replaced each byte with `*` and missed changes that made the marker return the value; the README row now reads "Checksum and offset-map errors". doc/testing.md has a Masking guarantee section listing what it covers and what it does not.
 - The `Mask` and `MaskFunc` godoc states the guarantee: for valid findings, `Mask` output depends only on the bytes outside the spans, and a `MaskFunc` callback that returns part of the value discloses that part.
+- One field policy now decides keys, joined key paths and name and value pairs for slog attributes, groups and WithAttrs, `MaskJSON`, the logger adapters and the HTTP access hook; before, the slog handler kept its own copy of these rules. An encoded slog Any value continues the key path of its groups. Each top-level slog attribute, with its groups and Any value, shares one 4 MiB detector budget instead of one budget per scalar. slog records allocate less: a flat record with a bound group no longer allocates in the handler.
+- A test crosses value representations (string, bytes, error, Stringer, pointer, slice, raw JSON, base64 text, LogValuer, numbers, fmt output, URLs and headers), key wrappings (flat, map, struct, list, name and value pairs, groups, WithGroup, WithAttrs) and every sink (slog JSON and text, zap, zerolog, logrus, MaskJSON, Sentry, OTel logs and spans, HTTP and gRPC). A secret that MaskJSON hides in a flat `{"key":"secret"}` object must be hidden in every cell.
+- The threshold study in doc/accuracy.md sums the kinds that `NewScanner` reports, observed on each kind's positives, instead of a fixed count that still included the kinds made opt-in in 0.17.0; it said "26 default kinds". Documented kind counts and the threat model rows are checked against the built-in table and the boundary tests.
+
+### Fixed
+
+- A slog record, group or WithAttrs call with `name` and `value` attributes, such as `slog.Group("env", "name", "DB_PASSWORD", "value", v)`, kept the value; the same data as a map was masked.
+- In a JSON object with a sensitive name member and two `value` members, the first value was kept.
+- A short `[]byte` field inside a struct, map or slice, such as an email of 8 bytes, reached zap, zerolog, logrus, Sentry, MaskJSON and slog Any output as base64 that was not scanned, because only base64 strings of 20 bytes or more were decoded. Base64 text of every length up to 8 KiB is now decoded and scanned.
+- doc/threat-model.md said zero-width characters are not removed; format characters inside a token are removed before detection. doc/countries.md said `NewScanner()` kept a 25-kind selection.
+
+### Detection changes
+
+- MaskJSON, the slog handler, the HTTP hook and the adapters now decode padded standard base64 strings shorter than 20 bytes when the decoded bytes are printable text, and hide the whole string on a finding. Ordinary words of four, eight or twelve letters decode to bytes that are not text and stay unchanged.
+
+### Removed
+
+- doc/migration.md, whose notes described APIs and defaults that later releases changed. The [v0.17.0 copy](https://github.com/nao1215/embargo/blob/v0.17.0/doc/migration.md) remains for older upgrades.
 
 ## [0.17.0] - 2026-11-19
 
@@ -346,7 +364,7 @@ Implementation: [PR #97](https://github.com/nao1215/embargo/pull/97), [2955f9d](
 
 ## [0.5.0] - 2026-11-16
 
-This release adds service and telemetry hooks, opt-in national ID detectors and explicit matching contracts. Users upgrading from v0.4.0 should review the default detector and IP behavior changes in [doc/migration.md](doc/migration.md).
+This release adds service and telemetry hooks, opt-in national ID detectors and explicit matching contracts. Users upgrading from v0.4.0 should review the default detector and IP behavior changes in [doc/migration.md](https://github.com/nao1215/embargo/blob/v0.17.0/doc/migration.md).
 
 ### Service and telemetry hooks
 
@@ -374,14 +392,14 @@ Implementation: [PR #87](https://github.com/nao1215/embargo/pull/87), [bde782f](
 Implementation: [PR #81](https://github.com/nao1215/embargo/pull/81), [afe881d](https://github.com/nao1215/embargo/commit/afe881d48d3343249becc12f22a7eb42c61c73a3); [PR #83](https://github.com/nao1215/embargo/pull/83), [0839eee](https://github.com/nao1215/embargo/commit/0839eee7502c1b2bd55b5f39e410aba4f71379a1); [PR #86](https://github.com/nao1215/embargo/pull/86), [780b634](https://github.com/nao1215/embargo/commit/780b634915d21ff1782ecd5cde6e1956fb10f949).
 
 - Restore candidate leaking test names in `embargotest.Guard` diagnostics by tracking active, paused and completed tests near observed output. Validate names and their joined representation against canaries, the scanner, character rules and length limits before displaying them; parallel tests and separate stdout/stderr pipes still limit attribution.
-- Include the instantiated `Secret` type in `%#v` and `GoString` output while preserving the redaction marker. Make `CheckValue` inspect unexported fmt fields, exposing domain types whose formatters are bypassed there; [migration notes](doc/migration.md) describe assertion and representation changes.
+- Include the instantiated `Secret` type in `%#v` and `GoString` output while preserving the redaction marker. Make `CheckValue` inspect unexported fmt fields, exposing domain types whose formatters are bypassed there; [migration notes](https://github.com/nao1215/embargo/blob/v0.17.0/doc/migration.md) describe assertion and representation changes.
 
 ### Default detection and log false positives
 
 Implementation: [PR #81](https://github.com/nao1215/embargo/pull/81), [afe881d](https://github.com/nao1215/embargo/commit/afe881d48d3343249becc12f22a7eb42c61c73a3); [PR #83](https://github.com/nao1215/embargo/pull/83), [0839eee](https://github.com/nao1215/embargo/commit/0839eee7502c1b2bd55b5f39e410aba4f71379a1).
 
 - Make `KindHighEntropy` opt-in through `WithKinds` or `WithAll`; default scanners, Recorder and Guard no longer report unlabeled entropy candidates. Its confidence remains 0.3 and the default minimum confidence remains zero. Credential assignments and provider prefixes stay enabled by default.
-- Exclude unspecified and loopback IPv4/IPv6 addresses from `KindIPAddr` while retaining other private endpoints. Reject additional path/hostname fragments, numeric log tails, operational counters and unquoted Java object references in the affected detectors; see [behavior migration](doc/migration.md) for the recall trade-offs.
+- Exclude unspecified and loopback IPv4/IPv6 addresses from `KindIPAddr` while retaining other private endpoints. Reject additional path/hostname fragments, numeric log tails, operational counters and unquoted Java object references in the affected detectors; see [behavior migration](https://github.com/nao1215/embargo/blob/v0.17.0/doc/migration.md) for the recall trade-offs.
 
 ### Severity gates and measured evidence
 
@@ -398,7 +416,7 @@ Implementation: [PR #83](https://github.com/nao1215/embargo/pull/83), [0839eee](
 
 ## [0.4.0] - 2026-11-15
 
-This release redesigns the public API after the rename to embargo. See [doc/migration.md](doc/migration.md) for behavior changes.
+This release redesigns the public API after the rename to embargo. See [doc/migration.md](https://github.com/nao1215/embargo/blob/v0.17.0/doc/migration.md) for behavior changes.
 
 ### Forgotten credentials and output contracts
 
@@ -426,7 +444,7 @@ Implementation: [PR #77](https://github.com/nao1215/embargo/pull/77), [97a0585](
 
 ### Accuracy and scanning
 
-- Decode one layer of percent escapes with original byte offsets, lower confidence for business-labeled numeric candidates, reject embedded My Number fragments, and share hint dispatch across selected detectors while removing unnecessary ASCII position maps ([PR #73](https://github.com/nao1215/embargo/pull/73), [implementation](https://github.com/nao1215/embargo/commit/29ce283)). Public API signatures and the default threshold of 0 are unchanged; see the [behavior migration note](doc/migration.md).
+- Decode one layer of percent escapes with original byte offsets, lower confidence for business-labeled numeric candidates, reject embedded My Number fragments, and share hint dispatch across selected detectors while removing unnecessary ASCII position maps ([PR #73](https://github.com/nao1215/embargo/pull/73), [implementation](https://github.com/nao1215/embargo/commit/29ce283)). Public API signatures and the default threshold of 0 are unchanged; see the [behavior migration note](https://github.com/nao1215/embargo/blob/v0.17.0/doc/migration.md).
 
 - Separate development and held-out synthetic evaluation, publish both default and 0.7 confidence policies, retain reviewed limits, and extend differential, offset and mutation assertions ([PR #73](https://github.com/nao1215/embargo/pull/73), [assertions](https://github.com/nao1215/embargo/commit/789318d)). The stricter SWIFT context experiment was rejected after held-out recall regressed.
 

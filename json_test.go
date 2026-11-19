@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"reflect"
 	"runtime"
 	"slices"
@@ -320,6 +321,7 @@ const (
 func TestAdversarialEncodingBoundary(t *testing.T) {
 	t.Parallel()
 	scanner := NewScanner(WithKinds(KindEmail))
+	threatModel := threatModelStatuses(t)
 	for _, tc := range []struct {
 		name, text string
 		caught     bool
@@ -340,6 +342,10 @@ func TestAdversarialEncodingBoundary(t *testing.T) {
 				t.Fatal("documented encoding boundary changed")
 			}
 		})
+		// The threat model row naming this case states the same outcome.
+		if status, ok := threatModel["TestAdversarialEncodingBoundary/"+tc.name]; ok && strings.HasPrefix(status, "Limit") == tc.caught {
+			t.Errorf("doc/threat-model.md states %q for %s", status, tc.name)
+		}
 	}
 	masked, err := scanner.MaskJSON([]byte(`{"value":"alice\u0040example.com"}`))
 	if err != nil || bytes.Contains(masked, []byte("alice")) {
@@ -495,6 +501,27 @@ func TestJSONExpansionStopsBeforeRetainingPastLimit(t *testing.T) {
 	if len(walker.result) > maxEventBytes {
 		t.Fatalf("retained %d bytes past output limit", len(walker.result))
 	}
+}
+
+// threatModelStatuses maps each test named in doc/threat-model.md tables to
+// the status column of its row.
+func threatModelStatuses(t *testing.T) map[string]string {
+	t.Helper()
+	text, err := os.ReadFile("doc/threat-model.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	statuses := map[string]string{}
+	for line := range strings.Lines(string(text)) {
+		cells := strings.Split(strings.TrimSpace(line), "|")
+		if len(cells) == 5 {
+			statuses[strings.TrimSpace(cells[3])] = strings.TrimSpace(cells[2])
+		}
+	}
+	if len(statuses) == 0 {
+		t.Fatal("no threat model rows")
+	}
+	return statuses
 }
 
 type expandingDetector struct{}

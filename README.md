@@ -266,19 +266,19 @@ Each link opens the test that produces and checks the shown output.
 <!-- tested-outputs:start -->
 | Output | Actual output (excerpt for SDKs) |
 |---|---|
-| [fmt](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L148-L148) | `embargo.Secret[string]([REDACTED])` |
-| [slog TextHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L149-L152) | `level=INFO msg=event token=[REDACTED] nested.again=[REDACTED]` |
-| [slog JSONHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L153-L156) | `{"level":"INFO","msg":"event","token":"[REDACTED]","nested":{"again":"[REDACTED]"}}` |
-| [encoding/json](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L157-L157) | `"[REDACTED]"` |
-| [encoding/xml](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L158-L163) | `<record><token>[REDACTED]</token></record>` |
-| [text/template](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L164-L170) | `[REDACTED]` |
-| [zap JSON core](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L171-L177) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
-| [zerolog JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L178-L182) | `{"level":"info","token":"[REDACTED]","message":"event"}` |
-| [logrus JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L183-L189) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
-| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L988-L1076) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
-| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L650-L735) | `"signing":{"key":"[REDACTED]"}` |
-| [HTTP](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L230-L252) | `[REDACTED]` |
-| [Child panic](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L254-L264) | `panic: [REDACTED]` |
+| [fmt](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L149-L149) | `embargo.Secret[string]([REDACTED])` |
+| [slog TextHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L150-L153) | `level=INFO msg=event token=[REDACTED] nested.again=[REDACTED]` |
+| [slog JSONHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L154-L157) | `{"level":"INFO","msg":"event","token":"[REDACTED]","nested":{"again":"[REDACTED]"}}` |
+| [encoding/json](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L158-L158) | `"[REDACTED]"` |
+| [encoding/xml](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L159-L164) | `<record><token>[REDACTED]</token></record>` |
+| [text/template](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L165-L171) | `[REDACTED]` |
+| [zap JSON core](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L172-L178) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
+| [zerolog JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L179-L183) | `{"level":"info","token":"[REDACTED]","message":"event"}` |
+| [logrus JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L184-L190) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
+| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L989-L1077) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
+| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L651-L736) | `"signing":{"key":"[REDACTED]"}` |
+| [HTTP](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L231-L253) | `[REDACTED]` |
+| [Child panic](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L255-L265) | `panic: [REDACTED]` |
 <!-- tested-outputs:end -->
 
 [Complete integration checks](tests/README.md).
