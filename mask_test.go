@@ -77,6 +77,145 @@ func TestMaskByteCoverageOracle(t *testing.T) {
 	}
 }
 
+// bridgedSpans is an oracle for the spans Mask replaces that does not sort or
+// merge intervals: two neighbouring covered bytes belong to one span exactly
+// when one finding covers both, so adjacent findings stay separate. It
+// returns the text split into public parts and spans, and which are spans.
+func bridgedSpans(text string, findings []Finding) (parts []string, hidden []bool) {
+	covered := make([]bool, len(text))
+	bridged := make([]bool, len(text))
+	for _, f := range findings {
+		for i := f.Start; i < f.End; i++ {
+			covered[i] = true
+			bridged[i] = bridged[i] || i > f.Start
+		}
+	}
+	for i := range len(text) {
+		if len(parts) == 0 || covered[i] != hidden[len(hidden)-1] || covered[i] && !bridged[i] {
+			parts, hidden = append(parts, ""), append(hidden, covered[i])
+		}
+		parts[len(parts)-1] += text[i : i+1]
+	}
+	return parts, hidden
+}
+
+// bridgedMask joins bridgedSpans with one marker per span.
+func bridgedMask(text string, findings []Finding) string {
+	parts, hidden := bridgedSpans(text, findings)
+	for i := range parts {
+		if hidden[i] {
+			parts[i] = redactionMarker
+		}
+	}
+	return strings.Join(parts, "")
+}
+
+// spanIntervals lists every valid finding range of a text of length n.
+func spanIntervals(n int) [][2]int {
+	var intervals [][2]int
+	for start := range n {
+		for end := start + 1; end <= n; end++ {
+			intervals = append(intervals, [2]int{start, end})
+		}
+	}
+	return intervals
+}
+
+// findingSets lists every sequence of one to limit valid findings over a text
+// of length n, so the same ranges also appear in every order.
+func findingSets(n, limit int) [][]Finding {
+	var sets [][]Finding
+	var choose func(findings []Finding)
+	choose = func(findings []Finding) {
+		if len(findings) > 0 {
+			sets = append(sets, findings)
+		}
+		if len(findings) == limit {
+			return
+		}
+		for _, r := range spanIntervals(n) {
+			choose(append(slices.Clip(findings), Finding{Kind: KindEmail, Start: r[0], End: r[1], Confidence: 1}))
+		}
+	}
+	choose(nil)
+	return sets
+}
+
+// replaceCovered returns text with every byte under a finding changed to a
+// different byte taken from replacement.
+func replaceCovered(text []byte, findings []Finding, replacement string) []byte {
+	replaced := bytes.Clone(text)
+	for _, f := range findings {
+		for i := f.Start; i < f.End; i++ {
+			replaced[i] = replacement[(i+len(findings))%len(replacement)]
+			if replaced[i] == text[i] {
+				replaced[i]++
+			}
+		}
+	}
+	return replaced
+}
+
+// TestMaskOutputIgnoresBytesInsideSpans checks every combination of up to
+// three valid ranges over texts of up to seven bytes. For fixed findings the
+// output depends only on the bytes outside them: replacing every covered byte,
+// including with marker text or broken UTF-8, keeps the output, and the output
+// matches bridgedMask in either finding order.
+func TestMaskOutputIgnoresBytesInsideSpans(t *testing.T) {
+	t.Parallel()
+	const outside = "ab\xe6\x97\xa5[R]"
+	const inside = "[REDACTED]\xff\x00\xe6"
+	cases := 0
+	for n := range 8 {
+		text := []byte(outside + outside)[:n]
+		for _, findings := range findingSets(n, 3) {
+			cases++
+			replaced := string(replaceCovered(text, findings, inside))
+			reversed := slices.Clone(findings)
+			slices.Reverse(reversed)
+			want := bridgedMask(string(text), findings)
+			for _, got := range []string{Mask(string(text), findings), Mask(replaced, findings), Mask(replaced, reversed)} {
+				if got != want {
+					t.Fatalf("Mask(%q, %v) = %q, want %q", replaced, findings, got, want)
+				}
+			}
+		}
+	}
+	if cases != 37512 {
+		t.Fatalf("enumerated %d finding sets", cases)
+	}
+}
+
+// TestMaskFuncPassesEachMergedSpanOnce checks that the callback sees exactly
+// the bytes of each merged span, once and in input order, and nothing else.
+// A callback that ignores its value therefore keeps the Mask guarantee; one
+// that returns part of the value discloses that part.
+func TestMaskFuncPassesEachMergedSpanOnce(t *testing.T) {
+	t.Parallel()
+	text := "0123456789"
+	for _, a := range spanIntervals(len(text)) {
+		for _, b := range spanIntervals(len(text)) {
+			findings := []Finding{{Kind: KindEmail, Start: a[0], End: a[1], Confidence: 1}, {Kind: KindPAN, Start: b[0], End: b[1], Confidence: 1}}
+			var values []string
+			got := MaskFunc(text, findings, func(_ Kind, value string) string {
+				values = append(values, value)
+				return "<" + value + ">"
+			})
+			parts, hidden := bridgedSpans(text, findings)
+			var want []string
+			for i, part := range parts {
+				if hidden[i] {
+					want = append(want, part)
+					parts[i] = "<" + part + ">"
+				}
+			}
+			if !slices.Equal(values, want) || got != strings.Join(parts, "") {
+				t.Fatalf("%v: callback saw %q and returned %q", findings, values, got)
+			}
+		}
+	}
+}
+
 func TestMaskUnion(t *testing.T) {
 	t.Parallel()
 	input := []Finding{{Kind: "a", Start: 1, End: 4, Confidence: .5}, {Kind: "b", Start: 3, End: 6, Confidence: 1}, {Kind: "c", Start: 6, End: 7, Confidence: 1}}

@@ -97,7 +97,7 @@ Invalid operation sequences, sticky failures and unsafe replay. Tests: [guard](.
 
 ### Lean reference proofs
 
-Arithmetic and interval errors beyond a finite random sample. Tests: [Reference](../tests/lean/Reference.lean), [oracles_test](../tests/oracles_test.go). CI: `verification:formal`.
+Checksum and offset-map errors beyond a finite random sample. Tests: [Reference](../tests/lean/Reference.lean), [oracles_test](../tests/oracles_test.go). CI: `verification:formal`.
 
 <a id="intentional-snapshots"></a>
 
@@ -192,7 +192,9 @@ go -C tests test . -run '^TestQuint' -count=1
 
 Quint's model checker requires Java 21. The simulator uses one worker so fixed-seed traces remain reproducible without allocating a host-sized worker pool. Guard sampling favors writes and rejects a trace set missing overflow, timeout, scanner failure, child failure or safe replay. The 64 traces contain 47 unique sequences; ten reach overflow, including combinations with child exit, timeout and scanner failure. Model checking still explores the same transition relation. The script verifies model-source hashes, regenerates the fixed-seed traces and rejects drift. CI replays 64 traces per model; the simulator and model checker run in their own job. The original scanner-failure model allowed failure on an empty stream; replay exposed that invalid abstraction because Scan(empty) does not invoke a custom detector. The model now requires bytes before that transition.
 
-Lean 4.35.0 checks reference arithmetic and range semantics without external theorem packages. The proofs cover Luhn's doubled-digit textbook identity and single-digit residue separation, streaming MOD 97 versus whole-number division, nonzero decimal-place residues, My Number's position weights, monotone bounded percent-position maps, and exact interval-union replacement for valid ranges. Invalid Go finding ranges instead use the separately tested fail-closed policy. The compiled reference produces 12,574 vectors consumed by the Go tests, including exact encoded spans and overlapping mask ranges. These prove reference properties and test correspondence with Go; they do not constitute a proof of the Go parser or runtime.
+Lean 4.35.0 checks checksum arithmetic and the percent-decoding offset map without external theorem packages. The proofs cover Luhn's doubled-digit textbook identity and single-digit residue separation, streaming MOD 97 versus whole-number division, nonzero decimal-place residues, My Number's position weights, and monotone bounded percent-position maps. The compiled reference produces 20,462 vectors consumed by the Go tests: checksum validity for eleven kinds and exact spans of percent-encoded email addresses. The proofs hold for the Lean definitions; the vectors show that the Go detectors agree with them on those inputs. Neither proves the Go code.
+
+Masking has no Lean model. The former model replaced each covered byte with `*` and was compared with MaskFunc through a callback that returned stars, so it never saw the merged marker. Of seven deliberate changes to mask.go, its vectors missed three: the marker returning the value, adjacent spans merging, and a third overlapping finding being ignored. The Go tests in [Masking guarantee](#masking-guarantee) reject all seven. Deductive verification of the Go code was tried with Gobra v26.09. It has no models of `cmp`, `slices` or `strings.Builder`, which mask.go uses, so it could only verify a rewritten copy, leaving the same gap as a model; even a byte-slice copy of the span merge needed several rounds of permission annotations before its bounds verified. That cost buys a property the bounded exhaustive test already checks on the real function, while every leak fixed so far came from detection or adapter paths.
 
 ```sh
 python3 scripts/install_verification.py /tmp/embargo-formal
@@ -207,6 +209,24 @@ The offline external oracle is python-stdnum 2.2: the ten modules it needs are c
 The existing nightly GitHub-hosted Go fuzz workflow now discovers the full target inventory through one script used by Make and CI. New grammars keep JSON paths, credential quoting and Guard write boundaries structurally meaningful; an additional bounded-input target checks processing cost, allocated bytes and valid single-record log framing. Seeds include synthetic reproductions of real-log false-positive shapes. ClusterFuzzLite would add a second fuzz engine and build interface without a new tested property here; native Go fuzzing remains the continuous engine. Scorecard recognizes native Go Fuzz functions; full SHA action pins remain independent of that signal. Crashing inputs are uploaded for review and regression retention.
 
 Same-runner benchmarks build base and head once and alternate ten measurements in both orders. Benchstat output and raw samples appear in the job summary and artifact. The clean and dirty default-scanner medians each fail above +20% versus base; existing zero-allocation tests and bounded allocation amplification tests remain gates. Accuracy and real-log FP/GB budgets run in separate detector-change jobs; see the [frozen thresholds](ci.md#detector-quality-gates). The scheduled heavy matrix adds large adversarial inputs without charging every push for 16 MB cases or full mutation runs.
+
+<a id="masking-guarantee"></a>
+
+## Masking guarantee
+
+Mask treats the bytes inside the given findings as secret and the bytes outside them, with the findings' positions, as public. For fixed valid findings, its output depends only on the public part: every outside byte in order, and one `[REDACTED]` per merged span. The output shows where spans are and how many there are, not their bytes or lengths. Invalid ranges return only the marker. [TestMaskOutputIgnoresBytesInsideSpans](../mask_test.go) checks this for every combination of up to three ranges over texts of up to seven bytes, replacing covered bytes with marker text and invalid UTF-8 and reversing the finding order; [FuzzMask](../fuzz_test.go) checks two arbitrary ranges over arbitrary text.
+
+MaskFunc output is whatever the callback returns. The callback receives each merged span exactly once and in order, which [TestMaskFuncPassesEachMergedSpanOnce](../mask_test.go) checks, so a callback that returns the last four digits discloses those digits. WithMaskFunc only replaces a result that contains the whole value.
+
+Findings on valid UTF-8 start and end on character boundaries; [TestFindingsDoNotSplitCharacters](../scanner_test.go) and FuzzScanner check this. A span ending inside a full-width digit would leave its last byte, and that byte identifies the digit.
+
+This guarantee does not cover:
+
+- a secret that no detector reports, or reports with a span that ends early; such bytes are public to Mask, and every leak fixed so far was of this kind or in an adapter path
+- values passed to Reveal, or written by code that does not go through embargo
+- encodings the detectors do not read, such as two layers of percent escapes
+- the time Scan and Mask take, which depends on the input
+- copies of the input held in memory
 
 ## Snapshot and generated-document review
 

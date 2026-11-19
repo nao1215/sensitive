@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
-	"strings"
 	"testing"
 
 	"pgregory.net/rapid"
@@ -177,12 +176,6 @@ func TestLeanReferenceVectors(t *testing.T) {
 			got := scanners["email"].ScanString(row[1])
 			if len(got) != 1 || got[0].Start != number(row[2]) || got[0].End != number(row[3]) {
 				t.Fatalf("Lean position vector %d disagrees", i)
-			}
-		case "mask":
-			spans := []embargo.Finding{{Kind: embargo.KindEmail, Start: number(row[2]), End: number(row[3]), Confidence: 1}, {Kind: embargo.KindPAN, Start: number(row[4]), End: number(row[5]), Confidence: 1}}
-			got := embargo.MaskFunc(row[1], spans, func(_ embargo.Kind, part string) string { return strings.Repeat("*", len(part)) })
-			if got != row[6] {
-				t.Fatalf("Lean union vector %d disagrees", i)
 			}
 		default:
 			t.Fatal("unknown reference vector")

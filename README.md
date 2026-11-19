@@ -318,7 +318,7 @@ Held-out synthetic set, default minimum confidence 0. [Generation, test cases an
 | Generated properties | [Missing checksum combinations](doc/testing.md#generated-properties) |
 | Metamorphic relations | [Inconsistent transformed findings](doc/testing.md#metamorphic-relations) |
 | Quint and model replay | [Invalid lifecycle transitions](doc/testing.md#quint-and-model-replay) |
-| Lean reference proofs | [Arithmetic and interval errors](doc/testing.md#lean-reference-proofs) |
+| Lean reference proofs | [Checksum and offset-map errors](doc/testing.md#lean-reference-proofs) |
 | Intentional snapshots | [Changed output structure](doc/testing.md#intentional-snapshots) |
 | Independent differential oracles | [Shared oracle mistakes](doc/testing.md#independent-differential-oracles) |
 | Structure-aware fuzzing | [Malformed nested inputs](doc/testing.md#structure-aware-fuzzing) |

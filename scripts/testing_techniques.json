@@ -62,7 +62,7 @@
   },
   {
     "name": "Lean reference proofs",
-    "bug": "Arithmetic and interval errors beyond a finite random sample",
+    "bug": "Checksum and offset-map errors beyond a finite random sample",
     "paths": [
       "tests/lean/Reference.lean",
       "tests/oracles_test.go"
@@ -71,7 +71,7 @@
     "commands": [
       "scripts/check_lean.py"
     ],
-    "summary": "Arithmetic and interval errors",
+    "summary": "Checksum and offset-map errors",
     "anchor": "lean-reference-proofs"
   },
   {

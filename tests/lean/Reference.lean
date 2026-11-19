@@ -103,20 +103,4 @@ theorem mapped_range (ws : List Nat) (a b : Nat) (h : a ≤ b) :
  position ws a ≤ position ws b ∧ position ws b ≤ ws.sum :=
  ⟨position_monotone ws a b h, position_bound ws b⟩
 
-def covered (ranges : List (Nat × Nat)) (i : Nat) : Bool :=
- ranges.any fun (a,b) => a ≤ i && i < b
-
-def maskByte (ranges : List (Nat × Nat)) (i : Nat) (original : Char) : Char :=
- if covered ranges i then '*' else original
-
-theorem covered_union (rs : List (Nat × Nat)) (i : Nat) :
- covered rs i = true ↔ ∃ r ∈ rs, r.1 ≤ i ∧ i < r.2 := by simp [covered, Bool.and_eq_true]
-
-theorem outside_unchanged (rs : List (Nat × Nat)) (i : Nat) (c : Char)
- (h : ¬ ∃ r ∈ rs, r.1 ≤ i ∧ i < r.2) : maskByte rs i c = c := by
- simp [maskByte, show covered rs i = false from Bool.eq_false_iff.mpr (fun x => h ((covered_union rs i).mp x))]
-
-theorem inside_replaced (rs : List (Nat × Nat)) (i : Nat) (c : Char)
- (h : ∃ r ∈ rs, r.1 ≤ i ∧ i < r.2) : maskByte rs i c = '*' := by
- simp [maskByte, (covered_union rs i).mpr h]
 end Embargo
