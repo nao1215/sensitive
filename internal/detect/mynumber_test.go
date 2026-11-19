@@ -206,7 +206,7 @@ func TestMynumberRejectedBoundaries(t *testing.T) {
 func TestARNAccountFieldProperty(t *testing.T) {
 	t.Parallel()
 	for n := range 2000 {
-		account := fmt.Sprintf("%012d", 123456780000+n)
+		account := fmt.Sprintf("%012d", int64(123456780000)+int64(n))
 		for _, partition := range []string{"aws", "aws-cn", "aws-us-gov"} {
 			input := "arn:" + partition + ":iam::" + account + ":role/fixture"
 			if got := NewMyNumber().Scan([]byte(input)); len(got) != 0 {

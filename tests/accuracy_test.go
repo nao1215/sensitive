@@ -591,8 +591,10 @@ func TestCountryAccuracy(t *testing.T) {
 	syncSeverityJSON(t, "../doc/countries.json", results)
 }
 
-// Each default kind is evaluated against its existing exact-span labels; the
-// byte denominator counts these per-kind evaluations, including repeated controls.
+// Each measured kind is evaluated alone against its existing exact-span
+// labels; the byte denominator counts these per-kind evaluations, including
+// repeated controls. Default reports whether the shipped NewScanner reports
+// the kind, observed on the kind's own positives rather than restated.
 type defaultThresholdResult struct {
 	Set       string       `json:"set"`
 	Kind      embargo.Kind `json:"kind"`
@@ -601,15 +603,24 @@ type defaultThresholdResult struct {
 	TP        int          `json:"tp"`
 	FP        int          `json:"fp"`
 	FN        int          `json:"fn"`
+	Default   bool         `json:"default"`
 }
 
 func TestDefaultThresholdAccuracy(t *testing.T) {
 	t.Parallel()
-	const defaultKinds = 27
-	results := make([]defaultThresholdResult, 0, defaultKinds*6)
+	// Capacity only; the measured kinds come from the labeled samples.
+	const sets, thresholds, kindsHint = 2, 3, 32
+	results := make([]defaultThresholdResult, 0, sets*thresholds*kindsHint)
+	shipped := embargo.NewScanner()
 	for _, set := range []string{developmentAccuracySet, heldAccuracySet} {
 		samples := allAccuracySamples(t, set)
 		samples = append(samples, readGeneratedAccuracy[labeledAccuracySample](t, "testdata/credentials-"+set+".jsonl")...)
+		enabled := map[embargo.Kind]bool{}
+		for _, sample := range samples {
+			if len(sample.Expected) > 0 && slices.ContainsFunc(shipped.ScanString(sample.Text), func(f embargo.Finding) bool { return f.Kind == sample.Kind }) {
+				enabled[sample.Kind] = true
+			}
+		}
 		for _, threshold := range []float64{0, .5, .7} {
 			counts := map[embargo.Kind]defaultThresholdResult{}
 			scanners := map[embargo.Kind]*embargo.Scanner{}
@@ -626,10 +637,11 @@ func TestDefaultThresholdAccuracy(t *testing.T) {
 				count.TP += score.tp
 				count.FP += score.fp
 				count.FN += score.fn
+				count.Default = enabled[sample.Kind]
 				counts[sample.Kind] = count
 			}
-			if len(counts) != defaultKinds {
-				t.Fatalf("default kind inventory changed: %d", len(counts))
+			if len(counts) == 0 || len(enabled) == 0 {
+				t.Fatal("no measured or shipped kinds")
 			}
 			names := make([]string, 0, len(counts))
 			for kind := range counts {

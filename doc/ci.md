@@ -4,7 +4,7 @@ Keep observed workflow and job timing tables in PR bodies only. Workflow duratio
 
 Run heavy local jobs one at a time with GOMAXPROCS at most 4. Mutation testing uses up to eight workers with two CPUs each. Minimum and stable Go run on Linux, Windows and macOS; stable legs retain race tests. Coverage combines root and integration instrumentation and enforces the 97% root-module floor. Documentation changes still run policy, generation and prose checks. Fuzzing runs nightly; mutation and scaling run weekly. Keep security scans, dependency provenance checks and formal model/vector checks enabled.
 
-Merge only an owned PR in this repository after required CI is green; use squash merge without force pushes. Each PR changes fewer than 100 files and includes its observed CI timing table. CodeRabbit is best effort. Release publication requires an explicit release request and runs through release.yml after an annotated root version tag.
+Merge only an owned PR in this repository after required CI is green; use squash merge without force pushes. Each PR changes fewer than 100 files and includes its observed CI timing table. CodeRabbit is best effort. Release publication requires an explicit release request and runs through release.yml after an annotated root version tag. It first waits for the tagged commit's other checks to pass.
 
 ## Detector quality gates
 
@@ -60,7 +60,7 @@ Real-log ceilings use the existing reviewed, stratified sample labels and per-da
 
 P and R mean precision and exact-span recall. Display rounding does not change the committed count fractions or FP/GB rational ceilings. Every built-in Kind, including opt-in Kinds, must have both split entries; a missing entry fails closed.
 
-The speed job builds base and head once, copies the same head-owned default-scanner harness into both archived revisions, and alternates ten 100ms samples in both orders on one runner with GOMAXPROCS=1. Both clean and dirty default-scanner medians must be at most 1.20 times their respective base medians; exactly +20% passes. Missing, nonfinite or nonpositive samples fail. Raw samples, benchstat output, conditions and the machine-readable gate result are retained even on failure. The existing narrowing comparisons remain observations. Shared-runner variation still exists: inspect paired samples when a run fails, and do not retry selectively until a regression disappears.
+The speed job builds base and head once, copies the same head-owned default-scanner harness into both archived revisions, and alternates ten 100ms samples in both orders on one runner with GOMAXPROCS=1. The clean, dirty, MaskJSON and slog medians must each be at most 1.20 times base; exactly +20% passes. Missing, nonfinite or nonpositive samples fail. Raw samples, benchstat output, conditions and the machine-readable gate result are retained even on failure. The existing narrowing comparisons remain observations. Shared-runner variation still exists: inspect paired samples when a run fails, and do not retry selectively until a regression disappears.
 
 To run the same gates locally, execute the following commands sequentially with GOMAXPROCS no greater than four. Speed needs two committed revisions because it measures archived source rather than uncommitted edits.
 

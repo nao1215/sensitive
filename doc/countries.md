@@ -1,6 +1,6 @@
 # Country identifiers
 
-Use `WithKinds` to select the identifiers that an application handles. For example, `WithKinds(KindUSSSN, KindUSITIN)` selects US individual tax identifiers, while `WithKinds(KindCanadaSIN)` selects Canadian SIN. The explicit list also works for applications serving several countries, so there is no separate region helper. `WithAll` enables these eleven families; `NewScanner()` retains its previous 25-family selection.
+Use `WithKinds` to select the identifiers that an application handles. For example, `WithKinds(KindUSSSN, KindUSITIN)` selects US individual tax identifiers, while `WithKinds(KindCanadaSIN)` selects Canadian SIN. The explicit list also works for applications serving several countries, so there is no separate region helper. `WithAll` enables these eleven families; `NewScanner()` enables none of them.
 
 ## Rules and boundaries
 

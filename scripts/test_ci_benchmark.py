@@ -4,8 +4,9 @@ import ci_benchmark
 from ci_benchmark import default_gate
 
 
-def samples(clean=100, dirty=200, count=10):
-    return ''.join(f'BenchmarkCIDefault/clean 100 {clean} ns/op 0 B/op 0 allocs/op\nBenchmarkCIDefault/dirty 100 {dirty} ns/op 128 B/op 1 allocs/op\n' for _ in range(count))
+def samples(clean=100, dirty=200, count=10, json=300, slog=400):
+    return ''.join(f'BenchmarkCIDefault/clean 100 {clean} ns/op 0 B/op 0 allocs/op\nBenchmarkCIDefault/dirty 100 {dirty} ns/op 128 B/op 1 allocs/op\n'
+                   f'BenchmarkCIDefault/json-8 100 {json} ns/op 64 B/op 2 allocs/op\nBenchmarkCIDefault/slog 100 {slog} ns/op 0 B/op 0 allocs/op\n' for _ in range(count))
 
 
 class DefaultGateTest(unittest.TestCase):
@@ -22,8 +23,14 @@ class DefaultGateTest(unittest.TestCase):
         self.assertFalse(default_gate(samples(), samples(121, 200))['passed'])
         self.assertFalse(default_gate(samples(), samples(100, 241))['passed'])
 
+    def test_every_workload_is_gated(self):
+        self.assertFalse(default_gate(samples(), samples(json=361))['passed'])
+        self.assertFalse(default_gate(samples(), samples(slog=481))['passed'])
+        with self.assertRaises(ValueError):
+            default_gate(samples(), samples()+'BenchmarkCIDefault/unknown 100 1 ns/op\n')
+
     def test_median_not_single_outlier(self):
-        noisy = samples(count=9)+samples(100000, 200000, count=1)
+        noisy = samples(count=9)+samples(100000, 200000, count=1, json=900000, slog=900000)
         self.assertTrue(default_gate(samples(), noisy)['passed'])
 
     def test_missing_extra_and_invalid_samples_fail_closed(self):

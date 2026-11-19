@@ -16,13 +16,15 @@ type Scanner struct {
 	sensitiveKeys map[string]struct{}
 	kinds         map[Kind]bool
 	// moreKinds holds kinds WithMoreKinds adds to the selection.
-	moreKinds     map[Kind]bool
-	detectors     []detect.Detector
-	hintCache     [][]hintEntry
-	custom        []Detector
-	maskFunc      func(Kind, string) string
-	scratch       *sync.Pool
-	keys          *keyCache
+	moreKinds map[Kind]bool
+	detectors []detect.Detector
+	hintCache [][]hintEntry
+	custom    []Detector
+	maskFunc  func(Kind, string) string
+	scratch   *sync.Pool
+	keys      *keyCache
+	// paths holds joined key paths that had no findings, as keys does.
+	paths         *keyCache
 	credential    detect.Detector
 	hintIndex     [256][]dispatchHint
 	follow        [256]byteSet
@@ -83,8 +85,9 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 	// built-in selections, which never retain input and always return the same
 	// findings, reuse buffers and key results.
 	if len(s.custom) == 0 {
-		s.scratch = &sync.Pool{New: func() any { return &scanScratch{text: nil, findings: nil} }}
+		s.scratch = &sync.Pool{New: func() any { return &scanScratch{text: nil, findings: nil, keys: nil, members: nil} }}
 		s.keys = &keyCache{}
+		s.paths = &keyCache{}
 	}
 	return s
 }
@@ -95,6 +98,9 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 type scanScratch struct {
 	text     []byte
 	findings []Finding
+	// keys and members are a fieldPolicy's key path.
+	keys    []byte
+	members []pathMember
 	// detected holds one detector's findings before conversion.
 	detected []detect.Finding
 }
@@ -103,13 +109,14 @@ type scanScratch struct {
 const (
 	largestPooledBuffer = 64 << 10
 	maxPooledFindings   = 64
+	maxPooledMembers    = 64
 )
 
 // takeScratch returns empty scratch storage. Scanners with custom detectors and
 // zero-value scanners get fresh storage.
 func (s *Scanner) takeScratch() *scanScratch {
 	if s.scratch == nil {
-		return &scanScratch{text: nil, findings: nil}
+		return &scanScratch{text: nil, findings: nil, keys: nil, members: nil}
 	}
 	scratch, ok := s.scratch.Get().(*scanScratch)
 	if !ok {
@@ -118,12 +125,17 @@ func (s *Scanner) takeScratch() *scanScratch {
 	return scratch
 }
 
-// returnScratch keeps storage, grown by its last user, for the next scan.
+// returnScratch keeps storage, grown by its last user, for the next scan. The
+// scanned text of a pooled buffer is cleared, so the pool holds no logged
+// value between scans. Unpooled storage belongs to its last user, such as a
+// custom detector that kept its input, and is left as it is.
 func (s *Scanner) returnScratch(scratch *scanScratch) {
-	if s.scratch == nil || cap(scratch.text) > largestPooledBuffer || cap(scratch.findings) > maxPooledFindings || cap(scratch.detected) > maxPooledFindings {
+	if s.scratch == nil || cap(scratch.text) > largestPooledBuffer || cap(scratch.findings) > maxPooledFindings || cap(scratch.detected) > maxPooledFindings || cap(scratch.keys) > largestPooledBuffer || cap(scratch.members) > maxPooledMembers {
 		return
 	}
+	clear(scratch.text)
 	scratch.text, scratch.findings, scratch.detected = scratch.text[:0], scratch.findings[:0], scratch.detected[:0]
+	scratch.keys, scratch.members = scratch.keys[:0], scratch.members[:0]
 	s.scratch.Put(scratch)
 }
 

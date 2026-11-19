@@ -11,6 +11,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Tests check the `Mask` guarantee that, for fixed valid findings, the output depends only on the bytes outside them. They run the real function on every combination of up to three ranges over texts of up to seven bytes, the exact spans a `MaskFunc` callback receives, and that findings on valid UTF-8 never split a character.
 - The Lean reference proofs no longer model masking. That model replaced each byte with `*` and missed changes that made the marker return the value; the README row now reads "Checksum and offset-map errors". doc/testing.md has a Masking guarantee section listing what it covers and what it does not.
 - The `Mask` and `MaskFunc` godoc states the guarantee: for valid findings, `Mask` output depends only on the bytes outside the spans, and a `MaskFunc` callback that returns part of the value discloses that part.
+- slog, MaskJSON, the adapters and the HTTP hook now share one rule set for keys, key paths and name/value pairs.
+- A slog record shares one 4 MiB scan budget.
+- A test checks every value representation, key wrapping and sink against MaskJSON of `{"key":"secret"}`.
+- The threshold table in doc/accuracy.md covers only the kinds `NewScanner` reports.
+- Adapters are covered by the API goldens, the coverage gate and the mutation gate.
+- The CI speed gate also measures MaskJSON and slog.
+- Releases wait for the tagged commit's other checks to pass.
+- CI runs the tests on GOARCH=386.
+
+### Fixed
+
+- slog groups and records with `name` and `value` attributes kept the value.
+- A JSON name/value object with two `value` members kept the first.
+- Short `[]byte` fields inside structs, maps and slices were written as unscanned base64.
+- A panic in the downstream handler while writing the withheld diagnostic escaped the HTTP and gRPC hooks.
+- doc/threat-model.md and doc/countries.md stated outdated facts.
+
+### Detection changes
+
+- Base64 text shorter than 20 bytes is now decoded and scanned.
+
+### Removed
+
+- doc/migration.md. The [v0.17.0 copy](https://github.com/nao1215/embargo/blob/v0.17.0/doc/migration.md) remains.
 
 ## [0.17.0] - 2026-11-19
 
@@ -346,7 +370,7 @@ Implementation: [PR #97](https://github.com/nao1215/embargo/pull/97), [2955f9d](
 
 ## [0.5.0] - 2026-11-16
 
-This release adds service and telemetry hooks, opt-in national ID detectors and explicit matching contracts. Users upgrading from v0.4.0 should review the default detector and IP behavior changes in [doc/migration.md](doc/migration.md).
+This release adds service and telemetry hooks, opt-in national ID detectors and explicit matching contracts. Users upgrading from v0.4.0 should review the default detector and IP behavior changes in [doc/migration.md](https://github.com/nao1215/embargo/blob/v0.17.0/doc/migration.md).
 
 ### Service and telemetry hooks
 
@@ -374,14 +398,14 @@ Implementation: [PR #87](https://github.com/nao1215/embargo/pull/87), [bde782f](
 Implementation: [PR #81](https://github.com/nao1215/embargo/pull/81), [afe881d](https://github.com/nao1215/embargo/commit/afe881d48d3343249becc12f22a7eb42c61c73a3); [PR #83](https://github.com/nao1215/embargo/pull/83), [0839eee](https://github.com/nao1215/embargo/commit/0839eee7502c1b2bd55b5f39e410aba4f71379a1); [PR #86](https://github.com/nao1215/embargo/pull/86), [780b634](https://github.com/nao1215/embargo/commit/780b634915d21ff1782ecd5cde6e1956fb10f949).
 
 - Restore candidate leaking test names in `embargotest.Guard` diagnostics by tracking active, paused and completed tests near observed output. Validate names and their joined representation against canaries, the scanner, character rules and length limits before displaying them; parallel tests and separate stdout/stderr pipes still limit attribution.
-- Include the instantiated `Secret` type in `%#v` and `GoString` output while preserving the redaction marker. Make `CheckValue` inspect unexported fmt fields, exposing domain types whose formatters are bypassed there; [migration notes](doc/migration.md) describe assertion and representation changes.
+- Include the instantiated `Secret` type in `%#v` and `GoString` output while preserving the redaction marker. Make `CheckValue` inspect unexported fmt fields, exposing domain types whose formatters are bypassed there; [migration notes](https://github.com/nao1215/embargo/blob/v0.17.0/doc/migration.md) describe assertion and representation changes.
 
 ### Default detection and log false positives
 
 Implementation: [PR #81](https://github.com/nao1215/embargo/pull/81), [afe881d](https://github.com/nao1215/embargo/commit/afe881d48d3343249becc12f22a7eb42c61c73a3); [PR #83](https://github.com/nao1215/embargo/pull/83), [0839eee](https://github.com/nao1215/embargo/commit/0839eee7502c1b2bd55b5f39e410aba4f71379a1).
 
 - Make `KindHighEntropy` opt-in through `WithKinds` or `WithAll`; default scanners, Recorder and Guard no longer report unlabeled entropy candidates. Its confidence remains 0.3 and the default minimum confidence remains zero. Credential assignments and provider prefixes stay enabled by default.
-- Exclude unspecified and loopback IPv4/IPv6 addresses from `KindIPAddr` while retaining other private endpoints. Reject additional path/hostname fragments, numeric log tails, operational counters and unquoted Java object references in the affected detectors; see [behavior migration](doc/migration.md) for the recall trade-offs.
+- Exclude unspecified and loopback IPv4/IPv6 addresses from `KindIPAddr` while retaining other private endpoints. Reject additional path/hostname fragments, numeric log tails, operational counters and unquoted Java object references in the affected detectors; see [behavior migration](https://github.com/nao1215/embargo/blob/v0.17.0/doc/migration.md) for the recall trade-offs.
 
 ### Severity gates and measured evidence
 
@@ -398,7 +422,7 @@ Implementation: [PR #83](https://github.com/nao1215/embargo/pull/83), [0839eee](
 
 ## [0.4.0] - 2026-11-15
 
-This release redesigns the public API after the rename to embargo. See [doc/migration.md](doc/migration.md) for behavior changes.
+This release redesigns the public API after the rename to embargo. See [doc/migration.md](https://github.com/nao1215/embargo/blob/v0.17.0/doc/migration.md) for behavior changes.
 
 ### Forgotten credentials and output contracts
 
@@ -426,7 +450,7 @@ Implementation: [PR #77](https://github.com/nao1215/embargo/pull/77), [97a0585](
 
 ### Accuracy and scanning
 
-- Decode one layer of percent escapes with original byte offsets, lower confidence for business-labeled numeric candidates, reject embedded My Number fragments, and share hint dispatch across selected detectors while removing unnecessary ASCII position maps ([PR #73](https://github.com/nao1215/embargo/pull/73), [implementation](https://github.com/nao1215/embargo/commit/29ce283)). Public API signatures and the default threshold of 0 are unchanged; see the [behavior migration note](doc/migration.md).
+- Decode one layer of percent escapes with original byte offsets, lower confidence for business-labeled numeric candidates, reject embedded My Number fragments, and share hint dispatch across selected detectors while removing unnecessary ASCII position maps ([PR #73](https://github.com/nao1215/embargo/pull/73), [implementation](https://github.com/nao1215/embargo/commit/29ce283)). Public API signatures and the default threshold of 0 are unchanged; see the [behavior migration note](https://github.com/nao1215/embargo/blob/v0.17.0/doc/migration.md).
 
 - Separate development and held-out synthetic evaluation, publish both default and 0.7 confidence policies, retain reviewed limits, and extend differential, offset and mutation assertions ([PR #73](https://github.com/nao1215/embargo/pull/73), [assertions](https://github.com/nao1215/embargo/commit/789318d)). The stricter SWIFT context experiment was rejected after held-out recall regressed.
 

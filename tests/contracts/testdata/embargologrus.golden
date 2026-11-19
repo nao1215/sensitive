@@ -1,0 +1,1 @@
+func NewFormatter(next logrus.Formatter, scanner *embargo.Scanner) logrus.Formatter

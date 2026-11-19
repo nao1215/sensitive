@@ -5,10 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"strings"
 	"unicode/utf8"
 
-	"github.com/nao1215/embargo/internal/ascii"
 	"github.com/nao1215/embargo/internal/saferecord"
 )
 
@@ -43,7 +41,19 @@ func (s *Scanner) MaskJSONContext(ctx context.Context, data []byte) ([]byte, err
 // maskJSON masks one document. encoded is true only for encoding/json output,
 // which that package has already validated and compacted, so json.Valid would
 // repeat its work.
-func (s *Scanner) maskJSON(ctx context.Context, data []byte, key string, encoded bool) (masked []byte, err error) {
+func (s *Scanner) maskJSON(ctx context.Context, data []byte, key string, encoded bool) ([]byte, error) {
+	if s == nil {
+		return nil, jsonFailure()
+	}
+	policy := newFieldPolicy(s, "")
+	defer policy.release()
+	return policy.maskJSON(ctx, data, key, encoded)
+}
+
+// maskJSON masks one document whose root value is the member value of key
+// under the policy's current path, so a document inside another tree, such
+// as a slog value, continues that tree's key path.
+func (p *fieldPolicy) maskJSON(ctx context.Context, data []byte, key string, encoded bool) (masked []byte, err error) {
 	complete := false
 	defer func() {
 		_ = recover() //nolint:errcheck // Discard panic values, including panic(nil) compatibility mode.
@@ -60,14 +70,18 @@ func (s *Scanner) maskJSON(ctx context.Context, data []byte, key string, encoded
 	if len(data) > maxEventBytes {
 		return nil, saferecord.ErrSizeLimit
 	}
-	if s == nil || len(data) == 0 || (!encoded && !json.Valid(data)) {
+	if len(data) == 0 || (!encoded && !json.Valid(data)) {
 		return nil, jsonFailure()
 	}
 
 	data = bytes.TrimSpace(data)
-	walker := jsonWalker{data: data, result: make([]byte, 0, len(data)), scanner: eventScanner{scanner: s, remaining: maxScanBytes}}
-	if err := walker.value(ctx, 0, key, false); err != nil {
-		return nil, err
+	// The walker works on a copy of the policy, which is written back, so
+	// the policy itself can stay on its owner's stack.
+	walker := jsonWalker{data: data, result: make([]byte, 0, len(data)), policy: *p}
+	walkErr := walker.value(ctx, 0, key, false)
+	*p = walker.policy
+	if walkErr != nil {
+		return nil, walkErr
 	}
 	complete = true
 	if len(walker.pathMasks) == 0 {
@@ -86,19 +100,14 @@ func (s *Scanner) maskJSON(ctx context.Context, data []byte, key string, encoded
 
 // json.Valid establishes grammar and bounds before this allocation-light walk.
 // Original numeric lexemes are retained, equivalent to decoding with UseNumber.
-// Unlike a map tree, the walk retains every duplicate key and its value.
-type jsonKeyPosition struct {
-	path       string
-	start, end int
-}
-
+// Unlike a map tree, the walk retains every duplicate key and its value. The
+// walker owns the JSON syntax and output; fieldPolicy decides what is masked.
 type jsonWalker struct {
-	path      []jsonKeyPosition
-	pathMasks map[int]Finding
 	err       error
-	scanner   eventScanner
+	pathMasks map[int]Finding
 	data      []byte
 	result    []byte
+	policy    fieldPolicy
 	pos       int
 }
 
@@ -124,7 +133,7 @@ func (w *jsonWalker) value(ctx context.Context, depth int, key string, hidden bo
 		return saferecord.ErrSizeLimit
 	}
 	w.space()
-	if !hidden && key != "" && w.scanner.scanner.cachedSensitiveKey(key) {
+	if !hidden && w.policy.sensitive(key) {
 		w.appendResult([]byte(`"` + redactionMarker + `"`))
 		hidden = true
 	}
@@ -174,7 +183,7 @@ func (w *jsonWalker) literal(ctx context.Context, key string, hidden bool) error
 }
 
 func (w *jsonWalker) scalar(ctx context.Context, raw []byte, key string) error {
-	masked, hidden, err := w.scanner.maskBytes(ctx, raw, key)
+	masked, hidden, err := w.policy.scan.maskBytes(ctx, raw, key)
 	if err != nil {
 		return err
 	}
@@ -200,7 +209,7 @@ func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidde
 		}
 	}
 	w.space()
-	pair := namedValue{active: open == '{' && !hidden, sensitive: false, valueStart: 0, valueEnd: 0}
+	var pair namedPair[Finding]
 	for w.data[w.pos] != closeByte {
 		if err := w.element(ctx, depth, key, open == '{', hidden, &pair); err != nil {
 			return err
@@ -208,19 +217,20 @@ func (w *jsonWalker) container(ctx context.Context, depth int, key string, hidde
 	}
 	w.pos++
 	if !hidden {
-		pair.mask(w)
+		pair.hidden(w.maskSpan)
 		w.appendResult([]byte{closeByte})
 	}
 	return nil
 }
 
 // element walks one array element or object member and the separator after it.
-func (w *jsonWalker) element(ctx context.Context, depth int, key string, member, hidden bool, pair *namedValue) error {
+func (w *jsonWalker) element(ctx context.Context, depth int, key string, member, hidden bool, pair *namedPair[Finding]) error {
 	fieldContext := key
-	pathDepth := len(w.path)
+	entered := member && !hidden
+	var keySpan Finding
 	if member {
 		var err error
-		if fieldContext, err = w.memberKey(ctx, key, hidden); err != nil {
+		if fieldContext, keySpan, err = w.memberKey(ctx, key, hidden); err != nil {
 			return err
 		}
 	}
@@ -229,114 +239,53 @@ func (w *jsonWalker) element(ctx context.Context, depth int, key string, member,
 	if err := w.value(ctx, depth+1, fieldContext, hidden); err != nil {
 		return err
 	}
-	pair.member(w, fieldContext, w.data[valueStart:w.pos], resultStart)
-	w.path = w.path[:pathDepth]
+	if entered {
+		if w.policy.leave() {
+			w.maskSpan(keySpan)
+		}
+		raw := w.data[valueStart:w.pos]
+		switch namedValueField(fieldContext) {
+		case pairName:
+			if name, ok := jsonName(raw); ok {
+				pair.name(&w.policy, name)
+			}
+		case pairValue:
+			pair.value(jsonValueShape(raw), Finding{Start: resultStart, End: len(w.result)})
+		case pairNone:
+		}
+	}
 	w.space()
 	w.elementSeparator(hidden)
 	return nil
 }
 
-// namedValue tracks one object that stores a setting as separate name and
-// value members, as Kubernetes env, ECS task definitions, SSM parameters and
-// CloudFormation parameters do: {"name":"DB_PASSWORD","value":"hunter2"}.
-// The value is masked when the name is a sensitive key, in either member
-// order: a string, or a whole object or array as under a sensitive key.
-// Numeric values, as in metric samples, stay visible.
-type namedValue struct {
-	active     bool
-	sensitive  bool
-	valueStart int
-	valueEnd   int
-}
-
-// member records a name member whose string is a sensitive key and the
-// output span of a value member that is a non-empty string or a container.
-func (p *namedValue) member(w *jsonWalker, key string, raw []byte, resultStart int) {
-	if !p.active {
-		return
-	}
-	switch namedValueField(key) {
-	case pairName:
-		var name string
-		if json.Unmarshal(raw, &name) == nil && w.scanner.scanner.cachedSensitiveKey(settingName(name)) {
-			p.sensitive = true
-		}
-	case pairValue:
-		// raw is a whole JSON value, so it is never empty.
-		if raw[0] == '{' || raw[0] == '[' || (raw[0] == '"' && len(raw) > len(`""`)) {
-			p.valueStart, p.valueEnd = resultStart, len(w.result)
-		}
-	case pairNone:
-	}
-}
-
-// pairField classifies a member of a name and value pair.
-type pairField uint8
-
-const (
-	pairNone pairField = iota
-	pairName
-	pairValue
-)
-
-// namedValueField lowers a short member key and drops separators, as
-// normalizeKey does, without allocating; longer keys are never pair members.
-func namedValueField(key string) pairField {
-	var folded [len("parametervalue")]byte
-	n := 0
-	for i := range len(key) {
-		c := key[i]
-		if c == '_' || c == '-' || c == '.' || c == ' ' {
-			continue
-		}
-		if n == len(folded) {
-			return pairNone
-		}
-		folded[n] = ascii.ToLower(c)
-		n++
-	}
-	switch string(folded[:n]) {
-	case "name", "key", "parameterkey", "parametername", "optionname", "variable":
-		return pairName
-	case "value", "parametervalue":
-		return pairValue
-	}
-	return pairNone
-}
-
-// mask hides the recorded value span once both members were seen.
-func (p *namedValue) mask(w *jsonWalker) {
-	if !p.sensitive || p.valueEnd == 0 || w.err != nil {
-		return
-	}
+// maskSpan writes the marker over an output span when the walk completes; a
+// failed walk returns no output, so its spans are never applied.
+func (w *jsonWalker) maskSpan(span Finding) {
 	if w.pathMasks == nil {
 		w.pathMasks = make(map[int]Finding)
 	}
-	w.pathMasks[p.valueStart] = Finding{Start: p.valueStart, End: p.valueEnd}
+	w.pathMasks[span.Start] = span
 }
 
-// settingName keeps the last segment of a parameter path such as
-// /prod/db/password, so the key rule sees the setting rather than the path.
-func settingName(name string) string {
-	return name[strings.LastIndexByte(name, '/')+1:]
-}
-
-// memberKey consumes an object key and its colon. A visible key is masked and
-// becomes the field context; under a hidden parent the enclosing key stays.
-func (w *jsonWalker) memberKey(ctx context.Context, key string, hidden bool) (string, error) {
+// memberKey consumes an object key and its colon. A visible key is masked,
+// entered into the policy path and becomes the field context, and keySpan is
+// its output span; under a hidden parent the enclosing key stays.
+func (w *jsonWalker) memberKey(ctx context.Context, key string, hidden bool) (fieldContext string, keySpan Finding, err error) {
 	raw := w.stringToken()
-	fieldContext := key
+	fieldContext = key
 	if !hidden {
-		var err error
+		start := len(w.result)
 		fieldContext, err = w.objectKey(ctx, raw)
 		if err != nil {
-			return "", err
+			return "", Finding{}, err
 		}
+		keySpan = Finding{Start: start, End: len(w.result)}
 		w.appendResult([]byte{':'})
 	}
 	w.space()
 	w.pos++ // Colon, already checked by json.Valid.
-	return fieldContext, nil
+	return fieldContext, keySpan, nil
 }
 
 // elementSeparator consumes a comma between container elements, copying it
@@ -369,10 +318,9 @@ func (w *jsonWalker) stringToken() []byte {
 func (w *jsonWalker) stringElement(ctx context.Context, raw []byte, key string) error {
 	content := raw[1 : len(raw)-1]
 	if bytes.IndexByte(content, '\\') >= 0 || !utf8.Valid(content) {
-		_, err := w.stringValue(ctx, raw, key, false)
-		return err
+		return w.stringValue(ctx, raw, key)
 	}
-	masked, changed, err := w.scanner.maskBytes(ctx, content, key)
+	masked, changed, err := w.policy.scan.maskBytes(ctx, content, key)
 	if err != nil {
 		return err
 	}
@@ -385,35 +333,38 @@ func (w *jsonWalker) stringElement(ctx context.Context, raw []byte, key string) 
 }
 
 // Decode escaped strings using encoding/json; plain UTF-8 needs no decoder.
-func (w *jsonWalker) stringValue(ctx context.Context, raw []byte, key string, objectKey bool) (string, error) {
+func (w *jsonWalker) stringValue(ctx context.Context, raw []byte, key string) error {
+	text, err := decodeJSONString(raw)
+	if err != nil {
+		return err
+	}
+	masked, err := w.policy.scan.maskScalar(ctx, text, key)
+	if err != nil {
+		return err
+	}
+	w.appendText(raw, text, masked)
+	return w.err
+}
+
+func decodeJSONString(raw []byte) (string, error) {
 	text := string(raw[1 : len(raw)-1])
 	if bytes.IndexByte(raw, '\\') >= 0 || !utf8.ValidString(text) {
 		if err := json.Unmarshal(raw, &text); err != nil {
 			return "", saferecord.ErrMasking
 		}
 	}
-	masked, err := w.maskText(ctx, text, key, objectKey)
-	if err != nil {
-		return "", err
-	}
-	// Reuse unchanged JSON lexemes. Escape changed strings with encoding/json;
-	// invalid UTF-8 is normalized by the decoder before it reaches the output.
+	return text, nil
+}
+
+// appendText reuses an unchanged JSON lexeme and escapes a changed string with
+// encoding/json; invalid UTF-8 is normalized by the decoder before it reaches
+// the output.
+func (w *jsonWalker) appendText(raw []byte, text, masked string) {
 	if masked == text && utf8.Valid(raw) {
 		w.appendResult(raw)
 	} else {
 		w.appendString(masked)
 	}
-	return text, w.err
-}
-
-// maskText masks a decoded string; object keys, scanned without a field
-// context, use the scanner's key cache.
-func (w *jsonWalker) maskText(ctx context.Context, text, key string, objectKey bool) (string, error) {
-	if !objectKey {
-		return w.scanner.maskScalar(ctx, text, key)
-	}
-	result, err := w.scanner.maskCached(ctx, text)
-	return result.masked, err
 }
 
 func (w *jsonWalker) appendString(text string) {
@@ -460,55 +411,27 @@ func (w *jsonWalker) appendResult(data []byte) {
 	w.result = append(w.result, data...)
 }
 
-// Keep original keys for path detection and output ranges for replacing every segment.
-func (w *jsonWalker) keyPath(ctx context.Context, key string, start, end int) error {
-	path := key
-	if len(w.path) > 0 {
-		path = joinedKey(w.path[len(w.path)-1].path, key)
-	}
-	w.path = append(w.path, jsonKeyPosition{path: path, start: start, end: end})
-	if len(w.path) == 1 {
-		return nil
-	} // Single keys were already scanned by stringValue.
-	crossed, err := w.scanner.joinedKeySensitive(ctx, path, len(w.path[len(w.path)-2].path))
-	if err != nil {
-		return err
-	}
-	if !crossed {
-		return nil
-	}
-	if w.pathMasks == nil {
-		w.pathMasks = make(map[int]Finding)
-	}
-	for _, segment := range w.path {
-		w.pathMasks[segment.start] = Finding{Start: segment.start, End: segment.end}
-	}
-	return nil
-}
-
+// objectKey writes a masked object key and enters it into the policy path.
 func (w *jsonWalker) objectKey(ctx context.Context, raw []byte) (string, error) {
-	start := len(w.result)
 	if content := raw[1 : len(raw)-1]; bytes.IndexByte(content, '\\') < 0 && utf8.Valid(content) {
 		// A cached key had no findings, so its lexeme is copied unchanged.
-		result, ok, err := cachedKey(ctx, &w.scanner, content)
+		decision, ok, err := w.policy.cachedMember(ctx, content)
 		if err != nil {
 			return "", err
 		}
 		if ok {
 			w.appendResult(raw)
-			if w.err != nil {
-				return "", w.err
-			}
-			return result.key, w.keyPath(ctx, result.key, start, len(w.result))
+			return decision.key, w.err
 		}
 	}
-	original, err := w.stringValue(ctx, raw, "", true)
+	text, err := decodeJSONString(raw)
 	if err != nil {
 		return "", err
 	}
-	pathKey := original
-	if !bytes.Equal(w.result[start:], raw) {
-		pathKey = redactionMarker
+	decision, err := w.policy.member(ctx, text)
+	if err != nil {
+		return "", err
 	}
-	return original, w.keyPath(ctx, pathKey, start, len(w.result))
+	w.appendText(raw, text, decision.masked)
+	return text, w.err
 }

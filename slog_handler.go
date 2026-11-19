@@ -129,7 +129,7 @@ func (h *slogHandler) WithGroup(name string) slog.Handler {
 		return h
 	}
 	copyOf := *h
-	safe, crossed, err := h.sanitizeAttrs([]slog.Attr{slog.String(name, "")})
+	decision, crossed, prefixCrossed, err := h.groupKey(name)
 	if h.depth >= maxDepth {
 		err = saferecord.ErrSizeLimit
 	}
@@ -137,28 +137,48 @@ func (h *slogHandler) WithGroup(name string) slog.Handler {
 		copyOf.failed = err
 		return &copyOf
 	}
-	if h.scanner.sensitiveKey(name) {
-		attrs := []slog.Attr{slog.String(safe[0].Key, redactionMarker)}
+	key := decision.masked
+	if crossed {
+		key = redactionMarker
+	}
+	if decision.sensitive {
+		attrs := []slog.Attr{slog.String(key, redactionMarker)}
 		copyOf.operations = append(slices.Clone(h.operations), slogOperation{attrs: attrs})
 		copyOf.next = h.next.WithAttrs(attrs)
 		copyOf.hidden = true
 	} else {
-		copyOf.next = h.next.WithGroup(safe[0].Key)
+		copyOf.next = h.next.WithGroup(key)
 		copyOf.depth++
-		pathGroup := safe[0].Key
-		if crossed {
-			// Later segments can extend the same detectable path. Keep its scan
-			// context even though every emitted group has already been masked.
-			pathGroup = name
-		}
-		copyOf.groups = joinedKey(h.groups, pathGroup)
-		copyOf.operations = append(slices.Clone(h.operations), slogOperation{group: safe[0].Key})
+		copyOf.groups = joinedKey(h.groups, pathKey(decision))
+		copyOf.operations = append(slices.Clone(h.operations), slogOperation{group: key})
 	}
-	copyOf.redactGroups = h.redactGroups || crossed
+	copyOf.redactGroups = h.redactGroups || prefixCrossed
 	if copyOf.redactGroups {
 		copyOf.next = copyOf.rebuildGroups()
 	}
 	return &copyOf
+}
+
+// groupKey decides a WithGroup name as a member key under the bound groups.
+func (h *slogHandler) groupKey(name string) (decision memberKey, crossed, prefixCrossed bool, err error) {
+	completed := false
+	defer func() {
+		if !completed {
+			_ = recover() //nolint:errcheck // Discard panic values, including panic(nil) compatibility mode.
+			if err == nil {
+				err = saferecord.ErrMasking
+			}
+		}
+	}()
+	policy := newFieldPolicy(h.scanner, h.groups)
+	defer policy.release()
+	decision, err = policy.member(context.Background(), name)
+	if err != nil {
+		return memberKey{}, false, false, err
+	}
+	crossed = policy.leave()
+	completed = true
+	return decision, crossed, policy.prefixCrossed, nil
 }
 
 // Replay only frozen attributes; original callbacks are never evaluated twice.
@@ -200,22 +220,20 @@ func (h *slogHandler) sanitizeRecord(ctx context.Context, record *slog.Record) (
 	var inline [16]slog.Attr
 	attrs, pooled := borrowAttrs(inline[:0], record.NumAttrs())
 	defer returnAttrs(pooled)
+	members := slogMembers{handler: h, policy: newFieldPolicy(h.scanner, h.groups), pair: namedPair[int]{}}
+	defer members.policy.release()
 	record.Attrs(func(attr slog.Attr) bool {
 		var clean slog.Attr
-		var pathHidden bool
-		clean, pathHidden, err = h.sanitizeAttr(ctx, attr, h.depth, h.groups)
-		crossed = crossed || pathHidden
-		if err != nil {
-			return false
-		}
+		clean, err = members.add(ctx, attr, h.depth, len(attrs))
 		attrs = append(attrs, clean)
-		return true
+		return err == nil
 	})
 	if err == nil {
+		members.finish(attrs)
 		safe.AddAttrs(attrs...)
 	}
 	completed = true
-	return safe, crossed, err
+	return safe, members.policy.prefixCrossed, err
 }
 
 // Records with more attributes than sanitizeRecord's inline array borrow
@@ -261,17 +279,73 @@ func (h *slogHandler) sanitizeAttrs(attrs []slog.Attr) (safe []slog.Attr, crosse
 			}
 		}
 	}()
+	members := slogMembers{handler: h, policy: newFieldPolicy(h.scanner, h.groups), pair: namedPair[int]{}}
+	defer members.policy.release()
 	safe = make([]slog.Attr, 0, len(attrs))
 	for _, attr := range attrs {
-		clean, pathHidden, err := h.sanitizeAttr(context.Background(), attr, h.depth, h.groups)
-		crossed = crossed || pathHidden
+		clean, err := members.add(context.Background(), attr, h.depth, len(safe))
 		if err != nil {
 			return nil, false, err
 		}
 		safe = append(safe, clean)
 	}
+	members.finish(safe)
 	completed = true
-	return safe, crossed, nil
+	return safe, members.policy.prefixCrossed, nil
+}
+
+// slogMembers sanitizes the attributes of one record, WithAttrs call or
+// group as members of one object under the handler's bound groups.
+type slogMembers struct {
+	handler *slogHandler
+	policy  fieldPolicy
+	pair    namedPair[int]
+}
+
+// add sanitizes one top-level attribute, which the caller stores at index.
+// The record's attributes share one scan budget, as one encoded event does.
+func (m *slogMembers) add(ctx context.Context, attr slog.Attr, depth, index int) (slog.Attr, error) {
+	clean, err := m.handler.sanitizeAttr(ctx, &m.policy, attr, depth)
+	if err != nil {
+		return slog.Attr{}, err
+	}
+	observeSlogPair(&m.policy, &m.pair, attr.Key, clean.Value, index)
+	return clean, nil
+}
+
+// finish writes the marker for the pair values among attrs.
+func (m *slogMembers) finish(attrs []slog.Attr) {
+	m.pair.hidden(func(i int) { attrs[i].Value = slog.StringValue(redactionMarker) })
+}
+
+// observeSlogPair records a sanitized member of a name and value pair.
+func observeSlogPair(policy *fieldPolicy, pair *namedPair[int], key string, value slog.Value, index int) {
+	switch namedValueField(key) {
+	case pairName:
+		if value.Kind() == slog.KindString {
+			pair.name(policy, value.String())
+		}
+	case pairValue:
+		pair.value(slogShape(value), index)
+	case pairNone:
+	}
+}
+
+// slogShape classifies a sanitized slog value as a pair value member.
+func slogShape(value slog.Value) valueShape {
+	switch value.Kind() { //nolint:exhaustive // Other kinds are numbers, booleans, times and durations.
+	case slog.KindString:
+		if value.String() != "" {
+			return shapeText
+		}
+	case slog.KindGroup:
+		return shapeContainer
+	case slog.KindAny:
+		if encoded, ok := value.Any().(maskedJSON); ok {
+			return jsonValueShape(encoded)
+		}
+	}
+	return shapeOther
 }
 
 // mask scans a message alone; short clean messages, like field keys, repeat
@@ -282,56 +356,45 @@ func (h *slogHandler) mask(ctx context.Context, text string) (string, error) {
 	return result.masked, err
 }
 
-func (h *slogHandler) sanitizeAttr(ctx context.Context, attr slog.Attr, depth int, groups string) (slog.Attr, bool, error) {
-	const maxDepth = 64
+func (h *slogHandler) sanitizeAttr(ctx context.Context, policy *fieldPolicy, attr slog.Attr, depth int) (slog.Attr, error) {
 	if ctx.Err() != nil {
-		return slog.Attr{}, false, saferecord.ErrCanceled
+		return slog.Attr{}, saferecord.ErrCanceled
 	}
 	if depth > maxDepth {
-		return slog.Attr{}, false, saferecord.ErrSizeLimit
+		return slog.Attr{}, saferecord.ErrSizeLimit
 	}
-	scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
-	result, err := scan.maskCached(ctx, attr.Key)
+	decision, err := policy.member(ctx, attr.Key)
 	if err != nil {
-		return slog.Attr{}, false, err
+		return slog.Attr{}, err
 	}
-	key := result.masked
-	pathKey := key
-	crossed := false
-	if groups != "" && attr.Key != "" {
-		scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
-		crossed, err = scan.joinedKeySensitive(ctx, joinedKey(groups, key), len(groups))
-		if err != nil {
-			return slog.Attr{}, false, err
-		}
-		if crossed {
-			key = redactionMarker
+	value := slog.StringValue(redactionMarker)
+	if !decision.sensitive {
+		if value, err = h.sanitizeValue(ctx, policy, decision.key, attr.Value, depth); err != nil {
+			return slog.Attr{}, err
 		}
 	}
-	if ctx.Err() != nil {
-		return slog.Attr{}, false, slogSanitizationError()
+	key := decision.masked
+	if policy.leave() {
+		key = redactionMarker
 	}
-	if result.sensitive {
-		return slog.String(key, redactionMarker), crossed, nil
-	}
-	value, err := resolveLogValue(ctx, attr.Value)
+	return slog.Attr{Key: key, Value: value}, nil
+}
+
+func (h *slogHandler) sanitizeValue(ctx context.Context, policy *fieldPolicy, key string, value slog.Value, depth int) (slog.Value, error) {
+	value, err := resolveLogValue(ctx, value)
 	if err != nil {
-		return slog.Attr{}, false, err
+		return slog.Value{}, err
 	}
 	switch value.Kind() {
 	case slog.KindGroup:
-		return h.sanitizeGroup(ctx, key, joinedKey(groups, pathKey), value.Group(), depth, crossed)
+		return h.sanitizeGroup(ctx, policy, value.Group(), depth)
 	case slog.KindAny:
-		safe, err := h.sanitizeAny(ctx, key, attr.Key, value.Any())
-		return safe, crossed, err
+		return h.sanitizeAny(ctx, policy, key, value.Any())
 	case slog.KindString, slog.KindBool, slog.KindDuration, slog.KindFloat64, slog.KindInt64, slog.KindTime, slog.KindUint64:
-		safe, err := h.sanitizeScalar(ctx, key, attr.Key, value)
-		return safe, crossed, err
-
+		return sanitizeScalar(ctx, policy, key, value)
 	case slog.KindLogValuer:
-		return slog.Attr{}, false, slogSanitizationError()
 	}
-	return slog.Attr{}, false, slogSanitizationError()
+	return slog.Value{}, slogSanitizationError()
 }
 
 // JSONHandler uses MarshalJSON. TextHandler quotes the compact JSON bytes;
@@ -344,9 +407,11 @@ func (v maskedJSON) MarshalJSON() ([]byte, error) { return v, nil }
 // String passes a previously masked error message to the logger.
 func (v maskedJSON) String() string { return string(v) }
 
-func (h *slogHandler) sanitizeAny(ctx context.Context, key, originalKey string, value any) (slog.Attr, error) {
+// sanitizeAny masks an Any value as a JSON document that continues the
+// policy's key path, so its members follow the same rules as groups.
+func (h *slogHandler) sanitizeAny(ctx context.Context, policy *fieldPolicy, key string, value any) (slog.Value, error) {
 	if errValue, ok := value.(error); ok {
-		return h.sanitizeScalar(ctx, key, originalKey, slog.StringValue(errValue.Error()))
+		return sanitizeScalar(ctx, policy, key, slog.StringValue(errValue.Error()))
 	}
 	// Scan byte contents before an encoder can hide them behind base64.
 	// Freeze the result so caller mutation and custom slice methods cannot leak.
@@ -355,25 +420,25 @@ func (h *slogHandler) sanitizeAny(ctx context.Context, key, originalKey string, 
 	if !rawJSON && rawValue.IsValid() && rawValue.Kind() == reflect.Slice && rawValue.Type().Elem().Kind() == reflect.Uint8 {
 		const jsonQuotes, base64Block, rawBlock = 2, 4, 3
 		if rawValue.Len() > (maxEventBytes-jsonQuotes)/base64Block*rawBlock {
-			return slog.Attr{}, saferecord.ErrSizeLimit
+			return slog.Value{}, saferecord.ErrSizeLimit
 		}
-		return h.sanitizeBytes(ctx, key, originalKey, rawValue.Bytes())
+		return sanitizeBytes(ctx, policy, key, rawValue.Bytes())
 	}
 	encoded, err := json.Marshal(value)
 	if err != nil {
-		return slog.Attr{}, slogSanitizationError()
+		return slog.Value{}, slogSanitizationError()
 	}
-	safe, err := h.scanner.maskJSON(ctx, encoded, originalKey, true)
+	safe, err := policy.maskJSON(ctx, encoded, key, true)
 	if err != nil {
-		return slog.Attr{}, err
+		return slog.Value{}, err
 	}
-	return slog.Any(key, maskedJSON(safe)), nil
+	return slog.AnyValue(maskedJSON(safe)), nil
 }
 
 // Inspect both standard handlers' scalar representations before retaining a typed value.
 // Any values are frozen as masked JSON, so their original TextMarshaler and String
 // methods cannot introduce another representation after this boundary.
-func (h *slogHandler) sanitizeScalar(ctx context.Context, key, originalKey string, value slog.Value) (slog.Attr, error) {
+func sanitizeScalar(ctx context.Context, policy *fieldPolicy, key string, value slog.Value) (slog.Value, error) {
 	var storage [2]string
 	representations := storage[:1]
 	switch value.Kind() {
@@ -389,7 +454,7 @@ func (h *slogHandler) sanitizeScalar(ctx context.Context, key, originalKey strin
 		representations[0] = value.String()
 		encoded, err := json.Marshal(value.Float64())
 		if err != nil {
-			return slog.Attr{}, slogSanitizationError()
+			return slog.Value{}, slogSanitizationError()
 		}
 		representations = append(representations, string(encoded))
 	case slog.KindBool:
@@ -400,45 +465,33 @@ func (h *slogHandler) sanitizeScalar(ctx context.Context, key, originalKey strin
 	case slog.KindUint64:
 		representations[0] = strconv.FormatUint(value.Uint64(), 10)
 	}
-	scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
 	for _, text := range representations {
-		masked, err := scan.maskScalar(ctx, text, originalKey)
+		masked, err := policy.scan.maskScalar(ctx, text, key)
 		if err != nil {
-			return slog.Attr{}, err
+			return slog.Value{}, err
 		}
 		if masked != text {
-			return slog.String(key, masked), nil
+			return slog.StringValue(masked), nil
 		}
 	}
-	return slog.Attr{Key: key, Value: value}, nil
+	return value, nil
 }
 
-func joinedKey(groups, key string) string {
-	if groups == "" {
-		return key
-	}
-	if key == "" {
-		return groups
-	}
-	return groups + "." + key
-}
-
-func (h *slogHandler) sanitizeBytes(ctx context.Context, key, originalKey string, raw []byte) (slog.Attr, error) {
-	scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
+func sanitizeBytes(ctx context.Context, policy *fieldPolicy, key string, raw []byte) (slog.Value, error) {
 	text := string(raw)
-	safe, err := scan.maskScalar(ctx, text, originalKey)
+	safe, err := policy.scan.maskScalar(ctx, text, key)
 	if err != nil {
-		return slog.Attr{}, err
+		return slog.Value{}, err
 	}
 	if safe != text {
-		return slog.String(key, safe), nil
+		return slog.StringValue(safe), nil
 	}
 	//nolint:errchkjson // Keep an explicit error boundary for encoding.
 	encoded, err := json.Marshal(raw)
 	if err != nil {
-		return slog.Attr{}, slogSanitizationError()
+		return slog.Value{}, slogSanitizationError()
 	}
-	return slog.Any(key, maskedJSON(encoded)), nil
+	return slog.AnyValue(maskedJSON(encoded)), nil
 }
 
 func resolveLogValue(ctx context.Context, value slog.Value) (slog.Value, error) {
@@ -457,18 +510,18 @@ func resolveLogValue(ctx context.Context, value slog.Value) (slog.Value, error) 
 	return value, nil
 }
 
-func (h *slogHandler) sanitizeGroup(ctx context.Context, key, path string, attrs []slog.Attr, depth int, crossed bool) (slog.Attr, bool, error) {
+// sanitizeGroup masks a group's attributes as members of one object.
+func (h *slogHandler) sanitizeGroup(ctx context.Context, policy *fieldPolicy, attrs []slog.Attr, depth int) (slog.Value, error) {
 	safe := make([]slog.Attr, 0, len(attrs))
+	var pair namedPair[int]
 	for _, child := range attrs {
-		clean, childCrossed, err := h.sanitizeAttr(ctx, child, depth+1, path)
-		crossed = crossed || childCrossed
+		clean, err := h.sanitizeAttr(ctx, policy, child, depth+1)
 		if err != nil {
-			return slog.Attr{}, false, err
+			return slog.Value{}, err
 		}
 		safe = append(safe, clean)
+		observeSlogPair(policy, &pair, child.Key, clean.Value, len(safe)-1)
 	}
-	if crossed && key != "" {
-		key = redactionMarker
-	}
-	return slog.Attr{Key: key, Value: slog.GroupValue(safe...)}, crossed, nil
+	pair.hidden(func(i int) { safe[i].Value = slog.StringValue(redactionMarker) })
+	return slog.GroupValue(safe...), nil
 }

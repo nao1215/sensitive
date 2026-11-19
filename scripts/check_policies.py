@@ -134,7 +134,7 @@ def fuzz_issue_permissions(text):
 def branding():
     text = read('README.md')
     badges = re.findall(r'^\[?!\[([^\]]+)\]', text.split('<p align=')[0], re.M)
-    expected = ['All Contributors', 'Go Reference', 'MultiPlatformUnitTest', 'reviewdog', 'Gosec', 'Trivy', 'Coverage', 'OpenSSF Scorecard']
+    expected = ['All Contributors', 'Go Reference', 'MultiPlatformUnitTest', 'reviewdog', 'Gosec', 'Trivy', 'Coverage', 'OpenSSF Scorecard', 'Mentioned in Awesome Go']
     require(badges == expected, f'badge set/order changed: {badges}')
     require(re.search(r'<p align="center">\s*<img[^>]+logo', text), 'README logo must be centered')
     require('https://github.com/sponsors/nao1215' in text, 'README sponsor link missing')

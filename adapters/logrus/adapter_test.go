@@ -323,3 +323,11 @@ func TestWithheldSchemaProperty(t *testing.T) {
 		}
 	}
 }
+
+func TestNilEntryReturnsFixedError(t *testing.T) {
+	t.Parallel()
+	data, err := embargologrus.NewFormatter(&logrus.JSONFormatter{}, embargo.NewScanner()).Format(nil)
+	if data != nil || err == nil || err.Error() != "embargo: logrus formatting failed" {
+		t.Fatalf("nil entry = %q, %v", data, err)
+	}
+}

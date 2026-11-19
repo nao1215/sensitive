@@ -135,8 +135,10 @@ def threshold_section():
     public = json.loads((ROOT/'doc/real-logs-summary.json').read_text(encoding='utf-8'))['datasets']
     names = [row['dataset'] for row in public]
     size = sum(row['bytes'] for row in public)
+    shipped = len({row['kind'] for row in synthetic if row['default']})
+    optin = len({row['kind'] for row in synthetic}) - shipped
     out = ['## Choosing a threshold', '',
-           f'The default remains 0 for all 26 default kinds. Public-log rates are sample estimates on {size:,} bytes; precision treats published contacts/endpoints as sensitive references. Absolute public-log misses are unknown because undetected secrets are not labeled. Synthetic precision and misses use each default kind alone with the existing exact-span labels, including the credential sets; opt-in entropy and country kinds are excluded. The LogHub splits were inspected before; the operations-log held files were labeled and seen but not used to choose rules.', '',
+           f'The default remains 0. Public-log rates are sample estimates on {size:,} bytes; precision treats published contacts/endpoints as sensitive references. Absolute public-log misses are unknown because undetected secrets are not labeled. Synthetic precision and misses sum the {shipped} kinds that NewScanner reports, each measured alone with the existing exact-span labels, including the credential sets; doc/default-thresholds.json also lists {optin} opt-in kinds measured the same way, and entropy and country kinds are excluded. The LogHub splits were inspected before; the operations-log held files were labeled and seen but not used to choose rules.', '',
            '| Minimum confidence | Public FP/GB | Public precision | Development precision / misses | Held precision / misses |',
            '|---|---:|---:|---:|---:|']
     for threshold, config in ((0,'default'),(.5,'default50'),(.7,'default70')):
@@ -144,11 +146,14 @@ def threshold_section():
         precision = f'{100*(count-fp)/count:.4f}%' if count else 'n/a'
         cells = [f'{threshold:.1f}', f'{fp/size*1e9:.1f}', precision]
         for split in ('development','held'):
-            rows = [row for row in synthetic if row['set']==split and row['threshold']==threshold]
+            rows = [row for row in synthetic if row['set']==split and row['threshold']==threshold and row['default']]
             tp, alarms, missed = (sum(row[key] for row in rows) for key in ('tp','fp','fn'))
             cells.append(f'{100*tp/(tp+alarms):.2f}% / {missed}')
         out.append('| '+' | '.join(cells)+' |')
-    out += ['', 'Choose 0 when retaining ambiguous secrets is the priority. On these synthetic sets, 0.5 removes record-label false positives without additional misses; validate it against your own mislabeled secrets before opting in. A global 0.7 loses bank-account and sort-code positives. These thresholds do not fix the remaining public-log ABA/SWIFT false positives. Select relevant kinds and sensitive keys before raising the global cutoff; confidence is not a probability. Regenerate with make accuracy-doc and make real-log-accuracy; python3 scripts/accuracy_figures.py --check verifies this table.', '']
+    lost = sorted({row['kind'] for row in synthetic if row['default'] and row['threshold'] == .7 and row['fn']})
+    kinds = sorted({kind for row in public for kind in row['counts']['default70']})
+    remaining = [kind for kind in kinds if real_logs.estimate(public, names, 'default70', kind)[1] > 0]
+    out += ['', f"Choose 0 when retaining ambiguous secrets is the priority. On these synthetic sets, 0.5 removes record-label false positives without additional misses; validate it against your own mislabeled secrets before opting in. A global 0.7 loses {', '.join('`'+kind+'`' for kind in lost)} positives. These thresholds do not remove the remaining public-log false positives, which are {', '.join('`'+kind+'`' for kind in remaining)} findings. Select relevant kinds and sensitive keys before raising the global cutoff; confidence is not a probability. Regenerate with make accuracy-doc and make real-log-accuracy; python3 scripts/accuracy_figures.py --check verifies this table.", '']
     return out
 
 

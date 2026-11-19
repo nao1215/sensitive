@@ -31,6 +31,11 @@ class MutationGateTests(unittest.TestCase):
         listed = {Path(path).relative_to(gate.ROOT).as_posix() for path in listed} - {'.', 'cmd/embargo'}
         self.assertEqual(set(gate.PACKAGES), listed)
 
+    def test_every_adapter_module_is_mutated(self):
+        modules = {path.parent.relative_to(gate.ROOT).as_posix() for path in (gate.ROOT/'adapters').glob('*/go.mod')}
+        self.assertEqual(set(gate.ADAPTERS), modules)
+        self.assertTrue(modules)
+
     def test_memory_cap_applies_to_child_processes(self):
         script = 'import resource; print(resource.getrlimit(resource.RLIMIT_AS)[0])'
         out = subprocess.check_output([sys.executable, '-c', script], preexec_fn=gate.limit_memory, text=True)
@@ -39,7 +44,7 @@ class MutationGateTests(unittest.TestCase):
     def test_timeout_is_not_a_kill(self):
         report = {'files': [{'file_name': 'embargotest/run.go', 'mutations': [{'status': value} for value in ['KILLED', 'LIVED', 'TIMED OUT', 'NOT COVERED', 'NOT VIABLE']]}]}
         got = gate.package_scores(report)['embargotest']
-        self.assertEqual(got['score'], 33.33)
+        self.assertEqual(got['score'], 66.67)
         self.assertEqual(got['coverage'], 75)
         self.assertEqual(gate.package_scores(report, 'command')['command'], got)
 

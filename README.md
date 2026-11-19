@@ -10,6 +10,7 @@
 [![Trivy](https://github.com/nao1215/embargo/actions/workflows/trivy.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/trivy.yml)
 ![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/embargo/coverage.svg)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nao1215/embargo/badge)](https://scorecard.dev/viewer/?uri=github.com/nao1215/embargo)
+[![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 
 <p align="center">
   <img src="doc/images/logo-small.png" alt="Go gopher peeking over the embargo title, with email and token values blacked out" width="320">
@@ -122,7 +123,7 @@ fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
 The HTTP and gRPC hooks mask what they log, not the request or response. [Adapters](doc/adapters.md) · [Size limits and failure records](doc/logging.md#bounds-and-failures)
 
 <!-- speed-summary:start -->
-On the same five JSON slog events, embargo is 1.10 to 1.42 times faster than go-masker given the same email and card rules, and embargo's default scanner is 2.07 to 4.22 times faster than pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
+On the same five JSON slog events, embargo is 1.04 to 1.17 times faster than go-masker given the same email and card rules, and embargo's default scanner is 1.85 to 3.51 times faster than pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
 <!-- speed-summary:end -->
 
 ## Find and mask sensitive text
@@ -266,19 +267,19 @@ Each link opens the test that produces and checks the shown output.
 <!-- tested-outputs:start -->
 | Output | Actual output (excerpt for SDKs) |
 |---|---|
-| [fmt](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L148-L148) | `embargo.Secret[string]([REDACTED])` |
-| [slog TextHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L149-L152) | `level=INFO msg=event token=[REDACTED] nested.again=[REDACTED]` |
-| [slog JSONHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L153-L156) | `{"level":"INFO","msg":"event","token":"[REDACTED]","nested":{"again":"[REDACTED]"}}` |
-| [encoding/json](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L157-L157) | `"[REDACTED]"` |
-| [encoding/xml](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L158-L163) | `<record><token>[REDACTED]</token></record>` |
-| [text/template](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L164-L170) | `[REDACTED]` |
-| [zap JSON core](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L171-L177) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
-| [zerolog JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L178-L182) | `{"level":"info","token":"[REDACTED]","message":"event"}` |
-| [logrus JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L183-L189) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
-| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L988-L1076) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
-| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L650-L735) | `"signing":{"key":"[REDACTED]"}` |
-| [HTTP](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L230-L252) | `[REDACTED]` |
-| [Child panic](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L254-L264) | `panic: [REDACTED]` |
+| [fmt](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L149-L149) | `embargo.Secret[string]([REDACTED])` |
+| [slog TextHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L150-L153) | `level=INFO msg=event token=[REDACTED] nested.again=[REDACTED]` |
+| [slog JSONHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L154-L157) | `{"level":"INFO","msg":"event","token":"[REDACTED]","nested":{"again":"[REDACTED]"}}` |
+| [encoding/json](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L158-L158) | `"[REDACTED]"` |
+| [encoding/xml](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L159-L164) | `<record><token>[REDACTED]</token></record>` |
+| [text/template](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L165-L171) | `[REDACTED]` |
+| [zap JSON core](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L172-L178) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
+| [zerolog JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L179-L183) | `{"level":"info","token":"[REDACTED]","message":"event"}` |
+| [logrus JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L184-L190) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
+| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L989-L1077) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
+| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L651-L736) | `"signing":{"key":"[REDACTED]"}` |
+| [HTTP](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L231-L253) | `[REDACTED]` |
+| [Child panic](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L255-L265) | `panic: [REDACTED]` |
 <!-- tested-outputs:end -->
 
 [Complete integration checks](tests/README.md).

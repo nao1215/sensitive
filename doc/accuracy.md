@@ -471,15 +471,15 @@ Scanner, slog, adapters and embargotest keep threshold 0. NewScanner and the zer
 
 ## Choosing a threshold
 
-The default remains 0 for all 26 default kinds. Public-log rates are sample estimates on 239,887,568 bytes; precision treats published contacts/endpoints as sensitive references. Absolute public-log misses are unknown because undetected secrets are not labeled. Synthetic precision and misses use each default kind alone with the existing exact-span labels, including the credential sets; opt-in entropy and country kinds are excluded. The LogHub splits were inspected before; the operations-log held files were labeled and seen but not used to choose rules.
+The default remains 0. Public-log rates are sample estimates on 239,887,568 bytes; precision treats published contacts/endpoints as sensitive references. Absolute public-log misses are unknown because undetected secrets are not labeled. Synthetic precision and misses sum the 19 kinds that NewScanner reports, each measured alone with the existing exact-span labels, including the credential sets; doc/default-thresholds.json also lists 8 opt-in kinds measured the same way, and entropy and country kinds are excluded. The LogHub splits were inspected before; the operations-log held files were labeled and seen but not used to choose rules.
 
 | Minimum confidence | Public FP/GB | Public precision | Development precision / misses | Held precision / misses |
 |---|---:|---:|---:|---:|
-| 0.0 | 8.3 | 99.9998% | 97.89% / 0 | 98.46% / 0 |
-| 0.5 | 8.3 | 99.9998% | 99.42% / 0 | 100.00% / 0 |
-| 0.7 | 8.3 | 99.9998% | 99.40% / 158 | 100.00% / 156 |
+| 0.0 | 8.3 | 99.9998% | 98.90% / 0 | 98.92% / 0 |
+| 0.5 | 8.3 | 99.9998% | 100.00% / 0 | 100.00% / 0 |
+| 0.7 | 8.3 | 99.9998% | 100.00% / 146 | 100.00% / 144 |
 
-Choose 0 when retaining ambiguous secrets is the priority. On these synthetic sets, 0.5 removes record-label false positives without additional misses; validate it against your own mislabeled secrets before opting in. A global 0.7 loses bank-account and sort-code positives. These thresholds do not fix the remaining public-log ABA/SWIFT false positives. Select relevant kinds and sensitive keys before raising the global cutoff; confidence is not a probability. Regenerate with make accuracy-doc and make real-log-accuracy; python3 scripts/accuracy_figures.py --check verifies this table.
+Choose 0 when retaining ambiguous secrets is the priority. On these synthetic sets, 0.5 removes record-label false positives without additional misses; validate it against your own mislabeled secrets before opting in. A global 0.7 loses `bank_account` positives. These thresholds do not remove the remaining public-log false positives, which are `credential` findings. Select relevant kinds and sensitive keys before raising the global cutoff; confidence is not a probability. Regenerate with make accuracy-doc and make real-log-accuracy; python3 scripts/accuracy_figures.py --check verifies this table.
 
 
 ## Severity and residual exposure

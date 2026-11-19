@@ -600,3 +600,50 @@ func TestMetadataIntegerExpansionFailureIsWithheld(t *testing.T) {
 	}
 	requireDiagnostic(t, out.Bytes(), "size limit")
 }
+
+// panickingHandler panics on every call, as a broken downstream handler can.
+type panickingHandler struct{}
+
+func (panickingHandler) Enabled(context.Context, slog.Level) bool  { panic("planted-enabled") }
+func (panickingHandler) Handle(context.Context, slog.Record) error { panic("planted-handle") }
+func (h panickingHandler) WithAttrs([]slog.Attr) slog.Handler      { return h }
+func (h panickingHandler) WithGroup(string) slog.Handler           { return h }
+
+func TestPanickingDiagnosticSinkPreservesRPCResult(t *testing.T) {
+	t.Parallel()
+	original := status.Error(codes.NotFound, "missing")
+	unary := embargogrpc.NewUnaryServerInterceptor(slog.New(panickingHandler{}), embargo.NewScanner())
+	result, err := unary(t.Context(), nil, &grpc.UnaryServerInfo{FullMethod: publicMethod}, func(context.Context, any) (any, error) { return grpcResponse, original })
+	if result != grpcResponse || !errors.Is(err, original) {
+		t.Fatal("a panicking sink changed the unary result")
+	}
+	stream := embargogrpc.NewStreamServerInterceptor(slog.New(panickingHandler{}), embargo.NewScanner())
+	if err := stream(nil, &exampleStream{}, &grpc.StreamServerInfo{FullMethod: publicMethod}, func(any, grpc.ServerStream) error { return original }); !errors.Is(err, original) {
+		t.Fatal("a panicking sink changed the stream result")
+	}
+}
+
+func TestDisabledLoggerWritesNothing(t *testing.T) {
+	t.Parallel()
+	var output bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&output, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	unary := embargogrpc.NewUnaryServerInterceptor(logger, embargo.NewScanner())
+	result, err := unary(t.Context(), nil, &grpc.UnaryServerInfo{FullMethod: publicMethod}, func(context.Context, any) (any, error) { return grpcResponse, nil })
+	if result != grpcResponse || err != nil || output.Len() != 0 {
+		t.Fatalf("disabled logger: %v %v %q", result, err, output.String())
+	}
+}
+
+// failingHandler panics in Enabled and fails the diagnostic write.
+type failingHandler struct{ panickingHandler }
+
+func (failingHandler) Handle(context.Context, slog.Record) error { return io.ErrClosedPipe }
+
+func TestFailingDiagnosticSinkPreservesRPCResult(t *testing.T) {
+	t.Parallel()
+	unary := embargogrpc.NewUnaryServerInterceptor(slog.New(failingHandler{}), embargo.NewScanner())
+	result, err := unary(t.Context(), nil, &grpc.UnaryServerInfo{FullMethod: publicMethod}, func(context.Context, any) (any, error) { return grpcResponse, nil })
+	if result != grpcResponse || err != nil {
+		t.Fatal("a failing sink changed the result")
+	}
+}

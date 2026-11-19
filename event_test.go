@@ -39,19 +39,19 @@ func TestSanitizationInternalBoundaries(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
-	if _, _, err := handler.sanitizeAttr(ctx, slog.String("key", "private"), 0, ""); !errors.Is(err, saferecord.ErrCanceled) {
+	if _, err := handler.sanitizeAttr(ctx, new(newFieldPolicy(handler.scanner, "")), slog.String("key", "private"), 0); !errors.Is(err, saferecord.ErrCanceled) {
 		t.Fatal("canceled attribute accepted")
 	}
-	if _, err := handler.sanitizeBytes(ctx, "key", "key", []byte("private")); !errors.Is(err, saferecord.ErrCanceled) {
+	if _, err := sanitizeBytes(ctx, new(newFieldPolicy(handler.scanner, "")), "key", []byte("private")); !errors.Is(err, saferecord.ErrCanceled) {
 		t.Fatal("canceled bytes accepted")
 	}
-	if _, err := handler.sanitizeScalar(t.Context(), "value", "value", slog.Float64Value(math.Inf(1))); err == nil {
+	if _, err := sanitizeScalar(t.Context(), new(newFieldPolicy(handler.scanner, "")), "value", slog.Float64Value(math.Inf(1))); err == nil {
 		t.Fatal("non-JSON scalar accepted")
 	}
-	if _, _, err := handler.sanitizeAttr(t.Context(), slog.String(strings.Repeat("x", maxScanBytes+1), "value"), 0, ""); !errors.Is(err, saferecord.ErrSizeLimit) {
+	if _, err := handler.sanitizeAttr(t.Context(), new(newFieldPolicy(handler.scanner, "")), slog.String(strings.Repeat("x", maxScanBytes+1), "value"), 0); !errors.Is(err, saferecord.ErrSizeLimit) {
 		t.Fatal("oversize key accepted")
 	}
-	if _, _, err := handler.sanitizeAttr(t.Context(), slog.String("key", "value"), 0, strings.Repeat("x", maxScanBytes)); !errors.Is(err, saferecord.ErrSizeLimit) {
+	if _, err := handler.sanitizeAttr(t.Context(), new(newFieldPolicy(handler.scanner, strings.Repeat("x", maxScanBytes))), slog.String("key", "value"), 0); !errors.Is(err, saferecord.ErrSizeLimit) {
 		t.Fatal("oversize group path accepted")
 	}
 	if got := joinedKey("group", ""); got != "group" {
@@ -91,7 +91,7 @@ func TestJoinedKeyFindingMustCrossSeparator(t *testing.T) {
 			t.Parallel()
 			scanner := NewScanner(WithKinds(), WithDetector(literalDetector{{Kind: "fixture", Start: tc.start, End: tc.end, Confidence: 1}}))
 			scan := eventScanner{scanner: scanner, remaining: len(path)}
-			got, err := scan.joinedKeySensitive(t.Context(), path, len("ab"))
+			got, err := scan.joinedKeySensitive(t.Context(), []byte(path), len("ab"))
 			if err != nil || got != tc.crosses || scan.remaining != 0 {
 				t.Fatalf("crossing = %v, error = %v, remaining = %d", got, err, scan.remaining)
 			}
@@ -164,8 +164,9 @@ func TestEncodedTextBoundaries(t *testing.T) {
 		name, value string
 		hidden      bool
 	}{
-		{"shortest scanned length", encode(email), true},
-		{"shorter values are not scanned", encode("a@b.co"), false},
+		{"short text is scanned", encode("a@b.co"), true},
+		{"binary data is not scanned", encode("\x00\x01\x02"), false},
+		{"plain words do not decode to text", "info", false},
 		{"longest scanned length", encode(atMax), true},
 		{"one quantum longer is not scanned", encode(overMax), false},
 		{"plus and slash belong to the alphabet", encode(email + "  ???>>>"), true},
@@ -229,5 +230,43 @@ func TestPrintableText(t *testing.T) {
 				t.Fatalf("printableText(%q) = %v, want %v", tt.data, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestPrintableStart(t *testing.T) {
+	t.Parallel()
+	encode := func(text string) string { return base64.StdEncoding.EncodeToString([]byte(text)) }
+	tests := []struct {
+		name, value string
+		want        bool
+	}{
+		{"one byte", encode("a"), true},
+		{"two bytes", encode("ab"), true},
+		{"three bytes", encode("abc"), true},
+		{"tab, newline and carriage return", encode("\t\n\r"), true},
+		{"plus and slash", encode("\xfb\xff\xbf"), true},
+		{"digits", encode("\xd3\x4d\x36"), true},
+		{"plain word", "accepted", false},
+		{"control first byte", encode("\x01ab"), false},
+		{"control second byte", encode("a\x01b"), false},
+		{"control third byte", encode("ab\x01"), false},
+		{"delete byte", encode("ab\x7f"), false},
+		{"control after one padded byte", encode("a\x00"), false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := printableStart(tt.value); got != tt.want {
+				t.Fatalf("printableStart(%q) = %v, want %v", tt.value, got, tt.want)
+			}
+		})
+	}
+	// The filter never rejects a value whose whole decoding is printable.
+	for c := range 256 {
+		for _, text := range []string{string(rune(c)), string([]byte{byte(c)}) + "é", "é" + string([]byte{byte(c)})} {
+			if encoded := encode(text); printableText([]byte(text)) && !printableStart(encoded) {
+				t.Fatalf("printableStart rejected %q", encoded)
+			}
+		}
 	}
 }

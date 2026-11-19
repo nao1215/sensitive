@@ -132,6 +132,33 @@ jobs:
       - name: Build
         run: go build ./...
 
+  unit_test_32bit:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    name: Unit test (GOARCH=386)
+
+    # int is 32 bits here, so a constant or a length that needs 64 bits fails
+    # to compile or overflows. A linux/amd64 runner executes 386 binaries.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      GOARCH: "386"
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "stable"
+
+      - name: Test the root module and every adapter
+        run: |
+          go test ./...
+          for gomod in adapters/*/go.mod; do go -C "$(dirname "$gomod")" test ./...; done
+
   property_tests:
     needs: changes
     if: needs.changes.outputs.code == 'true'

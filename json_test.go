@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"reflect"
 	"runtime"
 	"slices"
@@ -320,6 +321,7 @@ const (
 func TestAdversarialEncodingBoundary(t *testing.T) {
 	t.Parallel()
 	scanner := NewScanner(WithKinds(KindEmail))
+	threatModel := threatModelStatuses(t)
 	for _, tc := range []struct {
 		name, text string
 		caught     bool
@@ -340,6 +342,10 @@ func TestAdversarialEncodingBoundary(t *testing.T) {
 				t.Fatal("documented encoding boundary changed")
 			}
 		})
+		// The threat model row naming this case states the same outcome.
+		if status, ok := threatModel["TestAdversarialEncodingBoundary/"+tc.name]; ok && strings.HasPrefix(status, "Limit") == tc.caught {
+			t.Errorf("doc/threat-model.md states %q for %s", status, tc.name)
+		}
 	}
 	masked, err := scanner.MaskJSON([]byte(`{"value":"alice\u0040example.com"}`))
 	if err != nil || bytes.Contains(masked, []byte("alice")) {
@@ -488,13 +494,34 @@ func TestJSONExpansionStopsBeforeRetainingPastLimit(t *testing.T) {
 	t.Parallel()
 	input := []byte("[" + strings.Repeat(`"x",`, 100000) + `"x"]`)
 	scanner := NewScanner(WithKinds(), WithoutDefaultSensitiveKeys(), WithDetector(expandingDetector{}))
-	walker := jsonWalker{data: input, scanner: eventScanner{scanner: scanner, remaining: maxScanBytes}}
+	walker := jsonWalker{data: input, policy: newFieldPolicy(scanner, "")}
 	if err := walker.value(t.Context(), 0, "", false); err == nil {
 		t.Fatal("expanded output accepted")
 	}
 	if len(walker.result) > maxEventBytes {
 		t.Fatalf("retained %d bytes past output limit", len(walker.result))
 	}
+}
+
+// threatModelStatuses maps each test named in doc/threat-model.md tables to
+// the status column of its row.
+func threatModelStatuses(t *testing.T) map[string]string {
+	t.Helper()
+	text, err := os.ReadFile("doc/threat-model.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	statuses := map[string]string{}
+	for line := range strings.Lines(string(text)) {
+		cells := strings.Split(strings.TrimSpace(line), "|")
+		if len(cells) == 5 {
+			statuses[strings.TrimSpace(cells[3])] = strings.TrimSpace(cells[2])
+		}
+	}
+	if len(statuses) == 0 {
+		t.Fatal("no threat model rows")
+	}
+	return statuses
 }
 
 type expandingDetector struct{}
@@ -612,7 +639,7 @@ func TestWalkerFailureBoundaries(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
-	walker := jsonWalker{data: []byte(`[]`), scanner: eventScanner{scanner: NewScanner(), remaining: maxScanBytes}}
+	walker := jsonWalker{data: []byte(`[]`), policy: newFieldPolicy(NewScanner(), "")}
 	if err := walker.value(ctx, 0, "", false); !errors.Is(err, saferecord.ErrCanceled) {
 		t.Fatal("canceled walk accepted")
 	}
@@ -630,11 +657,11 @@ func TestWalkerFailureBoundaries(t *testing.T) {
 		t.Fatal("container expansion exceeded budget")
 	}
 	scanner := eventScanner{scanner: NewScanner(), remaining: 1}
-	if _, err := scanner.joinedKeySensitive(t.Context(), "a.b", 1); !errors.Is(err, saferecord.ErrSizeLimit) {
+	if _, err := scanner.joinedKeySensitive(t.Context(), []byte("a.b"), 1); !errors.Is(err, saferecord.ErrSizeLimit) {
 		t.Fatal("joined path exceeded scan budget")
 	}
 	scanner.remaining = maxScanBytes
-	if _, err := scanner.joinedKeySensitive(ctx, "a.b", 1); !errors.Is(err, saferecord.ErrCanceled) {
+	if _, err := scanner.joinedKeySensitive(ctx, []byte("a.b"), 1); !errors.Is(err, saferecord.ErrCanceled) {
 		t.Fatal("canceled joined path accepted")
 	}
 	if _, _, err := scanner.scanScalar(ctx, "private", ""); !errors.Is(err, saferecord.ErrCanceled) {
@@ -644,8 +671,9 @@ func TestWalkerFailureBoundaries(t *testing.T) {
 	if _, err := scanner.maskScalar(t.Context(), "1.0e0", ""); !errors.Is(err, saferecord.ErrSizeLimit) {
 		t.Fatal("canonical number scan escaped budget")
 	}
-	walker = jsonWalker{path: []jsonKeyPosition{{path: "a"}}, scanner: eventScanner{scanner: NewScanner(), remaining: 1}}
-	if err := walker.keyPath(t.Context(), "b", 0, 3); !errors.Is(err, saferecord.ErrSizeLimit) {
+	policy := newFieldPolicy(NewScanner(), "a")
+	policy.scan.remaining = 1
+	if err := policy.enter(t.Context(), memberKey{key: "b", masked: "b", sensitive: false}); !errors.Is(err, saferecord.ErrSizeLimit) {
 		t.Fatal("path error did not propagate")
 	}
 }
@@ -742,7 +770,9 @@ func TestJSONFastPathsStopOnBudgetCancellationAndOutputLimit(t *testing.T) {
 		t.Fatal(err)
 	}
 	walker := func(remaining int, result []byte) *jsonWalker {
-		return &jsonWalker{data: nil, result: result, scanner: eventScanner{scanner: scanner, remaining: remaining}}
+		policy := newFieldPolicy(scanner, "")
+		policy.scan.remaining = remaining
+		return &jsonWalker{data: nil, result: result, policy: policy}
 	}
 	// A cached key still pays its budget, so an exhausted budget stops the key.
 	if _, err := walker(len("status")-1, nil).objectKey(t.Context(), []byte(`"status"`)); !errors.Is(err, saferecord.ErrSizeLimit) {
@@ -858,7 +888,7 @@ func TestMaskJSONNamedValuePairs(t *testing.T) {
 
 func TestNamedValueFieldFoldsKeys(t *testing.T) {
 	t.Parallel()
-	for key, want := range map[string]pairField{"Name": pairName, "PARAMETER_VALUE": pairValue, "Parameter-Key": pairName, "values": pairNone, "parametervalues": pairNone, "": pairNone} {
+	for key, want := range map[string]pairField{"Name": pairName, "PARAMETER_VALUE": pairValue, "Parameter-Key": pairName, "values": pairNone, "parametervalues": pairNone, "": pairNone, "key": pairName, "_value": pairValue, "-name": pairName, ". key": pairName, "optionName": pairName, "variable": pairName, "status": pairNone} {
 		if got := namedValueField(key); got != want {
 			t.Errorf("namedValueField(%q) = %d, want %d", key, got, want)
 		}

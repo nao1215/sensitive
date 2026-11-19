@@ -21,6 +21,7 @@ import (
 	"go/types"
 	"io"
 	"log/slog"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -1745,4 +1746,445 @@ func TestWebFrameworkAccessLogs(t *testing.T) {
 			}
 		})
 	}
+}
+
+const (
+	matrixData     = "data"
+	matrixDetail   = "detail"
+	matrixMaskJSON = "MaskJSON"
+	matrixPublic   = "public"
+	matrixName     = "name"
+	matrixValue    = "value"
+	matrixNote     = "note"
+)
+
+// TestSinkMatrix crosses value representations, key wrappings and sinks. The
+// oracle is MaskJSON of the flat object {"key":"secret"}: a secret it masks
+// must be masked in every cell, so no representation, wrapping or sink can
+// treat a value differently from the plain JSON field.
+func TestSinkMatrix(t *testing.T) {
+	t.Parallel()
+	scanner := embargo.NewScanner()
+	for _, payload := range []struct{ key, secret string }{
+		{comparisonPasswordKey, "opaqueValue123"},
+		{matrixNote, comparisonEmail},
+		{matrixNote, "a@x.test"},
+		{matrixNote, "4111111111111111"},
+	} {
+		flat, err := scanner.MaskJSON(fmt.Appendf(nil, `{%q:%q}`, payload.key, payload.secret))
+		if err != nil || bytes.Contains(flat, []byte(payload.secret)) {
+			t.Fatalf("oracle does not mask %s: %s %v", payload.secret, flat, err)
+		}
+		for _, representation := range matrixRepresentations(payload.key, payload.secret) {
+			text, isText := matrixText(representation.value)
+			// A wrapping under a neutral key keeps only what the value itself
+			// carries, so it applies when the text form alone is masked.
+			neutral := isText && matrixMasked(t, scanner, matrixDetail, text, payload.secret)
+			for _, wrapping := range matrixWrappings() {
+				for _, sink := range matrixSinks() {
+					if (wrapping.slogOnly && !sink.slog) || (wrapping.neutral && !neutral) {
+						continue
+					}
+					name := strings.Join([]string{payload.key, payload.secret, representation.name, wrapping.name, sink.name}, "/")
+					checkMatrixCell(t, scanner, name, payload.key, payload.secret, representation.value, wrapping, sink)
+				}
+			}
+		}
+	}
+}
+
+// checkMatrixCell writes one value through one sink and requires the secret
+// to be hidden and the caller's value to be unchanged, since masking works on
+// copies.
+func checkMatrixCell(t *testing.T, scanner *embargo.Scanner, name, key, secret string, value any, wrapping matrixWrapping, sink matrixSink) {
+	t.Helper()
+	before := fmt.Sprintf("%#v", value)
+	out := sink.write(t, scanner, wrapping, key, value)
+	if leak := matrixLeak(out, secret); leak != "" {
+		t.Errorf("%s: %s retained as %q: %s", name, secret, leak, out)
+	}
+	if after := fmt.Sprintf("%#v", value); after != before {
+		t.Errorf("%s changed the caller's value: %s", name, after)
+	}
+}
+
+type matrixRepresentation struct {
+	value any
+	name  string
+}
+
+// matrixStringer is a named string with a String method, as many domain
+// types are.
+type matrixStringer string
+
+func (s matrixStringer) String() string { return string(s) }
+
+// matrixValuer resolves to the secret only through slog.LogValuer.
+type matrixValuer struct{ secret string }
+
+func (v matrixValuer) LogValue() slog.Value { return slog.StringValue(v.secret) }
+
+func matrixRepresentations(key, secret string) []matrixRepresentation {
+	field := reflect.StructOf([]reflect.StructField{{Name: strings.ToUpper(key[:1]) + key[1:], Type: reflect.TypeFor[string]()}})
+	holder := reflect.New(field).Elem()
+	holder.Field(0).SetString(secret)
+	target := &url.URL{Scheme: "https", Host: "service.invalid", Path: "/v1", RawQuery: url.Values{key: {secret}}.Encode()}
+	representations := []matrixRepresentation{
+		{value: fmt.Sprintf("%v", map[string]string{key: secret}), name: "%v map"},
+		{value: fmt.Sprintf("%+v", holder.Interface()), name: "%+v struct"},
+		{value: fmt.Sprintf("%#v", holder.Interface()), name: "%#v struct"},
+		{value: strconv.Quote(key + "=" + secret), name: "%q pair"},
+		{value: url.QueryEscape(key + "=" + secret), name: "percent pair"},
+		{value: target.String(), name: "URL text"},
+		{value: target, name: "*url.URL"},
+		{value: http.Header{http.CanonicalHeaderKey(key): {secret}}, name: "http.Header"},
+		{value: secret, name: "string"},
+		{value: []byte(secret), name: "bytes"},
+		{value: errors.New(secret), name: "error value"},
+		{value: matrixStringer(secret), name: "stringer"},
+		{value: &secret, name: "pointer"},
+		{value: []string{secret}, name: "slice"},
+		{value: json.RawMessage(strconv.Quote(secret)), name: "raw JSON"},
+		{value: base64.StdEncoding.EncodeToString([]byte(secret)), name: "base64 text"},
+		{value: matrixValuer{secret: secret}, name: "LogValuer"},
+	}
+	if number, err := strconv.ParseInt(secret, 10, 64); err == nil {
+		representations = append(representations,
+			matrixRepresentation{value: number, name: "int64"},
+			matrixRepresentation{value: json.Number(secret), name: "json.Number"})
+	}
+	return representations
+}
+
+// matrixWrapping places key and value in a record. slog wrappings use slog
+// features; the others are values that every logger encodes.
+type matrixWrapping struct {
+	slog     func(logger *slog.Logger, key string, value any)
+	value    func(key string, value any) (string, any)
+	name     string
+	slogOnly bool
+	// neutral wrappings place the value under a key that is not sensitive.
+	neutral bool
+}
+
+func matrixWrappings() []matrixWrapping {
+	structOf := func(fields ...reflect.StructField) reflect.Type { return reflect.StructOf(fields) }
+	tagged := func(key string, value any) any {
+		typ := structOf(reflect.StructField{Name: "Field", Type: reflect.TypeOf(value), Tag: reflect.StructTag(`json:"` + key + `"`)})
+		holder := reflect.New(typ).Elem()
+		holder.Field(0).Set(reflect.ValueOf(value))
+		return holder.Interface()
+	}
+	wrappings := []matrixWrapping{
+		{name: "flat", value: func(key string, value any) (string, any) { return key, value }},
+		{name: "neutral", neutral: true, value: func(_ string, value any) (string, any) { return matrixDetail, value }},
+		{name: "neutral map", neutral: true, value: func(_ string, value any) (string, any) {
+			return matrixData, map[string]any{matrixDetail: value}
+		}},
+		{name: "map", value: func(key string, value any) (string, any) { return matrixData, map[string]any{key: value} }},
+		{name: "struct", value: func(key string, value any) (string, any) { return matrixData, tagged(key, value) }},
+		{name: "list", value: func(key string, value any) (string, any) { return matrixData, []any{map[string]any{key: value}} }},
+		{name: "pair map", value: func(key string, value any) (string, any) {
+			return matrixData, map[string]any{matrixName: key, matrixValue: value}
+		}},
+		{name: "pair struct", value: func(key string, value any) (string, any) {
+			return matrixData, struct {
+				Value any    `json:"value"`
+				Name  string `json:"name"`
+			}{Value: value, Name: key}
+		}},
+		{name: "pair list", value: func(key string, value any) (string, any) {
+			return "env", []any{map[string]any{matrixName: key, matrixValue: value}}
+		}},
+	}
+	slogWrappings := []matrixWrapping{
+		{name: "group", slog: func(logger *slog.Logger, key string, value any) {
+			logger.Info("event", slog.Group(matrixData, key, value))
+		}},
+		{name: "WithGroup", slog: func(logger *slog.Logger, key string, value any) {
+			logger.WithGroup(matrixData).Info("event", key, value)
+		}},
+		{name: "With", slog: func(logger *slog.Logger, key string, value any) {
+			logger.With(key, value).Info("event")
+		}},
+		{name: "With in WithGroup", slog: func(logger *slog.Logger, key string, value any) {
+			logger.WithGroup(matrixData).With(key, value).Info("event")
+		}},
+		{name: "group pair", slog: func(logger *slog.Logger, key string, value any) {
+			logger.Info("event", slog.Group("env", matrixName, key, matrixValue, value))
+		}},
+		{name: "record pair", slog: func(logger *slog.Logger, key string, value any) {
+			logger.Info("event", matrixName, key, matrixValue, value)
+		}},
+		{name: "With pair", slog: func(logger *slog.Logger, key string, value any) {
+			logger.With(matrixName, key, matrixValue, value).Info("event")
+		}},
+		{name: "neutral group", neutral: true, slog: func(logger *slog.Logger, _ string, value any) {
+			logger.WithGroup(matrixData).Info("event", slog.Group("payload", matrixDetail, value))
+		}},
+	}
+	for i := range slogWrappings {
+		slogWrappings[i].slogOnly = true
+	}
+	return slices.Concat(wrappings, slogWrappings)
+}
+
+type matrixSink struct {
+	write func(t *testing.T, scanner *embargo.Scanner, wrapping matrixWrapping, key string, value any) []byte
+	name  string
+	slog  bool
+}
+
+func matrixSinks() []matrixSink {
+	slogSink := func(text bool) func(*testing.T, *embargo.Scanner, matrixWrapping, string, any) []byte {
+		return func(_ *testing.T, scanner *embargo.Scanner, wrapping matrixWrapping, key string, value any) []byte {
+			var out bytes.Buffer
+			var next slog.Handler = slog.NewJSONHandler(&out, nil)
+			if text {
+				next = slog.NewTextHandler(&out, nil)
+			}
+			logger := slog.New(embargo.NewSlogHandler(next, scanner))
+			if wrapping.slog != nil {
+				wrapping.slog(logger, key, value)
+			} else {
+				field, wrapped := wrapping.value(key, value)
+				logger.Info("event", field, wrapped)
+			}
+			return out.Bytes()
+		}
+	}
+	logger := func(name string) func(*testing.T, *embargo.Scanner, matrixWrapping, string, any) []byte {
+		return func(t *testing.T, scanner *embargo.Scanner, wrapping matrixWrapping, key string, value any) []byte {
+			t.Helper()
+			field, wrapped := wrapping.value(key, value)
+			return loggerOutput(t, scanner, name, field, wrapped)
+		}
+	}
+	return []matrixSink{
+		{name: "slog JSON", slog: true, write: slogSink(false)},
+		{name: "slog text", slog: true, write: slogSink(true)},
+		{name: loggerZap, write: logger(loggerZap)},
+		{name: loggerZerolog, write: logger(loggerZerolog)},
+		{name: loggerLogrus, write: logger(loggerLogrus)},
+		{name: matrixMaskJSON, write: func(t *testing.T, scanner *embargo.Scanner, wrapping matrixWrapping, key string, value any) []byte {
+			t.Helper()
+			field, wrapped := wrapping.value(key, value)
+			raw, err := json.Marshal(map[string]any{field: wrapped})
+			if err != nil {
+				t.Fatal(err)
+			}
+			masked, err := scanner.MaskJSON(raw)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return masked
+		}},
+		{name: "Sentry", write: func(t *testing.T, scanner *embargo.Scanner, wrapping matrixWrapping, key string, value any) []byte {
+			t.Helper()
+			field, wrapped := wrapping.value(key, value)
+			event := sentry.NewEvent()
+			event.Contexts = map[string]sentry.Context{"extra": {field: wrapped}}
+			encoded, err := json.Marshal(embargosentry.NewBeforeSend(scanner)(event, nil))
+			if err != nil {
+				t.Fatal(err)
+			}
+			return encoded
+		}},
+	}
+}
+
+// matrixLeak returns the spelling of secret that out retains: plain, JSON or
+// Go quoted, or standard, URL or unpadded base64.
+func matrixLeak(out []byte, secret string) string {
+	quoted := strconv.Quote(secret)
+	escaped, err := json.Marshal(secret) //nolint:errchkjson // Keep the encoding failure explicit.
+	if err != nil {
+		panic("matrix secret did not encode")
+	}
+	for _, spelling := range []string{
+		secret, quoted[1 : len(quoted)-1], string(escaped[1 : len(escaped)-1]),
+		base64.StdEncoding.EncodeToString([]byte(secret)), base64.URLEncoding.EncodeToString([]byte(secret)),
+		base64.RawStdEncoding.EncodeToString([]byte(secret)), url.QueryEscape(secret),
+	} {
+		if bytes.Contains(out, []byte(spelling)) {
+			return spelling
+		}
+	}
+	return ""
+}
+
+// matrixText returns the text a logger writes for a scalar representation.
+func matrixText(value any) (string, bool) {
+	switch typed := value.(type) {
+	case string:
+		return typed, true
+	case []byte:
+		return string(typed), true
+	case error:
+		return typed.Error(), true
+	case json.Number:
+		return typed.String(), true
+	case fmt.Stringer:
+		return typed.String(), true
+	case int64:
+		return strconv.FormatInt(typed, 10), true
+	}
+	return "", false
+}
+
+// matrixMasked reports whether MaskJSON of {key:text} hides secret.
+func matrixMasked(t *testing.T, scanner *embargo.Scanner, key, text, secret string) bool {
+	t.Helper()
+	raw, err := json.Marshal(map[string]string{key: text}) //nolint:errchkjson // Keep the encoding failure explicit.
+	if err != nil {
+		t.Fatal(err)
+	}
+	masked, err := scanner.MaskJSON(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return matrixLeak(masked, secret) == ""
+}
+
+// TestSinkMatrixDocuments checks JSON spellings that encoders never produce
+// but that reach every JSON sink as written: duplicate members, escapes and
+// parameter paths.
+func TestSinkMatrixDocuments(t *testing.T) {
+	t.Parallel()
+	scanner := embargo.NewScanner()
+	const secret = "opaqueValue123"
+	documents := map[string]string{
+		"duplicate value":     `{"name":"password","value":"public","value":"` + secret + `"}`,
+		"first of two values": `{"name":"password","value":"` + secret + `","value":"public"}`,
+		"value before name":   `{"value":"` + secret + `","name":"password"}`,
+		"duplicate name":      `{"name":"public","value":"` + secret + `","name":"password"}`,
+		"parameter path":      `{"Name":"/prod/db/password","Value":"` + secret + `"}`,
+		"nested pair":         `{"env":[{"name":"PORT","value":"80"},{"name":"DB_PASSWORD","value":{"inner":"` + secret + `"}}]}`,
+		"escaped key":         `{"pass\u0077ord":"` + secret + `"}`,
+		"duplicate key":       `{"password":"public","password":"` + secret + `"}`,
+		"escaped pair member": `{"n\u0061me":"password","v\u0061lue":"` + secret + `"}`,
+	}
+	for name, document := range documents {
+		if !json.Valid([]byte(document)) {
+			t.Fatalf("%s is not JSON", name)
+		}
+		outputs := map[string][]byte{}
+		masked, err := scanner.MaskJSON([]byte(document))
+		if err != nil {
+			t.Fatal(err)
+		}
+		outputs[matrixMaskJSON] = masked
+		outputs["slog"] = loggerOutput(t, scanner, loggerSlog, "payload", json.RawMessage(document))
+		var out bytes.Buffer
+		writer := embargozerolog.NewWriter(&out, scanner)
+		if _, err := writer.Write([]byte(document + "\n")); err != nil {
+			t.Fatal(err)
+		}
+		if err := writer.Close(); err != nil {
+			t.Fatal(err)
+		}
+		outputs[loggerZerolog] = bytes.Clone(out.Bytes())
+		out.Reset()
+		syncer := embargozap.NewWriteSyncer(zapcore.AddSync(&out), scanner)
+		if _, err := syncer.Write([]byte(document + "\n")); err != nil {
+			t.Fatal(err)
+		}
+		if err := syncer.Sync(); err != nil {
+			t.Fatal(err)
+		}
+		outputs[loggerZap] = out.Bytes()
+		for sink, data := range outputs {
+			if len(data) == 0 || bytes.Contains(data, []byte(secret)) {
+				t.Errorf("%s/%s retained the value: %s", name, sink, data)
+			}
+		}
+	}
+}
+
+// TestSinkMatrixTelemetry carries the text representations through OTel logs
+// and spans, HTTP queries and headers, and gRPC metadata and details.
+func TestSinkMatrixTelemetry(t *testing.T) {
+	t.Parallel()
+	scanner := embargo.NewScanner()
+	var grpcRows [][]string
+	for _, payload := range []struct{ key, secret string }{
+		{comparisonPasswordKey, "opaqueValue123"},
+		{matrixNote, comparisonEmail},
+		{matrixNote, "a@x.test"},
+		{matrixNote, "4111111111111111"},
+	} {
+		for _, representation := range matrixRepresentations(payload.key, payload.secret) {
+			text, ok := matrixText(representation.value)
+			if !ok {
+				continue
+			}
+			for _, key := range []string{payload.key, matrixDetail} {
+				if key == matrixDetail && !matrixMasked(t, scanner, key, text, payload.secret) {
+					continue
+				}
+				name := strings.Join([]string{payload.key, payload.secret, representation.name, key}, "/")
+				row := []string{matrixPublic, payload.secret, key, text}
+				if key == matrixDetail {
+					row = []string{text, payload.secret, "x-public", matrixPublic}
+				}
+				grpcRows = append(grpcRows, row)
+				for sink, out := range map[string][]byte{
+					"OTel log":    matrixOTelLog(t, scanner, key, text),
+					"OTel span":   matrixOTelSpan(t, scanner, key, text),
+					"HTTP query":  matrixHTTP(t, scanner, "/?"+url.Values{key: {text}}.Encode(), nil),
+					"HTTP header": matrixHTTP(t, scanner, "/", http.Header{key: {text}}),
+				} {
+					if leak := matrixLeak(out, payload.secret); leak != "" {
+						t.Errorf("%s/%s: retained as %q: %s", name, sink, leak, out)
+					}
+				}
+			}
+		}
+	}
+	checkGRPCBoundaryHooks(t, grpcRows)
+}
+
+func matrixOTelLog(t *testing.T, scanner *embargo.Scanner, key, text string) []byte {
+	t.Helper()
+	var out bytes.Buffer
+	provider := sdklog.NewLoggerProvider(sdklog.WithProcessor(sdklog.NewSimpleProcessor(embargootel.NewLogExporter(&sdkLogCapture{writer: &out}, scanner))))
+	var record otellog.Record
+	record.SetBody(attribute.StringValue("event"))
+	record.AddAttributes(attribute.String(key, text))
+	provider.Logger("matrix").Emit(t.Context(), record)
+	var list otellog.Record
+	list.SetBody(attribute.StringValue("event"))
+	list.AddAttributes(attribute.StringSlice(key, []string{text}))
+	provider.Logger("matrix").Emit(t.Context(), list)
+	if err := provider.Shutdown(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	return out.Bytes()
+}
+
+func matrixOTelSpan(t *testing.T, scanner *embargo.Scanner, key, text string) []byte {
+	t.Helper()
+	sink := tracetest.NewInMemoryExporter()
+	spans := []sdktrace.ReadOnlySpan{
+		tracetest.SpanStub{Name: "matrix", Attributes: []attribute.KeyValue{attribute.String(key, text)}}.Snapshot(),
+		tracetest.SpanStub{Name: "matrix", Attributes: []attribute.KeyValue{attribute.StringSlice(key, []string{text})}}.Snapshot(),
+	}
+	if err := embargootel.NewSpanExporter(sink, scanner).ExportSpans(t.Context(), spans); err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := json.Marshal(sink.GetSpans())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return encoded
+}
+
+func matrixHTTP(t *testing.T, scanner *embargo.Scanner, target string, header http.Header) []byte {
+	t.Helper()
+	var out bytes.Buffer
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://service.invalid"+target, nil)
+	maps.Copy(request.Header, header)
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
+	embargo.NewHTTPHandler(handler, slog.New(slog.NewJSONHandler(&out, nil)), scanner).ServeHTTP(httptest.NewRecorder(), request)
+	return out.Bytes()
 }

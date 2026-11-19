@@ -53,10 +53,18 @@ jobs:
         working-directory: tests
         run: go test -coverpkg=github.com/nao1215/embargo/... -coverprofile=../properties.cover ./...
 
+      - name: Cover every adapter module
+        run: |
+          for gomod in adapters/*/go.mod; do
+            module=$(dirname "$gomod")
+            go -C "$module" test -coverpkg="github.com/nao1215/embargo/$module/..." -coverprofile="$PWD/$(basename "$module").adapter.cover" ./...
+          done
+
       - name: Merge coverage blocks
         run: |
           python3 -m unittest discover -s scripts -p 'test_*.py'
-          python3 scripts/merge_coverage.py --root-module root.cover properties.cover > coverage.out
+          python3 scripts/merge_coverage.py --root-module root.cover properties.cover > root.out
+          python3 scripts/merge_coverage.py root.out *.adapter.cover > coverage.out
 
       - name: Require coverage of changed root statements
         if: github.event_name == 'pull_request'

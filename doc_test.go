@@ -437,7 +437,8 @@ func TestDefaultPolicyDocumentation(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		for _, required := range []string{"19 built-ins", "39", "WithAll", "opt-in"} {
+		// Counts are checked against the built-in table by TestDocumentedKindCounts.
+		for _, required := range []string{"WithAll", "opt-in"} {
 			if !strings.Contains(string(text), required) {
 				t.Errorf("%s omits the default contract %q", path, required)
 			}

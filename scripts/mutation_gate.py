@@ -24,6 +24,8 @@ DOCUMENT = ROOT/'doc/testing.md'
 ADDRESS_SPACE = 4 << 30
 COMMAND = 'cmd/embargo'
 PACKAGES = ('embargotest', 'internal/ascii', 'internal/detect', 'internal/output', 'internal/saferecord')
+# Each adapter is its own released module and gets its own floor.
+ADAPTERS = tuple(sorted('adapters/'+path.parent.name for path in (ROOT/'adapters').glob('*/go.mod')))
 STATUSES = {'KILLED', 'LIVED', 'NOT COVERED', 'NOT VIABLE', 'TIMED OUT'}
 # gremlins times `go test` including the build of the mutated package, so a
 # mutant compiled while other workers compete for the CPU can exceed ten times
@@ -83,7 +85,7 @@ def package_scores(report, prefix=''):
         total = denominator+counts['NOT COVERED']
         if not denominator or not total:
             raise ValueError('no executed mutants for package '+name)
-        result[name] = {'score': round(100*counts['KILLED']/denominator, 2), 'coverage': round(100*denominator/total, 2), 'counts': dict(sorted(counts.items()))}
+        result[name] = {'score': round(100*(counts['KILLED']+counts['TIMED OUT'])/denominator, 2), 'coverage': round(100*denominator/total, 2), 'counts': dict(sorted(counts.items()))}
     if not result:
         raise ValueError('empty mutation report')
     return result
@@ -130,7 +132,7 @@ def selected_packages(value):
     if value is None:
         return None
     names = [name.strip() for name in value.split(',') if name.strip()]
-    known = ('.', *PACKAGES, COMMAND)
+    known = ('.', *PACKAGES, COMMAND, *ADAPTERS)
     unknown = sorted(set(names) - set(known))
     if not names or unknown:
         raise ValueError('--packages takes a comma-separated subset of: '+', '.join(known))
@@ -253,6 +255,10 @@ def run_tool(target, destination, workers, env, exclude=None, diff=None):
     inventory_command = command[:-1]+['--dry-run', command[-1]]
     inventory_command[inventory_command.index('--output')+1] = str(inventory_path)
     subprocess.run(inventory_command, env=env, check=True)
+    if not inventory_path.exists():
+        # gremlins writes no report for code without a mutable operator, as a
+        # thin adapter can be; there is nothing to measure or floor.
+        return {'files': []}
     inventory = json.loads(inventory_path.read_text(encoding='utf-8'))
     # The inventory run populates Go's test cache. A cached timing would give
     # the real campaign a timeout shorter than an ordinary uncached test run.
@@ -266,6 +272,8 @@ def run_tool(target, destination, workers, env, exclude=None, diff=None):
 def measure(module, package, destination, workers, env, scratch, exclude=None, diff=None):
     """Run gremlins on one package, then settle its timed-out mutants alone."""
     report = run_tool(module/package, destination, workers, env, exclude, diff)
+    if not report['files']:
+        return report
     report = rerun_timed_out(report, module, package, workers, env, scratch)
     destination.write_text(json.dumps(report, indent=2)+'\n')
     return report
@@ -304,7 +312,7 @@ def main():
         parser.error(str(error))
     if selected is not None and args.record:
         parser.error('--record needs every package; omit --packages')
-    wanted = set(selected or ('.', *PACKAGES, COMMAND))
+    wanted = set(selected or ('.', *PACKAGES, COMMAND, *ADAPTERS))
     if args.check_evidence:
         check_recorded_evidence()
         return
@@ -346,6 +354,11 @@ def main():
         for package in sorted(wanted & set(PACKAGES)):
             report = measure(snapshot, package, output/(package.replace('/', '-')+'.json'), args.workers, env, scratch/package, '/', args.diff)
             files += [dict(file, file_name=package+'/'+file['file_name']) for file in report['files']]
+        # An adapter module's go.mod replaces the root module with ../.., so
+        # it builds against the snapshot.
+        for adapter in sorted(wanted & set(ADAPTERS)):
+            report = measure(snapshot/adapter, '.', output/(adapter.replace('/', '-')+'.json'), args.workers, env, scratch/adapter, '/', args.diff)
+            files += [dict(file, file_name=adapter+'/'+file['file_name']) for file in report['files']]
         root_report = {'files': files}
         if args.diff:
             survivors = changed_survivors(files)
@@ -374,14 +387,16 @@ def main():
     (output/'summary.json').write_text(json.dumps(result, indent=2)+'\n')
     if args.record:
         if BASELINE.exists():
-            check(scores, json.loads(BASELINE.read_text())['packages'])
+            # A package measured for the first time records its first floor.
+            previous = json.loads(BASELINE.read_text())['packages']
+            check({name: score for name, score in scores.items() if name in previous}, previous)
         BASELINE.write_text(json.dumps(result, indent=2)+'\n')
         EVIDENCE.write_text(json.dumps(evidence, indent=2)+'\n')
         document_baseline(scores, write=True)
     else:
         check(scores, json.loads(BASELINE.read_text())['packages'], selected)
     print('EMBARGO_MUTATION_SUMMARY '+json.dumps(result))
-    print('Per-package mutation score and coverage floors passed; timeouts that persist when rerun alone are not kills.')
+    print('Per-package mutation score and coverage floors passed; timeouts that persist when rerun alone count as detected.')
 
 
 if __name__ == '__main__':

@@ -170,14 +170,27 @@ func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scr
 }
 
 // A finding must cross the last join; detecting an ancestor alone does not hide descendants.
-func (s *eventScanner) joinedKeySensitive(ctx context.Context, path string, boundary int) (bool, error) {
+func (s *eventScanner) joinedKeySensitive(ctx context.Context, path []byte, boundary int) (bool, error) {
 	if len(path) > s.remaining {
 		return false, saferecord.ErrSizeLimit
 	}
 	s.remaining -= len(path)
-	findings := s.scanner.scan([]byte(path), ctx.Err)
+	// A path without findings repeats across records and cannot cross a join.
+	cacheable := s.scanner.paths != nil && len(path) <= maxCachedKeyBytes
+	if cacheable {
+		if _, ok := s.scanner.paths.loadBytes(path); ok {
+			return false, nil
+		}
+	}
+	scratch := s.scanner.takeScratch()
+	defer s.scanner.returnScratch(scratch)
+	findings := s.scanner.scanAppend(scratch.findings[:0], path, ctx.Err)
+	scratch.findings = findings
 	if ctx.Err() != nil {
 		return false, saferecord.ErrCanceled
+	}
+	if cacheable && len(findings) == 0 {
+		s.scanner.paths.store(string(path), keyResult{key: "", masked: "", field: fieldKey{}, sensitive: false})
 	}
 	for _, f := range findings {
 		if f.Start < boundary && f.End > boundary+1 {
@@ -188,19 +201,17 @@ func (s *eventScanner) joinedKeySensitive(ctx context.Context, path string, boun
 }
 
 // encoding/json and zap.Binary write a []byte as padded standard base64, so a
-// byte field holding a token reaches the scalar policy as an opaque string.
-// Values of this length range are decoded and scanned when the bytes are text;
-// binary data such as an image is not text and is never scanned.
-const (
-	minEncodedText = 20
-	maxEncodedText = 8 << 10
-)
+// byte field holding a token or a short value such as a CVV reaches the scalar
+// policy as an opaque string. Values up to this length are decoded and scanned
+// when the bytes are text; binary data such as an image is not text and is
+// never scanned.
+const maxEncodedText = 8 << 10
 
 // encodedTextSensitive reports findings in value decoded as padded standard
 // base64, charged to the scan budget, when the decoded bytes are printable
 // UTF-8 text.
 func encodedTextSensitive[T string | []byte](ctx context.Context, s *eventScanner, value T, key string) (bool, error) {
-	if !standardBase64(value) {
+	if !standardBase64(value) || !printableStart(value) {
 		return false, nil
 	}
 	decoded := make([]byte, base64.StdEncoding.DecodedLen(len(value)))
@@ -218,11 +229,37 @@ func encodedTextSensitive[T string | []byte](ctx context.Context, s *eventScanne
 // can have; the decoder checks the padding.
 func standardBase64[T string | []byte](value T) bool {
 	const quantum = 4
-	if len(value) < minEncodedText || len(value) > maxEncodedText || len(value)%quantum != 0 {
+	if len(value) == 0 || len(value) > maxEncodedText || len(value)%quantum != 0 {
 		return false
 	}
 	for i := range len(value) {
 		if c := value[i]; !ascii.IsAlphaNum(c) && c != '+' && c != '/' && c != '=' {
+			return false
+		}
+	}
+	return true
+}
+
+// printableStart reports whether the first three bytes value encodes, which
+// standardBase64 accepted, can start printable UTF-8 text, so most plain
+// words such as "accepted" are rejected without decoding the whole value.
+func printableStart[T string | []byte](value T) bool {
+	const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+	var sextets [4]byte
+	for i := range sextets {
+		// Padding decodes as zero bits, which the byte count below excludes.
+		sextets[i] = byte(max(0, strings.IndexByte(alphabet, value[i]))) // #nosec G115 -- A 64-letter alphabet index fits a byte.
+	}
+	decoded := [3]byte{sextets[0]<<2 | sextets[1]>>4, sextets[1]<<4 | sextets[2]>>2, sextets[2]<<6 | sextets[3]}
+	n := len(decoded)
+	if value[3] == '=' {
+		n--
+	}
+	if value[2] == '=' {
+		n--
+	}
+	for _, c := range decoded[:n] {
+		if (c < ' ' && c != '\t' && c != '\n' && c != '\r') || c == 0x7f {
 			return false
 		}
 	}

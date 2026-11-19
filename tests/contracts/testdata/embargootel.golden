@@ -1,0 +1,2 @@
+func NewLogExporter(next log.Exporter, scanner *embargo.Scanner) log.Exporter
+func NewSpanExporter(next trace.SpanExporter, scanner *embargo.Scanner) trace.SpanExporter
