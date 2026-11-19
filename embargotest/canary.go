@@ -161,7 +161,7 @@ type fragmentOption int
 // unrelated output. The default checks only whole-value representations.
 func WithCanaryFragments(minBytes int) Option { return fragmentOption(minBytes) }
 
-func (o fragmentOption) apply(r *Recorder) bool {
+func (o fragmentOption) apply(r *policy) bool {
 	const smallestFragment = 16
 	const largestCanary = 1024
 	if int(o) < smallestFragment || int(o) > largestCanary {
@@ -171,10 +171,10 @@ func (o fragmentOption) apply(r *Recorder) bool {
 	return true
 }
 
-func (r *Recorder) configureNeedles() {
+func (r *policy) configureNeedles() {
 	r.needles = representations(r.canary)
 	if r.minFragment > len(r.canary) {
-		r.failed = true
+		r.invalid = true
 		return
 	}
 	if r.minFragment == 0 {

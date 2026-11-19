@@ -9,8 +9,8 @@ import (
 // Country implements the national-identifier contracts documented on the root Kind constants.
 // See https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSSSN and the following country kinds.
 type Country struct {
-	name DetectorName
-	countryFamily
+	name   DetectorName
+	family countryFamily
 }
 
 // countryFamily holds everything one national number needs: its fixed-width
@@ -18,14 +18,14 @@ type Country struct {
 // label such as ssn_id, whether a bare digit run needs one of those labels, and
 // how a candidate value is scored.
 type countryFamily struct {
+	// score returns 0 to reject value; before is the normalized input
+	// preceding it, for families whose label can stand in for a checksum.
+	score   func(value string, before []byte) float64
 	layouts []string
 	labels  []string
 	// bareNeedsLabel marks the kinds whose check passes about one random
 	// number in ten or more, so a bare digit run alone is weak evidence.
 	bareNeedsLabel bool
-	// score returns 0 to reject value; before is the normalized input
-	// preceding it, for families whose label can stand in for a checksum.
-	score func(value string, before []byte) float64
 }
 
 // NewCountry prepares fixed-width layouts for a country kind; unsupported names panic.
@@ -34,7 +34,7 @@ func NewCountry(name DetectorName) *Country {
 	if !ok {
 		panic("embargo: unsupported country kind")
 	}
-	return &Country{name: name, countryFamily: family}
+	return &Country{name: name, family: family}
 }
 
 // Name identifies the selected national-number family, such as "ca_sin".
@@ -52,17 +52,17 @@ const nineDigitLayout = "#########"
 func countryFamilies() map[DetectorName]countryFamily {
 	ssnLayouts := []string{"###-##-####", nineDigitLayout}
 	return map[DetectorName]countryFamily{
-		"us_ssn":         {ssnLayouts, []string{"ssn", "security"}, true, structureScore(validSSN, countryStructureScore)},
-		"us_itin":        {ssnLayouts, []string{"itin", "taxpayer"}, true, structureScore(validITIN, countryStructureScore)},
-		"uk_nino":        {[]string{"AA ## ## ## A", "AA######A"}, []string{"nino", "insurance"}, false, structureScore(validNINO, countryLetterScore)},
-		"uk_nhs":         {[]string{"### ### ####", "##########"}, []string{"nhs"}, true, checksumScore(validNHS)},
-		"in_aadhaar":     {[]string{"#### #### ####", "############"}, []string{"aadhaar", "aadhar"}, true, checksumScore(validAadhaar)},
-		"in_pan":         {[]string{"AAAAA####A"}, []string{"pan"}, false, structureScore(validIndiaPAN, countryLetterScore)},
-		"br_cpf":         {[]string{"###.###.###-##", "###########"}, []string{"cpf"}, false, checksumScore(validCPF)},
-		"br_cnpj":        {[]string{"CC.CCC.CCC/CCCC-##", "CCCCCCCCCCCC##"}, []string{"cnpj"}, false, checksumScore(validCNPJ)},
-		"cn_resident_id": {[]string{"#################X"}, []string{"resident", "身份证", "身份证号"}, false, checksumScore(validChinaID)},
-		"kr_rrn":         {[]string{"######-#######", "#############"}, []string{"rrn", "주민등록번호"}, false, rrnScore},
-		"ca_sin":         {[]string{"###-###-###", nineDigitLayout}, []string{"sin", "insurance"}, true, checksumScore(validSIN)},
+		"us_ssn":         {structureScore(validSSN, countryStructureScore), ssnLayouts, []string{"ssn", "security"}, true},
+		"us_itin":        {structureScore(validITIN, countryStructureScore), ssnLayouts, []string{"itin", "taxpayer"}, true},
+		"uk_nino":        {structureScore(validNINO, countryLetterScore), []string{"AA ## ## ## A", "AA######A"}, []string{"nino", "insurance"}, false},
+		"uk_nhs":         {checksumScore(validNHS), []string{"### ### ####", "##########"}, []string{"nhs"}, true},
+		"in_aadhaar":     {checksumScore(validAadhaar), []string{"#### #### ####", "############"}, []string{"aadhaar", "aadhar"}, true},
+		"in_pan":         {structureScore(validIndiaPAN, countryLetterScore), []string{"AAAAA####A"}, []string{"pan"}, false},
+		"br_cpf":         {checksumScore(validCPF), []string{"###.###.###-##", "###########"}, []string{"cpf"}, false},
+		"br_cnpj":        {checksumScore(validCNPJ), []string{"CC.CCC.CCC/CCCC-##", "CCCCCCCCCCCC##"}, []string{"cnpj"}, false},
+		"cn_resident_id": {checksumScore(validChinaID), []string{"#################X"}, []string{"resident", "身份证", "身份证号"}, false},
+		"kr_rrn":         {rrnScore, []string{"######-#######", "#############"}, []string{"rrn", "주민등록번호"}, false},
+		"ca_sin":         {checksumScore(validSIN), []string{"###-###-###", nineDigitLayout}, []string{"sin", "insurance"}, true},
 	}
 }
 
@@ -91,12 +91,12 @@ func (d *Country) Scan(data []byte) []Finding {
 		if start > 0 && isIdentifierByte(normalized[start-1]) {
 			continue
 		}
-		for _, layout := range d.layouts {
+		for _, layout := range d.family.layouts {
 			value, end, ok := countryCandidate(normalized, start, layout)
-			if !ok || logContext.fragment(normalized, start, end) || recordLabeled(normalized, start, d.labels...) || d.unnamedBare(normalized, start, layout) {
+			if !ok || logContext.fragment(normalized, start, end) || recordLabeled(normalized, start, d.family.labels...) || d.unnamedBare(normalized, start, layout) {
 				continue
 			}
-			score := d.score(value, normalized[:start])
+			score := d.family.score(value, normalized[:start])
 			if score == 0 {
 				continue
 			}
@@ -113,7 +113,7 @@ func (d *Country) Scan(data []byte) []Finding {
 // Aadhaar pass one random ID in ten, so a user_id or an amount of that length
 // looks the same; the separated layouts keep their own evidence.
 func (d *Country) unnamedBare(data []byte, start int, layout string) bool {
-	return d.bareNeedsLabel && strings.Trim(layout, "#") == "" && !labelNames(data, start, d.labels...)
+	return d.family.bareNeedsLabel && strings.Trim(layout, "#") == "" && !labelNames(data, start, d.family.labels...)
 }
 
 func countryCandidate(data []byte, start int, layout string) (text string, end int, ok bool) {

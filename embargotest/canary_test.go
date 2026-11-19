@@ -99,7 +99,7 @@ func TestCanaryFragmentBoundsAndOrder(t *testing.T) {
 		r := New(p, WithCanaryFragments(minimum), WithCanary([]byte(canary)))
 		write(t, r, "out", []byte("complete"))
 		r.Expect("out", func([]byte) bool { return true })
-		if r.Check() || !guardPolicy([]Option{WithCanaryFragments(minimum), WithCanary([]byte(canary))}).failed {
+		if r.Check() || !guardPolicy([]Option{WithCanaryFragments(minimum), WithCanary([]byte(canary))}).invalid {
 			t.Fatal("invalid minimum accepted")
 		}
 		p.finish()
@@ -109,7 +109,7 @@ func TestCanaryFragmentBoundsAndOrder(t *testing.T) {
 		{WithCanary([]byte(canary)), WithCanaryFragments(len(canary))},
 	} {
 		policy := guardPolicy(options)
-		if policy.failed || !containsCanary([]byte(canary), policy.needles) || containsCanary([]byte(canary[:len(canary)-1]), policy.needles) {
+		if policy.invalid || !containsCanary([]byte(canary), policy.needles) || containsCanary([]byte(canary[:len(canary)-1]), policy.needles) {
 			t.Fatal("equal-length boundary or option order failed")
 		}
 	}
@@ -149,7 +149,7 @@ func TestCanaryJSONEscapingAndEmptyNeedles(t *testing.T) {
 	}
 	const maximum = 1024
 	policy := guardPolicy([]Option{WithCanaryFragments(maximum), WithCanary(bytes.Repeat([]byte("z"), maximum))})
-	if policy.failed || !containsCanary(policy.canary, policy.needles) || containsCanary(policy.canary[:maximum-1], policy.needles) {
+	if policy.invalid || !containsCanary(policy.canary, policy.needles) || containsCanary(policy.canary[:maximum-1], policy.needles) {
 		t.Fatal("maximum fragment length was not accepted exactly")
 	}
 }

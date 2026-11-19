@@ -206,10 +206,10 @@ func (*panickingGuardDetector) Scan([]byte) []embargo.Finding { panic("must not 
 func TestGuardNamesAndPolicy(t *testing.T) {
 	t.Parallel()
 	policy := guardPolicy([]Option{nil, WithMaxBytes(16), WithTimeout(time.Second)})
-	if policy.failed || policy.maxBytes != 16 || policy.timeout != time.Second {
+	if policy.invalid || policy.maxBytes != 16 || policy.timeout != time.Second {
 		t.Fatal("guard options lost")
 	}
-	if !guardPolicy([]Option{WithMaxBytes(-1)}).failed {
+	if !guardPolicy([]Option{WithMaxBytes(-1)}).invalid {
 		t.Fatal("invalid guard option accepted")
 	}
 }

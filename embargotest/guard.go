@@ -9,8 +9,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/nao1215/embargo"
 )
 
 // Guard runs a package under an output supervisor. Use
@@ -37,7 +35,7 @@ func Guard(m *testing.M, opts ...Option) int {
 		return m.Run()
 	}
 	policy := guardPolicy(opts)
-	if m == nil || policy.failed {
+	if m == nil || policy.invalid {
 		guardMessage("embargotest: invalid package guard options")
 		return 1
 	}
@@ -50,7 +48,7 @@ func Guard(m *testing.M, opts ...Option) int {
 	return guardParent(executable, args, policy, os.Stdout, os.Stderr)
 }
 
-func guardParent(executable string, args []string, policy *Recorder, stdout, stderr io.Writer) int {
+func guardParent(executable string, args []string, policy *policy, stdout, stderr io.Writer) int {
 	ctx, cancel := context.WithTimeout(context.Background(), policy.timeout)
 	defer cancel()
 	// #nosec G204 G702 -- The parent supplies its own executable and test arguments, never a shell.
@@ -61,7 +59,7 @@ func guardParent(executable string, args []string, policy *Recorder, stdout, std
 
 // guardCommand owns capture and replay; tests exercise it with real child pipes
 // while keeping the test runner's process globals unchanged.
-func guardCommand(ctx context.Context, cmd *exec.Cmd, policy *Recorder, stdout, stderr io.Writer) int {
+func guardCommand(ctx context.Context, cmd *exec.Cmd, policy *policy, stdout, stderr io.Writer) int {
 	capture := &guardCapture{maxBytes: policy.maxBytes}
 	cmd.Stdout = &guardStream{capture: capture, index: 0}
 	cmd.Stderr = &guardStream{capture: capture, index: 1}
@@ -96,18 +94,11 @@ func guardCommand(ctx context.Context, cmd *exec.Cmd, policy *Recorder, stdout, 
 	return code
 }
 
-func guardPolicy(opts []Option) *Recorder {
+// guardPolicy is the policy of Guard, whose deadline covers the whole test
+// binary rather than one child process.
+func guardPolicy(opts []Option) *policy {
 	const defaultGuardTimeout = 5 * time.Minute
-	// No testing lifecycle or mutable capture is exposed by this policy object.
-	//nolint:exhaustruct_v5 // Guard uses only policy fields; no Recorder capture lifecycle is registered.
-	r := &Recorder{scanner: embargo.NewScanner(), canary: []byte(defaultCanary), maxBytes: defaultMaxBytes, timeout: defaultGuardTimeout, allowedKinds: map[embargo.Kind]bool{}, allowedValues: map[string]bool{}}
-	for _, option := range opts {
-		if option != nil && !option.apply(r) {
-			r.failed = true
-		}
-	}
-	r.configureNeedles()
-	return r
+	return newPolicy(defaultGuardTimeout, opts)
 }
 
 type guardCapture struct {

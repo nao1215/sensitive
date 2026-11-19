@@ -262,7 +262,8 @@ func TestHTTPMetadataExactRemainingBudget(t *testing.T) {
 			cost += 6
 		}
 		for _, remaining := range []int64{cost - 1, cost, cost + 1} {
-			r := guardPolicy([]Option{WithScanner(embargo.NewScanner(embargo.WithKinds()))})
+			//nolint:exhaustruct_v5 // Only the policy and the retained budget take part in a metadata snapshot.
+			r := &Recorder{policy: guardPolicy([]Option{WithScanner(embargo.NewScanner(embargo.WithKinds()))})}
 			r.maxBytes, r.retained = 64, 64-remaining
 			w := &response{recorder: r}
 			got := w.snapshot(header, func(string) bool { return true })

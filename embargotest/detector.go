@@ -19,7 +19,7 @@ type (
 // Nil fails the test.
 func WithScanner(scanner *embargo.Scanner) Option { return scannerOption{scanner: scanner} }
 
-func (o scannerOption) apply(r *Recorder) bool {
+func (o scannerOption) apply(r *policy) bool {
 	if o.scanner == nil {
 		return false
 	}
@@ -31,7 +31,7 @@ func (o scannerOption) apply(r *Recorder) bool {
 // Allowances accumulate; canary checks are never disabled. The slice is copied.
 func WithAllowedKinds(kinds ...embargo.Kind) Option { return append(kindsOption(nil), kinds...) }
 
-func (o kindsOption) apply(r *Recorder) bool {
+func (o kindsOption) apply(r *policy) bool {
 	for _, kind := range o {
 		if kind == "" {
 			return false
@@ -46,7 +46,7 @@ func (o kindsOption) apply(r *Recorder) bool {
 // Allowances accumulate and do not bypass canary checks.
 func WithAllowedValues(values ...string) Option { return append(valuesOption(nil), values...) }
 
-func (o valuesOption) apply(r *Recorder) bool {
+func (o valuesOption) apply(r *policy) bool {
 	for _, value := range o {
 		if value == "" {
 			return false
@@ -56,12 +56,12 @@ func (o valuesOption) apply(r *Recorder) bool {
 	return true
 }
 
-func (r *Recorder) scan(data []byte) (found, failed bool) {
+func (r *policy) scan(data []byte) (found, failed bool) {
 	findings, failed := r.scanFindings(data)
 	return len(findings) > 0, failed
 }
 
-func (r *Recorder) scanFindings(data []byte) (findings []embargo.Finding, failed bool) {
+func (r *policy) scanFindings(data []byte) (findings []embargo.Finding, failed bool) {
 	failed = true
 	defer func() {
 		if failed {
@@ -165,7 +165,7 @@ const httpHeadersSink = "observed HTTP headers"
 // from test code, but one built from data could carry the value under test,
 // so a name that is long, uses bytes outside letters, digits and _ . / : -,
 // contains the canary or has a finding of its own is replaced.
-func (r *Recorder) printableSinkName(name string) string {
+func (r *policy) printableSinkName(name string) string {
 	if printableLabel(name) && !containsCanary([]byte(name), r.needles) {
 		if findings, failed := r.scanFindings([]byte(name)); len(findings) == 0 && !failed {
 			return name
@@ -175,7 +175,7 @@ func (r *Recorder) printableSinkName(name string) string {
 }
 
 // printableKind applies the same rule to a custom detector's kind.
-func (r *Recorder) printableKind(kind embargo.Kind) string {
+func (r *policy) printableKind(kind embargo.Kind) string {
 	if printableLabel(string(kind)) && !containsCanary([]byte(kind), r.needles) {
 		return string(kind)
 	}

@@ -12,7 +12,7 @@ import (
 
 type guardWrite struct{ start, end, stdout int }
 
-func guardLeaks(data []byte, policy *Recorder) ([]embargo.Finding, bool) {
+func guardLeaks(data []byte, policy *policy) ([]embargo.Finding, bool) {
 	findings, failed := policy.scanFindings(data)
 	for _, needle := range policy.needles {
 		for offset := 0; len(needle) > 0 && offset < len(data); {
@@ -29,7 +29,7 @@ func guardLeaks(data []byte, policy *Recorder) ([]embargo.Finding, bool) {
 }
 
 // Attribution uses observed pipe order; it cannot establish which parallel test wrote a byte.
-func guardTests(capture *guardCapture, stream int, leaks []embargo.Finding, policy *Recorder) string {
+func guardTests(capture *guardCapture, stream int, leaks []embargo.Finding, policy *policy) string {
 	observed := guardObservedNames(capture.data[0], guardLeakPositions(capture, stream, leaks))
 	// Names already observed at a leak need no further attribution or validation.
 	selected := make(map[string]bool, len(observed))
@@ -127,7 +127,7 @@ func guardFrame(line string, active map[string]bool) {
 	}
 }
 
-func guardSafeName(name string, policy *Recorder) string {
+func guardSafeName(name string, policy *policy) string {
 	const placeholder = "[redacted test name]"
 	data := []byte(name)
 	if containsCanary(data, policy.needles) {
