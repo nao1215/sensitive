@@ -122,8 +122,11 @@ func (s *Scanner) takeScratch() *scanScratch {
 	return scratch
 }
 
-// returnScratch keeps storage, grown by its last user, for the next scan.
+// returnScratch keeps storage, grown by its last user, for the next scan. The
+// scanned text is cleared first, so a pooled buffer holds no logged value
+// between scans.
 func (s *Scanner) returnScratch(scratch *scanScratch) {
+	clear(scratch.text)
 	if s.scratch == nil || cap(scratch.text) > largestPooledBuffer || cap(scratch.findings) > maxPooledFindings || cap(scratch.detected) > maxPooledFindings || cap(scratch.keys) > largestPooledBuffer || cap(scratch.members) > maxPooledMembers {
 		return
 	}

@@ -1786,13 +1786,25 @@ func TestSinkMatrix(t *testing.T) {
 						continue
 					}
 					name := strings.Join([]string{payload.key, payload.secret, representation.name, wrapping.name, sink.name}, "/")
-					out := sink.write(t, scanner, wrapping, payload.key, representation.value)
-					if leak := matrixLeak(out, payload.secret); leak != "" {
-						t.Errorf("%s: %s retained as %q: %s", name, payload.secret, leak, out)
-					}
+					checkMatrixCell(t, scanner, name, payload.key, payload.secret, representation.value, wrapping, sink)
 				}
 			}
 		}
+	}
+}
+
+// checkMatrixCell writes one value through one sink and requires the secret
+// to be hidden and the caller's value to be unchanged, since masking works on
+// copies.
+func checkMatrixCell(t *testing.T, scanner *embargo.Scanner, name, key, secret string, value any, wrapping matrixWrapping, sink matrixSink) {
+	t.Helper()
+	before := fmt.Sprintf("%#v", value)
+	out := sink.write(t, scanner, wrapping, key, value)
+	if leak := matrixLeak(out, secret); leak != "" {
+		t.Errorf("%s: %s retained as %q: %s", name, secret, leak, out)
+	}
+	if after := fmt.Sprintf("%#v", value); after != before {
+		t.Errorf("%s changed the caller's value: %s", name, after)
 	}
 }
 

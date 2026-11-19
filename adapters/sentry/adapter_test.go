@@ -385,8 +385,12 @@ func TestMaskedTypedFieldIsWithheld(t *testing.T) {
 	t.Parallel()
 	// A detected line number becomes a marker string that no longer decodes
 	// into the event's integer field, so the whole event is withheld.
+	if strconv.IntSize < 64 {
+		t.Skip("a card number does not fit the int line number field")
+	}
+	var card int64 = 4111111111111111
 	event := sentry.NewEvent()
-	event.Exception = []sentry.Exception{{Value: "boom", Stacktrace: &sentry.Stacktrace{Frames: []sentry.Frame{{Function: "f", Lineno: 4111111111111111}}}}}
+	event.Exception = []sentry.Exception{{Value: "boom", Stacktrace: &sentry.Stacktrace{Frames: []sentry.Frame{{Function: "f", Lineno: int(card)}}}}}
 	after := embargosentry.NewBeforeSend(embargo.NewScanner())(event, nil)
 	if after == nil || after.Message != "embargo: record withheld (masking error)" || after.Exception != nil {
 		t.Fatalf("typed field failure was not withheld: %+v", after)

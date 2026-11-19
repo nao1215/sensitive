@@ -1624,3 +1624,20 @@ func countryKind(kind Kind) bool {
 	}
 	return false
 }
+
+func TestReturnedScratchHoldsNoText(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner()
+	scratch := scanner.takeScratch()
+	scratch.text = append(scratch.text[:0], "card: 4111111111111111"...)
+	scanner.returnScratch(scratch)
+	if len(scratch.text) != 0 || slices.ContainsFunc(scratch.text[:cap(scratch.text)], func(b byte) bool { return b != 0 }) {
+		t.Fatal("a pooled buffer kept scanned text")
+	}
+	// Storage too large to pool is cleared as well.
+	large := &scanScratch{text: []byte(strings.Repeat("x", largestPooledBuffer+1)), findings: nil, keys: nil, members: nil}
+	scanner.returnScratch(large)
+	if slices.ContainsFunc(large.text, func(b byte) bool { return b != 0 }) {
+		t.Fatal("unpooled storage kept scanned text")
+	}
+}
