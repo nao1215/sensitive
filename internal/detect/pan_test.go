@@ -570,11 +570,11 @@ func TestPANShortRunSkipMatchesFullCandidate(t *testing.T) {
 	rng := rand.New(rand.NewPCG(4111, 1111))
 	parts := []string{"4111111111111111", "4111 1111 1111 1111", "4111-1111-1111-1111", "4111.1111.1111.1111", "1", "12", "123", "4111", " ", "-", ".", "ms", "card: ", "=", "x"}
 	for range 5000 {
-		var b strings.Builder
+		picked := make([]string, 0, 10)
 		for range rng.IntN(10) {
-			b.WriteString(parts[rng.IntN(len(parts))])
+			picked = append(picked, parts[rng.IntN(len(parts))])
 		}
-		data := []byte(b.String())
+		data := []byte(strings.Join(picked, ""))
 		want := scanNumeric(nil, data, data, nil, full, true)
 		if got := d.Scan(data); !slices.Equal(got, want) {
 			t.Fatalf("Scan(%q) = %v, want %v", data, got, want)

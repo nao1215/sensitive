@@ -336,13 +336,13 @@ func TestIBANScanMatchesEveryStartReference(t *testing.T) {
 	t.Parallel()
 	// #nosec G404 -- Fixed seed for reproducible synthetic tests.
 	rng := rand.New(rand.NewPCG(7, 97))
-	parts := []string{"DE89370400440532013000", "de89 3704 0044 0532 0130 00", "GB82WEST12345698765432", "DE89", "x", "A", "1", "12", " ", "-", "INFO GET /health status=ok", "\xff"}
+	parts := []string{"de89 3704 0044 0532 0130 00", sampleIBAN, "DE89", "x", "A", "1", "12", " ", "-", "INFO GET /health status=ok", "\xff"}
 	for range 5000 {
-		var b strings.Builder
+		picked := make([]string, 0, 8)
 		for range rng.IntN(8) {
-			b.WriteString(parts[rng.IntN(len(parts))])
+			picked = append(picked, parts[rng.IntN(len(parts))])
 		}
-		data := []byte(b.String())
+		data := []byte(strings.Join(picked, ""))
 		if got, want := NewIBAN().Scan(data), ibanReferenceScan(data); !slices.Equal(got, want) {
 			t.Fatalf("Scan(%q) = %v, want %v", data, got, want)
 		}

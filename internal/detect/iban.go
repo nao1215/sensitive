@@ -30,11 +30,12 @@ func (d *IBAN) Scan(data []byte) []Finding {
 
 	// Text is mostly letters, so look for the check digits first: the first
 	// one sits two bytes after the start.
-	for digit := 2; digit < len(data)-2; digit++ {
+	const country = len("DE")
+	for digit := country; digit < len(data)-2; digit++ {
 		if !ascii.IsDigit(data[digit]) {
 			continue
 		}
-		i := digit - 2
+		i := digit - country
 		if !ibanPrefixAt(data, i) {
 			continue
 		}

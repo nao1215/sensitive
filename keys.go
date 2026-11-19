@@ -156,6 +156,7 @@ func cacheableKey[T string | []byte](s *Scanner, key T) bool {
 // checks and charge that scanning it would apply. A miss charges nothing.
 func cachedKey[T string | []byte](ctx context.Context, s *eventScanner, key T) (*keyResult, error) {
 	if !cacheableKey(s.scanner, key) {
+		//nolint:nilnil // A nil result is a cache miss, which charges nothing.
 		return nil, nil
 	}
 	if ctx.Err() != nil {
@@ -181,9 +182,9 @@ func cachedKey[T string | []byte](ctx context.Context, s *eventScanner, key T) (
 // maskCached is maskScalar(ctx, key, "") with its result cached per scanner. A hit
 // performs the same cancellation and budget checks and charges as a scan.
 func (s *eventScanner) maskCached(ctx context.Context, key string) (masked string, sensitive bool, err error) {
-	if result, err := cachedKey(ctx, s, key); result != nil || err != nil {
+	if result, cacheErr := cachedKey(ctx, s, key); result != nil || cacheErr != nil {
 		if result == nil {
-			return "", false, err
+			return "", false, cacheErr
 		}
 		return key, result.sensitive, nil
 	}

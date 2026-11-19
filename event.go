@@ -276,19 +276,21 @@ func standardBase64[T string | []byte](value T) bool {
 	return true
 }
 
-// base64Sextet returns the six bits a standard base64 letter encodes.
+// base64Sextet returns the six bits a standard base64 letter encodes: its
+// index in A-Z, a-z, 0-9, + and /.
 func base64Sextet(c byte) (byte, bool) {
+	const lower, digits, plus, slash = 26, 52, 62, 63
 	switch {
 	case c >= 'A' && c <= 'Z':
 		return c - 'A', true
 	case c >= 'a' && c <= 'z':
-		return c - 'a' + 26, true
+		return c - 'a' + lower, true
 	case c >= '0' && c <= '9':
-		return c - '0' + 52, true
+		return c - '0' + digits, true
 	case c == '+':
-		return 62, true
+		return plus, true
 	case c == '/':
-		return 63, true
+		return slash, true
 	}
 	return 0, false
 }

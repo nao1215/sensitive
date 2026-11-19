@@ -99,34 +99,25 @@ func (s *Scanner) selectDetectors(data []byte) uint64 {
 	}
 	selected := s.unconditional
 	all := uint64(1)<<len(s.detectors) - 1
-	for i, b := range data {
-		b = ascii.ToLower(b)
-		if i+1 == len(data) {
-			// The final byte only reaches the hints of one byte.
-			selected |= s.hintIndex[b].short
-			break
-		}
-		next := ascii.ToLower(data[i+1])
+	last := len(data) - 1
+	for i := 0; i < last && selected != all; i++ {
+		b, next := ascii.ToLower(data[i]), ascii.ToLower(data[i+1])
 		if !s.follow[b].has(next) {
 			continue
 		}
 		bucket := &s.hintIndex[b]
 		selected |= bucket.short
-		for j, second := range bucket.second {
-			if second < next {
-				continue
-			}
-			if second > next {
-				break
-			}
+		// The second bytes are sorted, so the hints that can match sit together.
+		for j := 0; j < len(bucket.second) && bucket.second[j] <= next; j++ {
 			entry := &bucket.long[j]
-			if selected&entry.mask == 0 && len(entry.hint) <= len(data)-i && foldedPrefix(data[i+2:], entry.hint[2:]) {
+			if bucket.second[j] == next && selected&entry.mask == 0 && len(entry.hint) <= len(data)-i && foldedPrefix(data[i+2:], entry.hint[2:]) {
 				selected |= entry.mask
 			}
 		}
-		if selected == all {
-			break
-		}
+	}
+	if last >= 0 {
+		// The final byte only reaches the hints of one byte.
+		selected |= s.hintIndex[ascii.ToLower(data[last])].short
 	}
 	return selected
 }
