@@ -273,9 +273,9 @@ func TestRecorderReportsFixedReasonsOnce(t *testing.T) {
 		"expectation": {func(r *Recorder) {
 			write(t, r, "logs", []byte("ok"))
 			r.Expect("logs", func([]byte) bool { return false })
-		}, "embargotest: a content expectation was not met"},
-		"empty":                    {func(*Recorder) {}, "embargotest: no output or no content expectation was registered"},
-		"sink without expectation": {func(r *Recorder) { r.Writer("logs") }, "embargotest: no output or no content expectation was registered"},
+		}, unmetExpectation},
+		"empty":                    {func(*Recorder) {}, noExpectation},
+		"sink without expectation": {func(r *Recorder) { r.Writer("logs") }, noExpectation},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -299,6 +299,12 @@ func TestRecorderReportsFixedReasonsOnce(t *testing.T) {
 	}
 }
 
+// Fixed Check reasons shared by the recorder tests.
+const (
+	unmetExpectation = "embargotest: a content expectation was not met"
+	noExpectation    = "embargotest: no output or no content expectation was registered"
+)
+
 func TestRecorderExpectationWithoutSink(t *testing.T) {
 	t.Parallel()
 	p := &probeTB{TB: t}
@@ -308,7 +314,7 @@ func TestRecorderExpectationWithoutSink(t *testing.T) {
 		t.Fatal("an expectation without any sink was accepted")
 	}
 	p.finish()
-	want := []string{"embargotest: no output or no content expectation was registered", "embargotest: a content expectation was not met"}
+	want := []string{noExpectation, unmetExpectation}
 	if !slices.Equal(p.messages, want) {
 		t.Fatalf("messages = %q, want %q", p.messages, want)
 	}
