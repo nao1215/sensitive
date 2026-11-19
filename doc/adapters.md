@@ -4,18 +4,18 @@ These optional modules mask at the final JSON boundary, after the real logger ha
 
 ## Installation
 
-The six adapter modules are published at v0.18.0 and require root v0.18.0. Upgrade the root and every installed adapter together: [v0.17.0](../CHANGELOG.md#0170---2026-11-19) changes the default kinds, so add `embargo.WithMoreKinds` to a scanner that relied on My Number, national-format phone numbers or bank and merchant codes. Install the module for the logger or SDK the application uses:
+The six adapter modules are published at v0.18.1 and require root v0.18.1. Upgrade the root and every installed adapter together: [v0.17.0](../CHANGELOG.md#0170---2026-11-19) changes the default kinds, so add `embargo.WithMoreKinds` to a scanner that relied on My Number, national-format phone numbers or bank and merchant codes. Install the module for the logger or SDK the application uses:
 
 ```sh
-go get github.com/nao1215/embargo/adapters/zap@v0.18.0
-go get github.com/nao1215/embargo/adapters/zerolog@v0.18.0
-go get github.com/nao1215/embargo/adapters/logrus@v0.18.0
-go get github.com/nao1215/embargo/adapters/grpc@v0.18.0
-go get github.com/nao1215/embargo/adapters/otel@v0.18.0
-go get github.com/nao1215/embargo/adapters/sentry@v0.18.0
+go get github.com/nao1215/embargo/adapters/zap@v0.18.1
+go get github.com/nao1215/embargo/adapters/zerolog@v0.18.1
+go get github.com/nao1215/embargo/adapters/logrus@v0.18.1
+go get github.com/nao1215/embargo/adapters/grpc@v0.18.1
+go get github.com/nao1215/embargo/adapters/otel@v0.18.1
+go get github.com/nao1215/embargo/adapters/sentry@v0.18.1
 ```
 
-For `NewHTTPHandler`, install the root module with `go get github.com/nao1215/embargo@v0.18.0`; no adapter module is needed.
+For `NewHTTPHandler`, install the root module with `go get github.com/nao1215/embargo@v0.18.1`; no adapter module is needed.
 
 Use only the module for your integration. The [zap](../adapters/zap/example_test.go), [zerolog](../adapters/zerolog/example_test.go) and [logrus](../adapters/logrus/example_test.go) Examples show complete setup and their actual JSON output.
 
