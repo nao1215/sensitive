@@ -351,8 +351,9 @@ func slogShape(value slog.Value) valueShape {
 // mask scans a message alone; short clean messages, like field keys, repeat
 // across records and come from the scanner's cache.
 func (h *slogHandler) mask(ctx context.Context, text string) (string, error) {
-	scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
+	scan := eventScanner{scanner: h.scanner, spare: nil, remaining: maxScanBytes}
 	masked, _, err := scan.maskCached(ctx, text)
+	scan.release()
 	return masked, err
 }
 

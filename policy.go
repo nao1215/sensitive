@@ -35,15 +35,17 @@ type fieldPolicy struct {
 
 // newFieldPolicy returns a policy for one walk; its owner calls release.
 func newFieldPolicy(scanner *Scanner, prefix string) fieldPolicy {
-	return fieldPolicy{scan: eventScanner{scanner: scanner, remaining: maxScanBytes}, path: nil, prefix: prefix, top: memberKey{}, prefixCrossed: false, inTop: false}
+	return fieldPolicy{scan: eventScanner{scanner: scanner, spare: nil, remaining: maxScanBytes}, path: nil, prefix: prefix, top: memberKey{}, prefixCrossed: false, inTop: false}
 }
 
-// release returns the path storage, which holds only keys without findings.
+// release returns the path storage, which holds only keys without findings,
+// and the scan's spare scratch.
 func (p *fieldPolicy) release() {
 	if p.path != nil {
 		p.scan.scanner.returnScratch(p.path)
 		p.path = nil
 	}
+	p.scan.release()
 }
 
 // memberKey is the decision for one member key.

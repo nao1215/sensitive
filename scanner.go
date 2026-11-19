@@ -130,13 +130,23 @@ func (s *Scanner) takeScratch() *scanScratch {
 // value between scans. Unpooled storage belongs to its last user, such as a
 // custom detector that kept its input, and is left as it is.
 func (s *Scanner) returnScratch(scratch *scanScratch) {
-	if s.scratch == nil || cap(scratch.text) > largestPooledBuffer || cap(scratch.findings) > maxPooledFindings || cap(scratch.detected) > maxPooledFindings || cap(scratch.keys) > largestPooledBuffer || cap(scratch.members) > maxPooledMembers {
+	if !s.poolable(scratch) {
 		return
 	}
+	scratch.reset()
+	s.scratch.Put(scratch)
+}
+
+// poolable reports pooled storage small enough to keep.
+func (s *Scanner) poolable(scratch *scanScratch) bool {
+	return s.scratch != nil && cap(scratch.text) <= largestPooledBuffer && cap(scratch.findings) <= maxPooledFindings && cap(scratch.detected) <= maxPooledFindings && cap(scratch.keys) <= largestPooledBuffer && cap(scratch.members) <= maxPooledMembers
+}
+
+// reset clears the scanned text and empties every slice.
+func (scratch *scanScratch) reset() {
 	clear(scratch.text)
 	scratch.text, scratch.findings, scratch.detected = scratch.text[:0], scratch.findings[:0], scratch.detected[:0]
 	scratch.keys, scratch.members = scratch.keys[:0], scratch.members[:0]
-	s.scratch.Put(scratch)
 }
 
 // buildHintCache pre-computes lowered hints for each detector so that

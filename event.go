@@ -20,8 +20,40 @@ const (
 )
 
 type eventScanner struct {
-	scanner   *Scanner
+	scanner *Scanner
+	// spare is the scratch of the last finished scan, kept for the next scan
+	// of the same event instead of a pool round trip; release returns it.
+	spare     *scanScratch
 	remaining int
+}
+
+// takeScratch returns the spare scratch or one from the scanner.
+func (s *eventScanner) takeScratch() *scanScratch {
+	if scratch := s.spare; scratch != nil {
+		s.spare = nil
+		return scratch
+	}
+	return s.scanner.takeScratch()
+}
+
+// returnScratch clears scratch and keeps it as the spare, or returns it to
+// the scanner when a spare is already kept.
+func (s *eventScanner) returnScratch(scratch *scanScratch) {
+	if s.spare != nil || !s.scanner.poolable(scratch) {
+		s.scanner.returnScratch(scratch)
+		return
+	}
+	scratch.reset()
+	s.spare = scratch
+}
+
+// release returns the spare scratch; the owner of an eventScanner calls it
+// when the event is done.
+func (s *eventScanner) release() {
+	if s.spare != nil {
+		s.scanner.returnScratch(s.spare)
+		s.spare = nil
+	}
 }
 
 // Include the field name so context-based detectors can recognize, for example,
@@ -81,8 +113,8 @@ func canonicalInteger(text string) bool {
 // is a JSON number: the masked text when one finding covers all of value, so no
 // digits outside a finding survive, and the marker otherwise.
 func (s *eventScanner) scanScalar(ctx context.Context, value, key string) (masked, asNumber string, err error) {
-	scratch := s.scanner.takeScratch()
-	defer s.scanner.returnScratch(scratch)
+	scratch := s.takeScratch()
+	defer s.returnScratch(scratch)
 	findings, err := scalarFindings(ctx, s, scratch, value, key)
 	if err != nil {
 		return "", "", err
@@ -109,8 +141,8 @@ func (s *eventScanner) maskBytes(ctx context.Context, value []byte, key string) 
 		masked, err = s.maskScalar(ctx, text, key)
 		return masked, masked != text, err
 	}
-	scratch := s.scanner.takeScratch()
-	defer s.scanner.returnScratch(scratch)
+	scratch := s.takeScratch()
+	defer s.returnScratch(scratch)
 	findings, err := scalarFindings(ctx, s, scratch, value, key)
 	if err != nil {
 		return "", false, err
@@ -182,8 +214,8 @@ func (s *eventScanner) joinedKeySensitive(ctx context.Context, path []byte, boun
 			return false, nil
 		}
 	}
-	scratch := s.scanner.takeScratch()
-	defer s.scanner.returnScratch(scratch)
+	scratch := s.takeScratch()
+	defer s.returnScratch(scratch)
 	findings := s.scanner.scanAppend(scratch.findings[:0], path, ctx.Err)
 	scratch.findings = findings
 	if ctx.Err() != nil {
@@ -220,8 +252,8 @@ func encodedTextSensitive[T string | []byte](ctx context.Context, s *eventScanne
 	if err != nil || !printableText(decoded[:n]) {
 		return false, nil
 	}
-	scratch := s.scanner.takeScratch()
-	defer s.scanner.returnScratch(scratch)
+	scratch := s.takeScratch()
+	defer s.returnScratch(scratch)
 	findings, err := scalarFindings(ctx, s, scratch, decoded[:n], key)
 	return len(findings) > 0, err
 }

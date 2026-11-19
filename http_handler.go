@@ -65,8 +65,9 @@ func logHTTPExchange(next slog.Handler, scanner *Scanner, r *http.Request, w *ht
 		complete = true
 		return
 	}
-	scan := eventScanner{scanner: scanner, remaining: maxScanBytes}
+	scan := eventScanner{scanner: scanner, spare: nil, remaining: maxScanBytes}
 	record, err := scan.httpRecord(ctx, r, w, when, duration, status)
+	scan.release()
 	if err != nil {
 		cause = err
 		return
@@ -89,7 +90,7 @@ func (scan *eventScanner) maskHTTPHeaders(ctx context.Context, header http.Heade
 		return nil, saferecord.ErrSizeLimit
 	}
 	policy := fieldPolicy{scan: *scan, path: nil, prefix: "", prefixCrossed: false}
-	defer func() { *scan = policy.scan; policy.release() }()
+	defer func() { policy.release(); *scan = policy.scan }()
 	safe := make(map[string]any, len(header))
 	for key, values := range header {
 		name, masked, err := headerField(ctx, &policy, key, values)
@@ -208,7 +209,7 @@ func (scan *eventScanner) httpTarget(ctx context.Context, target *url.URL) (stri
 
 func (scan *eventScanner) httpQuery(ctx context.Context, raw string) ([]byte, error) {
 	policy := fieldPolicy{scan: *scan, path: nil, prefix: "", prefixCrossed: false}
-	defer func() { *scan = policy.scan; policy.release() }()
+	defer func() { policy.release(); *scan = policy.scan }()
 	var result []byte
 	for index, part := range strings.Split(raw, "&") {
 		if index > 0 {
