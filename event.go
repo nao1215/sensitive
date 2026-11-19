@@ -211,7 +211,7 @@ const maxEncodedText = 8 << 10
 // base64, charged to the scan budget, when the decoded bytes are printable
 // UTF-8 text.
 func encodedTextSensitive[T string | []byte](ctx context.Context, s *eventScanner, value T, key string) (bool, error) {
-	if !standardBase64(value) {
+	if !standardBase64(value) || !printableStart(value) {
 		return false, nil
 	}
 	decoded := make([]byte, base64.StdEncoding.DecodedLen(len(value)))
@@ -234,6 +234,32 @@ func standardBase64[T string | []byte](value T) bool {
 	}
 	for i := range len(value) {
 		if c := value[i]; !ascii.IsAlphaNum(c) && c != '+' && c != '/' && c != '=' {
+			return false
+		}
+	}
+	return true
+}
+
+// printableStart reports whether the first three bytes value encodes, which
+// standardBase64 accepted, can start printable UTF-8 text, so most plain
+// words such as "accepted" are rejected without decoding the whole value.
+func printableStart[T string | []byte](value T) bool {
+	const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+	var sextets [4]byte
+	for i := range sextets {
+		// Padding decodes as zero bits, which the byte count below excludes.
+		sextets[i] = byte(max(0, strings.IndexByte(alphabet, value[i]))) //nolint:gosec // A 64-letter alphabet index fits a byte.
+	}
+	decoded := [3]byte{sextets[0]<<2 | sextets[1]>>4, sextets[1]<<4 | sextets[2]>>2, sextets[2]<<6 | sextets[3]}
+	n := len(decoded)
+	if value[3] == '=' {
+		n--
+	}
+	if value[2] == '=' {
+		n--
+	}
+	for _, c := range decoded[:n] {
+		if (c < ' ' && c != '\t' && c != '\n' && c != '\r') || c == 0x7f {
 			return false
 		}
 	}

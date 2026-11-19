@@ -105,9 +105,9 @@ func (p *fieldPolicy) maskJSON(ctx context.Context, data []byte, key string, enc
 type jsonWalker struct {
 	err       error
 	pathMasks map[int]Finding
-	policy    fieldPolicy
 	data      []byte
 	result    []byte
+	policy    fieldPolicy
 	pos       int
 }
 

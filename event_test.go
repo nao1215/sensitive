@@ -232,3 +232,41 @@ func TestPrintableText(t *testing.T) {
 		})
 	}
 }
+
+func TestPrintableStart(t *testing.T) {
+	t.Parallel()
+	encode := func(text string) string { return base64.StdEncoding.EncodeToString([]byte(text)) }
+	tests := []struct {
+		name, value string
+		want        bool
+	}{
+		{"one byte", encode("a"), true},
+		{"two bytes", encode("ab"), true},
+		{"three bytes", encode("abc"), true},
+		{"tab, newline and carriage return", encode("\t\n\r"), true},
+		{"plus and slash", encode("\xfb\xff\xbf"), true},
+		{"digits", encode("\xd3\x4d\x36"), true},
+		{"plain word", "accepted", false},
+		{"control first byte", encode("\x01ab"), false},
+		{"control second byte", encode("a\x01b"), false},
+		{"control third byte", encode("ab\x01"), false},
+		{"delete byte", encode("ab\x7f"), false},
+		{"control after one padded byte", encode("a\x00"), false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := printableStart(tt.value); got != tt.want {
+				t.Fatalf("printableStart(%q) = %v, want %v", tt.value, got, tt.want)
+			}
+		})
+	}
+	// The filter never rejects a value whose whole decoding is printable.
+	for c := range 256 {
+		for _, text := range []string{string(rune(c)), string([]byte{byte(c)}) + "é", "é" + string([]byte{byte(c)})} {
+			if encoded := encode(text); printableText([]byte(text)) && !printableStart(encoded) {
+				t.Fatalf("printableStart rejected %q", encoded)
+			}
+		}
+	}
+}

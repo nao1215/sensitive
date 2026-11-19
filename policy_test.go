@@ -28,8 +28,8 @@ func TestFieldPolicyPath(t *testing.T) {
 	enter("request")
 	enter(pathUser)
 	enter(pathEmail)
-	if string(policy.path.keys) != "request.user.email" {
-		t.Fatalf("path = %q", policy.path.keys)
+	if path := policyPath(&policy); path != "request.user.email" {
+		t.Fatalf("path = %q", path)
 	}
 	for _, key := range []string{pathEmail, pathUser, "request"} {
 		if !policy.leave() {
@@ -39,7 +39,7 @@ func TestFieldPolicyPath(t *testing.T) {
 	enter(pathUser)
 	enter("name")
 	first, second := policy.leave(), policy.leave()
-	if first || second || len(policy.path.keys) != 0 || len(policy.path.members) != 0 {
+	if first || second || policyPath(&policy) != "" || policyDepth(&policy) != 0 {
 		t.Fatal("an unrelated path was marked or not unwound")
 	}
 	if policy.prefixCrossed {
@@ -84,8 +84,8 @@ func TestFieldPolicyMemberKeys(t *testing.T) {
 	if !decision.changed() || decision.masked != redactionMarker || pathKey(decision) != redactionMarker || decision.key != documentedEmail {
 		t.Fatalf("detected key decision = %+v", decision)
 	}
-	if string(policy.path.keys) != redactionMarker {
-		t.Fatalf("a detected key joined the path as %q", policy.path.keys)
+	if path := policyPath(&policy); path != redactionMarker {
+		t.Fatalf("a detected key joined the path as %q", path)
 	}
 	policy.leave()
 	decision, err = policy.member(t.Context(), credentialFixtureKey)
@@ -106,7 +106,7 @@ func TestFieldPolicyMemberKeys(t *testing.T) {
 		t.Fatalf("cached member = %+v, %v, %v", cached, ok, err)
 	}
 	policy.leave()
-	if _, ok, err := policy.cachedMember(t.Context(), []byte("never-seen-key")); ok || err != nil || len(policy.path.members) != 0 {
+	if _, ok, err := policy.cachedMember(t.Context(), []byte("never-seen-key")); ok || err != nil || policyDepth(&policy) != 0 {
 		t.Fatal("an uncached key was entered")
 	}
 }
@@ -126,8 +126,8 @@ func TestFieldPolicyTextMember(t *testing.T) {
 			t.Errorf("textMember(%q, %q) = %q, %q, %v", tc.key, tc.value, key, value, err)
 		}
 	}
-	if len(policy.path.members) != 0 {
-		t.Fatal("textMember left members entered")
+	if policyDepth(&policy) != 0 || policy.path != nil {
+		t.Fatal("textMember left members entered or borrowed path storage")
 	}
 	policy.scan.remaining = 0
 	if _, _, err := policy.textMember(t.Context(), "note", "value"); !errors.Is(err, saferecord.ErrSizeLimit) {
@@ -339,4 +339,27 @@ func TestPooledScratchLimits(t *testing.T) {
 			t.Errorf("keys %d members %d: pooled %v", tc.keys, tc.members, pooled)
 		}
 	}
+}
+
+// policyPath returns the entered key path, whether or not storage is borrowed.
+func policyPath(p *fieldPolicy) string {
+	if p.inTop {
+		return pathKey(p.top)
+	}
+	if p.path == nil {
+		return ""
+	}
+	return string(p.path.keys)
+}
+
+// policyDepth returns the number of entered members.
+func policyDepth(p *fieldPolicy) int {
+	depth := 0
+	if p.inTop {
+		depth++
+	}
+	if p.path != nil {
+		depth += len(p.path.members)
+	}
+	return depth
 }

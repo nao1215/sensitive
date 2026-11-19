@@ -23,14 +23,19 @@ type fieldPolicy struct {
 	path *scanScratch
 	// prefix is a key path bound before the walk, such as slog WithGroup names.
 	prefix string
+	// top is a member entered at the root before path is borrowed; a flat
+	// record never borrows path.
+	top memberKey
 	// prefixCrossed is set when a detected key path includes the prefix, so
 	// the sink writes its bound groups as the marker.
 	prefixCrossed bool
+	// inTop reports that top is entered and not yet in path.
+	inTop bool
 }
 
 // newFieldPolicy returns a policy for one walk; its owner calls release.
 func newFieldPolicy(scanner *Scanner, prefix string) fieldPolicy {
-	return fieldPolicy{scan: eventScanner{scanner: scanner, remaining: maxScanBytes}, path: nil, prefix: prefix, prefixCrossed: false}
+	return fieldPolicy{scan: eventScanner{scanner: scanner, remaining: maxScanBytes}, path: nil, prefix: prefix, top: memberKey{}, prefixCrossed: false, inTop: false}
 }
 
 // release returns the path storage, which holds only keys without findings.
@@ -83,6 +88,10 @@ func (p *fieldPolicy) cachedMember(ctx context.Context, key []byte) (memberKey, 
 // entered key and any bound prefix to be written as the marker; detecting an
 // ancestor alone does not hide its descendants.
 func (p *fieldPolicy) enter(ctx context.Context, key memberKey) error {
+	if p.path == nil && p.prefix == "" && !p.inTop {
+		p.top, p.inTop = key, true
+		return nil
+	}
 	segment := key.key
 	if key.changed() {
 		segment = redactionMarker
@@ -90,6 +99,11 @@ func (p *fieldPolicy) enter(ctx context.Context, key memberKey) error {
 	if p.path == nil {
 		p.path = p.scan.scanner.takeScratch()
 		p.path.keys = append(p.path.keys, p.prefix...)
+		if p.inTop {
+			p.path.members = append(p.path.members, pathMember{parent: 0, crossed: false})
+			p.path.keys = append(p.path.keys, pathKey(p.top)...)
+			p.inTop = false
+		}
 	}
 	stack := p.path
 	parent := len(stack.keys)
@@ -115,6 +129,10 @@ func (p *fieldPolicy) enter(ctx context.Context, key memberKey) error {
 // leave ends the last entered member and reports whether its key is written
 // as the marker because a detected key path crosses it.
 func (p *fieldPolicy) leave() bool {
+	if p.inTop {
+		p.inTop = false
+		return false
+	}
 	stack := p.path
 	last := stack.members[len(stack.members)-1]
 	stack.members = stack.members[:len(stack.members)-1]
@@ -257,6 +275,19 @@ const (
 // namedValueField lowers a short member key and drops separators, as
 // normalizeKey does, without allocating; longer keys are never pair members.
 func namedValueField(key string) pairField {
+	// Most keys are rejected by their first letter without folding.
+	const starts = 1<<('k'-'a') | 1<<('n'-'a') | 1<<('o'-'a') | 1<<('p'-'a') | 1<<('v'-'a')
+	if key == "" {
+		return pairNone
+	}
+	if c := ascii.ToLower(key[0]); c >= 'a' && c <= 'z' && starts>>(c-'a')&1 == 0 {
+		return pairNone
+	}
+	return foldedPairField(key)
+}
+
+// foldedPairField is namedValueField for a key that may name a pair member.
+func foldedPairField(key string) pairField {
 	var folded [len("parametervalue")]byte
 	n := 0
 	for i := range len(key) {
