@@ -199,7 +199,6 @@ func publicPackages() map[string]string {
 func standardMethods() map[string]string {
 	return map[string]string{
 		"Format":        "fmt.Formatter",
-		"GoString":      "fmt.GoStringer",
 		"String":        "fmt.Stringer",
 		"LogValue":      "slog.LogValuer",
 		"MarshalJSON":   "json.Marshaler",

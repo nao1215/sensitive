@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Removed
+
+- `Secret.GoString` and `Input.GoString`. `Format` already wrote the `%#v` output, so `fmt.Sprintf("%#v", secret)` still prints `embargo.Secret[string]([REDACTED])` and an `Input` still prints `[REDACTED]`; neither type implements `fmt.GoStringer` any more.
+- `embargotest.Recorder.File`. Write `r.Canary()` to a file with `os.WriteFile` when the code under test reads a secret from a path.
+
 ### Fixed
 
 - The parallel table in doc/benchmarks.md showed no speed-up from 1 to 16 CPUs since 0.15.0, because the benchmarks ran pinned to one CPU; re-measured on 24 CPUs, 16 goroutines are 10.0 times faster than one through Scanner.Scan, 7.8 times through the slog handler and 4.6 times through the zap WriteSyncer. `make benchmark-doc` now refuses to run with fewer than 16 CPUs in its affinity. Speed comparisons in the README, doc/comparison.md, doc/benchmarks.md and earlier release notes now say how many times faster or slower, instead of a fraction of the other library's time.

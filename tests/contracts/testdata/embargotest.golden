@@ -12,7 +12,6 @@ methodset *Recorder func (*Recorder).Canary() []byte
 methodset *Recorder func (*Recorder).Check() bool
 methodset *Recorder func (*Recorder).Expect(name string, validate func([]byte) bool)
 methodset *Recorder func (*Recorder).ExpectJSON(name string, path []string, fields map[string]string, count int)
-methodset *Recorder func (*Recorder).File(name string) string
 methodset *Recorder func (*Recorder).HTTP(name string) http.ResponseWriter
 methodset *Recorder func (*Recorder).Run(ctx context.Context, helper string, wantExit int) error
 methodset *Recorder func (*Recorder).Writer(name string) io.Writer

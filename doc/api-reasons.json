@@ -277,14 +277,6 @@
   },
   {
     "symbols": [
-      "embargo.Secret.GoString"
-    ],
-    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Secret, so the output is [REDACTED].",
-    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Secret exists to prevent.",
-    "implements": "fmt.GoStringer"
-  },
-  {
-    "symbols": [
       "embargo.Secret.String"
     ],
     "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Secret, so the output is [REDACTED].",
@@ -322,14 +314,6 @@
     "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Input, so the output is [REDACTED].",
     "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Input exists to prevent.",
     "implements": "fmt.Formatter"
-  },
-  {
-    "symbols": [
-      "embargo.Input.GoString"
-    ],
-    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Input, so the output is [REDACTED].",
-    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Input exists to prevent.",
-    "implements": "fmt.GoStringer"
   },
   {
     "symbols": [
@@ -428,13 +412,6 @@
     ],
     "need": "A handler test writes the response into a named recorder so status, headers, body and trailers are all searched for the canary.",
     "without": "Without it the test would use httptest.ResponseRecorder and check the body only, and secrets in headers or trailers would pass."
-  },
-  {
-    "symbols": [
-      "embargotest.Recorder.File"
-    ],
-    "need": "Code that reads a secret from a file path, such as a mounted credential file, gets a private temporary file holding the canary.",
-    "without": "Without it each test would create, chmod and clean up its own temp file with the canary, and could leave it world-readable."
   },
   {
     "symbols": [

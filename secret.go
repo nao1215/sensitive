@@ -36,15 +36,13 @@ func (s Secret[T]) Reveal() T {
 // String returns the fixed redaction marker.
 func (Secret[T]) String() string { return redactionMarker }
 
-// GoString includes the instantiated type, for example embargo.Secret[string]([REDACTED]).
-func (s Secret[T]) GoString() string { return fmt.Sprintf("%T(%s)", s, redactionMarker) }
-
-// Format writes the marker without examining T. The %#v form also names its type.
+// Format writes the marker without examining T. The %#v form also names its
+// type, for example embargo.Secret[string]([REDACTED]).
 // The fmt package handles %T and %p itself and may expose types or addresses.
 func (s Secret[T]) Format(state fmt.State, verb rune) {
 	text := redactionMarker
 	if verb == 'v' && state.Flag('#') {
-		text = s.GoString()
+		text = fmt.Sprintf("%T(%s)", s, redactionMarker)
 	}
 	if _, err := io.WriteString(state, text); err != nil {
 		return

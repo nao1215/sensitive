@@ -599,14 +599,6 @@ func ExampleSecret_String() {
 	// Output: [REDACTED]
 }
 
-func ExampleSecret_GoString() {
-	value := embargo.NewSecret("fake-key")
-
-	fmt.Println(value.GoString())
-
-	// Output: embargo.Secret[string]([REDACTED])
-}
-
 func ExampleSecret_Format() {
 	value := embargo.NewSecret("fake-key")
 
@@ -654,17 +646,6 @@ func ExampleInput_String() {
 	}
 
 	fmt.Println(value.String())
-
-	// Output: [REDACTED]
-}
-
-func ExampleInput_GoString() {
-	var value embargo.Input[string]
-	if err := value.UnmarshalText([]byte("fake-key")); err != nil {
-		panic(err)
-	}
-
-	fmt.Println(value.GoString())
 
 	// Output: [REDACTED]
 }

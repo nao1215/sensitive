@@ -304,22 +304,6 @@ func ExampleCheckValue() {
 	})) // Output: true
 }
 
-func ExampleRecorder_File() {
-	fmt.Println(runExample(func(tb testing.TB) bool {
-		tb.Helper()
-		r := embargotest.New(tb)
-		path := r.File("password")
-		// #nosec G304 -- Path was returned by the canary file helper in the private test directory.
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return false
-		}
-		r.Expect("out", func(data []byte) bool { return string(data) == "[REDACTED]" })
-		fmt.Fprint(r.Writer("out"), embargo.NewSecret(data))
-		return r.Check()
-	})) // Output: true
-}
-
 func ExampleGuard() {
 	// Create a complete test file, so this example needs no repository fixtures.
 	dir, err := os.MkdirTemp(".", ".embargo-guard-example-")
