@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-11-19
+
 ### Added
 
 - `KindPhone` detects international phone numbers written with `+` and an assigned country calling code, such as `+44 20 7946 0958`, `+1 (202) 555-0123` and `+919876543210`, so a scanner masks phone numbers from every country without one detector per country. It is on by default. Numbers without `+` follow one country's rules and stay with `KindJPPhone` and `KindUSPhone`.
