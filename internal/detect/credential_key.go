@@ -37,11 +37,13 @@ func NormalizeCredentialKey(key string) string {
 // is the working directory in environment dumps.
 func SensitiveCredentialKey(key string) bool {
 	normalized := NormalizeCredentialKey(key)
-	return credentialSuffix(key) || sensitiveNormalizedKey(normalized) || normalized == shortPassKey || normalized == shortPasswordKey
+	return credentialSuffix(key) || sensitiveNormalizedKey([]byte(normalized)) || normalized == shortPassKey || normalized == shortPasswordKey
 }
 
-func sensitiveNormalizedKey(key string) bool {
-	switch key {
+// sensitiveNormalizedKey takes bytes, which the switch compares without
+// building a string.
+func sensitiveNormalizedKey(key []byte) bool {
+	switch string(key) {
 	case "password", "passwd", credentialSecretKey, credentialTokenKey, "apikey", authorizationKey, proxyAuthorizationKey, cookieKey, setCookieKey, "accesstoken", "refreshtoken", "idtoken", "xapikey", "dbpassword", "privatetoken", "clientsecret", "authtoken", "pgpassword",
 		"otp", "pin", "passcode", "passphrase", "session", "sessionid", "sessiontoken", jsessionIDKey, "phpsessid":
 		return true
@@ -71,11 +73,11 @@ func (d *Credential) secretKey(key []byte) bool {
 		normalized[n] = ascii.ToLower(b)
 		n++
 	}
-	name := string(normalized[:n])
+	name := normalized[:n]
 	if d.MatchKey == nil && sensitiveNormalizedKey(name) {
 		return true
 	}
-	switch name {
+	switch string(name) {
 	case "xamzsignature", "sig", "accountkey", "sharedaccesssignature", "awssecretaccesskey", "secretaccesskey", "privatekey", "clientsecret", "twilioauthtoken", "authtoken":
 		return true
 	}
