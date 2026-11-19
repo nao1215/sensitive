@@ -103,21 +103,6 @@ func validRRNDate(value string) bool {
 	return countryDate(century + value[:6])
 }
 
-func countryLuhn(value string) bool {
-	sum := 0
-	for i := len(value) - 1; i >= 0; i-- {
-		digit := int(value[i] - '0')
-		if (len(value)-1-i)%doubledDigit == 1 {
-			digit *= doubledDigit
-			if digit > luhnCorrection {
-				digit -= luhnCorrection
-			}
-		}
-		sum += digit
-	}
-	return sum%decimalRadix == 0
-}
-
 func validVerhoeff(value string) bool {
 	// Multiplication in D5, represented by its ten permutations, and powers of the Verhoeff permutation.
 	multiplication := [10][10]int{

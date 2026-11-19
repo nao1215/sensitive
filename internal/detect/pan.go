@@ -1,7 +1,6 @@
 package detect
 
 import (
-	"slices"
 	"unicode/utf8"
 
 	"github.com/nao1215/embargo/internal/ascii"
@@ -217,11 +216,11 @@ func cardLabels() []string { return []string{"card", "pan", "cc", "credit", "カ
 // passesLuhn implements the Luhn algorithm (MOD 10) for check digit validation.
 // It processes digits from right to left, doubling every second digit.
 // A valid number produces a sum divisible by 10.
-func passesLuhn(digits []byte) bool {
+func passesLuhn[T string | []byte](digits T) bool {
 	sum := 0
 	alt := false
-	for _, digit := range slices.Backward(digits) {
-		n := int(digit - '0')
+	for i := len(digits) - 1; i >= 0; i-- {
+		n := int(digits[i] - '0')
 		if alt {
 			n *= 2
 			//nolint:mnd // Literal field widths and arithmetic follow the format rules documented on this detector.
