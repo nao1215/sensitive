@@ -151,7 +151,7 @@ func (w *response) trailerSnapshot() http.Header {
 func (w *response) snapshot(header http.Header, include func(string) bool) http.Header {
 	r := w.recorder
 	snapshot := make(http.Header)
-	budget := r.maxBytes - r.retained
+	budget := r.policy.maxBytes - r.retained
 	for key, values := range header {
 		if !include(key) {
 			continue

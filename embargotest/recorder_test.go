@@ -49,7 +49,7 @@ func TestRecorderDefaults(t *testing.T) {
 	t.Parallel()
 	p := &probeTB{TB: t}
 	r := New(p, nil)
-	if len(r.Canary()) != 32 || r.maxBytes != 1<<20 || r.timeout != 5*time.Second || maxSinks != 16 || childWaitDelay != 250*time.Millisecond {
+	if len(r.Canary()) != 32 || r.policy.maxBytes != 1<<20 || r.policy.timeout != 5*time.Second || maxSinks != 16 || childWaitDelay != 250*time.Millisecond {
 		t.Fatal("defaults changed")
 	}
 	c := r.Canary()

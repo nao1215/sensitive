@@ -22,8 +22,7 @@ const (
 // content. Writers support concurrent calls. Stop producers before Check.
 // Every recorder must be checked; Cleanup reports missing checks and late writes.
 type Recorder struct {
-	*policy
-
+	policy        *policy
 	tb            testing.TB
 	metadataKinds map[embargo.Kind]bool
 	sinks         map[string]*stream
@@ -90,11 +89,11 @@ type (
 // that matches unrelated output.
 func WithCanary(canary []byte) Option { return canaryOption(append([]byte(nil), canary...)) }
 
-func (c canaryOption) apply(r *policy) bool {
+func (c canaryOption) apply(p *policy) bool {
 	if len(c) < 16 || len(c) > 1024 {
 		return false
 	}
-	r.canary = append([]byte(nil), c...)
+	p.canary = append([]byte(nil), c...)
 	return true
 }
 
@@ -104,11 +103,11 @@ func (c canaryOption) apply(r *policy) bool {
 // and Error stay unbounded. Prefer Secret or a LogValuer returning a bounded value.
 func WithMaxBytes(n int64) Option { return maxBytesOption(n) }
 
-func (o maxBytesOption) apply(r *policy) bool {
+func (o maxBytesOption) apply(p *policy) bool {
 	if o < 1 {
 		return false
 	}
-	r.maxBytes = int64(o)
+	p.maxBytes = int64(o)
 	return true
 }
 
@@ -118,11 +117,11 @@ func (o maxBytesOption) apply(r *policy) bool {
 // interrupt in-process encoding or scanner callbacks.
 func WithTimeout(d time.Duration) Option { return timeoutOption(d) }
 
-func (o timeoutOption) apply(r *policy) bool {
+func (o timeoutOption) apply(p *policy) bool {
 	if o <= 0 {
 		return false
 	}
-	r.timeout = time.Duration(o)
+	p.timeout = time.Duration(o)
 	return true
 }
 
@@ -132,7 +131,7 @@ func (o timeoutOption) apply(r *policy) bool {
 func New(tb testing.TB, opts ...Option) *Recorder {
 	tb.Helper()
 	r := &Recorder{policy: newPolicy(defaultTimeout, opts), detected: false, scannerFailed: false, responses: nil, mu: sync.Mutex{}, retained: 0, expectations: nil, checked: false, failed: false, reported: false, leaked: false, running: 0, metadataKinds: map[embargo.Kind]bool{}, tb: tb, sinks: make(map[string]*stream)}
-	r.failed = r.invalid
+	r.failed = r.policy.invalid
 	if r.failed {
 		tb.Error("embargotest: invalid options")
 	}
@@ -158,7 +157,7 @@ func New(tb testing.TB, opts ...Option) *Recorder {
 }
 
 // Canary returns a copy of the fake secret to insert into the tested path.
-func (r *Recorder) Canary() []byte { return append([]byte(nil), r.canary...) }
+func (r *Recorder) Canary() []byte { return append([]byte(nil), r.policy.canary...) }
 
 // Writer returns the named stream; repeated calls append to the same capture.
 // Names must have 1 through 128 bytes. Writes after Check and truncated output
@@ -200,7 +199,7 @@ func (s *stream) Write(p []byte) (int, error) {
 
 // capture appends while the caller holds mu.
 func (r *Recorder) capture(s *stream, p []byte) int {
-	remaining := r.maxBytes - r.retained
+	remaining := r.policy.maxBytes - r.retained
 	keep := len(p)
 	if int64(keep) > remaining {
 		keep = int(remaining)

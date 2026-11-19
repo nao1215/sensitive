@@ -12,8 +12,10 @@
 // Cumulative scanner input, including repeated field names, is limited to 4 MiB
 // per event; exceeding it fails closed.
 //
-// Byte slices encoded as base64 and other application encodings are not decoded;
-// wrap them in embargo.Secret before logging. Hooks with independent output are
+// A byte slice, which logrus writes as base64, is decoded once and scanned when it
+// is 20 bytes to 8 KiB of padded standard base64 and decodes to printable text;
+// other binary data and application encodings are not decoded, so wrap such
+// values in embargo.Secret before logging. Hooks with independent output are
 // outside the formatter boundary. The caller's formatter must be safe for the
 // logger's concurrency configuration; the adapter does not mutate the Entry.
 //

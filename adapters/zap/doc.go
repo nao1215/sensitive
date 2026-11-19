@@ -12,8 +12,10 @@
 // per event; exceeding it fails closed.
 //
 // Use this sink for every core that needs masking. Console/CBOR encoders are not
-// supported. Base64 Binary fields and application encodings are not decoded;
-// wrap such values in embargo.Secret before logging. Zap's separate ErrorOutput
+// supported. A Binary field, which zap writes as base64, is decoded once and
+// scanned when it is 20 bytes to 8 KiB of padded standard base64 and decodes to
+// printable text; other binary data and application encodings are not decoded,
+// so wrap such values in embargo.Secret before logging. Zap's separate ErrorOutput
 // and any other sinks are outside this adapter's scope.
 //
 // If masking fails, the adapter writes a fixed diagnostic with a recognized level and

@@ -20,7 +20,9 @@ import (
 // other header and query keys follow WithSensitiveKeys, and bodies are not logged;
 // requests and responses pass through unchanged. All arguments are required.
 // If masking fails, the record keeps only time, level, status, duration and a fixed
-// reason. The [logging guide] covers contexts, panics and the failure record.
+// reason. Attributes already bound to logger, as with logger.With, are written as
+// they are; build logger from a handler without them. The [logging guide] covers
+// contexts, panics and the failure record.
 //
 // [logging guide]: https://github.com/nao1215/embargo/blob/main/doc/logging.md#bounds-and-failures
 func NewHTTPHandler(next http.Handler, logger *slog.Logger, scanner *Scanner) http.Handler {

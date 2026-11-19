@@ -112,8 +112,10 @@ func splitEnding(line []byte) (body, ending []byte) {
 }
 
 // maskLine uses MaskJSON for a line holding one JSON object or array, keeping
-// its shape and the sensitive key policy; any other line, and JSON that
-// MaskJSON rejects, is masked as text, which never returns the input unmasked.
+// its shape and the sensitive key policy. Any other line, and JSON that
+// MaskJSON rejects, is masked as text: detected values are replaced, the
+// sensitive key policy does not apply, and a line without findings is written
+// unchanged.
 // A line inside an open PEM block is always masked as text.
 func maskLine(lines *lineScanner, body []byte) []byte {
 	if trimmed := bytes.TrimLeft(body, " \t"); !lines.open() && len(trimmed) > 0 && (trimmed[0] == '{' || trimmed[0] == '[') {
