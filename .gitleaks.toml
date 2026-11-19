@@ -6,7 +6,9 @@
 [extend]
 useDefault = true
 
-[[allowlists]]
+# The singular table: gitleaks-action installs gitleaks 8.24, which does not
+# read the newer [[allowlists]] array.
+[allowlist]
 description = "Synthetic credentials used as detector test inputs and measurement records"
 paths = [
   '''(^|/)[^/]+_test\.go$''',
