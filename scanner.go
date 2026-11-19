@@ -445,6 +445,8 @@ func (s *Scanner) filterFindings(findings []Finding, inputLength int) []Finding 
 			result = append(result, f)
 		}
 	}
-	slices.SortStableFunc(result, compareFindings)
+	// compareFindings orders by every field, so findings it ties are equal
+	// and an unstable sort returns the same slice as a stable one.
+	slices.SortFunc(result, compareFindings)
 	return result
 }
