@@ -8,11 +8,17 @@ import (
 
 // Phone implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindPhone.
-type Phone struct{}
+type Phone struct {
+	codes map[string]bool
+}
 
 // NewPhone recognizes international numbers written with + and a country calling code.
 func NewPhone() *Phone {
-	return &Phone{}
+	codes := make(map[string]bool)
+	for code := range strings.FieldsSeq(callingCodes) {
+		codes[code] = true
+	}
+	return &Phone{codes: codes}
 }
 
 // Name returns "phone".
@@ -50,7 +56,7 @@ func (d *Phone) Scan(data []byte) []Finding {
 		if data[i] != '+' || (i != previousEnd && !phoneLeadingBoundary(data, i)) {
 			continue
 		}
-		end, ok := phoneAt(data, i+1)
+		end, ok := d.phoneAt(data, i+1)
 		if !ok {
 			continue
 		}
@@ -78,8 +84,8 @@ func phoneLeadingBoundary(data []byte, i int) bool {
 
 // phoneAt reads a country calling code at start, followed by digit groups
 // separated by one space, hyphen or dot, and returns the end of the number.
-func phoneAt(data []byte, start int) (int, bool) {
-	code := phoneCountryCode(data, start)
+func (d *Phone) phoneAt(data []byte, start int) (int, bool) {
+	code := d.countryCode(data, start)
 	if code == 0 {
 		return 0, false
 	}
@@ -143,14 +149,14 @@ func phoneGroup(data []byte, at int) (next int, digits []byte, trunk, ok bool) {
 	return next, data[at:next], false, next > at
 }
 
-// phoneCountryCode returns the length of the assigned calling code at start,
+// countryCode returns the length of the assigned calling code at start,
 // or 0. Calling codes are prefix-free, so at most one length matches.
-func phoneCountryCode(data []byte, start int) int {
+func (d *Phone) countryCode(data []byte, start int) int {
 	for n := 1; n <= phoneMaxCountryCode && start+n <= len(data); n++ {
 		if !ascii.IsDigit(data[start+n-1]) {
 			return 0
 		}
-		if strings.Contains(callingCodes, " "+string(data[start:start+n])+" ") {
+		if d.codes[string(data[start:start+n])] {
 			return n
 		}
 	}
@@ -158,13 +164,19 @@ func phoneCountryCode(data []byte, start int) int {
 }
 
 // callingCodes lists the ITU-T E.164 country calling codes in service,
-// including global services such as 800 and 883, with a space on each side.
-// Spare and reserved codes are absent, so +0 and +28 never start a number.
-const callingCodes = " 1 7 20 27 30 31 32 33 34 36 39 40 41 43 44 45 46 47 48 49 51 52 53 54 55 56 57 58 60 61 62 63 64 65 66 81 82 84 86 90 91 92 93 94 95 98 " +
-	"211 212 213 216 218 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 260 261 262 263 264 265 266 267 268 269 290 291 297 298 299 " +
-	"350 351 352 353 354 355 356 357 358 359 370 371 372 373 374 375 376 377 378 379 380 381 382 383 385 386 387 389 420 421 423 " +
-	"500 501 502 503 504 505 506 507 508 509 590 591 592 593 594 595 596 597 598 599 670 672 673 674 675 676 677 678 679 680 681 682 683 685 686 687 688 689 690 691 692 " +
-	"800 808 850 852 853 855 856 870 880 881 882 883 886 960 961 962 963 964 965 966 967 968 970 971 972 973 974 975 976 977 979 992 993 994 995 996 998 "
+// including global services such as 800 and 883. Spare and reserved codes are
+// absent, so +0 and +28 never start a number.
+const callingCodes = `
+1 7 20 27 30 31 32 33 34 36 39 40 41 43 44 45 46 47 48 49 51 52 53 54 55 56 57 58 60 61 62 63
+64 65 66 81 82 84 86 90 91 92 93 94 95 98 211 212 213 216 218 220 221 222 223 224 225 226 227
+228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250
+251 252 253 254 255 256 257 258 260 261 262 263 264 265 266 267 268 269 290 291 297 298 299
+350 351 352 353 354 355 356 357 358 359 370 371 372 373 374 375 376 377 378 379 380 381 382
+383 385 386 387 389 420 421 423 500 501 502 503 504 505 506 507 508 509 590 591 592 593 594
+595 596 597 598 599 670 672 673 674 675 676 677 678 679 680 681 682 683 685 686 687 688 689
+690 691 692 800 808 850 852 853 855 856 870 880 881 882 883 886 960 961 962 963 964 965 966
+967 968 970 971 972 973 974 975 976 977 979 992 993 994 995 996 998
+`
 
 // phoneTrailingBoundary rejects a number that runs into an identifier, more
 // digits, or a dotted or slashed continuation such as a version or a date.
