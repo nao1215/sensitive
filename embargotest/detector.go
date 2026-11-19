@@ -14,8 +14,8 @@ type (
 	valuesOption  []string
 )
 
-// WithScanner replaces the default 26 built-ins at minimum confidence 0.
-// National ID kinds and entropy are opt-in; NewScanner(WithAll()) selects all 38.
+// WithScanner replaces the default 19 built-ins at minimum confidence 0.
+// One country's formats and entropy are opt-in; NewScanner(WithAll()) selects all 39.
 // Nil fails the test.
 func WithScanner(scanner *embargo.Scanner) Option { return scannerOption{scanner: scanner} }
 

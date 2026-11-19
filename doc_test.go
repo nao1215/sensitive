@@ -437,9 +437,9 @@ func TestDefaultPolicyDocumentation(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		for _, required := range []string{"26 built-ins", "38", "WithAll", "opt-in"} {
+		for _, required := range []string{"19 built-ins", "39", "WithAll", "opt-in"} {
 			if !strings.Contains(string(text), required) {
-				t.Errorf("%s omits the v0.5 default contract %q", path, required)
+				t.Errorf("%s omits the default contract %q", path, required)
 			}
 		}
 		for _, stale := range []string{"enables every built-in", "default all-built-in policy", "reports some public random identifiers as high-entropy candidates", "WithMinConfidence(0.5)"} {
