@@ -127,7 +127,7 @@ On the same five JSON slog events, embargo is 1.07 to 1.45 times faster than go-
 
 ## Find and mask sensitive text
 
-embargo has 39 built-in detectors (19 run by default). The default covers values that are secret or personal in every country, in formats every country uses. One country's formats, such as My Number or US routing numbers, are opt-in through `WithKinds`; `WithAll` turns on everything.
+embargo has 39 built-in detectors (19 run by default). The default covers values that are secret or personal in every country, in formats every country uses. One country's formats, such as My Number or US routing numbers, are opt-in: `WithMoreKinds` adds them to the default, and `WithAll` turns on everything.
 
 <!-- example: example_test.go:ExampleKindCredential -->
 ```go

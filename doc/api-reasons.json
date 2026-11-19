@@ -29,6 +29,13 @@
   },
   {
     "symbols": [
+      "embargo.WithMoreKinds"
+    ],
+    "need": "A service in one country keeps NewScanner's default and turns on that country's formats, such as My Number and Japanese phone numbers, which are opt-in.",
+    "without": "Without it the caller would list all 19 default kinds in WithKinds plus its own, and that copied list would not follow later changes to the default."
+  },
+  {
+    "symbols": [
       "embargo.WithAll"
     ],
     "need": "A service that stores identifiers from several countries enables every national ID kind and the entropy heuristic in one option, including kinds added in later releases.",

@@ -46,3 +46,49 @@ func TestWithKindsPanicNamesOnlyMisspellings(t *testing.T) {
 		}()
 	}
 }
+
+func TestWithMoreKindsAddsToTheSelection(t *testing.T) {
+	t.Parallel()
+	const myNumber = "my_number=123456789018"
+	const email = "alice@example.com"
+	tests := []struct {
+		name                    string
+		opts                    []embargo.ScannerOption
+		wantMyNumber, wantEmail bool
+	}{
+		{name: "default", opts: nil, wantMyNumber: false, wantEmail: true},
+		{name: "added to the default", opts: []embargo.ScannerOption{embargo.WithMoreKinds(embargo.KindMyNumber)}, wantMyNumber: true, wantEmail: true},
+		{name: "added to WithKinds", opts: []embargo.ScannerOption{embargo.WithKinds(embargo.KindPAN), embargo.WithMoreKinds(embargo.KindMyNumber)}, wantMyNumber: true, wantEmail: false},
+		{name: "WithKinds afterwards replaces it", opts: []embargo.ScannerOption{embargo.WithMoreKinds(embargo.KindMyNumber), embargo.WithKinds(embargo.KindEmail)}, wantMyNumber: false, wantEmail: true},
+		{name: "two calls add up", opts: []embargo.ScannerOption{embargo.WithKinds(), embargo.WithMoreKinds(embargo.KindMyNumber), embargo.WithMoreKinds(embargo.KindEmail)}, wantMyNumber: true, wantEmail: true},
+		{name: "nothing added", opts: []embargo.ScannerOption{embargo.WithMoreKinds()}, wantMyNumber: false, wantEmail: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			s := embargo.NewScanner(tt.opts...)
+			if got := len(s.ScanString(myNumber)) > 0; got != tt.wantMyNumber {
+				t.Errorf("My Number found = %v, want %v", got, tt.wantMyNumber)
+			}
+			if got := len(s.ScanString(email)) > 0; got != tt.wantEmail {
+				t.Errorf("email found = %v, want %v", got, tt.wantEmail)
+			}
+		})
+	}
+}
+
+func TestWithMoreKindsCopiesAndRejectsUnknownKinds(t *testing.T) {
+	t.Parallel()
+	kinds := []embargo.Kind{embargo.KindMyNumber}
+	opt := embargo.WithMoreKinds(kinds...)
+	kinds[0] = embargo.KindPAN
+	if s := embargo.NewScanner(opt); len(s.ScanString("my_number=123456789018")) != 1 || len(s.ScanString("card 4111111111111111")) != 1 {
+		t.Fatal("WithMoreKinds did not copy its kinds")
+	}
+	defer func() {
+		if got := recover(); got != `embargo: unknown built-in kind "mynumbr" (did you mean "mynumber"?)` {
+			t.Fatalf("panic = %v", got)
+		}
+	}()
+	embargo.WithMoreKinds("mynumbr")
+}

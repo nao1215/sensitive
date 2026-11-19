@@ -101,6 +101,20 @@ func ExampleWithAll() {
 	// [REDACTED] ssn [REDACTED]
 }
 
+func ExampleWithMoreKinds() {
+	text := "alice@example.com 個人番号 1234 5678 9018 tel 03-1234-5678"
+
+	// A service in Japan keeps the default and adds Japan's formats.
+	japan := embargo.NewScanner(embargo.WithMoreKinds(embargo.KindMyNumber, embargo.KindJPPhone))
+	for _, scanner := range []*embargo.Scanner{embargo.NewScanner(), japan} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// [REDACTED] 個人番号 1234 5678 9018 tel 03-1234-5678
+	// [REDACTED] 個人番号 [REDACTED] tel [REDACTED]
+}
+
 func ExampleWithMinConfidence() {
 	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindBankAccount), embargo.WithMinConfidence(.9))
 

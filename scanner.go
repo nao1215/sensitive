@@ -15,6 +15,8 @@ import (
 type Scanner struct {
 	sensitiveKeys map[string]struct{}
 	kinds         map[Kind]bool
+	// moreKinds holds kinds WithMoreKinds adds to the selection.
+	moreKinds     map[Kind]bool
 	detectors     []detect.Detector
 	hintCache     [][]hintEntry
 	custom        []Detector
@@ -67,7 +69,7 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 		matchKey = s.sensitiveKey
 	}
 	for _, d := range builtins(matchKey) {
-		if (s.kinds == nil && (s.allKinds || defaultKind(Kind(d.Name())))) || s.kinds[Kind(d.Name())] {
+		if (s.kinds == nil && (s.allKinds || defaultKind(Kind(d.Name())))) || s.kinds[Kind(d.Name())] || s.moreKinds[Kind(d.Name())] {
 			s.detectors = append(s.detectors, d)
 		}
 	}

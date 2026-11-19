@@ -53,6 +53,7 @@ func WithDetector(d Detector) ScannerOption
 func WithKinds(kinds ...Kind) ScannerOption
 func WithMaskFunc(replace func(kind Kind, value string) string) ScannerOption
 func WithMinConfidence(threshold float64) ScannerOption
+func WithMoreKinds(kinds ...Kind) ScannerOption
 func WithSensitiveKeys(keys ...string) ScannerOption
 func WithoutDefaultSensitiveKeys() ScannerOption
 methodset *Input[T interface{~string | ~[]byte}] func (*Input[T]).Scan(src any) error

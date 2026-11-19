@@ -15,11 +15,34 @@ type (
 
 func (o scannerOption) apply(s *Scanner) { o(s) }
 
-// WithKinds replaces the built-in selection. No kinds selects none; custom detectors remain.
+// WithKinds replaces the built-in selection, including kinds added by an
+// earlier WithMoreKinds. No kinds selects none; custom detectors remain.
 // An unknown kind panics; the message quotes it and suggests the nearest
 // built-in only when it is a likely misspelling, within two edits of one.
 // The supplied slice is copied.
 func WithKinds(kinds ...Kind) ScannerOption {
+	selected := knownKinds(kinds)
+	return scannerOption(func(s *Scanner) { s.kinds = selected; s.allKinds = false; s.moreKinds = nil })
+}
+
+// WithMoreKinds adds built-in kinds to the selection made so far, by default
+// NewScanner's, so an application keeps the default and turns on the formats
+// of the countries it serves, such as KindMyNumber and KindJPPhone. Unknown
+// kinds panic as in WithKinds. The supplied slice is copied.
+func WithMoreKinds(kinds ...Kind) ScannerOption {
+	added := knownKinds(kinds)
+	return scannerOption(func(s *Scanner) {
+		if s.moreKinds == nil {
+			s.moreKinds = make(map[Kind]bool, len(added))
+		}
+		for kind := range added {
+			s.moreKinds[kind] = true
+		}
+	})
+}
+
+// knownKinds copies kinds into a set and panics on one that is not built in.
+func knownKinds(kinds []Kind) map[Kind]bool {
 	selected := make(map[Kind]bool, len(kinds))
 	known := make(map[Kind]bool)
 	for _, d := range builtins(nil) {
@@ -31,14 +54,14 @@ func WithKinds(kinds ...Kind) ScannerOption {
 		}
 		selected[kind] = true
 	}
-	return scannerOption(func(s *Scanner) { s.kinds = selected; s.allKinds = false })
+	return selected
 }
 
 // WithAll enables national identifiers from every supported country and unlabelled entropy candidates.
 // WithKinds avoids scanning for formats the application never handles and usually costs less.
 // Measurements and the recall tradeoff are in https://github.com/nao1215/embargo/blob/main/doc/benchmarks.md.
 func WithAll() ScannerOption {
-	return scannerOption(func(s *Scanner) { s.kinds = nil; s.allKinds = true })
+	return scannerOption(func(s *Scanner) { s.kinds = nil; s.allKinds = true; s.moreKinds = nil })
 }
 
 // WithDetector appends a custom detector independently of the built-in selection.
