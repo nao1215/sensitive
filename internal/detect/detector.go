@@ -17,6 +17,8 @@ const (
 	NameJPPhone DetectorName = "phone_jp"
 	// NameUSPhone is the detector name for North American phone numbers.
 	NameUSPhone DetectorName = "phone_us"
+	// NamePhone is the detector name for international phone numbers written with +.
+	NamePhone DetectorName = "phone"
 	// NameMyNumber is the detector name for Japanese My Number (individual number).
 	NameMyNumber DetectorName = "mynumber"
 	// NameJWT is the detector name for JSON Web Tokens.
@@ -61,10 +63,10 @@ const (
 
 // Detector extracts findings from bytes without modifying the input. Implementations used by concurrent scanner calls must support concurrent use.
 type Detector interface {
-	// Name returns the detector identifier used in its findings; scanner registrations with the same name replace earlier ones.
+	// Name returns the detector identifier used in its findings; the root package maps it to a public Kind.
 	Name() DetectorName
 
-	// Hints returns exhaustive pre-filter substrings: every possible match must contain at least one, or scanning may miss it. ASCII letters are matched case-insensitively; other bytes match exactly. Nil or empty hints always run Scan; keep hints unchanged after registration.
+	// Hints returns exhaustive pre-filter substrings: every possible match must contain at least one, or scanning may miss it. ASCII letters are matched case-insensitively; other bytes match exactly. Nil or empty hints skip the hint filter, though the first-byte dispatch of a detector with StartBytes still applies; keep hints unchanged after registration.
 	Hints() [][]byte
 
 	// Scan returns findings with original byte offsets. It must handle arbitrary input, including calls without hint filtering; use dedicated parsers and domain validation where practical.
@@ -137,6 +139,7 @@ var (
 	_ Detector = (*Email)(nil)
 	_ Detector = (*JPPhone)(nil)
 	_ Detector = (*USPhone)(nil)
+	_ Detector = (*Phone)(nil)
 	_ Detector = (*MyNumber)(nil)
 	_ Detector = (*JWT)(nil)
 	_ Detector = (*AWSKey)(nil)

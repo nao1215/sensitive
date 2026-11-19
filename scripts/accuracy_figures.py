@@ -56,6 +56,7 @@ HARD_CASES = {
  'pan':'Luhn-valid Visa, Mastercard, Amex and JCB shapes, hyphen-separated groups and full-width digits.',
  'phone_jp':'Hyphenated mobile numbers, full-width digits and Japanese text boundaries.',
  'phone_us':'Hyphenated, dotted and parenthesized fictional 555-01xx numbers.',
+ 'phone':'Fictional UK, Australian and North American numbers after + with spaces, hyphens or a parenthesized area code, and unseparated; spare country codes and signed amounts as look-alikes.',
  'mynumber':'Independently generated MOD 11 check digits, full-width digits and Japanese text boundaries.',
  'iban':'Independently generated German MOD 97 check digits and surrounding JSON or log text.',
  'btc':'Independently generated Base58Check P2PKH addresses and invalid checksum look-alikes.',

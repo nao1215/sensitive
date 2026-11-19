@@ -1,0 +1,38 @@
+name: gitleaks
+
+# Scans the commits of a pull request for committed secrets. This repository is
+# a detector, so its tests and measurement documents hold many synthetic
+# credentials on purpose; .gitleaks.toml lists those paths. Everything else,
+# including library code, scripts and workflows, must stay free of anything
+# gitleaks recognizes.
+
+on: [pull_request]
+
+permissions:
+  contents: read
+  # The action lists the pull request's commits to scope its scan, so it needs
+  # read access to pull requests; contents alone returns 403 on that call.
+  pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Dependabot runs get a read-only token, and the action's commit listing
+    # returns 403 with it. Version bumps carry no secrets to scan.
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml

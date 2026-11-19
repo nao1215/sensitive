@@ -36,212 +36,212 @@
   },
   "benchmarks": {
     "BenchmarkComparison/clean/embargo": {
-      "ns/op": 944.95,
+      "ns/op": 943.55,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparison/clean/embargo-default": {
-      "ns/op": 1380.5,
+      "ns/op": 1082.0,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparison/clean/ferret-scan": {
-      "ns/op": 86111.0,
+      "ns/op": 84841.0,
       "B/op": 7208.0,
       "allocs/op": 83.0
     },
     "BenchmarkComparison/clean/go-masker": {
-      "ns/op": 1366.0,
+      "ns/op": 1332.0,
       "B/op": 8.0,
       "allocs/op": 1.0
     },
     "BenchmarkComparison/clean/masq": {
-      "ns/op": 2816.0,
+      "ns/op": 2834.5,
       "B/op": 792.0,
       "allocs/op": 50.0
     },
     "BenchmarkComparison/clean/pii-shield": {
-      "ns/op": 4490.5,
+      "ns/op": 4383.5,
       "B/op": 488.0,
       "allocs/op": 4.0
     },
     "BenchmarkComparison/clean/plain": {
-      "ns/op": 420.3,
+      "ns/op": 420.04999999999995,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparison/flat/embargo": {
-      "ns/op": 1301.5,
+      "ns/op": 1270.0,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparison/flat/embargo-default": {
-      "ns/op": 2105.5,
+      "ns/op": 1686.0,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparison/flat/ferret-scan": {
-      "ns/op": 120069.0,
+      "ns/op": 118069.5,
       "B/op": 53556.0,
       "allocs/op": 385.0
     },
     "BenchmarkComparison/flat/go-masker": {
-      "ns/op": 1419.0,
+      "ns/op": 1398.0,
       "B/op": 48.0,
       "allocs/op": 3.0
     },
     "BenchmarkComparison/flat/masq": {
-      "ns/op": 3129.5,
+      "ns/op": 3117.5,
       "B/op": 672.0,
       "allocs/op": 32.0
     },
     "BenchmarkComparison/flat/pii-shield": {
-      "ns/op": 4805.0,
+      "ns/op": 4679.0,
       "B/op": 702.0,
       "allocs/op": 11.0
     },
     "BenchmarkComparison/flat/plain": {
-      "ns/op": 406.6,
+      "ns/op": 398.4,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparison/large50/embargo": {
-      "ns/op": 13106.5,
+      "ns/op": 12799.0,
       "B/op": 4098.0,
       "allocs/op": 2.0
     },
     "BenchmarkComparison/large50/embargo-default": {
-      "ns/op": 21517.5,
-      "B/op": 4100.0,
+      "ns/op": 17709.5,
+      "B/op": 4099.0,
       "allocs/op": 2.0
     },
     "BenchmarkComparison/large50/ferret-scan": {
-      "ns/op": 1015559.0,
+      "ns/op": 990338.5,
       "B/op": 71011.0,
       "allocs/op": 386.0
     },
     "BenchmarkComparison/large50/go-masker": {
-      "ns/op": 13963.5,
+      "ns/op": 15031.5,
       "B/op": 2096.0,
       "allocs/op": 4.0
     },
     "BenchmarkComparison/large50/masq": {
-      "ns/op": 60439.0,
+      "ns/op": 59496.0,
       "B/op": 12707.0,
       "allocs/op": 561.0
     },
     "BenchmarkComparison/large50/pii-shield": {
-      "ns/op": 66222.0,
+      "ns/op": 64110.0,
       "B/op": 8369.0,
       "allocs/op": 12.0
     },
     "BenchmarkComparison/large50/plain": {
-      "ns/op": 3805.5,
+      "ns/op": 3751.5,
       "B/op": 2048.0,
       "allocs/op": 1.0
     },
     "BenchmarkComparison/map/embargo": {
-      "ns/op": 3050.0,
+      "ns/op": 3070.0,
       "B/op": 554.0,
       "allocs/op": 15.0
     },
     "BenchmarkComparison/map/embargo-default": {
-      "ns/op": 4109.0,
+      "ns/op": 3597.5,
       "B/op": 554.0,
       "allocs/op": 15.0
     },
     "BenchmarkComparison/map/ferret-scan": {
-      "ns/op": 142140.0,
+      "ns/op": 141221.0,
       "B/op": 54137.0,
       "allocs/op": 391.0
     },
     "BenchmarkComparison/map/go-masker": {
-      "ns/op": 3503.0,
+      "ns/op": 3553.5,
       "B/op": 1448.0,
       "allocs/op": 29.0
     },
     "BenchmarkComparison/map/masq": {
-      "ns/op": 5537.0,
+      "ns/op": 5644.5,
       "B/op": 1744.0,
       "allocs/op": 63.0
     },
     "BenchmarkComparison/map/pii-shield": {
-      "ns/op": 6950.5,
+      "ns/op": 6746.0,
       "B/op": 1184.0,
       "allocs/op": 22.0
     },
     "BenchmarkComparison/map/plain": {
-      "ns/op": 1232.0,
+      "ns/op": 1242.5,
       "B/op": 288.0,
       "allocs/op": 9.0
     },
     "BenchmarkComparison/nested/embargo": {
-      "ns/op": 2390.0,
+      "ns/op": 2308.0,
       "B/op": 282.0,
       "allocs/op": 5.0
     },
     "BenchmarkComparison/nested/embargo-default": {
-      "ns/op": 2860.0,
+      "ns/op": 2711.5,
       "B/op": 282.0,
       "allocs/op": 5.0
     },
     "BenchmarkComparison/nested/ferret-scan": {
-      "ns/op": 150387.5,
+      "ns/op": 149024.5,
       "B/op": 47607.5,
       "allocs/op": 264.0
     },
     "BenchmarkComparison/nested/go-masker": {
-      "ns/op": 2964.5,
+      "ns/op": 3005.5,
       "B/op": 800.0,
       "allocs/op": 19.0
     },
     "BenchmarkComparison/nested/masq": {
-      "ns/op": 5153.0,
+      "ns/op": 5092.5,
       "B/op": 1784.0,
       "allocs/op": 61.0
     },
     "BenchmarkComparison/nested/pii-shield": {
-      "ns/op": 7757.5,
+      "ns/op": 7590.0,
       "B/op": 960.0,
       "allocs/op": 18.0
     },
     "BenchmarkComparison/nested/plain": {
-      "ns/op": 582.25,
+      "ns/op": 612.7,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparisonFormatter/clean": {
-      "ns/op": 552.35,
+      "ns/op": 547.95,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparisonFormatter/flat": {
-      "ns/op": 616.8,
+      "ns/op": 588.55,
       "B/op": 32.0,
       "allocs/op": 2.0
     },
     "BenchmarkComparisonFormatter/large50": {
-      "ns/op": 7598.5,
+      "ns/op": 7512.5,
       "B/op": 7872.0,
       "allocs/op": 10.0
     },
     "BenchmarkComparisonFormatter/map": {
-      "ns/op": 450.95000000000005,
+      "ns/op": 439.55,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparisonFormatter/nested": {
-      "ns/op": 451.1,
+      "ns/op": 442.05,
       "B/op": 0.0,
       "allocs/op": 0.0
     },
     "BenchmarkComparisonStruct/embargo": {
-      "ns/op": 1613.5,
+      "ns/op": 1568.0,
       "B/op": 338.0,
       "allocs/op": 5.0
     },
     "BenchmarkComparisonStruct/go_mask": {
-      "ns/op": 569.3499999999999,
+      "ns/op": 553.5999999999999,
       "B/op": 328.0,
       "allocs/op": 7.0
     },
@@ -251,27 +251,27 @@
       "allocs/op": 12.0
     },
     "BenchmarkComparisonText/godlp": {
-      "ns/op": 30275.0,
+      "ns/op": 30119.5,
       "B/op": 11713.0,
       "allocs/op": 59.0
     },
     "BenchmarkStructuredPath/json_shape": {
-      "ns/op": 1611.0,
+      "ns/op": 1573.5,
       "B/op": 338.0,
       "allocs/op": 5.0
     },
     "BenchmarkStructuredPath/old_string": {
-      "ns/op": 643.3499999999999,
+      "ns/op": 605.55,
       "B/op": 576.0,
       "allocs/op": 7.0
     }
   },
-  "scenarios_sha256": "cfce031780f592616b8ef162ce023de1aaad8a25a5a7ac80d6eca516e74c70d0",
-  "date": "2026-11-18",
+  "scenarios_sha256": "f610e7150fdebbf82309a074921b4cfd973b3e05874404c63f51472c909349b4",
+  "date": "2026-11-19",
   "command": "GOMAXPROCS=1 GOTOOLCHAIN=go1.26.11 go -C tests test -run '^$' -bench '^Benchmark(Comparison|StructuredPath)' -benchmem -benchtime=200ms -count=10 .",
   "go": "go version go1.26.11 linux/amd64",
-  "source_sha256": "cf4fd7aa852189222eb3971d07655d949c01a6fa15dfea39d60f79fe1a1eb14c",
-  "full_source_sha256": "9b6542d2b171e5552319022cdfe665951e0eb612a4e15b6ec583cdda2405840e",
+  "source_sha256": "b250c90ddbdaeba38a0499bea0b226cdf37197c9db95045e811052d5f53c435a",
+  "full_source_sha256": "062cb8264897610b382b690e0687b28dcfc9ca48ce59a32fb692f2314251b504",
   "measured_modules": [
     "github.com/bytedance/godlp",
     "github.com/m-mizutani/masq",
@@ -287,8 +287,8 @@
     "golang.org/x/text",
     "gopkg.in/yaml.v2"
   ],
-  "raw_sha256": "5f1153bc66524b718f2710e445a07f8b2a27f7cd4130d5c823827d9686a2d5da",
-  "benchstat_sha256": "b028d89d855e8bd97487a1eea96b1835e4e318e4d418193913dd686cdc1a2966",
+  "raw_sha256": "6970fae36f3c12a22c9eaf88322bbea96d4c95a5092a09f0ec12b1500a9c8a44",
+  "benchstat_sha256": "8b9df81aaefa52009256f92fbb5a54ded2ef805be5f36b9125109b8360601a4e",
   "cpu": "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S",
   "affinity": [
     12

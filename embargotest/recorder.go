@@ -22,20 +22,13 @@ const (
 // content. Writers support concurrent calls. Stop producers before Check.
 // Every recorder must be checked; Cleanup reports missing checks and late writes.
 type Recorder struct {
+	policy        *policy
 	tb            testing.TB
-	allowedKinds  map[embargo.Kind]bool
 	metadataKinds map[embargo.Kind]bool
-	allowedValues map[string]bool
 	sinks         map[string]*stream
-	scanner       *embargo.Scanner
-	needles       [][]byte
 	expectations  []expectation
 	responses     []*response
-	canary        []byte
-	maxBytes      int64
-	timeout       time.Duration
 	retained      int64
-	minFragment   int
 	running       int
 	mu            sync.Mutex
 	scannerFailed bool
@@ -55,9 +48,36 @@ type expectation struct {
 	name     string
 }
 
-// Option configures a Recorder without exposing mutable configuration.
+// policy is the checking configuration that options set. Recorder and Guard
+// share it; Guard has no capture lifecycle of its own.
+type policy struct {
+	allowedKinds  map[embargo.Kind]bool
+	allowedValues map[string]bool
+	scanner       *embargo.Scanner
+	needles       [][]byte
+	canary        []byte
+	maxBytes      int64
+	timeout       time.Duration
+	minFragment   int
+	// invalid records an option that was rejected or contradicts another.
+	invalid bool
+}
+
+// newPolicy applies opts over the defaults; nil options do nothing.
+func newPolicy(timeout time.Duration, opts []Option) *policy {
+	p := &policy{scanner: embargo.NewScanner(), canary: []byte(defaultCanary), maxBytes: defaultMaxBytes, timeout: timeout, allowedKinds: map[embargo.Kind]bool{}, allowedValues: map[string]bool{}, needles: nil, minFragment: 0, invalid: false}
+	for _, o := range opts {
+		if o != nil && !o.apply(p) {
+			p.invalid = true
+		}
+	}
+	p.configureNeedles()
+	return p
+}
+
+// Option configures the checks of New and Guard without exposing mutable configuration.
 type (
-	Option         interface{ apply(*Recorder) bool }
+	Option         interface{ apply(*policy) bool }
 	canaryOption   []byte
 	maxBytesOption int64
 	timeoutOption  time.Duration
@@ -69,11 +89,11 @@ type (
 // that matches unrelated output.
 func WithCanary(canary []byte) Option { return canaryOption(append([]byte(nil), canary...)) }
 
-func (c canaryOption) apply(r *Recorder) bool {
+func (c canaryOption) apply(p *policy) bool {
 	if len(c) < 16 || len(c) > 1024 {
 		return false
 	}
-	r.canary = append([]byte(nil), c...)
+	p.canary = append([]byte(nil), c...)
 	return true
 }
 
@@ -83,11 +103,11 @@ func (c canaryOption) apply(r *Recorder) bool {
 // and Error stay unbounded. Prefer Secret or a LogValuer returning a bounded value.
 func WithMaxBytes(n int64) Option { return maxBytesOption(n) }
 
-func (o maxBytesOption) apply(r *Recorder) bool {
+func (o maxBytesOption) apply(p *policy) bool {
 	if o < 1 {
 		return false
 	}
-	r.maxBytes = int64(o)
+	p.maxBytes = int64(o)
 	return true
 }
 
@@ -97,11 +117,11 @@ func (o maxBytesOption) apply(r *Recorder) bool {
 // interrupt in-process encoding or scanner callbacks.
 func WithTimeout(d time.Duration) Option { return timeoutOption(d) }
 
-func (o timeoutOption) apply(r *Recorder) bool {
+func (o timeoutOption) apply(p *policy) bool {
 	if o <= 0 {
 		return false
 	}
-	r.timeout = time.Duration(o)
+	p.timeout = time.Duration(o)
 	return true
 }
 
@@ -110,13 +130,8 @@ func (o timeoutOption) apply(r *Recorder) bool {
 // do nothing. The default scanner omits unlabelled entropy tokens; use WithScanner to choose kinds. Invalid options fail the test and leave Check unable to succeed.
 func New(tb testing.TB, opts ...Option) *Recorder {
 	tb.Helper()
-	r := &Recorder{minFragment: 0, detected: false, scannerFailed: false, responses: nil, mu: sync.Mutex{}, needles: nil, retained: 0, expectations: nil, checked: false, failed: false, reported: false, leaked: false, running: 0, scanner: embargo.NewScanner(), metadataKinds: map[embargo.Kind]bool{}, allowedKinds: map[embargo.Kind]bool{}, allowedValues: map[string]bool{}, tb: tb, canary: []byte(defaultCanary), maxBytes: defaultMaxBytes, timeout: defaultTimeout, sinks: make(map[string]*stream)}
-	for _, o := range opts {
-		if o != nil && !o.apply(r) {
-			r.failed = true
-		}
-	}
-	r.configureNeedles()
+	r := &Recorder{policy: newPolicy(defaultTimeout, opts), detected: false, scannerFailed: false, responses: nil, mu: sync.Mutex{}, retained: 0, expectations: nil, checked: false, failed: false, reported: false, leaked: false, running: 0, metadataKinds: map[embargo.Kind]bool{}, tb: tb, sinks: make(map[string]*stream)}
+	r.failed = r.policy.invalid
 	if r.failed {
 		tb.Error("embargotest: invalid options")
 	}
@@ -142,7 +157,7 @@ func New(tb testing.TB, opts ...Option) *Recorder {
 }
 
 // Canary returns a copy of the fake secret to insert into the tested path.
-func (r *Recorder) Canary() []byte { return append([]byte(nil), r.canary...) }
+func (r *Recorder) Canary() []byte { return append([]byte(nil), r.policy.canary...) }
 
 // Writer returns the named stream; repeated calls append to the same capture.
 // Names must have 1 through 128 bytes. Writes after Check and truncated output
@@ -184,7 +199,7 @@ func (s *stream) Write(p []byte) (int, error) {
 
 // capture appends while the caller holds mu.
 func (r *Recorder) capture(s *stream, p []byte) int {
-	remaining := r.maxBytes - r.retained
+	remaining := r.policy.maxBytes - r.retained
 	keep := len(p)
 	if int64(keep) > remaining {
 		keep = int(remaining)

@@ -120,7 +120,7 @@ func TestInputDisplay(t *testing.T) {
 	if err := v.UnmarshalText([]byte("fake-secret-value")); err != nil {
 		t.Fatal(err)
 	}
-	if v.String() != redactionMarker || v.GoString() != redactionMarker || v.LogValue().String() != redactionMarker || fmt.Sprintf("%+#v", v) != redactionMarker {
+	if v.String() != redactionMarker || v.LogValue().String() != redactionMarker || fmt.Sprintf("%+#v", v) != redactionMarker {
 		t.Fatal("input display changed")
 	}
 	data, err := v.MarshalText()

@@ -206,10 +206,10 @@ func (*panickingGuardDetector) Scan([]byte) []embargo.Finding { panic("must not 
 func TestGuardNamesAndPolicy(t *testing.T) {
 	t.Parallel()
 	policy := guardPolicy([]Option{nil, WithMaxBytes(16), WithTimeout(time.Second)})
-	if policy.failed || policy.maxBytes != 16 || policy.timeout != time.Second {
+	if policy.invalid || policy.maxBytes != 16 || policy.timeout != time.Second {
 		t.Fatal("guard options lost")
 	}
-	if !guardPolicy([]Option{WithMaxBytes(-1)}).failed {
+	if !guardPolicy([]Option{WithMaxBytes(-1)}).invalid {
 		t.Fatal("invalid guard option accepted")
 	}
 }
@@ -397,5 +397,13 @@ func TestGuardParentChild(t *testing.T) {
 	}
 	if _, err := fmt.Fprintln(os.Stdout, message); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestGuardWithoutExecutable(t *testing.T) {
+	t.Parallel()
+	unavailable := func() (string, error) { return "", errors.New("no executable") }
+	if code := guardSupervise(&testing.M{}, unavailable, nil); code != 1 {
+		t.Fatalf("exit code %d, want 1", code)
 	}
 }

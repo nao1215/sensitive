@@ -1516,7 +1516,8 @@ func TestMaskingBoundaryHooks(t *testing.T) {
 
 func checkBoundaryHooks(t *testing.T, text, needle, key, value string) {
 	t.Helper()
-	scanner := embargo.NewScanner()
+	// WithAll keeps the SWIFT and My Number boundary fixtures, which are opt-in.
+	scanner := embargo.NewScanner(embargo.WithAll())
 	check := func(name string, data []byte) {
 		t.Helper()
 		if len(data) == 0 || bytes.Contains(data, []byte(needle)) || bytes.Contains(data, []byte(strconv.Quote(needle)[1:len(strconv.Quote(needle))-1])) {

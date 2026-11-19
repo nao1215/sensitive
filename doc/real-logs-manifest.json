@@ -30,6 +30,7 @@
     "mynumber",
     "pan",
     "payment_token",
+    "phone",
     "phone_jp",
     "phone_us",
     "private_key_pem",

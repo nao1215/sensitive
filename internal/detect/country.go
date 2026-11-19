@@ -9,7 +9,18 @@ import (
 // Country implements the national-identifier contracts documented on the root Kind constants.
 // See https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSSSN and the following country kinds.
 type Country struct {
-	name    DetectorName
+	name   DetectorName
+	family countryFamily
+}
+
+// countryFamily holds everything one national number needs: its fixed-width
+// layouts, the label words that name it, which keep a candidate under a record
+// label such as ssn_id, whether a bare digit run needs one of those labels, and
+// how a candidate value is scored.
+type countryFamily struct {
+	// score returns 0 to reject value; before is the normalized input
+	// preceding it, for families whose label can stand in for a checksum.
+	score   func(value string, before []byte) float64
 	layouts []string
 	labels  []string
 	// bareNeedsLabel marks the kinds whose check passes about one random
@@ -19,8 +30,11 @@ type Country struct {
 
 // NewCountry prepares fixed-width layouts for a country kind; unsupported names panic.
 func NewCountry(name DetectorName) *Country {
-	layouts, labels, weak := countryLayouts(name)
-	return &Country{name: name, layouts: layouts, labels: labels, bareNeedsLabel: weak}
+	family, ok := countryFamilies()[name]
+	if !ok {
+		panic("embargo: unsupported country kind")
+	}
+	return &Country{name: name, family: family}
 }
 
 // Name identifies the selected national-number family, such as "ca_sin".
@@ -32,36 +46,40 @@ func (d *Country) Hints() [][]byte { return nil }
 // nineDigitLayout is the unseparated layout of SSN, ITIN and SIN.
 const nineDigitLayout = "#########"
 
-// countryLayouts returns a country kind's fixed-width layouts, the label
-// words that name its number, which keep a candidate under a record label
-// such as ssn_id, and whether its bare digit run needs one of them.
-func countryLayouts(name DetectorName) (layouts, labels []string, weak bool) {
-	switch string(name) {
-	case "us_ssn":
-		return []string{"###-##-####", nineDigitLayout}, []string{"ssn", "security"}, true
-	case "us_itin":
-		return []string{"###-##-####", nineDigitLayout}, []string{"itin", "taxpayer"}, true
-	case "uk_nino":
-		return []string{"AA ## ## ## A", "AA######A"}, []string{"nino", "insurance"}, false
-	case "uk_nhs":
-		return []string{"### ### ####", "##########"}, []string{"nhs"}, true
-	case "in_aadhaar":
-		return []string{"#### #### ####", "############"}, []string{"aadhaar", "aadhar"}, true
-	case "in_pan":
-		return []string{"AAAAA####A"}, []string{"pan"}, false
-	case "br_cpf":
-		return []string{"###.###.###-##", "###########"}, []string{"cpf"}, false
-	case "br_cnpj":
-		return []string{"CC.CCC.CCC/CCCC-##", "CCCCCCCCCCCC##"}, []string{"cnpj"}, false
-	case "cn_resident_id":
-		return []string{"#################X"}, []string{"resident", "身份证", "身份证号"}, false
-	case "kr_rrn":
-		return []string{"######-#######", "#############"}, []string{"rrn", "주민등록번호"}, false
-	case "ca_sin":
-		return []string{"###-###-###", nineDigitLayout}, []string{"sin", "insurance"}, true
-	default:
-		panic("embargo: unsupported country kind")
+// countryFamilies lists every supported national number. Families without a
+// check digit score their structure or issuing letters; the others score their
+// checksum.
+func countryFamilies() map[DetectorName]countryFamily {
+	ssnLayouts := []string{"###-##-####", nineDigitLayout}
+	return map[DetectorName]countryFamily{
+		"us_ssn":         {structureScore(validSSN, countryStructureScore), ssnLayouts, []string{"ssn", "security"}, true},
+		"us_itin":        {structureScore(validITIN, countryStructureScore), ssnLayouts, []string{"itin", "taxpayer"}, true},
+		"uk_nino":        {structureScore(validNINO, countryLetterScore), []string{"AA ## ## ## A", "AA######A"}, []string{"nino", "insurance"}, false},
+		"uk_nhs":         {checksumScore(validNHS), []string{"### ### ####", "##########"}, []string{"nhs"}, true},
+		"in_aadhaar":     {checksumScore(validAadhaar), []string{"#### #### ####", "############"}, []string{"aadhaar", "aadhar"}, true},
+		"in_pan":         {structureScore(validIndiaPAN, countryLetterScore), []string{"AAAAA####A"}, []string{"pan"}, false},
+		"br_cpf":         {checksumScore(validCPF), []string{"###.###.###-##", "###########"}, []string{"cpf"}, false},
+		"br_cnpj":        {checksumScore(validCNPJ), []string{"CC.CCC.CCC/CCCC-##", "CCCCCCCCCCCC##"}, []string{"cnpj"}, false},
+		"cn_resident_id": {checksumScore(validChinaID), []string{"#################X"}, []string{"resident", "身份证", "身份证号"}, false},
+		"kr_rrn":         {rrnScore, []string{"######-#######", "#############"}, []string{"rrn", "주민등록번호"}, false},
+		"ca_sin":         {checksumScore(validSIN), []string{"###-###-###", nineDigitLayout}, []string{"sin", "insurance"}, true},
 	}
+}
+
+// structureScore scores a family without a check digit, whose confidence comes
+// from its structure or issuing letters.
+func structureScore(valid func(string) bool, score float64) func(string, []byte) float64 {
+	return func(value string, _ []byte) float64 {
+		if valid(value) {
+			return score
+		}
+		return 0
+	}
+}
+
+// checksumScore scores a family whose check digit earns the checksum score.
+func checksumScore(valid func(string) bool) func(string, []byte) float64 {
+	return structureScore(valid, countryChecksumScore)
 }
 
 // Scan maps normalized digits back to byte ranges and rejects candidates embedded in identifiers.
@@ -73,12 +91,12 @@ func (d *Country) Scan(data []byte) []Finding {
 		if start > 0 && isIdentifierByte(normalized[start-1]) {
 			continue
 		}
-		for _, layout := range d.layouts {
+		for _, layout := range d.family.layouts {
 			value, end, ok := countryCandidate(normalized, start, layout)
-			if !ok || logContext.fragment(normalized, start, end) || recordLabeled(normalized, start, d.labels...) || d.unnamedBare(normalized, start, layout) {
+			if !ok || logContext.fragment(normalized, start, end) || recordLabeled(normalized, start, d.family.labels...) || d.unnamedBare(normalized, start, layout) {
 				continue
 			}
-			score := countryScore(d.name, value, normalized[:start])
+			score := d.family.score(value, normalized[:start])
 			if score == 0 {
 				continue
 			}
@@ -95,7 +113,7 @@ func (d *Country) Scan(data []byte) []Finding {
 // Aadhaar pass one random ID in ten, so a user_id or an amount of that length
 // looks the same; the separated layouts keep their own evidence.
 func (d *Country) unnamedBare(data []byte, start int, layout string) bool {
-	return d.bareNeedsLabel && strings.Trim(layout, "#") == "" && !labelNames(data, start, d.labels...)
+	return d.family.bareNeedsLabel && strings.Trim(layout, "#") == "" && !labelNames(data, start, d.family.labels...)
 }
 
 func countryCandidate(data []byte, start int, layout string) (text string, end int, ok bool) {
@@ -143,68 +161,17 @@ const (
 	countryStructureScore = 0.6
 	decimalRadix          = 10
 	mod11Base             = 11
-	luhnCorrection        = 9
 	doubledDigit          = 2
 	cnpjCycle             = 8
 	rrnBodyWidth          = 12
 )
 
-func countryScore(name DetectorName, value string, before []byte) float64 {
-	if string(name) == "kr_rrn" {
-		return rrnScore(value, before)
-	}
-	if score, ok := countryFormatScore(string(name), value); ok {
-		return score
-	}
-	if validCountryChecksum(string(name), value) {
-		return countryChecksumScore
-	}
-	return 0
+func validAadhaar(value string) bool {
+	return value[0] >= '2' && !sameCountryDigits(value) && validVerhoeff(value)
 }
 
-// countryFormatScore scores identifiers without a check digit, whose confidence
-// comes from structure or issuing letters; ok is false for other names.
-func countryFormatScore(name, value string) (score float64, ok bool) {
-	var valid bool
-	score = countryStructureScore
-	switch name {
-	case "us_ssn":
-		valid = validSSN(value)
-	case "us_itin":
-		valid = validITIN(value)
-	case "uk_nino":
-		valid = validNINO(value)
-		score = countryLetterScore
-	case "in_pan":
-		valid = validIndiaPAN(value)
-		score = countryLetterScore
-	default:
-		return 0, false
-	}
-	if valid {
-		return score, true
-	}
-	return 0, true
-}
-
-// validCountryChecksum validates identifiers whose check digit earns the
-// checksum score. countryScore calls it only for the checksum families, so the
-// last of them, ca_sin, is the default case.
-func validCountryChecksum(name, value string) bool {
-	switch name {
-	case "uk_nhs":
-		return validNHS(value)
-	case "in_aadhaar":
-		return value[0] >= '2' && !sameCountryDigits(value) && validVerhoeff(value)
-	case "br_cpf":
-		return validCPF(value)
-	case "br_cnpj":
-		return validCNPJ(value)
-	case "cn_resident_id":
-		return validChinaID(value)
-	default:
-		return value[0] != '0' && value[0] != '8' && !sameCountryDigits(value) && countryLuhn(value)
-	}
+func validSIN(value string) bool {
+	return value[0] != '0' && value[0] != '8' && !sameCountryDigits(value) && passesLuhn(value)
 }
 
 func sameCountryDigits(value string) bool { return strings.Count(value, value[:1]) == len(value) }

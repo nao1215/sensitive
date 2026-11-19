@@ -23,7 +23,7 @@ It exists for four jobs:
 |---|---|
 | Keep a known secret, such as an API key, from ever printing | [`Secret`](#values-that-must-never-print), which prints `[REDACTED]` through fmt, JSON, XML, templates and loggers |
 | Log the structs, errors and JSON you already have | [A slog handler and `MaskJSON`](#mask-structs-without-changing-their-types) that keep keys, types and nesting, plus [adapters](#loggers-and-services) for other loggers and SDKs |
-| Catch secrets nobody declared, such as a card number inside an error message | [38 built-in detectors](#find-and-mask-sensitive-text) that check the values: tokens, URL passwords, cards, bank numbers, email, IPs |
+| Catch secrets nobody declared, such as a card number inside an error message | [39 built-in detectors](#find-and-mask-sensitive-text) that check the values: tokens, URL passwords, cards, bank numbers, email, IPs, phone numbers |
 | Prove in CI that no secret reaches the output | [`embargotest`](#fail-tests-on-leaks), which fails a test when a fake secret appears in stdout, logs, HTTP responses or child processes |
 
 Redaction in a log pipeline can still run after it; embargo stops the leak where it is written. See [what it misses](doc/cases.md), its [accuracy](#accuracy) and [speed](#benchmarks).
@@ -36,29 +36,19 @@ Requires Go 1.26.11 or later.
 go get github.com/nao1215/embargo@v0.16.1
 ```
 
-<!-- example: example_test.go:Example -->
+<!-- example: example_test.go:ExampleNewSlogHandler_quickStart -->
 ```go
-package main
+// next is the handler you already use, such as slog.NewJSONHandler(os.Stdout, nil).
+logger := slog.New(embargo.NewSlogHandler(next, embargo.NewScanner()))
 
-import (
-	"fmt"
+logger.Info("login failed", "email", "alice@example.com", "password", "hunter2", "request_id", "req-7f3a")
 
-	"github.com/nao1215/embargo"
-)
-
-func main() {
-	text := "email=alice@example.com card=4111111111111111"
-	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail, embargo.KindPAN))
-
-	fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
-
-	// Output: email=[REDACTED] card=[REDACTED]
-}
+// Output: {"level":"INFO","msg":"login failed","email":"[REDACTED]","password":"[REDACTED]","request_id":"req-7f3a"}
 ```
 
-## Values that must never print
+Wrap `next` before calling `With` on it: attributes bound to `next` itself are written unmasked. IP addresses are masked by default; [access logs](#loggers-and-services) show how to keep the client address.
 
-Wrap the value once; every formatter then sees the marker.
+## Values that must never print
 
 <!-- example: example_test.go:ExampleNewSecret -->
 ```go
@@ -69,13 +59,9 @@ fmt.Println(key)
 // Output: [REDACTED]
 ```
 
-`key.Reveal()` returns the value when the program really needs it. [Tested outputs](#tested-outputs) lists every path checked to print `[REDACTED]`, and `Input` loads such values from JSON, config files and SQL rows. [Secret, Input and your own types](doc/values.md)
-
-Measured against the other typed wrapper, go-masker v3's `Sensitive`, on twelve standard output paths: both hide the value on fmt, JSON, XML, templates and slog, and only `Secret` stays hidden when it sits in an unexported struct field printed with `%+v`. [Output-path table](doc/comparison.md#keeping-a-known-secret-out-typed-wrappers)
+`key.Reveal()` returns the value; `Input` decodes one from JSON, config files and SQL rows. [Secret, Input and your own types](doc/values.md) · [Compared with go-masker's Sensitive](doc/comparison.md#keeping-a-known-secret-out-typed-wrappers)
 
 ## Mask structs without changing their types
-
-Log the struct you already have. The handler encodes it as `slog.JSONHandler` would, masks detected values, and hides whole values under keys such as `password`, `token` or `authorization`.
 
 <!-- example: example_test.go:ExampleNewSlogHandler_struct -->
 ```go
@@ -92,8 +78,6 @@ logger.Info("signup", "user", User{Name: "carol", Email: "carol@example.com", Pa
 // Output: {"level":"INFO","msg":"signup","user":{"Name":"carol","Email":"[REDACTED]","Password":"[REDACTED]"}}
 ```
 
-`next` is the handler your logger writes to, before any `With` or `WithGroup`: attributes bound to it earlier never pass through embargo, so add them to the logger built on the result. The same rules apply to JSON that never reaches a logger, such as an API response or an audit export:
-
 <!-- example: example_test.go:ExampleScanner_MaskJSON -->
 ```go
 scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
@@ -107,7 +91,7 @@ fmt.Println(string(safe))
 // {"user":{"email":"[REDACTED]","password":"[REDACTED]"},"amount":125,"paid":true}
 ```
 
-Numbers and booleans keep their types. `WithSensitiveKeys` adds key names; `WithoutDefaultSensitiveKeys` drops the defaults. [Structured values and key rules](doc/logging.md)
+Clean values keep their JSON types; a detected number becomes a marker string. [Key rules and structured values](doc/logging.md)
 
 ## Loggers and services
 
@@ -123,21 +107,7 @@ Numbers and booleans keep their types. `WithSensitiveKeys` adds key names; `With
 | Sentry events | [`embargosentry.NewBeforeSend(scanner)`](adapters/sentry/example_test.go) | `adapters/sentry` |
 | log, fmt and anything else | `Secret` values, or `embargo.Mask` on the text before writing | root |
 
-<!-- example: example_test.go:ExampleNewSlogHandler_short -->
-```go
-scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
-logger := slog.New(embargo.NewSlogHandler(next, scanner))
-
-logger.Info("checkout", "email", "alice@example.com")
-
-// Output: {"level":"INFO","msg":"checkout","email":"[REDACTED]"}
-```
-
-Limits: MaskJSON bounds encoded input/output to 1 MiB, nesting to 64 and cumulative detector input to 4 MiB; logger writers include the newline in their 1 MiB limit. Recorder WithMaxBytes bounds retained bytes and WithTimeout bounds child Run time. Input decoding has no size limit; bound its upstream reader. MarshalJSON, LogValue, String and Error run before these byte limits apply, so their time and memory are not bounded; use Secret or a LogValuer returning a bounded value. [Details](doc/logging.md#bounds-and-failures)
-
-Every adapter and hook uses the same detectors and key rules as the slog handler. The HTTP and gRPC hooks mask what they log, not the request your service receives or the response it sends. gin, echo and Connect servers are `http.Handler`s, so `NewHTTPHandler` wraps them unchanged; [a test runs all three](tests/integrations_test.go). [Installation and limits](doc/adapters.md)
-
-Access logs usually need the client address. Select kinds without `KindIPAddr` to keep it while tokens and addresses in the request line are still masked:
+Access logs usually need the client address. Select kinds without `KindIPAddr`:
 
 <!-- example: example_test.go:ExampleWithKinds_accessLog -->
 ```go
@@ -149,13 +119,15 @@ fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
 // Output: 203.0.113.7 - - [17/Nov/2026:10:00:00 +0000] "GET /reset?email=[REDACTED]&token=[REDACTED] HTTP/1.1" 302 0
 ```
 
+The HTTP and gRPC hooks mask what they log, not the request or response. [Adapters](doc/adapters.md) · [Size limits and failure records](doc/logging.md#bounds-and-failures)
+
 <!-- speed-summary:start -->
-On the same five JSON slog events, embargo is 1.07 to 1.45 times faster than go-masker given the same email and card rules, and embargo's default scanner is 1.69 to 3.25 times faster than pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
+On the same five JSON slog events, embargo is 1.10 to 1.41 times faster than go-masker given the same email and card rules, and embargo's default scanner is 1.88 to 4.05 times faster than pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
 <!-- speed-summary:end -->
 
 ## Find and mask sensitive text
 
-embargo has 38 built-in detectors (26 run by default). `NewScanner()` runs the first five groups below except the entropy heuristic. The national IDs and the heuristic are opt-in: name them in `WithKinds`, or turn on everything with `WithAll`. The scanner reads the text itself, so no field has to be listed first.
+embargo has 39 built-in detectors (19 run by default). The default covers values that are secret or personal in every country, in formats every country uses. One country's formats, such as My Number or US routing numbers, are opt-in: `WithMoreKinds` adds them to the default, and `WithAll` turns on everything.
 
 <!-- example: example_test.go:ExampleKindCredential -->
 ```go
@@ -167,66 +139,64 @@ fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
 
 | Group | Detectors | What is detected |
 |---|---:|---|
-| Credentials | 9 | URL and DSN passwords, `password=` and auth headers, tokens from AWS, GitHub, Slack, OpenAI and others, JWT, PEM keys |
-| Cards | 5 | Card numbers (Luhn), CVV, expiry, payment tokens, merchant ID |
-| Bank | 6 | IBAN, SWIFT/BIC, ABA routing, UK sort code, bank account, ACH trace |
+| Credentials | 9 | URL and DSN passwords, `password=` and auth headers, AWS, GitHub, Slack, OpenAI and other tokens, JWT, PEM keys |
+| Cards | 5 | Card numbers (Luhn), CVV, expiry, payment tokens; merchant IDs are opt-in |
+| Bank | 6 | IBAN and bank account numbers; SWIFT/BIC, ABA routing, UK sort code and ACH trace are opt-in |
 | Crypto | 2 | Bitcoin and Ethereum addresses |
-| Personal | 5 | Email, IP address, US and Japanese phone numbers, and My Number, including full-width digits |
+| Personal | 6 | Email, IP address, international phone numbers; Japanese and North American phone numbers and My Number are opt-in |
 | National IDs | 11 | Opt-in US, UK, Indian, Brazilian, Chinese, Korean and Canadian identifiers; [rules and measured limits](doc/countries.md) |
 
 <details>
-<summary>Matching rules and validation for all 38 kinds</summary>
+<summary>All 39 kinds, their Examples and defaults</summary>
 
-The cells excerpt each constant's godoc; follow the Kind link for the full rule and confidence tiers. Default refers to `NewScanner()` without options.
 
 <!-- detectors:start -->
-| Kind | What it matches | How it is checked | Default |
-|---|---|---|---|
-| [KindServiceToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindServiceToken) | covers provider-prefixed secrets and webhook credential paths | prefix, alphabet and length checks yield 0.95 without a keyword or remote authentication | on |
-| [KindHighEntropy](https://pkg.go.dev/github.com/nao1215/embargo@main#KindHighEntropy) | looks for unlabeled runs of 32–256 ASCII letters, digits, _, - or + | Shannon entropy of at least 4.5 bits per byte and three of lowercase, uppercase, digit and symbol classes yield 0.3 | off |
-| [KindCredential](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCredential) | locates nonempty assignment values, Authorization credentials and URL/DSN passwords | delimiter and quoting checks give 0.95, preserving labels, initial auth schemes, usernames and hosts | on |
-| [KindPAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN) | finds 13–19 digits with Visa, Mastercard, Amex, JCB, Discover, Diners or UnionPay prefixes | Luhn plus issuer length scores 1.0 and 0.4 under a record label such as user_id; a failed checksum is not a card, nor … | on |
-| [KindEmail](https://pkg.go.dev/github.com/nao1215/embargo@main#KindEmail) | extracts ASCII local parts using letters, digits and .+-_ before @ and dotted domains using letters, digits and .- … | structure checks score 0.7 or 0.8 for an unknown TLD and 0.9 or 1.0 for a known TLD | on |
-| [KindJPPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJPPhone) | recognizes 10- or 11-digit Japanese numbers beginning with 0 or written as +81 without the leading 0, allowing … | prefix/length checks score landlines 0.8, other accepted types 0.9, and 0.4 under a record label such as user_id | on |
-| [KindUSPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSPhone) | recognizes separated ten-digit North American numbers such as (202) 555-0123 or 202.555.0123, with an optional +1 or … | numbering-plan and matching-separator checks score 0.7, 0.9 after a phone, tel, mobile, cell, fax, call or contact … | on |
-| [KindMyNumber](https://pkg.go.dev/github.com/nao1215/embargo@main#KindMyNumber) | recognizes 12 digits with optional spaces or hyphens as Japanese individual-number candidates | the weighted MOD 11 check gives 0.95 without requiring a keyword; a contiguous 12-digit account field of a syntactic … | on |
-| [KindJWT](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJWT) | parses eyJ-prefixed base64url text with exactly two dots and nonempty header and payload segments | header checks yield 0.5, 0.7 or 0.8 with an empty signature, and 0.7, 0.9 or 1.0 otherwise | on |
-| [KindAWSKey](https://pkg.go.dev/github.com/nao1215/embargo@main#KindAWSKey) | identifies AKIA (long-term), ASIA (temporary), ABIA (STS service bearer) or ACCA (context-specific) followed by … | length, alphabet and alphanumeric boundary checks give 0.95 without a context keyword or authentication | on |
-| [KindIBAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIBAN) | accepts two ASCII country letters, two digits and an alphanumeric BBAN with optional internal spaces | country length and MOD 97 checks give 0.95, rejecting check digits 00, 01 and 99 without requiring a keyword | on |
-| [KindIPAddr](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIPAddr) | extracts dotted IPv4 decimal octets and colon-separated IPv6 hexadecimal text, including :: shorthand | net.ParseIP validation gives 0.8, excluding IPv4 addresses whose first octet is zero (the this-network block, which … | on |
-| [KindSWIFTBIC](https://pkg.go.dev/github.com/nao1215/embargo@main#KindSWIFTBIC) | accepts 8 or 11 ASCII alphanumerics as four bank letters, two country letters, location and optional branch | country and structure checks give 0.85, with case ignored and no institution lookup | on |
-| [KindABARouting](https://pkg.go.dev/github.com/nao1215/embargo@main#KindABARouting) | selects 9 consecutive digits beginning 01–12, 21–32, 61–72 or 80 as US routing candidates | the repeating 3,7,1 weighted MOD 10 checksum must pass, giving 0.85 without a keyword; a record identifier label such … | on |
-| [KindUKSortCode](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKSortCode) | picks six digits in three pairs separated consistently by hyphens or spaces with matching separators, excluding … | structure checks give 0.7, or 0.55 for contextual date-like candidates, without a checksum | on |
-| [KindCVV](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCVV) | finds 3 or 4 consecutive digits within 30 bytes of a verification-code keyword end | length and non-overlap checks yield 0.85 without a checksum | on |
-| [KindCardExpiry](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCardExpiry) | reads MM/YY, MM/YYYY, MM-YY or MM-YYYY near expiration labels | month 01–12 and adjacent-digit checks yield 0.85, without checking whether the date is in the future | on |
-| [KindPaymentToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPaymentToken) | covers Stripe identifiers and keys, PayPal PAYID- and Square sq0idp-/sq0csp- tokens | prefix and minimum-body checks yield 0.9 with no keyword or authentication | on |
-| [KindBankAccount](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBankAccount) | looks for 4–17 consecutive digits within 50 bytes of a banking keyword end | length checks give 0.5, raised to 0.65 by nearby holder context, without a checksum | on |
-| [KindACHTrace](https://pkg.go.dev/github.com/nao1215/embargo@main#KindACHTrace) | takes 15 consecutive digits within 50 bytes of an ACH or trace keyword end | prefix validation requires 01–12, 21–32, 61–72 or 80 and scores 0.75 without a checksum | on |
-| [KindMerchantID](https://pkg.go.dev/github.com/nao1215/embargo@main#KindMerchantID) | finds 15 ASCII alphanumerics for merchant IDs or 8 consecutive digits at alphanumeric boundaries for terminal IDs | length and keyword-overlap checks give 0.7 without checksum validation | on |
-| [KindBTC](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBTC) | recognizes mainnet 1/3 Base58 text of 25–34 characters or single-case bc1 text of 42 or 62 characters | Base58Check or Bech32/Bech32m checksum validation gives 0.95 without a keyword | on |
-| [KindETH](https://pkg.go.dev/github.com/nao1215/embargo@main#KindETH) | captures 0x or 0X followed by exactly 40 hexadecimal characters at identifier boundaries | uniform-case hex scores 0.8 without checksum validation, while mixed case must pass EIP-55 (Keccak-256) for 0.95 … | on |
-| [KindGitHubToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindGitHubToken) | distinguishes classic ghp_/gho_/ghu_/ghs_/ghr_ tokens from github_pat_ tokens | body-length and token-boundary checks yield 0.95 without a keyword or authentication | on |
-| [KindSlackToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindSlackToken) | recognizes xoxb-, xoxp-, xoxa-, xoxo-, xoxr-, xoxs- and xoxe- followed by ASCII letters, digits or hyphens | a body of at least 10 characters and token-boundary checks yield 0.9, with no context keyword or authentication | on |
-| [KindGoogleAPIKey](https://pkg.go.dev/github.com/nao1215/embargo@main#KindGoogleAPIKey) | looks for AIza followed by exactly 35 ASCII letters, digits, hyphens or underscores | the 39-character length and token-boundary checks give 0.9 without a keyword or authentication | on |
-| [KindPrivateKeyPEM](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPrivateKeyPEM) | covers -----BEGIN headers whose same-line content ends in PRIVATE KEY or equals PGP PRIVATE KEY BLOCK, closed by five … | header grammar alone gives 0.99 without a keyword or key-material validation | on |
-| [KindUSSSN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSSSN) | recognizes 9 digits, either contiguous or grouped 3-2-4 with hyphens | field checks yield 0.6, none under a record label such as order_id; a hyphenated value needs no keyword or checksum … | off |
-| [KindUSITIN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSITIN) | finds 9 digits starting with 9, optionally hyphenated 3-2-4 | middle-group validation gives 0.6, none under a record label such as order_id; a hyphenated value needs no keyword or … | off |
-| [KindUKNINO](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKNINO) | accepts two uppercase ASCII letters, six digits and a suffix A–D, optionally spaced into groups of 2 letters, 2/2/2 … | prefix checks score 0.7, none under a record label such as order_id, without requiring context or a checksum | off |
-| [KindUKNHS](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKNHS) | collects 10 digits, contiguous or spaced 3-3-4 | weighted MOD 11 validation yields 0.95, none under a record label such as order_id; a spaced value needs no keyword … | off |
-| [KindIndiaAadhaar](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIndiaAadhaar) | accepts 12 digits beginning 2–9, contiguous or spaced 4-4-4 | Verhoeff checksum validation gives 0.95, none under a record label such as order_id; a spaced value needs no keyword … | off |
-| [KindIndiaPAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIndiaPAN) | recognizes five uppercase ASCII letters, four digits and one final uppercase letter | holder-type and nonzero-serial checks score 0.7, none under a record label such as order_id, with no keyword or checksum | off |
-| [KindBrazilCPF](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBrazilCPF) | takes 11 digits, contiguous or formatted DDD.DDD.DDD-DD | both MOD 11 check digits must pass for 0.95, none under a record label such as order_id, without a keyword | off |
-| [KindBrazilCNPJ](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBrazilCNPJ) | admits 12 uppercase ASCII alphanumerics and two digits, contiguous or formatted CC.CCC.CCC/CCCC-DD | two MOD 11 checks give 0.95, none under a record label such as order_id, without requiring a keyword | off |
-| [KindChinaResidentID](https://pkg.go.dev/github.com/nao1215/embargo@main#KindChinaResidentID) | requires 17 digits followed by a digit or uppercase X, including a YYYYMMDD birth date | province, date, sequence and MOD 11-2 checks yield 0.95, none under a record label such as order_id, with no keyword | off |
-| [KindKoreaRRN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindKoreaRRN) | reads 13 digits, contiguous or hyphenated 6-7, with a birth date and century/sex digit | the legacy weighted MOD 11 check scores 0.95, labeled check failures 0.6, and none under a record label such as order_id | off |
-| [KindCanadaSIN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCanadaSIN) | finds 9 digits starting with 1–7 or 9, contiguous or hyphenated 3-3-3 | Luhn checksum validation yields 0.95, none under a record label such as order_id; a hyphenated value needs no … | off |
+| Kind | Input and output | Default |
+|---|---|---|
+| [KindServiceToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindServiceToken) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindServiceToken) | on |
+| [KindHighEntropy](https://pkg.go.dev/github.com/nao1215/embargo@main#KindHighEntropy) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindHighEntropy) | off |
+| [KindCredential](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCredential) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindCredential) | on |
+| [KindPAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindPAN) | on |
+| [KindEmail](https://pkg.go.dev/github.com/nao1215/embargo@main#KindEmail) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindEmail) | on |
+| [KindJPPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJPPhone) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindJPPhone) | off |
+| [KindUSPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSPhone) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindUSPhone) | off |
+| [KindPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPhone) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindPhone) | on |
+| [KindMyNumber](https://pkg.go.dev/github.com/nao1215/embargo@main#KindMyNumber) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindMyNumber) | off |
+| [KindJWT](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJWT) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindJWT) | on |
+| [KindAWSKey](https://pkg.go.dev/github.com/nao1215/embargo@main#KindAWSKey) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindAWSKey) | on |
+| [KindIBAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIBAN) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindIBAN) | on |
+| [KindIPAddr](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIPAddr) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindIPAddr) | on |
+| [KindSWIFTBIC](https://pkg.go.dev/github.com/nao1215/embargo@main#KindSWIFTBIC) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindSWIFTBIC) | off |
+| [KindABARouting](https://pkg.go.dev/github.com/nao1215/embargo@main#KindABARouting) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindABARouting) | off |
+| [KindUKSortCode](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKSortCode) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindUKSortCode) | off |
+| [KindCVV](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCVV) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindCVV) | on |
+| [KindCardExpiry](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCardExpiry) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindCardExpiry) | on |
+| [KindPaymentToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPaymentToken) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindPaymentToken) | on |
+| [KindBankAccount](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBankAccount) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindBankAccount) | on |
+| [KindACHTrace](https://pkg.go.dev/github.com/nao1215/embargo@main#KindACHTrace) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindACHTrace) | off |
+| [KindMerchantID](https://pkg.go.dev/github.com/nao1215/embargo@main#KindMerchantID) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindMerchantID) | off |
+| [KindBTC](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBTC) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindBTC) | on |
+| [KindETH](https://pkg.go.dev/github.com/nao1215/embargo@main#KindETH) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindETH) | on |
+| [KindGitHubToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindGitHubToken) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindGitHubToken) | on |
+| [KindSlackToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindSlackToken) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindSlackToken) | on |
+| [KindGoogleAPIKey](https://pkg.go.dev/github.com/nao1215/embargo@main#KindGoogleAPIKey) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindGoogleAPIKey) | on |
+| [KindPrivateKeyPEM](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPrivateKeyPEM) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindPrivateKeyPEM) | on |
+| [KindUSSSN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSSSN) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindUSSSN) | off |
+| [KindUSITIN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSITIN) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindUSITIN) | off |
+| [KindUKNINO](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKNINO) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindUKNINO) | off |
+| [KindUKNHS](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKNHS) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindUKNHS) | off |
+| [KindIndiaAadhaar](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIndiaAadhaar) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindIndiaAadhaar) | off |
+| [KindIndiaPAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIndiaPAN) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindIndiaPAN) | off |
+| [KindBrazilCPF](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBrazilCPF) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindBrazilCPF) | off |
+| [KindBrazilCNPJ](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBrazilCNPJ) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindBrazilCNPJ) | off |
+| [KindChinaResidentID](https://pkg.go.dev/github.com/nao1215/embargo@main#KindChinaResidentID) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindChinaResidentID) | off |
+| [KindKoreaRRN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindKoreaRRN) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindKoreaRRN) | off |
+| [KindCanadaSIN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCanadaSIN) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindCanadaSIN) | off |
 <!-- detectors:end -->
 
 </details>
 
 [Every detector and how it validates](doc/detectors.md) · [Provider token formats](doc/credentials.md)
-
-Mask everything a scanner finds, or keep part of a value:
 
 <!-- masking:start -->
 | Operation | Actual text |
@@ -237,7 +207,7 @@ Mask everything a scanner finds, or keep part of a value:
 | [Overlapping matches](example_test.go) | `token=abcdef` with `abcd cdef` → `token=[REDACTED]` |
 <!-- masking:end -->
 
-[`WithMaskFunc`](example_test.go) gives log records, MaskJSON and the adapters the same callback, so a log line keeps `card=****0366`. `Scanner.ScanLines` reads files and streams line by line. [Scanner options and custom replacements](doc/masking.md)
+`WithMaskFunc` applies the same replacement to log records, MaskJSON and the adapters. [Scanner options and custom replacements](doc/masking.md)
 
 <!-- narrowing-line:start -->
 Pick the kinds you need: on 2.7 KB of log lines with no secret, `WithKinds(KindEmail)` returns in 0.10 µs because there is no `@` to inspect, while `WithAll()` takes 65 µs. [Per-detector benchmarks](doc/benchmarks.md)
@@ -249,9 +219,9 @@ Add one line to a package's tests:
 
 `func TestMain(m *testing.M) { os.Exit(embargotest.Guard(m)) }`
 
-Guard reruns the package tests and fails when a canary (a fake secret) or a detected value appears in stdout, stderr, default slog output or child processes. The canary is matched as raw bytes, hex, standard or URL-safe base64 at any byte alignment, and standard Go/JSON-escaped forms, so that check does not depend on the detectors. It also searches the output once more after one layer of JSON backslash-u and percent escapes is decoded; MIME-wrapped base64 requires decoding before recording. [ExampleGuard](embargotest/example_test.go)
+Guard reruns the package tests and fails when a fake secret, in any common encoding, or a detected value appears in stdout, stderr, default slog output or child processes. [ExampleGuard](embargotest/example_test.go)
 
-For one test, build the logger the way the service does and let a recorder check both that the expected output exists and that no canary escaped. Attributes bound after wrapping pass through embargo; ones bound to `next`, or added by handlers after it, do not, and this test fails when the wiring lets the canary through:
+For one test, build the logger the way the service does; the recorder checks that the expected output exists and that the canary did not escape:
 
 <!-- test: doc_test.go:TestReadmeCheckOutput -->
 ```go
@@ -269,18 +239,15 @@ func TestReadmeCheckOutput(t *testing.T) {
 }
 ```
 
-[Keep your masking, add the leak test](doc/keep-your-masking.md) shows how to add only embargotest to existing masking. [HTTP, child processes, and canaries in env, files and headers](doc/testing-output.md)
-
-In a sample service with planted leaks (a DSN, wrapped errors, an Authorization header, a token in a request body), the slog and zap paths masked every leak that reached a logger. The redirect URL never reaches a logger; `embargotest.HTTP` catches it. [Scenario table](doc/comparison.md#service-leak-scenarios)
+[Keep your masking, add the leak test](doc/keep-your-masking.md) · [HTTP, child processes and canaries](doc/testing-output.md)
 
 ## Command line
 
-The `embargo` command masks a log file or a pipe line by line, keeps JSON lines' shape and depends only on the standard library.
+The `embargo` command masks a log file or a pipe line by line and keeps JSON lines' shape.
 
 ```sh
 go install github.com/nao1215/embargo/cmd/embargo@v0.16.1
 kubectl logs deploy/api | embargo
-embargo --format json app.log
 embargo --format jsonl app.log
 ```
 
@@ -290,7 +257,7 @@ $ printf '%s\n' 'login failed for alice@example.com from 203.0.113.7' | embargo
 login failed for [REDACTED] from [REDACTED]
 ```
 
-The masked lines are what you paste into a ticket or hand to an LLM. `--format json` prints per-kind counts with a few locations, and `--format jsonl` prints one line per finding with its line, column and kind; neither prints a matched value. Because jsonl prints nothing for a clean log, `out=$(embargo --format jsonl app.log) && test -z "$out"` fails a CI step on a finding and on an unreadable input alike; the exit status alone only says whether embargo ran. [Flags, limits and comparing settings](doc/audit.md)
+`--format json` prints per-kind counts and `--format jsonl` one line per finding; neither prints a matched value. [Flags, limits and CI use](doc/audit.md)
 
 ## Tested outputs
 
@@ -318,9 +285,7 @@ Each link opens the test that produces and checks the shown output.
 
 ## Accuracy
 
-[Audit your own logs](doc/audit.md): count findings by Kind, inspect masked offsets and test settings that preserve diagnostic IDs.
-
-Held-out synthetic set, default minimum confidence 0. [Generation, test cases and observed misses](doc/accuracy.md) · [Credential detectors](doc/credentials-accuracy.md), measured separately
+Held-out synthetic set, default minimum confidence 0. [Generation, test cases and observed misses](doc/accuracy.md) · [Credential detectors](doc/credentials-accuracy.md) · [Audit your own logs](doc/audit.md)
 
 <!-- accuracy:start -->
 [Per-detector precision, recall and charts](doc/accuracy.md).
@@ -333,8 +298,9 @@ Held-out synthetic set, default minimum confidence 0. [Generation, test cases an
 | [github_token](doc/accuracy.md#github-token) | [google_api_key](doc/accuracy.md#google-api-key) | [iban](doc/accuracy.md#iban) |
 | [ipaddr](doc/accuracy.md#ipaddr) | [jwt](doc/accuracy.md#jwt) | [merchant_id](doc/accuracy.md#merchant-id) |
 | [mynumber](doc/accuracy.md#mynumber) | [pan](doc/accuracy.md#pan) | [payment_token](doc/accuracy.md#payment-token) |
-| [phone_jp](doc/accuracy.md#phone-jp) | [phone_us](doc/accuracy.md#phone-us) | [private_key_pem](doc/accuracy.md#private-key-pem) |
-| [slack_token](doc/accuracy.md#slack-token) | [swiftbic](doc/accuracy.md#swiftbic) | [uk_sortcode](doc/accuracy.md#uk-sortcode) |
+| [phone](doc/accuracy.md#phone) | [phone_jp](doc/accuracy.md#phone-jp) | [phone_us](doc/accuracy.md#phone-us) |
+| [private_key_pem](doc/accuracy.md#private-key-pem) | [slack_token](doc/accuracy.md#slack-token) | [swiftbic](doc/accuracy.md#swiftbic) |
+| [uk_sortcode](doc/accuracy.md#uk-sortcode) | | |
 <!-- accuracy:end -->
 
 <!-- real-logs-summary:start -->
@@ -391,11 +357,9 @@ Recorded scanner medians (ten interleaved samples):
 [kinds1/3/8 definitions, input sizes and uncertainty](doc/benchmarks.md#choose-the-kinds-the-application-needs). Narrower selection avoids irrelevant detections and gives up their recall.
 <!-- narrowing-summary:end -->
 
-[Machine, method, profiles and full results](doc/benchmarks.md).
-
 ## Compared with other Go libraries
 
-The same scenarios, service probe and log events run against pii-shield, ferret-scan, masq, go-masker, slog-formatter, go-mask and godlp, and the typed-wrapper paths against ggwhite/go-masker v3. A catch means the original planted value was removed; partial masks count. These configured examples are not a production accuracy estimate.
+The same scenarios, service probe and log events run against pii-shield, ferret-scan, masq, go-masker, slog-formatter, go-mask and godlp. A catch means the planted value was removed; partial masks count.
 
 | Job | Strongest measured option | Where others win or tie |
 |---|---|---|
@@ -406,9 +370,7 @@ The same scenarios, service probe and log events run against pii-shield, ferret-
 
 ![Scenario catch rate](doc/images/scenario-catch.svg)
 
-pii-shield also runs as a Kubernetes sidecar outside the process, and ferret-scan scans documents and images; embargo stays inside the Go process where the value is written. Its default scanner keeps the invalid-Luhn control visible, because a number that fails the Luhn check is not an issued card; masq masks it. [Exact outputs, setup, runtime dependencies and speed](doc/comparison.md) document the strengths and limits of every configuration.
-
-The service probe below also checks a redirect that bypasses every logger. `embargotest.HTTP` catches that response leak:
+![Scenario catch rate](doc/images/scenario-catch.svg)
 
 <!-- leak-scenarios:start -->
 | Service output | embargo slog | embargo zap | pii-shield v3.0.0 | ferret-scan v2.4.3 | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |
@@ -422,7 +384,7 @@ The service probe below also checks a redirect that bypasses every logger. `emba
 | Redirect URL query, never logged | leaked | leaked | leaked | leaked | leaked | leaked | leaked | leaked | leaked |
 <!-- leak-scenarios:end -->
 
-[Service setup and full results](doc/comparison.md#service-leak-scenarios).
+[Exact outputs, setup and speed](doc/comparison.md).
 
 ## Contributing
 

@@ -180,6 +180,16 @@
     "fn": 0
   },
   {
+    "detector": "phone",
+    "precision": "100.0%",
+    "recall": "100.0%",
+    "positive": 144,
+    "negative": 64,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
     "detector": "phone_jp",
     "precision": "82.0%",
     "recall": "100.0%",

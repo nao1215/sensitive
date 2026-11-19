@@ -161,33 +161,33 @@ type fragmentOption int
 // unrelated output. The default checks only whole-value representations.
 func WithCanaryFragments(minBytes int) Option { return fragmentOption(minBytes) }
 
-func (o fragmentOption) apply(r *Recorder) bool {
+func (o fragmentOption) apply(p *policy) bool {
 	const smallestFragment = 16
 	const largestCanary = 1024
 	if int(o) < smallestFragment || int(o) > largestCanary {
 		return false
 	}
-	r.minFragment = int(o)
+	p.minFragment = int(o)
 	return true
 }
 
-func (r *Recorder) configureNeedles() {
-	r.needles = representations(r.canary)
-	if r.minFragment > len(r.canary) {
-		r.failed = true
+func (p *policy) configureNeedles() {
+	p.needles = representations(p.canary)
+	if p.minFragment > len(p.canary) {
+		p.invalid = true
 		return
 	}
-	if r.minFragment == 0 {
+	if p.minFragment == 0 {
 		return
 	}
 	// A longer raw fragment necessarily contains a minimum-length window.
 	// The canary already belongs to the policy and remains immutable.
 	seen := make(map[string]bool)
-	for start := 0; start+r.minFragment <= len(r.canary); start++ {
-		fragment := r.canary[start : start+r.minFragment]
+	for start := 0; start+p.minFragment <= len(p.canary); start++ {
+		fragment := p.canary[start : start+p.minFragment]
 		if !seen[string(fragment)] {
 			seen[string(fragment)] = true
-			r.needles = append(r.needles, fragment)
+			p.needles = append(p.needles, fragment)
 		}
 	}
 }

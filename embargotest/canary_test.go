@@ -7,8 +7,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
 	"math/big"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -93,7 +99,7 @@ func TestCanaryFragmentBoundsAndOrder(t *testing.T) {
 		r := New(p, WithCanaryFragments(minimum), WithCanary([]byte(canary)))
 		write(t, r, "out", []byte("complete"))
 		r.Expect("out", func([]byte) bool { return true })
-		if r.Check() || !guardPolicy([]Option{WithCanaryFragments(minimum), WithCanary([]byte(canary))}).failed {
+		if r.Check() || !guardPolicy([]Option{WithCanaryFragments(minimum), WithCanary([]byte(canary))}).invalid {
 			t.Fatal("invalid minimum accepted")
 		}
 		p.finish()
@@ -103,7 +109,7 @@ func TestCanaryFragmentBoundsAndOrder(t *testing.T) {
 		{WithCanary([]byte(canary)), WithCanaryFragments(len(canary))},
 	} {
 		policy := guardPolicy(options)
-		if policy.failed || !containsCanary([]byte(canary), policy.needles) || containsCanary([]byte(canary[:len(canary)-1]), policy.needles) {
+		if policy.invalid || !containsCanary([]byte(canary), policy.needles) || containsCanary([]byte(canary[:len(canary)-1]), policy.needles) {
 			t.Fatal("equal-length boundary or option order failed")
 		}
 	}
@@ -143,7 +149,7 @@ func TestCanaryJSONEscapingAndEmptyNeedles(t *testing.T) {
 	}
 	const maximum = 1024
 	policy := guardPolicy([]Option{WithCanaryFragments(maximum), WithCanary(bytes.Repeat([]byte("z"), maximum))})
-	if policy.failed || !containsCanary(policy.canary, policy.needles) || containsCanary(policy.canary[:maximum-1], policy.needles) {
+	if policy.invalid || !containsCanary(policy.canary, policy.needles) || containsCanary(policy.canary[:maximum-1], policy.needles) {
 		t.Fatal("maximum fragment length was not accepted exactly")
 	}
 }
@@ -292,3 +298,50 @@ func TestCanaryDecodingEdges(t *testing.T) {
 		t.Fatalf("decodeUnicodeEscapes read past the slice: %q", got)
 	}
 }
+
+func TestCanaryHTTPInputs(t *testing.T) {
+	t.Parallel()
+	r := New(t)
+	// Standard library types carry the canary into HTTP inputs.
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "http://example.com/", bytes.NewReader(r.Canary()))
+	request.Header.Set("Authorization", string(r.Canary()))
+	body, err := io.ReadAll(request.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := request.Body.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(body, r.Canary()) || request.Header.Get("Authorization") != string(r.Canary()) {
+		t.Fatal("input differs")
+	}
+	logger := slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(r.Writer("logs"), nil), embargo.NewScanner()))
+	logger.Info("received", slog.String("authorization", request.Header.Get("Authorization")), slog.String("token", string(body)))
+	r.ExpectJSON("logs", nil, map[string]string{"authorization": injectedMarker, "token": injectedMarker}, 1)
+	r.Check()
+}
+
+func TestCanaryFileInput(t *testing.T) {
+	t.Parallel()
+	r := New(t)
+	// A secret-file configuration gets the canary through an ordinary private file.
+	path := filepath.Join(t.TempDir(), "password")
+	if err := os.WriteFile(path, r.Canary(), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// #nosec G304 -- Private temporary file created above.
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(data, r.Canary()) {
+		t.Fatal("file differs")
+	}
+	if _, err := r.Writer("logs").Write([]byte(embargo.NewSecret(data).String())); err != nil {
+		t.Fatal(err)
+	}
+	r.Expect("logs", func(data []byte) bool { return len(data) > 0 })
+	r.Check()
+}
+
+const injectedMarker = "[REDACTED]"

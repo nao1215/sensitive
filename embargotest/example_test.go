@@ -69,29 +69,32 @@ func ExampleWithCanary() {
 }
 
 func ExampleWithMaxBytes() {
-	fmt.Println(runExample(func(tb testing.TB) bool {
+	write := func(tb testing.TB, text string) bool {
 		tb.Helper()
-		r := embargotest.New(tb, embargotest.WithMaxBytes(4096))
-		r.Expect("out", func(data []byte) bool { return string(data) == "ok" })
-
-		fmt.Fprint(r.Writer("out"), "ok")
+		r := embargotest.New(tb, embargotest.WithMaxBytes(16))
+		r.Expect("out", func(data []byte) bool { return len(data) > 0 })
+		fmt.Fprint(r.Writer("out"), text)
 		return r.Check()
-	}))
+	}
 
-	// Output: true
+	fmt.Println(runExample(func(tb testing.TB) bool { tb.Helper(); return write(tb, "sixteen bytes ok") }))
+	fmt.Println(runExample(func(tb testing.TB) bool { tb.Helper(); return write(tb, "seventeen bytes!!") }))
+
+	// Output:
+	// true
+	// false
 }
 
 func ExampleWithTimeout() {
 	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
-		r := embargotest.New(tb, embargotest.WithTimeout(time.Minute))
-		r.Expect("out", func(data []byte) bool { return string(data) == "ok" })
-
-		fmt.Fprint(r.Writer("out"), "ok")
-		return r.Check()
+		// TestChildHang waits a minute; the recorder stops it after 100 ms.
+		r := embargotest.New(tb, embargotest.WithTimeout(100*time.Millisecond))
+		err := r.Run(context.Background(), "TestChildHang", 0)
+		return err == nil && r.Check()
 	}))
 
-	// Output: true
+	// Output: false
 }
 
 func ExampleRecorder_ExpectJSON() {
@@ -247,16 +250,22 @@ func ExampleRecorder_Check() {
 }
 
 func ExampleWithScanner() {
-	fmt.Println(runExample(func(tb testing.TB) bool {
+	logEmail := func(tb testing.TB, opts ...embargotest.Option) bool {
 		tb.Helper()
-		recorder := embargotest.New(tb, embargotest.WithScanner(embargo.NewScanner(embargo.WithKinds(embargo.KindPAN))))
+		r := embargotest.New(tb, opts...)
+		r.Expect("out", func(data []byte) bool { return len(data) > 0 })
+		fmt.Fprint(r.Writer("out"), "sent to alice@example.com")
+		return r.Check()
+	}
+	cardsOnly := embargo.NewScanner(embargo.WithKinds(embargo.KindPAN))
 
-		fmt.Fprint(recorder.Writer("out"), "accepted")
-		recorder.Expect("out", func(data []byte) bool { return string(data) == "accepted" })
-		return recorder.Check()
-	}))
+	// The default scanner fails on the email address; a card-only scanner allows it.
+	fmt.Println(runExample(func(tb testing.TB) bool { tb.Helper(); return logEmail(tb) }))
+	fmt.Println(runExample(func(tb testing.TB) bool { tb.Helper(); return logEmail(tb, embargotest.WithScanner(cardsOnly)) }))
 
-	// Output: true
+	// Output:
+	// false
+	// true
 }
 
 func ExampleWithAllowedKinds() {
@@ -286,37 +295,27 @@ func ExampleWithAllowedValues() {
 }
 
 func ExampleWithCanaryFragments() {
-	fmt.Println(runExample(func(tb testing.TB) bool {
+	logPrefix := func(tb testing.TB, opts ...embargotest.Option) bool {
 		tb.Helper()
-		r := embargotest.New(tb, embargotest.WithCanaryFragments(16))
-		// Preserve useful content; a surviving 16-byte raw fragment would fail Check.
-		fmt.Fprint(r.Writer("logs"), "order accepted: ", embargo.NewSecret(r.Canary()))
-		r.Expect("logs", func(data []byte) bool { return string(data) == "order accepted: [REDACTED]" })
+		r := embargotest.New(tb, opts...)
+		r.Expect("logs", func(data []byte) bool { return len(data) > 0 })
+		// The code under test logs the first 16 bytes of the secret.
+		fmt.Fprintf(r.Writer("logs"), "token prefix %s", r.Canary()[:16])
 		return r.Check()
-	}))
-	// Output: true
+	}
+
+	fmt.Println(runExample(func(tb testing.TB) bool { tb.Helper(); return logPrefix(tb) }))
+	fmt.Println(runExample(func(tb testing.TB) bool { tb.Helper(); return logPrefix(tb, embargotest.WithCanaryFragments(16)) }))
+
+	// Output:
+	// true
+	// false
 }
 
 func ExampleCheckValue() {
 	fmt.Println(runExample(func(tb testing.TB) bool {
 		tb.Helper()
 		return embargotest.CheckValue(tb, func(canary string) any { return embargo.NewSecret(canary) })
-	})) // Output: true
-}
-
-func ExampleRecorder_File() {
-	fmt.Println(runExample(func(tb testing.TB) bool {
-		tb.Helper()
-		r := embargotest.New(tb)
-		path := r.File("password")
-		// #nosec G304 -- Path was returned by the canary file helper in the private test directory.
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return false
-		}
-		r.Expect("out", func(data []byte) bool { return string(data) == "[REDACTED]" })
-		fmt.Fprint(r.Writer("out"), embargo.NewSecret(data))
-		return r.Check()
 	})) // Output: true
 }
 

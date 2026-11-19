@@ -15,6 +15,8 @@ import (
 type Scanner struct {
 	sensitiveKeys map[string]struct{}
 	kinds         map[Kind]bool
+	// moreKinds holds kinds WithMoreKinds adds to the selection.
+	moreKinds     map[Kind]bool
 	detectors     []detect.Detector
 	hintCache     [][]hintEntry
 	custom        []Detector
@@ -44,8 +46,13 @@ type hintEntry struct {
 	needFold bool
 }
 
-// NewScanner starts with 26 built-ins; the additional country families and KindHighEntropy are opt-in.
-// WithAll enables all 38 families; WithKinds selects the regions and formats an application handles.
+// NewScanner starts with 19 built-ins: credentials and provider tokens, card and bank account
+// data, email, IP and international phone numbers, and cryptocurrency addresses, the values the
+// OWASP Logging Cheat Sheet and PCI DSS keep out of logs, written in formats used in every country.
+// Formats of one country (national IDs, My Number, Japanese and North American phone numbers, ABA,
+// sort codes, ACH traces), bank and merchant identifiers (SWIFT/BIC, merchant IDs) and
+// KindHighEntropy are opt-in. WithAll enables all 39 families; WithKinds selects the regions and
+// formats an application handles.
 // Minimum confidence defaults to 0, so ambiguous numeric and contextual candidates remain.
 // Select WithKinds when the application knows which data it handles; fewer detectors reduce work and unrelated findings.
 // See https://github.com/nao1215/embargo/blob/main/doc/benchmarks.md for measured kind sets.
@@ -62,7 +69,7 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 		matchKey = s.sensitiveKey
 	}
 	for _, d := range builtins(matchKey) {
-		if (s.kinds == nil && (s.allKinds || defaultKind(Kind(d.Name())))) || s.kinds[Kind(d.Name())] {
+		if (s.kinds == nil && (s.allKinds || defaultKind(Kind(d.Name())))) || s.kinds[Kind(d.Name())] || s.moreKinds[Kind(d.Name())] {
 			s.detectors = append(s.detectors, d)
 		}
 	}
@@ -71,9 +78,10 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 	if len(s.detectors) > 1 {
 		s.buildDispatch()
 	}
-	// Custom detectors receive the scanned bytes and may keep them or answer
-	// differently each time, so only built-in selections, which never retain
-	// input and always return the same findings, reuse buffers and key results.
+	// A custom detector may answer differently each time, and one that breaks
+	// its no-retention contract would see a reused buffer change, so only
+	// built-in selections, which never retain input and always return the same
+	// findings, reuse buffers and key results.
 	if len(s.custom) == 0 {
 		s.scratch = &sync.Pool{New: func() any { return &scanScratch{text: nil, findings: nil} }}
 		s.keys = &keyCache{}
@@ -142,13 +150,17 @@ func buildHintCache(detectors []detect.Detector) [][]hintEntry {
 }
 
 // Scan returns every finding, including overlaps, ordered by start, descending end,
-// kind, then descending confidence. Built-ins decode one layer of valid percent
-// escapes (%HH); KindCredential keeps original URL/DSN delimiters and also scans
-// normalized assignments.
-// Literal + and invalid escapes are preserved; offsets always refer
-// to original bytes. KindCredential also scans up to four Go/JSON quote and
-// backslash escape layers, including hexadecimal and Unicode quote escapes. Other encodings are not decoded. Custom detectors receive
-// the original bytes. Invalid custom findings panic with a fixed message.
+// kind, then descending confidence. Offsets always refer to the original bytes.
+//
+// Before built-ins run, the input is decoded in this order: one layer of
+// backslash-u escapes whose code point is ASCII, one layer of valid percent
+// escapes (%HH), and removal of non-ASCII dash, space and format characters
+// inside a token. Literal +, escaped backslashes and invalid escapes are kept.
+// KindCredential also keeps original URL/DSN delimiters and scans up to four
+// Go/JSON quote and backslash escape layers. Base64 and other encodings are not
+// decoded by Scan; MaskJSON and the log handlers decode one layer of base64
+// text. Custom detectors receive the original bytes. Invalid custom findings
+// panic with a fixed message.
 func (s *Scanner) Scan(data []byte) []Finding {
 	return s.scan(data, nil)
 }
@@ -362,7 +374,9 @@ func matchesAnyHint(entries []hintEntry, data []byte, foldedData *[]byte, folded
 
 func defaultKind(kind Kind) bool {
 	switch kind { //nolint:exhaustive // Explicit opt-in families; the remaining built-ins retain their defaults.
-	case KindHighEntropy, KindUSSSN, KindUSITIN, KindUKNINO, KindUKNHS, KindIndiaAadhaar, KindIndiaPAN, KindBrazilCPF, KindBrazilCNPJ, KindChinaResidentID, KindKoreaRRN, KindCanadaSIN:
+	// One country's formats and values that no international guideline treats
+	// as secret or personal are opt-in; see the default rule on NewScanner.
+	case KindHighEntropy, KindMyNumber, KindJPPhone, KindUSPhone, KindABARouting, KindUKSortCode, KindACHTrace, KindSWIFTBIC, KindMerchantID, KindUSSSN, KindUSITIN, KindUKNINO, KindUKNHS, KindIndiaAadhaar, KindIndiaPAN, KindBrazilCPF, KindBrazilCNPJ, KindChinaResidentID, KindKoreaRRN, KindCanadaSIN:
 		return false
 	default:
 		return true

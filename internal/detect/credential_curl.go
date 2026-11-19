@@ -11,7 +11,7 @@ import (
 // lines. The username stays visible, as in URL userinfo; when the password is
 // empty, as with an API key passed as the username, the username is reported.
 // Other commands are ignored because their -u option has unrelated meanings,
-// such as docker run -u uid:gid.
+// such as the user and group IDs that docker run takes.
 func curlUserPasswords(data []byte) []Finding {
 	var out []Finding
 	for i := 0; i+len("curl") <= len(data); i++ {

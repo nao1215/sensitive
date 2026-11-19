@@ -64,7 +64,7 @@ func TestCountryRecordLabels(t *testing.T) {
 		name  DetectorName
 		label string
 	}{{"uk_nino", "nino"}, {"in_pan", "pan"}, {"br_cnpj", "cnpj"}, {"cn_resident_id", "resident"}, {"kr_rrn", "rrn"}} {
-		if _, labels, _ := countryLayouts(tc.name); labels[0] != tc.label {
+		if labels := countryFamilies()[tc.name].labels; labels[0] != tc.label {
 			t.Errorf("%s labels %q, want %q first", tc.name, labels, tc.label)
 		}
 	}

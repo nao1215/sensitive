@@ -19,6 +19,7 @@ func builtins(matchKey func(string) bool) []detect.Detector {
 		detect.NewEmail(),
 		detect.NewJPPhone(),
 		detect.NewUSPhone(),
+		detect.NewPhone(),
 		detect.NewMyNumber(),
 		detect.NewJWT(),
 		detect.NewAWSKey(),

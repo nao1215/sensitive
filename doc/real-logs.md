@@ -54,6 +54,7 @@ Rates below are estimated false-positive findings per decimal GB (10⁹ bytes), 
 | mynumber | 8,072.0 | 0.0 | 912.8 | 0.0 |
 | pan | 44,209.9 | 0.0 | 0.0 | 0.0 |
 | payment_token | 0.0 | 0.0 | 0.0 | 0.0 |
+| phone | 0.0 | 0.0 | 0.0 | 0.0 |
 | phone_jp | 2,607.9 | 0.0 | 0.0 | 0.0 |
 | phone_us | 0.0 | 0.0 | 0.0 | 0.0 |
 | private_key_pem | 0.0 | 0.0 | 0.0 | 0.0 |
@@ -87,7 +88,7 @@ The operations-log families were added after the LogHub baseline, so they have c
 | system (LogHub) | development | 4 | 8,052,486 | 0.0 | 0.0 | none |
 | system (LogHub) | held | 4 | 84,357,362 | 11.9 | 0.0 | ca_sin |
 | web access | development | 2 | 19,129,354 | 0.0 | 0.0 | none |
-| web access | held | 1 | 2,370,789 | 65,379.1 | 1,265.4 | high_entropy, swiftbic |
+| web access | held | 1 | 2,370,789 | 65,379.1 | 0.0 | high_entropy, swiftbic |
 | Kubernetes audit | development | 1 | 92,794,383 | 0.0 | 0.0 | none |
 | cloud audit | development | 1 | 16,030,714 | 0.0 | 0.0 | none |
 | cloud audit | held | 2 | 17,152,480 | 3,672.9 | 116.6 | credential, high_entropy |

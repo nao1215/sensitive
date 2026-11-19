@@ -48,7 +48,8 @@ func run() error {
 }
 
 func check(text, needle, key, value string) error {
-	scanner := embargo.NewScanner()
+	// WithAll keeps the SWIFT and My Number boundary fixtures, which are opt-in.
+	scanner := embargo.NewScanner(embargo.WithAll())
 	var out bytes.Buffer
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(strings.ToLower(key), value, "detail", text))
 	unary := embargogrpc.NewUnaryServerInterceptor(slog.New(slog.NewJSONHandler(&out, nil)), scanner)

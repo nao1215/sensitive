@@ -156,7 +156,7 @@ func TestNilPanicCompatibility(t *testing.T) {
 			probe.finish()
 			want := "embargotest: scanner failed"
 			if kind == validator {
-				want = "embargotest: a content expectation was not met"
+				want = unmetExpectation
 			}
 			if len(probe.messages) != 1 || probe.messages[0] != want {
 				t.Fatal("panic(nil) must produce only the fixed failure message")

@@ -37,7 +37,7 @@ func TestSecret(t *testing.T) {
 		t.Fatal("nonzero reveal")
 	}
 	s := NewSecret(hostileValue{})
-	if s.String() != redactionMarker || s.GoString() != "embargo.Secret[github.com/nao1215/embargo.hostileValue]([REDACTED])" || s.LogValue().String() != redactionMarker {
+	if s.String() != redactionMarker || fmt.Sprintf("%#v", s) != "embargo.Secret[github.com/nao1215/embargo.hostileValue]([REDACTED])" || s.LogValue().String() != redactionMarker {
 		t.Fatal("display changed")
 	}
 	for _, verb := range "vbcdoOqxXUeEfFgGstpT%z" {
@@ -45,7 +45,7 @@ func TestSecret(t *testing.T) {
 			output := fmt.Sprintf("%"+flag+string(verb), s)
 			want := redactionMarker
 			if verb == 'v' && strings.Contains(flag, "#") {
-				want = s.GoString()
+				want = "embargo.Secret[github.com/nao1215/embargo.hostileValue]([REDACTED])"
 			}
 			if verb != 'p' && verb != 'T' && verb != '%' && output != want {
 				t.Fatal("formatter redactionMarker changed")
@@ -152,8 +152,8 @@ func TestSecretDebugType(t *testing.T) {
 			t.Fatalf("%s: %s", format, got)
 		}
 	}
-	if got := password.GoString(); got != "embargo.Secret[string]([REDACTED])" {
-		t.Fatal(got)
+	if _, ok := any(password).(fmt.GoStringer); ok {
+		t.Fatal("Secret implements fmt.GoStringer; Format owns the Go-syntax verb")
 	}
 	var zero Secret[[]byte]
 	if got := fmt.Sprintf("%#v", zero); got != "embargo.Secret[[]uint8]([REDACTED])" {

@@ -20,8 +20,8 @@ func repositoryKinds(t *testing.T) []kindDoc {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(kinds) != 38 {
-		t.Fatalf("got %d kinds, want 38", len(kinds))
+	if len(kinds) != 39 {
+		t.Fatalf("got %d kinds, want 39", len(kinds))
 	}
 	return kinds
 }
@@ -35,12 +35,14 @@ func repositoryReadme(t *testing.T) string {
 	return strings.ReplaceAll(string(data), "\r\n", "\n")
 }
 
+const unlabeledCase = "unlabeled"
+
 func TestKindGodocValidation(t *testing.T) {
 	t.Parallel()
 	for _, kind := range repositoryKinds(t) {
 		t.Run(kind.name, func(t *testing.T) {
 			t.Parallel()
-			if _, _, _, err := columns(kind); err != nil {
+			if _, err := defaultSetting(kind); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -73,7 +75,7 @@ func TestReadmeFreshness(t *testing.T) {
 func TestKindGodocRejectsMissingValidation(t *testing.T) {
 	t.Parallel()
 	for _, doc := range []string{"", "KindFake selects values.", "KindFake matches digits; reports candidates (NewScanner default: on)."} {
-		if _, _, _, err := columns(kindDoc{name: "KindFake", doc: doc}); err == nil {
+		if _, err := defaultSetting(kindDoc{name: "KindFake", doc: doc}); err == nil {
 			t.Errorf("accepted incomplete contract %q", doc)
 		}
 	}
@@ -132,12 +134,13 @@ const (
 func scoreCases() map[embargo.Kind][]scoreCase {
 	return map[embargo.Kind][]scoreCase{
 		embargo.KindServiceToken:    {{"provider", "sk-proj-abcdefghijklmnop", .95}, {"webhook", "https://hooks.slack.com/services/T0/B0/abcdefghijklmnop", .95}},
-		embargo.KindHighEntropy:     {{"unlabeled", "aB3dE6gH9jK2mN5pQ8sT1vW4yZ7cF0iL", .3}},
+		embargo.KindHighEntropy:     {{unlabeledCase, "aB3dE6gH9jK2mN5pQ8sT1vW4yZ7cF0iL", .3}},
 		embargo.KindCredential:      {{"assignment", "password=synthetic", .95}, {"dsn", "postgres://alice:synthetic@localhost/db", .95}},
 		embargo.KindPAN:             {{"Luhn", "4111111111111111", 1}, {businessLabelCase, "order_id=4111111111111111", .4}},
 		embargo.KindEmail:           {{"known TLD", "alice@example.com", 1}, {"unknown TLD", "alice@example.zzzz", .8}, {"known TLD doubled dot", "alice@ex..ample.com", .9}, {"unknown TLD doubled dot", "alice@ex..ample.zzzz", .7}},
 		embargo.KindJPPhone:         {{"mobile", "09012345678", .9}, {"landline", "0312345678", .8}, {businessLabelCase, "order_id=09012345678", .4}},
-		embargo.KindUSPhone:         {{"unlabeled", "202-555-0123", .7}, {"phone label", "phone: (202) 555-0123", .9}, {businessLabelCase, "order_id=202-555-0123", .4}},
+		embargo.KindUSPhone:         {{unlabeledCase, "202-555-0123", .7}, {"phone label", "phone: (202) 555-0123", .9}, {businessLabelCase, "order_id=202-555-0123", .4}},
+		embargo.KindPhone:           {{unlabeledCase, "+44 20 7946 0958", .8}, {"phone label", "phone: +44 20 7946 0958", .9}, {businessLabelCase, "order_id=+44 20 7946 0958", .4}},
 		embargo.KindMyNumber:        {{checksumCase, "123456789018", .95}, {"My Number label", "My Number: 123456789018", .95}},
 		embargo.KindJWT:             {{"invalid unsigned header", "eyJ.e30.", .5}, {"invalid signed header", "eyJ.e30.sig", .7}, {"unsigned object", "eyJ4IjoxfQ.e30.", .7}, {"signed object", "eyJ4IjoxfQ.e30.sig", .9}, {"unsigned alg", "eyJhbGciOiJub25lIn0.e30.", .8}, {"signed alg", "eyJhbGciOiJIUzI1NiJ9.e30.sig", 1}},
 		embargo.KindAWSKey:          {{"access key ID", "AKIAIOSFODNN7EXAMPLE", .95}},

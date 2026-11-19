@@ -30,6 +30,7 @@ const KindMerchantID Kind = "merchant_id"
 const KindMyNumber Kind = "mynumber"
 const KindPAN Kind = "pan"
 const KindPaymentToken Kind = "payment_token"
+const KindPhone Kind = "phone"
 const KindPrivateKeyPEM Kind = "private_key_pem"
 const KindSWIFTBIC Kind = "swiftbic"
 const KindServiceToken Kind = "service_token"
@@ -52,13 +53,13 @@ func WithDetector(d Detector) ScannerOption
 func WithKinds(kinds ...Kind) ScannerOption
 func WithMaskFunc(replace func(kind Kind, value string) string) ScannerOption
 func WithMinConfidence(threshold float64) ScannerOption
+func WithMoreKinds(kinds ...Kind) ScannerOption
 func WithSensitiveKeys(keys ...string) ScannerOption
 func WithoutDefaultSensitiveKeys() ScannerOption
 methodset *Input[T interface{~string | ~[]byte}] func (*Input[T]).Scan(src any) error
 methodset *Input[T interface{~string | ~[]byte}] func (*Input[T]).UnmarshalJSON(data []byte) error
 methodset *Input[T interface{~string | ~[]byte}] func (*Input[T]).UnmarshalText(data []byte) error
 methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).Format(state fmt.State, _ rune)
-methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).GoString() string
 methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).LogValue() slog.Value
 methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).MarshalJSON() ([]byte, error)
 methodset *Input[T interface{~string | ~[]byte}] func (Input[T]).MarshalText() ([]byte, error)
@@ -70,7 +71,6 @@ methodset *Scanner func (*Scanner).Scan(data []byte) []Finding
 methodset *Scanner func (*Scanner).ScanLines(r io.Reader, fn func(lineNum int, line []byte, findings []Finding)) error
 methodset *Scanner func (*Scanner).ScanString(text string) []Finding
 methodset *Secret[T any] func (Secret[T]).Format(state fmt.State, verb rune)
-methodset *Secret[T any] func (Secret[T]).GoString() string
 methodset *Secret[T any] func (Secret[T]).LogValue() slog.Value
 methodset *Secret[T any] func (Secret[T]).MarshalJSON() ([]byte, error)
 methodset *Secret[T any] func (Secret[T]).MarshalText() ([]byte, error)
@@ -78,14 +78,12 @@ methodset *Secret[T any] func (Secret[T]).Reveal() T
 methodset *Secret[T any] func (Secret[T]).String() string
 methodset Detector func (Detector).Scan(data []byte) []Finding
 methodset Input[T interface{~string | ~[]byte}] func (Input[T]).Format(state fmt.State, _ rune)
-methodset Input[T interface{~string | ~[]byte}] func (Input[T]).GoString() string
 methodset Input[T interface{~string | ~[]byte}] func (Input[T]).LogValue() slog.Value
 methodset Input[T interface{~string | ~[]byte}] func (Input[T]).MarshalJSON() ([]byte, error)
 methodset Input[T interface{~string | ~[]byte}] func (Input[T]).MarshalText() ([]byte, error)
 methodset Input[T interface{~string | ~[]byte}] func (Input[T]).Secret() Secret[T]
 methodset Input[T interface{~string | ~[]byte}] func (Input[T]).String() string
 methodset Secret[T any] func (Secret[T]).Format(state fmt.State, verb rune)
-methodset Secret[T any] func (Secret[T]).GoString() string
 methodset Secret[T any] func (Secret[T]).LogValue() slog.Value
 methodset Secret[T any] func (Secret[T]).MarshalJSON() ([]byte, error)
 methodset Secret[T any] func (Secret[T]).MarshalText() ([]byte, error)

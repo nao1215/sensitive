@@ -442,8 +442,8 @@
     {
       "results": {
         "embargo": {
-          "output": "{\"level\":\"INFO\",\"msg\":\"contact [REDACTED]\"}",
-          "removed": true
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact 03-1234-5678\"}",
+          "removed": false
         },
         "ferret-scan": {
           "output": "{\"level\":\"INFO\",\"msg\":\"contact 03-1234-5678\"}",
@@ -481,8 +481,8 @@
     {
       "results": {
         "embargo": {
-          "output": "{\"level\":\"INFO\",\"msg\":\"contact [REDACTED]\"}",
-          "removed": true
+          "output": "{\"level\":\"INFO\",\"msg\":\"contact 202-555-0123\"}",
+          "removed": false
         },
         "ferret-scan": {
           "output": "{\"level\":\"INFO\",\"msg\":\"contact [PHONE-REDACTED]\"}",

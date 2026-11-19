@@ -7,13 +7,11 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"html"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 )
 
 const (
@@ -88,47 +86,34 @@ func readKindValues(value *ast.ValueSpec) ([]kindDoc, error) {
 	return result, nil
 }
 
-// The first semicolon separates matching from validation; subsequent clauses
-// stay in validation. The final parenthesis carries NewScanner's default.
-// Cells are verbatim excerpts, never a second hand-maintained rule list: remove
-// the identifier, take the first validation sentence, escape Markdown/HTML,
-// and cut at a word boundary with an ellipsis when over 120 visible characters. The Kind link opens the full godoc.
-func columns(kind kindDoc) (matches, checked, enabled string, err error) {
+// defaultSetting returns "on" or "off" from a Kind's godoc after checking its
+// contract: the first semicolon separates matching from validation, and the
+// final parenthesis carries NewScanner's default. The README row links the
+// Kind's godoc and its runnable Example instead of repeating the rule, so the
+// rule lives only in the godoc.
+func defaultSetting(kind kindDoc) (enabled string, err error) {
 	matches, checked, ok := strings.Cut(kind.doc, "; ")
 	validation := regexp.MustCompile(`(?i)\b(check\w*|validat\w*|verif\w*|structure|grammar|Shannon)\b`)
 	if !strings.HasPrefix(matches, kind.name+" ") || !ok || !validation.MatchString(checked) {
-		return "", "", "", fmt.Errorf("%s lacks godoc matching and validation clauses", kind.name)
+		return "", fmt.Errorf("%s lacks godoc matching and validation clauses", kind.name)
 	}
-	checked, enabled, ok = strings.Cut(checked, defaultPrefix)
+	_, enabled, ok = strings.Cut(checked, defaultPrefix)
 	if !ok || (enabled != "on)." && enabled != "off).") {
-		return "", "", "", fmt.Errorf("%s lacks a NewScanner default", kind.name)
+		return "", fmt.Errorf("%s lacks a NewScanner default", kind.name)
 	}
-	enabled = strings.TrimSuffix(enabled, ").")
-	matches = strings.TrimPrefix(matches, kind.name+" ")
-	checked, _, _ = strings.Cut(checked, ". ")
-	return matches, checked, enabled, nil
-}
-
-func cell(text string) string {
-	const limit = 120
-	if utf8.RuneCountInString(text) > limit {
-		cut := string([]rune(text)[:limit-2])
-		if space := strings.LastIndexByte(cut, ' '); space >= 0 {
-			cut = cut[:space]
-		}
-		text = strings.TrimRight(cut, ";,") + " …"
-	}
-	return strings.ReplaceAll(html.EscapeString(text), "|", "&#124;")
+	return strings.TrimSuffix(enabled, ")."), nil
 }
 
 func render(kinds []kindDoc) (string, error) {
-	rows := []string{startMarker, "| Kind | What it matches | How it is checked | Default |", "|---|---|---|---|"}
+	rows := []string{startMarker, "| Kind | Input and output | Default |", "|---|---|---|"}
 	for _, kind := range kinds {
-		matches, checked, enabled, err := columns(kind)
+		// The godoc must still carry its matching and validation clauses.
+		enabled, err := defaultSetting(kind)
 		if err != nil {
 			return "", err
 		}
-		rows = append(rows, "| ["+kind.name+"](https://pkg.go.dev/github.com/nao1215/embargo@main#"+kind.name+") | "+cell(matches)+" | "+cell(checked)+" | "+enabled+" |")
+		godoc := "https://pkg.go.dev/github.com/nao1215/embargo@main#"
+		rows = append(rows, "| ["+kind.name+"]("+godoc+kind.name+") | [Example]("+godoc+"example-"+kind.name+") | "+enabled+" |")
 	}
 	return strings.Join(append(rows, endMarker), "\n"), nil
 }

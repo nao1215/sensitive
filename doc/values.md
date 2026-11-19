@@ -25,37 +25,15 @@ Decode into a fresh object: absent fields and invalid outer JSON can prevent Inp
 
 `Secret` stays an immutable snapshot and does not implement scanning or text unmarshaling. Neither wrapper implements `driver.Valuer`: implicitly returning its raw value would create an output path that bypasses the wrapper's display contract, while returning the marker could silently corrupt stored credentials. Write deliberately with `db.ExecContext(ctx, query, secret.Reveal())`. Use string/byte Input fields for secrets; arbitrary numeric or driver-specific SQL types need explicit conversion by the application. See the [runnable database Example](../example_test.go) and [copy, NULL and failure tests](../input_test.go).
 
-## Migrating from struct tags
+## Fields without tags
 
-masq users do use tags in real applications, including [wandb/operator](https://github.com/wandb/operator/blob/7db584188fe7adae6e7cea58f62a51438630903e/internal/logx/redact.go) and [73ai/infralayer](https://github.com/73ai/infralayer/blob/9b28ed83ffcfb5fabd6673d120206cef723fa96e/services/backend/cmd/main.go). embargo deliberately does not add an `embargo:"secret"` tag. The zap, zerolog and logrus adapters see encoded bytes; they cannot recover Go tags. A slog-only tag would split the common output model. Furthermore, fmt, encoding/json, errors, panics, templates and other loggers ignore a masker-specific tag, and the original value remains exposed whenever it bypasses that masker. Another annotation is another thing to forget; this follows the decision to remove Catalog and Describe.
-
-For a type you cannot change, migrate a tagged field to the shared key policy; use its JSON name if it has a JSON tag:
+embargo reads no struct tags: a tag only works inside the masker that reads it, while fmt, encoding/json, errors and other loggers ignore it. Make the field a `Secret` when you own the type, or name its key when you do not:
 
 ```go
-// Before: the annotation is only interpreted by masq.
-type Credentials struct {
-    Recovery string `masq:"secret" json:"recovery"`
-}
-// After: every embargo logger adapter and MaskJSON uses this policy.
-scanner := embargo.NewScanner(embargo.WithSensitiveKeys(
-    "password", "passwd", "secret", "token", "api_key",
-    "authorization", "cookie", "set-cookie", "recovery",
-))
+type Credentials struct{ Recovery embargo.Secret[string] }
+
+scanner := embargo.NewScanner(embargo.WithSensitiveKeys("recovery"))
 ```
-
-For a type you own, change the field type so the value protects itself even outside embargo:
-
-```go
-// Before.
-type Credentials struct { Recovery string `masq:"secret"` }
-// After.
-type Credentials struct { Recovery embargo.Secret[string] }
-credentials := Credentials{Recovery: embargo.NewSecret("synthetic-recovery-code")}
-```
-
-A database/config DTO can instead declare `Recovery embargo.Input[string]` and copy its Secret into the application's immutable Credentials after loading. Both wrappers mask themselves through fmt, encoding/json and their other supported formatting interfaces. This is not memory erasure or protection after an explicit Reveal, a custom formatter that ignores the interfaces, or a process memory dump. [Runnable Secret Examples](../example_test.go) and [cross-encoder tests](../tests/integrations_test.go) define the supported paths.
-
-[Support maintenance](https://github.com/sponsors/nao1215).
 
 ## Keep domain types independent of embargo
 
@@ -139,7 +117,7 @@ For each call, trace the returned string or bytes to its destination: an authent
 
 `MarshalJSON` and `MarshalText` write the marker. Saving `json.Marshal(credentials)` with a Secret field stores `"[REDACTED]"`, not an encrypted or recoverable value. The original value is lost from that serialized copy. Input rejects the marker on decode so it cannot silently become a password. Persist a deliberately revealed value through an appropriate storage boundary when that is the intended operation; serializing a Secret is a display safeguard.
 
-A homemade `type Password string` with only `String()` can look safe at the top level and still expose its underlying string through `fmt.Sprint(struct{ password Password }{...})`. fmt does not call methods on unexported fields. [The regression test](../secret_test.go) contrasts that case with Secret's pointer storage. CheckValue now covers `%v`, `%+v` and `%#v` inside such a field, so the incomplete type fails with a path such as `fmt/unexported/%v`. The domain example above uses the same storage principle without importing embargo.
+A homemade `type Password string` with only `String()` can look safe at the top level and still expose its underlying string through `fmt.Sprint(struct{ password Password }{...})`. fmt does not call methods on unexported fields. [The regression test](../secret_test.go) contrasts that case with Secret, which keeps its value inside a closure that reflection cannot read. CheckValue now covers `%v`, `%+v` and `%#v` inside such a field, so the incomplete type fails with a path such as `fmt/unexported/%v`. The domain example above uses the same storage principle without importing embargo.
 
 ## Memory lifetime
 

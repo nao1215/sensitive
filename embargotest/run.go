@@ -40,7 +40,7 @@ func (r *Recorder) run(ctx context.Context, executable, helper string, wantExit 
 	start := len(stdout.data)
 	r.mu.Unlock()
 	defer func() { r.mu.Lock(); r.running--; r.mu.Unlock() }()
-	bounded, cancel := context.WithTimeout(ctx, r.timeout)
+	bounded, cancel := context.WithTimeout(ctx, r.policy.timeout)
 	defer cancel()
 	cmd, stdoutCopy, stderrCopy := r.childCommand(bounded, executable, helper, stdout, stderr)
 	if err := cmd.Start(); err != nil {
@@ -127,7 +127,7 @@ func (r *Recorder) runFailure(message string) error { r.markFailed(); return err
 func (r *Recorder) childCommand(ctx context.Context, executable, helper string, stdout, stderr *stream) (cmd *exec.Cmd, stdoutCopy, stderrCopy *childOutput) {
 	// The executable comes from os.Executable; the helper is an escaped test name.
 	cmd = exec.CommandContext(ctx, executable, "-test.run=^"+regexp.QuoteMeta(helper)+"$", "-test.v", "-test.count=1") // #nosec G204 -- current test executable, never a shell command.
-	cmd.Env = []string{"EMBARGO_TEST_CHILD=" + helper, "EMBARGO_TEST_CANARY=" + base64.StdEncoding.EncodeToString(r.canary)}
+	cmd.Env = []string{"EMBARGO_TEST_CHILD=" + helper, "EMBARGO_TEST_CANARY=" + base64.StdEncoding.EncodeToString(r.policy.canary)}
 	if systemRoot := os.Getenv("SystemRoot"); systemRoot != "" {
 		cmd.Env = append(cmd.Env, "SystemRoot="+systemRoot)
 	}

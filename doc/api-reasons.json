@@ -29,6 +29,13 @@
   },
   {
     "symbols": [
+      "embargo.WithMoreKinds"
+    ],
+    "need": "A service in one country keeps NewScanner's default and turns on that country's formats, such as My Number and Japanese phone numbers, which are opt-in.",
+    "without": "Without it the caller would list all 19 default kinds in WithKinds plus its own, and that copied list would not follow later changes to the default."
+  },
+  {
+    "symbols": [
       "embargo.WithAll"
     ],
     "need": "A service that stores identifiers from several countries enables every national ID kind and the entropy heuristic in one option, including kinds added in later releases.",
@@ -81,7 +88,7 @@
       "embargo.Detector.Scan"
     ],
     "need": "A custom detector returns its findings for one input; this is the single method the scanner calls on it.",
-    "without": "Without a method on the interface there would be no way for the scanner to call the custom detector on the bytes it already normalized and bounded."
+    "without": "Without a method on the interface there would be no way for the scanner to call the custom detector on the caller's original bytes."
   },
   {
     "symbols": [
@@ -155,6 +162,7 @@
       "embargo.KindMyNumber",
       "embargo.KindPAN",
       "embargo.KindPaymentToken",
+      "embargo.KindPhone",
       "embargo.KindPrivateKeyPEM",
       "embargo.KindSWIFTBIC",
       "embargo.KindServiceToken",
@@ -180,8 +188,8 @@
     "symbols": [
       "embargo.Scanner.ScanString"
     ],
-    "need": "Code that holds a string, such as an error message or a formatted log line, gets the findings for Mask without converting to bytes.",
-    "without": "Without it the caller would write scanner.Scan([]byte(s)) and pay a copy on every call, as the README example would show."
+    "need": "Code that holds a string, such as an error message or a formatted log line, gets the findings for Mask with the same offsets it will slice.",
+    "without": "Without it each caller would write scanner.Scan([]byte(s)); the conversion is the same, but every text example would start with a byte-slice conversion that has nothing to do with masking."
   },
   {
     "symbols": [
@@ -271,96 +279,80 @@
     "symbols": [
       "embargo.Secret.Format"
     ],
-    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Secret, so the output is [REDACTED].",
-    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Secret exists to prevent.",
+    "need": "fmt calls Format for every verb, including %v, %s, %q, %x and %#v, when a program prints a Secret or a struct holding one.",
+    "without": "Without it fmt would print the wrapped value through its default formatting, which is the leak Secret exists to prevent.",
     "implements": "fmt.Formatter"
-  },
-  {
-    "symbols": [
-      "embargo.Secret.GoString"
-    ],
-    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Secret, so the output is [REDACTED].",
-    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Secret exists to prevent.",
-    "implements": "fmt.GoStringer"
   },
   {
     "symbols": [
       "embargo.Secret.String"
     ],
-    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Secret, so the output is [REDACTED].",
-    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Secret exists to prevent.",
+    "need": "text/template, html/template and code that asks for fmt.Stringer, such as error wrappers and some loggers, call String when they print a Secret.",
+    "without": "Without it those callers would fall back to the default formatting of the wrapped value.",
     "implements": "fmt.Stringer"
   },
   {
     "symbols": [
       "embargo.Secret.LogValue"
     ],
-    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Secret, so the output is [REDACTED].",
-    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Secret exists to prevent.",
+    "need": "log/slog calls LogValue when a Secret is an attribute value, so the record carries the marker before any handler sees it.",
+    "without": "Without it slog would format the wrapped value through reflection in each handler, which is the leak Secret exists to prevent.",
     "implements": "slog.LogValuer"
   },
   {
     "symbols": [
       "embargo.Secret.MarshalJSON"
     ],
-    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Secret, so the output is [REDACTED].",
-    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Secret exists to prevent.",
+    "need": "encoding/json calls MarshalJSON when a Secret, or a struct or map holding one, is marshaled for a response, a config dump or a JSON log.",
+    "without": "Without it encoding/json would marshal the wrapped value itself.",
     "implements": "json.Marshaler"
   },
   {
     "symbols": [
       "embargo.Secret.MarshalText"
     ],
-    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Secret, so the output is [REDACTED].",
-    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Secret exists to prevent.",
+    "need": "encoding/xml, map keys in encoding/json and text-based encoders call MarshalText when they write a Secret.",
+    "without": "Without it those encoders would write the wrapped value or fail on the type.",
     "implements": "encoding.TextMarshaler"
   },
   {
     "symbols": [
       "embargo.Input.Format"
     ],
-    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Input, so the output is [REDACTED].",
-    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Input exists to prevent.",
+    "need": "fmt calls Format for every verb, including %v, %s, %q, %x and %#v, when a program prints a Input or a struct holding one.",
+    "without": "Without it fmt would print the wrapped value through its default formatting, which is the leak Input exists to prevent.",
     "implements": "fmt.Formatter"
-  },
-  {
-    "symbols": [
-      "embargo.Input.GoString"
-    ],
-    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Input, so the output is [REDACTED].",
-    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Input exists to prevent.",
-    "implements": "fmt.GoStringer"
   },
   {
     "symbols": [
       "embargo.Input.String"
     ],
-    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Input, so the output is [REDACTED].",
-    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Input exists to prevent.",
+    "need": "text/template, html/template and code that asks for fmt.Stringer, such as error wrappers and some loggers, call String when they print a Input.",
+    "without": "Without it those callers would fall back to the default formatting of the wrapped value.",
     "implements": "fmt.Stringer"
   },
   {
     "symbols": [
       "embargo.Input.LogValue"
     ],
-    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Input, so the output is [REDACTED].",
-    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Input exists to prevent.",
+    "need": "log/slog calls LogValue when a Input is an attribute value, so the record carries the marker before any handler sees it.",
+    "without": "Without it slog would format the wrapped value through reflection in each handler, which is the leak Input exists to prevent.",
     "implements": "slog.LogValuer"
   },
   {
     "symbols": [
       "embargo.Input.MarshalJSON"
     ],
-    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Input, so the output is [REDACTED].",
-    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Input exists to prevent.",
+    "need": "encoding/json calls MarshalJSON when a Input, or a struct or map holding one, is marshaled for a response, a config dump or a JSON log.",
+    "without": "Without it encoding/json would marshal the wrapped value itself.",
     "implements": "json.Marshaler"
   },
   {
     "symbols": [
       "embargo.Input.MarshalText"
     ],
-    "need": "fmt, encoding/json, encoding/xml, templates and log/slog call this method when a program prints or marshals a Input, so the output is [REDACTED].",
-    "without": "Without it the standard library would print the wrapped value through its default formatting, which is the leak Input exists to prevent.",
+    "need": "encoding/xml, map keys in encoding/json and text-based encoders call MarshalText when they write a Input.",
+    "without": "Without it those encoders would write the wrapped value or fail on the type.",
     "implements": "encoding.TextMarshaler"
   },
   {
@@ -431,13 +423,6 @@
   },
   {
     "symbols": [
-      "embargotest.Recorder.File"
-    ],
-    "need": "Code that reads a secret from a file path, such as a mounted credential file, gets a private temporary file holding the canary.",
-    "without": "Without it each test would create, chmod and clean up its own temp file with the canary, and could leave it world-readable."
-  },
-  {
-    "symbols": [
       "embargotest.Recorder.Run"
     ],
     "need": "Code that leaks through a child process, os.Exit or a panic is run as a helper in a child so its real stdout and stderr are searched.",
@@ -483,7 +468,7 @@
       "embargotest.WithCanary"
     ],
     "need": "A test whose code validates input format, such as a key with a fixed prefix, supplies its own fake canary that the code accepts.",
-    "without": "Without it the Recorder's random canary would be rejected by the code under test, and the test could not reach the logging path."
+    "without": "Without it the Recorder's fixed default canary would be rejected by the code under test, and the test could not reach the logging path."
   },
   {
     "symbols": [
@@ -524,8 +509,8 @@
     "symbols": [
       "embargotest.WithTimeout"
     ],
-    "need": "A test whose child helper or validator runs long raises the deadline, or a fast suite lowers it, without changing the capture limit.",
-    "without": "Without it a slow helper under Run would time out at the default deadline, with no way to raise only that bound."
+    "need": "A test whose child process under Run or test binary under Guard runs long raises the deadline, or a fast suite lowers it, without changing the capture limit.",
+    "without": "Without it a slow child would be stopped at the default deadline, with no way to raise only that bound; in-process code is not interrupted either way."
   },
   {
     "symbols": [
