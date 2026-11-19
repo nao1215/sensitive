@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `KindPhone` detects international phone numbers written with `+` and an assigned country calling code, such as `+44 20 7946 0958`, `+1 (202) 555-0123` and `+919876543210`, so a scanner masks phone numbers from every country without one detector per country. It is on by default. Numbers without `+` follow one country's rules and stay with `KindJPPhone` and `KindUSPhone`.
+
+### Changed
+
+- `NewScanner()` now runs 19 detectors instead of 26. The default keeps what the OWASP Logging Cheat Sheet and PCI DSS keep out of logs in formats used in every country: credentials and provider tokens, card and bank account data, email, IP and international phone numbers, and cryptocurrency addresses. `KindMyNumber`, `KindJPPhone`, `KindUSPhone`, `KindABARouting`, `KindUKSortCode` and `KindACHTrace` describe one country's formats and are opt-in like the national IDs; `KindSWIFTBIC` and `KindMerchantID` identify banks and merchants, not people, and are opt-in too. Name them in `WithKinds`, or use `WithAll`, to keep the previous coverage. On the public logs, the default false-positive rate of the held-out web access log drops from 1,265.4 to 0 findings per GB.
+- The README's detector table links each kind's runnable Example instead of repeating its rule; the rules stay in the godoc.
+
+### Detection changes
+
+- The default scanner no longer masks My Number, Japanese and North American phone numbers in their national formats, ABA routing numbers, UK sort codes, ACH trace numbers, SWIFT/BIC codes and merchant IDs. A Japanese or North American number written with `+81` or `+1` is still masked, now by `KindPhone`. Random 12-digit business identifiers that pass the My Number check digit, one in ten, are no longer masked by default.
+
 ### Removed
 
 - `Secret.GoString` and `Input.GoString`. `Format` already wrote the `%#v` output, so `fmt.Sprintf("%#v", secret)` still prints `embargo.Secret[string]([REDACTED])` and an `Input` still prints `[REDACTED]`; neither type implements `fmt.GoStringer` any more.

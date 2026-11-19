@@ -50,7 +50,7 @@ Each adapter is its own module with a tag of the form `adapters/<name>/vX.Y.Z`, 
 
 ## Shared JSON policy
 
-The adapters use the same `Scanner.MaskJSON` engine as structured slog Any values. It masks decoded string leaves and object keys, preserves clean numeric lexemes without float64 conversion, and replaces the entire value of a sensitive key. `WithSensitiveKeys` therefore covers third-party structs, maps and HTTP headers after their logger encodes them, including custom marshaler output. See [the logging model and limits](logging.md) and [tag migration](values.md). Embargo's root module still has zero requirements; logger SDKs and comparison libraries stay in optional/test modules.
+The adapters use the same `Scanner.MaskJSON` engine as structured slog Any values. It masks decoded string leaves and object keys, preserves clean numeric lexemes without float64 conversion, and replaces the entire value of a sensitive key. `WithSensitiveKeys` therefore covers third-party structs, maps and HTTP headers after their logger encodes them, including custom marshaler output. See [the logging model and limits](logging.md) and [fields without tags](values.md#fields-without-tags). Embargo's root module still has zero requirements; logger SDKs and comparison libraries stay in optional/test modules.
 
 ## Table explanations
 

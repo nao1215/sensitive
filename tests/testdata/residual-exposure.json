@@ -21105,6 +21105,1158 @@
   },
   {
     "set": "development",
+    "id": "phone/positive/0/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/0/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 28,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/0/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/0/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 33,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/0/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 16,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/0/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 55,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/1/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/1/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/1/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/1/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 32,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/1/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 15,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/1/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 48,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/10/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 32,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/10/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/10/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/10/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 34,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/10/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 17,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/10/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 58,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/11/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 28,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/11/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/11/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/11/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/11/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 13,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/11/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 46,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/12/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/12/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 28,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/12/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/12/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 33,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/12/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 16,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/12/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 55,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/13/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/13/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/13/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/13/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 32,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/13/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 15,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/13/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 48,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/14/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 32,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/14/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/14/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/14/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 34,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/14/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 17,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/14/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 58,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/15/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 28,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/15/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/15/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/15/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/15/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 13,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/15/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 46,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/16/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/16/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 28,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/16/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/16/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 33,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/16/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 16,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/16/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 55,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/17/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/17/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/17/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/17/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 32,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/17/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 15,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/17/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 48,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/18/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 32,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/18/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/18/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/18/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 34,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/18/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 17,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/18/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 58,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/19/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 28,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/19/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/19/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/19/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/19/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 13,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/19/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 46,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/2/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 32,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/2/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/2/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/2/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 34,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/2/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 17,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/2/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 58,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/20/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/20/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 28,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/20/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/20/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 33,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/20/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 16,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/20/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 55,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/21/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/21/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/21/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/21/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 32,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/21/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 15,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/21/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 48,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/22/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 32,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/22/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/22/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/22/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 34,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/22/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 17,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/22/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 58,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/23/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 28,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/23/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/23/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/23/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/23/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 13,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/23/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 46,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/3/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 28,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/3/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/3/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/3/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/3/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 13,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/3/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 46,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/4/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/4/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 28,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/4/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/4/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 33,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/4/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 16,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/4/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 55,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/5/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/5/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/5/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/5/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 32,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/5/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 15,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/5/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 48,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/6/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 32,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/6/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/6/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/6/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 34,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/6/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 17,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/6/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 58,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/7/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 28,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/7/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/7/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/7/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/7/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 13,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/7/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 46,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/8/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/8/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 28,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/8/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/8/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 33,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/8/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 16,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/8/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 55,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/9/japanese",
+    "kind": "phone",
+    "start": 15,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/9/json",
+    "kind": "phone",
+    "start": 12,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/9/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/9/multiline",
+    "kind": "phone",
+    "start": 17,
+    "end": 32,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/9/plain",
+    "kind": "phone",
+    "start": 0,
+    "end": 15,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
+    "id": "phone/positive/9/url",
+    "kind": "phone",
+    "start": 31,
+    "end": 48,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "development",
     "id": "phone_jp/positive/0/japanese",
     "kind": "phone_jp",
     "start": 15,
@@ -79149,6 +80301,1158 @@
     "kind": "payment_token",
     "start": 32,
     "end": 63,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/0/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/0/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 37,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/0/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/0/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/0/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 26,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/0/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 56,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/1/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 24,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/1/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 36,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/1/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/1/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/1/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/1/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 49,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/10/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 26,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/10/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 38,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/10/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/10/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/10/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/10/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 59,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/11/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 22,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/11/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 34,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/11/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/11/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/11/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 23,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/11/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 47,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/12/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/12/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 37,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/12/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/12/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/12/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 26,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/12/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 56,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/13/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 24,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/13/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 36,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/13/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/13/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/13/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/13/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 49,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/14/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 26,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/14/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 38,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/14/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/14/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/14/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/14/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 59,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/15/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 22,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/15/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 34,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/15/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/15/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/15/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 23,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/15/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 47,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/16/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/16/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 37,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/16/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/16/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/16/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 26,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/16/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 56,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/17/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 24,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/17/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 36,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/17/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/17/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/17/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/17/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 49,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/18/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 26,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/18/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 38,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/18/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/18/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/18/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/18/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 59,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/19/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 22,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/19/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 34,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/19/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/19/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/19/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 23,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/19/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 47,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/2/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 26,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/2/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 38,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/2/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/2/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/2/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/2/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 59,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/20/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/20/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 37,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/20/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/20/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/20/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 26,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/20/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 56,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/21/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 24,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/21/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 36,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/21/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/21/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/21/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/21/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 49,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/22/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 26,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/22/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 38,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/22/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/22/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/22/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/22/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 59,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/23/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 22,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/23/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 34,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/23/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/23/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/23/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 23,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/23/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 47,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/3/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 22,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/3/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 34,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/3/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/3/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/3/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 23,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/3/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 47,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/4/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/4/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 37,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/4/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/4/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/4/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 26,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/4/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 56,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/5/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 24,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/5/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 36,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/5/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/5/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/5/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/5/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 49,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/6/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 26,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/6/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 38,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/6/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/6/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 31,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/6/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/6/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 59,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/7/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 22,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/7/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 34,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/7/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/7/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 27,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/7/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 23,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/7/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 47,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/8/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/8/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 37,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/8/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/8/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 30,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/8/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 26,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/8/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 56,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/9/japanese",
+    "kind": "phone",
+    "start": 9,
+    "end": 24,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/9/json",
+    "kind": "phone",
+    "start": 21,
+    "end": 36,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/9/log",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/9/multiline",
+    "kind": "phone",
+    "start": 14,
+    "end": 29,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/9/plain",
+    "kind": "phone",
+    "start": 10,
+    "end": 25,
+    "unmasked_bytes": 0
+  },
+  {
+    "set": "held",
+    "id": "phone/positive/9/url",
+    "kind": "phone",
+    "start": 32,
+    "end": 49,
     "unmasked_bytes": 0
   },
   {

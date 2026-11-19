@@ -84,28 +84,14 @@
     {
       "source": "synthetic/accuracy.json/8",
       "input_sha256": "522d69851a96e9603eba545c59de1c0b5808cfbb0978ede5e7f0c5ab47bfa9aa",
-      "masked_sha256": "e54b74eb9192b48055c48d2062bffdd23469ef7d70f960ff1293a47f86c8eba2",
-      "findings": [
-        {
-          "Kind": "phone_jp",
-          "Start": 0,
-          "End": 13,
-          "Confidence": 0.9
-        }
-      ]
+      "masked_sha256": "522d69851a96e9603eba545c59de1c0b5808cfbb0978ede5e7f0c5ab47bfa9aa",
+      "findings": []
     },
     {
       "source": "synthetic/accuracy.json/9",
       "input_sha256": "c199a0c08bebab875de1c60e6fafc7578bebff19b3723a1a4f59cfb237e33c0d",
-      "masked_sha256": "e54b74eb9192b48055c48d2062bffdd23469ef7d70f960ff1293a47f86c8eba2",
-      "findings": [
-        {
-          "Kind": "phone_jp",
-          "Start": 0,
-          "End": 12,
-          "Confidence": 0.8
-        }
-      ]
+      "masked_sha256": "c199a0c08bebab875de1c60e6fafc7578bebff19b3723a1a4f59cfb237e33c0d",
+      "findings": []
     },
     {
       "source": "synthetic/accuracy.json/10",
@@ -122,29 +108,15 @@
     {
       "source": "synthetic/accuracy.json/12",
       "input_sha256": "0722847621484e139b6f8692bb206c28a6858a6954c9289ce77f0a440aa076cc",
-      "structured_sha256": "fca92358a25a3418b48b418da3d16a5a170136fefcafc47495b432a98cd19093",
-      "masked_sha256": "e54b74eb9192b48055c48d2062bffdd23469ef7d70f960ff1293a47f86c8eba2",
-      "findings": [
-        {
-          "Kind": "mynumber",
-          "Start": 0,
-          "End": 12,
-          "Confidence": 0.95
-        }
-      ]
+      "structured_sha256": "0722847621484e139b6f8692bb206c28a6858a6954c9289ce77f0a440aa076cc",
+      "masked_sha256": "0722847621484e139b6f8692bb206c28a6858a6954c9289ce77f0a440aa076cc",
+      "findings": []
     },
     {
       "source": "synthetic/accuracy.json/13",
       "input_sha256": "a3aa50b3228f624b227f385a73f8dacff205d13549db6a47dd9f2cf921e50513",
-      "masked_sha256": "e54b74eb9192b48055c48d2062bffdd23469ef7d70f960ff1293a47f86c8eba2",
-      "findings": [
-        {
-          "Kind": "mynumber",
-          "Start": 0,
-          "End": 36,
-          "Confidence": 0.95
-        }
-      ]
+      "masked_sha256": "a3aa50b3228f624b227f385a73f8dacff205d13549db6a47dd9f2cf921e50513",
+      "findings": []
     },
     {
       "source": "synthetic/accuracy.json/14",
@@ -315,28 +287,14 @@
     {
       "source": "synthetic/accuracy.json/32",
       "input_sha256": "97a97f955a9bcc9c64171eb89b04bd62d3a45c82e5771e0f3422f4d068a8ab2e",
-      "masked_sha256": "e54b74eb9192b48055c48d2062bffdd23469ef7d70f960ff1293a47f86c8eba2",
-      "findings": [
-        {
-          "Kind": "swiftbic",
-          "Start": 0,
-          "End": 8,
-          "Confidence": 0.85
-        }
-      ]
+      "masked_sha256": "97a97f955a9bcc9c64171eb89b04bd62d3a45c82e5771e0f3422f4d068a8ab2e",
+      "findings": []
     },
     {
       "source": "synthetic/accuracy.json/33",
       "input_sha256": "32ff20840f7ad514fb5508757f214dfb8530014b2f3f3ea4f343bf067cecf3fd",
-      "masked_sha256": "479b864f74afedf3c02259648eda7c49c1f745abf72263fcb53534c5ca16d303",
-      "findings": [
-        {
-          "Kind": "swiftbic",
-          "Start": 7,
-          "End": 15,
-          "Confidence": 0.85
-        }
-      ]
+      "masked_sha256": "32ff20840f7ad514fb5508757f214dfb8530014b2f3f3ea4f343bf067cecf3fd",
+      "findings": []
     },
     {
       "source": "synthetic/accuracy.json/34",
@@ -353,28 +311,14 @@
     {
       "source": "synthetic/accuracy.json/36",
       "input_sha256": "1f873cdde0ca4f83efeb62d639b3036fccc634a95a857225c789771109c4b5d3",
-      "masked_sha256": "e54b74eb9192b48055c48d2062bffdd23469ef7d70f960ff1293a47f86c8eba2",
-      "findings": [
-        {
-          "Kind": "aba_routing",
-          "Start": 0,
-          "End": 9,
-          "Confidence": 0.85
-        }
-      ]
+      "masked_sha256": "1f873cdde0ca4f83efeb62d639b3036fccc634a95a857225c789771109c4b5d3",
+      "findings": []
     },
     {
       "source": "synthetic/accuracy.json/37",
       "input_sha256": "6a50f7bdc489549fb1f06b41fd20cc9340ebb7cbd3922555beef7f57f33f235d",
-      "masked_sha256": "e54b74eb9192b48055c48d2062bffdd23469ef7d70f960ff1293a47f86c8eba2",
-      "findings": [
-        {
-          "Kind": "aba_routing",
-          "Start": 0,
-          "End": 9,
-          "Confidence": 0.85
-        }
-      ]
+      "masked_sha256": "6a50f7bdc489549fb1f06b41fd20cc9340ebb7cbd3922555beef7f57f33f235d",
+      "findings": []
     },
     {
       "source": "synthetic/accuracy.json/38",
@@ -391,28 +335,14 @@
     {
       "source": "synthetic/accuracy.json/40",
       "input_sha256": "92451744e304b807cd8f31d34e2897c9e135db649b63ca9014b21e688e010518",
-      "masked_sha256": "e54b74eb9192b48055c48d2062bffdd23469ef7d70f960ff1293a47f86c8eba2",
-      "findings": [
-        {
-          "Kind": "uk_sortcode",
-          "Start": 0,
-          "End": 8,
-          "Confidence": 0.7
-        }
-      ]
+      "masked_sha256": "92451744e304b807cd8f31d34e2897c9e135db649b63ca9014b21e688e010518",
+      "findings": []
     },
     {
       "source": "synthetic/accuracy.json/41",
       "input_sha256": "4e6df63b497fbc2579d93b24c56a673544c36301109c18f082d05bb3b109ed6e",
-      "masked_sha256": "5562ea710be83398427afa45e29d7d0ffbd580e638fddefebadd5ba58ea878b9",
-      "findings": [
-        {
-          "Kind": "uk_sortcode",
-          "Start": 11,
-          "End": 19,
-          "Confidence": 0.7
-        }
-      ]
+      "masked_sha256": "4e6df63b497fbc2579d93b24c56a673544c36301109c18f082d05bb3b109ed6e",
+      "findings": []
     },
     {
       "source": "synthetic/accuracy.json/42",
@@ -567,28 +497,14 @@
     {
       "source": "synthetic/accuracy.json/60",
       "input_sha256": "bb089129b53b982e2e68860a8928ba15a30347f77312666360cb17e8770fc0ca",
-      "masked_sha256": "9e65f40aaad51cf44736232661f40c0420eb53d93851ca47887fa61dc866bd8c",
-      "findings": [
-        {
-          "Kind": "ach_trace",
-          "Start": 10,
-          "End": 25,
-          "Confidence": 0.75
-        }
-      ]
+      "masked_sha256": "bb089129b53b982e2e68860a8928ba15a30347f77312666360cb17e8770fc0ca",
+      "findings": []
     },
     {
       "source": "synthetic/accuracy.json/61",
       "input_sha256": "43301b8d31df449d888d1497522d22a5f98a4c774e7f4b4966119e39418681a5",
-      "masked_sha256": "9e65f40aaad51cf44736232661f40c0420eb53d93851ca47887fa61dc866bd8c",
-      "findings": [
-        {
-          "Kind": "ach_trace",
-          "Start": 10,
-          "End": 25,
-          "Confidence": 0.75
-        }
-      ]
+      "masked_sha256": "43301b8d31df449d888d1497522d22a5f98a4c774e7f4b4966119e39418681a5",
+      "findings": []
     },
     {
       "source": "synthetic/accuracy.json/62",
@@ -605,28 +521,14 @@
     {
       "source": "synthetic/accuracy.json/64",
       "input_sha256": "eed8fb149824afd732c6aeccc568062774fc855b2c5a63954012372505a4ef52",
-      "masked_sha256": "d7efd27e69924e07ec5e1135771452fe33605179b46405b545933bc467d670ac",
-      "findings": [
-        {
-          "Kind": "merchant_id",
-          "Start": 12,
-          "End": 27,
-          "Confidence": 0.7
-        }
-      ]
+      "masked_sha256": "eed8fb149824afd732c6aeccc568062774fc855b2c5a63954012372505a4ef52",
+      "findings": []
     },
     {
       "source": "synthetic/accuracy.json/65",
       "input_sha256": "6746e7cbe1a1cf889fe1783214ebd7c90cd4fd1edceedcacfe6bb4a5cd376b7f",
-      "masked_sha256": "eb40c87bd5373ad0b3aa0de05768238cde9024c573947165813705108510b0c7",
-      "findings": [
-        {
-          "Kind": "merchant_id",
-          "Start": 4,
-          "End": 12,
-          "Confidence": 0.7
-        }
-      ]
+      "masked_sha256": "6746e7cbe1a1cf889fe1783214ebd7c90cd4fd1edceedcacfe6bb4a5cd376b7f",
+      "findings": []
     },
     {
       "source": "synthetic/accuracy.json/66",
@@ -989,15 +891,8 @@
     {
       "source": "synthetic/detection-compatibility.json/1",
       "input_sha256": "62492a1c38a75348734a4b8b4b97d36c1d7d6f94e2e5e6d5a20b4050eac439c1",
-      "masked_sha256": "e54b74eb9192b48055c48d2062bffdd23469ef7d70f960ff1293a47f86c8eba2",
-      "findings": [
-        {
-          "Kind": "phone_jp",
-          "Start": 0,
-          "End": 39,
-          "Confidence": 0.9
-        }
-      ]
+      "masked_sha256": "62492a1c38a75348734a4b8b4b97d36c1d7d6f94e2e5e6d5a20b4050eac439c1",
+      "findings": []
     },
     {
       "source": "synthetic/detection-compatibility.json/2",
@@ -1485,54 +1380,26 @@
     {
       "source": "synthetic/detection-compatibility.json/42",
       "input_sha256": "94dd5b00b46fbf22c0fee665fd23f9c3ffcf1f9ceedd0a449903c9ec7c6b0e33",
-      "masked_sha256": "28ef2283a66d1c74f29b0d41ac9290379e81726d272b64081f901f6e012ae01c",
-      "findings": [
-        {
-          "Kind": "swiftbic",
-          "Start": 12,
-          "End": 20,
-          "Confidence": 0.85
-        }
-      ]
+      "masked_sha256": "94dd5b00b46fbf22c0fee665fd23f9c3ffcf1f9ceedd0a449903c9ec7c6b0e33",
+      "findings": []
     },
     {
       "source": "synthetic/detection-compatibility.json/43",
       "input_sha256": "2e352553a5c93068361dc0780a5243d327d816c1309a2a4f60f70f65da5094c7",
-      "masked_sha256": "459a806fecdd0e1c99f081add30e8dc887b751bc6f08094c2c77cda2c3fc99d0",
-      "findings": [
-        {
-          "Kind": "swiftbic",
-          "Start": 10,
-          "End": 18,
-          "Confidence": 0.85
-        }
-      ]
+      "masked_sha256": "2e352553a5c93068361dc0780a5243d327d816c1309a2a4f60f70f65da5094c7",
+      "findings": []
     },
     {
       "source": "synthetic/detection-compatibility.json/44",
       "input_sha256": "f0ea48a7124ddc7292f567d4dbd6dbb20c938367c91cef239d7988b9ed3c3887",
-      "masked_sha256": "65f5d279dc975af5390c404fd4f188c8d1c5c0cb2999c547e334853402e14784",
-      "findings": [
-        {
-          "Kind": "swiftbic",
-          "Start": 11,
-          "End": 19,
-          "Confidence": 0.85
-        }
-      ]
+      "masked_sha256": "f0ea48a7124ddc7292f567d4dbd6dbb20c938367c91cef239d7988b9ed3c3887",
+      "findings": []
     },
     {
       "source": "synthetic/detection-compatibility.json/45",
       "input_sha256": "cf8ed69f2c5c42d94003ce494b0f2955a93e4714af0547e0f2ca29961e9a2f97",
-      "masked_sha256": "cecfff6cc1fa5a006f399363966ab58942f85ee41db876533a04682b5b6aa66d",
-      "findings": [
-        {
-          "Kind": "swiftbic",
-          "Start": 13,
-          "End": 21,
-          "Confidence": 0.85
-        }
-      ]
+      "masked_sha256": "cf8ed69f2c5c42d94003ce494b0f2955a93e4714af0547e0f2ca29961e9a2f97",
+      "findings": []
     },
     {
       "source": "synthetic/detection-compatibility.json/46",
@@ -1706,28 +1573,14 @@
     {
       "source": "synthetic/detection-compatibility.json/59",
       "input_sha256": "42b9d161d2163639efb943363e8cd91c829f27fbba14becfbb242ec5bd45f1cd",
-      "masked_sha256": "0bfd1c613e7437000e847d15ce1f0df72ca0fe35a688a040a9814680201d1cc2",
-      "findings": [
-        {
-          "Kind": "mynumber",
-          "Start": 17,
-          "End": 29,
-          "Confidence": 0.95
-        }
-      ]
+      "masked_sha256": "42b9d161d2163639efb943363e8cd91c829f27fbba14becfbb242ec5bd45f1cd",
+      "findings": []
     },
     {
       "source": "synthetic/detection-compatibility.json/60",
       "input_sha256": "83152076f8d0ffd23d36c1c372205c2d8f8fd9c56debd3810773cdae85f8950b",
-      "masked_sha256": "c07363720c20eb1a258ac6109120bb2056c468d8db311465aabb3d8d3a30c206",
-      "findings": [
-        {
-          "Kind": "mynumber",
-          "Start": 13,
-          "End": 27,
-          "Confidence": 0.95
-        }
-      ]
+      "masked_sha256": "83152076f8d0ffd23d36c1c372205c2d8f8fd9c56debd3810773cdae85f8950b",
+      "findings": []
     },
     {
       "source": "synthetic/detection-compatibility.json/61",
@@ -1768,67 +1621,32 @@
     {
       "source": "synthetic/detection-compatibility.json/67",
       "input_sha256": "c43e39a0cb759232b774d190de503d42b25b0384790ffa88a92f1885b34b0245",
-      "masked_sha256": "0918f07affe8f61527a0b0e605851ab66c49e8b0a1532f4d7daf273789fabf95",
-      "findings": [
-        {
-          "Kind": "swiftbic",
-          "Start": 5,
-          "End": 13,
-          "Confidence": 0.85
-        }
-      ]
+      "masked_sha256": "c43e39a0cb759232b774d190de503d42b25b0384790ffa88a92f1885b34b0245",
+      "findings": []
     },
     {
       "source": "synthetic/detection-compatibility.json/68",
       "input_sha256": "954da135fcfee05b8ea7b8714fe29fb5c738771619048cb236f5c8431f5df312",
-      "masked_sha256": "ad24d4517ae8555c382e259832624aaa492fe96c797f6efee8a69009205d5bb2",
-      "findings": [
-        {
-          "Kind": "swiftbic",
-          "Start": 8,
-          "End": 16,
-          "Confidence": 0.85
-        }
-      ]
+      "masked_sha256": "954da135fcfee05b8ea7b8714fe29fb5c738771619048cb236f5c8431f5df312",
+      "findings": []
     },
     {
       "source": "synthetic/detection-compatibility.json/69",
       "input_sha256": "e11016f4db561c49bd5d1bcab292ff55d790b022a4a9b19cff9f6481b4e541dd",
-      "masked_sha256": "9d64d72ece84c6447a9821d3a2c70818dd5b0347ea14df54327ff1b5e3082bf6",
-      "findings": [
-        {
-          "Kind": "swiftbic",
-          "Start": 7,
-          "End": 15,
-          "Confidence": 0.85
-        }
-      ]
+      "masked_sha256": "e11016f4db561c49bd5d1bcab292ff55d790b022a4a9b19cff9f6481b4e541dd",
+      "findings": []
     },
     {
       "source": "synthetic/detection-compatibility.json/70",
       "input_sha256": "00a031ffcc6c55a5ff04970efb794c57a1c0f48050eeaa5b39989caccd0fd986",
-      "masked_sha256": "57b8c460958503ca47039c44d901137966113c1f66916d70c7dd9867affba708",
-      "findings": [
-        {
-          "Kind": "aba_routing",
-          "Start": 5,
-          "End": 14,
-          "Confidence": 0.85
-        }
-      ]
+      "masked_sha256": "00a031ffcc6c55a5ff04970efb794c57a1c0f48050eeaa5b39989caccd0fd986",
+      "findings": []
     },
     {
       "source": "synthetic/detection-compatibility.json/71",
       "input_sha256": "1f873cdde0ca4f83efeb62d639b3036fccc634a95a857225c789771109c4b5d3",
-      "masked_sha256": "e54b74eb9192b48055c48d2062bffdd23469ef7d70f960ff1293a47f86c8eba2",
-      "findings": [
-        {
-          "Kind": "aba_routing",
-          "Start": 0,
-          "End": 9,
-          "Confidence": 0.85
-        }
-      ]
+      "masked_sha256": "1f873cdde0ca4f83efeb62d639b3036fccc634a95a857225c789771109c4b5d3",
+      "findings": []
     },
     {
       "source": "synthetic/detection-compatibility.json/72",

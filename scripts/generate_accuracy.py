@@ -62,6 +62,21 @@ def us_phone(area, line, i):
     return [f'{area}-555-{line}', f'({area}) 555-{line}', f'{area}.555.{line}'][i % 3]
 
 
+def detached(rng):
+    """Return a generator that starts where rng is without advancing rng, so a
+    kind added later leaves the values of every other kind and index as they were."""
+    copy = random.Random()
+    copy.setstate(rng.getstate())
+    return copy
+
+
+def intl_phone(rng, i):
+    # Ofcom's drama range 020 7946 0xxx, ACMA's fictitious 02 5550 xxxx and
+    # North America's 555-01xx are reserved for fictional numbers.
+    rng = detached(rng)
+    return [f'+44 20 7946 0{digits(rng, 3)}', f'+61-2-5550-{digits(rng, 4)}', f'+1 (202) 555-01{digits(rng, 2)}', f'+4420794600{digits(rng, 2)}'][i % 4]
+
+
 def fullwidth(value):
     return value.translate(str.maketrans('0123456789-', '０１２３４５６７８９－'))
 
@@ -96,6 +111,7 @@ def specimens(rng, i):
         'private_key_pem': ('', '-----BEGIN ' + ['RSA ', 'EC ', 'OPENSSH ', ''][i % 4] + 'PRIVATE KEY-----'),
         # Drawn last so the random values of every earlier kind stay unchanged.
         'phone_us': ('', us_phone(['202', '212', '303', '415', '617'][i % 5], '01' + digits(rng, 2), i)),
+        'phone': ('', intl_phone(rng, i)),
     }
 
 
@@ -119,6 +135,7 @@ def invalids(rng, i):
         'slack_token': 'xoxz-' + chars(rng, 24), 'google_api_key': 'AIza' + chars(rng, 34),
         'private_key_pem': ['-----BEGIN PUBLIC KEY-----', '-----BEGIN CERTIFICATE-----'][i % 2],
         'phone_us': ['102-555-01', '202-555.01', '202-911-01'][i % 3] + digits(rng, 2),
+        'phone': ['+28 20 7946 0', 'balance +10000', '+44 2'][i % 3] + digits(detached(rng), 3),
     }
 
 

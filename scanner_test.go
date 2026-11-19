@@ -605,7 +605,7 @@ func TestDispatchRetainsMoreThan32Families(t *testing.T) {
 
 func TestOutputJapaneseSeparators(t *testing.T) {
 	t.Parallel()
-	s := NewScanner()
+	s := NewScanner(WithKinds(KindJPPhone, KindPAN, KindMyNumber))
 	for _, v := range []string{
 		"０９０－１２３４－５６７８", // U+FF0D: masked (control)
 		"０９０−１２３４−５６７８", // U+2212 MINUS SIGN
@@ -1495,7 +1495,7 @@ func TestScanFieldKeepsKeyContext(t *testing.T) {
 		{NewScanner(WithSensitiveKeys("ticket")), "ticket", "opaqueTicketValue", KindCredential},
 		{NewScanner(), "bank account", "12345678", KindBankAccount},
 		// A letters-only code needs the swift keyword, which only the key holds.
-		{NewScanner(), "swift", "DEUTDEFF", KindSWIFTBIC},
+		{NewScanner(WithKinds(KindSWIFTBIC)), "swift", "DEUTDEFF", KindSWIFTBIC},
 	} {
 		prefix := len(tc.key) + len(": ")
 		got := fieldFindings(tc.scanner.scanField([]byte(tc.key+": "+tc.value), prefix, nil), prefix)

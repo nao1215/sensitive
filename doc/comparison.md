@@ -132,7 +132,7 @@ Run `make comparison-doc` to rerun ten samples, benchstat and all generated comp
 
 embargo cannot automatically identify arbitrary unregistered secrets; use Secret, a key rule or a custom detector. It does not return a typed masked struct copy, apply partial display per field (WithMaskFunc chooses it per kind), preserve safe/unsafe provenance, or centrally enforce OTel pipelines. JSON response/export masking is covered by MaskJSON when the boundary accepts JSON bytes; callers that need a typed copy for further business logic still benefit from struct-copy libraries. Non-JSON formats, encoded binary data, unsupported phone/identity families, custom method side effects and data added downstream need separate handling and output tests. URL/DSN credentials, additional token detectors and package-wide output checks are covered by the credential and output scenario suite below. An error-wrapping helper is intentionally absent because preserving Unwrap also exposes the original error text.
 
-[Tag migration and database/config inputs](values.md), [shared logging semantics](logging.md), [keep an existing masker and test its real output](testing-output.md), [security scan decisions](security-scans.md).
+[Fields without tags and database/config inputs](values.md), [shared logging semantics](logging.md), [keep an existing masker and test its real output](testing-output.md), [security scan decisions](security-scans.md).
 
 [Support maintenance](https://github.com/sponsors/nao1215).
 

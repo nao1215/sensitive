@@ -646,5 +646,45 @@
     "detector": "phone_us",
     "text": "build v1.202.555.0123",
     "positive": false
+  },
+  {
+    "detector": "phone",
+    "text": "call +44 20 7946 0958",
+    "positive": true
+  },
+  {
+    "detector": "phone",
+    "text": "tel:+61-2-5550-1234",
+    "positive": true
+  },
+  {
+    "detector": "phone",
+    "text": "office +1 (202) 555-0123",
+    "positive": true
+  },
+  {
+    "detector": "phone",
+    "text": "mobile +819012345678",
+    "positive": true
+  },
+  {
+    "detector": "phone",
+    "text": "balance +1000000",
+    "positive": false
+  },
+  {
+    "detector": "phone",
+    "text": "+28 20 7946 0958",
+    "positive": false
+  },
+  {
+    "detector": "phone",
+    "text": "2026-11-19T10:00:00+09:00",
+    "positive": false
+  },
+  {
+    "detector": "phone",
+    "text": "version +1.2.3",
+    "positive": false
   }
 ]

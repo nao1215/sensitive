@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="863" viewBox="0 0 960 863" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="893" viewBox="0 0 960 893" role="img">
 <title>Precision and recall on held-out synthetic samples</title>
 <desc>Blue bars show precision; orange bars show recall. Counts are positive and negative inputs per detector.</desc>
 <rect width="100%" height="100%" fill="white"/>
@@ -153,31 +153,31 @@
 <rect x="435" y="606" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="619" font-size="14">100.0%</text>
 <text x="730" y="620" font-size="14">144 / 544</text>
-<text x="20" y="650" font-size="14">phone_jp</text>
+<text x="20" y="650" font-size="14">phone</text>
 <rect x="205" y="636" width="150" height="14" fill="#edf0f4"/>
-<rect x="205" y="636" width="122.70" height="14" fill="#1877b8"/>
-<text x="363" y="649" font-size="14">81.8%</text>
+<rect x="205" y="636" width="150.00" height="14" fill="#1877b8"/>
+<text x="363" y="649" font-size="14">100.0%</text>
 <rect x="435" y="636" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="636" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="649" font-size="14">100.0%</text>
-<text x="730" y="650" font-size="14">144 / 544</text>
-<text x="20" y="680" font-size="14">phone_us</text>
+<text x="730" y="650" font-size="14">144 / 64</text>
+<text x="20" y="680" font-size="14">phone_jp</text>
 <rect x="205" y="666" width="150" height="14" fill="#edf0f4"/>
-<rect x="205" y="666" width="150.00" height="14" fill="#1877b8"/>
-<text x="363" y="679" font-size="14">100.0%</text>
+<rect x="205" y="666" width="122.70" height="14" fill="#1877b8"/>
+<text x="363" y="679" font-size="14">81.8%</text>
 <rect x="435" y="666" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="666" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="679" font-size="14">100.0%</text>
-<text x="730" y="680" font-size="14">144 / 64</text>
-<text x="20" y="710" font-size="14">private_key_pem</text>
+<text x="730" y="680" font-size="14">144 / 544</text>
+<text x="20" y="710" font-size="14">phone_us</text>
 <rect x="205" y="696" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="696" width="150.00" height="14" fill="#1877b8"/>
 <text x="363" y="709" font-size="14">100.0%</text>
 <rect x="435" y="696" width="150" height="14" fill="#edf0f4"/>
 <rect x="435" y="696" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="709" font-size="14">100.0%</text>
-<text x="730" y="710" font-size="14">144 / 544</text>
-<text x="20" y="740" font-size="14">slack_token</text>
+<text x="730" y="710" font-size="14">144 / 64</text>
+<text x="20" y="740" font-size="14">private_key_pem</text>
 <rect x="205" y="726" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="726" width="150.00" height="14" fill="#1877b8"/>
 <text x="363" y="739" font-size="14">100.0%</text>
@@ -185,7 +185,7 @@
 <rect x="435" y="726" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="739" font-size="14">100.0%</text>
 <text x="730" y="740" font-size="14">144 / 544</text>
-<text x="20" y="770" font-size="14">swiftbic</text>
+<text x="20" y="770" font-size="14">slack_token</text>
 <rect x="205" y="756" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="756" width="150.00" height="14" fill="#1877b8"/>
 <text x="363" y="769" font-size="14">100.0%</text>
@@ -193,7 +193,7 @@
 <rect x="435" y="756" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="769" font-size="14">100.0%</text>
 <text x="730" y="770" font-size="14">144 / 544</text>
-<text x="20" y="800" font-size="14">uk_sortcode</text>
+<text x="20" y="800" font-size="14">swiftbic</text>
 <rect x="205" y="786" width="150" height="14" fill="#edf0f4"/>
 <rect x="205" y="786" width="150.00" height="14" fill="#1877b8"/>
 <text x="363" y="799" font-size="14">100.0%</text>
@@ -201,5 +201,13 @@
 <rect x="435" y="786" width="150.00" height="14" fill="#b34b19"/>
 <text x="593" y="799" font-size="14">100.0%</text>
 <text x="730" y="800" font-size="14">144 / 544</text>
-<text x="20" y="849" font-size="12">PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 development, 0.0 held.</text>
+<text x="20" y="830" font-size="14">uk_sortcode</text>
+<rect x="205" y="816" width="150" height="14" fill="#edf0f4"/>
+<rect x="205" y="816" width="150.00" height="14" fill="#1877b8"/>
+<text x="363" y="829" font-size="14">100.0%</text>
+<rect x="435" y="816" width="150" height="14" fill="#edf0f4"/>
+<rect x="435" y="816" width="150.00" height="14" fill="#b34b19"/>
+<text x="593" y="829" font-size="14">100.0%</text>
+<text x="730" y="830" font-size="14">144 / 544</text>
+<text x="20" y="879" font-size="12">PAN negatives are deliberate card-like look-alikes; public-log PAN FP/GB: 0.0 development, 0.0 held.</text>
 </g></svg>

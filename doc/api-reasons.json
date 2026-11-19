@@ -155,6 +155,7 @@
       "embargo.KindMyNumber",
       "embargo.KindPAN",
       "embargo.KindPaymentToken",
+      "embargo.KindPhone",
       "embargo.KindPrivateKeyPEM",
       "embargo.KindSWIFTBIC",
       "embargo.KindServiceToken",

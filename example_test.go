@@ -604,6 +604,27 @@ func ExampleNewSlogHandler_short() {
 	// Output: {"level":"INFO","msg":"checkout","email":"[REDACTED]"}
 }
 
+func ExampleNewSlogHandler_quickStart() {
+	next := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.TimeKey {
+				return slog.Attr{}
+			}
+			return a
+		},
+	})
+
+	// README:begin
+
+	// next is the handler you already use, such as slog.NewJSONHandler(os.Stdout, nil).
+	logger := slog.New(embargo.NewSlogHandler(next, embargo.NewScanner()))
+
+	logger.Info("login failed", "email", "alice@example.com", "password", "hunter2", "request_id", "req-7f3a")
+	// README:end
+
+	// Output: {"level":"INFO","msg":"login failed","email":"[REDACTED]","password":"[REDACTED]","request_id":"req-7f3a"}
+}
+
 func ExampleNewSlogHandler_struct() {
 	next := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
@@ -1053,6 +1074,29 @@ func ExampleWithKinds_accessLog() {
 	line := `203.0.113.7 - - [17/Nov/2026:10:00:00 +0000] "GET /reset?email=alice@example.com&token=sk-proj-Fake0Fake0Fake0Fake0Fake0Fake0 HTTP/1.1" 302 0`
 	fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
 	// Output: 203.0.113.7 - - [17/Nov/2026:10:00:00 +0000] "GET /reset?email=[REDACTED]&token=[REDACTED] HTTP/1.1" 302 0
+}
+
+func ExampleKindPhone() {
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindPhone))
+
+	for _, text := range []string{
+		"call +44 20 7946 0958",
+		"office +44 (0)20 7946 0958", // The trunk prefix (0) is part of the number.
+		"tel:+919876543210",
+		"balance +1000000",   // Unseparated and under ten digits: a signed amount.
+		"+28 20 7946 0958",   // 28 is not an assigned country calling code.
+		"call 020 7946 0958", // Without +, numbers follow one country's rules.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// call [REDACTED]
+	// office [REDACTED]
+	// tel:[REDACTED]
+	// balance +1000000
+	// +28 20 7946 0958
+	// call 020 7946 0958
 }
 
 func ExampleKindUSPhone() {

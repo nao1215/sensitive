@@ -500,7 +500,7 @@ func httpLog(t *testing.T, target string, reqHeader http.Header) string {
 func TestOutputQueryKeyReencoding(t *testing.T) {
 	t.Parallel()
 	scanner := embargo.NewScanner()
-	for _, key := range []string{"4111%201111%201111%201111", "090%201234%205678", "1234%205678%209018", "DE89%203704%200044%200532%200130%2000"} {
+	for _, key := range []string{"4111%201111%201111%201111", "%2B44%2020%207946%200958", "DE89%203704%200044%200532%200130%2000"} {
 		for _, suffix := range []string{"", "=public"} {
 			target := "/search?" + key + suffix
 			want := embargo.Mask(target, scanner.ScanString(target))

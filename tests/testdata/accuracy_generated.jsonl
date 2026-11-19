@@ -106,6 +106,12 @@
 {"id":"payment_token/positive/0/url","kind":"payment_token","expected":[{"start":31,"end":63}],"parts":["https://example.invalid/?value=sk","_test_mJ2YYqWA4bB8hr5mWzbTR2gJ&result=accepted"]}
 {"id":"payment_token/positive/0/japanese","kind":"payment_token","expected":[{"start":15,"end":47}],"parts":["処理結果【sk","_test_mJ2YYqWA4bB8hr5mWzbTR2gJ】を記録しました"]}
 {"id":"payment_token/positive/0/multiline","kind":"payment_token","expected":[{"start":17,"end":49}],"parts":["request accepted\nsk","_test_mJ2YYqWA4bB8hr5mWzbTR2gJ\nworker finished"]}
+{"id":"phone/positive/0/plain","kind":"phone","text":"+44 20 7946 0217","expected":[{"start":0,"end":16}]}
+{"id":"phone/positive/0/log","kind":"phone","text":"INFO checkout +44 20 7946 0217; result=accepted","expected":[{"start":14,"end":30}]}
+{"id":"phone/positive/0/json","kind":"phone","text":"{\"message\":\"+44 20 7946 0217\",\"result\":\"accepted\"}","expected":[{"start":12,"end":28}]}
+{"id":"phone/positive/0/url","kind":"phone","text":"https://example.invalid/?value=%2B44%2020%207946%200217&result=accepted","expected":[{"start":31,"end":55}]}
+{"id":"phone/positive/0/japanese","kind":"phone","text":"処理結果【+44 20 7946 0217】を記録しました","expected":[{"start":15,"end":31}]}
+{"id":"phone/positive/0/multiline","kind":"phone","text":"request accepted\n+44 20 7946 0217\nworker finished","expected":[{"start":17,"end":33}]}
 {"id":"phone_jp/positive/0/plain","kind":"phone_jp","text":"090-2187-2855","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/0/log","kind":"phone_jp","text":"INFO checkout 090-2187-2855; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/0/json","kind":"phone_jp","text":"{\"message\":\"090-2187-2855\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -250,6 +256,12 @@
 {"id":"payment_token/positive/1/url","kind":"payment_token","expected":[{"start":31,"end":63}],"parts":["https://example.invalid/?value=pk","_test_67osxK2pvYcFcSiMZr1NaVXr&result=accepted"]}
 {"id":"payment_token/positive/1/japanese","kind":"payment_token","expected":[{"start":15,"end":47}],"parts":["処理結果【pk","_test_67osxK2pvYcFcSiMZr1NaVXr】を記録しました"]}
 {"id":"payment_token/positive/1/multiline","kind":"payment_token","expected":[{"start":17,"end":49}],"parts":["request accepted\npk","_test_67osxK2pvYcFcSiMZr1NaVXr\nworker finished"]}
+{"id":"phone/positive/1/plain","kind":"phone","text":"+61-2-5550-4591","expected":[{"start":0,"end":15}]}
+{"id":"phone/positive/1/log","kind":"phone","text":"INFO checkout +61-2-5550-4591; result=accepted","expected":[{"start":14,"end":29}]}
+{"id":"phone/positive/1/json","kind":"phone","text":"{\"message\":\"+61-2-5550-4591\",\"result\":\"accepted\"}","expected":[{"start":12,"end":27}]}
+{"id":"phone/positive/1/url","kind":"phone","text":"https://example.invalid/?value=%2B61-2-5550-4591&result=accepted","expected":[{"start":31,"end":48}]}
+{"id":"phone/positive/1/japanese","kind":"phone","text":"処理結果【+61-2-5550-4591】を記録しました","expected":[{"start":15,"end":30}]}
+{"id":"phone/positive/1/multiline","kind":"phone","text":"request accepted\n+61-2-5550-4591\nworker finished","expected":[{"start":17,"end":32}]}
 {"id":"phone_jp/positive/1/plain","kind":"phone_jp","text":"090-2710-4271","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/1/log","kind":"phone_jp","text":"INFO checkout 090-2710-4271; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/1/json","kind":"phone_jp","text":"{\"message\":\"090-2710-4271\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -394,6 +406,12 @@
 {"id":"payment_token/positive/2/url","kind":"payment_token","expected":[{"start":31,"end":59}],"parts":["https://example.invalid/?value=to","k_pHJ80YOgUcK7fl52qEkvVIwe&result=accepted"]}
 {"id":"payment_token/positive/2/japanese","kind":"payment_token","expected":[{"start":15,"end":43}],"parts":["処理結果【to","k_pHJ80YOgUcK7fl52qEkvVIwe】を記録しました"]}
 {"id":"payment_token/positive/2/multiline","kind":"payment_token","expected":[{"start":17,"end":45}],"parts":["request accepted\nto","k_pHJ80YOgUcK7fl52qEkvVIwe\nworker finished"]}
+{"id":"phone/positive/2/plain","kind":"phone","text":"+1 (202) 555-0179","expected":[{"start":0,"end":17}]}
+{"id":"phone/positive/2/log","kind":"phone","text":"INFO checkout +1 (202) 555-0179; result=accepted","expected":[{"start":14,"end":31}]}
+{"id":"phone/positive/2/json","kind":"phone","text":"{\"message\":\"+1 (202) 555-0179\",\"result\":\"accepted\"}","expected":[{"start":12,"end":29}]}
+{"id":"phone/positive/2/url","kind":"phone","text":"https://example.invalid/?value=%2B1%20%28202%29%20555-0179&result=accepted","expected":[{"start":31,"end":58}]}
+{"id":"phone/positive/2/japanese","kind":"phone","text":"処理結果【+1 (202) 555-0179】を記録しました","expected":[{"start":15,"end":32}]}
+{"id":"phone/positive/2/multiline","kind":"phone","text":"request accepted\n+1 (202) 555-0179\nworker finished","expected":[{"start":17,"end":34}]}
 {"id":"phone_jp/positive/2/plain","kind":"phone_jp","text":"０９０－９５５３－９５１１","expected":[{"start":0,"end":39}]}
 {"id":"phone_jp/positive/2/log","kind":"phone_jp","text":"INFO checkout ０９０－９５５３－９５１１; result=accepted","expected":[{"start":14,"end":53}]}
 {"id":"phone_jp/positive/2/json","kind":"phone_jp","text":"{\"message\":\"０９０－９５５３－９５１１\",\"result\":\"accepted\"}","expected":[{"start":12,"end":51}]}
@@ -538,6 +556,12 @@
 {"id":"payment_token/positive/3/url","kind":"payment_token","expected":[{"start":31,"end":61}],"parts":["https://example.invalid/?value=PA","YID-XFnn6vPBkBMsP02o2BVGAgYO&result=accepted"]}
 {"id":"payment_token/positive/3/japanese","kind":"payment_token","expected":[{"start":15,"end":45}],"parts":["処理結果【PA","YID-XFnn6vPBkBMsP02o2BVGAgYO】を記録しました"]}
 {"id":"payment_token/positive/3/multiline","kind":"payment_token","expected":[{"start":17,"end":47}],"parts":["request accepted\nPA","YID-XFnn6vPBkBMsP02o2BVGAgYO\nworker finished"]}
+{"id":"phone/positive/3/plain","kind":"phone","text":"+442079460001","expected":[{"start":0,"end":13}]}
+{"id":"phone/positive/3/log","kind":"phone","text":"INFO checkout +442079460001; result=accepted","expected":[{"start":14,"end":27}]}
+{"id":"phone/positive/3/json","kind":"phone","text":"{\"message\":\"+442079460001\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
+{"id":"phone/positive/3/url","kind":"phone","text":"https://example.invalid/?value=%2B442079460001&result=accepted","expected":[{"start":31,"end":46}]}
+{"id":"phone/positive/3/japanese","kind":"phone","text":"処理結果【+442079460001】を記録しました","expected":[{"start":15,"end":28}]}
+{"id":"phone/positive/3/multiline","kind":"phone","text":"request accepted\n+442079460001\nworker finished","expected":[{"start":17,"end":30}]}
 {"id":"phone_jp/positive/3/plain","kind":"phone_jp","text":"090-1932-9853","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/3/log","kind":"phone_jp","text":"INFO checkout 090-1932-9853; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/3/json","kind":"phone_jp","text":"{\"message\":\"090-1932-9853\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -682,6 +706,12 @@
 {"id":"payment_token/positive/4/url","kind":"payment_token","expected":[{"start":31,"end":62}],"parts":["https://example.invalid/?value=sq","0idp-jPWnbJ3eynKdH21Uy0qrusit&result=accepted"]}
 {"id":"payment_token/positive/4/japanese","kind":"payment_token","expected":[{"start":15,"end":46}],"parts":["処理結果【sq","0idp-jPWnbJ3eynKdH21Uy0qrusit】を記録しました"]}
 {"id":"payment_token/positive/4/multiline","kind":"payment_token","expected":[{"start":17,"end":48}],"parts":["request accepted\nsq","0idp-jPWnbJ3eynKdH21Uy0qrusit\nworker finished"]}
+{"id":"phone/positive/4/plain","kind":"phone","text":"+44 20 7946 0161","expected":[{"start":0,"end":16}]}
+{"id":"phone/positive/4/log","kind":"phone","text":"INFO checkout +44 20 7946 0161; result=accepted","expected":[{"start":14,"end":30}]}
+{"id":"phone/positive/4/json","kind":"phone","text":"{\"message\":\"+44 20 7946 0161\",\"result\":\"accepted\"}","expected":[{"start":12,"end":28}]}
+{"id":"phone/positive/4/url","kind":"phone","text":"https://example.invalid/?value=%2B44%2020%207946%200161&result=accepted","expected":[{"start":31,"end":55}]}
+{"id":"phone/positive/4/japanese","kind":"phone","text":"処理結果【+44 20 7946 0161】を記録しました","expected":[{"start":15,"end":31}]}
+{"id":"phone/positive/4/multiline","kind":"phone","text":"request accepted\n+44 20 7946 0161\nworker finished","expected":[{"start":17,"end":33}]}
 {"id":"phone_jp/positive/4/plain","kind":"phone_jp","text":"090-6768-6248","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/4/log","kind":"phone_jp","text":"INFO checkout 090-6768-6248; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/4/json","kind":"phone_jp","text":"{\"message\":\"090-6768-6248\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -826,6 +856,12 @@
 {"id":"payment_token/positive/5/url","kind":"payment_token","expected":[{"start":31,"end":63}],"parts":["https://example.invalid/?value=sk","_test_5Hdy1xISbl3FQmuGUeSXjPNi&result=accepted"]}
 {"id":"payment_token/positive/5/japanese","kind":"payment_token","expected":[{"start":15,"end":47}],"parts":["処理結果【sk","_test_5Hdy1xISbl3FQmuGUeSXjPNi】を記録しました"]}
 {"id":"payment_token/positive/5/multiline","kind":"payment_token","expected":[{"start":17,"end":49}],"parts":["request accepted\nsk","_test_5Hdy1xISbl3FQmuGUeSXjPNi\nworker finished"]}
+{"id":"phone/positive/5/plain","kind":"phone","text":"+61-2-5550-9201","expected":[{"start":0,"end":15}]}
+{"id":"phone/positive/5/log","kind":"phone","text":"INFO checkout +61-2-5550-9201; result=accepted","expected":[{"start":14,"end":29}]}
+{"id":"phone/positive/5/json","kind":"phone","text":"{\"message\":\"+61-2-5550-9201\",\"result\":\"accepted\"}","expected":[{"start":12,"end":27}]}
+{"id":"phone/positive/5/url","kind":"phone","text":"https://example.invalid/?value=%2B61-2-5550-9201&result=accepted","expected":[{"start":31,"end":48}]}
+{"id":"phone/positive/5/japanese","kind":"phone","text":"処理結果【+61-2-5550-9201】を記録しました","expected":[{"start":15,"end":30}]}
+{"id":"phone/positive/5/multiline","kind":"phone","text":"request accepted\n+61-2-5550-9201\nworker finished","expected":[{"start":17,"end":32}]}
 {"id":"phone_jp/positive/5/plain","kind":"phone_jp","text":"０９０－９０１３－０４４０","expected":[{"start":0,"end":39}]}
 {"id":"phone_jp/positive/5/log","kind":"phone_jp","text":"INFO checkout ０９０－９０１３－０４４０; result=accepted","expected":[{"start":14,"end":53}]}
 {"id":"phone_jp/positive/5/json","kind":"phone_jp","text":"{\"message\":\"０９０－９０１３－０４４０\",\"result\":\"accepted\"}","expected":[{"start":12,"end":51}]}
@@ -970,6 +1006,12 @@
 {"id":"payment_token/positive/6/url","kind":"payment_token","expected":[{"start":31,"end":63}],"parts":["https://example.invalid/?value=pk","_test_WsX0h2ILTUyo7G3mmiyWEmzV&result=accepted"]}
 {"id":"payment_token/positive/6/japanese","kind":"payment_token","expected":[{"start":15,"end":47}],"parts":["処理結果【pk","_test_WsX0h2ILTUyo7G3mmiyWEmzV】を記録しました"]}
 {"id":"payment_token/positive/6/multiline","kind":"payment_token","expected":[{"start":17,"end":49}],"parts":["request accepted\npk","_test_WsX0h2ILTUyo7G3mmiyWEmzV\nworker finished"]}
+{"id":"phone/positive/6/plain","kind":"phone","text":"+1 (202) 555-0140","expected":[{"start":0,"end":17}]}
+{"id":"phone/positive/6/log","kind":"phone","text":"INFO checkout +1 (202) 555-0140; result=accepted","expected":[{"start":14,"end":31}]}
+{"id":"phone/positive/6/json","kind":"phone","text":"{\"message\":\"+1 (202) 555-0140\",\"result\":\"accepted\"}","expected":[{"start":12,"end":29}]}
+{"id":"phone/positive/6/url","kind":"phone","text":"https://example.invalid/?value=%2B1%20%28202%29%20555-0140&result=accepted","expected":[{"start":31,"end":58}]}
+{"id":"phone/positive/6/japanese","kind":"phone","text":"処理結果【+1 (202) 555-0140】を記録しました","expected":[{"start":15,"end":32}]}
+{"id":"phone/positive/6/multiline","kind":"phone","text":"request accepted\n+1 (202) 555-0140\nworker finished","expected":[{"start":17,"end":34}]}
 {"id":"phone_jp/positive/6/plain","kind":"phone_jp","text":"090-7611-2471","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/6/log","kind":"phone_jp","text":"INFO checkout 090-7611-2471; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/6/json","kind":"phone_jp","text":"{\"message\":\"090-7611-2471\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -1114,6 +1156,12 @@
 {"id":"payment_token/positive/7/url","kind":"payment_token","expected":[{"start":31,"end":59}],"parts":["https://example.invalid/?value=to","k_JavCykEWLa0xdG3WMTkD4OHM&result=accepted"]}
 {"id":"payment_token/positive/7/japanese","kind":"payment_token","expected":[{"start":15,"end":43}],"parts":["処理結果【to","k_JavCykEWLa0xdG3WMTkD4OHM】を記録しました"]}
 {"id":"payment_token/positive/7/multiline","kind":"payment_token","expected":[{"start":17,"end":45}],"parts":["request accepted\nto","k_JavCykEWLa0xdG3WMTkD4OHM\nworker finished"]}
+{"id":"phone/positive/7/plain","kind":"phone","text":"+442079460020","expected":[{"start":0,"end":13}]}
+{"id":"phone/positive/7/log","kind":"phone","text":"INFO checkout +442079460020; result=accepted","expected":[{"start":14,"end":27}]}
+{"id":"phone/positive/7/json","kind":"phone","text":"{\"message\":\"+442079460020\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
+{"id":"phone/positive/7/url","kind":"phone","text":"https://example.invalid/?value=%2B442079460020&result=accepted","expected":[{"start":31,"end":46}]}
+{"id":"phone/positive/7/japanese","kind":"phone","text":"処理結果【+442079460020】を記録しました","expected":[{"start":15,"end":28}]}
+{"id":"phone/positive/7/multiline","kind":"phone","text":"request accepted\n+442079460020\nworker finished","expected":[{"start":17,"end":30}]}
 {"id":"phone_jp/positive/7/plain","kind":"phone_jp","text":"090-2237-0672","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/7/log","kind":"phone_jp","text":"INFO checkout 090-2237-0672; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/7/json","kind":"phone_jp","text":"{\"message\":\"090-2237-0672\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -1258,6 +1306,12 @@
 {"id":"payment_token/positive/8/url","kind":"payment_token","expected":[{"start":31,"end":61}],"parts":["https://example.invalid/?value=PA","YID-I14hJ64vITncJtVmXIofX1ub&result=accepted"]}
 {"id":"payment_token/positive/8/japanese","kind":"payment_token","expected":[{"start":15,"end":45}],"parts":["処理結果【PA","YID-I14hJ64vITncJtVmXIofX1ub】を記録しました"]}
 {"id":"payment_token/positive/8/multiline","kind":"payment_token","expected":[{"start":17,"end":47}],"parts":["request accepted\nPA","YID-I14hJ64vITncJtVmXIofX1ub\nworker finished"]}
+{"id":"phone/positive/8/plain","kind":"phone","text":"+44 20 7946 0717","expected":[{"start":0,"end":16}]}
+{"id":"phone/positive/8/log","kind":"phone","text":"INFO checkout +44 20 7946 0717; result=accepted","expected":[{"start":14,"end":30}]}
+{"id":"phone/positive/8/json","kind":"phone","text":"{\"message\":\"+44 20 7946 0717\",\"result\":\"accepted\"}","expected":[{"start":12,"end":28}]}
+{"id":"phone/positive/8/url","kind":"phone","text":"https://example.invalid/?value=%2B44%2020%207946%200717&result=accepted","expected":[{"start":31,"end":55}]}
+{"id":"phone/positive/8/japanese","kind":"phone","text":"処理結果【+44 20 7946 0717】を記録しました","expected":[{"start":15,"end":31}]}
+{"id":"phone/positive/8/multiline","kind":"phone","text":"request accepted\n+44 20 7946 0717\nworker finished","expected":[{"start":17,"end":33}]}
 {"id":"phone_jp/positive/8/plain","kind":"phone_jp","text":"０９０－２３０８－７４０４","expected":[{"start":0,"end":39}]}
 {"id":"phone_jp/positive/8/log","kind":"phone_jp","text":"INFO checkout ０９０－２３０８－７４０４; result=accepted","expected":[{"start":14,"end":53}]}
 {"id":"phone_jp/positive/8/json","kind":"phone_jp","text":"{\"message\":\"０９０－２３０８－７４０４\",\"result\":\"accepted\"}","expected":[{"start":12,"end":51}]}
@@ -1402,6 +1456,12 @@
 {"id":"payment_token/positive/9/url","kind":"payment_token","expected":[{"start":31,"end":62}],"parts":["https://example.invalid/?value=sq","0idp-oij0R6VJkKxpBzybaolBoY5C&result=accepted"]}
 {"id":"payment_token/positive/9/japanese","kind":"payment_token","expected":[{"start":15,"end":46}],"parts":["処理結果【sq","0idp-oij0R6VJkKxpBzybaolBoY5C】を記録しました"]}
 {"id":"payment_token/positive/9/multiline","kind":"payment_token","expected":[{"start":17,"end":48}],"parts":["request accepted\nsq","0idp-oij0R6VJkKxpBzybaolBoY5C\nworker finished"]}
+{"id":"phone/positive/9/plain","kind":"phone","text":"+61-2-5550-3052","expected":[{"start":0,"end":15}]}
+{"id":"phone/positive/9/log","kind":"phone","text":"INFO checkout +61-2-5550-3052; result=accepted","expected":[{"start":14,"end":29}]}
+{"id":"phone/positive/9/json","kind":"phone","text":"{\"message\":\"+61-2-5550-3052\",\"result\":\"accepted\"}","expected":[{"start":12,"end":27}]}
+{"id":"phone/positive/9/url","kind":"phone","text":"https://example.invalid/?value=%2B61-2-5550-3052&result=accepted","expected":[{"start":31,"end":48}]}
+{"id":"phone/positive/9/japanese","kind":"phone","text":"処理結果【+61-2-5550-3052】を記録しました","expected":[{"start":15,"end":30}]}
+{"id":"phone/positive/9/multiline","kind":"phone","text":"request accepted\n+61-2-5550-3052\nworker finished","expected":[{"start":17,"end":32}]}
 {"id":"phone_jp/positive/9/plain","kind":"phone_jp","text":"090-5441-5260","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/9/log","kind":"phone_jp","text":"INFO checkout 090-5441-5260; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/9/json","kind":"phone_jp","text":"{\"message\":\"090-5441-5260\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -1546,6 +1606,12 @@
 {"id":"payment_token/positive/10/url","kind":"payment_token","expected":[{"start":31,"end":63}],"parts":["https://example.invalid/?value=sk","_test_nhbu8YGORvTA9pESauyLUMen&result=accepted"]}
 {"id":"payment_token/positive/10/japanese","kind":"payment_token","expected":[{"start":15,"end":47}],"parts":["処理結果【sk","_test_nhbu8YGORvTA9pESauyLUMen】を記録しました"]}
 {"id":"payment_token/positive/10/multiline","kind":"payment_token","expected":[{"start":17,"end":49}],"parts":["request accepted\nsk","_test_nhbu8YGORvTA9pESauyLUMen\nworker finished"]}
+{"id":"phone/positive/10/plain","kind":"phone","text":"+1 (202) 555-0158","expected":[{"start":0,"end":17}]}
+{"id":"phone/positive/10/log","kind":"phone","text":"INFO checkout +1 (202) 555-0158; result=accepted","expected":[{"start":14,"end":31}]}
+{"id":"phone/positive/10/json","kind":"phone","text":"{\"message\":\"+1 (202) 555-0158\",\"result\":\"accepted\"}","expected":[{"start":12,"end":29}]}
+{"id":"phone/positive/10/url","kind":"phone","text":"https://example.invalid/?value=%2B1%20%28202%29%20555-0158&result=accepted","expected":[{"start":31,"end":58}]}
+{"id":"phone/positive/10/japanese","kind":"phone","text":"処理結果【+1 (202) 555-0158】を記録しました","expected":[{"start":15,"end":32}]}
+{"id":"phone/positive/10/multiline","kind":"phone","text":"request accepted\n+1 (202) 555-0158\nworker finished","expected":[{"start":17,"end":34}]}
 {"id":"phone_jp/positive/10/plain","kind":"phone_jp","text":"090-8593-0772","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/10/log","kind":"phone_jp","text":"INFO checkout 090-8593-0772; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/10/json","kind":"phone_jp","text":"{\"message\":\"090-8593-0772\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -1690,6 +1756,12 @@
 {"id":"payment_token/positive/11/url","kind":"payment_token","expected":[{"start":31,"end":63}],"parts":["https://example.invalid/?value=pk","_test_28tD6Ih8OUKKz638QDgzoail&result=accepted"]}
 {"id":"payment_token/positive/11/japanese","kind":"payment_token","expected":[{"start":15,"end":47}],"parts":["処理結果【pk","_test_28tD6Ih8OUKKz638QDgzoail】を記録しました"]}
 {"id":"payment_token/positive/11/multiline","kind":"payment_token","expected":[{"start":17,"end":49}],"parts":["request accepted\npk","_test_28tD6Ih8OUKKz638QDgzoail\nworker finished"]}
+{"id":"phone/positive/11/plain","kind":"phone","text":"+442079460027","expected":[{"start":0,"end":13}]}
+{"id":"phone/positive/11/log","kind":"phone","text":"INFO checkout +442079460027; result=accepted","expected":[{"start":14,"end":27}]}
+{"id":"phone/positive/11/json","kind":"phone","text":"{\"message\":\"+442079460027\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
+{"id":"phone/positive/11/url","kind":"phone","text":"https://example.invalid/?value=%2B442079460027&result=accepted","expected":[{"start":31,"end":46}]}
+{"id":"phone/positive/11/japanese","kind":"phone","text":"処理結果【+442079460027】を記録しました","expected":[{"start":15,"end":28}]}
+{"id":"phone/positive/11/multiline","kind":"phone","text":"request accepted\n+442079460027\nworker finished","expected":[{"start":17,"end":30}]}
 {"id":"phone_jp/positive/11/plain","kind":"phone_jp","text":"０９０－８２９３－２０４１","expected":[{"start":0,"end":39}]}
 {"id":"phone_jp/positive/11/log","kind":"phone_jp","text":"INFO checkout ０９０－８２９３－２０４１; result=accepted","expected":[{"start":14,"end":53}]}
 {"id":"phone_jp/positive/11/json","kind":"phone_jp","text":"{\"message\":\"０９０－８２９３－２０４１\",\"result\":\"accepted\"}","expected":[{"start":12,"end":51}]}
@@ -1834,6 +1906,12 @@
 {"id":"payment_token/positive/12/url","kind":"payment_token","expected":[{"start":31,"end":59}],"parts":["https://example.invalid/?value=to","k_CAus0W7OgSnQXzx74AEx5fkD&result=accepted"]}
 {"id":"payment_token/positive/12/japanese","kind":"payment_token","expected":[{"start":15,"end":43}],"parts":["処理結果【to","k_CAus0W7OgSnQXzx74AEx5fkD】を記録しました"]}
 {"id":"payment_token/positive/12/multiline","kind":"payment_token","expected":[{"start":17,"end":45}],"parts":["request accepted\nto","k_CAus0W7OgSnQXzx74AEx5fkD\nworker finished"]}
+{"id":"phone/positive/12/plain","kind":"phone","text":"+44 20 7946 0914","expected":[{"start":0,"end":16}]}
+{"id":"phone/positive/12/log","kind":"phone","text":"INFO checkout +44 20 7946 0914; result=accepted","expected":[{"start":14,"end":30}]}
+{"id":"phone/positive/12/json","kind":"phone","text":"{\"message\":\"+44 20 7946 0914\",\"result\":\"accepted\"}","expected":[{"start":12,"end":28}]}
+{"id":"phone/positive/12/url","kind":"phone","text":"https://example.invalid/?value=%2B44%2020%207946%200914&result=accepted","expected":[{"start":31,"end":55}]}
+{"id":"phone/positive/12/japanese","kind":"phone","text":"処理結果【+44 20 7946 0914】を記録しました","expected":[{"start":15,"end":31}]}
+{"id":"phone/positive/12/multiline","kind":"phone","text":"request accepted\n+44 20 7946 0914\nworker finished","expected":[{"start":17,"end":33}]}
 {"id":"phone_jp/positive/12/plain","kind":"phone_jp","text":"090-0819-0413","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/12/log","kind":"phone_jp","text":"INFO checkout 090-0819-0413; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/12/json","kind":"phone_jp","text":"{\"message\":\"090-0819-0413\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -1978,6 +2056,12 @@
 {"id":"payment_token/positive/13/url","kind":"payment_token","expected":[{"start":31,"end":61}],"parts":["https://example.invalid/?value=PA","YID-RBF7nuu6pIB6AJ6un8ospcx9&result=accepted"]}
 {"id":"payment_token/positive/13/japanese","kind":"payment_token","expected":[{"start":15,"end":45}],"parts":["処理結果【PA","YID-RBF7nuu6pIB6AJ6un8ospcx9】を記録しました"]}
 {"id":"payment_token/positive/13/multiline","kind":"payment_token","expected":[{"start":17,"end":47}],"parts":["request accepted\nPA","YID-RBF7nuu6pIB6AJ6un8ospcx9\nworker finished"]}
+{"id":"phone/positive/13/plain","kind":"phone","text":"+61-2-5550-7491","expected":[{"start":0,"end":15}]}
+{"id":"phone/positive/13/log","kind":"phone","text":"INFO checkout +61-2-5550-7491; result=accepted","expected":[{"start":14,"end":29}]}
+{"id":"phone/positive/13/json","kind":"phone","text":"{\"message\":\"+61-2-5550-7491\",\"result\":\"accepted\"}","expected":[{"start":12,"end":27}]}
+{"id":"phone/positive/13/url","kind":"phone","text":"https://example.invalid/?value=%2B61-2-5550-7491&result=accepted","expected":[{"start":31,"end":48}]}
+{"id":"phone/positive/13/japanese","kind":"phone","text":"処理結果【+61-2-5550-7491】を記録しました","expected":[{"start":15,"end":30}]}
+{"id":"phone/positive/13/multiline","kind":"phone","text":"request accepted\n+61-2-5550-7491\nworker finished","expected":[{"start":17,"end":32}]}
 {"id":"phone_jp/positive/13/plain","kind":"phone_jp","text":"090-3095-7417","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/13/log","kind":"phone_jp","text":"INFO checkout 090-3095-7417; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/13/json","kind":"phone_jp","text":"{\"message\":\"090-3095-7417\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -2122,6 +2206,12 @@
 {"id":"payment_token/positive/14/url","kind":"payment_token","expected":[{"start":31,"end":62}],"parts":["https://example.invalid/?value=sq","0idp-K1j2F7HgWOauz3ekzFZwDGvm&result=accepted"]}
 {"id":"payment_token/positive/14/japanese","kind":"payment_token","expected":[{"start":15,"end":46}],"parts":["処理結果【sq","0idp-K1j2F7HgWOauz3ekzFZwDGvm】を記録しました"]}
 {"id":"payment_token/positive/14/multiline","kind":"payment_token","expected":[{"start":17,"end":48}],"parts":["request accepted\nsq","0idp-K1j2F7HgWOauz3ekzFZwDGvm\nworker finished"]}
+{"id":"phone/positive/14/plain","kind":"phone","text":"+1 (202) 555-0100","expected":[{"start":0,"end":17}]}
+{"id":"phone/positive/14/log","kind":"phone","text":"INFO checkout +1 (202) 555-0100; result=accepted","expected":[{"start":14,"end":31}]}
+{"id":"phone/positive/14/json","kind":"phone","text":"{\"message\":\"+1 (202) 555-0100\",\"result\":\"accepted\"}","expected":[{"start":12,"end":29}]}
+{"id":"phone/positive/14/url","kind":"phone","text":"https://example.invalid/?value=%2B1%20%28202%29%20555-0100&result=accepted","expected":[{"start":31,"end":58}]}
+{"id":"phone/positive/14/japanese","kind":"phone","text":"処理結果【+1 (202) 555-0100】を記録しました","expected":[{"start":15,"end":32}]}
+{"id":"phone/positive/14/multiline","kind":"phone","text":"request accepted\n+1 (202) 555-0100\nworker finished","expected":[{"start":17,"end":34}]}
 {"id":"phone_jp/positive/14/plain","kind":"phone_jp","text":"０９０－４５６５－６４０４","expected":[{"start":0,"end":39}]}
 {"id":"phone_jp/positive/14/log","kind":"phone_jp","text":"INFO checkout ０９０－４５６５－６４０４; result=accepted","expected":[{"start":14,"end":53}]}
 {"id":"phone_jp/positive/14/json","kind":"phone_jp","text":"{\"message\":\"０９０－４５６５－６４０４\",\"result\":\"accepted\"}","expected":[{"start":12,"end":51}]}
@@ -2266,6 +2356,12 @@
 {"id":"payment_token/positive/15/url","kind":"payment_token","expected":[{"start":31,"end":63}],"parts":["https://example.invalid/?value=sk","_test_woRX9w6H78xsFwQBhsYf534e&result=accepted"]}
 {"id":"payment_token/positive/15/japanese","kind":"payment_token","expected":[{"start":15,"end":47}],"parts":["処理結果【sk","_test_woRX9w6H78xsFwQBhsYf534e】を記録しました"]}
 {"id":"payment_token/positive/15/multiline","kind":"payment_token","expected":[{"start":17,"end":49}],"parts":["request accepted\nsk","_test_woRX9w6H78xsFwQBhsYf534e\nworker finished"]}
+{"id":"phone/positive/15/plain","kind":"phone","text":"+442079460058","expected":[{"start":0,"end":13}]}
+{"id":"phone/positive/15/log","kind":"phone","text":"INFO checkout +442079460058; result=accepted","expected":[{"start":14,"end":27}]}
+{"id":"phone/positive/15/json","kind":"phone","text":"{\"message\":\"+442079460058\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
+{"id":"phone/positive/15/url","kind":"phone","text":"https://example.invalid/?value=%2B442079460058&result=accepted","expected":[{"start":31,"end":46}]}
+{"id":"phone/positive/15/japanese","kind":"phone","text":"処理結果【+442079460058】を記録しました","expected":[{"start":15,"end":28}]}
+{"id":"phone/positive/15/multiline","kind":"phone","text":"request accepted\n+442079460058\nworker finished","expected":[{"start":17,"end":30}]}
 {"id":"phone_jp/positive/15/plain","kind":"phone_jp","text":"090-9141-3817","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/15/log","kind":"phone_jp","text":"INFO checkout 090-9141-3817; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/15/json","kind":"phone_jp","text":"{\"message\":\"090-9141-3817\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -2410,6 +2506,12 @@
 {"id":"payment_token/positive/16/url","kind":"payment_token","expected":[{"start":31,"end":63}],"parts":["https://example.invalid/?value=pk","_test_vsUsfNVt6D8g7FDQQE6iU3i3&result=accepted"]}
 {"id":"payment_token/positive/16/japanese","kind":"payment_token","expected":[{"start":15,"end":47}],"parts":["処理結果【pk","_test_vsUsfNVt6D8g7FDQQE6iU3i3】を記録しました"]}
 {"id":"payment_token/positive/16/multiline","kind":"payment_token","expected":[{"start":17,"end":49}],"parts":["request accepted\npk","_test_vsUsfNVt6D8g7FDQQE6iU3i3\nworker finished"]}
+{"id":"phone/positive/16/plain","kind":"phone","text":"+44 20 7946 0484","expected":[{"start":0,"end":16}]}
+{"id":"phone/positive/16/log","kind":"phone","text":"INFO checkout +44 20 7946 0484; result=accepted","expected":[{"start":14,"end":30}]}
+{"id":"phone/positive/16/json","kind":"phone","text":"{\"message\":\"+44 20 7946 0484\",\"result\":\"accepted\"}","expected":[{"start":12,"end":28}]}
+{"id":"phone/positive/16/url","kind":"phone","text":"https://example.invalid/?value=%2B44%2020%207946%200484&result=accepted","expected":[{"start":31,"end":55}]}
+{"id":"phone/positive/16/japanese","kind":"phone","text":"処理結果【+44 20 7946 0484】を記録しました","expected":[{"start":15,"end":31}]}
+{"id":"phone/positive/16/multiline","kind":"phone","text":"request accepted\n+44 20 7946 0484\nworker finished","expected":[{"start":17,"end":33}]}
 {"id":"phone_jp/positive/16/plain","kind":"phone_jp","text":"090-0421-3824","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/16/log","kind":"phone_jp","text":"INFO checkout 090-0421-3824; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/16/json","kind":"phone_jp","text":"{\"message\":\"090-0421-3824\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -2554,6 +2656,12 @@
 {"id":"payment_token/positive/17/url","kind":"payment_token","expected":[{"start":31,"end":59}],"parts":["https://example.invalid/?value=to","k_oxHNrYPn3UcoD58zQm1mME7U&result=accepted"]}
 {"id":"payment_token/positive/17/japanese","kind":"payment_token","expected":[{"start":15,"end":43}],"parts":["処理結果【to","k_oxHNrYPn3UcoD58zQm1mME7U】を記録しました"]}
 {"id":"payment_token/positive/17/multiline","kind":"payment_token","expected":[{"start":17,"end":45}],"parts":["request accepted\nto","k_oxHNrYPn3UcoD58zQm1mME7U\nworker finished"]}
+{"id":"phone/positive/17/plain","kind":"phone","text":"+61-2-5550-9002","expected":[{"start":0,"end":15}]}
+{"id":"phone/positive/17/log","kind":"phone","text":"INFO checkout +61-2-5550-9002; result=accepted","expected":[{"start":14,"end":29}]}
+{"id":"phone/positive/17/json","kind":"phone","text":"{\"message\":\"+61-2-5550-9002\",\"result\":\"accepted\"}","expected":[{"start":12,"end":27}]}
+{"id":"phone/positive/17/url","kind":"phone","text":"https://example.invalid/?value=%2B61-2-5550-9002&result=accepted","expected":[{"start":31,"end":48}]}
+{"id":"phone/positive/17/japanese","kind":"phone","text":"処理結果【+61-2-5550-9002】を記録しました","expected":[{"start":15,"end":30}]}
+{"id":"phone/positive/17/multiline","kind":"phone","text":"request accepted\n+61-2-5550-9002\nworker finished","expected":[{"start":17,"end":32}]}
 {"id":"phone_jp/positive/17/plain","kind":"phone_jp","text":"０９０－２７２２－８１２９","expected":[{"start":0,"end":39}]}
 {"id":"phone_jp/positive/17/log","kind":"phone_jp","text":"INFO checkout ０９０－２７２２－８１２９; result=accepted","expected":[{"start":14,"end":53}]}
 {"id":"phone_jp/positive/17/json","kind":"phone_jp","text":"{\"message\":\"０９０－２７２２－８１２９\",\"result\":\"accepted\"}","expected":[{"start":12,"end":51}]}
@@ -2698,6 +2806,12 @@
 {"id":"payment_token/positive/18/url","kind":"payment_token","expected":[{"start":31,"end":61}],"parts":["https://example.invalid/?value=PA","YID-8uLAoDV48O0Wi1DYdjs0aHpQ&result=accepted"]}
 {"id":"payment_token/positive/18/japanese","kind":"payment_token","expected":[{"start":15,"end":45}],"parts":["処理結果【PA","YID-8uLAoDV48O0Wi1DYdjs0aHpQ】を記録しました"]}
 {"id":"payment_token/positive/18/multiline","kind":"payment_token","expected":[{"start":17,"end":47}],"parts":["request accepted\nPA","YID-8uLAoDV48O0Wi1DYdjs0aHpQ\nworker finished"]}
+{"id":"phone/positive/18/plain","kind":"phone","text":"+1 (202) 555-0163","expected":[{"start":0,"end":17}]}
+{"id":"phone/positive/18/log","kind":"phone","text":"INFO checkout +1 (202) 555-0163; result=accepted","expected":[{"start":14,"end":31}]}
+{"id":"phone/positive/18/json","kind":"phone","text":"{\"message\":\"+1 (202) 555-0163\",\"result\":\"accepted\"}","expected":[{"start":12,"end":29}]}
+{"id":"phone/positive/18/url","kind":"phone","text":"https://example.invalid/?value=%2B1%20%28202%29%20555-0163&result=accepted","expected":[{"start":31,"end":58}]}
+{"id":"phone/positive/18/japanese","kind":"phone","text":"処理結果【+1 (202) 555-0163】を記録しました","expected":[{"start":15,"end":32}]}
+{"id":"phone/positive/18/multiline","kind":"phone","text":"request accepted\n+1 (202) 555-0163\nworker finished","expected":[{"start":17,"end":34}]}
 {"id":"phone_jp/positive/18/plain","kind":"phone_jp","text":"090-7125-8321","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/18/log","kind":"phone_jp","text":"INFO checkout 090-7125-8321; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/18/json","kind":"phone_jp","text":"{\"message\":\"090-7125-8321\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -2842,6 +2956,12 @@
 {"id":"payment_token/positive/19/url","kind":"payment_token","expected":[{"start":31,"end":62}],"parts":["https://example.invalid/?value=sq","0idp-VImhZXY4HekS0tkTgZsTGEJr&result=accepted"]}
 {"id":"payment_token/positive/19/japanese","kind":"payment_token","expected":[{"start":15,"end":46}],"parts":["処理結果【sq","0idp-VImhZXY4HekS0tkTgZsTGEJr】を記録しました"]}
 {"id":"payment_token/positive/19/multiline","kind":"payment_token","expected":[{"start":17,"end":48}],"parts":["request accepted\nsq","0idp-VImhZXY4HekS0tkTgZsTGEJr\nworker finished"]}
+{"id":"phone/positive/19/plain","kind":"phone","text":"+442079460072","expected":[{"start":0,"end":13}]}
+{"id":"phone/positive/19/log","kind":"phone","text":"INFO checkout +442079460072; result=accepted","expected":[{"start":14,"end":27}]}
+{"id":"phone/positive/19/json","kind":"phone","text":"{\"message\":\"+442079460072\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
+{"id":"phone/positive/19/url","kind":"phone","text":"https://example.invalid/?value=%2B442079460072&result=accepted","expected":[{"start":31,"end":46}]}
+{"id":"phone/positive/19/japanese","kind":"phone","text":"処理結果【+442079460072】を記録しました","expected":[{"start":15,"end":28}]}
+{"id":"phone/positive/19/multiline","kind":"phone","text":"request accepted\n+442079460072\nworker finished","expected":[{"start":17,"end":30}]}
 {"id":"phone_jp/positive/19/plain","kind":"phone_jp","text":"090-1633-5863","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/19/log","kind":"phone_jp","text":"INFO checkout 090-1633-5863; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/19/json","kind":"phone_jp","text":"{\"message\":\"090-1633-5863\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -2986,6 +3106,12 @@
 {"id":"payment_token/positive/20/url","kind":"payment_token","expected":[{"start":31,"end":63}],"parts":["https://example.invalid/?value=sk","_test_IFpeGBaCo4wQWlMGT4ZpTreI&result=accepted"]}
 {"id":"payment_token/positive/20/japanese","kind":"payment_token","expected":[{"start":15,"end":47}],"parts":["処理結果【sk","_test_IFpeGBaCo4wQWlMGT4ZpTreI】を記録しました"]}
 {"id":"payment_token/positive/20/multiline","kind":"payment_token","expected":[{"start":17,"end":49}],"parts":["request accepted\nsk","_test_IFpeGBaCo4wQWlMGT4ZpTreI\nworker finished"]}
+{"id":"phone/positive/20/plain","kind":"phone","text":"+44 20 7946 0026","expected":[{"start":0,"end":16}]}
+{"id":"phone/positive/20/log","kind":"phone","text":"INFO checkout +44 20 7946 0026; result=accepted","expected":[{"start":14,"end":30}]}
+{"id":"phone/positive/20/json","kind":"phone","text":"{\"message\":\"+44 20 7946 0026\",\"result\":\"accepted\"}","expected":[{"start":12,"end":28}]}
+{"id":"phone/positive/20/url","kind":"phone","text":"https://example.invalid/?value=%2B44%2020%207946%200026&result=accepted","expected":[{"start":31,"end":55}]}
+{"id":"phone/positive/20/japanese","kind":"phone","text":"処理結果【+44 20 7946 0026】を記録しました","expected":[{"start":15,"end":31}]}
+{"id":"phone/positive/20/multiline","kind":"phone","text":"request accepted\n+44 20 7946 0026\nworker finished","expected":[{"start":17,"end":33}]}
 {"id":"phone_jp/positive/20/plain","kind":"phone_jp","text":"０９０－４１０５－９６７２","expected":[{"start":0,"end":39}]}
 {"id":"phone_jp/positive/20/log","kind":"phone_jp","text":"INFO checkout ０９０－４１０５－９６７２; result=accepted","expected":[{"start":14,"end":53}]}
 {"id":"phone_jp/positive/20/json","kind":"phone_jp","text":"{\"message\":\"０９０－４１０５－９６７２\",\"result\":\"accepted\"}","expected":[{"start":12,"end":51}]}
@@ -3130,6 +3256,12 @@
 {"id":"payment_token/positive/21/url","kind":"payment_token","expected":[{"start":31,"end":63}],"parts":["https://example.invalid/?value=pk","_test_Y18emwz2mvEoQtXb5M4GO4zJ&result=accepted"]}
 {"id":"payment_token/positive/21/japanese","kind":"payment_token","expected":[{"start":15,"end":47}],"parts":["処理結果【pk","_test_Y18emwz2mvEoQtXb5M4GO4zJ】を記録しました"]}
 {"id":"payment_token/positive/21/multiline","kind":"payment_token","expected":[{"start":17,"end":49}],"parts":["request accepted\npk","_test_Y18emwz2mvEoQtXb5M4GO4zJ\nworker finished"]}
+{"id":"phone/positive/21/plain","kind":"phone","text":"+61-2-5550-8662","expected":[{"start":0,"end":15}]}
+{"id":"phone/positive/21/log","kind":"phone","text":"INFO checkout +61-2-5550-8662; result=accepted","expected":[{"start":14,"end":29}]}
+{"id":"phone/positive/21/json","kind":"phone","text":"{\"message\":\"+61-2-5550-8662\",\"result\":\"accepted\"}","expected":[{"start":12,"end":27}]}
+{"id":"phone/positive/21/url","kind":"phone","text":"https://example.invalid/?value=%2B61-2-5550-8662&result=accepted","expected":[{"start":31,"end":48}]}
+{"id":"phone/positive/21/japanese","kind":"phone","text":"処理結果【+61-2-5550-8662】を記録しました","expected":[{"start":15,"end":30}]}
+{"id":"phone/positive/21/multiline","kind":"phone","text":"request accepted\n+61-2-5550-8662\nworker finished","expected":[{"start":17,"end":32}]}
 {"id":"phone_jp/positive/21/plain","kind":"phone_jp","text":"090-3074-4024","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/21/log","kind":"phone_jp","text":"INFO checkout 090-3074-4024; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/21/json","kind":"phone_jp","text":"{\"message\":\"090-3074-4024\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -3274,6 +3406,12 @@
 {"id":"payment_token/positive/22/url","kind":"payment_token","expected":[{"start":31,"end":59}],"parts":["https://example.invalid/?value=to","k_VjLCEnntIfFfn5Zf2NU9HFNb&result=accepted"]}
 {"id":"payment_token/positive/22/japanese","kind":"payment_token","expected":[{"start":15,"end":43}],"parts":["処理結果【to","k_VjLCEnntIfFfn5Zf2NU9HFNb】を記録しました"]}
 {"id":"payment_token/positive/22/multiline","kind":"payment_token","expected":[{"start":17,"end":45}],"parts":["request accepted\nto","k_VjLCEnntIfFfn5Zf2NU9HFNb\nworker finished"]}
+{"id":"phone/positive/22/plain","kind":"phone","text":"+1 (202) 555-0126","expected":[{"start":0,"end":17}]}
+{"id":"phone/positive/22/log","kind":"phone","text":"INFO checkout +1 (202) 555-0126; result=accepted","expected":[{"start":14,"end":31}]}
+{"id":"phone/positive/22/json","kind":"phone","text":"{\"message\":\"+1 (202) 555-0126\",\"result\":\"accepted\"}","expected":[{"start":12,"end":29}]}
+{"id":"phone/positive/22/url","kind":"phone","text":"https://example.invalid/?value=%2B1%20%28202%29%20555-0126&result=accepted","expected":[{"start":31,"end":58}]}
+{"id":"phone/positive/22/japanese","kind":"phone","text":"処理結果【+1 (202) 555-0126】を記録しました","expected":[{"start":15,"end":32}]}
+{"id":"phone/positive/22/multiline","kind":"phone","text":"request accepted\n+1 (202) 555-0126\nworker finished","expected":[{"start":17,"end":34}]}
 {"id":"phone_jp/positive/22/plain","kind":"phone_jp","text":"090-3492-7301","expected":[{"start":0,"end":13}]}
 {"id":"phone_jp/positive/22/log","kind":"phone_jp","text":"INFO checkout 090-3492-7301; result=accepted","expected":[{"start":14,"end":27}]}
 {"id":"phone_jp/positive/22/json","kind":"phone_jp","text":"{\"message\":\"090-3492-7301\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
@@ -3418,6 +3556,12 @@
 {"id":"payment_token/positive/23/url","kind":"payment_token","expected":[{"start":31,"end":61}],"parts":["https://example.invalid/?value=PA","YID-2Wf1E6zvOMqt95CoyxiUxnTC&result=accepted"]}
 {"id":"payment_token/positive/23/japanese","kind":"payment_token","expected":[{"start":15,"end":45}],"parts":["処理結果【PA","YID-2Wf1E6zvOMqt95CoyxiUxnTC】を記録しました"]}
 {"id":"payment_token/positive/23/multiline","kind":"payment_token","expected":[{"start":17,"end":47}],"parts":["request accepted\nPA","YID-2Wf1E6zvOMqt95CoyxiUxnTC\nworker finished"]}
+{"id":"phone/positive/23/plain","kind":"phone","text":"+442079460054","expected":[{"start":0,"end":13}]}
+{"id":"phone/positive/23/log","kind":"phone","text":"INFO checkout +442079460054; result=accepted","expected":[{"start":14,"end":27}]}
+{"id":"phone/positive/23/json","kind":"phone","text":"{\"message\":\"+442079460054\",\"result\":\"accepted\"}","expected":[{"start":12,"end":25}]}
+{"id":"phone/positive/23/url","kind":"phone","text":"https://example.invalid/?value=%2B442079460054&result=accepted","expected":[{"start":31,"end":46}]}
+{"id":"phone/positive/23/japanese","kind":"phone","text":"処理結果【+442079460054】を記録しました","expected":[{"start":15,"end":28}]}
+{"id":"phone/positive/23/multiline","kind":"phone","text":"request accepted\n+442079460054\nworker finished","expected":[{"start":17,"end":30}]}
 {"id":"phone_jp/positive/23/plain","kind":"phone_jp","text":"０９０－８０６７－８６０９","expected":[{"start":0,"end":39}]}
 {"id":"phone_jp/positive/23/log","kind":"phone_jp","text":"INFO checkout ０９０－８０６７－８６０９; result=accepted","expected":[{"start":14,"end":53}]}
 {"id":"phone_jp/positive/23/json","kind":"phone_jp","text":"{\"message\":\"０９０－８０６７－８６０９\",\"result\":\"accepted\"}","expected":[{"start":12,"end":51}]}
@@ -3526,6 +3670,10 @@
 {"id":"payment_token/negative/0/log","kind":"payment_token","text":"INFO checkout sk_test_HsCu3; result=accepted","expected":[]}
 {"id":"payment_token/negative/0/json","kind":"payment_token","text":"{\"message\":\"sk_test_HsCu3\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/0/japanese","kind":"payment_token","text":"処理結果【sk_test_HsCu3】を記録しました","expected":[]}
+{"id":"phone/negative/0/plain","kind":"phone","text":"+28 20 7946 0975","expected":[]}
+{"id":"phone/negative/0/log","kind":"phone","text":"INFO checkout +28 20 7946 0975; result=accepted","expected":[]}
+{"id":"phone/negative/0/json","kind":"phone","text":"{\"message\":\"+28 20 7946 0975\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/0/japanese","kind":"phone","text":"処理結果【+28 20 7946 0975】を記録しました","expected":[]}
 {"id":"phone_jp/negative/0/plain","kind":"phone_jp","text":"190-2018-6625","expected":[]}
 {"id":"phone_jp/negative/0/log","kind":"phone_jp","text":"INFO checkout 190-2018-6625; result=accepted","expected":[]}
 {"id":"phone_jp/negative/0/json","kind":"phone_jp","text":"{\"message\":\"190-2018-6625\",\"result\":\"accepted\"}","expected":[]}
@@ -3622,6 +3770,10 @@
 {"id":"payment_token/negative/1/log","kind":"payment_token","text":"INFO checkout sk_test_4JzH3; result=accepted","expected":[]}
 {"id":"payment_token/negative/1/json","kind":"payment_token","text":"{\"message\":\"sk_test_4JzH3\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/1/japanese","kind":"payment_token","text":"処理結果【sk_test_4JzH3】を記録しました","expected":[]}
+{"id":"phone/negative/1/plain","kind":"phone","text":"balance +10000409","expected":[]}
+{"id":"phone/negative/1/log","kind":"phone","text":"INFO checkout balance +10000409; result=accepted","expected":[]}
+{"id":"phone/negative/1/json","kind":"phone","text":"{\"message\":\"balance +10000409\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/1/japanese","kind":"phone","text":"処理結果【balance +10000409】を記録しました","expected":[]}
 {"id":"phone_jp/negative/1/plain","kind":"phone_jp","text":"190-8736-8504","expected":[]}
 {"id":"phone_jp/negative/1/log","kind":"phone_jp","text":"INFO checkout 190-8736-8504; result=accepted","expected":[]}
 {"id":"phone_jp/negative/1/json","kind":"phone_jp","text":"{\"message\":\"190-8736-8504\",\"result\":\"accepted\"}","expected":[]}
@@ -3718,6 +3870,10 @@
 {"id":"payment_token/negative/2/log","kind":"payment_token","text":"INFO checkout sk_test_QzV9m; result=accepted","expected":[]}
 {"id":"payment_token/negative/2/json","kind":"payment_token","text":"{\"message\":\"sk_test_QzV9m\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/2/japanese","kind":"payment_token","text":"処理結果【sk_test_QzV9m】を記録しました","expected":[]}
+{"id":"phone/negative/2/plain","kind":"phone","text":"+44 2718","expected":[]}
+{"id":"phone/negative/2/log","kind":"phone","text":"INFO checkout +44 2718; result=accepted","expected":[]}
+{"id":"phone/negative/2/json","kind":"phone","text":"{\"message\":\"+44 2718\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/2/japanese","kind":"phone","text":"処理結果【+44 2718】を記録しました","expected":[]}
 {"id":"phone_jp/negative/2/plain","kind":"phone_jp","text":"190-1168-0524","expected":[]}
 {"id":"phone_jp/negative/2/log","kind":"phone_jp","text":"INFO checkout 190-1168-0524; result=accepted","expected":[]}
 {"id":"phone_jp/negative/2/json","kind":"phone_jp","text":"{\"message\":\"190-1168-0524\",\"result\":\"accepted\"}","expected":[]}
@@ -3814,6 +3970,10 @@
 {"id":"payment_token/negative/3/log","kind":"payment_token","text":"INFO checkout sk_test_A0HGC; result=accepted","expected":[]}
 {"id":"payment_token/negative/3/json","kind":"payment_token","text":"{\"message\":\"sk_test_A0HGC\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/3/japanese","kind":"payment_token","text":"処理結果【sk_test_A0HGC】を記録しました","expected":[]}
+{"id":"phone/negative/3/plain","kind":"phone","text":"+28 20 7946 0598","expected":[]}
+{"id":"phone/negative/3/log","kind":"phone","text":"INFO checkout +28 20 7946 0598; result=accepted","expected":[]}
+{"id":"phone/negative/3/json","kind":"phone","text":"{\"message\":\"+28 20 7946 0598\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/3/japanese","kind":"phone","text":"処理結果【+28 20 7946 0598】を記録しました","expected":[]}
 {"id":"phone_jp/negative/3/plain","kind":"phone_jp","text":"190-9869-3771","expected":[]}
 {"id":"phone_jp/negative/3/log","kind":"phone_jp","text":"INFO checkout 190-9869-3771; result=accepted","expected":[]}
 {"id":"phone_jp/negative/3/json","kind":"phone_jp","text":"{\"message\":\"190-9869-3771\",\"result\":\"accepted\"}","expected":[]}
@@ -3910,6 +4070,10 @@
 {"id":"payment_token/negative/4/log","kind":"payment_token","text":"INFO checkout sk_test_EJnKl; result=accepted","expected":[]}
 {"id":"payment_token/negative/4/json","kind":"payment_token","text":"{\"message\":\"sk_test_EJnKl\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/4/japanese","kind":"payment_token","text":"処理結果【sk_test_EJnKl】を記録しました","expected":[]}
+{"id":"phone/negative/4/plain","kind":"phone","text":"balance +10000173","expected":[]}
+{"id":"phone/negative/4/log","kind":"phone","text":"INFO checkout balance +10000173; result=accepted","expected":[]}
+{"id":"phone/negative/4/json","kind":"phone","text":"{\"message\":\"balance +10000173\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/4/japanese","kind":"phone","text":"処理結果【balance +10000173】を記録しました","expected":[]}
 {"id":"phone_jp/negative/4/plain","kind":"phone_jp","text":"190-7461-5088","expected":[]}
 {"id":"phone_jp/negative/4/log","kind":"phone_jp","text":"INFO checkout 190-7461-5088; result=accepted","expected":[]}
 {"id":"phone_jp/negative/4/json","kind":"phone_jp","text":"{\"message\":\"190-7461-5088\",\"result\":\"accepted\"}","expected":[]}
@@ -4006,6 +4170,10 @@
 {"id":"payment_token/negative/5/log","kind":"payment_token","text":"INFO checkout sk_test_nHw6T; result=accepted","expected":[]}
 {"id":"payment_token/negative/5/json","kind":"payment_token","text":"{\"message\":\"sk_test_nHw6T\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/5/japanese","kind":"payment_token","text":"処理結果【sk_test_nHw6T】を記録しました","expected":[]}
+{"id":"phone/negative/5/plain","kind":"phone","text":"+44 2744","expected":[]}
+{"id":"phone/negative/5/log","kind":"phone","text":"INFO checkout +44 2744; result=accepted","expected":[]}
+{"id":"phone/negative/5/json","kind":"phone","text":"{\"message\":\"+44 2744\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/5/japanese","kind":"phone","text":"処理結果【+44 2744】を記録しました","expected":[]}
 {"id":"phone_jp/negative/5/plain","kind":"phone_jp","text":"190-7290-9519","expected":[]}
 {"id":"phone_jp/negative/5/log","kind":"phone_jp","text":"INFO checkout 190-7290-9519; result=accepted","expected":[]}
 {"id":"phone_jp/negative/5/json","kind":"phone_jp","text":"{\"message\":\"190-7290-9519\",\"result\":\"accepted\"}","expected":[]}
@@ -4102,6 +4270,10 @@
 {"id":"payment_token/negative/6/log","kind":"payment_token","text":"INFO checkout sk_test_lTbsQ; result=accepted","expected":[]}
 {"id":"payment_token/negative/6/json","kind":"payment_token","text":"{\"message\":\"sk_test_lTbsQ\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/6/japanese","kind":"payment_token","text":"処理結果【sk_test_lTbsQ】を記録しました","expected":[]}
+{"id":"phone/negative/6/plain","kind":"phone","text":"+28 20 7946 0962","expected":[]}
+{"id":"phone/negative/6/log","kind":"phone","text":"INFO checkout +28 20 7946 0962; result=accepted","expected":[]}
+{"id":"phone/negative/6/json","kind":"phone","text":"{\"message\":\"+28 20 7946 0962\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/6/japanese","kind":"phone","text":"処理結果【+28 20 7946 0962】を記録しました","expected":[]}
 {"id":"phone_jp/negative/6/plain","kind":"phone_jp","text":"190-5246-5560","expected":[]}
 {"id":"phone_jp/negative/6/log","kind":"phone_jp","text":"INFO checkout 190-5246-5560; result=accepted","expected":[]}
 {"id":"phone_jp/negative/6/json","kind":"phone_jp","text":"{\"message\":\"190-5246-5560\",\"result\":\"accepted\"}","expected":[]}
@@ -4198,6 +4370,10 @@
 {"id":"payment_token/negative/7/log","kind":"payment_token","text":"INFO checkout sk_test_Ywfc9; result=accepted","expected":[]}
 {"id":"payment_token/negative/7/json","kind":"payment_token","text":"{\"message\":\"sk_test_Ywfc9\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/7/japanese","kind":"payment_token","text":"処理結果【sk_test_Ywfc9】を記録しました","expected":[]}
+{"id":"phone/negative/7/plain","kind":"phone","text":"balance +10000350","expected":[]}
+{"id":"phone/negative/7/log","kind":"phone","text":"INFO checkout balance +10000350; result=accepted","expected":[]}
+{"id":"phone/negative/7/json","kind":"phone","text":"{\"message\":\"balance +10000350\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/7/japanese","kind":"phone","text":"処理結果【balance +10000350】を記録しました","expected":[]}
 {"id":"phone_jp/negative/7/plain","kind":"phone_jp","text":"190-5283-5549","expected":[]}
 {"id":"phone_jp/negative/7/log","kind":"phone_jp","text":"INFO checkout 190-5283-5549; result=accepted","expected":[]}
 {"id":"phone_jp/negative/7/json","kind":"phone_jp","text":"{\"message\":\"190-5283-5549\",\"result\":\"accepted\"}","expected":[]}
@@ -4294,6 +4470,10 @@
 {"id":"payment_token/negative/8/log","kind":"payment_token","text":"INFO checkout sk_test_fOZ1Y; result=accepted","expected":[]}
 {"id":"payment_token/negative/8/json","kind":"payment_token","text":"{\"message\":\"sk_test_fOZ1Y\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/8/japanese","kind":"payment_token","text":"処理結果【sk_test_fOZ1Y】を記録しました","expected":[]}
+{"id":"phone/negative/8/plain","kind":"phone","text":"+44 2973","expected":[]}
+{"id":"phone/negative/8/log","kind":"phone","text":"INFO checkout +44 2973; result=accepted","expected":[]}
+{"id":"phone/negative/8/json","kind":"phone","text":"{\"message\":\"+44 2973\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/8/japanese","kind":"phone","text":"処理結果【+44 2973】を記録しました","expected":[]}
 {"id":"phone_jp/negative/8/plain","kind":"phone_jp","text":"190-8664-2002","expected":[]}
 {"id":"phone_jp/negative/8/log","kind":"phone_jp","text":"INFO checkout 190-8664-2002; result=accepted","expected":[]}
 {"id":"phone_jp/negative/8/json","kind":"phone_jp","text":"{\"message\":\"190-8664-2002\",\"result\":\"accepted\"}","expected":[]}
@@ -4390,6 +4570,10 @@
 {"id":"payment_token/negative/9/log","kind":"payment_token","text":"INFO checkout sk_test_X8QrI; result=accepted","expected":[]}
 {"id":"payment_token/negative/9/json","kind":"payment_token","text":"{\"message\":\"sk_test_X8QrI\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/9/japanese","kind":"payment_token","text":"処理結果【sk_test_X8QrI】を記録しました","expected":[]}
+{"id":"phone/negative/9/plain","kind":"phone","text":"+28 20 7946 0602","expected":[]}
+{"id":"phone/negative/9/log","kind":"phone","text":"INFO checkout +28 20 7946 0602; result=accepted","expected":[]}
+{"id":"phone/negative/9/json","kind":"phone","text":"{\"message\":\"+28 20 7946 0602\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/9/japanese","kind":"phone","text":"処理結果【+28 20 7946 0602】を記録しました","expected":[]}
 {"id":"phone_jp/negative/9/plain","kind":"phone_jp","text":"190-5196-1543","expected":[]}
 {"id":"phone_jp/negative/9/log","kind":"phone_jp","text":"INFO checkout 190-5196-1543; result=accepted","expected":[]}
 {"id":"phone_jp/negative/9/json","kind":"phone_jp","text":"{\"message\":\"190-5196-1543\",\"result\":\"accepted\"}","expected":[]}
@@ -4486,6 +4670,10 @@
 {"id":"payment_token/negative/10/log","kind":"payment_token","text":"INFO checkout sk_test_SYt9a; result=accepted","expected":[]}
 {"id":"payment_token/negative/10/json","kind":"payment_token","text":"{\"message\":\"sk_test_SYt9a\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/10/japanese","kind":"payment_token","text":"処理結果【sk_test_SYt9a】を記録しました","expected":[]}
+{"id":"phone/negative/10/plain","kind":"phone","text":"balance +10000176","expected":[]}
+{"id":"phone/negative/10/log","kind":"phone","text":"INFO checkout balance +10000176; result=accepted","expected":[]}
+{"id":"phone/negative/10/json","kind":"phone","text":"{\"message\":\"balance +10000176\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/10/japanese","kind":"phone","text":"処理結果【balance +10000176】を記録しました","expected":[]}
 {"id":"phone_jp/negative/10/plain","kind":"phone_jp","text":"190-2244-8588","expected":[]}
 {"id":"phone_jp/negative/10/log","kind":"phone_jp","text":"INFO checkout 190-2244-8588; result=accepted","expected":[]}
 {"id":"phone_jp/negative/10/json","kind":"phone_jp","text":"{\"message\":\"190-2244-8588\",\"result\":\"accepted\"}","expected":[]}
@@ -4582,6 +4770,10 @@
 {"id":"payment_token/negative/11/log","kind":"payment_token","text":"INFO checkout sk_test_Lu4ea; result=accepted","expected":[]}
 {"id":"payment_token/negative/11/json","kind":"payment_token","text":"{\"message\":\"sk_test_Lu4ea\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/11/japanese","kind":"payment_token","text":"処理結果【sk_test_Lu4ea】を記録しました","expected":[]}
+{"id":"phone/negative/11/plain","kind":"phone","text":"+44 2630","expected":[]}
+{"id":"phone/negative/11/log","kind":"phone","text":"INFO checkout +44 2630; result=accepted","expected":[]}
+{"id":"phone/negative/11/json","kind":"phone","text":"{\"message\":\"+44 2630\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/11/japanese","kind":"phone","text":"処理結果【+44 2630】を記録しました","expected":[]}
 {"id":"phone_jp/negative/11/plain","kind":"phone_jp","text":"190-2256-1193","expected":[]}
 {"id":"phone_jp/negative/11/log","kind":"phone_jp","text":"INFO checkout 190-2256-1193; result=accepted","expected":[]}
 {"id":"phone_jp/negative/11/json","kind":"phone_jp","text":"{\"message\":\"190-2256-1193\",\"result\":\"accepted\"}","expected":[]}
@@ -4678,6 +4870,10 @@
 {"id":"payment_token/negative/12/log","kind":"payment_token","text":"INFO checkout sk_test_QAgkB; result=accepted","expected":[]}
 {"id":"payment_token/negative/12/json","kind":"payment_token","text":"{\"message\":\"sk_test_QAgkB\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/12/japanese","kind":"payment_token","text":"処理結果【sk_test_QAgkB】を記録しました","expected":[]}
+{"id":"phone/negative/12/plain","kind":"phone","text":"+28 20 7946 0041","expected":[]}
+{"id":"phone/negative/12/log","kind":"phone","text":"INFO checkout +28 20 7946 0041; result=accepted","expected":[]}
+{"id":"phone/negative/12/json","kind":"phone","text":"{\"message\":\"+28 20 7946 0041\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/12/japanese","kind":"phone","text":"処理結果【+28 20 7946 0041】を記録しました","expected":[]}
 {"id":"phone_jp/negative/12/plain","kind":"phone_jp","text":"190-4422-8614","expected":[]}
 {"id":"phone_jp/negative/12/log","kind":"phone_jp","text":"INFO checkout 190-4422-8614; result=accepted","expected":[]}
 {"id":"phone_jp/negative/12/json","kind":"phone_jp","text":"{\"message\":\"190-4422-8614\",\"result\":\"accepted\"}","expected":[]}
@@ -4774,6 +4970,10 @@
 {"id":"payment_token/negative/13/log","kind":"payment_token","text":"INFO checkout sk_test_RTk1V; result=accepted","expected":[]}
 {"id":"payment_token/negative/13/json","kind":"payment_token","text":"{\"message\":\"sk_test_RTk1V\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/13/japanese","kind":"payment_token","text":"処理結果【sk_test_RTk1V】を記録しました","expected":[]}
+{"id":"phone/negative/13/plain","kind":"phone","text":"balance +10000954","expected":[]}
+{"id":"phone/negative/13/log","kind":"phone","text":"INFO checkout balance +10000954; result=accepted","expected":[]}
+{"id":"phone/negative/13/json","kind":"phone","text":"{\"message\":\"balance +10000954\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/13/japanese","kind":"phone","text":"処理結果【balance +10000954】を記録しました","expected":[]}
 {"id":"phone_jp/negative/13/plain","kind":"phone_jp","text":"190-4529-8576","expected":[]}
 {"id":"phone_jp/negative/13/log","kind":"phone_jp","text":"INFO checkout 190-4529-8576; result=accepted","expected":[]}
 {"id":"phone_jp/negative/13/json","kind":"phone_jp","text":"{\"message\":\"190-4529-8576\",\"result\":\"accepted\"}","expected":[]}
@@ -4870,6 +5070,10 @@
 {"id":"payment_token/negative/14/log","kind":"payment_token","text":"INFO checkout sk_test_JB30F; result=accepted","expected":[]}
 {"id":"payment_token/negative/14/json","kind":"payment_token","text":"{\"message\":\"sk_test_JB30F\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/14/japanese","kind":"payment_token","text":"処理結果【sk_test_JB30F】を記録しました","expected":[]}
+{"id":"phone/negative/14/plain","kind":"phone","text":"+44 2486","expected":[]}
+{"id":"phone/negative/14/log","kind":"phone","text":"INFO checkout +44 2486; result=accepted","expected":[]}
+{"id":"phone/negative/14/json","kind":"phone","text":"{\"message\":\"+44 2486\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/14/japanese","kind":"phone","text":"処理結果【+44 2486】を記録しました","expected":[]}
 {"id":"phone_jp/negative/14/plain","kind":"phone_jp","text":"190-2034-3891","expected":[]}
 {"id":"phone_jp/negative/14/log","kind":"phone_jp","text":"INFO checkout 190-2034-3891; result=accepted","expected":[]}
 {"id":"phone_jp/negative/14/json","kind":"phone_jp","text":"{\"message\":\"190-2034-3891\",\"result\":\"accepted\"}","expected":[]}
@@ -4966,6 +5170,10 @@
 {"id":"payment_token/negative/15/log","kind":"payment_token","text":"INFO checkout sk_test_adJzP; result=accepted","expected":[]}
 {"id":"payment_token/negative/15/json","kind":"payment_token","text":"{\"message\":\"sk_test_adJzP\",\"result\":\"accepted\"}","expected":[]}
 {"id":"payment_token/negative/15/japanese","kind":"payment_token","text":"処理結果【sk_test_adJzP】を記録しました","expected":[]}
+{"id":"phone/negative/15/plain","kind":"phone","text":"+28 20 7946 0327","expected":[]}
+{"id":"phone/negative/15/log","kind":"phone","text":"INFO checkout +28 20 7946 0327; result=accepted","expected":[]}
+{"id":"phone/negative/15/json","kind":"phone","text":"{\"message\":\"+28 20 7946 0327\",\"result\":\"accepted\"}","expected":[]}
+{"id":"phone/negative/15/japanese","kind":"phone","text":"処理結果【+28 20 7946 0327】を記録しました","expected":[]}
 {"id":"phone_jp/negative/15/plain","kind":"phone_jp","text":"190-5121-3402","expected":[]}
 {"id":"phone_jp/negative/15/log","kind":"phone_jp","text":"INFO checkout 190-5121-3402; result=accepted","expected":[]}
 {"id":"phone_jp/negative/15/json","kind":"phone_jp","text":"{\"message\":\"190-5121-3402\",\"result\":\"accepted\"}","expected":[]}

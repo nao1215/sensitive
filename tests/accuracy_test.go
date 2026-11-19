@@ -605,7 +605,7 @@ type defaultThresholdResult struct {
 
 func TestDefaultThresholdAccuracy(t *testing.T) {
 	t.Parallel()
-	const defaultKinds = 26
+	const defaultKinds = 27
 	results := make([]defaultThresholdResult, 0, defaultKinds*6)
 	for _, set := range []string{developmentAccuracySet, heldAccuracySet} {
 		samples := allAccuracySamples(t, set)

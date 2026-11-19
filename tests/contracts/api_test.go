@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/constant"
-	"go/doc"
 	"go/parser"
 	"go/token"
 	"go/types"
@@ -344,9 +343,9 @@ func examples(t *testing.T, path string) map[string]string {
 	}
 	// An Example without an Output comment compiles but never runs, so it
 	// would show readers output nobody checks.
-	for _, example := range doc.Examples(file) {
-		if example.Output == "" && !example.EmptyOutput {
-			t.Errorf("%s: Example%s has no Output comment", path, example.Name)
+	for _, decl := range file.Decls {
+		if fn, ok := decl.(*ast.FuncDecl); ok && strings.HasPrefix(fn.Name.Name, "Example") && !hasOutputComment(file, fn) {
+			t.Errorf("%s: %s has no Output comment", path, fn.Name.Name)
 		}
 	}
 	bodies := map[string]string{}
@@ -356,6 +355,21 @@ func examples(t *testing.T, path string) map[string]string {
 		}
 	}
 	return bodies
+}
+
+// hasOutputComment reports whether fn's body holds the Output or Unordered
+// output comment that makes go test run it.
+func hasOutputComment(file *ast.File, fn *ast.FuncDecl) bool {
+	for _, group := range file.Comments {
+		if group.Pos() < fn.Body.Pos() || group.End() > fn.Body.End() {
+			continue
+		}
+		text := strings.TrimSpace(group.Text())
+		if strings.HasPrefix(text, "Output:") || strings.HasPrefix(text, "Unordered output:") {
+			return true
+		}
+	}
+	return false
 }
 
 // hasExample accepts Example names with a lowercase suffix, as go doc does.

@@ -727,7 +727,7 @@ func TestMaskIdempotentAllKinds(t *testing.T) {
 			byKind[sample.Kind] = append(byKind[sample.Kind], sample.Text)
 		}
 	}
-	if len(byKind) != 38 {
+	if len(byKind) != 39 {
 		t.Fatal("every Kind needs positive adjacency fixtures")
 	}
 	for kind, inputs := range byKind {
@@ -995,7 +995,7 @@ func TestHTTPEncodedKeysAndCredentialHeadersProperty(t *testing.T) {
 	t.Parallel()
 	rapid.Check(t, func(rt *rapid.T) {
 		email := "person" + strconv.Itoa(rapid.IntRange(1, 999999).Draw(rt, "user")) + "@example.net"
-		key := rapid.SampledFrom([]string{email, "4111 1111 1111 1111", "090-1234-5678"}).Draw(rt, "query key")
+		key := rapid.SampledFrom([]string{email, "4111 1111 1111 1111", "+44 20 7946 0958"}).Draw(rt, "query key")
 		credential := "Basic " + base64.StdEncoding.EncodeToString([]byte("user:"+email))
 		request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/?"+url.QueryEscape(key)+"=public", http.NoBody)
 		request.Header.Set("Authorization", credential)

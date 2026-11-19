@@ -44,8 +44,13 @@ type hintEntry struct {
 	needFold bool
 }
 
-// NewScanner starts with 26 built-ins; the additional country families and KindHighEntropy are opt-in.
-// WithAll enables all 38 families; WithKinds selects the regions and formats an application handles.
+// NewScanner starts with 19 built-ins: credentials and provider tokens, card and bank account
+// data, email, IP and international phone numbers, and cryptocurrency addresses, the values the
+// OWASP Logging Cheat Sheet and PCI DSS keep out of logs, written in formats used in every country.
+// Formats of one country (national IDs, My Number, Japanese and North American phone numbers, ABA,
+// sort codes, ACH traces), bank and merchant identifiers (SWIFT/BIC, merchant IDs) and
+// KindHighEntropy are opt-in. WithAll enables all 39 families; WithKinds selects the regions and
+// formats an application handles.
 // Minimum confidence defaults to 0, so ambiguous numeric and contextual candidates remain.
 // Select WithKinds when the application knows which data it handles; fewer detectors reduce work and unrelated findings.
 // See https://github.com/nao1215/embargo/blob/main/doc/benchmarks.md for measured kind sets.
@@ -367,7 +372,9 @@ func matchesAnyHint(entries []hintEntry, data []byte, foldedData *[]byte, folded
 
 func defaultKind(kind Kind) bool {
 	switch kind { //nolint:exhaustive // Explicit opt-in families; the remaining built-ins retain their defaults.
-	case KindHighEntropy, KindUSSSN, KindUSITIN, KindUKNINO, KindUKNHS, KindIndiaAadhaar, KindIndiaPAN, KindBrazilCPF, KindBrazilCNPJ, KindChinaResidentID, KindKoreaRRN, KindCanadaSIN:
+	// One country's formats and values that no international guideline treats
+	// as secret or personal are opt-in; see the default rule on NewScanner.
+	case KindHighEntropy, KindMyNumber, KindJPPhone, KindUSPhone, KindABARouting, KindUKSortCode, KindACHTrace, KindSWIFTBIC, KindMerchantID, KindUSSSN, KindUSITIN, KindUKNINO, KindUKNHS, KindIndiaAadhaar, KindIndiaPAN, KindBrazilCPF, KindBrazilCNPJ, KindChinaResidentID, KindKoreaRRN, KindCanadaSIN:
 		return false
 	default:
 		return true

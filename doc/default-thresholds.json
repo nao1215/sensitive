@@ -172,6 +172,15 @@
   },
   {
     "set": "development",
+    "kind": "phone",
+    "threshold": 0,
+    "bytes": 9292,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
     "kind": "phone_jp",
     "threshold": 0,
     "bytes": 26163,
@@ -401,6 +410,15 @@
     "threshold": 0.5,
     "bytes": 26858,
     "tp": 146,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
+    "kind": "phone",
+    "threshold": 0.5,
+    "bytes": 9292,
+    "tp": 144,
     "fp": 0,
     "fn": 0
   },
@@ -640,6 +658,15 @@
   },
   {
     "set": "development",
+    "kind": "phone",
+    "threshold": 0.7,
+    "bytes": 9292,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "development",
     "kind": "phone_jp",
     "threshold": 0.7,
     "bytes": 26163,
@@ -874,6 +901,15 @@
   },
   {
     "set": "held",
+    "kind": "phone",
+    "threshold": 0,
+    "bytes": 8228,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
     "kind": "phone_jp",
     "threshold": 0,
     "bytes": 25430,
@@ -1108,6 +1144,15 @@
   },
   {
     "set": "held",
+    "kind": "phone",
+    "threshold": 0.5,
+    "bytes": 8228,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
     "kind": "phone_jp",
     "threshold": 0.5,
     "bytes": 25430,
@@ -1336,6 +1381,15 @@
     "kind": "payment_token",
     "threshold": 0.7,
     "bytes": 26090,
+    "tp": 144,
+    "fp": 0,
+    "fn": 0
+  },
+  {
+    "set": "held",
+    "kind": "phone",
+    "threshold": 0.7,
+    "bytes": 8228,
     "tp": 144,
     "fp": 0,
     "fn": 0
