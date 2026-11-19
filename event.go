@@ -291,9 +291,11 @@ func base64Sextet(c byte) (byte, bool) {
 		return c - 'a' + lower, true
 	case ascii.IsDigit(c):
 		return c - '0' + digits, true
-	case c == '+':
+	}
+	switch c {
+	case '+':
 		return plus, true
-	case c == '/':
+	case '/':
 		return slash, true
 	}
 	return 0, false

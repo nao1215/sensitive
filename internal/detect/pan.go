@@ -108,12 +108,12 @@ func (d *PAN) candidate(orig, data []byte, posMap []int, i int) (Finding, int, b
 	}
 	// A run of fewer than panMinDigits digits that ends without a separator
 	// or a dot, such as the 2 of 2ms, is no card in any written form.
-	k := i + 1
-	for k < len(data) && ascii.IsDigit(data[k]) {
-		k++
+	run := 1
+	for i+run < len(data) && ascii.IsDigit(data[i+run]) {
+		run++
 	}
-	if k-i < panMinDigits && (k == len(data) || (!cardSeparator(data[k]) && data[k] != '.')) {
-		return Finding{}, k, false
+	if end := i + run; run < panMinDigits && (end == len(data) || (!cardSeparator(data[end]) && data[end] != '.')) {
+		return Finding{}, end, false
 	}
 	// Card digits fit the array; a longer run grows past it and is rejected by length.
 	var stack [panMaxDigits + 1]byte
