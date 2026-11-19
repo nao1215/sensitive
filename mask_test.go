@@ -78,7 +78,7 @@ func TestMaskByteCoverageOracle(t *testing.T) {
 }
 
 // bridgedSpans is an oracle for the spans Mask replaces that does not sort or
-// merge intervals: two neighbouring covered bytes belong to one span exactly
+// merge intervals: two neighboring covered bytes belong to one span exactly
 // when one finding covers both, so adjacent findings stay separate. It
 // returns the text split into public parts and spans, and which are spans.
 func bridgedSpans(text string, findings []Finding) (parts []string, hidden []bool) {
