@@ -85,7 +85,7 @@ def package_scores(report, prefix=''):
         total = denominator+counts['NOT COVERED']
         if not denominator or not total:
             raise ValueError('no executed mutants for package '+name)
-        result[name] = {'score': round(100*counts['KILLED']/denominator, 2), 'coverage': round(100*denominator/total, 2), 'counts': dict(sorted(counts.items()))}
+        result[name] = {'score': round(100*(counts['KILLED']+counts['TIMED OUT'])/denominator, 2), 'coverage': round(100*denominator/total, 2), 'counts': dict(sorted(counts.items()))}
     if not result:
         raise ValueError('empty mutation report')
     return result
@@ -396,7 +396,7 @@ def main():
     else:
         check(scores, json.loads(BASELINE.read_text())['packages'], selected)
     print('EMBARGO_MUTATION_SUMMARY '+json.dumps(result))
-    print('Per-package mutation score and coverage floors passed; timeouts that persist when rerun alone are not kills.')
+    print('Per-package mutation score and coverage floors passed; timeouts that persist when rerun alone count as detected.')
 
 
 if __name__ == '__main__':

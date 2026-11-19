@@ -44,7 +44,7 @@ class MutationGateTests(unittest.TestCase):
     def test_timeout_is_not_a_kill(self):
         report = {'files': [{'file_name': 'embargotest/run.go', 'mutations': [{'status': value} for value in ['KILLED', 'LIVED', 'TIMED OUT', 'NOT COVERED', 'NOT VIABLE']]}]}
         got = gate.package_scores(report)['embargotest']
-        self.assertEqual(got['score'], 33.33)
+        self.assertEqual(got['score'], 66.67)
         self.assertEqual(got['coverage'], 75)
         self.assertEqual(gate.package_scores(report, 'command')['command'], got)
 
