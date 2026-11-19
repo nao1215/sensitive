@@ -71,22 +71,22 @@
   },
   {
     "file": "slog_handler.go",
-    "start": 502,
-    "end": 504,
+    "start": 510,
+    "end": 512,
     "sha256": "da67528e3953916c88a9e124e62a881ea200624773983d04e4568551dc3ad49b",
     "reason": "Cancellation must arrive between the preceding context check and entry into LogValue resolution; tests assert cancellation caused by LogValue and by scanners without relying on scheduler timing."
   },
   {
     "file": "slog_handler.go",
-    "start": 395,
-    "end": 397,
+    "start": 403,
+    "end": 405,
     "sha256": "c66ddefb9c0bd1c429d3779cf7315ebdb33a6ca1e7653211d3b6892874ceb52e",
     "reason": "LogValue resolution loops until Kind is no longer KindLogValuer, and every public slog.Value constructor produces a handled Kind; the defensive fallback rejects a malformed value."
   },
   {
     "file": "slog_handler.go",
-    "start": 491,
-    "end": 493,
+    "start": 499,
+    "end": 501,
     "sha256": "28020aa2c7ebf3b9b8225038b449abf66632c1b41663f7ff935379eea3b3a992",
     "reason": "encoding/json.Marshal receives a byte slice and always succeeds, including invalid UTF-8 bytes; the defensive failure path cannot arise for this type."
   },
