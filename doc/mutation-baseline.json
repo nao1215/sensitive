@@ -5,23 +5,23 @@
   "timeout_coefficient": 10,
   "packages": {
     ".": {
-      "score": 86.47,
+      "score": 86.68,
       "coverage": 99.81,
       "counts": {
-        "KILLED": 460,
+        "KILLED": 462,
         "LIVED": 55,
         "NOT COVERED": 1,
-        "TIMED OUT": 17
+        "TIMED OUT": 16
       }
     },
     "embargotest": {
-      "score": 92.76,
-      "coverage": 98.98,
+      "score": 93.71,
+      "coverage": 99.31,
       "counts": {
-        "KILLED": 269,
-        "LIVED": 19,
-        "NOT COVERED": 3,
-        "TIMED OUT": 2
+        "KILLED": 268,
+        "LIVED": 17,
+        "NOT COVERED": 2,
+        "TIMED OUT": 1
       }
     },
     "internal/ascii": {
@@ -32,13 +32,13 @@
       }
     },
     "internal/detect": {
-      "score": 88.17,
-      "coverage": 96.16,
+      "score": 88.43,
+      "coverage": 96.25,
       "counts": {
-        "KILLED": 2608,
-        "LIVED": 303,
+        "KILLED": 2675,
+        "LIVED": 306,
         "NOT COVERED": 118,
-        "TIMED OUT": 47
+        "TIMED OUT": 44
       }
     },
     "internal/output": {

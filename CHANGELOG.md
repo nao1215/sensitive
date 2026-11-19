@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Tests check the `Mask` guarantee that, for fixed valid findings, the output depends only on the bytes outside them. They run the real function on every combination of up to three ranges over texts of up to seven bytes, the exact spans a `MaskFunc` callback receives, and that findings on valid UTF-8 never split a character.
 - The Lean reference proofs no longer model masking. That model replaced each byte with `*` and missed changes that made the marker return the value; the README row now reads "Checksum and offset-map errors". doc/testing.md has a Masking guarantee section listing what it covers and what it does not.
+- The `Mask` and `MaskFunc` godoc states the guarantee: for valid findings, `Mask` output depends only on the bytes outside the spans, and a `MaskFunc` callback that returns part of the value discloses that part.
 
 ## [0.17.0] - 2026-11-19
 

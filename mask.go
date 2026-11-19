@@ -9,6 +9,8 @@ const redactionMarker = "[REDACTED]"
 
 // Mask replaces overlapping spans with [REDACTED]. Adjacent spans remain separate.
 // Invalid ranges redact the entire text. Neither input nor findings is changed.
+// For valid findings, the output depends only on the bytes outside the spans and
+// on where the merged spans are, not on the bytes inside them.
 // Masking text twice may mask more, so mask each original value once; the marker
 // is not a trusted-input bypass.
 func Mask(text string, findings []Finding) string {
@@ -39,6 +41,8 @@ func (s *Scanner) guardedReplace(kind Kind, value string) string {
 // The kind comes from the highest-confidence finding; ties prefer kind, start, then
 // descending end. The value covers the full merged span. Adjacent spans stay separate.
 // Invalid ranges redact all text without calling replace. A nil callback panics.
+// The output contains whatever replace returns, so returning part of the value
+// discloses that part.
 func MaskFunc(text string, findings []Finding, replace func(kind Kind, value string) string) string {
 	if replace == nil {
 		panic("embargo: nil replacement")
