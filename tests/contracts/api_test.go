@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/constant"
+	"go/doc"
 	"go/parser"
 	"go/token"
 	"go/types"
@@ -337,9 +338,16 @@ func receiverName(expr ast.Expr) string {
 func examples(t *testing.T, path string) map[string]string {
 	t.Helper()
 	source := repositoryFile(t, path)
-	file, err := parser.ParseFile(token.NewFileSet(), path, source, parser.SkipObjectResolution)
+	file, err := parser.ParseFile(token.NewFileSet(), path, source, parser.SkipObjectResolution|parser.ParseComments)
 	if err != nil {
 		t.Fatal(err)
+	}
+	// An Example without an Output comment compiles but never runs, so it
+	// would show readers output nobody checks.
+	for _, example := range doc.Examples(file) {
+		if example.Output == "" && !example.EmptyOutput {
+			t.Errorf("%s: Example%s has no Output comment", path, example.Name)
+		}
 	}
 	bodies := map[string]string{}
 	for _, decl := range file.Decls {

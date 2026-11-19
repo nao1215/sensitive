@@ -89,11 +89,16 @@ func ExampleWithKinds() {
 }
 
 func ExampleWithAll() {
-	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail), embargo.WithAll())
+	text := "alice@example.com ssn 663-27-1262"
 
-	fmt.Println(len(scanner.ScanString("alice@example.com 192.0.2.1 cvv: 123")))
+	// National IDs are opt-in; WithAll adds them and KindHighEntropy.
+	for _, scanner := range []*embargo.Scanner{embargo.NewScanner(), embargo.NewScanner(embargo.WithAll())} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
 
-	// Output: 4
+	// Output:
+	// [REDACTED] ssn 663-27-1262
+	// [REDACTED] ssn [REDACTED]
 }
 
 func ExampleWithMinConfidence() {
@@ -204,141 +209,363 @@ func ExampleMaskFunc() {
 }
 
 func ExampleKindPAN() {
-	fmt.Println(embargo.KindPAN)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindPAN))
 
-	// Output: pan
+	for _, text := range []string{
+		"card 4111111111111111", // Passes the Luhn check.
+		"card 4111111111111112", // Fails it, so it is not a card number.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// card [REDACTED]
+	// card 4111111111111112
 }
 
 func ExampleKindEmail() {
-	fmt.Println(embargo.KindEmail)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindEmail))
 
-	// Output: email
+	for _, text := range []string{
+		"mail alice@example.com",
+		"mail alice@localhost", // No dotted domain.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// mail [REDACTED]
+	// mail alice@localhost
 }
 
 func ExampleKindJPPhone() {
-	fmt.Println(embargo.KindJPPhone)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindJPPhone))
 
-	// Output: phone_jp
+	for _, text := range []string{
+		"tel 090-1234-5678",
+		"tel +81 90-1234-5678",
+		"tel 1234-5678", // Too short for a Japanese number.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// tel [REDACTED]
+	// tel [REDACTED]
+	// tel 1234-5678
 }
 
 func ExampleKindMyNumber() {
-	fmt.Println(embargo.KindMyNumber)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindMyNumber))
 
-	// Output: mynumber
+	for _, text := range []string{
+		"my_number=123456789018", // The check digit matches.
+		"my_number=123456789019", // It does not.
+		"order_id=123456789018",  // A record identifier label excludes it.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// my_number=[REDACTED]
+	// my_number=123456789019
+	// order_id=123456789018
 }
 
 func ExampleKindJWT() {
-	fmt.Println(embargo.KindJWT)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindJWT))
 
-	// Output: jwt
+	for _, text := range []string{
+		"token eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.c2lnbmF0dXJl",
+		"token eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0", // Only one dot.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// token [REDACTED]
+	// token eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0
 }
 
 func ExampleKindAWSKey() {
-	fmt.Println(embargo.KindAWSKey)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindAWSKey))
 
-	// Output: awskey
+	for _, text := range []string{
+		"key AKIAIOSFODNN7EXAMPLE",
+		"key AKIAIOSFODNN7EXAMP", // Too short.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// key [REDACTED]
+	// key AKIAIOSFODNN7EXAMP
 }
 
 func ExampleKindIBAN() {
-	fmt.Println(embargo.KindIBAN)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindIBAN))
 
-	// Output: iban
+	for _, text := range []string{
+		"iban GB82 WEST 1234 5698 7654 32",
+		"iban GB83 WEST 1234 5698 7654 32", // The MOD 97 check fails.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// iban [REDACTED]
+	// iban GB83 WEST 1234 5698 7654 32
 }
 
 func ExampleKindIPAddr() {
-	fmt.Println(embargo.KindIPAddr)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindIPAddr))
 
-	// Output: ipaddr
+	for _, text := range []string{
+		"client 203.0.113.7",
+		"client 2001:db8::1",
+		"version 1.2.3.4", // A version label excludes it.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// client [REDACTED]
+	// client [REDACTED]
+	// version 1.2.3.4
 }
 
 func ExampleKindSWIFTBIC() {
-	fmt.Println(embargo.KindSWIFTBIC)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindSWIFTBIC))
 
-	// Output: swiftbic
+	for _, text := range []string{
+		"bic DEUTDEFF500",
+		"bic DEUTZZFF", // ZZ is not a country code.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// bic [REDACTED]
+	// bic DEUTZZFF
 }
 
 func ExampleKindABARouting() {
-	fmt.Println(embargo.KindABARouting)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindABARouting))
 
-	// Output: aba_routing
+	for _, text := range []string{
+		"routing 021000021", // The 3-7-1 checksum passes.
+		"routing 021000022", // It fails.
+		"user_id=021000021", // A record identifier label excludes it.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// routing [REDACTED]
+	// routing 021000022
+	// user_id=021000021
 }
 
 func ExampleKindUKSortCode() {
-	fmt.Println(embargo.KindUKSortCode)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindUKSortCode))
 
-	// Output: uk_sortcode
+	for _, text := range []string{
+		"sort code 12-34-56",
+		"sort code 12-34 56", // Separators differ.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// sort code [REDACTED]
+	// sort code 12-34 56
 }
 
 func ExampleKindCVV() {
-	fmt.Println(embargo.KindCVV)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindCVV))
 
-	// Output: cvv
+	for _, text := range []string{
+		"cvv: 123",
+		"code 123", // No verification-code keyword.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// cvv: [REDACTED]
+	// code 123
 }
 
 func ExampleKindCardExpiry() {
-	fmt.Println(embargo.KindCardExpiry)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindCardExpiry))
 
-	// Output: card_expiry
+	for _, text := range []string{
+		"expires 12/29",
+		"expires 13/29", // No month 13.
+		"shipped 12/29", // No expiry keyword.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// expires [REDACTED]
+	// expires 13/29
+	// shipped 12/29
 }
 
 func ExampleKindPaymentToken() {
-	fmt.Println(embargo.KindPaymentToken)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindPaymentToken))
 
-	// Output: payment_token
+	for _, text := range []string{
+		"stripe sk_test_" + strings.Repeat("Fake0", 5),
+		"paypal PAYID-" + strings.Repeat("FAKE", 6),
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// stripe [REDACTED]
+	// paypal [REDACTED]
 }
 
 func ExampleKindBankAccount() {
-	fmt.Println(embargo.KindBankAccount)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindBankAccount))
 
-	// Output: bank_account
+	for _, text := range []string{
+		"account number 12345678",
+		"12345678", // No banking keyword.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// account number [REDACTED]
+	// 12345678
 }
 
 func ExampleKindACHTrace() {
-	fmt.Println(embargo.KindACHTrace)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindACHTrace))
 
-	// Output: ach_trace
+	for _, text := range []string{
+		"trace number 021000021234567",
+		"021000021234567", // No ACH or trace keyword.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// trace number [REDACTED]
+	// 021000021234567
 }
 
 func ExampleKindMerchantID() {
-	fmt.Println(embargo.KindMerchantID)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindMerchantID))
 
-	// Output: merchant_id
+	for _, text := range []string{
+		"merchant id 123456789012345",
+		"terminal id 12345678",
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// merchant id [REDACTED]
+	// terminal id [REDACTED]
 }
 
 func ExampleKindBTC() {
-	fmt.Println(embargo.KindBTC)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindBTC))
 
-	// Output: btc
+	for _, text := range []string{
+		"pay 1BoatSLRHtKNngkdXEeobR76b53LETtpyT",
+		"pay bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+		"pay 1BoatSLRHtKNngkdXEeobR76b53LETtpyU", // The Base58Check checksum fails.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// pay [REDACTED]
+	// pay [REDACTED]
+	// pay 1BoatSLRHtKNngkdXEeobR76b53LETtpyU
 }
 
 func ExampleKindETH() {
-	fmt.Println(embargo.KindETH)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindETH))
 
-	// Output: eth
+	for _, text := range []string{
+		"to 0x52908400098527886E0F7030069857D2E4169EE7", // Mixed case passes EIP-55.
+		"to 0x52908400098527886e0f7030069857d2e4169ee7", // Uniform case has no checksum.
+		"to 0x52908400098527886e0F7030069857D2E4169EE7", // Mixed case fails EIP-55.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// to [REDACTED]
+	// to [REDACTED]
+	// to 0x52908400098527886e0F7030069857D2E4169EE7
 }
 
 func ExampleKindGitHubToken() {
-	fmt.Println(embargo.KindGitHubToken)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindGitHubToken))
 
-	// Output: github_token
+	for _, text := range []string{
+		"token ghp_" + strings.Repeat("Fake0", 7) + "X", // 36 characters after ghp_.
+		"token ghp_" + strings.Repeat("Fake0", 7),       // 35.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// token [REDACTED]
+	// token ghp_Fake0Fake0Fake0Fake0Fake0Fake0Fake0
 }
 
 func ExampleKindSlackToken() {
-	fmt.Println(embargo.KindSlackToken)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindSlackToken))
 
-	// Output: slack_token
+	for _, text := range []string{
+		"slack xoxb-0000000000-fake",
+		"slack xoxb-short", // Body under 10 characters.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// slack [REDACTED]
+	// slack xoxb-short
 }
 
 func ExampleKindGoogleAPIKey() {
-	fmt.Println(embargo.KindGoogleAPIKey)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindGoogleAPIKey))
 
-	// Output: google_api_key
+	for _, text := range []string{
+		"key AIza" + strings.Repeat("Fake0", 7), // 35 characters after AIza.
+		"key AIza" + strings.Repeat("Fake0", 6), // 30.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// key [REDACTED]
+	// key AIzaFake0Fake0Fake0Fake0Fake0Fake0
 }
 
 func ExampleKindPrivateKeyPEM() {
-	fmt.Println(embargo.KindPrivateKeyPEM)
+	scanner := embargo.NewScanner(embargo.WithKinds(embargo.KindPrivateKeyPEM))
 
-	// Output: private_key_pem
+	for _, text := range []string{
+		"-----BEGIN PRIVATE KEY-----\nMIIEfake\n-----END PRIVATE KEY-----\nnext line", // The span runs through the END line.
+		"-----BEGIN PUBLIC KEY-----", // Not a private key.
+	} {
+		fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
+	}
+
+	// Output:
+	// [REDACTED]
+	// next line
+	// -----BEGIN PUBLIC KEY-----
 }
 
 func ExampleNewSlogHandler() {
