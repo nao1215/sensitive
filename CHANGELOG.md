@@ -11,33 +11,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Tests check the `Mask` guarantee that, for fixed valid findings, the output depends only on the bytes outside them. They run the real function on every combination of up to three ranges over texts of up to seven bytes, the exact spans a `MaskFunc` callback receives, and that findings on valid UTF-8 never split a character.
 - The Lean reference proofs no longer model masking. That model replaced each byte with `*` and missed changes that made the marker return the value; the README row now reads "Checksum and offset-map errors". doc/testing.md has a Masking guarantee section listing what it covers and what it does not.
 - The `Mask` and `MaskFunc` godoc states the guarantee: for valid findings, `Mask` output depends only on the bytes outside the spans, and a `MaskFunc` callback that returns part of the value discloses that part.
-- One field policy now decides keys, joined key paths and name and value pairs for slog attributes, groups and WithAttrs, `MaskJSON`, the logger adapters and the HTTP access hook; before, the slog handler kept its own copy of these rules. An encoded slog Any value continues the key path of its groups. All attributes of one slog record share one 4 MiB detector budget, as one adapter event does, instead of one budget per scalar, so a record with many large values is withheld as a size limit instead of being scanned without a record-wide bound. slog records allocate less: a flat record with a bound group no longer allocates in the handler.
-- A test crosses value representations (string, bytes, error, Stringer, pointer, slice, raw JSON, base64 text, LogValuer, numbers, fmt output, URLs and headers), key wrappings (flat, map, struct, list, name and value pairs, groups, WithGroup, WithAttrs) and every sink (slog JSON and text, zap, zerolog, logrus, MaskJSON, Sentry, OTel logs and spans, HTTP and gRPC). A secret that MaskJSON hides in a flat `{"key":"secret"}` object must be hidden in every cell.
-- The threshold study in doc/accuracy.md sums the kinds that `NewScanner` reports, observed on each kind's positives, instead of a fixed count that still included the kinds made opt-in in 0.17.0; it said "26 default kinds". Documented kind counts and the threat model rows are checked against the built-in table and the boundary tests.
-
-- The six adapter modules now have API goldens and count toward the coverage gate; the API test lists the repository's packages itself, so a new public package needs a golden. The adapters reach 100% statement coverage, and OTel 97%.
-
-- The CI speed gate also compares a MaskJSON event and a slog record with a group, a name and value pair and a struct against the base revision, beside the two raw-scan workloads; each median may grow at most 20%.
-- The mutation gate also mutates the six adapter modules, each with its own floor.
-- The release workflow waits until every other check on the tagged commit has passed before it builds, signs or publishes, and stops when one failed.
-- Joined key paths without findings are cached like clean keys, so a slog Any value under a group does not rescan the same path for every record.
-- doc/logging.md shows how to send net/http's own panic log, `Server.ErrorLog`, through the masked logger.
+- slog, MaskJSON, the adapters and the HTTP hook now share one rule set for keys, key paths and name/value pairs.
+- A slog record shares one 4 MiB scan budget.
+- A test checks every value representation, key wrapping and sink against MaskJSON of `{"key":"secret"}`.
+- The threshold table in doc/accuracy.md covers only the kinds `NewScanner` reports.
+- Adapters are covered by the API goldens, the coverage gate and the mutation gate.
+- The CI speed gate also measures MaskJSON and slog.
+- Releases wait for the tagged commit's other checks to pass.
+- CI runs the tests on GOARCH=386.
 
 ### Fixed
 
-- When masking an HTTP access record or a gRPC call record panicked and the downstream slog handler also panicked while writing the withheld diagnostic, the second panic left the hook: the HTTP handler replaced the response and the handler's own panic, and the gRPC interceptors panicked the RPC. The diagnostic write now cannot panic out of either hook.
-- A slog record, group or WithAttrs call with `name` and `value` attributes, such as `slog.Group("env", "name", "DB_PASSWORD", "value", v)`, kept the value; the same data as a map was masked.
-- In a JSON object with a sensitive name member and two `value` members, the first value was kept.
-- A short `[]byte` field inside a struct, map or slice, such as an email of 8 bytes, reached zap, zerolog, logrus, Sentry, MaskJSON and slog Any output as base64 that was not scanned, because only base64 strings of 20 bytes or more were decoded. Base64 text of every length up to 8 KiB is now decoded and scanned.
-- doc/threat-model.md said zero-width characters are not removed; format characters inside a token are removed before detection. doc/countries.md said `NewScanner()` kept a 25-kind selection.
+- slog groups and records with `name` and `value` attributes kept the value.
+- A JSON name/value object with two `value` members kept the first.
+- Short `[]byte` fields inside structs, maps and slices were written as unscanned base64.
+- A panic in the downstream handler while writing the withheld diagnostic escaped the HTTP and gRPC hooks.
+- doc/threat-model.md and doc/countries.md stated outdated facts.
 
 ### Detection changes
 
-- MaskJSON, the slog handler, the HTTP hook and the adapters now decode padded standard base64 strings shorter than 20 bytes when the decoded bytes are printable text, and hide the whole string on a finding. Ordinary words of four, eight or twelve letters decode to bytes that are not text and stay unchanged.
+- Base64 text shorter than 20 bytes is now decoded and scanned.
 
 ### Removed
 
-- doc/migration.md, whose notes described APIs and defaults that later releases changed. The [v0.17.0 copy](https://github.com/nao1215/embargo/blob/v0.17.0/doc/migration.md) remains for older upgrades.
+- doc/migration.md. The [v0.17.0 copy](https://github.com/nao1215/embargo/blob/v0.17.0/doc/migration.md) remains.
 
 ## [0.17.0] - 2026-11-19
 
