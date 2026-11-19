@@ -888,7 +888,7 @@ func TestMaskJSONNamedValuePairs(t *testing.T) {
 
 func TestNamedValueFieldFoldsKeys(t *testing.T) {
 	t.Parallel()
-	for key, want := range map[string]pairField{"Name": pairName, "PARAMETER_VALUE": pairValue, "Parameter-Key": pairName, "values": pairNone, "parametervalues": pairNone, "": pairNone} {
+	for key, want := range map[string]pairField{"Name": pairName, "PARAMETER_VALUE": pairValue, "Parameter-Key": pairName, "values": pairNone, "parametervalues": pairNone, "": pairNone, "key": pairName, "_value": pairValue, "-name": pairName, ". key": pairName, "optionName": pairName, "variable": pairName, "status": pairNone} {
 		if got := namedValueField(key); got != want {
 			t.Errorf("namedValueField(%q) = %d, want %d", key, got, want)
 		}

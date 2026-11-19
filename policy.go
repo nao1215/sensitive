@@ -275,12 +275,9 @@ const (
 // namedValueField lowers a short member key and drops separators, as
 // normalizeKey does, without allocating; longer keys are never pair members.
 func namedValueField(key string) pairField {
-	// Most keys are rejected by their first letter without folding.
-	const starts = 1<<('k'-'a') | 1<<('n'-'a') | 1<<('o'-'a') | 1<<('p'-'a') | 1<<('v'-'a')
-	if key == "" {
-		return pairNone
-	}
-	if c := ascii.ToLower(key[0]); c >= 'a' && c <= 'z' && starts>>(c-'a')&1 == 0 {
+	// Most keys are rejected by their first byte without folding.
+	const starts = "kKnNoOpPvV_-. "
+	if key == "" || strings.IndexByte(starts, key[0]) < 0 {
 		return pairNone
 	}
 	return foldedPairField(key)
