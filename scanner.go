@@ -256,14 +256,15 @@ func (s *Scanner) indexLabelReaders() {
 // the value alone. Findings are in text offsets, as from scanAppend.
 func (s *Scanner) scanField(text []byte, prefix int, canceled func() error) []Finding {
 	var detected []detect.Finding
-	return s.scanFieldInto(nil, &detected, text, prefix, canceled)
+	return s.scanFieldInto(nil, &detected, text, prefix, nil, canceled)
 }
 
 // scanFieldInto is scanField that keeps each detector's raw findings in
-// *detected, whose grown storage the caller reuses for the next field.
-func (s *Scanner) scanFieldInto(dst []Finding, detected *[]detect.Finding, text []byte, prefix int, canceled func() error) []Finding {
+// *detected, whose grown storage the caller reuses for the next field. A
+// non-nil key is the cached fieldKey of the field's key.
+func (s *Scanner) scanFieldInto(dst []Finding, detected *[]detect.Finding, text []byte, prefix int, key *fieldKey, canceled func() error) []Finding {
 	if !s.initialized {
-		return defaultScanner().scanFieldInto(dst, detected, text, prefix, canceled)
+		return defaultScanner().scanFieldInto(dst, detected, text, prefix, nil, canceled)
 	}
 	if prefix == 0 || len(s.detectors) == 0 {
 		return s.scanAppend(dst, text, canceled)
@@ -272,7 +273,7 @@ func (s *Scanner) scanFieldInto(dst []Finding, detected *[]detect.Finding, text 
 		return nil
 	}
 	value := detect.NewView(text[prefix:])
-	selected, wholeText := s.selectField(text, prefix, value)
+	selected, wholeText := s.selectField(text, prefix, value, key)
 	var whole detect.View
 	findings := dst[:0]
 	for i, d := range s.detectors {
@@ -300,10 +301,14 @@ func (s *Scanner) scanFieldInto(dst []Finding, detected *[]detect.Finding, text 
 
 // selectField returns the detectors a field selects and, among them, those
 // that scan the whole "key: value" text rather than the value alone.
-func (s *Scanner) selectField(text []byte, prefix int, value detect.View) (selected, wholeText uint64) {
+func (s *Scanner) selectField(text []byte, prefix int, value detect.View, known *fieldKey) (selected, wholeText uint64) {
 	keyEnd := prefix - len(": ")
-	key, ok := s.cachedField(text[:keyEnd])
-	if !ok {
+	var key fieldKey
+	if known != nil {
+		key = *known
+	} else if cached, ok := s.cachedField(text[:keyEnd]); ok {
+		key = cached
+	} else {
 		key = s.keyField(text, keyEnd)
 	}
 	selected = s.selectDetectors(value.Data) | key.selected

@@ -23,7 +23,10 @@ type eventScanner struct {
 	scanner *Scanner
 	// spare is the scratch of the last finished scan, kept for the next scan
 	// of the same event instead of a pool round trip; release returns it.
-	spare     *scanScratch
+	spare *scanScratch
+	// lastKey is the cache entry of the last cached key, whose detector
+	// selection the scan of its member value reuses.
+	lastKey   *keyResult
 	remaining int
 }
 
@@ -179,7 +182,11 @@ func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scr
 		text = append(append(text, key...), ": "...)
 	}
 	text = append(text, value...)
-	findings := s.scanner.scanFieldInto(scratch.findings[:0], &scratch.detected, text, prefixBytes, ctx.Err)
+	var known *fieldKey
+	if last := s.lastKey; last != nil && prefixBytes > 0 && last.key == key {
+		known = &last.field
+	}
+	findings := s.scanner.scanFieldInto(scratch.findings[:0], &scratch.detected, text, prefixBytes, known, ctx.Err)
 	// Keep grown storage for the next user; the returned spans alias findings.
 	scratch.text, scratch.findings = text, findings
 	if ctx.Err() != nil {

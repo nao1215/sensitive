@@ -173,6 +173,7 @@ func cachedKey[T string | []byte](ctx context.Context, s *eventScanner, key T) (
 	}
 	if result != nil {
 		s.remaining -= len(key)
+		s.lastKey = result
 	}
 	return result, nil
 }
