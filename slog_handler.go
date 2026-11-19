@@ -224,12 +224,9 @@ func (h *slogHandler) sanitizeRecord(ctx context.Context, record *slog.Record) (
 	defer members.policy.release()
 	record.Attrs(func(attr slog.Attr) bool {
 		var clean slog.Attr
-		if clean, err = h.sanitizeAttr(ctx, &members.policy, attr, h.depth); err != nil {
-			return false
-		}
-		observeSlogPair(&members.policy, &members.pair, attr.Key, clean.Value, len(attrs))
+		clean, err = members.add(ctx, attr, h.depth, len(attrs))
 		attrs = append(attrs, clean)
-		return true
+		return err == nil
 	})
 	if err == nil {
 		members.finish(attrs)

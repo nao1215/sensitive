@@ -248,7 +248,7 @@ func printableStart[T string | []byte](value T) bool {
 	var sextets [4]byte
 	for i := range sextets {
 		// Padding decodes as zero bits, which the byte count below excludes.
-		sextets[i] = byte(max(0, strings.IndexByte(alphabet, value[i]))) //nolint:gosec // A 64-letter alphabet index fits a byte.
+		sextets[i] = byte(max(0, strings.IndexByte(alphabet, value[i]))) // #nosec G115 -- A 64-letter alphabet index fits a byte.
 	}
 	decoded := [3]byte{sextets[0]<<2 | sextets[1]>>4, sextets[1]<<4 | sextets[2]>>2, sextets[2]<<6 | sextets[3]}
 	n := len(decoded)
