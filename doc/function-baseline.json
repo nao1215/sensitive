@@ -3,9 +3,9 @@
     {
       "file": "adapters/grpc/adapter.go",
       "name": "record",
-      "statements": 31,
+      "statements": 33,
       "cyclomatic": 8,
-      "lines": 39
+      "lines": 41
     },
     {
       "file": "adapters/otel/span.go",
@@ -94,9 +94,9 @@
     {
       "file": "http_handler.go",
       "name": "logHTTPExchange",
-      "statements": 28,
+      "statements": 30,
       "cyclomatic": 8,
-      "lines": 38
+      "lines": 41
     },
     {
       "file": "internal/detect/aba.go",

@@ -380,3 +380,67 @@ func TestIntegerExpansionFailureIsWithheld(t *testing.T) {
 		t.Fatal("original event fields survived")
 	}
 }
+
+func TestMaskedTypedFieldIsWithheld(t *testing.T) {
+	t.Parallel()
+	// A detected line number becomes a marker string that no longer decodes
+	// into the event's integer field, so the whole event is withheld.
+	event := sentry.NewEvent()
+	event.Exception = []sentry.Exception{{Value: "boom", Stacktrace: &sentry.Stacktrace{Frames: []sentry.Frame{{Function: "f", Lineno: 4111111111111111}}}}}
+	after := embargosentry.NewBeforeSend(embargo.NewScanner())(event, nil)
+	if after == nil || after.Message != "embargo: record withheld (masking error)" || after.Exception != nil {
+		t.Fatalf("typed field failure was not withheld: %+v", after)
+	}
+}
+
+// countingContext reports cancellation from its limit-th Err call on.
+//
+//nolint:containedctx // The wrapper is the context under test.
+type countingContext struct {
+	context.Context
+
+	calls, limit int
+}
+
+func (c *countingContext) Err() error {
+	c.calls++
+	if c.limit > 0 && c.calls >= c.limit {
+		return context.Canceled
+	}
+	return nil
+}
+
+func TestCancellationAfterMaskingIsWithheld(t *testing.T) {
+	t.Parallel()
+	before := embargosentry.NewBeforeSend(embargo.NewScanner())
+	event := func() *sentry.Event {
+		event := sentry.NewEvent()
+		event.Message = plantedMessage
+		return event
+	}
+	// The first events fill the key cache, so later events check the same points.
+	for range 2 {
+		before(event(), nil)
+	}
+	probe := &countingContext{Context: t.Context()}
+	if after := before(event(), &sentry.EventHint{Context: probe}); after == nil || after.Message != plantedMessage {
+		t.Fatal("probe event changed")
+	}
+	// Canceling at the last check, after masking succeeded, still withholds.
+	late := &countingContext{Context: t.Context(), limit: probe.calls}
+	after := before(event(), &sentry.EventHint{Context: late})
+	if after == nil || after.Message != canceledDiagnostic {
+		t.Fatalf("late cancellation = %+v", after)
+	}
+}
+
+func TestWithheldRecordCountsBreadcrumbData(t *testing.T) {
+	t.Parallel()
+	event := sentry.NewEvent()
+	event.Message = plantedMessage + strings.Repeat("x", 1<<20)
+	event.Breadcrumbs = []*sentry.Breadcrumb{nil, {Data: map[string]any{"planted-key": 1, "other": 2}}}
+	after := embargosentry.NewBeforeSend(embargo.NewScanner())(event, nil)
+	if after == nil || after.Contexts["embargo"]["withheld_attributes"] != 2 {
+		t.Fatalf("breadcrumb data count = %+v", after)
+	}
+}

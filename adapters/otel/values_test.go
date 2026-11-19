@@ -427,3 +427,122 @@ func TestNumberLexemeProperty(t *testing.T) {
 		}
 	}
 }
+
+// checkCountingContext reports cancellation from its limit-th Err call on.
+//
+//nolint:containedctx // The wrapper is the context under test.
+type checkCountingContext struct {
+	context.Context
+
+	calls, limit int
+}
+
+func (c *checkCountingContext) Err() error {
+	c.calls++
+	if c.limit > 0 && c.calls >= c.limit {
+		return context.Canceled
+	}
+	return nil
+}
+
+// TestCancellationAtEveryCheck cancels at each context check in turn, so every
+// cancellation branch is reached, and requires that each record is either
+// fully masked or withheld.
+func TestCancellationAtEveryCheck(t *testing.T) {
+	t.Parallel()
+	const planted = "opaque-planted-value"
+	nested := attribute.MapValue(attribute.String("password", planted), attribute.StringSlice("list", []string{publicText, "a@example.com"}))
+	attrs := []attribute.KeyValue{
+		attribute.String("note", publicText),
+		{Key: "payload", Value: attribute.MapValue(attribute.KeyValue{Key: "inner", Value: nested}, attribute.Int("count", 3))},
+		{Key: "entries", Value: attribute.SliceValue(attribute.StringValue(publicText), attribute.Int64Value(4), attribute.MapValue(attribute.String("token", planted)))},
+		attribute.ByteSlice("raw", []byte(publicText)),
+	}
+	fixture := reviewRecord(t, -1, attrs...)
+	for name, export := range map[string]func(ctx context.Context, scanner *embargo.Scanner) string{
+		"log": func(ctx context.Context, scanner *embargo.Scanner) string {
+			sink := &captureLog{}
+			record := fixture.Clone()
+			record.SetEventName("checkout")
+			record.SetSeverityText("INFO")
+			if err := embargootel.NewLogExporter(sink, scanner).Export(ctx, []sdklog.Record{record}); err != nil || len(sink.records) != 1 {
+				t.Fatalf("log export: %v", err)
+			}
+			return fmt.Sprint(sink.records[0].Body(), sink.records[0].EventName(), sink.records[0].SeverityText(), attributesOf(&sink.records[0]))
+		},
+		"span": func(ctx context.Context, scanner *embargo.Scanner) string {
+			sink := &captureSpan{}
+			span := tracetest.SpanStub{
+				Name: publicText, Attributes: attrs, Status: sdktrace.Status{Code: codes.Error, Description: publicText},
+				Events: []sdktrace.Event{{Name: "event", Attributes: attrs}},
+				Links:  []sdktrace.Link{{Attributes: attrs}},
+			}.Snapshot()
+			if err := embargootel.NewSpanExporter(sink, scanner).ExportSpans(ctx, []sdktrace.ReadOnlySpan{span}); err != nil || len(sink.spans) != 1 {
+				t.Fatalf("span export: %v", err)
+			}
+			encoded, err := json.Marshal(tracetest.SpanStubFromReadOnlySpan(sink.spans[0]))
+			if err != nil {
+				t.Fatal(err)
+			}
+			return string(encoded)
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			scanner := embargo.NewScanner()
+			// The first exports fill the key cache, so later ones check the same points.
+			for range 2 {
+				export(t.Context(), scanner)
+			}
+			probe := &checkCountingContext{Context: t.Context()}
+			if out := export(probe, scanner); strings.Contains(out, planted) || probe.calls == 0 {
+				t.Fatalf("probe export: %s", out)
+			}
+			for limit := 1; limit <= probe.calls; limit++ {
+				out := export(&checkCountingContext{Context: t.Context(), limit: limit}, scanner)
+				if strings.Contains(out, planted) || strings.Contains(out, "a@example.com") {
+					t.Fatalf("cancel at check %d retained input: %s", limit, out)
+				}
+			}
+		})
+	}
+}
+
+func attributesOf(record *sdklog.Record) []attribute.KeyValue {
+	var attrs []attribute.KeyValue
+	record.WalkAttributes(func(kv attribute.KeyValue) bool { attrs = append(attrs, kv); return true })
+	return attrs
+}
+
+func TestOversizedTextFieldsAreWithheld(t *testing.T) {
+	t.Parallel()
+	huge := strings.Repeat("x", 1<<20)
+	record := reviewRecord(t, -1, attribute.String("note", publicText))
+	record.SetEventName(huge)
+	sink := &captureLog{}
+	if err := embargootel.NewLogExporter(sink, embargo.NewScanner()).Export(t.Context(), []sdklog.Record{record}); err != nil || len(sink.records) != 1 || sink.records[0].Body().AsString() != withheldSizeLimit {
+		t.Fatal("oversized event name was not withheld")
+	}
+	for name, stub := range map[string]tracetest.SpanStub{
+		"event name": {Name: publicText, Events: []sdktrace.Event{{Name: huge}}},
+		"status":     {Name: publicText, Status: sdktrace.Status{Code: codes.Error, Description: huge}},
+	} {
+		spans := &captureSpan{}
+		if err := embargootel.NewSpanExporter(spans, embargo.NewScanner()).ExportSpans(t.Context(), []sdktrace.ReadOnlySpan{stub.Snapshot()}); err != nil || len(spans.spans) != 1 || spans.spans[0].Name() != withheldSizeLimit {
+			t.Fatalf("oversized %s was not withheld", name)
+		}
+	}
+}
+
+func TestDeepAttributeIsWithheld(t *testing.T) {
+	t.Parallel()
+	value := attribute.StringValue(publicText)
+	for range 70 {
+		value = attribute.MapValue(attribute.KeyValue{Key: "level", Value: value})
+	}
+	spans := &captureSpan{}
+	stub := tracetest.SpanStub{Name: publicText, Attributes: []attribute.KeyValue{{Key: "deep", Value: value}}}
+	if err := embargootel.NewSpanExporter(spans, embargo.NewScanner()).ExportSpans(t.Context(), []sdktrace.ReadOnlySpan{stub.Snapshot()}); err != nil || len(spans.spans) != 1 || spans.spans[0].Name() != withheldSizeLimit {
+		t.Fatal("a 70-level attribute was not withheld")
+	}
+}

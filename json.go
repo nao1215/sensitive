@@ -259,11 +259,9 @@ func (w *jsonWalker) element(ctx context.Context, depth int, key string, member,
 	return nil
 }
 
-// maskSpan writes the marker over an output span when the walk completes.
+// maskSpan writes the marker over an output span when the walk completes; a
+// failed walk returns no output, so its spans are never applied.
 func (w *jsonWalker) maskSpan(span Finding) {
-	if w.err != nil {
-		return
-	}
 	if w.pathMasks == nil {
 		w.pathMasks = make(map[int]Finding)
 	}
@@ -320,8 +318,7 @@ func (w *jsonWalker) stringToken() []byte {
 func (w *jsonWalker) stringElement(ctx context.Context, raw []byte, key string) error {
 	content := raw[1 : len(raw)-1]
 	if bytes.IndexByte(content, '\\') >= 0 || !utf8.Valid(content) {
-		_, err := w.stringValue(ctx, raw, key)
-		return err
+		return w.stringValue(ctx, raw, key)
 	}
 	masked, changed, err := w.policy.scan.maskBytes(ctx, content, key)
 	if err != nil {
@@ -336,17 +333,17 @@ func (w *jsonWalker) stringElement(ctx context.Context, raw []byte, key string) 
 }
 
 // Decode escaped strings using encoding/json; plain UTF-8 needs no decoder.
-func (w *jsonWalker) stringValue(ctx context.Context, raw []byte, key string) (string, error) {
+func (w *jsonWalker) stringValue(ctx context.Context, raw []byte, key string) error {
 	text, err := decodeJSONString(raw)
 	if err != nil {
-		return "", err
+		return err
 	}
 	masked, err := w.policy.scan.maskScalar(ctx, text, key)
 	if err != nil {
-		return "", err
+		return err
 	}
 	w.appendText(raw, text, masked)
-	return text, w.err
+	return w.err
 }
 
 func decodeJSONString(raw []byte) (string, error) {

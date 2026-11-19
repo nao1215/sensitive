@@ -57,6 +57,8 @@ func record(ctx context.Context, next slog.Handler, scanner *embargo.Scanner, me
 	defer func() {
 		_ = recover() //nolint:errcheck // A formatter panic must not replace the service result.
 		if !complete {
+			// Nor may a downstream handler that also panics on the diagnostic.
+			defer func() { _ = recover() }() //nolint:errcheck // Same reason as above.
 			if err := saferecord.Slog(ctx, outcome, when, slog.LevelInfo, attributeCount, saferecord.Reason(ctx, nil)); err != nil {
 				return
 			}
@@ -103,18 +105,4 @@ func (h *outcomeHandler) Handle(ctx context.Context, record slog.Record) error {
 	record = record.Clone()
 	record.AddAttrs(slog.String("code", h.code.String()), slog.Duration("duration", h.duration))
 	return h.Handler.Handle(ctx, record)
-}
-
-// WithAttrs retains the outcome wrapper while delegating bound attributes.
-func (h *outcomeHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	copyOf := *h
-	copyOf.Handler = h.Handler.WithAttrs(attrs)
-	return &copyOf
-}
-
-// WithGroup retains the outcome wrapper while delegating grouping.
-func (h *outcomeHandler) WithGroup(name string) slog.Handler {
-	copyOf := *h
-	copyOf.Handler = h.Handler.WithGroup(name)
-	return &copyOf
 }

@@ -117,8 +117,7 @@ func withheldEvent(ctx context.Context, event *sentry.Event, err error) *sentry.
 	}
 	const identifierBytes = 16
 	var identifier [identifierBytes]byte
-	if _, readErr := rand.Read(identifier[:]); readErr != nil {
-		panic("embargo: event identifier generation failed")
-	}
+	// crypto/rand.Read never returns an error; it crashes the program instead.
+	_, _ = rand.Read(identifier[:]) //nolint:errcheck // Documented to return no error.
 	return &sentry.Event{EventID: sentry.EventID(hex.EncodeToString(identifier[:])), Timestamp: event.Timestamp, Level: level, Message: saferecord.Message(saferecord.Reason(ctx, err)), Contexts: map[string]sentry.Context{"embargo": {"withheld_attributes": count}}}
 }

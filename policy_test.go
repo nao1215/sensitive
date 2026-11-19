@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log/slog"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/nao1215/embargo/internal/saferecord"
@@ -237,4 +238,32 @@ func (pathDetector) Scan(data []byte) []Finding {
 		}
 	}
 	return findings
+}
+
+func TestJSONWalkerTokenFailures(t *testing.T) {
+	t.Parallel()
+	// The public entry points validate a document first, so these tokens reach
+	// the walker only through a direct call.
+	invalid := []byte(`"\x"`)
+	walker := jsonWalker{policy: newFieldPolicy(NewScanner(), "")}
+	if err := walker.stringValue(t.Context(), invalid, ""); !errors.Is(err, saferecord.ErrMasking) {
+		t.Fatalf("invalid string token: %v", err)
+	}
+	if _, err := walker.objectKey(t.Context(), invalid); !errors.Is(err, saferecord.ErrMasking) {
+		t.Fatalf("invalid key token: %v", err)
+	}
+	walker.policy.scan.remaining = 0
+	if err := walker.stringValue(t.Context(), []byte(`"a\u0062"`), ""); !errors.Is(err, saferecord.ErrSizeLimit) {
+		t.Fatalf("escaped string past the budget: %v", err)
+	}
+}
+
+func TestOversizedGroupNameIsWithheld(t *testing.T) {
+	t.Parallel()
+	var out strings.Builder
+	logger := slog.New(NewSlogHandler(slog.NewJSONHandler(&out, nil), NewScanner())).WithGroup(strings.Repeat("g", maxScanBytes+1))
+	logger.Info("event", statusKey, "ok")
+	if !strings.Contains(out.String(), "embargo: record withheld (size limit)") || strings.Contains(out.String(), "ggg") {
+		t.Fatalf("oversized group name: %.200s", out.String())
+	}
 }

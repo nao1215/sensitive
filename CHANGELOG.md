@@ -15,8 +15,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - A test crosses value representations (string, bytes, error, Stringer, pointer, slice, raw JSON, base64 text, LogValuer, numbers, fmt output, URLs and headers), key wrappings (flat, map, struct, list, name and value pairs, groups, WithGroup, WithAttrs) and every sink (slog JSON and text, zap, zerolog, logrus, MaskJSON, Sentry, OTel logs and spans, HTTP and gRPC). A secret that MaskJSON hides in a flat `{"key":"secret"}` object must be hidden in every cell.
 - The threshold study in doc/accuracy.md sums the kinds that `NewScanner` reports, observed on each kind's positives, instead of a fixed count that still included the kinds made opt-in in 0.17.0; it said "26 default kinds". Documented kind counts and the threat model rows are checked against the built-in table and the boundary tests.
 
+- The six adapter modules now have API goldens and count toward the coverage gate; the API test lists the repository's packages itself, so a new public package needs a golden. The adapters reach 100% statement coverage, and OTel 97%.
+
 ### Fixed
 
+- When masking an HTTP access record or a gRPC call record panicked and the downstream slog handler also panicked while writing the withheld diagnostic, the second panic left the hook: the HTTP handler replaced the response and the handler's own panic, and the gRPC interceptors panicked the RPC. The diagnostic write now cannot panic out of either hook.
 - A slog record, group or WithAttrs call with `name` and `value` attributes, such as `slog.Group("env", "name", "DB_PASSWORD", "value", v)`, kept the value; the same data as a map was masked.
 - In a JSON object with a sensitive name member and two `value` members, the first value was kept.
 - A short `[]byte` field inside a struct, map or slice, such as an email of 8 bytes, reached zap, zerolog, logrus, Sentry, MaskJSON and slog Any output as base64 that was not scanned, because only base64 strings of 20 bytes or more were decoded. Base64 text of every length up to 8 KiB is now decoded and scanned.

@@ -1,0 +1,2 @@
+func NewStreamServerInterceptor(logger *slog.Logger, scanner *embargo.Scanner) grpc.StreamServerInterceptor
+func NewUnaryServerInterceptor(logger *slog.Logger, scanner *embargo.Scanner) grpc.UnaryServerInterceptor

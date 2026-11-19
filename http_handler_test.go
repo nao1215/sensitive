@@ -785,3 +785,36 @@ func TestHTTPIntegerExpansionFailureIsWithheld(t *testing.T) {
 		t.Fatal("masking failure changed the service response")
 	}
 }
+
+// panickingHandler panics on every call, as a broken downstream handler can.
+type panickingHandler struct{}
+
+func (panickingHandler) Enabled(context.Context, slog.Level) bool  { panic("planted-enabled") }
+func (panickingHandler) Handle(context.Context, slog.Record) error { panic("planted-handle") }
+func (h panickingHandler) WithAttrs([]slog.Attr) slog.Handler      { return h }
+func (h panickingHandler) WithGroup(string) slog.Handler           { return h }
+
+func TestHTTPPanickingDiagnosticSinkPreservesExchange(t *testing.T) {
+	t.Parallel()
+	for _, panicValue := range []any{nil, "service-panic"} {
+		next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusAccepted)
+			if panicValue != nil {
+				panic(panicValue)
+			}
+		})
+		handler := embargo.NewHTTPHandler(next, slog.New(panickingHandler{}), embargo.NewScanner())
+		response := httptest.NewRecorder()
+		func() {
+			defer func() {
+				if got := recover(); got != panicValue {
+					t.Errorf("panic = %v, want the service's %v", got, panicValue)
+				}
+			}()
+			handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", http.NoBody))
+		}()
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("status = %d", response.Code)
+		}
+	}
+}

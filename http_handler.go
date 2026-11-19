@@ -53,6 +53,9 @@ func logHTTPExchange(next slog.Handler, scanner *Scanner, r *http.Request, w *ht
 	defer func() {
 		_ = recover() //nolint:errcheck // Panic values may contain secrets.
 		if !complete {
+			// A downstream handler that also panics on the diagnostic must not
+			// replace the response or the handler's own panic.
+			defer func() { _ = recover() }() //nolint:errcheck // Same reason as above.
 			if err := saferecord.Slog(ctx, next, when, slog.LevelInfo, attributeCount, saferecord.Reason(ctx, cause), slog.Int("status", status), slog.Duration("duration", duration)); err != nil {
 				return
 			}

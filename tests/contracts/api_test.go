@@ -21,13 +21,16 @@ import (
 
 func TestPublicAPI(t *testing.T) {
 	t.Parallel()
-	loaded, err := packages.Load(&packages.Config{Mode: packages.NeedName | packages.NeedTypes | packages.NeedImports | packages.NeedDeps}, "github.com/nao1215/embargo", "github.com/nao1215/embargo/embargotest")
-	if err != nil {
-		t.Fatal(err)
+	public := importablePackages(t)
+	listed := slices.Sorted(maps.Keys(publicPackages()))
+	for i, dir := range listed {
+		listed[i] = strings.TrimSuffix("github.com/nao1215/embargo/"+dir, "/.")
 	}
-	if len(loaded) != 2 {
-		t.Fatal("all public packages must load")
+	slices.Sort(listed)
+	if !slices.Equal(listed, public) {
+		t.Fatalf("publicPackages lists %v, the repository has %v", listed, public)
 	}
+	loaded := loadPublic(t, public)
 	sort.Slice(loaded, func(i, j int) bool { return loaded[i].PkgPath < loaded[j].PkgPath })
 	for _, pkg := range loaded {
 		if len(pkg.Errors) > 0 {
@@ -40,7 +43,7 @@ func TestPublicAPI(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		want, err := os.ReadFile(path) // #nosec G304 -- names come only from the two explicitly loaded local packages.
+		want, err := os.ReadFile(path) // #nosec G304 -- names come only from the discovered local packages.
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -48,6 +51,73 @@ func TestPublicAPI(t *testing.T) {
 			t.Fatalf("public API changed in %s; review the API golden and CHANGELOG together\n%s", pkg.Name, got)
 		}
 	}
+	// No golden may outlive its package.
+	goldens, err := filepath.Glob(filepath.Join("testdata", "*.golden"))
+	if err != nil || len(goldens) != len(public) {
+		t.Fatalf("%d API goldens for %d public packages", len(goldens), len(public))
+	}
+}
+
+// e2eDirectory holds the CLI end-to-end specification, not a Go package.
+const e2eDirectory = "e2e"
+
+// loadPublic loads each package from its own module, so an adapter whose
+// dependencies the tests module does not require is still checked.
+func loadPublic(t *testing.T, public []string) []*packages.Package {
+	t.Helper()
+	const module = "github.com/nao1215/embargo"
+	loaded := make([]*packages.Package, 0, len(public))
+	for _, path := range public {
+		directory := filepath.Join("..", "..", filepath.FromSlash(strings.TrimPrefix(strings.TrimPrefix(path, module), "/")))
+		found, err := packages.Load(&packages.Config{Mode: packages.NeedName | packages.NeedTypes | packages.NeedImports | packages.NeedDeps, Dir: directory, Env: append(os.Environ(), "GOWORK=off")}, ".")
+		if err != nil || len(found) != 1 || found[0].PkgPath != path {
+			t.Fatalf("%s did not load: %v", path, err)
+		}
+		loaded = append(loaded, found[0])
+	}
+	return loaded
+}
+
+// importablePackages lists every importable package in the repository: the root
+// module and each adapter module, without internal, command, test or testdata
+// directories. A new public package therefore needs an API golden.
+func importablePackages(t *testing.T) []string {
+	t.Helper()
+	const module = "github.com/nao1215/embargo"
+	var found []string
+	root := filepath.Join("..", "..")
+	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		name := entry.Name()
+		if entry.IsDir() {
+			if path != root && (strings.HasPrefix(name, ".") || name == "internal" || name == "cmd" || name == "tests" || name == "testdata" || name == e2eDirectory || name == "scripts") {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			return nil
+		}
+		relative, relErr := filepath.Rel(root, filepath.Dir(path))
+		if relErr != nil {
+			return relErr
+		}
+		importPath := module
+		if relative != "." {
+			importPath += "/" + filepath.ToSlash(relative)
+		}
+		if !slices.Contains(found, importPath) {
+			found = append(found, importPath)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	slices.Sort(found)
+	return found
 }
 
 //nolint:gocognit // Enumerate all Go type shapes and both complete method sets in one audit.
