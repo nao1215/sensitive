@@ -255,6 +255,10 @@ def run_tool(target, destination, workers, env, exclude=None, diff=None):
     inventory_command = command[:-1]+['--dry-run', command[-1]]
     inventory_command[inventory_command.index('--output')+1] = str(inventory_path)
     subprocess.run(inventory_command, env=env, check=True)
+    if not inventory_path.exists():
+        # gremlins writes no report for code without a mutable operator, as a
+        # thin adapter can be; there is nothing to measure or floor.
+        return {'files': []}
     inventory = json.loads(inventory_path.read_text(encoding='utf-8'))
     # The inventory run populates Go's test cache. A cached timing would give
     # the real campaign a timeout shorter than an ordinary uncached test run.
@@ -268,6 +272,8 @@ def run_tool(target, destination, workers, env, exclude=None, diff=None):
 def measure(module, package, destination, workers, env, scratch, exclude=None, diff=None):
     """Run gremlins on one package, then settle its timed-out mutants alone."""
     report = run_tool(module/package, destination, workers, env, exclude, diff)
+    if not report['files']:
+        return report
     report = rerun_timed_out(report, module, package, workers, env, scratch)
     destination.write_text(json.dumps(report, indent=2)+'\n')
     return report
