@@ -65,7 +65,7 @@ func logHTTPExchange(next slog.Handler, scanner *Scanner, r *http.Request, w *ht
 		complete = true
 		return
 	}
-	scan := eventScanner{scanner: scanner, remaining: maxScanBytes}
+	scan := eventScanner{scanner: scanner, spare: nil, remaining: maxScanBytes}
 	record, err := scan.httpRecord(ctx, r, w, when, duration, status)
 	if err != nil {
 		cause = err
@@ -89,7 +89,7 @@ func (scan *eventScanner) maskHTTPHeaders(ctx context.Context, header http.Heade
 		return nil, saferecord.ErrSizeLimit
 	}
 	policy := fieldPolicy{scan: *scan, path: nil, prefix: "", prefixCrossed: false}
-	defer func() { *scan = policy.scan; policy.release() }()
+	defer func() { policy.release(); *scan = policy.scan }()
 	safe := make(map[string]any, len(header))
 	for key, values := range header {
 		name, masked, err := headerField(ctx, &policy, key, values)
@@ -208,7 +208,7 @@ func (scan *eventScanner) httpTarget(ctx context.Context, target *url.URL) (stri
 
 func (scan *eventScanner) httpQuery(ctx context.Context, raw string) ([]byte, error) {
 	policy := fieldPolicy{scan: *scan, path: nil, prefix: "", prefixCrossed: false}
-	defer func() { *scan = policy.scan; policy.release() }()
+	defer func() { policy.release(); *scan = policy.scan }()
 	var result []byte
 	for index, part := range strings.Split(raw, "&") {
 		if index > 0 {
@@ -329,6 +329,7 @@ func nilHTTPHandler(next http.Handler) bool {
 
 // httpRecord owns access-field sanitization; logHTTPExchange owns outcomes and recovery.
 func (scan *eventScanner) httpRecord(ctx context.Context, r *http.Request, w *httpLogWriter, when time.Time, duration time.Duration, status int) (slog.Record, error) {
+	defer scan.release()
 	header := w.finalHeader
 	if header == nil {
 		header = w.Header()

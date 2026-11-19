@@ -601,3 +601,25 @@ func credentialViewOracle(d detect.Detector, raw, decoded []byte, positions []in
 	}
 	return out
 }
+
+func TestDispatchBucketSplitsOneByteHints(t *testing.T) {
+	t.Parallel()
+	bucket := newDispatchBucket([]dispatchHint{{hint: []byte("ac"), mask: 1}, {hint: []byte("a"), mask: 2}, {hint: nil, mask: 4}, {hint: []byte("ab"), mask: 8}})
+	if bucket.short != 2|4 {
+		t.Fatalf("short = %b, want the one-byte and hintless masks", bucket.short)
+	}
+	if string(bucket.second) != "bc" || bucket.long[0].mask != 8 || bucket.long[1].mask != 1 {
+		t.Fatalf("long hints are not sorted by second byte: %q %+v", bucket.second, bucket.long)
+	}
+}
+
+func TestSelectDetectorsReadsAOneByteInput(t *testing.T) {
+	t.Parallel()
+	s := NewScanner(WithKinds(KindEmail, KindPAN))
+	if s.selectDetectors([]byte("4")) == 0 || s.selectDetectors([]byte("@")) == 0 {
+		t.Fatal("a one-byte input must reach the hints that start with its byte")
+	}
+	if s.selectDetectors(nil) != s.unconditional {
+		t.Fatal("empty input selects only the unconditional detectors")
+	}
+}

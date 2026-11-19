@@ -1,7 +1,9 @@
 package detect
 
 import (
+	"math/rand/v2"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -546,6 +548,36 @@ func TestPANDottedGroupEnds(t *testing.T) {
 	for _, code := range []string{"4512345678906", "4900000000108", "4522222222221"} {
 		if !passesEAN13([]byte(code)) {
 			t.Errorf("EAN-13 %s rejected", code)
+		}
+	}
+}
+
+func TestPANShortRunSkipMatchesFullCandidate(t *testing.T) {
+	t.Parallel()
+	d := NewPAN()
+	// The candidate before short runs were skipped.
+	full := func(orig, data []byte, posMap []int, i int) (Finding, int, bool) {
+		if data[i] < '0' || data[i] > '9' {
+			return Finding{}, i + 1, false
+		}
+		var stack [panMaxDigits + 1]byte
+		digits, end := cardDigits(data, i, stack[:0])
+		bounded := panBounded(orig, data, posMap, i, end)
+		f, ok := d.evaluateCandidate(orig, posMap, digits, len(digits), i, end)
+		return f, end, ok && bounded
+	}
+	// #nosec G404 -- Fixed seed for reproducible synthetic tests.
+	rng := rand.New(rand.NewPCG(4111, 1111))
+	parts := []string{"4111111111111111", "4111 1111 1111 1111", "4111-1111-1111-1111", "4111.1111.1111.1111", "1", "12", "123", "4111", " ", "-", ".", "ms", "card: ", "=", "x"}
+	for range 5000 {
+		picked := make([]string, 0, 10)
+		for range rng.IntN(10) {
+			picked = append(picked, parts[rng.IntN(len(parts))])
+		}
+		data := []byte(strings.Join(picked, ""))
+		want := scanNumeric(nil, data, data, nil, full, true)
+		if got := d.Scan(data); !slices.Equal(got, want) {
+			t.Fatalf("Scan(%q) = %v, want %v", data, got, want)
 		}
 	}
 }

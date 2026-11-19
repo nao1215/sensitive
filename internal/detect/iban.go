@@ -28,7 +28,14 @@ func (d *IBAN) startBytes() []byte { return digitStarts() }
 func (d *IBAN) Scan(data []byte) []Finding {
 	var findings []Finding
 
-	for i := 0; i < len(data)-4; i++ {
+	// Text is mostly letters, so look for the check digits first: the first
+	// one sits two bytes after the start.
+	const country = len("DE")
+	for digit := country; digit < len(data)-2; digit++ {
+		if !ascii.IsDigit(data[digit]) {
+			continue
+		}
+		i := digit - country
 		if !ibanPrefixAt(data, i) {
 			continue
 		}
@@ -64,7 +71,7 @@ func (d *IBAN) Scan(data []byte) []Finding {
 			Confidence: 0.95,
 		})
 
-		i = end - 1
+		digit = end + 1
 	}
 
 	return findings

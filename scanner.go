@@ -26,7 +26,7 @@ type Scanner struct {
 	// paths holds joined key paths that had no findings, as keys does.
 	paths         *keyCache
 	credential    detect.Detector
-	hintIndex     [256][]dispatchHint
+	hintIndex     [256]dispatchBucket
 	follow        [256]byteSet
 	minConfidence float64
 	unconditional uint64
@@ -130,13 +130,23 @@ func (s *Scanner) takeScratch() *scanScratch {
 // value between scans. Unpooled storage belongs to its last user, such as a
 // custom detector that kept its input, and is left as it is.
 func (s *Scanner) returnScratch(scratch *scanScratch) {
-	if s.scratch == nil || cap(scratch.text) > largestPooledBuffer || cap(scratch.findings) > maxPooledFindings || cap(scratch.detected) > maxPooledFindings || cap(scratch.keys) > largestPooledBuffer || cap(scratch.members) > maxPooledMembers {
+	if !s.poolable(scratch) {
 		return
 	}
+	scratch.reset()
+	s.scratch.Put(scratch)
+}
+
+// poolable reports pooled storage small enough to keep.
+func (s *Scanner) poolable(scratch *scanScratch) bool {
+	return s.scratch != nil && cap(scratch.text) <= largestPooledBuffer && cap(scratch.findings) <= maxPooledFindings && cap(scratch.detected) <= maxPooledFindings && cap(scratch.keys) <= largestPooledBuffer && cap(scratch.members) <= maxPooledMembers
+}
+
+// reset clears the scanned text and empties every slice.
+func (scratch *scanScratch) reset() {
 	clear(scratch.text)
 	scratch.text, scratch.findings, scratch.detected = scratch.text[:0], scratch.findings[:0], scratch.detected[:0]
 	scratch.keys, scratch.members = scratch.keys[:0], scratch.members[:0]
-	s.scratch.Put(scratch)
 }
 
 // buildHintCache pre-computes lowered hints for each detector so that
@@ -246,14 +256,15 @@ func (s *Scanner) indexLabelReaders() {
 // the value alone. Findings are in text offsets, as from scanAppend.
 func (s *Scanner) scanField(text []byte, prefix int, canceled func() error) []Finding {
 	var detected []detect.Finding
-	return s.scanFieldInto(nil, &detected, text, prefix, canceled)
+	return s.scanFieldInto(nil, &detected, text, prefix, nil, canceled)
 }
 
 // scanFieldInto is scanField that keeps each detector's raw findings in
-// *detected, whose grown storage the caller reuses for the next field.
-func (s *Scanner) scanFieldInto(dst []Finding, detected *[]detect.Finding, text []byte, prefix int, canceled func() error) []Finding {
+// *detected, whose grown storage the caller reuses for the next field. A
+// non-nil key is the cached fieldKey of the field's key.
+func (s *Scanner) scanFieldInto(dst []Finding, detected *[]detect.Finding, text []byte, prefix int, key *fieldKey, canceled func() error) []Finding {
 	if !s.initialized {
-		return defaultScanner().scanFieldInto(dst, detected, text, prefix, canceled)
+		return defaultScanner().scanFieldInto(dst, detected, text, prefix, nil, canceled)
 	}
 	if prefix == 0 || len(s.detectors) == 0 {
 		return s.scanAppend(dst, text, canceled)
@@ -262,7 +273,7 @@ func (s *Scanner) scanFieldInto(dst []Finding, detected *[]detect.Finding, text 
 		return nil
 	}
 	value := detect.NewView(text[prefix:])
-	selected, wholeText := s.selectField(text, prefix, value)
+	selected, wholeText := s.selectField(text, prefix, value, key)
 	var whole detect.View
 	findings := dst[:0]
 	for i, d := range s.detectors {
@@ -290,10 +301,14 @@ func (s *Scanner) scanFieldInto(dst []Finding, detected *[]detect.Finding, text 
 
 // selectField returns the detectors a field selects and, among them, those
 // that scan the whole "key: value" text rather than the value alone.
-func (s *Scanner) selectField(text []byte, prefix int, value detect.View) (selected, wholeText uint64) {
+func (s *Scanner) selectField(text []byte, prefix int, value detect.View, known *fieldKey) (selected, wholeText uint64) {
 	keyEnd := prefix - len(": ")
-	key, ok := s.cachedField(text[:keyEnd])
-	if !ok {
+	var key fieldKey
+	if known != nil {
+		key = *known
+	} else if cached, ok := s.cachedField(text[:keyEnd]); ok {
+		key = cached
+	} else {
 		key = s.keyField(text, keyEnd)
 	}
 	selected = s.selectDetectors(value.Data) | key.selected
@@ -328,8 +343,10 @@ func (s *Scanner) cachedField(key []byte) (fieldKey, bool) {
 	if !cacheableKey(s, key) {
 		return fieldKey{}, false
 	}
-	result, ok := s.keys.loadBytes(key)
-	return result.field, ok
+	if result := s.keys.loadBytes(key); result != nil {
+		return result.field, true
+	}
+	return fieldKey{}, false
 }
 
 // finishScan appends custom detector findings for data and validates them all.
@@ -428,6 +445,8 @@ func (s *Scanner) filterFindings(findings []Finding, inputLength int) []Finding 
 			result = append(result, f)
 		}
 	}
-	slices.SortStableFunc(result, compareFindings)
+	// compareFindings orders by every field, so findings it ties are equal
+	// and an unstable sort returns the same slice as a stable one.
+	slices.SortFunc(result, compareFindings)
 	return result
 }

@@ -20,8 +20,43 @@ const (
 )
 
 type eventScanner struct {
-	scanner   *Scanner
+	scanner *Scanner
+	// spare is the scratch of the last finished scan, kept for the next scan
+	// of the same event instead of a pool round trip; release returns it.
+	spare *scanScratch
+	// lastKey is the cache entry of the last cached key, whose detector
+	// selection the scan of its member value reuses.
+	lastKey   *keyResult
 	remaining int
+}
+
+// takeScratch returns the spare scratch or one from the scanner.
+func (s *eventScanner) takeScratch() *scanScratch {
+	if scratch := s.spare; scratch != nil {
+		s.spare = nil
+		return scratch
+	}
+	return s.scanner.takeScratch()
+}
+
+// returnScratch clears scratch and keeps it as the spare, or returns it to
+// the scanner when a spare is already kept.
+func (s *eventScanner) returnScratch(scratch *scanScratch) {
+	if s.spare != nil || !s.scanner.poolable(scratch) {
+		s.scanner.returnScratch(scratch)
+		return
+	}
+	scratch.reset()
+	s.spare = scratch
+}
+
+// release returns the spare scratch; the owner of an eventScanner calls it
+// when the event is done.
+func (s *eventScanner) release() {
+	if s.spare != nil {
+		s.scanner.returnScratch(s.spare)
+		s.spare = nil
+	}
 }
 
 // Include the field name so context-based detectors can recognize, for example,
@@ -81,8 +116,8 @@ func canonicalInteger(text string) bool {
 // is a JSON number: the masked text when one finding covers all of value, so no
 // digits outside a finding survive, and the marker otherwise.
 func (s *eventScanner) scanScalar(ctx context.Context, value, key string) (masked, asNumber string, err error) {
-	scratch := s.scanner.takeScratch()
-	defer s.scanner.returnScratch(scratch)
+	scratch := s.takeScratch()
+	defer s.returnScratch(scratch)
 	findings, err := scalarFindings(ctx, s, scratch, value, key)
 	if err != nil {
 		return "", "", err
@@ -109,8 +144,8 @@ func (s *eventScanner) maskBytes(ctx context.Context, value []byte, key string) 
 		masked, err = s.maskScalar(ctx, text, key)
 		return masked, masked != text, err
 	}
-	scratch := s.scanner.takeScratch()
-	defer s.scanner.returnScratch(scratch)
+	scratch := s.takeScratch()
+	defer s.returnScratch(scratch)
 	findings, err := scalarFindings(ctx, s, scratch, value, key)
 	if err != nil {
 		return "", false, err
@@ -126,6 +161,14 @@ func (s *eventScanner) maskBytes(ctx context.Context, value []byte, key string) 
 	text := string(value)
 	masked = maskOwned(text, findings, s.scanner.replacer())
 	return masked, masked != text, nil
+}
+
+// knownField returns the cached fieldKey of key when it was the last cached key.
+func (s *eventScanner) knownField(key string) *fieldKey {
+	if last := s.lastKey; last != nil && last.key == key {
+		return &last.field
+	}
+	return nil
 }
 
 // scalarFindings scans "key: value" and returns the value's findings in value
@@ -147,7 +190,7 @@ func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scr
 		text = append(append(text, key...), ": "...)
 	}
 	text = append(text, value...)
-	findings := s.scanner.scanFieldInto(scratch.findings[:0], &scratch.detected, text, prefixBytes, ctx.Err)
+	findings := s.scanner.scanFieldInto(scratch.findings[:0], &scratch.detected, text, prefixBytes, s.knownField(key), ctx.Err)
 	// Keep grown storage for the next user; the returned spans alias findings.
 	scratch.text, scratch.findings = text, findings
 	if ctx.Err() != nil {
@@ -178,19 +221,19 @@ func (s *eventScanner) joinedKeySensitive(ctx context.Context, path []byte, boun
 	// A path without findings repeats across records and cannot cross a join.
 	cacheable := s.scanner.paths != nil && len(path) <= maxCachedKeyBytes
 	if cacheable {
-		if _, ok := s.scanner.paths.loadBytes(path); ok {
+		if s.scanner.paths.loadBytes(path) != nil {
 			return false, nil
 		}
 	}
-	scratch := s.scanner.takeScratch()
-	defer s.scanner.returnScratch(scratch)
+	scratch := s.takeScratch()
+	defer s.returnScratch(scratch)
 	findings := s.scanner.scanAppend(scratch.findings[:0], path, ctx.Err)
 	scratch.findings = findings
 	if ctx.Err() != nil {
 		return false, saferecord.ErrCanceled
 	}
 	if cacheable && len(findings) == 0 {
-		s.scanner.paths.store(string(path), keyResult{key: "", masked: "", field: fieldKey{}, sensitive: false})
+		s.scanner.paths.store(string(path), keyResult{key: "", field: fieldKey{}, sensitive: false})
 	}
 	for _, f := range findings {
 		if f.Start < boundary && f.End > boundary+1 {
@@ -211,7 +254,8 @@ const maxEncodedText = 8 << 10
 // base64, charged to the scan budget, when the decoded bytes are printable
 // UTF-8 text.
 func encodedTextSensitive[T string | []byte](ctx context.Context, s *eventScanner, value T, key string) (bool, error) {
-	if !standardBase64(value) || !printableStart(value) {
+	const quantum = 4
+	if len(value) == 0 || len(value) > maxEncodedText || len(value)%quantum != 0 || !printableStart(value) || !standardBase64(value) {
 		return false, nil
 	}
 	decoded := make([]byte, base64.StdEncoding.DecodedLen(len(value)))
@@ -219,45 +263,65 @@ func encodedTextSensitive[T string | []byte](ctx context.Context, s *eventScanne
 	if err != nil || !printableText(decoded[:n]) {
 		return false, nil
 	}
-	scratch := s.scanner.takeScratch()
-	defer s.scanner.returnScratch(scratch)
+	scratch := s.takeScratch()
+	defer s.returnScratch(scratch)
 	findings, err := scalarFindings(ctx, s, scratch, decoded[:n], key)
 	return len(findings) > 0, err
 }
 
-// standardBase64 reports a length and alphabet that padded standard base64
-// can have; the decoder checks the padding.
+// standardBase64 reports an alphabet that padded standard base64 can have;
+// the decoder checks the padding.
 func standardBase64[T string | []byte](value T) bool {
-	const quantum = 4
-	if len(value) == 0 || len(value) > maxEncodedText || len(value)%quantum != 0 {
-		return false
-	}
 	for i := range len(value) {
-		if c := value[i]; !ascii.IsAlphaNum(c) && c != '+' && c != '/' && c != '=' {
+		if _, ok := base64Sextet(value[i]); !ok && value[i] != '=' {
 			return false
 		}
 	}
 	return true
 }
 
-// printableStart reports whether the first three bytes value encodes, which
-// standardBase64 accepted, can start printable UTF-8 text, so most plain
-// words such as "accepted" are rejected without decoding the whole value.
+// base64Sextet returns the six bits a standard base64 letter encodes: its
+// index in A-Z, a-z, 0-9, + and /.
+func base64Sextet(c byte) (byte, bool) {
+	const lower, digits, plus, slash = 26, 52, 62, 63
+	switch {
+	case ascii.IsUpper(c):
+		return c - 'A', true
+	case ascii.IsLower(c):
+		return c - 'a' + lower, true
+	case ascii.IsDigit(c):
+		return c - '0' + digits, true
+	}
+	switch c {
+	case '+':
+		return plus, true
+	case '/':
+		return slash, true
+	}
+	return 0, false
+}
+
+// printableStart reports whether the first quantum of value, at least four
+// bytes long, is standard base64 whose bytes can start printable UTF-8 text,
+// so most plain words such as "accepted" are rejected without reading the
+// whole value.
 func printableStart[T string | []byte](value T) bool {
-	const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 	var sextets [4]byte
+	n := len(sextets) - 1
 	for i := range sextets {
-		// Padding decodes as zero bits, which the byte count below excludes.
-		sextets[i] = byte(max(0, strings.IndexByte(alphabet, value[i]))) // #nosec G115 -- A 64-letter alphabet index fits a byte.
+		c := value[i]
+		if c == '=' && i >= 2 {
+			// Padding decodes as zero bits, which the byte count excludes.
+			n--
+			continue
+		}
+		sextet, ok := base64Sextet(c)
+		if !ok || n < len(sextets)-1 {
+			return false
+		}
+		sextets[i] = sextet
 	}
 	decoded := [3]byte{sextets[0]<<2 | sextets[1]>>4, sextets[1]<<4 | sextets[2]>>2, sextets[2]<<6 | sextets[3]}
-	n := len(decoded)
-	if value[3] == '=' {
-		n--
-	}
-	if value[2] == '=' {
-		n--
-	}
 	for _, c := range decoded[:n] {
 		if (c < ' ' && c != '\t' && c != '\n' && c != '\r') || c == 0x7f {
 			return false

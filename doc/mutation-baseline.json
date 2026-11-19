@@ -5,11 +5,11 @@
   "timeout_coefficient": 10,
   "packages": {
     ".": {
-      "score": 90.36,
-      "coverage": 99.82,
+      "score": 91.38,
+      "coverage": 99.83,
       "counts": {
-        "KILLED": 481,
-        "LIVED": 53,
+        "KILLED": 535,
+        "LIVED": 52,
         "NOT COVERED": 1,
         "TIMED OUT": 16
       }
@@ -61,12 +61,12 @@
       }
     },
     "internal/detect": {
-      "score": 89.88,
-      "coverage": 96.25,
+      "score": 89.89,
+      "coverage": 96.29,
       "counts": {
-        "KILLED": 2675,
-        "LIVED": 306,
-        "NOT COVERED": 118,
+        "KILLED": 2686,
+        "LIVED": 307,
+        "NOT COVERED": 117,
         "TIMED OUT": 44
       }
     },

@@ -299,7 +299,7 @@ func TestJoinedPathCache(t *testing.T) {
 		if _, err := scan.joinedKeySensitive(t.Context(), path, n-len(".b")); err != nil {
 			t.Fatal(err)
 		}
-		if _, cached := scanner.paths.loadBytes(path); cached != (n <= maxCachedKeyBytes) {
+		if cached := scanner.paths.loadBytes(path) != nil; cached != (n <= maxCachedKeyBytes) {
 			t.Errorf("path of %d bytes cached = %v", n, cached)
 		}
 	}
