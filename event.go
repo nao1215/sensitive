@@ -165,7 +165,7 @@ func (s *eventScanner) maskBytes(ctx context.Context, value []byte, key string) 
 
 // knownField returns the cached fieldKey of key when it was the last cached key.
 func (s *eventScanner) knownField(key string) *fieldKey {
-	if last := s.lastKey; last != nil && key != "" && last.key == key {
+	if last := s.lastKey; last != nil && last.key == key {
 		return &last.field
 	}
 	return nil

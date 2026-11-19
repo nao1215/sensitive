@@ -274,3 +274,57 @@ func TestPrintableStart(t *testing.T) {
 		}
 	}
 }
+
+func TestBase64SextetMatchesTheAlphabet(t *testing.T) {
+	t.Parallel()
+	const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+	for c := range 256 {
+		got, ok := base64Sextet(byte(c))
+		want := strings.IndexByte(alphabet, byte(c))
+		if ok != (want >= 0) || (ok && int(got) != want) {
+			t.Fatalf("base64Sextet(%q) = %d, %v; want %d", rune(c), got, ok, want)
+		}
+	}
+}
+
+func TestEventScannerKeepsOneSpareScratch(t *testing.T) {
+	t.Parallel()
+	scan := eventScanner{scanner: NewScanner(), spare: nil, remaining: maxScanBytes}
+	first, second := scan.takeScratch(), scan.takeScratch()
+	scan.returnScratch(second)
+	if scan.spare != second {
+		t.Fatal("the first returned scratch must become the spare")
+	}
+	scan.returnScratch(first)
+	if scan.spare != second {
+		t.Fatal("a second returned scratch must go to the pool, not replace the spare")
+	}
+	if scan.takeScratch() != second || scan.spare != nil {
+		t.Fatal("take must hand out the spare first")
+	}
+	scan.returnScratch(second)
+	scan.release()
+	if scan.spare != nil {
+		t.Fatal("release must return the spare")
+	}
+}
+
+func TestKnownFieldOnlyReusesTheSameKey(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner()
+	warm := eventScanner{scanner: scanner, spare: nil, remaining: maxScanBytes}
+	for _, key := range []string{statusKey, string(KindCVV)} {
+		if _, _, err := warm.maskCached(t.Context(), key); err != nil {
+			t.Fatal(err)
+		}
+	}
+	scan := eventScanner{scanner: scanner, spare: nil, remaining: maxScanBytes}
+	// The last cached key is status, which selects no keyword detector; the
+	// cvv value must still be scanned with cvv's own selection.
+	if _, _, err := scan.maskCached(t.Context(), statusKey); err != nil {
+		t.Fatal(err)
+	}
+	if masked, err := scan.maskScalar(t.Context(), "123", string(KindCVV)); err != nil || masked == "123" {
+		t.Fatalf("cvv value after a status key = %q, %v", masked, err)
+	}
+}

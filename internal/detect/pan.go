@@ -106,14 +106,13 @@ func (d *PAN) candidate(orig, data []byte, posMap []int, i int) (Finding, int, b
 	if !ascii.IsDigit(data[i]) {
 		return Finding{}, i + 1, false
 	}
-	// Fewer than four digits that end without a separator, such as the 2 of
-	// 2ms, are no card in any written form; skip them without extracting.
-	const group = len("4111")
-	k := i
-	for k < len(data) && k-i < group && ascii.IsDigit(data[k]) {
+	// A run of fewer than panMinDigits digits that ends without a separator
+	// or a dot, such as the 2 of 2ms, is no card in any written form.
+	k := i + 1
+	for k < len(data) && ascii.IsDigit(data[k]) {
 		k++
 	}
-	if k-i < group && (k == len(data) || !cardSeparator(data[k])) {
+	if k-i < panMinDigits && (k == len(data) || (!cardSeparator(data[k]) && data[k] != '.')) {
 		return Finding{}, k, false
 	}
 	// Card digits fit the array; a longer run grows past it and is rejected by length.
