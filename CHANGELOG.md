@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-11-20
+
 ### Changed
 
 - Tests check the `Mask` guarantee that, for fixed valid findings, the output depends only on the bytes outside them. They run the real function on every combination of up to three ranges over texts of up to seven bytes, the exact spans a `MaskFunc` callback receives, and that findings on valid UTF-8 never split a character.
