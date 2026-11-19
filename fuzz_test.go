@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/nao1215/embargo/internal/detect"
 )
@@ -119,15 +120,27 @@ func FuzzScanner(f *testing.F) {
 		if !sameKeys(keysOf(got), want) {
 			t.Fatal("hint filter changed matches")
 		}
-		for i, v := range got {
-			if v.Kind == "" || v.Start < 0 || v.End <= v.Start || v.End > len(data) || v.Confidence < 0 || v.Confidence > 1 {
-				t.Fatal("invalid finding")
-			}
-			if i > 0 && got[i-1].Start > v.Start {
-				t.Fatal("position order")
-			}
-		}
+		checkFindingShapes(t, text, got)
 	})
+}
+
+// checkFindingShapes rejects findings outside text, out of position order or,
+// on valid UTF-8, inside a character, where a span would leave its remaining
+// bytes in the output.
+func checkFindingShapes(t *testing.T, text string, got []Finding) {
+	t.Helper()
+	valid := utf8.ValidString(text)
+	for i, v := range got {
+		if v.Kind == "" || v.Start < 0 || v.End <= v.Start || v.End > len(text) || v.Confidence < 0 || v.Confidence > 1 {
+			t.Fatal("invalid finding")
+		}
+		if i > 0 && got[i-1].Start > v.Start {
+			t.Fatal("position order")
+		}
+		if valid && (!onRuneBoundary(text, v.Start) || !onRuneBoundary(text, v.End)) {
+			t.Fatal("finding splits a character")
+		}
+	}
 }
 
 func TestAllBuiltinsHaveSeeds(t *testing.T) {
@@ -306,6 +319,16 @@ func FuzzMask(f *testing.F) {
 		}
 		if got != string(want) {
 			t.Fatal("union missed a byte")
+		}
+		// For fixed findings, Mask output depends only on the bytes outside them.
+		replaced := []byte(text)
+		for i := range replaced {
+			if (i >= a && i < b) || (i >= c && i < d) {
+				replaced[i] ^= 0x80
+			}
+		}
+		if masked := Mask(text, spans); masked != Mask(string(replaced), spans) || masked != bridgedMask(text, spans) {
+			t.Fatal("Mask output depends on covered bytes")
 		}
 	})
 }

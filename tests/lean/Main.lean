@@ -34,12 +34,6 @@ def main : IO Unit := do
    else "%" ++ String.ofList ["0123456789ABCDEF".toList[c.toNat/16]!, "0123456789ABCDEF".toList[c.toNat%16]!]
   let widths := List.replicate 6 1 ++ tokens.map String.length ++ [1]
   emit ["percent", "note (" ++ String.join tokens ++ ")", toString (position widths 6), toString (position widths 13)]
- for a in List.range 12 do
-  for b in List.range 12 do
-   let ranges := [(a,a+3),(b,b+4)]
-   let original := "abcdefghijklmnop"
-   let masked := String.ofList (original.toList.zipIdx.map fun (c,i) => maskByte ranges i c)
-   emit ["mask", original, toString a, toString (a+3), toString b, toString (b+4), masked]
  emit ["mynumber","000000000000","true"]
  emit ["mynumber","200000000000","true"]
 

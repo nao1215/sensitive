@@ -20,9 +20,43 @@ import (
 	"strings"
 	"testing"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/nao1215/embargo/internal/detect"
 )
+
+// onRuneBoundary reports whether i starts a character of text or ends it.
+func onRuneBoundary(text string, i int) bool {
+	return i == len(text) || utf8.RuneStart(text[i])
+}
+
+// TestFindingsDoNotSplitCharacters joins full-width digits, Japanese labels,
+// combining marks and escapes with ASCII secrets. Every finding on valid UTF-8
+// must start and end on a character boundary: a span ending inside a
+// full-width digit would leave its last byte, which identifies the digit.
+func TestFindingsDoNotSplitCharacters(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithAll())
+	pieces := []string{"４１１１", "１１１１", "－", "　", "＠", "ｅｘａｍｐｌｅ", "．ｃｏｍ", "4111", "1111", "-", " ", "a@b.co", "user", "＝", "password=", "パスワード：", "電話", "０９０", "1234", "Ａ", "%40", "\\u0040", "日本", "é", "e\u0301", "\u200b", "\u00a0", "ﾊﾟｽ", "AKIA", "IOSFODNN7EXAMPLE", "ghp_", "0123456789abcdefABCDEF0123456789abcd", "+81", "(", ")", "\t", ":", "\"", "'"}
+	rng := rand.New(rand.NewPCG(3, 11)) // #nosec G404 -- Reproducible synthetic test data.
+	found := 0
+	for range 20000 {
+		var b strings.Builder
+		for range 1 + rng.IntN(14) {
+			b.WriteString(pieces[rng.IntN(len(pieces))]) //nolint:errcheck // strings.Builder writes always succeed.
+		}
+		text := b.String()
+		for _, f := range scanner.ScanString(text) {
+			found++
+			if !onRuneBoundary(text, f.Start) || !onRuneBoundary(text, f.End) {
+				t.Fatalf("%s [%d,%d) splits a character in %q", f.Kind, f.Start, f.End, text)
+			}
+		}
+	}
+	if found < 5000 {
+		t.Fatalf("only %d findings; the generator no longer reaches detectors", found)
+	}
+}
 
 func TestScannerRecognitionRegressions(t *testing.T) {
 	t.Parallel()
