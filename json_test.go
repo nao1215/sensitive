@@ -488,7 +488,7 @@ func TestJSONExpansionStopsBeforeRetainingPastLimit(t *testing.T) {
 	t.Parallel()
 	input := []byte("[" + strings.Repeat(`"x",`, 100000) + `"x"]`)
 	scanner := NewScanner(WithKinds(), WithoutDefaultSensitiveKeys(), WithDetector(expandingDetector{}))
-	walker := jsonWalker{data: input, scanner: eventScanner{scanner: scanner, remaining: maxScanBytes}}
+	walker := jsonWalker{data: input, policy: newFieldPolicy(scanner, "")}
 	if err := walker.value(t.Context(), 0, "", false); err == nil {
 		t.Fatal("expanded output accepted")
 	}
@@ -612,7 +612,7 @@ func TestWalkerFailureBoundaries(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
-	walker := jsonWalker{data: []byte(`[]`), scanner: eventScanner{scanner: NewScanner(), remaining: maxScanBytes}}
+	walker := jsonWalker{data: []byte(`[]`), policy: newFieldPolicy(NewScanner(), "")}
 	if err := walker.value(ctx, 0, "", false); !errors.Is(err, saferecord.ErrCanceled) {
 		t.Fatal("canceled walk accepted")
 	}
@@ -630,11 +630,11 @@ func TestWalkerFailureBoundaries(t *testing.T) {
 		t.Fatal("container expansion exceeded budget")
 	}
 	scanner := eventScanner{scanner: NewScanner(), remaining: 1}
-	if _, err := scanner.joinedKeySensitive(t.Context(), "a.b", 1); !errors.Is(err, saferecord.ErrSizeLimit) {
+	if _, err := scanner.joinedKeySensitive(t.Context(), []byte("a.b"), 1); !errors.Is(err, saferecord.ErrSizeLimit) {
 		t.Fatal("joined path exceeded scan budget")
 	}
 	scanner.remaining = maxScanBytes
-	if _, err := scanner.joinedKeySensitive(ctx, "a.b", 1); !errors.Is(err, saferecord.ErrCanceled) {
+	if _, err := scanner.joinedKeySensitive(ctx, []byte("a.b"), 1); !errors.Is(err, saferecord.ErrCanceled) {
 		t.Fatal("canceled joined path accepted")
 	}
 	if _, _, err := scanner.scanScalar(ctx, "private", ""); !errors.Is(err, saferecord.ErrCanceled) {
@@ -644,8 +644,9 @@ func TestWalkerFailureBoundaries(t *testing.T) {
 	if _, err := scanner.maskScalar(t.Context(), "1.0e0", ""); !errors.Is(err, saferecord.ErrSizeLimit) {
 		t.Fatal("canonical number scan escaped budget")
 	}
-	walker = jsonWalker{path: []jsonKeyPosition{{path: "a"}}, scanner: eventScanner{scanner: NewScanner(), remaining: 1}}
-	if err := walker.keyPath(t.Context(), "b", 0, 3); !errors.Is(err, saferecord.ErrSizeLimit) {
+	policy := newFieldPolicy(NewScanner(), "a")
+	policy.scan.remaining = 1
+	if err := policy.enter(t.Context(), memberKey{key: "b", masked: "b", sensitive: false}); !errors.Is(err, saferecord.ErrSizeLimit) {
 		t.Fatal("path error did not propagate")
 	}
 }
@@ -742,7 +743,9 @@ func TestJSONFastPathsStopOnBudgetCancellationAndOutputLimit(t *testing.T) {
 		t.Fatal(err)
 	}
 	walker := func(remaining int, result []byte) *jsonWalker {
-		return &jsonWalker{data: nil, result: result, scanner: eventScanner{scanner: scanner, remaining: remaining}}
+		policy := newFieldPolicy(scanner, "")
+		policy.scan.remaining = remaining
+		return &jsonWalker{data: nil, result: result, policy: policy}
 	}
 	// A cached key still pays its budget, so an exhausted budget stops the key.
 	if _, err := walker(len("status")-1, nil).objectKey(t.Context(), []byte(`"status"`)); !errors.Is(err, saferecord.ErrSizeLimit) {

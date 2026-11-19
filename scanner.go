@@ -83,7 +83,7 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 	// built-in selections, which never retain input and always return the same
 	// findings, reuse buffers and key results.
 	if len(s.custom) == 0 {
-		s.scratch = &sync.Pool{New: func() any { return &scanScratch{text: nil, findings: nil} }}
+		s.scratch = &sync.Pool{New: func() any { return &scanScratch{text: nil, findings: nil, keys: nil, members: nil} }}
 		s.keys = &keyCache{}
 	}
 	return s
@@ -95,6 +95,9 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 type scanScratch struct {
 	text     []byte
 	findings []Finding
+	// keys and members are a fieldPolicy's key path.
+	keys    []byte
+	members []pathMember
 	// detected holds one detector's findings before conversion.
 	detected []detect.Finding
 }
@@ -103,13 +106,14 @@ type scanScratch struct {
 const (
 	largestPooledBuffer = 64 << 10
 	maxPooledFindings   = 64
+	maxPooledMembers    = 2*maxDepth + 2
 )
 
 // takeScratch returns empty scratch storage. Scanners with custom detectors and
 // zero-value scanners get fresh storage.
 func (s *Scanner) takeScratch() *scanScratch {
 	if s.scratch == nil {
-		return &scanScratch{text: nil, findings: nil}
+		return &scanScratch{text: nil, findings: nil, keys: nil, members: nil}
 	}
 	scratch, ok := s.scratch.Get().(*scanScratch)
 	if !ok {
@@ -120,10 +124,11 @@ func (s *Scanner) takeScratch() *scanScratch {
 
 // returnScratch keeps storage, grown by its last user, for the next scan.
 func (s *Scanner) returnScratch(scratch *scanScratch) {
-	if s.scratch == nil || cap(scratch.text) > largestPooledBuffer || cap(scratch.findings) > maxPooledFindings || cap(scratch.detected) > maxPooledFindings {
+	if s.scratch == nil || cap(scratch.text) > largestPooledBuffer || cap(scratch.findings) > maxPooledFindings || cap(scratch.detected) > maxPooledFindings || cap(scratch.keys) > largestPooledBuffer || cap(scratch.members) > maxPooledMembers {
 		return
 	}
 	scratch.text, scratch.findings, scratch.detected = scratch.text[:0], scratch.findings[:0], scratch.detected[:0]
+	scratch.keys, scratch.members = scratch.keys[:0], scratch.members[:0]
 	s.scratch.Put(scratch)
 }
 

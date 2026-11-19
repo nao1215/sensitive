@@ -170,12 +170,15 @@ func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scr
 }
 
 // A finding must cross the last join; detecting an ancestor alone does not hide descendants.
-func (s *eventScanner) joinedKeySensitive(ctx context.Context, path string, boundary int) (bool, error) {
+func (s *eventScanner) joinedKeySensitive(ctx context.Context, path []byte, boundary int) (bool, error) {
 	if len(path) > s.remaining {
 		return false, saferecord.ErrSizeLimit
 	}
 	s.remaining -= len(path)
-	findings := s.scanner.scan([]byte(path), ctx.Err)
+	scratch := s.scanner.takeScratch()
+	defer s.scanner.returnScratch(scratch)
+	findings := s.scanner.scanAppend(scratch.findings[:0], path, ctx.Err)
+	scratch.findings = findings
 	if ctx.Err() != nil {
 		return false, saferecord.ErrCanceled
 	}
@@ -188,13 +191,11 @@ func (s *eventScanner) joinedKeySensitive(ctx context.Context, path string, boun
 }
 
 // encoding/json and zap.Binary write a []byte as padded standard base64, so a
-// byte field holding a token reaches the scalar policy as an opaque string.
-// Values of this length range are decoded and scanned when the bytes are text;
-// binary data such as an image is not text and is never scanned.
-const (
-	minEncodedText = 20
-	maxEncodedText = 8 << 10
-)
+// byte field holding a token or a short value such as a CVV reaches the scalar
+// policy as an opaque string. Values up to this length are decoded and scanned
+// when the bytes are text; binary data such as an image is not text and is
+// never scanned.
+const maxEncodedText = 8 << 10
 
 // encodedTextSensitive reports findings in value decoded as padded standard
 // base64, charged to the scan budget, when the decoded bytes are printable
@@ -218,7 +219,7 @@ func encodedTextSensitive[T string | []byte](ctx context.Context, s *eventScanne
 // can have; the decoder checks the padding.
 func standardBase64[T string | []byte](value T) bool {
 	const quantum = 4
-	if len(value) < minEncodedText || len(value) > maxEncodedText || len(value)%quantum != 0 {
+	if len(value) == 0 || len(value) > maxEncodedText || len(value)%quantum != 0 {
 		return false
 	}
 	for i := range len(value) {

@@ -1,0 +1,240 @@
+package embargo
+
+import (
+	"errors"
+	"log/slog"
+	"slices"
+	"testing"
+
+	"github.com/nao1215/embargo/internal/saferecord"
+)
+
+func TestFieldPolicyPath(t *testing.T) {
+	t.Parallel()
+	// The fixture reports user.email spelled over two keys, so only a path
+	// that joins them crosses a join.
+	scanner := NewScanner(WithKinds(), WithoutDefaultSensitiveKeys(), WithDetector(pathDetector{}))
+	policy := newFieldPolicy(scanner, "")
+	defer policy.release()
+	enter := func(key string) memberKey {
+		t.Helper()
+		decision, err := policy.member(t.Context(), key)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return decision
+	}
+	enter("request")
+	enter(pathUser)
+	enter(pathEmail)
+	if string(policy.path.keys) != "request.user.email" {
+		t.Fatalf("path = %q", policy.path.keys)
+	}
+	for _, key := range []string{pathEmail, pathUser, "request"} {
+		if !policy.leave() {
+			t.Fatalf("%s left without the marker", key)
+		}
+	}
+	enter(pathUser)
+	enter("name")
+	first, second := policy.leave(), policy.leave()
+	if first || second || len(policy.path.keys) != 0 || len(policy.path.members) != 0 {
+		t.Fatal("an unrelated path was marked or not unwound")
+	}
+	if policy.prefixCrossed {
+		t.Fatal("a policy without a prefix reported a crossed prefix")
+	}
+}
+
+func TestFieldPolicyPrefix(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(), WithoutDefaultSensitiveKeys(), WithDetector(pathDetector{}))
+	for _, tc := range []struct {
+		prefix, key string
+		crossed     bool
+	}{
+		{pathUser, pathEmail, true},
+		{"request.user", pathEmail, true},
+		{pathUser, "name", false},
+		{"", pathEmail, false},
+	} {
+		policy := newFieldPolicy(scanner, tc.prefix)
+		if _, err := policy.member(t.Context(), tc.key); err != nil {
+			t.Fatal(err)
+		}
+		if crossed := policy.leave(); crossed != tc.crossed || policy.prefixCrossed != (tc.crossed && tc.prefix != "") {
+			t.Errorf("%s.%s: crossed %v, prefix crossed %v", tc.prefix, tc.key, crossed, policy.prefixCrossed)
+		}
+		policy.release()
+		if policy.path != nil {
+			t.Fatal("release kept the path storage")
+		}
+	}
+}
+
+func TestFieldPolicyMemberKeys(t *testing.T) {
+	t.Parallel()
+	policy := newFieldPolicy(NewScanner(), "")
+	defer policy.release()
+	decision, err := policy.member(t.Context(), documentedEmail)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !decision.changed() || decision.masked != redactionMarker || pathKey(decision) != redactionMarker || decision.key != documentedEmail {
+		t.Fatalf("detected key decision = %+v", decision)
+	}
+	if string(policy.path.keys) != redactionMarker {
+		t.Fatalf("a detected key joined the path as %q", policy.path.keys)
+	}
+	policy.leave()
+	decision, err = policy.member(t.Context(), credentialFixtureKey)
+	if err != nil || !decision.sensitive || decision.changed() || pathKey(decision) != credentialFixtureKey {
+		t.Fatalf("sensitive key decision = %+v, %v", decision, err)
+	}
+	policy.leave()
+	if !policy.sensitive(credentialFixtureKey) || policy.sensitive("") || policy.sensitive(statusKey) {
+		t.Fatal("sensitive key rule changed")
+	}
+	// A cached key needs no decoding and returns the same decision.
+	if _, err = policy.member(t.Context(), statusKey); err != nil {
+		t.Fatal(err)
+	}
+	policy.leave()
+	cached, ok, err := policy.cachedMember(t.Context(), []byte(statusKey))
+	if err != nil || !ok || cached.key != statusKey || cached.changed() || cached.sensitive {
+		t.Fatalf("cached member = %+v, %v, %v", cached, ok, err)
+	}
+	policy.leave()
+	if _, ok, err := policy.cachedMember(t.Context(), []byte("never-seen-key")); ok || err != nil || len(policy.path.members) != 0 {
+		t.Fatal("an uncached key was entered")
+	}
+}
+
+func TestFieldPolicyTextMember(t *testing.T) {
+	t.Parallel()
+	policy := newFieldPolicy(NewScanner(), "")
+	defer policy.release()
+	for _, tc := range []struct{ key, value, wantKey, wantValue string }{
+		{tokenKey, "opaque", tokenKey, redactionMarker},
+		{"note", "mail " + documentedEmail, "note", "mail " + redactionMarker},
+		{documentedEmail, budgetPublicKey, redactionMarker, budgetPublicKey},
+		{statusKey, "ok", statusKey, "ok"},
+	} {
+		key, value, err := policy.textMember(t.Context(), tc.key, tc.value)
+		if err != nil || key != tc.wantKey || value != tc.wantValue {
+			t.Errorf("textMember(%q, %q) = %q, %q, %v", tc.key, tc.value, key, value, err)
+		}
+	}
+	if len(policy.path.members) != 0 {
+		t.Fatal("textMember left members entered")
+	}
+	policy.scan.remaining = 0
+	if _, _, err := policy.textMember(t.Context(), "note", "value"); !errors.Is(err, saferecord.ErrSizeLimit) {
+		t.Fatal("textMember ignored the budget")
+	}
+}
+
+func TestFieldPolicyCrossedTextMember(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner(WithKinds(), WithoutDefaultSensitiveKeys(), WithDetector(pathDetector{}))
+	policy := newFieldPolicy(scanner, pathUser)
+	defer policy.release()
+	key, value, err := policy.textMember(t.Context(), pathEmail, budgetPublicKey)
+	if err != nil || key != redactionMarker || value != budgetPublicKey || !policy.prefixCrossed {
+		t.Fatalf("crossed text member = %q, %q, %v", key, value, err)
+	}
+	policy.scan.remaining = len(pathEmail) - 1
+	if _, _, err := policy.textMember(t.Context(), pathEmail, budgetPublicKey); !errors.Is(err, saferecord.ErrSizeLimit) {
+		t.Fatal("key budget ignored")
+	}
+}
+
+func TestNamedPair(t *testing.T) {
+	t.Parallel()
+	policy := newFieldPolicy(NewScanner(), "")
+	collect := func(pair *namedPair[int]) []int {
+		var hidden []int
+		pair.hidden(func(i int) { hidden = append(hidden, i) })
+		return hidden
+	}
+	var pair namedPair[int]
+	pair.value(shapeText, 1)
+	pair.value(shapeOther, 2)
+	pair.value(shapeContainer, 3)
+	if got := collect(&pair); got != nil {
+		t.Fatalf("values hidden without a sensitive name: %v", got)
+	}
+	pair.name(&policy, "PORT")
+	if got := collect(&pair); got != nil {
+		t.Fatalf("a public name hid values: %v", got)
+	}
+	pair.name(&policy, "/prod/db/password")
+	if got := collect(&pair); !slices.Equal(got, []int{1, 3}) {
+		t.Fatalf("hidden = %v, want every text and container value", got)
+	}
+	var empty namedPair[int]
+	empty.name(&policy, credentialFixtureKey)
+	if got := collect(&empty); got != nil {
+		t.Fatalf("a pair without values hid %v", got)
+	}
+}
+
+func TestValueShapes(t *testing.T) {
+	t.Parallel()
+	for raw, want := range map[string]valueShape{
+		`""`: shapeOther, `"x"`: shapeText, `{}`: shapeContainer, `[]`: shapeContainer,
+		`12`: shapeOther, `false`: shapeOther, jsonNull: shapeOther, ``: shapeOther,
+	} {
+		if got := jsonValueShape([]byte(raw)); got != want {
+			t.Errorf("jsonValueShape(%s) = %d, want %d", raw, got, want)
+		}
+	}
+	for _, tc := range []struct {
+		value slog.Value
+		want  valueShape
+	}{
+		{slog.StringValue(""), shapeOther},
+		{slog.StringValue("x"), shapeText},
+		{slog.GroupValue(slog.Int("n", 1)), shapeContainer},
+		{slog.AnyValue(maskedJSON(`{"a":1}`)), shapeContainer},
+		{slog.AnyValue(maskedJSON(`"x"`)), shapeText},
+		{slog.AnyValue(maskedJSON(`1`)), shapeOther},
+		{slog.AnyValue([]int{1}), shapeOther},
+		{slog.IntValue(7), shapeOther},
+	} {
+		if got := slogShape(tc.value); got != tc.want {
+			t.Errorf("slogShape(%v) = %d, want %d", tc.value, got, tc.want)
+		}
+	}
+	for raw, want := range map[string]bool{`"name"`: true, `"n\u0061me"`: true, `1`: false, ``: false, `"bad`: false} {
+		name, ok := jsonName([]byte(raw))
+		if ok != want || (ok && name != "name") {
+			t.Errorf("jsonName(%s) = %q, %v", raw, name, ok)
+		}
+	}
+	if settingName("/prod/db/"+credentialFixtureKey) != credentialFixtureKey || settingName(credentialFixtureKey) != credentialFixtureKey || settingName("dir/") != "" {
+		t.Fatal("setting name changed")
+	}
+	if joinedKey("", "a") != "a" || joinedKey("a", "") != "a" || joinedKey("a", "b") != "a.b" {
+		t.Fatal("joined key changed")
+	}
+}
+
+const (
+	pathUser  = "user"
+	pathEmail = "email"
+)
+
+// pathDetector reports user.email wherever the text spells it.
+type pathDetector struct{}
+
+func (pathDetector) Scan(data []byte) []Finding {
+	var findings []Finding
+	const target = "user.email"
+	for i := 0; i+len(target) <= len(data); i++ {
+		if string(data[i:i+len(target)]) == target {
+			findings = append(findings, Finding{Kind: "path", Start: i, End: i + len(target), Confidence: 1})
+		}
+	}
+	return findings
+}

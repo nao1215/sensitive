@@ -85,17 +85,11 @@ func (scan *eventScanner) maskHTTPHeaders(ctx context.Context, header http.Heade
 	if !headerWithinLimit(header) {
 		return nil, saferecord.ErrSizeLimit
 	}
+	policy := fieldPolicy{scan: *scan, path: nil, prefix: "", prefixCrossed: false}
+	defer func() { *scan = policy.scan; policy.release() }()
 	safe := make(map[string]any, len(header))
 	for key, values := range header {
-		name, err := scan.maskScalar(ctx, key, "")
-		if err != nil {
-			return nil, err
-		}
-		if strings.EqualFold(key, "Authorization") || strings.EqualFold(key, "Proxy-Authorization") || strings.EqualFold(key, "Cookie") || strings.EqualFold(key, "Set-Cookie") || scan.scanner.sensitiveKey(key) {
-			safe[name] = redactionMarker
-			continue
-		}
-		masked, err := scan.maskHeaderValues(ctx, key, values)
+		name, masked, err := headerField(ctx, &policy, key, values)
 		if err != nil {
 			return nil, err
 		}
@@ -109,6 +103,26 @@ func (scan *eventScanner) maskHTTPHeaders(ctx context.Context, header http.Heade
 		return nil, saferecord.ErrSizeLimit
 	}
 	return safe, nil
+}
+
+// headerField decides one header as a member: a sensitive or credential
+// header is written as the marker and others mask each value.
+func headerField(ctx context.Context, policy *fieldPolicy, key string, values []string) (name string, value any, err error) {
+	decision, err := policy.member(ctx, key)
+	if err != nil {
+		return "", nil, err
+	}
+	policy.leave()
+	if decision.sensitive || credentialHeader(key) {
+		return decision.masked, redactionMarker, nil
+	}
+	masked, err := policy.scan.maskHeaderValues(ctx, key, values)
+	return decision.masked, masked, err
+}
+
+// credentialHeader reports the standard headers that carry credentials.
+func credentialHeader(key string) bool {
+	return strings.EqualFold(key, "Authorization") || strings.EqualFold(key, "Proxy-Authorization") || strings.EqualFold(key, "Cookie") || strings.EqualFold(key, "Set-Cookie")
 }
 
 // headerWithinLimit reports whether every header name and value together fit
@@ -190,6 +204,8 @@ func (scan *eventScanner) httpTarget(ctx context.Context, target *url.URL) (stri
 }
 
 func (scan *eventScanner) httpQuery(ctx context.Context, raw string) ([]byte, error) {
+	policy := fieldPolicy{scan: *scan, path: nil, prefix: "", prefixCrossed: false}
+	defer func() { *scan = policy.scan; policy.release() }()
 	var result []byte
 	for index, part := range strings.Split(raw, "&") {
 		if index > 0 {
@@ -199,18 +215,13 @@ func (scan *eventScanner) httpQuery(ctx context.Context, raw string) ([]byte, er
 		if err != nil {
 			return nil, err
 		}
-		name, err := scan.maskScalar(ctx, key, "")
+		name, masked, err := policy.textMember(ctx, key, value)
 		if err != nil {
 			return nil, err
 		}
 		result = append(result, name...)
 		if hasValue {
-			masked, maskErr := scan.queryValue(ctx, key, value)
-			if maskErr != nil {
-				return nil, maskErr
-			}
-			result = append(result, '=')
-			result = append(result, masked...)
+			result = append(append(result, '='), masked...)
 		}
 		if len(result) > maxEventBytes {
 			return nil, saferecord.ErrSizeLimit
@@ -236,15 +247,6 @@ func parseQueryPair(part string) (key, value string, hasValue bool, err error) {
 		return "", "", false, saferecord.ErrMasking
 	}
 	return key, value, hasValue, nil
-}
-
-// queryValue replaces the value of a sensitive parameter with the marker and
-// scans any other value with its decoded key as context.
-func (scan *eventScanner) queryValue(ctx context.Context, key, value string) (string, error) {
-	if scan.scanner.sensitiveKey(key) {
-		return redactionMarker, nil
-	}
-	return scan.maskScalar(ctx, value, key)
 }
 
 type httpLogWriter struct {
