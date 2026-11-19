@@ -2,9 +2,13 @@ package detect
 
 import (
 	"encoding/json"
+	"math/rand/v2"
 	"os"
+	"slices"
 	"strings"
 	"testing"
+
+	"github.com/nao1215/embargo/internal/ascii"
 )
 
 func TestIBANDetector_Scan(t *testing.T) {
@@ -303,5 +307,44 @@ func TestIbanRejectedBoundaries(t *testing.T) {
 	t.Parallel()
 	if validateIBANMod97([]byte("GB82WEST1234569876543!")) {
 		t.Fatal("invalid IBAN byte accepted")
+	}
+}
+
+// ibanReferenceScan is the scan that tried every start, kept to check that
+// looking for the check digits first finds the same IBANs.
+func ibanReferenceScan(data []byte) []Finding {
+	var findings []Finding
+	for i := 0; i < len(data)-4; i++ {
+		if !ibanPrefixAt(data, i) {
+			continue
+		}
+		expectedLen, ok := ibanCountryLength(string([]byte{ascii.ToUpper(data[i]), ascii.ToUpper(data[i+1])}))
+		if !ok {
+			continue
+		}
+		chars, end := extractIBANChars(data, i, expectedLen)
+		if len(chars) != expectedLen || (end < len(data) && ascii.IsAlphaNum(data[end])) || !validateIBANMod97(chars) {
+			continue
+		}
+		findings = append(findings, Finding{DetectorName: NameIBAN, Start: i, End: end, Confidence: 0.95})
+		i = end - 1
+	}
+	return findings
+}
+
+func TestIBANScanMatchesEveryStartReference(t *testing.T) {
+	t.Parallel()
+	// #nosec G404 -- Fixed seed for reproducible synthetic tests.
+	rng := rand.New(rand.NewPCG(7, 97))
+	parts := []string{"DE89370400440532013000", "de89 3704 0044 0532 0130 00", "GB82WEST12345698765432", "DE89", "x", "A", "1", "12", " ", "-", "INFO GET /health status=ok", "\xff"}
+	for range 5000 {
+		var b strings.Builder
+		for range rng.IntN(8) {
+			b.WriteString(parts[rng.IntN(len(parts))])
+		}
+		data := []byte(b.String())
+		if got, want := NewIBAN().Scan(data), ibanReferenceScan(data); !slices.Equal(got, want) {
+			t.Fatalf("Scan(%q) = %v, want %v", data, got, want)
+		}
 	}
 }
