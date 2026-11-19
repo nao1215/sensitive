@@ -252,6 +252,10 @@ func TestPrintableStart(t *testing.T) {
 		{"control third byte", encode("ab\x01"), false},
 		{"delete byte", encode("ab\x7f"), false},
 		{"control after one padded byte", encode("a\x00"), false},
+		{"letter outside the alphabet", "YW!j", false},
+		{"padding first", "=Wxj", false},
+		{"padding second", "Y=xj", false},
+		{"letter after padding", "YW=j", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -211,7 +211,8 @@ const maxEncodedText = 8 << 10
 // base64, charged to the scan budget, when the decoded bytes are printable
 // UTF-8 text.
 func encodedTextSensitive[T string | []byte](ctx context.Context, s *eventScanner, value T, key string) (bool, error) {
-	if !standardBase64(value) || !printableStart(value) {
+	const quantum = 4
+	if len(value) == 0 || len(value) > maxEncodedText || len(value)%quantum != 0 || !printableStart(value) || !standardBase64(value) {
 		return false, nil
 	}
 	decoded := make([]byte, base64.StdEncoding.DecodedLen(len(value)))
@@ -225,39 +226,55 @@ func encodedTextSensitive[T string | []byte](ctx context.Context, s *eventScanne
 	return len(findings) > 0, err
 }
 
-// standardBase64 reports a length and alphabet that padded standard base64
-// can have; the decoder checks the padding.
+// standardBase64 reports an alphabet that padded standard base64 can have;
+// the decoder checks the padding.
 func standardBase64[T string | []byte](value T) bool {
-	const quantum = 4
-	if len(value) == 0 || len(value) > maxEncodedText || len(value)%quantum != 0 {
-		return false
-	}
 	for i := range len(value) {
-		if c := value[i]; !ascii.IsAlphaNum(c) && c != '+' && c != '/' && c != '=' {
+		if _, ok := base64Sextet(value[i]); !ok && value[i] != '=' {
 			return false
 		}
 	}
 	return true
 }
 
-// printableStart reports whether the first three bytes value encodes, which
-// standardBase64 accepted, can start printable UTF-8 text, so most plain
-// words such as "accepted" are rejected without decoding the whole value.
+// base64Sextet returns the six bits a standard base64 letter encodes.
+func base64Sextet(c byte) (byte, bool) {
+	switch {
+	case c >= 'A' && c <= 'Z':
+		return c - 'A', true
+	case c >= 'a' && c <= 'z':
+		return c - 'a' + 26, true
+	case c >= '0' && c <= '9':
+		return c - '0' + 52, true
+	case c == '+':
+		return 62, true
+	case c == '/':
+		return 63, true
+	}
+	return 0, false
+}
+
+// printableStart reports whether the first quantum of value, at least four
+// bytes long, is standard base64 whose bytes can start printable UTF-8 text,
+// so most plain words such as "accepted" are rejected without reading the
+// whole value.
 func printableStart[T string | []byte](value T) bool {
-	const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 	var sextets [4]byte
+	n := len(sextets) - 1
 	for i := range sextets {
-		// Padding decodes as zero bits, which the byte count below excludes.
-		sextets[i] = byte(max(0, strings.IndexByte(alphabet, value[i]))) // #nosec G115 -- A 64-letter alphabet index fits a byte.
+		c := value[i]
+		if c == '=' && i >= 2 {
+			// Padding decodes as zero bits, which the byte count excludes.
+			n--
+			continue
+		}
+		sextet, ok := base64Sextet(c)
+		if !ok || n < len(sextets)-1 {
+			return false
+		}
+		sextets[i] = sextet
 	}
 	decoded := [3]byte{sextets[0]<<2 | sextets[1]>>4, sextets[1]<<4 | sextets[2]>>2, sextets[2]<<6 | sextets[3]}
-	n := len(decoded)
-	if value[3] == '=' {
-		n--
-	}
-	if value[2] == '=' {
-		n--
-	}
 	for _, c := range decoded[:n] {
 		if (c < ' ' && c != '\t' && c != '\n' && c != '\r') || c == 0x7f {
 			return false
