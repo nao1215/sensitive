@@ -1,6 +1,6 @@
 # Supported detectors
 
-The [Kind godoc](https://pkg.go.dev/github.com/nao1215/embargo@main#Kind) defines what each detector matches, how it is checked, the confidence it emits and its default selection; [Rules by kind](#rules-by-kind) lists the prefixes, keywords and exclusions of the longer entries. The [README table](../README.md#find-and-mask-sensitive-text) is generated from those comments. Use this page to interpret findings and choose a threshold; format acceptance does not establish account ownership, identity issuance or successful authentication.
+The [Kind godoc](https://pkg.go.dev/github.com/nao1215/embargo@main#Kind) defines what each detector matches, how it is checked, the confidence it emits and its default selection; [Rules by kind](#rules-by-kind) lists the prefixes, keywords and exclusions of the longer entries. The [README table](../README.md#find-and-mask-sensitive-text) lists each Kind with its Example and default, generated from those comments. Use this page to interpret findings and choose a threshold; format acceptance does not establish account ownership, identity issuance or successful authentication.
 
 ## Confidence and false positives
 
@@ -65,6 +65,10 @@ No keyword is needed; 11-digit prefixes are 090/080/070/050/020/060/0800, 0120 t
 
 The forms are (202) 555-0123, 202-555-0123, 202.555.0123 or 202 555 0123. Area codes start 2–9 with a second digit 0–8; exchange codes start 2–9 and are not N11. The two separators must match, so unseparated IDs and timestamps stay visible.
 
+### KindPhone
+
+The number starts with + and an ITU-T E.164 country calling code in service, checked against the full list including global services such as +800 and +883; spare codes such as +0 and +28 never start a number. Digit groups are separated by one space, hyphen or dot; one parenthesized group of up to four digits is allowed, and a parenthesized 0, the trunk prefix of +44 (0)20 7946 0958, is not counted. The number has 7 to 15 digits including the country code, at least four after it, and at least 10 when no separator appears, so +1000000 in an amount stays visible. A + after a letter, digit or another + does not start a number, which excludes time zone offsets such as 10:00+09:00. A run of one repeated digit is a placeholder.
+
 ### KindMyNumber
 
 Weights on the first 11 digits from right to left are 2,3,4,5,6,7,2,3,4,5,6; a remainder of 0 or 1 requires check digit 0, otherwise 11 minus the remainder. Random 12-digit IDs pass this check about one time in ten, so a value whose attached label names a record identifier is not reported: a word ending in id (accountId, recipientAccountId, user_id), account, user, customer, order, invoice, tracking and similar English record words, number or no unless it follows my or individual, and Japanese labels containing 番号 or a business stem such as 注文 or 品番. My Number, mynumber, マイナンバー and 個人番号 keep the candidate.
@@ -119,7 +123,7 @@ Digit 7 must be 9/0 for the 1800s, 1/2 for the 1900s or 3/4 for the 2000s; after
 
 ## Updating detector documentation
 
-Edit the individual constant comment in finding.go, and the matching entry under Rules by kind when the detail changes, then run `go -C tests run ./cmd/detectordocs`. Each comment separates matching from validation with its first semicolon and ends with the NewScanner default in parentheses. The generator uses go/ast, takes the first validation sentence and shortens cells at word boundaries to the prose checker's 120-character budget; each Kind links to its full godoc.
+Edit the individual constant comment in finding.go, and the matching entry under Rules by kind when the detail changes, then run `go -C tests run ./cmd/detectordocs`. Each comment separates matching from validation with its first semicolon and ends with the NewScanner default in parentheses. The generator uses go/ast to check that contract and writes one row per Kind with links to its godoc and its runnable Example and the default.
 
 `go -C tests run ./cmd/detectordocs --check` rejects stale output. `go -C tests test ./cmd/detectordocs` checks all constants, validation clauses, README membership, exact regeneration, observed confidence tiers and default detection through `NewScanner()`. Both commands run in CI; a new kind needs representative inputs for each score before its documentation can pass.
 

@@ -139,7 +139,7 @@ fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
 
 | Group | Detectors | What is detected |
 |---|---:|---|
-| Credentials | 9 | URL and DSN passwords, `password=` and auth headers, tokens from AWS, GitHub, Slack, OpenAI and others, JWT, PEM keys; the entropy heuristic is opt-in |
+| Credentials | 9 | URL and DSN passwords, `password=` and auth headers, AWS, GitHub, Slack, OpenAI and other tokens, JWT, PEM keys |
 | Cards | 5 | Card numbers (Luhn), CVV, expiry, payment tokens; merchant IDs are opt-in |
 | Bank | 6 | IBAN and bank account numbers; SWIFT/BIC, ABA routing, UK sort code and ACH trace are opt-in |
 | Crypto | 2 | Bitcoin and Ethereum addresses |

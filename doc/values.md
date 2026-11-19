@@ -117,7 +117,7 @@ For each call, trace the returned string or bytes to its destination: an authent
 
 `MarshalJSON` and `MarshalText` write the marker. Saving `json.Marshal(credentials)` with a Secret field stores `"[REDACTED]"`, not an encrypted or recoverable value. The original value is lost from that serialized copy. Input rejects the marker on decode so it cannot silently become a password. Persist a deliberately revealed value through an appropriate storage boundary when that is the intended operation; serializing a Secret is a display safeguard.
 
-A homemade `type Password string` with only `String()` can look safe at the top level and still expose its underlying string through `fmt.Sprint(struct{ password Password }{...})`. fmt does not call methods on unexported fields. [The regression test](../secret_test.go) contrasts that case with Secret's pointer storage. CheckValue now covers `%v`, `%+v` and `%#v` inside such a field, so the incomplete type fails with a path such as `fmt/unexported/%v`. The domain example above uses the same storage principle without importing embargo.
+A homemade `type Password string` with only `String()` can look safe at the top level and still expose its underlying string through `fmt.Sprint(struct{ password Password }{...})`. fmt does not call methods on unexported fields. [The regression test](../secret_test.go) contrasts that case with Secret, which keeps its value inside a closure that reflection cannot read. CheckValue now covers `%v`, `%+v` and `%#v` inside such a field, so the incomplete type fails with a path such as `fmt/unexported/%v`. The domain example above uses the same storage principle without importing embargo.
 
 ## Memory lifetime
 
