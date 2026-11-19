@@ -26,7 +26,7 @@ type Scanner struct {
 	// paths holds joined key paths that had no findings, as keys does.
 	paths         *keyCache
 	credential    detect.Detector
-	hintIndex     [256][]dispatchHint
+	hintIndex     [256]dispatchBucket
 	follow        [256]byteSet
 	minConfidence float64
 	unconditional uint64

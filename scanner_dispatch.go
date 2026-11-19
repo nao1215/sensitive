@@ -1,6 +1,9 @@
 package embargo
 
 import (
+	"cmp"
+	"slices"
+
 	"github.com/nao1215/embargo/internal/ascii"
 	"github.com/nao1215/embargo/internal/detect"
 )
@@ -10,9 +13,37 @@ type dispatchHint struct {
 	mask uint64
 }
 
+// dispatchBucket holds the hints that start with one lowered byte. Hintless
+// entries and one-byte hints match on that byte; longer hints are sorted by
+// their second byte, which second lists, so a lookup compares only the hints
+// whose first two bytes match.
+type dispatchBucket struct {
+	long   []dispatchHint
+	second []byte
+	// short is the mask of the hintless entries and one-byte hints.
+	short uint64
+}
+
+func newDispatchBucket(entries []dispatchHint) dispatchBucket {
+	var bucket dispatchBucket
+	for _, entry := range entries {
+		if len(entry.hint) < len("ab") {
+			bucket.short |= entry.mask
+		} else {
+			bucket.long = append(bucket.long, entry)
+		}
+	}
+	slices.SortStableFunc(bucket.long, func(a, b dispatchHint) int { return cmp.Compare(a.hint[1], b.hint[1]) })
+	for _, entry := range bucket.long {
+		bucket.second = append(bucket.second, entry.hint[1])
+	}
+	return bucket
+}
+
 // buildDispatch compiles immutable first-byte buckets once per scanner. The
 // selection mask has one bit per built-in, so there can be at most 64.
 func (s *Scanner) buildDispatch() {
+	var buckets [256][]dispatchHint
 	for i, entries := range s.hintCache {
 		mask := uint64(1) << i
 		if len(entries) == 0 {
@@ -21,19 +52,20 @@ func (s *Scanner) buildDispatch() {
 				s.unconditional |= mask
 			}
 			for _, b := range starts {
-				s.hintIndex[b] = append(s.hintIndex[b], dispatchHint{mask: mask})
+				buckets[b] = append(buckets[b], dispatchHint{mask: mask})
 			}
 		}
 		for _, entry := range entries {
 			b := entry.lowered[0]
-			s.hintIndex[b] = append(s.hintIndex[b], dispatchHint{hint: entry.lowered, mask: mask})
+			buckets[b] = append(buckets[b], dispatchHint{hint: entry.lowered, mask: mask})
 		}
 	}
 	// A dense table lets selectDetectors skip most bytes without loading a
 	// bucket: follow holds the possible second bytes after each first byte,
 	// and is empty when no hint starts with that byte.
-	for b, bucket := range &s.hintIndex {
+	for b, bucket := range &buckets {
 		s.follow[b] = followingBytes(bucket)
+		s.hintIndex[b] = newDispatchBucket(bucket)
 	}
 }
 
@@ -59,12 +91,6 @@ func followingBytes(bucket []dispatchHint) byteSet {
 	return set
 }
 
-// mayStartHint reports whether data[i], already lowered as b, can begin a
-// hint given the byte after it; the final byte only reaches its bucket.
-func (s *Scanner) mayStartHint(data []byte, i int, b byte) bool {
-	return i+1 == len(data) || s.follow[b].has(ascii.ToLower(data[i+1]))
-}
-
 func (s *Scanner) selectDetectors(data []byte) uint64 {
 	// A single detector benefits from the standard library substring search;
 	// walking every byte through dispatch buckets would add work for no sharing.
@@ -75,14 +101,26 @@ func (s *Scanner) selectDetectors(data []byte) uint64 {
 	all := uint64(1)<<len(s.detectors) - 1
 	for i, b := range data {
 		b = ascii.ToLower(b)
-		if !s.mayStartHint(data, i, b) {
+		if i+1 == len(data) {
+			// The final byte only reaches the hints of one byte.
+			selected |= s.hintIndex[b].short
+			break
+		}
+		next := ascii.ToLower(data[i+1])
+		if !s.follow[b].has(next) {
 			continue
 		}
-		for _, entry := range s.hintIndex[b] {
-			if selected&entry.mask != 0 || len(entry.hint) > len(data)-i {
+		bucket := &s.hintIndex[b]
+		selected |= bucket.short
+		for j, second := range bucket.second {
+			if second < next {
 				continue
 			}
-			if hintAt(data[i:], entry.hint) {
+			if second > next {
+				break
+			}
+			entry := &bucket.long[j]
+			if selected&entry.mask == 0 && len(entry.hint) <= len(data)-i && foldedPrefix(data[i+2:], entry.hint[2:]) {
 				selected |= entry.mask
 			}
 		}
@@ -102,13 +140,6 @@ func (s *Scanner) selectSingleDetector(data []byte) uint64 {
 		return 1
 	}
 	return 0
-}
-
-// hintAt reports whether data, whose lowered first byte already equals the
-// hint's, starts with the lowered hint. Hints in a bucket share the first byte
-// but rarely the second, so that byte is compared before the rest.
-func hintAt(data, hint []byte) bool {
-	return len(hint) < len("ab") || (ascii.ToLower(data[1]) == hint[1] && foldedPrefix(data[2:], hint[2:]))
 }
 
 func foldedPrefix(data, hint []byte) bool {
