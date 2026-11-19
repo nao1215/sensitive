@@ -67,7 +67,6 @@ func logHTTPExchange(next slog.Handler, scanner *Scanner, r *http.Request, w *ht
 	}
 	scan := eventScanner{scanner: scanner, spare: nil, remaining: maxScanBytes}
 	record, err := scan.httpRecord(ctx, r, w, when, duration, status)
-	scan.release()
 	if err != nil {
 		cause = err
 		return
@@ -330,6 +329,7 @@ func nilHTTPHandler(next http.Handler) bool {
 
 // httpRecord owns access-field sanitization; logHTTPExchange owns outcomes and recovery.
 func (scan *eventScanner) httpRecord(ctx context.Context, r *http.Request, w *httpLogWriter, when time.Time, duration time.Duration, status int) (slog.Record, error) {
+	defer scan.release()
 	header := w.finalHeader
 	if header == nil {
 		header = w.Header()

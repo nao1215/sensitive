@@ -163,6 +163,14 @@ func (s *eventScanner) maskBytes(ctx context.Context, value []byte, key string) 
 	return masked, masked != text, nil
 }
 
+// knownField returns the cached fieldKey of key when it was the last cached key.
+func (s *eventScanner) knownField(key string) *fieldKey {
+	if last := s.lastKey; last != nil && key != "" && last.key == key {
+		return &last.field
+	}
+	return nil
+}
+
 // scalarFindings scans "key: value" and returns the value's findings in value
 // offsets. The budget is charged before any buffer is filled or detector runs.
 func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scratch *scanScratch, value T, key string) ([]Finding, error) {
@@ -182,11 +190,7 @@ func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scr
 		text = append(append(text, key...), ": "...)
 	}
 	text = append(text, value...)
-	var known *fieldKey
-	if last := s.lastKey; last != nil && prefixBytes > 0 && last.key == key {
-		known = &last.field
-	}
-	findings := s.scanner.scanFieldInto(scratch.findings[:0], &scratch.detected, text, prefixBytes, known, ctx.Err)
+	findings := s.scanner.scanFieldInto(scratch.findings[:0], &scratch.detected, text, prefixBytes, s.knownField(key), ctx.Err)
 	// Keep grown storage for the next user; the returned spans alias findings.
 	scratch.text, scratch.findings = text, findings
 	if ctx.Err() != nil {
@@ -281,11 +285,11 @@ func standardBase64[T string | []byte](value T) bool {
 func base64Sextet(c byte) (byte, bool) {
 	const lower, digits, plus, slash = 26, 52, 62, 63
 	switch {
-	case c >= 'A' && c <= 'Z':
+	case ascii.IsUpper(c):
 		return c - 'A', true
-	case c >= 'a' && c <= 'z':
+	case ascii.IsLower(c):
 		return c - 'a' + lower, true
-	case c >= '0' && c <= '9':
+	case ascii.IsDigit(c):
 		return c - '0' + digits, true
 	case c == '+':
 		return plus, true
