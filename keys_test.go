@@ -26,9 +26,9 @@ func TestMaskKeyCacheHitMatchesScan(t *testing.T) {
 			want, wantErr := (&eventScanner{scanner: scanner, remaining: maxScanBytes}).maskScalar(context.Background(), key, "")
 			for range 2 {
 				scan := eventScanner{scanner: scanner, remaining: maxScanBytes}
-				got, err := scan.maskCached(context.Background(), key)
-				if got.masked != want || !errors.Is(err, wantErr) || got.sensitive != scanner.sensitiveKey(key) {
-					t.Fatalf("maskCached(%q) = %+v, %v; want %q, %v", key, got, err, want, wantErr)
+				got, sensitive, err := scan.maskCached(context.Background(), key)
+				if got != want || !errors.Is(err, wantErr) || sensitive != scanner.sensitiveKey(key) {
+					t.Fatalf("maskCached(%q) = %q, %v, %v; want %q, %v", key, got, sensitive, err, want, wantErr)
 				}
 				if scan.remaining != maxScanBytes-len(key) {
 					t.Fatalf("maskCached(%q) charged %d bytes", key, maxScanBytes-scan.remaining)
@@ -45,7 +45,7 @@ func TestKeyCacheFieldMatchesScan(t *testing.T) {
 		// A pending key is published when it is stored again.
 		for range 2 {
 			scan := eventScanner{scanner: cached, remaining: maxScanBytes}
-			if _, err := scan.maskCached(context.Background(), key); err != nil {
+			if _, _, err := scan.maskCached(context.Background(), key); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -69,15 +69,15 @@ func TestKeyCacheKeepsOnlyCleanShortTextKeys(t *testing.T) {
 	scanner := NewScanner(WithKinds(KindEmail))
 	for _, key := range []string{statusKey, documentedEmail, "17", strings.Repeat("k", maxCachedKeyBytes+1)} {
 		scan := eventScanner{scanner: scanner, remaining: maxScanBytes}
-		if _, err := scan.maskCached(context.Background(), key); err != nil {
+		if _, _, err := scan.maskCached(context.Background(), key); err != nil {
 			t.Fatal(err)
 		}
 	}
-	if _, ok := scanner.keys.load(statusKey); !ok {
+	if scanner.keys.load(statusKey) == nil {
 		t.Fatal("clean key was not cached")
 	}
 	for _, key := range []string{documentedEmail, "17", strings.Repeat("k", maxCachedKeyBytes+1)} {
-		if _, ok := scanner.keys.load(key); ok {
+		if scanner.keys.load(key) != nil {
 			t.Fatalf("%q must not be cached", key)
 		}
 	}
@@ -96,16 +96,16 @@ func TestKeyCacheStopsAdmittingWhenFull(t *testing.T) {
 	t.Parallel()
 	var cache keyCache
 	for i := range maxCachedKeys + 10 {
-		cache.store("key"+strconv.Itoa(i), keyResult{masked: "kept"})
+		cache.store("key"+strconv.Itoa(i), keyResult{sensitive: true})
 	}
-	cache.store("key0", keyResult{masked: "again"})
+	cache.store("key0", keyResult{})
 	if got := cache.size(); got != maxCachedKeys {
 		t.Fatalf("cache size = %d, want %d", got, maxCachedKeys)
 	}
-	if result, ok := cache.load("key0"); !ok || result.masked != "kept" {
-		t.Fatalf("first entry = %+v, %v", result, ok)
+	if result := cache.load("key0"); result == nil || !result.sensitive {
+		t.Fatalf("first entry = %+v", result)
 	}
-	if _, ok := cache.load("key" + strconv.Itoa(maxCachedKeys)); ok {
+	if cache.load("key"+strconv.Itoa(maxCachedKeys)) != nil {
 		t.Fatal("a full cache admitted another key")
 	}
 }
@@ -114,20 +114,20 @@ func TestMaskKeyHitStillChecksCancellationAndBudget(t *testing.T) {
 	t.Parallel()
 	scanner := NewScanner(WithKinds(KindEmail))
 	warm := eventScanner{scanner: scanner, remaining: maxScanBytes}
-	if _, err := warm.maskCached(context.Background(), statusKey); err != nil {
+	if _, _, err := warm.maskCached(context.Background(), statusKey); err != nil {
 		t.Fatal(err)
 	}
 	canceled, cancel := context.WithCancel(context.Background())
 	cancel()
-	if _, err := warm.maskCached(canceled, statusKey); !errors.Is(err, saferecord.ErrCanceled) {
+	if _, _, err := warm.maskCached(canceled, statusKey); !errors.Is(err, saferecord.ErrCanceled) {
 		t.Fatalf("canceled hit = %v", err)
 	}
 	short := eventScanner{scanner: scanner, remaining: len(statusKey) - 1}
-	if _, err := short.maskCached(context.Background(), statusKey); !errors.Is(err, saferecord.ErrSizeLimit) {
+	if _, _, err := short.maskCached(context.Background(), statusKey); !errors.Is(err, saferecord.ErrSizeLimit) {
 		t.Fatalf("hit beyond budget = %v", err)
 	}
 	exact := eventScanner{scanner: scanner, remaining: len(statusKey)}
-	if _, err := exact.maskCached(context.Background(), statusKey); err != nil || exact.remaining != 0 {
+	if _, _, err := exact.maskCached(context.Background(), statusKey); err != nil || exact.remaining != 0 {
 		t.Fatalf("hit at the budget = %v, remaining %d", err, exact.remaining)
 	}
 }
@@ -135,31 +135,31 @@ func TestMaskKeyHitStillChecksCancellationAndBudget(t *testing.T) {
 func TestKeyCachePublishesPendingKeysInDoublingBatches(t *testing.T) {
 	t.Parallel()
 	var cache keyCache
-	cache.store("a", keyResult{masked: "a"})
-	if _, ok := cache.load("a"); !ok {
+	cache.store("a", keyResult{})
+	if cache.load("a") == nil {
 		t.Fatal("the first key must be published at once")
 	}
-	cache.store("b", keyResult{masked: "b"})
-	cache.store("c", keyResult{masked: "c"})
-	if _, ok := cache.load("c"); ok {
+	cache.store("b", keyResult{})
+	cache.store("c", keyResult{sensitive: true})
+	if cache.load("c") != nil {
 		t.Fatal("a pending key smaller than the published set must wait")
 	}
 	if got := cache.size(); got != 3 {
 		t.Fatalf("size = %d, want 3", got)
 	}
-	cache.store("c", keyResult{masked: "again"})
-	if _, ok := cache.load("c"); !ok {
+	cache.store("c", keyResult{})
+	if cache.load("c") == nil {
 		t.Fatal("a pending key stored again must publish its batch")
 	}
-	cache.store("d", keyResult{masked: "d"})
-	cache.store("e", keyResult{masked: "e"})
-	cache.store("d", keyResult{masked: "d"})
+	cache.store("d", keyResult{})
+	cache.store("e", keyResult{})
+	cache.store("d", keyResult{})
 	for _, key := range []string{"a", "b", "c", "d", "e"} {
-		if _, ok := cache.load(key); !ok {
+		if cache.load(key) == nil {
 			t.Fatalf("%q was not published with its batch", key)
 		}
 	}
-	if result, _ := cache.loadBytes([]byte("c")); result.masked != "c" || result.key != "c" {
+	if result := cache.loadBytes([]byte("c")); result == nil || !result.sensitive || result.key != "c" {
 		t.Fatalf("a repeated store replaced the pending result: %+v", result)
 	}
 }

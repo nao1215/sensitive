@@ -766,7 +766,7 @@ func TestJSONFastPathsStopOnBudgetCancellationAndOutputLimit(t *testing.T) {
 	t.Parallel()
 	scanner := NewScanner(WithKinds(KindEmail))
 	warm := eventScanner{scanner: scanner, remaining: maxScanBytes}
-	if _, err := warm.maskCached(t.Context(), "status"); err != nil {
+	if _, _, err := warm.maskCached(t.Context(), "status"); err != nil {
 		t.Fatal(err)
 	}
 	walker := func(remaining int, result []byte) *jsonWalker {

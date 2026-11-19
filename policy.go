@@ -62,11 +62,11 @@ func (k memberKey) changed() bool { return k.masked != k.key }
 // member masks key, enters it and reports its decision; the sink calls leave
 // after the member value.
 func (p *fieldPolicy) member(ctx context.Context, key string) (memberKey, error) {
-	result, err := p.scan.maskCached(ctx, key)
+	masked, sensitive, err := p.scan.maskCached(ctx, key)
 	if err != nil {
 		return memberKey{}, err
 	}
-	decision := memberKey{key: key, masked: result.masked, sensitive: result.sensitive}
+	decision := memberKey{key: key, masked: masked, sensitive: sensitive}
 	return decision, p.enter(ctx, decision)
 }
 
@@ -74,8 +74,8 @@ func (p *fieldPolicy) member(ctx context.Context, key string) (memberKey, error)
 // when key is not cached; then nothing was entered or charged and the sink
 // decodes the key and calls member.
 func (p *fieldPolicy) cachedMember(ctx context.Context, key []byte) (memberKey, bool, error) {
-	result, ok, err := cachedKey(ctx, &p.scan, key)
-	if !ok || err != nil {
+	result, err := cachedKey(ctx, &p.scan, key)
+	if result == nil || err != nil {
 		return memberKey{}, false, err
 	}
 	decision := memberKey{key: result.key, masked: result.key, sensitive: result.sensitive}

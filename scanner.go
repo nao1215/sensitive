@@ -328,8 +328,10 @@ func (s *Scanner) cachedField(key []byte) (fieldKey, bool) {
 	if !cacheableKey(s, key) {
 		return fieldKey{}, false
 	}
-	result, ok := s.keys.loadBytes(key)
-	return result.field, ok
+	if result := s.keys.loadBytes(key); result != nil {
+		return result.field, true
+	}
+	return fieldKey{}, false
 }
 
 // finishScan appends custom detector findings for data and validates them all.

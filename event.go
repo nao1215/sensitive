@@ -178,7 +178,7 @@ func (s *eventScanner) joinedKeySensitive(ctx context.Context, path []byte, boun
 	// A path without findings repeats across records and cannot cross a join.
 	cacheable := s.scanner.paths != nil && len(path) <= maxCachedKeyBytes
 	if cacheable {
-		if _, ok := s.scanner.paths.loadBytes(path); ok {
+		if s.scanner.paths.loadBytes(path) != nil {
 			return false, nil
 		}
 	}
@@ -190,7 +190,7 @@ func (s *eventScanner) joinedKeySensitive(ctx context.Context, path []byte, boun
 		return false, saferecord.ErrCanceled
 	}
 	if cacheable && len(findings) == 0 {
-		s.scanner.paths.store(string(path), keyResult{key: "", masked: "", field: fieldKey{}, sensitive: false})
+		s.scanner.paths.store(string(path), keyResult{key: "", field: fieldKey{}, sensitive: false})
 	}
 	for _, f := range findings {
 		if f.Start < boundary && f.End > boundary+1 {

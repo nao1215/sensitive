@@ -352,8 +352,8 @@ func slogShape(value slog.Value) valueShape {
 // across records and come from the scanner's cache.
 func (h *slogHandler) mask(ctx context.Context, text string) (string, error) {
 	scan := eventScanner{scanner: h.scanner, remaining: maxScanBytes}
-	result, err := scan.maskCached(ctx, text)
-	return result.masked, err
+	masked, _, err := scan.maskCached(ctx, text)
+	return masked, err
 }
 
 func (h *slogHandler) sanitizeAttr(ctx context.Context, policy *fieldPolicy, attr slog.Attr, depth int) (slog.Attr, error) {
