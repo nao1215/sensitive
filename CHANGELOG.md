@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Masking is faster with the same output: slog events take 5% to 16% less time than in v0.18.0, MaskJSON 11% less and Scan of plain log lines up to 23% less.
+
 ## [0.18.0] - 2026-11-20
 
 ### Changed
