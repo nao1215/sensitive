@@ -110,4 +110,4 @@ The generated table above is the source for current per-kind rates, and the accu
 
 ## Your application logs
 
-The public estimates measure this corpus and labeling policy. Use the [local audit command and diagnostic-preservation recipes](audit.md) on your own logs, then label findings and missed secrets. No root scanner API was added for per-field exemptions or per-Kind thresholds.
+The public estimates measure this corpus and labeling policy. Use the [command](https://nao1215.github.io/embargo/command-line/#count-findings) and the [threshold recipe](https://nao1215.github.io/embargo/kinds/#keep-diagnostic-identifiers) on your own logs, then label findings and missed secrets. No root scanner API was added for per-field exemptions or per-Kind thresholds.

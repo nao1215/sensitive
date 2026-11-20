@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- The guides moved from doc/ to the documentation site, https://nao1215.github.io/embargo/, and godoc links point there.
+
 ## [0.20.0] - 2026-11-20
 
 ### Added

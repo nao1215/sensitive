@@ -10,6 +10,17 @@ import fuzz_targets
 
 
 class PolicyTests(unittest.TestCase):
+    def test_website_pages_writes_stay_in_the_deploy_job(self):
+        text = (policies.ROOT/'.github/workflows/website.yml').read_text()
+        policies.website_permissions(text)
+        variants = [text.replace('permissions: {}\n', 'permissions:\n  pages: write\n', 1),
+                    text.replace('      contents: read\n', '      contents: read\n      pages: write\n', 1),
+                    text.replace("    if: github.event_name != 'pull_request'\n", '', 1)]
+        for variant in variants:
+            self.assertNotEqual(variant, text)
+            with self.assertRaises(ValueError):
+                policies.website_permissions(variant)
+
     def test_fuzz_issue_permission_is_limited_to_scheduled_report(self):
         text = (policies.ROOT/'.github/workflows/fuzz.yml').read_text()
         policies.fuzz_issue_permissions(text)

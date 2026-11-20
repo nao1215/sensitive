@@ -28,7 +28,7 @@ import (
 // next.WithAttrs or next.WithGroup, and fields next adds itself, never pass through
 // embargo: they are written unmasked, also beside a withheld diagnostic.
 //
-// [logging guide]: https://github.com/nao1215/embargo/blob/main/doc/logging.md
+// [logging guide]: https://nao1215.github.io/embargo/getting-started/#mask-slog-output
 func NewSlogHandler(next slog.Handler, scanner *Scanner) slog.Handler {
 	if next == nil {
 		panic("embargo: nil slog handler")

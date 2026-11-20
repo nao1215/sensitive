@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
+	"os"
 	"reflect"
 	"regexp"
 	"strings"
@@ -191,7 +192,7 @@ func TestAdoptionCases(t *testing.T) {
 		}
 		writeComparisonTable(t, &table, "\n")
 	}
-	syncDocTable(t, "../doc/cases.md", "adoption-cases", table.String())
+	syncDocTable(t, "../website/content/compare.md", "adoption-cases", table.String())
 }
 
 func TestAdoptionDeclaredControls(t *testing.T) {
@@ -252,7 +253,7 @@ func TestAdoptionCheckIndependence(t *testing.T) {
 		}
 		writeComparisonTable(t, &table, "\n")
 	}
-	syncDocTable(t, "../doc/testing-output.md", "check-independence", table.String())
+	syncDocTable(t, "../website/content/compare.md", "check-independence", table.String())
 }
 
 func TestAuditDiagnosticRecipe(t *testing.T) {
@@ -271,5 +272,13 @@ func TestAuditDiagnosticRecipe(t *testing.T) {
 	baseline, err := embargo.NewScanner().MaskJSON([]byte(input))
 	if err != nil || !strings.Contains(string(baseline), "DEUTDEFF") || strings.Contains(string(baseline), "4111111111111111") {
 		t.Fatalf("default ID policy changed: %s", baseline)
+	}
+	// The Kinds page shows this output as the recipe's result.
+	page, err := os.ReadFile("../website/content/kinds.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(page), "```json\n"+want+"\n```") {
+		t.Fatal("the Kinds page does not show the recipe output")
 	}
 }

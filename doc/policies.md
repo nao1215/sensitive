@@ -71,10 +71,14 @@ This inventory states the owner's active maintenance policy and maps each rule t
 | Country documentation generation uses UTF-8 independently of the host locale | Repository maintenance policy | [test_country_docs_under_ascii_locale](../scripts/test_countries.py) | Verification |
 | Mutation workers and per-test CPUs stay capped at two | Repository maintenance policy | [test_mutation_target_limits_workers_and_test_cpus](../scripts/test_production_hooks.py) | Verification |
 | Every Kind documents matching, validation, scores and default selection | Repository maintenance policy | [kind-contract](../scripts/check_prose.py) | Verification |
-| README detector rows come from godoc and cannot be missing or stale | Repository maintenance policy | [TestReadmeFreshness](../tests/cmd/detectordocs/main_test.go) | Verification |
+| Kinds page detector rows come from godoc and cannot be missing or stale | Repository maintenance policy | [TestPageFreshness](../tests/cmd/detectordocs/main_test.go) | Verification |
 | Documented detector scores agree with representative public scans | Repository maintenance policy | [TestKindConfidenceScores](../tests/cmd/detectordocs/main_test.go) | Verification |
-| README detector defaults agree with NewScanner behavior | Repository maintenance policy | [TestReadmeDefaults](../tests/cmd/detectordocs/main_test.go) | Verification |
+| Kinds page detector defaults agree with NewScanner behavior | Repository maintenance policy | [TestPageDefaults](../tests/cmd/detectordocs/main_test.go) | Verification |
 | Detector documentation checks stay wired into CI | Repository maintenance policy | [detector_docs](../scripts/check_policies.py) | Verification |
+| Every site page is in the menu and every menu entry has a page | Repository maintenance policy | [TestSiteMenuListsEveryPage](../tests/docs_test.go) | MultiPlatformUnitTest |
+| Site links to pages, headings and repository files resolve | Repository maintenance policy | [TestSiteLinksResolve](../tests/docs_test.go) | MultiPlatformUnitTest |
+| Links from Go documentation and Markdown to the site or to main-branch files resolve | Repository maintenance policy | [TestDocumentationLinksResolve](../tests/docs_test.go) | MultiPlatformUnitTest |
+| Generated blocks on the site match their README or doc/ copy | Repository maintenance policy | [TestSiteSharesGeneratedBlocks](../tests/docs_test.go) | MultiPlatformUnitTest |
 | Logger scalar masking agrees with original-key JSON context | Repository maintenance policy | [TestLoggerKeyContextDifferential](../tests/integrations_test.go) | MultiPlatformUnitTest |
 | Slog scans both standard handler representations | Repository maintenance policy | [TestSlogEncodedRepresentations](../slog_handler_test.go) | MultiPlatformUnitTest |
 | Slog explicit groups and WithGroup share a depth bound | Repository maintenance policy | [TestSlogWithGroupDepth](../slog_handler_test.go) | MultiPlatformUnitTest |

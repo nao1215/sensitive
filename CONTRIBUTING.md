@@ -10,7 +10,7 @@ Contributions can add features, fix bugs, improve documentation or test a missin
 
 #### Installing Go
 
-See [Installation and requirements](README.md#installation-and-requirements) for the library's Go floor and [Testing](README.md#testing) for the separate test module's requirement. Install a current Go toolchain using the [official installation guide](https://go.dev/doc/install).
+See [Install](https://nao1215.github.io/embargo/install/) for the library's Go floor and [Testing](README.md#testing) for the separate test module's requirement. Install a current Go toolchain using the [official installation guide](https://go.dev/doc/install).
 
 Verify installation:
 ```bash

@@ -122,7 +122,7 @@
     "symbols": [
       "embargo.Finding.Confidence"
     ],
-    "need": "Callers of Scan read Finding.Confidence to apply their own threshold per kind or show how certain a match is, as doc/audit.md does.",
+    "need": "Callers of Scan read Finding.Confidence to apply their own threshold per kind or show how certain a match is, as the command's --format json report does.",
     "without": "Without the field the caller would have to rescan or reparse the matched text to recover the same information, which the detector already computed."
   },
   {

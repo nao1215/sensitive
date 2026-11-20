@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 280" width="760" height="280" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif" font-size="14">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker></defs>
+<rect x="0" y="0" width="760" height="280" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+<rect x="20" y="40" width="150" height="190" rx="6" fill="#ddf4ff" stroke="#0969da"/>
+<text x="95.0" y="131.0" text-anchor="middle" fill="#1f2328">embargo run</text>
+<text x="95.0" y="149.0" text-anchor="middle" fill="#57606a" font-size="12"></text>
+<text x="95.0" y="165.0" text-anchor="middle" fill="#57606a" font-size="12">starts COMMAND,</text>
+<text x="95.0" y="181.0" text-anchor="middle" fill="#57606a" font-size="12">masks its output,</text>
+<text x="95.0" y="197.0" text-anchor="middle" fill="#57606a" font-size="12">exits with</text>
+<text x="95.0" y="213.0" text-anchor="middle" fill="#57606a" font-size="12">its status</text>
+<rect x="330" y="40" width="150" height="190" rx="6" fill="#f6f8fa" stroke="#8c959f"/>
+<text x="405.0" y="131.0" text-anchor="middle" fill="#1f2328">COMMAND</text>
+<text x="405.0" y="149.0" text-anchor="middle" fill="#57606a" font-size="12"></text>
+<text x="405.0" y="165.0" text-anchor="middle" fill="#57606a" font-size="12">the child</text>
+<text x="405.0" y="181.0" text-anchor="middle" fill="#57606a" font-size="12">process</text>
+<rect x="590" y="40" width="150" height="80" rx="6" fill="#dafbe1" stroke="#1a7f37"/>
+<text x="665.0" y="76.0" text-anchor="middle" fill="#1f2328">stdout</text>
+<text x="665.0" y="94.0" text-anchor="middle" fill="#57606a" font-size="12">masked</text>
+<rect x="590" y="150" width="150" height="80" rx="6" fill="#dafbe1" stroke="#1a7f37"/>
+<text x="665.0" y="186.0" text-anchor="middle" fill="#1f2328">stderr</text>
+<text x="665.0" y="204.0" text-anchor="middle" fill="#57606a" font-size="12">masked</text>
+<line x1="170" y1="70" x2="330" y2="70" stroke="#555" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="250.0" y="64.0" text-anchor="middle" fill="#57606a" font-size="12">stdin, inherited</text>
+<line x1="170" y1="120" x2="330" y2="120" stroke="#555" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="250.0" y="114.0" text-anchor="middle" fill="#57606a" font-size="12">SIGTERM, SIGHUP</text>
+<line x1="480" y1="80" x2="590" y2="80" stroke="#555" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="535.0" y="74.0" text-anchor="middle" fill="#57606a" font-size="12">pipe → mask</text>
+<line x1="480" y1="190" x2="590" y2="190" stroke="#555" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="535.0" y="184.0" text-anchor="middle" fill="#57606a" font-size="12">pipe → mask</text>
+<line x1="330" y1="210" x2="170" y2="210" stroke="#555" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="250.0" y="204.0" text-anchor="middle" fill="#57606a" font-size="12">exit status, or 128 + signal</text>
+<text x="20" y="262" text-anchor="start" fill="#57606a" font-size="12">Each stream is masked line by line on its own, so stdout and stderr never mix. Ctrl-C reaches COMMAND from the terminal.</text>
+</svg>

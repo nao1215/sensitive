@@ -21,7 +21,7 @@
 //
 // If masking fails, the adapter writes a fixed diagnostic with the time, level and
 // an attribute count instead of the original fields; the logging guide explains it:
-// https://github.com/nao1215/embargo/blob/main/doc/logging.md#bounds-and-failures.
+// https://nao1215.github.io/embargo/getting-started/#bounds-and-failures.
 // MarshalJSON, LogValue, String and Error can run before byte limits apply; their
 // time and memory are not bounded. Prefer Secret or a bounded LogValuer.
 package embargologrus

@@ -28,7 +28,9 @@ It exists for four jobs:
 | Catch secrets nobody declared, such as a card number inside an error message | [39 built-in detectors](#find-and-mask-sensitive-text) that check the values: tokens, URL passwords, cards, bank numbers, email, IPs, phone numbers |
 | Prove in CI that no secret reaches the output | [`embargotest`](#fail-tests-on-leaks), which fails a test when a fake secret appears in stdout, logs, HTTP responses or child processes |
 
-Redaction in a log pipeline can still run after it; embargo stops the leak where it is written. See [what it misses](doc/cases.md), its [accuracy](#accuracy) and [speed](#benchmarks).
+Redaction in a log pipeline can still run after it; embargo stops the leak where it is written. See [what it misses](https://nao1215.github.io/embargo/compare/#where-a-logging-policy-stops), its [accuracy](#accuracy) and [speed](#benchmarks).
+
+Documentation: https://nao1215.github.io/embargo/
 
 ## Quick start
 
@@ -61,7 +63,7 @@ fmt.Println(key)
 // Output: [REDACTED]
 ```
 
-`key.Reveal()` returns the value; `Input` decodes one from JSON, config files and SQL rows. [Secret, Input and your own types](doc/values.md)
+`key.Reveal()` returns the value; `Input` decodes one from JSON, config files and SQL rows. [Secret, Input and your own types](https://nao1215.github.io/embargo/getting-started/#values-that-must-never-print)
 
 ## Mask structs without changing their types
 
@@ -93,7 +95,7 @@ fmt.Println(string(safe))
 // {"user":{"email":"[REDACTED]","password":"[REDACTED]"},"amount":125,"paid":true}
 ```
 
-Clean values keep their JSON types; a detected number becomes a marker string. [Key rules and structured values](doc/logging.md)
+Clean values keep their JSON types; a detected number becomes a marker string. [Key rules and structured values](https://nao1215.github.io/embargo/getting-started/#mask-slog-output)
 
 ## Loggers and services
 
@@ -121,7 +123,7 @@ fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
 // Output: 203.0.113.7 - - [17/Nov/2026:10:00:00 +0000] "GET /reset?email=[REDACTED]&token=[REDACTED] HTTP/1.1" 302 0
 ```
 
-The HTTP and gRPC hooks mask what they log, not the request or response. [Adapters](doc/adapters.md) · [Size limits and failure records](doc/logging.md#bounds-and-failures)
+The HTTP and gRPC hooks mask what they log, not the request or response. [Adapters](https://nao1215.github.io/embargo/getting-started/#loggers-and-services) · [Size limits and failure records](https://nao1215.github.io/embargo/getting-started/#bounds-and-failures)
 
 ## Find and mask sensitive text
 
@@ -144,57 +146,8 @@ fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
 | Personal | 6 | Email, IP address, international phone numbers; Japanese and North American phone numbers and My Number are opt-in |
 | National IDs | 11 | Opt-in US, UK, Indian, Brazilian, Chinese, Korean and Canadian identifiers; [rules and measured limits](doc/countries.md) |
 
-<details>
-<summary>All 39 kinds, their Examples and defaults</summary>
 
-
-<!-- detectors:start -->
-| Kind | Input and output | Default |
-|---|---|---|
-| [KindServiceToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindServiceToken) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindServiceToken) | on |
-| [KindHighEntropy](https://pkg.go.dev/github.com/nao1215/embargo@main#KindHighEntropy) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindHighEntropy) | off |
-| [KindCredential](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCredential) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindCredential) | on |
-| [KindPAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPAN) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindPAN) | on |
-| [KindEmail](https://pkg.go.dev/github.com/nao1215/embargo@main#KindEmail) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindEmail) | on |
-| [KindJPPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJPPhone) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindJPPhone) | off |
-| [KindUSPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSPhone) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindUSPhone) | off |
-| [KindPhone](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPhone) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindPhone) | on |
-| [KindMyNumber](https://pkg.go.dev/github.com/nao1215/embargo@main#KindMyNumber) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindMyNumber) | off |
-| [KindJWT](https://pkg.go.dev/github.com/nao1215/embargo@main#KindJWT) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindJWT) | on |
-| [KindAWSKey](https://pkg.go.dev/github.com/nao1215/embargo@main#KindAWSKey) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindAWSKey) | on |
-| [KindIBAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIBAN) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindIBAN) | on |
-| [KindIPAddr](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIPAddr) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindIPAddr) | on |
-| [KindSWIFTBIC](https://pkg.go.dev/github.com/nao1215/embargo@main#KindSWIFTBIC) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindSWIFTBIC) | off |
-| [KindABARouting](https://pkg.go.dev/github.com/nao1215/embargo@main#KindABARouting) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindABARouting) | off |
-| [KindUKSortCode](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKSortCode) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindUKSortCode) | off |
-| [KindCVV](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCVV) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindCVV) | on |
-| [KindCardExpiry](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCardExpiry) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindCardExpiry) | on |
-| [KindPaymentToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPaymentToken) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindPaymentToken) | on |
-| [KindBankAccount](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBankAccount) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindBankAccount) | on |
-| [KindACHTrace](https://pkg.go.dev/github.com/nao1215/embargo@main#KindACHTrace) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindACHTrace) | off |
-| [KindMerchantID](https://pkg.go.dev/github.com/nao1215/embargo@main#KindMerchantID) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindMerchantID) | off |
-| [KindBTC](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBTC) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindBTC) | on |
-| [KindETH](https://pkg.go.dev/github.com/nao1215/embargo@main#KindETH) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindETH) | on |
-| [KindGitHubToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindGitHubToken) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindGitHubToken) | on |
-| [KindSlackToken](https://pkg.go.dev/github.com/nao1215/embargo@main#KindSlackToken) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindSlackToken) | on |
-| [KindGoogleAPIKey](https://pkg.go.dev/github.com/nao1215/embargo@main#KindGoogleAPIKey) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindGoogleAPIKey) | on |
-| [KindPrivateKeyPEM](https://pkg.go.dev/github.com/nao1215/embargo@main#KindPrivateKeyPEM) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindPrivateKeyPEM) | on |
-| [KindUSSSN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSSSN) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindUSSSN) | off |
-| [KindUSITIN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUSITIN) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindUSITIN) | off |
-| [KindUKNINO](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKNINO) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindUKNINO) | off |
-| [KindUKNHS](https://pkg.go.dev/github.com/nao1215/embargo@main#KindUKNHS) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindUKNHS) | off |
-| [KindIndiaAadhaar](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIndiaAadhaar) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindIndiaAadhaar) | off |
-| [KindIndiaPAN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindIndiaPAN) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindIndiaPAN) | off |
-| [KindBrazilCPF](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBrazilCPF) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindBrazilCPF) | off |
-| [KindBrazilCNPJ](https://pkg.go.dev/github.com/nao1215/embargo@main#KindBrazilCNPJ) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindBrazilCNPJ) | off |
-| [KindChinaResidentID](https://pkg.go.dev/github.com/nao1215/embargo@main#KindChinaResidentID) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindChinaResidentID) | off |
-| [KindKoreaRRN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindKoreaRRN) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindKoreaRRN) | off |
-| [KindCanadaSIN](https://pkg.go.dev/github.com/nao1215/embargo@main#KindCanadaSIN) | [Example](https://pkg.go.dev/github.com/nao1215/embargo@main#example-KindCanadaSIN) | off |
-<!-- detectors:end -->
-
-</details>
-
-[Every detector and how it validates](doc/detectors.md) · [Provider token formats](doc/credentials.md)
+[All 39 kinds, their defaults and rules](https://nao1215.github.io/embargo/kinds/) · [Provider token formats](doc/credentials.md)
 
 <!-- masking:start -->
 | Operation | Actual text |
@@ -205,7 +158,7 @@ fmt.Println(embargo.Mask(text, scanner.ScanString(text)))
 | [Overlapping matches](example_test.go) | `token=abcdef` with `abcd cdef` → `token=[REDACTED]` |
 <!-- masking:end -->
 
-`WithMaskFunc` applies the same replacement to log records, MaskJSON and the adapters. [Scanner options and custom replacements](doc/masking.md)
+`WithMaskFunc` applies the same replacement to log records, MaskJSON and the adapters. [Scanner options and custom replacements](https://nao1215.github.io/embargo/getting-started/#choose-what-is-detected)
 
 <!-- narrowing-line:start -->
 Pick the kinds you need: on 2.7 KB of log lines with no secret, `WithKinds(KindEmail)` returns in 0.10 µs because there is no `@` to inspect, while `WithAll()` takes 65 µs. [Per-detector benchmarks](doc/benchmarks.md)
@@ -237,7 +190,7 @@ func TestReadmeCheckOutput(t *testing.T) {
 }
 ```
 
-[Keep your masking, add the leak test](doc/keep-your-masking.md) · [HTTP, child processes and canaries](doc/testing-output.md)
+[Keep your masking, add the leak test, HTTP, child processes and canaries](https://nao1215.github.io/embargo/getting-started/#fail-tests-on-leaks)
 
 ## Command line
 
@@ -260,7 +213,7 @@ $ printf '%s\n' 'login failed for alice@example.com from 203.0.113.7' | embargo
 login failed for [REDACTED] from [REDACTED]
 ```
 
-A JSON line keeps its keys, types and nesting; gzip and bzip2 files are decompressed, and CSV and TSV column names work as keys. `--format json` prints per-kind counts and `--format jsonl` one line per finding; neither prints a matched value. [Flags, limits and CI use](doc/audit.md)
+A JSON line keeps its keys, types and nesting; gzip and bzip2 files are decompressed, and CSV and TSV column names work as keys. `--format json` prints per-kind counts and `--format jsonl` one line per finding; neither prints a matched value. [Flags, limits and CI use](https://nao1215.github.io/embargo/command-line/)
 
 ## Accuracy
 
@@ -300,7 +253,7 @@ Coverage 99.4% · mutation score 89.18% · 13 fuzz targets, 2208636 executions.
 ## Benchmarks
 
 <!-- speed-summary:start -->
-On the same five JSON slog events, embargo is 1.10 to 1.61 times faster than go-masker given the same email and card rules, and embargo's default scanner is 1.86 to 6.00 times faster than pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
+On the same five JSON slog events, embargo is 1.09 to 1.60 times faster than go-masker given the same email and card rules, and embargo's default scanner is 1.83 to 5.79 times faster than pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
 <!-- speed-summary:end -->
 
 <!-- benchmarks:start -->

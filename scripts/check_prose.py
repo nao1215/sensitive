@@ -43,7 +43,14 @@ def markdown(path, text):
         if len(paragraph) > 1:
             result.append(issue(path, 'paragraph', '\n'.join(x[1] for x in paragraph), paragraph[0][0]))
         paragraph.clear()
-    for line, raw in enumerate(text.splitlines(), 1):
+    lines = text.splitlines()
+    front = 0
+    if lines and lines[0] == '---':
+        # Hugo front matter on the site pages is data, not prose.
+        front = lines.index('---', 1) + 1
+    for line, raw in enumerate(lines, 1):
+        if line <= front:
+            continue
         if raw.startswith('```'):
             fence = not fence
             flush()
@@ -115,7 +122,7 @@ def main():
     parser.add_argument('--json',action='store_true')
     args=parser.parse_args()
     findings=[]
-    for path in [ROOT/'README.md',ROOT/'CHANGELOG.md',ROOT/'CONTRIBUTING.md',*sorted((ROOT/'doc').glob('*.md'))]:
+    for path in [ROOT/'README.md',ROOT/'CHANGELOG.md',ROOT/'CONTRIBUTING.md',*sorted((ROOT/'doc').glob('*.md')),*sorted((ROOT/'website/content').glob('*.md'))]:
         findings.extend(markdown(str(path.relative_to(ROOT)),path.read_text()))
     extracted=subprocess.check_output(['go','-C',str(ROOT/'tests'),'run','./cmd/prose',str(ROOT)],text=True)
     findings.extend(godoc(json.loads(extracted)))

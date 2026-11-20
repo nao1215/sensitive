@@ -1,0 +1,16 @@
+{{- /* Images under doc/images, the path the README uses, and the site's
+     own figures under website/figures are mounted as assets, so the page
+     serves the same file, with its intrinsic size when it has one. */ -}}
+{{- $u := .Destination -}}
+{{- $img := "" -}}
+{{- if hasPrefix $u "doc/images/" -}}
+  {{- $img = resources.Get (printf "imgsrc/%s" (strings.TrimPrefix "doc/images/" $u)) -}}
+{{- else if hasPrefix $u "figures/" -}}
+  {{- $img = resources.Get (printf "imgsrc/%s" (strings.TrimPrefix "figures/" $u)) -}}
+{{- end -}}
+{{- if $img -}}
+<img src="{{ $img.RelPermalink }}" alt="{{ .Text }}"{{ with .Title }} title="{{ . }}"{{ end }}{{ if ne $img.MediaType.SubType "svg" }} width="{{ $img.Width }}" height="{{ $img.Height }}"{{ end }} loading="lazy">
+{{- else -}}
+<img src="{{ $u }}" alt="{{ .Text }}"{{ with .Title }} title="{{ . }}"{{ end }} loading="lazy">
+{{- end -}}
+{{- /* chomp trailing newline */ -}}

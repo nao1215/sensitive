@@ -52,3 +52,8 @@ mutation-results/
 
 # atago keeps the last failed scenarios here for --rerun-failed.
 .atago/
+
+# Hugo output of the documentation site
+/website/public/
+/website/resources/
+/website/.hugo_build.lock

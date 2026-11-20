@@ -1,0 +1,14 @@
+{{ define "main" }}
+<article>
+<div class="hero">
+{{- $logo := resources.Get "imgsrc/logo-small.png" }}
+{{- with $logo }}
+<picture>
+<img class="logo" src="{{ (.Resize "640x webp").RelPermalink }}" alt="Go gopher peeking over the embargo title, with email and token values blacked out" width="320" height="200">
+</picture>
+{{- end }}
+<h1>{{ site.Params.tagline }}</h1>
+</div>
+{{ .Content }}
+</article>
+{{ end }}

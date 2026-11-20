@@ -16,23 +16,23 @@
 <rect x="890" y="105" width="1.00" height="258" rx="2" fill="#ccd2da"/>
 <text x="890.0" y="386" font-size="13" fill="#172033" text-anchor="middle">6</text>
 <text x="24" y="134" font-size="15" fill="#172033" text-anchor="start">slog alone</text>
-<rect x="240" y="113" width="43.93" height="28" rx="2" fill="#617281"/>
-<text x="293.93" y="134" font-size="14" fill="#172033" text-anchor="start">0.41 µs</text>
+<rect x="240" y="113" width="43.88" height="28" rx="2" fill="#617281"/>
+<text x="293.88" y="134" font-size="14" fill="#172033" text-anchor="start">0.41 µs</text>
 <text x="24" y="176" font-size="15" fill="#172033" text-anchor="start">slog + embargo (email, card)</text>
-<rect x="240" y="155" width="137.26" height="28" rx="2" fill="#087f75"/>
-<text x="387.26" y="176" font-size="14" fill="#172033" text-anchor="start">1.27 µs</text>
+<rect x="240" y="155" width="138.99" height="28" rx="2" fill="#087f75"/>
+<text x="388.99" y="176" font-size="14" fill="#172033" text-anchor="start">1.28 µs</text>
 <text x="24" y="218" font-size="15" fill="#172033" text-anchor="start">slog + embargo (default)</text>
-<rect x="240" y="197" width="174.47" height="28" rx="2" fill="#0b5f58"/>
-<text x="424.47" y="218" font-size="14" fill="#172033" text-anchor="start">1.61 µs</text>
+<rect x="240" y="197" width="178.70" height="28" rx="2" fill="#0b5f58"/>
+<text x="428.7" y="218" font-size="14" fill="#172033" text-anchor="start">1.65 µs</text>
 <text x="24" y="260" font-size="15" fill="#172033" text-anchor="start">slog + pii-shield v3.0.0</text>
-<rect x="240" y="239" width="499.69" height="28" rx="2" fill="#8a6d00"/>
-<text x="749.69" y="260" font-size="14" fill="#172033" text-anchor="start">4.61 µs</text>
+<rect x="240" y="239" width="501.96" height="28" rx="2" fill="#8a6d00"/>
+<text x="751.96" y="260" font-size="14" fill="#172033" text-anchor="start">4.63 µs</text>
 <text x="24" y="302" font-size="15" fill="#172033" text-anchor="start">slog + masq v0.2.3</text>
-<rect x="240" y="281" width="336.65" height="28" rx="2" fill="#4169b1"/>
-<text x="586.65" y="302" font-size="14" fill="#172033" text-anchor="start">3.11 µs</text>
+<rect x="240" y="281" width="347.97" height="28" rx="2" fill="#4169b1"/>
+<text x="597.97" y="302" font-size="14" fill="#172033" text-anchor="start">3.21 µs</text>
 <text x="24" y="344" font-size="15" fill="#172033" text-anchor="start">slog + go-masker v0.6.1</text>
-<rect x="240" y="323" width="150.31" height="28" rx="2" fill="#9a4814"/>
-<text x="400.31" y="344" font-size="14" fill="#172033" text-anchor="start">1.39 µs</text>
+<rect x="240" y="323" width="151.12" height="28" rx="2" fill="#9a4814"/>
+<text x="401.12" y="344" font-size="14" fill="#172033" text-anchor="start">1.40 µs</text>
 <text x="565.0" y="412" font-size="15" fill="#172033" text-anchor="middle">Time per event (microseconds; linear scale)</text>
 <text x="24" y="436" font-size="12" fill="#172033" text-anchor="start">Median of ten 200 ms samples; JSON to io.Discard; setup excluded. masq and go-masker get email and card rules, pii-shield its default policy.</text>
 </g></svg>

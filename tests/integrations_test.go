@@ -29,6 +29,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -1166,13 +1167,28 @@ func TestWrappedJoinedErrorText(t *testing.T) {
 	}
 }
 
+// TestDomainValueDocumentation keeps the Getting started page naming every
+// output method that the domain example implements, so a method added to
+// the example cannot go unmentioned there.
 func TestDomainValueDocumentation(t *testing.T) {
 	t.Parallel()
 	source, err := os.ReadFile("domain/password.go")
 	if err != nil {
 		t.Fatal(err)
 	}
-	syncDocTable(t, "../doc/values.md", "domain-value", "```go\n"+string(source)+"```\n")
+	page, err := os.ReadFile("../website/content/getting-started.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	methods := regexp.MustCompile(`(?m)^func \(Password\) (\w+)\(`).FindAllSubmatch(source, -1)
+	if len(methods) == 0 || !strings.Contains(string(page), "tests/domain/password.go") {
+		t.Fatal("the page must link the domain example, which must define output methods")
+	}
+	for _, method := range methods {
+		if !strings.Contains(string(page), "`"+string(method[1])+"`") {
+			t.Errorf("the Getting started page does not name %s", method[1])
+		}
+	}
 }
 
 const (
@@ -1690,7 +1706,7 @@ type frameworkLogin struct {
 }
 
 // TestWebFrameworkAccessLogs wraps gin, echo and Connect servers the way
-// doc/adapters.md shows: the framework stays an http.Handler behind
+// the Getting started page shows: the framework stays an http.Handler behind
 // NewHTTPHandler, and application logs go through NewSlogHandler.
 func TestWebFrameworkAccessLogs(t *testing.T) {
 	t.Parallel()

@@ -88,8 +88,10 @@ TAG_PINNED_WORKFLOWS = {'slsa-framework/slsa-github-generator/.github/workflows/
 
 def workflows():
     # release.yml signs keylessly (id-token), attests archives (attestations) and
-    # uploads them with the SLSA provenance (contents).
+    # uploads them with the SLSA provenance (contents). website.yml publishes
+    # the documentation site to GitHub Pages (pages, id-token).
     writes = {'release.yml': {'contents', 'id-token', 'attestations'}, 'coverage.yml': {'actions', 'pull-requests'},
+              'website.yml': {'pages', 'id-token'},
               'reviewdog.yml': {'pull-requests'}, 'codeql.yml': {'security-events'},
               'trivy.yml': {'security-events'}, 'scorecard.yml': {'security-events', 'id-token'},
               'fuzz.yml': {'issues'}}
@@ -101,6 +103,8 @@ def workflows():
         require(actual <= writes.get(path.name, set()), f'{path.name}: unexpected write permissions: {actual}')
         if path.name == 'fuzz.yml':
             fuzz_issue_permissions(text)
+        if path.name == 'website.yml':
+            website_permissions(text)
         if path.name == 'scorecard.yml':
             require(not re.search(r'^(?:env|defaults):', text, re.M), 'Scorecard publication forbids workflow env/defaults')
         for reference in re.findall(r'uses:\s*([^\s#]+)', text):
@@ -110,6 +114,17 @@ def workflows():
                 require(re.search(r'@[0-9a-f]{40}$', reference) or reference in TAG_PINNED_WORKFLOWS, f'unpinned action: {reference}')
         require('pull_request_target:' not in text, f'{path.name}: privileged PR execution forbidden')
     require('github-actions' in read('.github/dependabot.yml'), 'Dependabot must watch actions')
+
+
+def website_permissions(text):
+    """Keep the Pages writes in the deploy job, which a pull request never runs."""
+    prefix, jobs = text.split('\njobs:\n', 1)
+    parts = re.split(r'^  ([\w-]+):\n', jobs, flags=re.M)
+    blocks = dict(zip(parts[1::2], parts[2::2]))
+    write = r'^\s+(?:pages|id-token):\s*write\s*$'
+    require(re.search(r'^permissions: \{\}$', prefix, re.M), 'website workflow permissions must default to none')
+    require(not any(re.search(write, block, re.M) for name, block in blocks.items() if name != 'deploy'), 'Pages writes belong only to the deploy job')
+    require("if: github.event_name != 'pull_request'" in blocks.get('deploy', ''), 'a pull request must not deploy the site')
 
 
 def fuzz_issue_permissions(text):

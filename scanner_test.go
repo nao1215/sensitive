@@ -1594,7 +1594,7 @@ func TestDocumentedKindCounts(t *testing.T) {
 			countries++
 		}
 	}
-	for _, path := range []string{"doc/masking.md", "doc/testing-output.md", "embargotest/detector.go"} {
+	for _, path := range []string{"website/content/getting-started.md", "embargotest/detector.go"} {
 		// #nosec G304 -- Fixed repository documentation paths.
 		text, err := os.ReadFile(path)
 		if err != nil {

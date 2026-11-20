@@ -121,3 +121,10 @@ CPU ?= 0
 scanner-experiment: ## Repeat the rejected lexer and kind-selection benchmarks (BASE clone, CPU)
 	@test -n "$(strip $(BASE))" || { echo 'BASE must name a baseline clone' >&2; exit 1; }
 	python3 scripts/scanner_experiment.py --measure --cpu "$(CPU)"
+
+.PHONY: website website-serve
+website: ## Build the documentation site into website/public
+	cd website && hugo --gc --minify --cleanDestinationDir
+
+website-serve: ## Serve the documentation site locally
+	cd website && hugo server --buildDrafts
