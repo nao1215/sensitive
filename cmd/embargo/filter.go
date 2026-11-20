@@ -38,7 +38,7 @@ func writeFailed(err error) error {
 func filterLines(input io.Reader, output io.Writer, scanner *embargo.Scanner) error {
 	reader := bufio.NewReaderSize(input, ioBuffer)
 	writer := bufio.NewWriterSize(output, ioBuffer)
-	lines := &lineScanner{scanner: scanner}
+	lines := newLineScanner(scanner)
 	for number := 1; ; number++ {
 		line, tooLong, readErr := readLine(reader)
 		if failure := readFailure(tooLong, readErr, number, "output stops before it"); failure != nil {
@@ -168,22 +168,34 @@ const pemProbe = "\nx"
 // start of the open block and rescans it together with each new line, so the
 // root detectors decide where the block ends.
 type lineScanner struct {
-	scanner *embargo.Scanner
-	header  []byte
+	scanner   *embargo.Scanner
+	structure *structure
+	header    []byte
 }
 
-func (l *lineScanner) open() bool { return l.header != nil }
+func newLineScanner(scanner *embargo.Scanner) *lineScanner {
+	return &lineScanner{scanner: scanner, structure: newStructure(scanner), header: nil}
+}
+
+// open reports whether an earlier line left a PEM block, a JSON document or
+// a YAML block open, so this line belongs to it.
+func (l *lineScanner) open() bool { return l.header != nil || l.structure.open() }
 
 // observe records a block opened by a line whose findings were not needed.
 func (l *lineScanner) observe(body []byte) {
 	if bytes.Contains(body, []byte(pemHint)) {
-		l.scan(body)
+		l.scanPEM(body)
 	}
 }
 
 // scan returns line-relative findings for body, including the part of an open
 // PEM block that covers it.
 func (l *lineScanner) scan(body []byte) []embargo.Finding {
+	return mergeFindings(l.scanPEM(body), l.structure.findings(body))
+}
+
+// scanPEM is scan without the structures around the line.
+func (l *lineScanner) scanPEM(body []byte) []embargo.Finding {
 	if l.header == nil {
 		findings := l.scanner.Scan(body)
 		l.header = l.opened(body, findings)

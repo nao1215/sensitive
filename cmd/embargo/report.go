@@ -49,7 +49,7 @@ func writeReport(input io.Reader, output io.Writer, scanner *embargo.Scanner, sa
 
 func collectReport(input io.Reader, scanner *embargo.Scanner, sampleLimit int) (report, error) {
 	groups := make(map[embargo.Kind]*kindReport)
-	scanned := &lineScanner{scanner: scanner}
+	scanned := newLineScanner(scanner)
 	lines, size, err := eachLine(bufio.NewReaderSize(input, ioBuffer), "no report is written", func(number int, offset int64, body []byte) error {
 		for _, finding := range scanned.scan(body) {
 			addFinding(groups, finding, offset, number, sampleLimit)
@@ -78,7 +78,7 @@ func writeFindings(input io.Reader, output io.Writer, scanner *embargo.Scanner) 
 	reader := bufio.NewReaderSize(input, ioBuffer)
 	writer := bufio.NewWriterSize(output, ioBuffer)
 	encoder := json.NewEncoder(writer)
-	scanned := &lineScanner{scanner: scanner}
+	scanned := newLineScanner(scanner)
 	_, _, err := eachLine(reader, "output stops before it", func(number int, offset int64, body []byte) error {
 		for _, f := range scanned.scan(body) {
 			at := newLocation(f, offset, number)

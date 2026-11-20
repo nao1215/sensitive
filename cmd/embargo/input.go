@@ -50,12 +50,12 @@ func safeInputError(err error, fallback string) error {
 type fileSequence struct {
 	stdin    io.Reader
 	current  io.Reader
-	file     *os.File
 	closeErr error
-	names    []string
-	opened   int
+	file     *os.File
 	// format names the compression of the current input, if compressed.
 	format     string
+	names      []string
+	opened     int
 	started    bool
 	unnamed    bool
 	compressed bool
@@ -202,23 +202,28 @@ const (
 	bzip2Format = "bzip2"
 )
 
-// signatures are the starts of the compressed formats, with the byte order
-// marks of UTF-16. A '?' in the bzip2 signature is its block size digit.
-var signatures = []struct{ name, magic string }{
-	{gzipFormat, "\x1f\x8b"},
-	{bzip2Format, "BZh?1AY&SY"},
-	{"zstd", "\x28\xb5\x2f\xfd"},
-	{"xz", "\xfd7zXZ\x00"},
-	{"zip", "PK\x03\x04"},
-	{"7z", "7z\xbc\xaf\x27\x1c"},
-	{"lz4", "\x04\x22\x4d\x18"},
-	{"", utf16LittleEndian},
-	{"", utf16BigEndian},
+// signature is the start of a compressed format; a '?' in the bzip2 magic is
+// its block size digit. A UTF-16 byte order mark has no format name.
+type signature struct{ name, magic string }
+
+// signatures lists the formats compression knows.
+func signatures() []signature {
+	return []signature{
+		{gzipFormat, "\x1f\x8b"},
+		{bzip2Format, "BZh?1AY&SY"},
+		{"zstd", "\x28\xb5\x2f\xfd"},
+		{"xz", "\xfd7zXZ\x00"},
+		{"zip", "PK\x03\x04"},
+		{"7z", "7z\xbc\xaf\x27\x1c"},
+		{"lz4", "\x04\x22\x4d\x18"},
+		{"", utf16LittleEndian},
+		{"", utf16BigEndian},
+	}
 }
 
 // compression names the format whose signature starts head, or "" for text.
 func compression(head []byte) string {
-	for _, signature := range signatures {
+	for _, signature := range signatures() {
 		if len(head) >= len(signature.magic) && signatureMatch(head, signature.magic) {
 			return signature.name
 		}
@@ -228,7 +233,7 @@ func compression(head []byte) string {
 
 // partialSignature reports whether head is shorter than a signature it starts.
 func partialSignature(head []byte) bool {
-	for _, signature := range signatures {
+	for _, signature := range signatures() {
 		if len(head) < len(signature.magic) && signatureMatch(head, signature.magic) {
 			return true
 		}

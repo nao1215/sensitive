@@ -137,6 +137,9 @@ func TestUTF16InputStopsInsteadOfPassingThrough(t *testing.T) {
 	}
 }
 
+// invalidGzip is the message for a gzip input that cannot be decompressed.
+const invalidGzip = "embargo: the input is not valid gzip"
+
 // gzipped compresses text as one gzip member.
 func gzipped(t *testing.T, text string) string {
 	t.Helper()
@@ -159,13 +162,19 @@ func TestCompressedInputIsDecompressedOrStops(t *testing.T) {
 		t.Fatal(err)
 	}
 	member := gzipped(t, "one "+filterEmail+"\n")
+	lines := make([]string, 20000)
+	for i := range lines {
+		lines[i] = "line " + strings.Repeat("x", i%50) + "\n"
+	}
+	large := gzipped(t, strings.Join(lines, ""))
 	cases := []struct{ name, input, want, failure string }{
 		{"gzip", member, "one " + filterMarker + "\n", ""},
 		{"gzip members", member + gzipped(t, "two "+filterPAN+"\n"), "one " + filterMarker + "\ntwo " + filterMarker + "\n", ""},
 		{"bzip2", string(bzipped), "a " + filterMarker + "\n", ""},
 		{"empty gzip", gzipped(t, ""), "", ""},
-		{"broken gzip header", "\x1f\x8bxxxxxxxxxx", "", "embargo: the input is not valid gzip"},
-		{"cut gzip", member[:len(member)-6], "", "embargo: the input is not valid gzip"},
+		{"broken gzip header", "\x1f\x8bxxxxxxxxxx", "", invalidGzip},
+		{"cut gzip", member[:len(member)-6], "", invalidGzip},
+		{"cut after the first read", large[:len(large)/2], "", invalidGzip},
 		{"broken bzip2", "BZh91AY&SY" + strings.Repeat("x", 40), "", "embargo: the input is not valid bzip2"},
 		{"gzip in gzip", gzipped(t, member), "", "embargo: the input is compressed twice; decompress it first"},
 		{"UTF-16 in gzip", gzipped(t, "\xff\xfea\x00"), "", "embargo: the input is UTF-16; convert it to UTF-8"},
@@ -209,13 +218,13 @@ func TestCompressedInputIsDecompressedOrStops(t *testing.T) {
 func TestSniffWaitsOnlyForAPossibleSignature(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
-		chunks []string
 		head   string
+		chunks []string
 	}{
-		{[]string{"plain line\n", "more\n"}, "plain line\n"},
-		{[]string{"\x1f", "\x8b", "rest"}, "\x1f\x8b"},
-		{[]string{"BZ", "h9", "1AY&SY", "data"}, "BZh91AY&SY"},
-		{[]string{"BZ", "x"}, "BZx"},
+		{"plain line\n", []string{"plain line\n", "more\n"}},
+		{"\x1f\x8b", []string{"\x1f", "\x8b", "rest"}},
+		{"BZh91AY&SY", []string{"BZ", "h9", "1AY&SY", "data"}},
+		{"BZx", []string{"BZ", "x"}},
 	} {
 		chunks := make([]io.Reader, len(tc.chunks))
 		for i, chunk := range tc.chunks {
