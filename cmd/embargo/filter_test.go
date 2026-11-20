@@ -35,7 +35,7 @@ func TestFilterMasksTextAndJSONLinesAndKeepsEndings(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			var out bytes.Buffer
-			if err := run(nil, strings.NewReader(tt.input), &out); err != nil {
+			if err := run(nil, strings.NewReader(tt.input), &out, io.Discard); err != nil {
 				t.Fatal(err)
 			}
 			if out.String() != tt.want {
@@ -58,7 +58,7 @@ func TestFilterKindSelection(t *testing.T) {
 		{args: []string{flagKinds, kindsAll}, want: filterMarker + " " + filterMarker + "\n"},
 	} {
 		var out bytes.Buffer
-		if err := run(tc.args, strings.NewReader(input), &out); err != nil {
+		if err := run(tc.args, strings.NewReader(input), &out, io.Discard); err != nil {
 			t.Fatal(tc.args, err)
 		}
 		if out.String() != tc.want {
@@ -71,7 +71,7 @@ func TestFilterStopsBeforeOverlongLineAndReadFailure(t *testing.T) {
 	t.Parallel()
 	var out bytes.Buffer
 	input := "first " + filterPAN + "\n" + strings.Repeat("x", maximumLine+1) + "\nnever written\n"
-	err := run(nil, strings.NewReader(input), &out)
+	err := run(nil, strings.NewReader(input), &out, io.Discard)
 	if err == nil || err.Error() != "embargo: line 2 exceeds the 4 MiB limit; output stops before it" {
 		t.Fatalf("over-long line: %v", err)
 	}
@@ -80,12 +80,12 @@ func TestFilterStopsBeforeOverlongLineAndReadFailure(t *testing.T) {
 	}
 	out.Reset()
 	exact := strings.Repeat("y", maximumLine-1) + "\n"
-	if exactErr := run(nil, strings.NewReader(exact), &out); exactErr != nil || out.Len() != len(exact) {
+	if exactErr := run(nil, strings.NewReader(exact), &out, io.Discard); exactErr != nil || out.Len() != len(exact) {
 		t.Fatalf("line at the limit: err=%v length=%d", exactErr, out.Len())
 	}
 	out.Reset()
 	failing := io.MultiReader(strings.NewReader("card="+filterPAN+"\n"), &failingInput{})
-	err = run(nil, failing, &out)
+	err = run(nil, failing, &out, io.Discard)
 	if err == nil || err.Error() != "embargo: input read failed at line 2; output stops before it" || strings.Contains(out.String(), filterPAN) {
 		t.Fatalf("read failure: err=%v output=%q", err, out.String())
 	}
@@ -94,12 +94,12 @@ func TestFilterStopsBeforeOverlongLineAndReadFailure(t *testing.T) {
 func TestFilterReportsOutputFailures(t *testing.T) {
 	t.Parallel()
 	for _, input := range []string{"line\n", "a\n" + strings.Repeat("z", maximumLine+1)} {
-		if err := run(nil, strings.NewReader(input), failingOutput{}); err == nil || err.Error() != outputWriteFailed {
+		if err := run(nil, strings.NewReader(input), failingOutput{}, io.Discard); err == nil || err.Error() != outputWriteFailed {
 			t.Errorf("output failure for %d bytes: %v", len(input), err)
 		}
 	}
 	// A line larger than the output buffer reaches the writer before the flush.
-	if err := run(nil, strings.NewReader(strings.Repeat("w", 2*ioBuffer)+"\n"), &shortWriter{limit: 0}); err == nil || err.Error() != outputWriteFailed {
+	if err := run(nil, strings.NewReader(strings.Repeat("w", 2*ioBuffer)+"\n"), &shortWriter{limit: 0}, io.Discard); err == nil || err.Error() != outputWriteFailed {
 		t.Errorf("failure writing a large line: %v", err)
 	}
 }
@@ -160,7 +160,7 @@ func TestFilterFlushesWhenNoInputIsBuffered(t *testing.T) {
 	t.Parallel()
 	var out bytes.Buffer
 	reader := &pacedReader{output: &out, lines: []string{"first\n", "second\n"}, flushed: nil}
-	if err := run(nil, reader, &out); err != nil {
+	if err := run(nil, reader, &out, io.Discard); err != nil {
 		t.Fatal(err)
 	}
 	if len(reader.flushed) == 0 || !reader.flushed[0] {
@@ -175,7 +175,7 @@ func TestFilterPassesBinaryBytesAndMasksLongJSONAsText(t *testing.T) {
 	t.Parallel()
 	var out bytes.Buffer
 	binary := "nul\x00 " + filterPAN + " \xff\xfe end\n"
-	if err := run(nil, strings.NewReader(binary), &out); err != nil || out.String() != "nul\x00 "+filterMarker+" \xff\xfe end\n" {
+	if err := run(nil, strings.NewReader(binary), &out, io.Discard); err != nil || out.String() != "nul\x00 "+filterMarker+" \xff\xfe end\n" {
 		t.Fatalf("binary line: err=%v output=%q", err, out.String())
 	}
 	out.Reset()
@@ -183,7 +183,7 @@ func TestFilterPassesBinaryBytesAndMasksLongJSONAsText(t *testing.T) {
 	// and keeps its original spacing.
 	long := `{"card": "` + filterPAN + `", "pad": "` + strings.Repeat("p", 1<<20) + `"}` + "\n"
 	want := `{"card": "` + filterMarker + `", "pad": "` + strings.Repeat("p", 1<<20) + `"}` + "\n"
-	if err := run(nil, strings.NewReader(long), &out); err != nil || out.String() != want {
+	if err := run(nil, strings.NewReader(long), &out, io.Discard); err != nil || out.String() != want {
 		t.Fatalf("long JSON line: err=%v length=%d", err, out.Len())
 	}
 }
@@ -202,7 +202,7 @@ func TestFilterMasksEscapedValuesWhereMaskJSONCannotRun(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			var out bytes.Buffer
-			if err := run(nil, strings.NewReader(tt.input), &out); err != nil {
+			if err := run(nil, strings.NewReader(tt.input), &out, io.Discard); err != nil {
 				t.Fatal(err)
 			}
 			if strings.Contains(out.String(), "alice") || !strings.Contains(out.String(), filterMarker) {
@@ -218,11 +218,11 @@ func TestFilterAndReportShareTheLineLimit(t *testing.T) {
 	over := exact + "z"
 	for _, args := range [][]string{nil, {flagFormat, formatJSON}} {
 		var out bytes.Buffer
-		if err := run(args, strings.NewReader(exact), &out); err != nil {
+		if err := run(args, strings.NewReader(exact), &out, io.Discard); err != nil {
 			t.Errorf("%v: a final line of exactly 4 MiB was rejected: %v", args, err)
 		}
 		out.Reset()
-		err := run(args, strings.NewReader("ok\n"+over), &out)
+		err := run(args, strings.NewReader("ok\n"+over), &out, io.Discard)
 		if err == nil || !strings.HasPrefix(err.Error(), "embargo: line 2 exceeds the 4 MiB limit; ") {
 			t.Errorf("%v: over-long line: %v", args, err)
 		}
@@ -248,7 +248,7 @@ func TestFilterMasksPEMBlockLinesLikeScanLines(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			var out bytes.Buffer
-			if err := run(nil, strings.NewReader(tt.input), &out); err != nil {
+			if err := run(nil, strings.NewReader(tt.input), &out, io.Discard); err != nil {
 				t.Fatal(err)
 			}
 			if got, want := out.String(), maskedByScanLines(t, tt.input); got != want {
@@ -284,10 +284,22 @@ func TestFilterKeepsPEMBlockOpenedInsideJSONLine(t *testing.T) {
 	body := "MIIEvQIBADANBgkqhkiG9w0BAQEFAASC"
 	input := `{"key":"-----BEGIN ` + `PRIVATE KEY-----"}` + "\n" + body + "\n"
 	var out bytes.Buffer
-	if err := run(nil, strings.NewReader(input), &out); err != nil {
+	if err := run(nil, strings.NewReader(input), &out, io.Discard); err != nil {
 		t.Fatal(err)
 	}
 	if strings.Contains(out.String(), body) {
 		t.Fatalf("key body after a JSON-looking header leaked: %q", out.String())
+	}
+}
+
+func TestFilterKeepsAUTF8ByteOrderMark(t *testing.T) {
+	t.Parallel()
+	var out bytes.Buffer
+	input := "\xef\xbb\xbf" + `{"password":"` + filterPassword + `","n": 1}` + "\n"
+	if err := run(nil, strings.NewReader(input), &out, io.Discard); err != nil {
+		t.Fatal(err)
+	}
+	if want := "\xef\xbb\xbf" + `{"password":"[REDACTED]","n":1}` + "\n"; out.String() != want {
+		t.Fatalf("got %q, want %q", out.String(), want)
 	}
 }

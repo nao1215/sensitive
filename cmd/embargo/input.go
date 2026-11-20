@@ -15,12 +15,14 @@ const stdinName = "-"
 // none; the name "-" reads stdin in its place. Files open one at a time; a file
 // that cannot be read stops the input with an error that gives its position
 // among the named files, such as "input file 2 cannot be opened: no such file",
-// but does not repeat its name.
+// but does not repeat its name. An input that starts with a UTF-16 byte order
+// mark, as Windows PowerShell 5 writes for a redirection, stops with an error
+// instead of passing through unmasked.
 func openInputs(names []string, stdin io.Reader) (source io.Reader, closeAll func()) {
-	if len(names) == 0 {
-		return stdin, func() {}
+	files := &fileSequence{names: names, stdin: stdin, current: nil, file: nil, closeErr: nil, unnamed: len(names) == 0}
+	if files.unnamed {
+		files.names = []string{stdinName}
 	}
-	files := &fileSequence{names: names, stdin: stdin, current: nil, file: nil, closeErr: nil}
 	return files, files.close
 }
 
@@ -48,6 +50,8 @@ type fileSequence struct {
 	closeErr error
 	names    []string
 	opened   int
+	started  bool
+	unnamed  bool
 }
 
 // Read reads the files in order and reports io.EOF after the last one.
@@ -56,7 +60,10 @@ func (f *fileSequence) Read(p []byte) (int, error) {
 		if err := f.advance(); err != nil {
 			return 0, err
 		}
-		n, err := f.current.Read(p)
+		n, err := f.readCurrent(p)
+		if failure, ok := errors.AsType[inputError](err); ok {
+			return 0, failure
+		}
 		if errors.Is(err, io.EOF) {
 			// The next file continues the stream, so EOF is reported only after the last.
 			f.close()
@@ -65,12 +72,43 @@ func (f *fileSequence) Read(p []byte) (int, error) {
 			}
 			continue
 		}
+		if err != nil && f.unnamed {
+			// The filter names the line; stdin's own error text is not shown.
+			return n, err
+		}
 		if err != nil {
 			return n, inputError("embargo: an input file cannot be read")
 		}
 		return n, nil
 	}
 }
+
+// readCurrent reads the current input, checking its first bytes for a UTF-16
+// byte order mark.
+func (f *fileSequence) readCurrent(p []byte) (int, error) {
+	if f.started || len(p) < len(utf16LittleEndian) {
+		return f.current.Read(p)
+	}
+	f.started = true
+	n, err := io.ReadAtLeast(f.current, p, len(utf16LittleEndian))
+	if head := string(p[:min(n, len(utf16LittleEndian))]); head == utf16LittleEndian || head == utf16BigEndian {
+		if f.unnamed {
+			return 0, inputError("embargo: the input is UTF-16; convert it to UTF-8")
+		}
+		return 0, inputError(fmt.Sprintf("embargo: input file %d is UTF-16; convert it to UTF-8", f.opened))
+	}
+	if errors.Is(err, io.ErrUnexpectedEOF) {
+		// The short input ends with the next read.
+		err = nil
+	}
+	return n, err
+}
+
+// The UTF-16 byte order marks, little endian first.
+const (
+	utf16LittleEndian = "\xff\xfe"
+	utf16BigEndian    = "\xfe\xff"
+)
 
 // advance opens the next file when none is open, returning io.EOF after the
 // last one and a fixed error for a file that cannot be opened or closed.
@@ -119,5 +157,5 @@ func (f *fileSequence) close() {
 	if f.file != nil {
 		f.closeErr = f.file.Close()
 	}
-	f.current, f.file = nil, nil
+	f.current, f.file, f.started = nil, nil, false
 }

@@ -253,9 +253,9 @@ go install github.com/nao1215/embargo/cmd/embargo@v0.18.1
 
 | Where | Command |
 |---|---|
-| An application that prints secrets | `./app 2>&1 \| embargo >> app.log` |
+| An application that prints secrets | `embargo run ./app >> app.log` |
 | Logs shared in an issue or a chat | `kubectl logs deploy/api \| embargo > share.log` |
-| A CI step's output | `make test 2>&1 \| embargo` |
+| A CI step's output, keeping its exit status | `embargo run make test` |
 | A live log before it is shipped | `tail -f app.log \| embargo \| your-shipper` |
 | A CI gate on a saved log | `out=$(embargo --format jsonl app.log) && test -z "$out"` |
 

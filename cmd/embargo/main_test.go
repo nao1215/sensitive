@@ -21,14 +21,14 @@ func TestHelpVersionAndExitStatus(t *testing.T) {
 		t.Errorf("version: code=%d output=%q", code, out.String())
 	}
 	out.Reset()
-	if code := exitCode([]string{flagKinds, "unknown"}, strings.NewReader(""), &out, &diagnostics); code != 1 || out.Len() != 0 || !strings.HasPrefix(diagnostics.String(), "embargo: --kinds") {
+	if code := exitCode([]string{flagKinds, "unknown"}, strings.NewReader(""), &out, &diagnostics); code != statusUsage || out.Len() != 0 || !strings.HasPrefix(diagnostics.String(), "embargo: --kinds") {
 		t.Errorf("invalid kind: code=%d stdout=%q stderr=%q", code, out.String(), diagnostics.String())
 	}
-	if exitCode([]string{flagKinds, "unknown"}, strings.NewReader(""), &out, failingOutput{}) != 1 {
+	if exitCode([]string{flagKinds, "unknown"}, strings.NewReader(""), &out, failingOutput{}) != statusUsage {
 		t.Error("a failed diagnostic changed the exit status")
 	}
 	for _, args := range [][]string{{"--help"}, {"--version"}} {
-		if run(args, strings.NewReader(""), failingOutput{}) == nil {
+		if run(args, strings.NewReader(""), failingOutput{}, io.Discard) == nil {
 			t.Errorf("%v: output failure ignored", args)
 		}
 	}

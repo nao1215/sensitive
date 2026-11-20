@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `embargo run COMMAND [arg ...]` runs a command, masks its stdout and stderr separately and exits with its status.
+
+### Changed
+
+- The command exits with status 2 for invalid flags, 141 without a message when the reader closes the output (on Windows too), and 126 or 127 when `run` cannot start a command.
+- A UTF-8 byte order mark no longer stops a JSON line from being masked as JSON, and input that starts with a UTF-16 byte order mark is refused instead of passing through unmasked.
+
 ## [0.18.1] - 2026-11-20
 
 ### Changed

@@ -41,7 +41,10 @@ func writeReport(input io.Reader, output io.Writer, scanner *embargo.Scanner, sa
 	}
 	encoder := json.NewEncoder(output)
 	encoder.SetIndent("", "  ")
-	return encoder.Encode(result)
+	if err := encoder.Encode(result); err != nil {
+		return writeFailed(err)
+	}
+	return nil
 }
 
 func collectReport(input io.Reader, scanner *embargo.Scanner, sampleLimit int) (report, error) {
@@ -80,12 +83,14 @@ func writeFindings(input io.Reader, output io.Writer, scanner *embargo.Scanner) 
 		for _, f := range scanned.scan(body) {
 			at := newLocation(f, offset, number)
 			value := foundValue{Kind: f.Kind, Start: at.Start, End: at.End, Line: at.Line, Column: at.Column}
-			if encoder.Encode(value) != nil {
-				return errors.New("embargo: output write failed")
+			if err := encoder.Encode(value); err != nil {
+				return writeFailed(err)
 			}
 		}
-		if reader.Buffered() == 0 && writer.Flush() != nil {
-			return errors.New("embargo: output write failed")
+		if reader.Buffered() == 0 {
+			if err := writer.Flush(); err != nil {
+				return writeFailed(err)
+			}
 		}
 		return nil
 	})
