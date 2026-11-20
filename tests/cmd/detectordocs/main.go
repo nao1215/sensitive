@@ -23,7 +23,7 @@ const (
 type kindDoc struct{ name, value, doc string }
 
 func main() {
-	check := flag.Bool("check", false, "fail if the generated README block differs")
+	check := flag.Bool("check", false, "fail if the generated Kinds page block differs")
 	root := flag.String("root", "..", "repository root (default assumes go -C tests run)")
 	flag.Parse()
 	if err := update(*root, *check); err != nil {
@@ -88,9 +88,9 @@ func readKindValues(value *ast.ValueSpec) ([]kindDoc, error) {
 
 // defaultSetting returns "on" or "off" from a Kind's godoc after checking its
 // contract: the first semicolon separates matching from validation, and the
-// final parenthesis carries NewScanner's default. The README row links the
-// Kind's godoc and its runnable Example instead of repeating the rule, so the
-// rule lives only in the godoc.
+// final parenthesis carries NewScanner's default. The Kinds page row shows the
+// matching clause and links the Kind's godoc and its runnable Example instead
+// of repeating the rest, so the rule lives only in the godoc.
 func defaultSetting(kind kindDoc) (enabled string, err error) {
 	matches, checked, ok := strings.Cut(kind.doc, "; ")
 	validation := regexp.MustCompile(`(?i)\b(check\w*|validat\w*|verif\w*|structure|grammar|Shannon)\b`)
@@ -105,7 +105,7 @@ func defaultSetting(kind kindDoc) (enabled string, err error) {
 }
 
 func render(kinds []kindDoc) (string, error) {
-	rows := []string{startMarker, "| Kind | Input and output | Default |", "|---|---|---|"}
+	rows := []string{startMarker, "| Kind | Matches | Example | Default |", "|---|---|---|---|"}
 	for _, kind := range kinds {
 		// The godoc must still carry its matching and validation clauses.
 		enabled, err := defaultSetting(kind)
@@ -113,14 +113,45 @@ func render(kinds []kindDoc) (string, error) {
 			return "", err
 		}
 		godoc := "https://pkg.go.dev/github.com/nao1215/embargo@main#"
-		rows = append(rows, "| ["+kind.name+"]("+godoc+kind.name+") | [Example]("+godoc+"example-"+kind.name+") | "+enabled+" |")
+		rows = append(rows, "| ["+kind.name+"]("+godoc+kind.name+") | "+matching(kind)+" | [Example]("+godoc+"example-"+kind.name+") | "+enabled+" |")
 	}
 	return strings.Join(append(rows, endMarker), "\n"), nil
 }
 
+// matchingWidth keeps a table cell within two lines on a wide page; the
+// Kind's godoc, which the row links, has the whole clause.
+const matchingWidth = 120
+
+// matching is the godoc's first clause without the Kind name, as a table
+// cell: "KindPAN finds 13–19 digits ...; ..." gives "Finds 13–19 digits ...".
+// A longer clause is cut at a word before matchingWidth and ends in "…".
+func matching(kind kindDoc) string {
+	clause, _, _ := strings.Cut(strings.TrimPrefix(kind.doc, kind.name+" "), "; ")
+	words := strings.Fields(clause)
+	cell := ""
+	for i, word := range words {
+		next := strings.TrimSpace(cell + " " + word)
+		limit := matchingWidth
+		if i < len(words)-1 {
+			limit -= len([]rune(" …"))
+		}
+		if len([]rune(next)) > limit {
+			cell = strings.TrimRight(cell, ",") + " …"
+			break
+		}
+		cell = next
+	}
+	return strings.ReplaceAll(strings.ToUpper(cell[:1])+cell[1:], "|", `\|`)
+}
+
+// pagePath is the site page that holds the generated table.
+func pagePath(root string) string {
+	return filepath.Join(root, "website", "content", "kinds.md")
+}
+
 func detectorBlock(readme string) (string, error) {
 	if strings.Count(readme, startMarker) != 1 || strings.Count(readme, endMarker) != 1 {
-		return "", errors.New("README needs one detectors block")
+		return "", errors.New("the Kinds page needs one detectors block")
 	}
 	start, end := strings.Index(readme, startMarker), strings.Index(readme, endMarker)
 	if end < start {
@@ -138,7 +169,7 @@ func update(root string, check bool) error {
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(root, "README.md")
+	path := pagePath(root)
 	// #nosec G304 G703 -- The generator accepts a local repository root from its caller.
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -156,6 +187,6 @@ func update(root string, check bool) error {
 		return errors.New("stale detectors block; run go -C tests run ./cmd/detectordocs")
 	}
 	const generatedFileMode = 0o600
-	// #nosec G703 -- Only the caller-selected repository README is regenerated.
+	// #nosec G703 -- Only the caller-selected repository page is regenerated.
 	return os.WriteFile(path, []byte(strings.Replace(readme, current, generated, 1)), generatedFileMode)
 }

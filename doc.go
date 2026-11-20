@@ -21,5 +21,5 @@
 // See the [detector cases] and [output examples] for supported representations.
 //
 // [detector cases]: https://github.com/nao1215/embargo/blob/main/doc/accuracy.md
-// [output examples]: https://github.com/nao1215/embargo/blob/main/doc/testing-output.md
+// [output examples]: https://nao1215.github.io/embargo/getting-started/#fail-tests-on-leaks
 package embargo

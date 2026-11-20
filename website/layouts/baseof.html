@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{{- $title := printf "%s · %s" .Title site.Title }}
+{{- with .Params.seoTitle }}{{ $title = . }}{{ end }}
+{{- if .IsHome }}{{ $title = printf "%s — %s" site.Title site.Params.tagline }}{{ end }}
+<title>{{ $title }}</title>
+{{- $desc := or .Params.description site.Params.description }}
+<meta name="description" content="{{ $desc }}">
+<link rel="canonical" href="{{ .Permalink }}">
+<link rel="icon" href="data:,">
+<meta property="og:title" content="{{ $title }}">
+<meta property="og:description" content="{{ $desc }}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ .Permalink }}">
+<meta name="twitter:title" content="{{ $title }}">
+<meta name="twitter:description" content="{{ $desc }}">
+{{- with resources.Get "imgsrc/ogp.png" }}
+{{- $card := .Resize "1200x jpg" }}
+<meta property="og:image" content="{{ $card.Permalink }}">
+<meta property="og:image:width" content="{{ $card.Width }}">
+<meta property="og:image:height" content="{{ $card.Height }}">
+<meta name="twitter:card" content="summary_large_image">
+{{- end }}
+{{- $css := slice (resources.Get "css/site.css") (resources.Get "css/chroma.css") | resources.Concat "css/bundle.css" | minify | fingerprint }}
+<link rel="stylesheet" href="{{ $css.RelPermalink }}">
+{{- /* Build metadata, so a deployed page can be told apart from a stale cached
+       one. The post-deploy check reads these to confirm the commit it expects
+       is the commit that is live; without them, "the site is up" and "the site
+       is the site we just built" are indistinguishable. The workflow sets the
+       commit via HUGO_PARAMS_BUILDCOMMIT; a local build falls back to "dev".
+       Hugo's getenv is whitelisted to HUGO_* only, and a param override is the
+       idiomatic way in besides. */ -}}
+<meta name="embargo-build-commit" content="{{ or site.Params.buildCommit "dev" }}">
+<meta name="embargo-build-time" content="{{ now.UTC.Format "2006-01-02T15:04:05Z" }}">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header>
+<nav>
+<a class="brand" href="{{ site.Home.RelPermalink }}">embargo</a>
+{{- range site.Menus.main }}
+<a{{ if or ($.IsMenuCurrent "main" .) ($.HasMenuCurrent "main" .) }} class="active"{{ end }} href="{{ .URL }}">{{ .Name }}</a>
+{{- end }}
+<a href="https://github.com/nao1215/embargo">GitHub</a>
+<a href="https://github.com/sponsors/nao1215">Sponsor</a>
+<div class="search">
+<button type="button" id="search-box" class="search-box" aria-label="Search the documentation" aria-expanded="false" aria-controls="search-ui" data-pagefind-base="{{ relURL "" }}">Search</button>
+<div id="search-ui" class="search-ui" hidden></div>
+</div>
+</nav>
+</header>
+<main id="main" data-pagefind-body>
+{{ block "main" . }}{{ end }}
+</main>
+<footer>
+<p><a href="https://github.com/nao1215/embargo/blob/main/LICENSE">MIT license</a> · <a href="https://github.com/nao1215/embargo">nao1215/embargo</a></p>
+</footer>
+<script>
+// Add copy buttons as code blocks approach the viewport. Reveal them on
+// hover, keyboard focus, and touch devices.
+(function () {
+  if (!(navigator.clipboard && window.isSecureContext)) return;
+  var main = document.getElementById("main");
+  if (!main) return;
+  function addButton(pre) {
+    if (pre.querySelector(".copy")) return;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "copy";
+    b.textContent = "copy";
+    b.setAttribute("aria-label", "Copy code to clipboard");
+    b.addEventListener("click", function () {
+      var code = pre.querySelector("code");
+      navigator.clipboard.writeText(code ? code.innerText : pre.innerText).then(function () {
+        b.textContent = "copied";
+      }, function () {
+        b.textContent = "failed";
+      }).then(function () {
+        setTimeout(function () { b.textContent = "copy"; }, 1200);
+      });
+    });
+    pre.appendChild(b);
+  }
+  var pres = main.querySelectorAll("pre");
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { addButton(en.target); io.unobserve(en.target); }
+      });
+    }, { rootMargin: "300px" });
+    pres.forEach(function (pre) { io.observe(pre); });
+  } else {
+    pres.forEach(addButton);
+  }
+})();
+</script>
+<script>
+// Load the self-hosted Pagefind index only when search is opened.
+(function () {
+  var box = document.getElementById("search-box");
+  var ui = document.getElementById("search-ui");
+  if (!box || !ui) return;
+  var base = box.getAttribute("data-pagefind-base") || "/";
+  var ready = false;
+  var loading = false;
+  function focusInput() {
+    var input = ui.querySelector("input");
+    if (input && !ui.hidden) input.focus();
+  }
+  function close(restoreFocus) {
+    ui.hidden = true;
+    box.setAttribute("aria-expanded", "false");
+    if (restoreFocus) box.focus();
+  }
+  function failed() {
+    loading = false;
+    ui.textContent = "Search is unavailable. Close it and try again.";
+  }
+  function load() {
+    if (ready) { focusInput(); return; }
+    if (loading) return;
+    loading = true;
+    ui.textContent = "Loading search…";
+    if (!document.getElementById("pagefind-css")) {
+      var css = document.createElement("link");
+      css.id = "pagefind-css";
+      css.rel = "stylesheet";
+      css.href = base + "pagefind/pagefind-ui.css";
+      document.head.appendChild(css);
+    }
+    var s = document.createElement("script");
+    s.src = base + "pagefind/pagefind-ui.js";
+    s.onload = function () {
+      if (typeof PagefindUI === "undefined") { failed(); return; }
+      ui.textContent = "";
+      /* global PagefindUI */
+      new PagefindUI({ element: "#search-ui", showImages: false, showSubResults: true });
+      ready = true;
+      loading = false;
+      focusInput();
+    };
+    s.onerror = failed;
+    document.body.appendChild(s);
+  }
+  box.addEventListener("click", function () {
+    if (!ui.hidden) { close(false); return; }
+    ui.hidden = false;
+    box.setAttribute("aria-expanded", "true");
+    load();
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && !ui.hidden) {
+      event.preventDefault();
+      close(true);
+    }
+  });
+  document.addEventListener("click", function (event) {
+    if (!box.parentElement.contains(event.target)) close(false);
+  });
+})();
+</script>
+</body>
+</html>

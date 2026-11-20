@@ -1,0 +1,14 @@
+{{- /* Three kinds of destination. A page path ("/kinds/#kindpan") gets the
+     site's base path, so pages work under https://<host>/embargo/. A
+     repository path ("example_test.go", "doc/accuracy.md") is the form the
+     README and the shared generated blocks use; it points at that file on
+     GitHub. External URLs and fragments pass through. The docs drift test
+     checks that every page and repository path exists. */ -}}
+{{- $u := .Destination -}}
+{{- if and (hasPrefix $u "/") (not (hasPrefix $u "//")) -}}
+  {{- $u = relURL (strings.TrimPrefix "/" $u) -}}
+{{- else if not (or (hasPrefix $u "#") (findRE `^[a-z]+:` $u)) -}}
+  {{- $u = printf "https://github.com/nao1215/embargo/blob/main/%s" $u -}}
+{{- end -}}
+<a href="{{ $u }}"{{ with .Title }} title="{{ . }}"{{ end }}>{{ .Text }}</a>
+{{- /* chomp trailing newline */ -}}

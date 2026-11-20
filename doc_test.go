@@ -24,17 +24,42 @@ import (
 	"github.com/nao1215/embargo/embargotest"
 )
 
-//nolint:gocognit // Walk the complete declaration or example structure so missing public contracts cannot be skipped.
 func TestReadmeExamples(t *testing.T) {
 	t.Parallel()
-	readme, err := os.ReadFile("README.md")
+	for _, path := range documentationPages(t) {
+		t.Run(path, func(t *testing.T) {
+			t.Parallel()
+			checkDocumentExamples(t, path)
+		})
+	}
+}
+
+// readmePath is the repository README, the first documentation page.
+const readmePath = "README.md"
+
+// documentationPages are the README and the pages of the website: every Go
+// block a reader sees in them is a runnable Example or test.
+func documentationPages(t *testing.T) []string {
+	t.Helper()
+	pages, err := filepath.Glob(filepath.Join("website", "content", "*.md"))
+	if err != nil || len(pages) == 0 {
+		t.Fatal("website pages not found")
+	}
+	return append([]string{readmePath}, pages...)
+}
+
+//nolint:gocognit // Walk the complete declaration or example structure so missing public contracts cannot be skipped.
+func checkDocumentExamples(t *testing.T, path string) {
+	t.Helper()
+	// #nosec G304 -- The paths are repository documentation files.
+	readme, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 	readme = bytes.ReplaceAll(readme, []byte("\r\n"), []byte("\n"))
 	blocks := regexp.MustCompile("(?s)<!-- example: ([^:\n]+):(Example\\w*) -->\n```go\n(.*?)\n```").FindAllSubmatch(readme, -1)
-	if len(blocks) == 0 || len(blocks)+bytes.Count(readme, []byte("<!-- test: ")) != bytes.Count(readme, []byte("```go\n")) {
-		t.Fatal("every README Go block must have an example: file:function marker")
+	if len(blocks)+bytes.Count(readme, []byte("<!-- test: ")) != bytes.Count(readme, []byte("```go\n")) {
+		t.Fatal("every Go block must have an example: file:function marker")
 	}
 	for _, block := range blocks {
 		t.Run(string(block[2]), func(t *testing.T) {
@@ -432,7 +457,7 @@ func Example() {
 func TestDefaultPolicyDocumentation(t *testing.T) {
 	t.Parallel()
 	root := openExampleRoot(t, ".")
-	for _, path := range []string{"doc/masking.md", "doc/testing-output.md", "embargotest/detector.go"} {
+	for _, path := range []string{"website/content/getting-started.md", "embargotest/detector.go"} {
 		text, err := root.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)
@@ -449,7 +474,7 @@ func TestDefaultPolicyDocumentation(t *testing.T) {
 			}
 		}
 	}
-	text, err := os.ReadFile("doc/logging.md")
+	text, err := os.ReadFile("website/content/getting-started.md")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -513,13 +538,18 @@ func TestReadmeCheckOutput(t *testing.T) {
 
 func TestReadmeTestSnippets(t *testing.T) {
 	t.Parallel()
-	data, err := os.ReadFile("README.md")
-	if err != nil {
-		t.Fatal(err)
-	}
-	blocks := regexp.MustCompile("(?s)<!-- test: ([^:]+):(Test\\w+) -->\\n```go\\n(.*?)\\n```").FindAllStringSubmatch(string(data), -1)
-	if len(blocks) != 1 {
-		t.Fatal("README must show the real output-check test")
+	var blocks [][]string
+	for _, path := range documentationPages(t) {
+		// #nosec G304 -- The paths are repository documentation files.
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := regexp.MustCompile("(?s)<!-- test: ([^:]+):(Test\\w+) -->\\n```go\\n(.*?)\\n```").FindAllStringSubmatch(string(data), -1)
+		if path == readmePath && len(found) != 1 {
+			t.Fatal("README must show the real output-check test")
+		}
+		blocks = append(blocks, found...)
 	}
 	for _, block := range blocks {
 		fset := token.NewFileSet()
@@ -541,12 +571,12 @@ func TestReadmeTestSnippets(t *testing.T) {
 			if ok && fn.Name.Name == block[2] {
 				found = true
 				if canonicalExample(t, fset, fn.Body) != canonicalExample(t, fset, snippetFunc.Body) {
-					t.Fatal("README test differs from the executable test")
+					t.Fatal("documented test differs from the executable test")
 				}
 			}
 		}
 		if !found {
-			t.Fatal("README test not found")
+			t.Fatal("documented test not found")
 		}
 	}
 }
@@ -565,9 +595,7 @@ func TestReadmeMaskingFigure(t *testing.T) {
 	//nolint:gocritic // Markdown code spans need literal backticks, not Go string quoting.
 	table := fmt.Sprintf("| Operation | Actual text |\n|---|---|\n| Input | `%s` |\n| [Mask](example_test.go) | `%s` |\n| [MaskFunc: keep last four](example_test.go) | `%s` |\n| [Overlapping matches](example_test.go) | `%s` with `%s` → `%s` |\n", log[0], log[1], log[2], overlap[0], overlap[1], overlap[2])
 	syncVisualDocument(t, "README.md", "masking", table)
-	//nolint:dupword,gocritic // Mermaid labels and consecutive edges require literal quotes and repeated node names.
-	diagram := fmt.Sprintf("```mermaid\nflowchart LR\n  input[\"%s\"] --> first[\"Match: %s\"]\n  input --> second[\"Match: %s\"]\n  first --> union[\"Merge overlapping spans\"]\n  second --> union\n  union --> output[\"%s\"]\n```\n", overlap[0], strings.Fields(overlap[1])[0], strings.Fields(overlap[1])[1], overlap[2])
-	syncVisualDocument(t, "doc/masking.md", "overlap", diagram)
+	syncVisualDocument(t, "website/content/getting-started.md", "masking", table)
 }
 
 func syncVisualDocument(t *testing.T, path, name, content string) {
@@ -596,25 +624,25 @@ func syncVisualDocument(t *testing.T, path, name, content string) {
 	}
 }
 
-// TestReadmeCLIExampleIsPinnedByE2E keeps the README command example in step
-// with the atago spec that runs it: the example's input line must be fed to the
-// built command there and its output line must be what the spec expects.
+// TestInstallExamplesShareOneVersion keeps every install line, archive name
+// and provenance tag a reader copies on the same release.
 func TestInstallExamplesShareOneVersion(t *testing.T) {
 	t.Parallel()
 	files, err := filepath.Glob("doc/*.md")
 	if err != nil {
 		t.Fatal(err)
 	}
-	pin := regexp.MustCompile(`github\.com/nao1215/embargo[a-z/]*@(v\d[0-9A-Za-z.-]*)`)
+	pin := regexp.MustCompile(`github\.com/nao1215/embargo[a-z/]*@(v\d[0-9A-Za-z.-]*)|embargo_(\d[0-9A-Za-z.-]*)_[a-z]|--source-tag (v\d[0-9A-Za-z.-]*)`)
 	versions := map[string][]string{}
-	for _, path := range append(files, "README.md") {
+	for _, path := range append(files, documentationPages(t)...) {
 		// #nosec G304 -- The paths are repository documentation files.
 		text, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)
 		}
 		for _, match := range pin.FindAllSubmatch(text, -1) {
-			versions[string(match[1])] = append(versions[string(match[1])], path)
+			version := "v" + strings.TrimPrefix(string(bytes.Join(match[1:], nil)), "v")
+			versions[version] = append(versions[version], path)
 		}
 	}
 	if len(versions) != 1 {
@@ -622,55 +650,68 @@ func TestInstallExamplesShareOneVersion(t *testing.T) {
 	}
 }
 
+// cliSpec is the atago spec that runs the documented command lines.
+const cliSpec = "e2e/atago/cli.atago.yaml"
+
+// TestReadmeCLIExampleIsPinnedByE2E keeps the command examples in step with
+// the atago spec that runs them: each cli-example's input line is fed to the
+// built command there and its output line is what the spec expects, and
+// every embargo line in an sh block runs in the spec as written.
 func TestReadmeCLIExampleIsPinnedByE2E(t *testing.T) {
 	t.Parallel()
-	readme, err := os.ReadFile("README.md")
+	spec, err := os.ReadFile(cliSpec)
 	if err != nil {
 		t.Fatal(err)
 	}
-	block := regexp.MustCompile("(?s)<!-- cli-example: ([^ ]+) -->\n```text\n\\$ printf '%s\\\\n' '([^']+)' \\| embargo\n([^\n]+)\n```").FindSubmatch(readme)
-	if block == nil {
-		t.Fatal("README needs one cli-example block piping one printf line into embargo, then the output line")
-	}
-	// #nosec G304,G703 -- The path is a repository file named by the README marker.
-	spec, err := os.ReadFile(string(block[1]))
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, line := range [][]byte{block[2], block[3]} {
-		if !regexp.MustCompile(`(?m)^\s+` + regexp.QuoteMeta(string(line)) + `$`).Match(spec) {
-			t.Errorf("%s does not run or expect the README line %q", block[1], line)
+	for _, path := range documentationPages(t) {
+		// #nosec G304 -- The paths are repository documentation files.
+		text, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		checkCLIExamples(t, path, text, spec)
+		for _, match := range regexp.MustCompile("(?s)```sh\n(.*?)```").FindAllSubmatch(text, -1) {
+			checkDocumentedCommands(t, string(match[1]), spec)
 		}
 	}
-	// Every embargo command in the README Command line block and in the
-	// command guide also runs in the spec, through sh when it uses the shell.
-	install := regexp.MustCompile("(?s)## Command line\n.*?```sh\n(.*?)```").FindSubmatch(readme)
-	if install == nil {
-		t.Fatal("README Command line section needs an sh block")
+}
+
+// checkCLIExamples checks each printf example of one page against the spec;
+// the README must have exactly one.
+func checkCLIExamples(t *testing.T, path string, text, spec []byte) {
+	t.Helper()
+	example := regexp.MustCompile("(?s)<!-- cli-example: ([^ ]+) -->\n```text\n\\$ printf '%s\\\\n' '([^']+)' \\| embargo\n([^\n]+)\n```")
+	found := example.FindAllSubmatch(text, -1)
+	if path == readmePath && len(found) != 1 {
+		t.Fatal("README needs one cli-example block piping one printf line into embargo, then the output line")
 	}
-	guide, err := os.ReadFile("doc/audit.md")
-	if err != nil {
-		t.Fatal(err)
+	for _, block := range found {
+		if string(block[1]) != cliSpec {
+			t.Fatalf("%s names spec %s, want %s", path, block[1], cliSpec)
+		}
+		for _, line := range [][]byte{block[2], block[3]} {
+			if !regexp.MustCompile(`(?m)^\s+` + regexp.QuoteMeta(string(line)) + `$`).Match(spec) {
+				t.Errorf("%s does not run or expect the %s line %q", cliSpec, path, line)
+			}
+		}
 	}
-	matches := regexp.MustCompile("(?s)```sh\n(.*?)```").FindAllSubmatch(guide, -1)
-	blocks := make([][]byte, 0, len(matches)+1)
-	blocks = append(blocks, install[1])
-	for _, match := range matches {
-		blocks = append(blocks, match[1])
-	}
-	for _, text := range blocks {
-		for line := range strings.Lines(string(text)) {
-			line = strings.TrimSpace(line)
-			if !strings.HasPrefix(line, "embargo ") && !strings.HasPrefix(line, "! embargo ") {
-				continue
-			}
-			command := line
-			if strings.ContainsAny(line, "<>|!") {
-				command = "sh -c '" + line + "'"
-			}
-			if !strings.Contains(string(spec), "command: "+command+"\n") {
-				t.Errorf("%s does not run the documented command %q", block[1], line)
-			}
+}
+
+// checkDocumentedCommands requires every embargo line of an sh block to run
+// in the spec, through sh when it uses the shell.
+func checkDocumentedCommands(t *testing.T, block string, spec []byte) {
+	t.Helper()
+	for line := range strings.Lines(block) {
+		line = strings.TrimSpace(line)
+		if !strings.HasPrefix(line, "embargo ") && !strings.HasPrefix(line, "! embargo ") {
+			continue
+		}
+		command := line
+		if strings.ContainsAny(line, "<>|!") {
+			command = "sh -c '" + line + "'"
+		}
+		if !strings.Contains(string(spec), "command: "+command+"\n") {
+			t.Errorf("%s does not run the documented command %q", cliSpec, line)
 		}
 	}
 }

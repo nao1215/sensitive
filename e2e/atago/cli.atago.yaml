@@ -2,7 +2,7 @@
 # Black-box behaviour of the embargo command: the pipe filter, file input,
 # --format json and jsonl, a CI gate, run, exit codes and option errors. scripts/run_e2e.sh builds
 # the command from this checkout and puts it first on PATH.
-# The first scenario pins the command output shown in the README.
+# The first scenario pins the command output shown in the README and on the site.
 version: "1"
 
 suite:
@@ -211,7 +211,7 @@ scenarios:
       - assert:
           exit_code: 1
 
-  - name: the commands in doc/audit.md run as written
+  - name: the commands on the Command line page run as written
     steps:
       - fixture:
           file: app.log

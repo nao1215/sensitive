@@ -396,9 +396,9 @@
     "where": "Verification"
   },
   {
-    "rule": "README detector rows come from godoc and cannot be missing or stale",
+    "rule": "Kinds page detector rows come from godoc and cannot be missing or stale",
     "source": "Repository maintenance policy",
-    "check": "tests/cmd/detectordocs/main_test.go#TestReadmeFreshness",
+    "check": "tests/cmd/detectordocs/main_test.go#TestPageFreshness",
     "where": "Verification"
   },
   {
@@ -408,9 +408,9 @@
     "where": "Verification"
   },
   {
-    "rule": "README detector defaults agree with NewScanner behavior",
+    "rule": "Kinds page detector defaults agree with NewScanner behavior",
     "source": "Repository maintenance policy",
-    "check": "tests/cmd/detectordocs/main_test.go#TestReadmeDefaults",
+    "check": "tests/cmd/detectordocs/main_test.go#TestPageDefaults",
     "where": "Verification"
   },
   {
@@ -418,6 +418,30 @@
     "source": "Repository maintenance policy",
     "check": "scripts/check_policies.py#detector_docs",
     "where": "Verification"
+  },
+  {
+    "rule": "Every site page is in the menu and every menu entry has a page",
+    "source": "Repository maintenance policy",
+    "check": "tests/docs_test.go#TestSiteMenuListsEveryPage",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Site links to pages, headings and repository files resolve",
+    "source": "Repository maintenance policy",
+    "check": "tests/docs_test.go#TestSiteLinksResolve",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Links from Go documentation and Markdown to the site or to main-branch files resolve",
+    "source": "Repository maintenance policy",
+    "check": "tests/docs_test.go#TestDocumentationLinksResolve",
+    "where": "MultiPlatformUnitTest"
+  },
+  {
+    "rule": "Generated blocks on the site match their README or doc/ copy",
+    "source": "Repository maintenance policy",
+    "check": "tests/docs_test.go#TestSiteSharesGeneratedBlocks",
+    "where": "MultiPlatformUnitTest"
   },
   {
     "rule": "Logger scalar masking agrees with original-key JSON context",

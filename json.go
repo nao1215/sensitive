@@ -20,7 +20,7 @@ func jsonFailure() error { return saferecord.ErrMasking }
 // Use it before sending JSON API responses, exports or audit records; the
 // [logging guide] describes the remaining bounds.
 //
-// [logging guide]: https://github.com/nao1215/embargo/blob/main/doc/logging.md#bounds-and-failures
+// [logging guide]: https://nao1215.github.io/embargo/getting-started/#bounds-and-failures
 func (s *Scanner) MaskJSON(data []byte) ([]byte, error) {
 	return s.MaskJSONContext(context.Background(), data)
 }

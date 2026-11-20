@@ -16,7 +16,7 @@ Raw Scan accepts arbitrary byte slices and does not impose an input limit. The s
 
 MaskJSON limits input/output and cumulative scan work to the limits documented in json.go; JSON nesting is limited to 64. Inputs over 1 MiB or over the nesting bound return a fixed error and no output. The structured normalizer also bounds slog Any values; a failed record is suppressed. Slog messages and typed string attributes use raw Scan and do not inherit the JSON input limit, so callers must bound their record size. Tests cover deep trees, wide objects, large scalars and invalid strings. ScanLines has the documented bufio line limit and returns an error for an oversized line; direct Scan is the path for a caller that explicitly accepts larger lines. Guard and Recorder share a retained-byte budget across streams and reject overflow; timeout and scanner failure prevent replay. A synchronous custom detector can still loop forever: the caller must trust extensions or isolate them in a process.
 
-The same built-in inventory now includes all eleven country detectors in allocation and scaling tests. HTTP, gRPC, OpenTelemetry and Sentry add TestHookAllocationBudget and BenchmarkHookScaling at the same five sizes. Large MaskJSON-backed SDK records measure fail-closed rejection above the JSON limit; HTTP and gRPC remain access-log boundaries and do not mask service wire data. Log metadata that an SDK does not permit the wrapper to replace is either suppressed or explicitly outside the documented wrapper scope. See the [production scenario matrix](adapters.md#production-leak-scenarios).
+The same built-in inventory now includes all eleven country detectors in allocation and scaling tests. HTTP, gRPC, OpenTelemetry and Sentry add TestHookAllocationBudget and BenchmarkHookScaling at the same five sizes. Large MaskJSON-backed SDK records measure fail-closed rejection above the JSON limit; HTTP and gRPC remain access-log boundaries and do not mask service wire data. Log metadata that an SDK does not permit the wrapper to replace is either suppressed or explicitly outside the documented wrapper scope. See the production scenario matrix below.
 
 ## Encodings and audit tradeoffs
 
@@ -51,5 +51,20 @@ A generic code key does not imply a credential, so an OAuth authorization code u
 Credential scanning decodes at most four Go/JSON quote/backslash layers and one percent layer, and does not reconstruct arbitrary encodings or split fields; %#v byte lists are masked as complete credential-key values without decoding the bytes, while embargotest also recognizes a registered canary inside such a list.
 
 Unquoted fmt values with spaces are bounded by the next field or container end and can over-mask adjacent prose; YAML block scalars require indentation under a credential key, and their contents remain masked through the next peer line.
+
+## Production leak scenarios
+
+| Scenario | Checked output | Expected result | Executable evidence |
+|---|---|---|---|
+| HTTP auth, cookies, custom header and query | Access record from a real request | Opaque values hidden; public field and status retained | TestHTTPHandlerMasksLogsAndPreservesExchange |
+| Redirect containing a custom query secret | Logged Location | Hidden in log; original Location reaches the client | TestHTTPHandlerMasksLogsAndPreservesExchange |
+| Unary RPC denied with a password in its error | gRPC access record | Error text and metadata masked; client code preserved | TestInterceptorsWithRealGRPC |
+| Streaming RPC fails after starting | Final stream access record | One masked record; client receives original status | TestInterceptorsWithRealGRPC |
+| OTel body, secret-key attribute and string slice | Exported log record | Text hidden; count stays an integer; input unchanged | TestExportersThroughRealProviders |
+| Span resource, scope, link and error description | Exported ReadOnlySpan | All recorded text paths masked | TestSpanResourceScopeLinksAndStatusAreMasked |
+| Log resource contains an opaque password | Export batch | Nothing forwarded | TestSensitiveResourceSuppressesLogBatch |
+| Sentry request, context and breadcrumb contain secrets | Event delivered by the SDK | Serialized values hidden; public count retained | TestBeforeSendThroughSentryClient |
+| Vendor TraceState contains email or an opaque session | Span, parent and link contexts | TraceState omitted; IDs and flags retained | TestSpanContextsOmitTraceStateWithoutChangingIdentity |
+| Sentry sampling context contains a customer email | SDK envelope sampling context | Email masked; public sampling fields retained | TestClientPreservesAndMasksDynamicSamplingContext |
 
 [Support maintenance](https://github.com/sponsors/nao1215).

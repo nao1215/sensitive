@@ -24,7 +24,7 @@ import (
 // they are; build logger from a handler without them. The [logging guide] covers
 // contexts, panics and the failure record.
 //
-// [logging guide]: https://github.com/nao1215/embargo/blob/main/doc/logging.md#bounds-and-failures
+// [logging guide]: https://nao1215.github.io/embargo/getting-started/#bounds-and-failures
 func NewHTTPHandler(next http.Handler, logger *slog.Logger, scanner *Scanner) http.Handler {
 	if next == nil || nilHTTPHandler(next) || logger == nil || scanner == nil {
 		panic("embargo: nil HTTP dependency")

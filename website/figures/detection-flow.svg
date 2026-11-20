@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 422" width="760" height="422" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif" font-size="14">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker></defs>
+<rect x="0" y="0" width="760" height="422" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+<rect x="20" y="40" width="160" height="70" rx="6" fill="#f6f8fa" stroke="#8c959f"/>
+<text x="100.0" y="64.0" text-anchor="middle" fill="#1f2328">JSON walk</text>
+<text x="100.0" y="82.0" text-anchor="middle" fill="#57606a" font-size="12">slog, MaskJSON,</text>
+<text x="100.0" y="98.0" text-anchor="middle" fill="#57606a" font-size="12">adapters</text>
+<line x1="180" y1="75.0" x2="207" y2="75.0" stroke="#555" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="207" y="40" width="160" height="70" rx="6" fill="#f6f8fa" stroke="#8c959f"/>
+<text x="287.0" y="64.0" text-anchor="middle" fill="#1f2328">Sensitive key?</text>
+<text x="287.0" y="82.0" text-anchor="middle" fill="#57606a" font-size="12">password, token,</text>
+<text x="287.0" y="98.0" text-anchor="middle" fill="#57606a" font-size="12">api_key, *_secret …</text>
+<line x1="367" y1="75.0" x2="394" y2="75.0" stroke="#555" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="380.5" y="69.0" text-anchor="middle" fill="#57606a" font-size="12">yes</text>
+<rect x="394" y="40" width="347" height="70" rx="6" fill="#fff8c5" stroke="#bf8700"/>
+<text x="567.5" y="80.0" text-anchor="middle" fill="#1f2328">The whole value becomes [REDACTED]</text>
+<line x1="287.0" y1="110" x2="287.0" y2="170" stroke="#555" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="295.0" y="144.0" text-anchor="start" fill="#57606a" font-size="12">no: the scalar, with its key</text>
+<rect x="20" y="170" width="160" height="70" rx="6" fill="#f6f8fa" stroke="#8c959f"/>
+<text x="100.0" y="194.0" text-anchor="middle" fill="#1f2328">Text</text>
+<text x="100.0" y="212.0" text-anchor="middle" fill="#57606a" font-size="12">Scan, Mask,</text>
+<text x="100.0" y="228.0" text-anchor="middle" fill="#57606a" font-size="12">the command</text>
+<line x1="180" y1="205.0" x2="207" y2="205.0" stroke="#555" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="207" y="170" width="160" height="70" rx="6" fill="#f6f8fa" stroke="#8c959f"/>
+<text x="287.0" y="194.0" text-anchor="middle" fill="#1f2328">Normalized view</text>
+<text x="287.0" y="212.0" text-anchor="middle" fill="#57606a" font-size="12">escapes decoded once,</text>
+<text x="287.0" y="228.0" text-anchor="middle" fill="#57606a" font-size="12">offsets kept</text>
+<line x1="367" y1="205.0" x2="394" y2="205.0" stroke="#555" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="394" y="170" width="160" height="70" rx="6" fill="#f6f8fa" stroke="#8c959f"/>
+<text x="474.0" y="194.0" text-anchor="middle" fill="#1f2328">First-byte dispatch</text>
+<text x="474.0" y="212.0" text-anchor="middle" fill="#57606a" font-size="12">runs only detectors</text>
+<text x="474.0" y="228.0" text-anchor="middle" fill="#57606a" font-size="12">whose hint occurs</text>
+<line x1="554" y1="205.0" x2="581" y2="205.0" stroke="#555" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="581" y="170" width="160" height="70" rx="6" fill="#f6f8fa" stroke="#8c959f"/>
+<text x="661.0" y="194.0" text-anchor="middle" fill="#1f2328">Detectors</text>
+<text x="661.0" y="212.0" text-anchor="middle" fill="#57606a" font-size="12">parse, then check</text>
+<text x="661.0" y="228.0" text-anchor="middle" fill="#57606a" font-size="12">sums, shape, labels</text>
+<line x1="661.0" y1="240" x2="661.0" y2="300" stroke="#555" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="581" y="300" width="160" height="70" rx="6" fill="#f6f8fa" stroke="#8c959f"/>
+<text x="661.0" y="324.0" text-anchor="middle" fill="#1f2328">Findings</text>
+<text x="661.0" y="342.0" text-anchor="middle" fill="#57606a" font-size="12">kind, confidence,</text>
+<text x="661.0" y="358.0" text-anchor="middle" fill="#57606a" font-size="12">span in the input</text>
+<line x1="581" y1="335.0" x2="554" y2="335.0" stroke="#555" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="394" y="300" width="160" height="70" rx="6" fill="#f6f8fa" stroke="#8c959f"/>
+<text x="474.0" y="324.0" text-anchor="middle" fill="#1f2328">Threshold</text>
+<text x="474.0" y="342.0" text-anchor="middle" fill="#57606a" font-size="12">WithMinConfidence,</text>
+<text x="474.0" y="358.0" text-anchor="middle" fill="#57606a" font-size="12">stable order</text>
+<line x1="394" y1="335.0" x2="367" y2="335.0" stroke="#555" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="207" y="300" width="160" height="70" rx="6" fill="#f6f8fa" stroke="#8c959f"/>
+<text x="287.0" y="324.0" text-anchor="middle" fill="#1f2328">Mask</text>
+<text x="287.0" y="342.0" text-anchor="middle" fill="#57606a" font-size="12">overlaps merged,</text>
+<text x="287.0" y="358.0" text-anchor="middle" fill="#57606a" font-size="12">MaskFunc applied</text>
+<line x1="207" y1="335.0" x2="180" y2="335.0" stroke="#555" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="20" y="300" width="160" height="70" rx="6" fill="#dafbe1" stroke="#1a7f37"/>
+<text x="100.0" y="324.0" text-anchor="middle" fill="#1f2328">Output</text>
+<text x="100.0" y="342.0" text-anchor="middle" fill="#57606a" font-size="12">same shape,</text>
+<text x="100.0" y="358.0" text-anchor="middle" fill="#57606a" font-size="12">secrets replaced</text>
+<text x="20" y="404" fill="#57606a" font-size="12">A failure or a size limit replaces the record with a fixed diagnostic; nothing of the original is written.</text>
+</svg>

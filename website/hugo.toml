@@ -1,0 +1,73 @@
+# The documentation website, published to GitHub Pages. The prose for
+# readers lives here; doc/ keeps generated measurements and their data.
+baseURL = "https://nao1215.github.io/embargo/"
+locale = "en"
+title = "embargo"
+disableKinds = ["taxonomy", "term", "rss"]
+enableRobotsTXT = true
+timeZone = "UTC"
+
+[params]
+tagline = "Keep secrets and personal data out of what a Go program writes"
+description = "embargo masks secrets and personal data in Go logs, error reports, HTTP access logs and traces, and its command masks the output of any program. The root module has no dependencies."
+
+[markup.highlight]
+noClasses = false
+
+[markup.tableOfContents]
+startLevel = 2
+endLevel = 3
+
+[[menus.main]]
+name = "Install"
+pageRef = "/install"
+weight = 10
+
+[[menus.main]]
+name = "Getting started"
+pageRef = "/getting-started"
+weight = 20
+
+[[menus.main]]
+name = "Command line"
+pageRef = "/command-line"
+weight = 30
+
+[[menus.main]]
+name = "Kinds"
+pageRef = "/kinds"
+weight = 40
+
+[[menus.main]]
+name = "Compare"
+pageRef = "/compare"
+weight = 50
+
+[[menus.main]]
+name = "Development"
+pageRef = "/development"
+weight = 60
+
+[module]
+[[module.mounts]]
+source = "content"
+target = "content"
+
+[[module.mounts]]
+source = "layouts"
+target = "layouts"
+
+[[module.mounts]]
+source = "assets"
+target = "assets"
+
+# Figures and the logo stay in doc/images, which the README also shows,
+# so both serve the same files.
+[[module.mounts]]
+source = "../doc/images"
+target = "assets/imgsrc"
+
+# Figures drawn only for the site.
+[[module.mounts]]
+source = "figures"
+target = "assets/imgsrc"

@@ -247,7 +247,7 @@ type apiSurface struct {
 	want     map[string]string
 	examples map[string]map[string]string
 	spec     string
-	readme   string
+	kinds    string
 }
 
 // publicPackages are the directories whose exported identifiers users import.
@@ -295,7 +295,7 @@ func repositoryFile(t *testing.T, path string) string {
 
 func loadAPISurface(t *testing.T) apiSurface {
 	t.Helper()
-	surface := apiSurface{want: map[string]string{}, examples: map[string]map[string]string{}, spec: repositoryFile(t, "e2e/atago/cli.atago.yaml"), readme: repositoryFile(t, "README.md")}
+	surface := apiSurface{want: map[string]string{}, examples: map[string]map[string]string{}, spec: repositoryFile(t, "e2e/atago/cli.atago.yaml"), kinds: repositoryFile(t, "website/content/kinds.md")}
 	for dir, name := range publicPackages() {
 		files, err := filepath.Glob(filepath.Join("..", "..", dir, "*.go"))
 		if err != nil {
@@ -483,8 +483,8 @@ func (s apiSurface) groupProblem(reason apiReason, symbol string) string {
 			return symbol + " does not implement " + reason.Implements
 		}
 	case len(reason.Symbols) > 1:
-		if len(parts) != 2 || !strings.HasPrefix(symbol, "embargo.Kind") || !strings.Contains(s.readme, "["+parts[1]+"](") {
-			return symbol + ": only Kind constants listed in the README detector table share an entry"
+		if len(parts) != 2 || !strings.HasPrefix(symbol, "embargo.Kind") || !strings.Contains(s.kinds, "["+parts[1]+"](") {
+			return symbol + ": only Kind constants listed in the Kinds page table share an entry"
 		}
 	}
 	return ""
@@ -571,7 +571,7 @@ func TestReasonProblemsRejectTasteAndShortText(t *testing.T) {
 
 func TestGroupedReasonsAreKindsOrOneInterface(t *testing.T) {
 	t.Parallel()
-	surface := apiSurface{readme: "[KindEmail](x) [KindPAN](x)"}
+	surface := apiSurface{kinds: "[KindEmail](x) [KindPAN](x)"}
 	if problem := surface.groupProblem(apiReason{Symbols: []string{"embargo.KindEmail", "embargo.KindPAN"}}, "embargo.KindPAN"); problem != "" {
 		t.Error(problem)
 	}

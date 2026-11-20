@@ -74,6 +74,10 @@ workflows:
         - 'actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e'
         - 'actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78'
         - 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9'
+    '.github/workflows/website.yml':
+        - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
+        - 'actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346'
+        - 'actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9'
 dependencies:
     'actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8':
         ref: 'v4.2.2'
@@ -112,6 +116,11 @@ dependencies:
         commit: 'sha1-3d3c42e5aac5ba805825da76410c181273ba90b1'
         owner_id: 44036562
         repo_id: 197814629
+    'actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346':
+        ref: 'v5.0.1'
+        commit: 'sha1-368f82528645a54fb793d4d04e342629a3f51346'
+        owner_id: 44036562
+        repo_id: 438112499
     'actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3':
         ref: 'v9.0.0'
         commit: 'sha1-3a2844b7e9c422d3c10d287c895573f7108da1b3'
@@ -127,11 +136,23 @@ dependencies:
         commit: 'sha1-77dd5b2ce225ea11469928ac317850245a74ae78'
         owner_id: 44036562
         repo_id: 196057608
+    'actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f':
+        ref: 'v7.0.0'
+        commit: 'sha1-bbbca2ddaa5d8feaa63e36b76fdaad77386f024f'
+        owner_id: 44036562
+        repo_id: 192625955
     'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9':
         ref: 'v7.0.2'
         commit: 'sha1-cf430e030ddbb5b0abf93d22962f4752f3646cd9'
         owner_id: 44036562
         repo_id: 192625955
+    'actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9':
+        ref: 'v5.0.0'
+        commit: 'sha1-fc324d3547104276b827a68afc52ff2a11cc49c9'
+        owner_id: 44036562
+        repo_id: 496012378
+        uses:
+            - 'actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f'
     'anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c':
         ref: 'v0.24.3'
         commit: 'sha1-66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c'

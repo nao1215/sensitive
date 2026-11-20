@@ -3,13 +3,16 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"sort"
 	"strconv"
 	"strings"
 	"testing"
+	"unicode"
 )
 
 func TestBenchmarkTable(t *testing.T) {
@@ -212,4 +215,238 @@ func TestTestingMetrics(t *testing.T) {
 	syncDocTable(t, "../doc/testing.md", "testing-metrics", text)
 	summary := fmt.Sprintf("Coverage %.1f%% · mutation score %.2f%% · %d fuzz targets, %d executions.\n", 100*float64(snapshot.CoveredStatements)/float64(snapshot.TotalStatements), snapshot.Efficacy, len(snapshot.Fuzz), executions)
 	syncReadmeTable(t, "testing-metrics", summary)
+}
+
+// The website is checked against the repository it documents: every page
+// is in the menu, every link to a page, a heading or a repository file
+// resolves, every block it shares with the README or doc/ is identical,
+// and every link from Go documentation or Markdown to the site lands on a
+// heading, as every link to a file on the main branch names a file.
+// Code blocks and command lines are checked by the root module's doc tests.
+
+const siteURL = "https://nao1215.github.io/embargo/"
+
+// sitePages maps a page path such as "/kinds/" to its Markdown.
+func sitePages(t *testing.T) map[string]string {
+	t.Helper()
+	files, err := filepath.Glob("../website/content/*.md")
+	if err != nil || len(files) == 0 {
+		t.Fatal("website pages not found")
+	}
+	pages := map[string]string{}
+	for _, file := range files {
+		// #nosec G304 -- The paths are repository documentation files.
+		data, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		name := strings.TrimSuffix(filepath.Base(file), ".md")
+		path := "/" + name + "/"
+		if name == "_index" {
+			path = "/"
+		}
+		pages[path] = strings.ReplaceAll(string(data), "\r\n", "\n")
+	}
+	return pages
+}
+
+// headingAnchor is the id Hugo gives a Markdown heading by default: lower
+// case, punctuation other than - and _ removed, spaces turned into -.
+func headingAnchor(heading string) string {
+	anchor := make([]rune, 0, len(heading))
+	for _, r := range strings.ToLower(heading) {
+		switch {
+		case r == ' ':
+			anchor = append(anchor, '-')
+		case r == '-' || r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r):
+			anchor = append(anchor, r)
+		}
+	}
+	return string(anchor)
+}
+
+// pageAnchors returns the heading ids of a page, outside code blocks.
+func pageAnchors(markdown string) map[string]bool {
+	anchors := map[string]bool{}
+	fence := false
+	for line := range strings.SplitSeq(markdown, "\n") {
+		if strings.HasPrefix(line, "```") {
+			fence = !fence
+		}
+		if heading, ok := strings.CutPrefix(strings.TrimLeft(line, "#"), " "); ok && !fence && strings.HasPrefix(line, "##") {
+			anchors[headingAnchor(heading)] = true
+		}
+	}
+	return anchors
+}
+
+// checkSiteLink reports why a link to a page of the site does not resolve.
+func checkSiteLink(pages map[string]string, link string) string {
+	path, anchor, _ := strings.Cut(link, "#")
+	page, ok := pages[path]
+	switch {
+	case !ok:
+		return "no such page"
+	case anchor != "" && !pageAnchors(page)[anchor]:
+		return "no such heading"
+	}
+	return ""
+}
+
+func TestSiteMenuListsEveryPage(t *testing.T) {
+	t.Parallel()
+	config, err := os.ReadFile("../website/hugo.toml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	menu := map[string]bool{}
+	for _, match := range regexp.MustCompile(`(?m)^pageRef = "(/[a-z-]+)"$`).FindAllStringSubmatch(string(config), -1) {
+		menu[match[1]+"/"] = true
+	}
+	for path := range sitePages(t) {
+		if path != "/" && !menu[path] {
+			t.Errorf("%s is not in the menu", path)
+		}
+		delete(menu, path)
+	}
+	for path := range menu {
+		t.Errorf("the menu names %s, which has no page", path)
+	}
+}
+
+func TestSiteLinksResolve(t *testing.T) {
+	t.Parallel()
+	pages := sitePages(t)
+	link := regexp.MustCompile(`\]\(([^)\s]+)\)`)
+	for path, page := range pages {
+		fence := false
+		for line := range strings.SplitSeq(page, "\n") {
+			if strings.HasPrefix(line, "```") {
+				fence = !fence
+			}
+			if fence {
+				continue
+			}
+			// Inline code such as `Secret[string]([REDACTED])` holds no links.
+			line = regexp.MustCompile("`[^`]*`").ReplaceAllString(line, "")
+			for _, match := range link.FindAllStringSubmatch(line, -1) {
+				if problem := checkPageLink(pages, path, match[1]); problem != "" {
+					t.Errorf("%s links %s: %s", path, match[1], problem)
+				}
+			}
+		}
+	}
+}
+
+// checkPageLink resolves one link written on a page the way the site's
+// render hooks do.
+func checkPageLink(pages map[string]string, page, link string) string {
+	switch {
+	case strings.HasPrefix(link, siteURL):
+		return checkSiteLink(pages, "/"+strings.TrimPrefix(link, siteURL))
+	case strings.HasPrefix(link, "/"):
+		return checkSiteLink(pages, link)
+	case strings.HasPrefix(link, "#"):
+		return checkSiteLink(pages, page+link)
+	case regexp.MustCompile(`^[a-z]+:`).MatchString(link):
+		return ""
+	}
+	file, _, _ := strings.Cut(link, "#")
+	if strings.HasPrefix(file, "figures/") {
+		file = "website/" + file
+	}
+	if _, err := fs.Stat(os.DirFS(".."), strings.TrimSuffix(file, "/")); err != nil {
+		return "no such repository file"
+	}
+	return ""
+}
+
+func TestDocumentationLinksResolve(t *testing.T) {
+	t.Parallel()
+	pages := sitePages(t)
+	link := regexp.MustCompile(regexp.QuoteMeta(siteURL) + "[^\\s)\\]\"`]*[^\\s)\\].,\"`]")
+	blob := regexp.MustCompile(`https://github\.com/nao1215/embargo/blob/main/([A-Za-z0-9_./-]*[A-Za-z0-9_/-])`)
+	found := 0
+	repository := os.DirFS("..")
+	err := fs.WalkDir(repository, ".", func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() && path != "." && (entry.Name() == "website" || strings.HasPrefix(entry.Name(), ".")) {
+			return fs.SkipDir
+		}
+		if entry.IsDir() || (!strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, ".md")) {
+			return nil
+		}
+		data, err := fs.ReadFile(repository, path)
+		if err != nil {
+			return err
+		}
+		for _, match := range link.FindAllString(string(data), -1) {
+			found++
+			if problem := checkSiteLink(pages, "/"+strings.TrimPrefix(match, siteURL)); problem != "" {
+				t.Errorf("%s links %s: %s", path, match, problem)
+			}
+		}
+		// A link to a file on the main branch breaks when the file moves.
+		for _, match := range blob.FindAllStringSubmatch(string(data), -1) {
+			if _, err := fs.Stat(repository, strings.TrimSuffix(match[1], "/")); err != nil {
+				t.Errorf("%s links %s, which is not in the repository", path, match[0])
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if found == 0 {
+		t.Fatal("no links to the site found")
+	}
+}
+
+// TestSiteSharesGeneratedBlocks keeps a generated block that a page shows
+// identical to the README or doc/ copy its generator writes. Run it with
+// UPDATE_DOCS=1 after regenerating the README or doc/ to copy the blocks.
+func TestSiteSharesGeneratedBlocks(t *testing.T) {
+	t.Parallel()
+	sources, err := filepath.Glob("../doc/*.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sources = append([]string{"../README.md"}, sources...)
+	marker := regexp.MustCompile(`<!-- ([a-z-]+):start -->`)
+	files, err := filepath.Glob("../website/content/*.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, file := range files {
+		// #nosec G304 -- The paths are repository documentation files.
+		data, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, match := range marker.FindAllStringSubmatch(string(data), -1) {
+			for _, source := range sources {
+				// #nosec G304 -- The paths are repository documentation files.
+				text, err := os.ReadFile(source)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if block, ok := markedBlock(string(text), match[1]); ok {
+					syncDocTable(t, file, match[1], block)
+					break
+				}
+			}
+		}
+	}
+}
+
+// markedBlock returns the text between a block's start and end markers.
+func markedBlock(text, name string) (string, bool) {
+	_, rest, ok := strings.Cut(text, "<!-- "+name+":start -->\n")
+	if !ok {
+		return "", false
+	}
+	block, _, ok := strings.Cut(rest, "<!-- "+name+":end -->")
+	return block, ok
 }

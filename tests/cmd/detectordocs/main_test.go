@@ -26,9 +26,9 @@ func repositoryKinds(t *testing.T) []kindDoc {
 	return kinds
 }
 
-func repositoryReadme(t *testing.T) string {
+func repositoryPage(t *testing.T) string {
 	t.Helper()
-	data, err := os.ReadFile("../../../README.md")
+	data, err := os.ReadFile(pagePath("../../.."))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,23 +49,23 @@ func TestKindGodocValidation(t *testing.T) {
 	}
 }
 
-func TestReadmeKinds(t *testing.T) {
+func TestPageKinds(t *testing.T) {
 	t.Parallel()
-	block, err := detectorBlock(repositoryReadme(t))
+	block, err := detectorBlock(repositoryPage(t))
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, kind := range repositoryKinds(t) {
 		if strings.Count(block, "["+kind.name+"]") != 1 {
-			t.Errorf("%s must have exactly one README row", kind.name)
+			t.Errorf("%s must have exactly one Kinds page row", kind.name)
 		}
 	}
 	if got := strings.Count(block, "\n| [Kind"); got != len(repositoryKinds(t)) {
-		t.Fatalf("unexpected README kind rows: %d", got)
+		t.Fatalf("unexpected Kinds page rows: %d", got)
 	}
 }
 
-func TestReadmeFreshness(t *testing.T) {
+func TestPageFreshness(t *testing.T) {
 	t.Parallel()
 	if err := update("../../..", true); err != nil {
 		t.Fatal(err)
@@ -81,7 +81,7 @@ func TestKindGodocRejectsMissingValidation(t *testing.T) {
 	}
 }
 
-func TestReadmeCheckRejectsStaleBlock(t *testing.T) {
+func TestPageCheckRejectsStaleBlock(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
 	source, err := os.ReadFile("../../../finding.go")
@@ -92,7 +92,11 @@ func TestReadmeCheckRejectsStaleBlock(t *testing.T) {
 	if err = os.WriteFile(filepath.Join(root, "finding.go"), source, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err = os.WriteFile(filepath.Join(root, "README.md"), []byte(startMarker+"\nstale\n"+endMarker), 0o600); err != nil {
+	if err = os.MkdirAll(filepath.Dir(pagePath(root)), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	// #nosec G703 -- The path is confined to this test temporary directory.
+	if err = os.WriteFile(pagePath(root), []byte(startMarker+"\nstale\n"+endMarker), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if err = update(root, false); err != nil {
@@ -101,8 +105,8 @@ func TestReadmeCheckRejectsStaleBlock(t *testing.T) {
 	if err = update(root, true); err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(root, "README.md")
-	// #nosec G304 -- Read only the temporary README created above.
+	path := pagePath(root)
+	// #nosec G304 -- Read only the temporary page created above.
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
@@ -113,7 +117,7 @@ func TestReadmeCheckRejectsStaleBlock(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err = update(root, true); err == nil {
-		t.Fatal("accepted stale README default")
+		t.Fatal("accepted stale page default")
 	}
 }
 
@@ -232,9 +236,9 @@ func sortedScores(scores map[string]bool) []string {
 	return result
 }
 
-func TestReadmeDefaults(t *testing.T) {
+func TestPageDefaults(t *testing.T) {
 	t.Parallel()
-	if err := checkDefaults(repositoryKinds(t), repositoryReadme(t)); err != nil {
+	if err := checkDefaults(repositoryKinds(t), repositoryPage(t)); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -267,7 +271,7 @@ func checkDefaults(kinds []kindDoc, readme string) error {
 			if strings.HasPrefix(line, "| ["+doc.name+"]") {
 				found = true
 				if !strings.HasSuffix(line, "| "+expected+" |") {
-					return fmt.Errorf("%s README default disagrees with NewScanner: want %s", doc.name, expected)
+					return fmt.Errorf("%s page default disagrees with NewScanner: want %s", doc.name, expected)
 				}
 			}
 		}
@@ -278,9 +282,9 @@ func checkDefaults(kinds []kindDoc, readme string) error {
 	return nil
 }
 
-func TestReadmeDefaultsRejectChangedSelection(t *testing.T) {
+func TestPageDefaultsRejectChangedSelection(t *testing.T) {
 	t.Parallel()
-	readme := strings.Replace(repositoryReadme(t), "| on |", "| off |", 1)
+	readme := strings.Replace(repositoryPage(t), "| on |", "| off |", 1)
 	if err := checkDefaults(repositoryKinds(t), readme); err == nil {
 		t.Fatal("default mismatch accepted")
 	}
