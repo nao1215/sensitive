@@ -154,3 +154,16 @@ func TestATableBaseKeepsTheHeader(t *testing.T) {
 		t.Fatalf("base header %q", base.table.header)
 	}
 }
+
+func TestSendStopsWhenTheWriterHasQuit(t *testing.T) {
+	t.Parallel()
+	quit := make(chan struct{})
+	close(quit)
+	if send(make(chan *batch), &batch{}, quit) {
+		t.Fatal("send waited for a writer that had quit")
+	}
+	open := make(chan *batch, 1)
+	if !send(open, &batch{}, make(chan struct{})) || len(open) != 1 {
+		t.Fatal("send did not deliver the batch")
+	}
+}
