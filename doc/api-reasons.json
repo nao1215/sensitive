@@ -577,6 +577,13 @@
   },
   {
     "symbols": [
+      "embargo --input"
+    ],
+    "need": "An export from a database or spreadsheet holds secrets in columns such as password whose values look like any text; csv or tsv reads the header so the column name works as a key, as a JSON key does.",
+    "without": "Without it a CSV password column would pass through unmasked, and lines would be the only way to read a table whose files are not named .csv or .tsv."
+  },
+  {
+    "symbols": [
       "embargo --kinds"
     ],
     "need": "An audit of one log source checks only the kinds that source can hold, or adds the opt-in national IDs with all, matching WithKinds in the library.",

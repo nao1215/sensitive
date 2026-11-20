@@ -35,28 +35,32 @@ func writeFailed(err error) error {
 // buffered input left, so a pipe such as tail -f sees each line as it arrives.
 // A read failure or an over-long line stops before that line: nothing after a
 // failure is written, and the error names only the line number.
-func filterLines(input io.Reader, output io.Writer, scanner *embargo.Scanner) error {
-	reader := bufio.NewReaderSize(input, ioBuffer)
+func filterLines(input io.Reader, output io.Writer, lines *lineScanner) error {
 	writer := bufio.NewWriterSize(output, ioBuffer)
-	lines := &lineScanner{scanner: scanner}
-	for number := 1; ; number++ {
-		line, tooLong, readErr := readLine(reader)
-		if failure := readFailure(tooLong, readErr, number, "output stops before it"); failure != nil {
-			return flushThen(writer, failure)
-		}
-		if err := writeMaskedLine(writer, lines, line); err != nil {
-			return err
-		}
-		done := errors.Is(readErr, io.EOF)
-		if done || reader.Buffered() == 0 {
-			if err := writer.Flush(); err != nil {
-				return writeFailed(err)
-			}
-		}
-		if done {
-			return nil
+	masked := &pipeline{base: lines, render: renderMasked, consequence: "output stops before it", lines: 0, size: 0}
+	return masked.run(input, func(b *batch) error { return writeBatch(writer, b) })
+}
+
+// renderMasked writes each masked line followed by its original ending.
+func renderMasked(lines *lineScanner, b *batch) {
+	b.each(func(_ int, _ int64, line []byte) {
+		body, ending := splitEnding(line)
+		b.out = append(append(b.out, maskLine(lines, body)...), ending...)
+	})
+}
+
+// writeBatch writes the output of b, flushing when b is the last input
+// buffered.
+func writeBatch(writer *bufio.Writer, b *batch) error {
+	if _, err := writer.Write(b.out); err != nil {
+		return writeFailed(err)
+	}
+	if b.flush {
+		if err := writer.Flush(); err != nil {
+			return writeFailed(err)
 		}
 	}
+	return nil
 }
 
 // readFailure turns a stopped read into the message for line number, ending
@@ -70,29 +74,6 @@ func readFailure(tooLong bool, readErr error, number int, consequence string) er
 		return safeInputError(readErr, fmt.Sprintf("embargo: input read failed at line %d; %s", number, consequence))
 	}
 	return nil
-}
-
-// writeMaskedLine writes one masked line followed by its original ending.
-func writeMaskedLine(writer *bufio.Writer, lines *lineScanner, line []byte) error {
-	if len(line) == 0 {
-		return nil
-	}
-	body, ending := splitEnding(line)
-	_, err := writer.Write(maskLine(lines, body))
-	if err == nil {
-		_, err = writer.Write(ending)
-	}
-	if err != nil {
-		return writeFailed(err)
-	}
-	return nil
-}
-
-func flushThen(writer *bufio.Writer, err error) error {
-	if flushErr := writer.Flush(); flushErr != nil {
-		return writeFailed(flushErr)
-	}
-	return err
 }
 
 // readLine returns one line including its newline, or the final unterminated
@@ -138,7 +119,7 @@ func maskLine(lines *lineScanner, body []byte) []byte {
 	if bytes.HasPrefix(body, []byte(utf8BOM)) {
 		return append([]byte(utf8BOM), maskLine(lines, body[len(utf8BOM):])...)
 	}
-	if trimmed := bytes.TrimLeft(body, " \t"); !lines.open() && len(trimmed) > 0 && (trimmed[0] == '{' || trimmed[0] == '[') {
+	if trimmed := bytes.TrimLeft(body, " \t"); lines.table == nil && !lines.open() && len(trimmed) > 0 && (trimmed[0] == '{' || trimmed[0] == '[') {
 		if masked, err := lines.scanner.MaskJSON(body); err == nil {
 			lines.observe(body)
 			return masked
@@ -168,22 +149,47 @@ const pemProbe = "\nx"
 // start of the open block and rescans it together with each new line, so the
 // root detectors decide where the block ends.
 type lineScanner struct {
-	scanner *embargo.Scanner
-	header  []byte
+	scanner   *embargo.Scanner
+	structure *structure
+	// table reads CSV or TSV records instead of the structures, when set.
+	table  *table
+	header []byte
 }
 
-func (l *lineScanner) open() bool { return l.header != nil }
+// newLineScanner scans lines of the given --input mode.
+func newLineScanner(scanner *embargo.Scanner, mode string) *lineScanner {
+	lines := &lineScanner{scanner: scanner, structure: newStructure(scanner), table: nil, header: nil}
+	switch mode {
+	case inputCSV:
+		lines.table = newTable(scanner, ',')
+	case inputTSV:
+		lines.table = newTable(scanner, '\t')
+	}
+	return lines
+}
+
+// open reports whether an earlier line left a PEM block, a JSON document or
+// a YAML block open, so this line belongs to it.
+func (l *lineScanner) open() bool { return l.header != nil || l.structure.open() }
 
 // observe records a block opened by a line whose findings were not needed.
 func (l *lineScanner) observe(body []byte) {
 	if bytes.Contains(body, []byte(pemHint)) {
-		l.scan(body)
+		l.scanPEM(body)
 	}
 }
 
 // scan returns line-relative findings for body, including the part of an open
 // PEM block that covers it.
 func (l *lineScanner) scan(body []byte) []embargo.Finding {
+	if l.table != nil {
+		return mergeFindings(l.scanPEM(body), l.table.findings(body))
+	}
+	return mergeFindings(l.scanPEM(body), l.structure.findings(body))
+}
+
+// scanPEM is scan without the structures around the line.
+func (l *lineScanner) scanPEM(body []byte) []embargo.Finding {
 	if l.header == nil {
 		findings := l.scanner.Scan(body)
 		l.header = l.opened(body, findings)

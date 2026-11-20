@@ -190,14 +190,9 @@ func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scr
 		text = append(append(text, key...), ": "...)
 	}
 	text = append(text, value...)
-	findings := s.scanner.scanFieldInto(scratch.findings[:0], &scratch.detected, text, prefixBytes, s.knownField(key), ctx.Err)
-	// Keep grown storage for the next user; the returned spans alias findings.
-	scratch.text, scratch.findings = text, findings
-	if ctx.Err() != nil {
-		return nil, saferecord.ErrCanceled
-	}
-	if prefixBytes == 0 {
-		return findings, nil
+	findings, err := s.scanText(ctx, scratch, text, prefixBytes, key)
+	if err != nil || prefixBytes == 0 {
+		return findings, err
 	}
 	// Findings are fresh validated results; shift the value's spans in place.
 	spans := findings[:0]
@@ -210,6 +205,26 @@ func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scr
 		spans = append(spans, finding)
 	}
 	return spans, nil
+}
+
+// scanText returns the findings in the "key: value" text, skipping the
+// detectors for a text found clean before.
+func (s *eventScanner) scanText(ctx context.Context, scratch *scanScratch, text []byte, prefixBytes int, key string) ([]Finding, error) {
+	values := s.scanner.values
+	if values != nil && values.has(text, prefixBytes) {
+		scratch.text = text
+		return nil, nil
+	}
+	findings := s.scanner.scanFieldInto(scratch.findings[:0], &scratch.detected, text, prefixBytes, s.knownField(key), ctx.Err)
+	// Keep grown storage for the next user; the returned spans alias findings.
+	scratch.text, scratch.findings = text, findings
+	if ctx.Err() != nil {
+		return nil, saferecord.ErrCanceled
+	}
+	if values != nil && len(findings) == 0 {
+		values.store(text, prefixBytes)
+	}
+	return findings, nil
 }
 
 // A finding must cross the last join; detecting an ancestor alone does not hide descendants.

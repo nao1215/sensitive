@@ -165,7 +165,7 @@ func (p *commandPipes) mask(scanner *embargo.Scanner, output, diagnostics io.Wri
 	var group sync.WaitGroup
 	for i, destination := range []io.Writer{output, diagnostics} {
 		group.Go(func() {
-			failures[i] = filterLines(p.read[i], destination, scanner)
+			failures[i] = filterLines(p.read[i], destination, newLineScanner(scanner, inputLines))
 			_ = p.read[i].Close() //nolint:errcheck // The stream was read to its end or abandoned.
 		})
 	}

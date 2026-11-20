@@ -260,7 +260,7 @@ $ printf '%s\n' 'login failed for alice@example.com from 203.0.113.7' | embargo
 login failed for [REDACTED] from [REDACTED]
 ```
 
-A JSON line keeps its keys, types and nesting. `--format json` prints per-kind counts and `--format jsonl` one line per finding; neither prints a matched value. [Flags, limits and CI use](doc/audit.md)
+A JSON line keeps its keys, types and nesting; gzip and bzip2 files are decompressed, and CSV and TSV column names work as keys. `--format json` prints per-kind counts and `--format jsonl` one line per finding; neither prints a matched value. [Flags, limits and CI use](doc/audit.md)
 
 ## Accuracy
 
@@ -300,7 +300,7 @@ Coverage 99.4% · mutation score 89.18% · 13 fuzz targets, 2208636 executions.
 ## Benchmarks
 
 <!-- speed-summary:start -->
-On the same five JSON slog events, embargo is 1.11 to 1.38 times faster than go-masker given the same email and card rules, and embargo's default scanner is 1.83 to 4.34 times faster than pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
+On the same five JSON slog events, embargo is 1.06 to 1.48 times faster than go-masker given the same email and card rules, and embargo's default scanner is 1.84 to 5.70 times faster than pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
 <!-- speed-summary:end -->
 
 <!-- benchmarks:start -->

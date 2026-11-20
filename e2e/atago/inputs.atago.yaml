@@ -1,0 +1,217 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nao1215/atago/v0.26.0/schema/atago.schema.json
+# Input formats: compressed files, CSV and TSV column names, values whose key
+# is on an earlier line of JSON or YAML, CEF labels, and order over many lines.
+version: "1"
+
+suite:
+  name: embargo inputs
+
+scenarios:
+  - name: a gzip file is decompressed and masked
+    steps:
+      - fixture:
+          file: app.log.gz
+          base64: H4sIAAAAAAAAA8vPS1VIzMlMTnVIrUjMLchJ1UvOz+UqKc9XMDFEBVwA1il0FSsAAAA=
+      - run:
+          command: embargo app.log.gz
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              one [REDACTED]
+              two [REDACTED]
+
+  - name: bzip2 on stdin is decompressed and masked
+    steps:
+      - run:
+          command: embargo
+          stdin:
+            base64: QlpoOTFBWSZTWf1R1WEAAAnVgAAQQAFAAConwEAgACKaaaGaeqEAACe5cniSrRYzQB8XckU4UJD9UdVh
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              one [REDACTED]
+
+  - name: zstd stops with an error instead of passing through
+    steps:
+      - fixture:
+          file: plain.log
+          content: |
+            plain alice@example.com
+      - fixture:
+          file: packed.log.zst
+          base64: KLUv/QRYEQAAeAqu/eki
+      - run:
+          command: embargo plain.log packed.log.zst
+      - assert:
+          exit_code: 1
+          stdout:
+            equals: |
+              plain [REDACTED]
+          stderr:
+            equals: |
+              embargo: input file 2 is zstd-compressed; decompress it first
+
+  - name: UTF-16 inside gzip stops with an error
+    steps:
+      - run:
+          command: embargo
+          stdin:
+            base64: H4sIAAAAAAAAA/v/L5EBANHd/TwEAAAA
+      - assert:
+          exit_code: 1
+          stdout:
+            empty: true
+          stderr:
+            equals: |
+              embargo: the input is UTF-16; convert it to UTF-8
+
+  - name: a CSV file masks the columns its header names as sensitive
+    steps:
+      - fixture:
+          file: users.csv
+          content: |
+            id,email,password,cvv,note
+            1,alice@example.com,hunter2xyz,123,public
+            2,"bob, jr",pw,7,"multi
+            line"
+      - run:
+          command: embargo users.csv
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              id,email,password,cvv,note
+              1,[REDACTED],[REDACTED],[REDACTED],public
+              2,"bob, jr",[REDACTED],7,"multi
+              line"
+
+  - name: a quoted CSV field across lines keeps its column
+    steps:
+      - run:
+          command: embargo --input csv
+          stdin: |
+            note,secret
+            public,"first
+            second"
+            x,y
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              note,secret
+              public,"[REDACTED]
+              [REDACTED]"
+              x,[REDACTED]
+
+  - name: --input tsv reads tab-separated column names on stdin
+    steps:
+      - run:
+          command: embargo --input tsv --format jsonl
+          stdin: "id\ttoken\n1\topaque\n"
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              {"kind":"credential","start":11,"end":17,"line":2,"column":2}
+
+  - name: an unknown --input stops with status 2 and never repeats it
+    steps:
+      - run:
+          command: embargo --input alice@example.com
+      - assert:
+          exit_code: 2
+          stdout:
+            empty: true
+          stderr:
+            equals: |
+              embargo: --input must be lines, csv or tsv
+
+  - name: pretty-printed JSON masks a value on the line after its key
+    steps:
+      - run:
+          command: embargo
+          stdin: |
+            {
+              "token":
+                "opaque-value",
+              "secret": [
+                "one",
+                2
+              ],
+              "names": [
+                "public"
+              ]
+            }
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              {
+                "token":
+                  "[REDACTED]",
+                "secret": [
+                  "[REDACTED]",
+                  [REDACTED]
+                ],
+                "names": [
+                  "public"
+                ]
+              }
+
+  - name: a YAML block scalar under a sensitive key is masked line by line
+    steps:
+      - run:
+          command: embargo
+          stdin: |
+            password: |
+              first line
+              second line
+            secret:
+              - one
+              - name: public
+            session:
+              timeout: 30
+            user: bob
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              password: [REDACTED]
+                [REDACTED]
+                [REDACTED]
+              secret:
+                - [REDACTED]
+                - name: public
+              session:
+                timeout: 30
+              user: bob
+
+  - name: a CEF custom field is masked by its label
+    steps:
+      - run:
+          command: embargo
+          stdin: |
+            CEF:0|Acme|App|1.0|100|login|5|suser=alice cs1Label=password cs1=two words cs2Label=note cs2=public
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              CEF:0|Acme|App|1.0|100|login|5|suser=alice cs1Label=password cs1=[REDACTED] cs2Label=note cs2=public
+
+  - name: many lines keep their order and every value is masked
+    steps:
+      - fixture:
+          file: make.sh
+          content: |
+            i=1
+            while [ $i -le 30000 ]; do echo "line $i user$i@example.com"; i=$((i+1)); done > in.log
+            embargo in.log > out.txt
+            i=1
+            while [ $i -le 30000 ]; do echo "line $i [REDACTED]"; i=$((i+1)); done | cmp - out.txt
+      - run:
+          command: sh make.sh
+          timeout: 120s
+      - assert:
+          exit_code: 0

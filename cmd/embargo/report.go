@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"slices"
@@ -34,8 +33,8 @@ type report struct {
 // writeReport prints per-kind counts and finding locations for --format json. Each line is
 // discarded after scanning, so memory stays bounded, and input bytes are never
 // printed. Incomplete input produces no report.
-func writeReport(input io.Reader, output io.Writer, scanner *embargo.Scanner, sampleLimit int) error {
-	result, err := collectReport(input, scanner, sampleLimit)
+func writeReport(input io.Reader, output io.Writer, scanned *lineScanner, sampleLimit int) error {
+	result, err := collectReport(input, scanned, sampleLimit)
 	if err != nil {
 		return err
 	}
@@ -47,19 +46,29 @@ func writeReport(input io.Reader, output io.Writer, scanner *embargo.Scanner, sa
 	return nil
 }
 
-func collectReport(input io.Reader, scanner *embargo.Scanner, sampleLimit int) (report, error) {
+func collectReport(input io.Reader, scanned *lineScanner, sampleLimit int) (report, error) {
 	groups := make(map[embargo.Kind]*kindReport)
-	scanned := &lineScanner{scanner: scanner}
-	lines, size, err := eachLine(bufio.NewReaderSize(input, ioBuffer), "no report is written", func(number int, offset int64, body []byte) error {
-		for _, finding := range scanned.scan(body) {
-			addFinding(groups, finding, offset, number, sampleLimit)
+	counted := &pipeline{base: scanned, render: renderFindings, consequence: "no report is written", lines: 0, size: 0}
+	err := counted.run(input, func(b *batch) error {
+		for _, at := range b.found {
+			addFinding(groups, at.finding, at.offset, at.line, sampleLimit)
 		}
 		return nil
 	})
 	if err != nil {
 		return report{}, err
 	}
-	return report{Findings: sortedKinds(groups), Bytes: size, Lines: lines}, nil
+	return report{Findings: sortedKinds(groups), Bytes: counted.size, Lines: counted.lines}, nil
+}
+
+// renderFindings keeps the findings of each line of b.
+func renderFindings(lines *lineScanner, b *batch) {
+	b.each(func(number int, offset int64, line []byte) {
+		body, _ := splitEnding(line)
+		for _, finding := range lines.scan(body) {
+			b.found = append(b.found, located{finding: finding, offset: offset, line: number})
+		}
+	})
 }
 
 // foundValue is one --format jsonl line: where a finding is, never its value.
@@ -74,50 +83,20 @@ type foundValue struct {
 // writeFindings prints one JSON object per finding as each line is scanned and
 // flushes whenever no more input is buffered, so tail -f works as with the
 // filter. A read failure stops before that line, after the earlier findings.
-func writeFindings(input io.Reader, output io.Writer, scanner *embargo.Scanner) error {
-	reader := bufio.NewReaderSize(input, ioBuffer)
+func writeFindings(input io.Reader, output io.Writer, scanned *lineScanner) error {
 	writer := bufio.NewWriterSize(output, ioBuffer)
-	encoder := json.NewEncoder(writer)
-	scanned := &lineScanner{scanner: scanner}
-	_, _, err := eachLine(reader, "output stops before it", func(number int, offset int64, body []byte) error {
-		for _, f := range scanned.scan(body) {
-			at := newLocation(f, offset, number)
-			value := foundValue{Kind: f.Kind, Start: at.Start, End: at.End, Line: at.Line, Column: at.Column}
-			if err := encoder.Encode(value); err != nil {
-				return writeFailed(err)
-			}
-		}
-		if reader.Buffered() == 0 {
-			if err := writer.Flush(); err != nil {
-				return writeFailed(err)
-			}
-		}
-		return nil
-	})
-	return flushThen(writer, err)
+	listed := &pipeline{base: scanned, render: renderFoundValues, consequence: "output stops before it", lines: 0, size: 0}
+	return listed.run(input, func(b *batch) error { return writeBatch(writer, b) })
 }
 
-// eachLine reads lines exactly as the filter does and calls fn with each
-// line's number, the byte offset where it starts and its body without the
-// ending. It returns the line count and total size, or the first read failure,
-// whose message ends with consequence, or fn's error.
-func eachLine(reader *bufio.Reader, consequence string, fn func(number int, offset int64, body []byte) error) (lines int, size int64, err error) {
-	for number := 1; ; number++ {
-		line, tooLong, readErr := readLine(reader)
-		if failure := readFailure(tooLong, readErr, number, consequence); failure != nil {
-			return lines, size, failure
-		}
-		if len(line) > 0 {
-			lines++
-			body, _ := splitEnding(line)
-			if err := fn(number, size, body); err != nil {
-				return lines, size, err
-			}
-			size += int64(len(line))
-		}
-		if errors.Is(readErr, io.EOF) {
-			return lines, size, nil
-		}
+// renderFoundValues encodes one JSON line per finding of each line of b.
+func renderFoundValues(lines *lineScanner, b *batch) {
+	renderFindings(lines, b)
+	for _, at := range b.found {
+		place := newLocation(at.finding, at.offset, at.line)
+		value := foundValue{Kind: at.finding.Kind, Start: place.Start, End: place.End, Line: place.Line, Column: place.Column}
+		encoded, _ := json.Marshal(value) //nolint:errcheck // A struct of strings and integers always encodes.
+		b.out = append(append(b.out, encoded...), '\n')
 	}
 }
 

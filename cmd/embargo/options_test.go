@@ -12,8 +12,9 @@ const (
 	flagKinds          = "--kinds"
 	flagMinimum        = "--min-confidence"
 	flagFormat         = "--format"
+	flagInput          = "--input"
 	kindsAll           = "all"
-	unknownFlagMessage = "embargo: unknown flag; the flags are --kinds, --min-confidence, --format, --samples and --version; see embargo --help"
+	unknownFlagMessage = "embargo: unknown flag; the flags are --kinds, --min-confidence, --format, --input, --samples and --version; see embargo --help"
 	minimumMessage     = "embargo: --min-confidence must be a number from 0 to 1"
 	kindsMessage       = "embargo: --kinds must be all or a comma-separated list of kinds; see embargo --help"
 	flagSamples        = "--samples"
@@ -47,6 +48,10 @@ func TestOptionErrorsNameTheFlagAndNeverEchoTheValue(t *testing.T) {
 		{args: []string{flagFormat, "yaml"}, want: formatMessage},
 		{args: []string{flagFormat, secretArgument}, want: formatMessage},
 		{args: []string{flagFormat, formatJSONL, flagSamples, "1"}, want: "embargo: --samples requires --format json"},
+		{args: []string{flagInput, "xml"}, want: "embargo: --input must be lines, csv or tsv"},
+		{args: []string{flagInput, secretArgument}, want: "embargo: --input must be lines, csv or tsv"},
+		{args: []string{flagInput}, want: "embargo: --input needs a value; see embargo --help"},
+		{args: []string{flagInput, inputCSV, runOperand, "true"}, want: "embargo: run reads lines only; --input cannot be used with it"},
 	} {
 		var out, diagnostics bytes.Buffer
 		code := exitCode(tc.args, strings.NewReader(secretArgument), &out, &diagnostics)

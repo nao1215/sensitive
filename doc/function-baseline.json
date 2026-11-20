@@ -38,16 +38,16 @@
     {
       "file": "cmd/embargo/main.go",
       "name": "run",
-      "statements": 18,
-      "cyclomatic": 8,
-      "lines": 29
+      "statements": 13,
+      "cyclomatic": 6,
+      "lines": 20
     },
     {
       "file": "cmd/embargo/options.go",
       "name": "parseOptions",
-      "statements": 29,
-      "cyclomatic": 13,
-      "lines": 35
+      "statements": 24,
+      "cyclomatic": 11,
+      "lines": 29
     },
     {
       "file": "embargotest/guard_names.go",
@@ -104,6 +104,13 @@
       "statements": 30,
       "cyclomatic": 8,
       "lines": 41
+    },
+    {
+      "file": "integer.go",
+      "name": "exactInteger",
+      "statements": 28,
+      "cyclomatic": 10,
+      "lines": 39
     },
     {
       "file": "internal/detect/aba.go",

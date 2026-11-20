@@ -140,9 +140,9 @@ func TestJSONLStopsAtFailuresAfterEarlierFindings(t *testing.T) {
 
 func TestJSONLFlushesWhenNoInputIsBuffered(t *testing.T) {
 	t.Parallel()
-	var out bytes.Buffer
-	reader := &pacedReader{output: &out, lines: []string{"card=4111111111111111\n", "mail alice@example.com\n"}, flushed: nil}
-	if err := run([]string{flagFormat, formatJSONL}, reader, &out, io.Discard); err != nil {
+	out := newSyncBuffer()
+	reader := &pacedReader{output: out, lines: []string{"card=4111111111111111\n", "mail alice@example.com\n"}, flushed: nil, given: false}
+	if err := run([]string{flagFormat, formatJSONL}, reader, out, io.Discard); err != nil {
 		t.Fatal(err)
 	}
 	if len(reader.flushed) == 0 || !reader.flushed[0] {
@@ -156,7 +156,7 @@ func TestJSONLFlushesWhenNoInputIsBuffered(t *testing.T) {
 func TestReportCountsLinesWithoutTheEmptyEnd(t *testing.T) {
 	t.Parallel()
 	for input, want := range map[string]int{"": 0, "a\n": 1, "a\nb": 2, "a\n\n": 2} {
-		got, err := collectReport(strings.NewReader(input), embargo.NewScanner(), 1)
+		got, err := collectReport(strings.NewReader(input), newLineScanner(embargo.NewScanner(), inputLines), 1)
 		if err != nil || got.Lines != want || got.Bytes != int64(len(input)) {
 			t.Errorf("%q: lines=%d bytes=%d err=%v, want %d lines", input, got.Lines, got.Bytes, err, want)
 		}

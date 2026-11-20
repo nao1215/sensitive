@@ -1,7 +1,9 @@
 package embargo_test
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"testing"
 
@@ -276,5 +278,31 @@ func BenchmarkScannerAdversarial(b *testing.B) {
 				}
 			})
 		}
+	}
+}
+
+// BenchmarkSlogValues logs events whose values repeat, as statuses and flags
+// do, and events whose values never repeat, as request IDs and counters do.
+func BenchmarkSlogValues(b *testing.B) {
+	const distinct = 1 << 14
+	ids := make([]string, distinct)
+	for i := range ids {
+		ids[i] = fmt.Sprintf("req-%08x-%04d", uint32(i)*2654435761, i)
+	}
+	for _, mode := range []string{"repeated", "unique"} {
+		b.Run(mode, func(b *testing.B) {
+			logger := slog.New(embargo.NewSlogHandler(slog.DiscardHandler, embargo.NewScanner()))
+			ctx := context.Background()
+			b.ReportAllocs()
+			i := 0
+			for b.Loop() {
+				id, count := ids[0], int64(17)
+				if mode == "unique" {
+					id, count = ids[i%distinct], int64(i)
+				}
+				i++
+				logger.LogAttrs(ctx, slog.LevelInfo, "request", slog.String("status", "accepted"), slog.String("request_id", id), slog.Int64("count", count), slog.Bool("ok", true))
+			}
+		})
 	}
 }

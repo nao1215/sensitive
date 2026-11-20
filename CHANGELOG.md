@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- The command decompresses gzip and bzip2 input; zstd, xz, zip, 7z and lz4 input stops with an error instead of passing through unmasked.
+- `--input` with `csv` or `tsv` reads the first line as column names that work as keys, so a `password` column is masked; files ending in `.csv` or `.tsv` are read this way by default.
+- The command masks a value whose key is on an earlier line of pretty-printed JSON, the lines of a YAML block scalar or list under a sensitive key, and CEF custom fields by their label.
+
+### Changed
+
+- The command scans lines on every CPU and keeps their order: 113 MB of public logs take 0.50 s instead of 2.80 s on 8 cores.
+- A scalar value that repeats with the same key, such as a status or a flag, skips the detectors after it was found clean, so small slog events take up to a quarter less time.
+
 ## [0.19.0] - 2026-11-20
 
 ### Added

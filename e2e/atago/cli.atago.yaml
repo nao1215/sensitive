@@ -300,7 +300,7 @@ scenarios:
           exit_code: 2
           stderr:
             equals: |
-              embargo: unknown flag; the flags are --kinds, --min-confidence, --format, --samples and --version; see embargo --help
+              embargo: unknown flag; the flags are --kinds, --min-confidence, --format, --input, --samples and --version; see embargo --help
       - run:
           command: embargo --kinds emial
       - assert:
