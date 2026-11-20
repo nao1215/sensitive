@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-11-20
+
 ### Added
 
 - `embargo run COMMAND [arg ...]` runs a command, masks its stdout and stderr separately and exits with its status.
