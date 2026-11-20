@@ -287,7 +287,7 @@ func BenchmarkSlogValues(b *testing.B) {
 	const distinct = 1 << 14
 	ids := make([]string, distinct)
 	for i := range ids {
-		ids[i] = fmt.Sprintf("req-%08x-%04d", i*2654435761, i)
+		ids[i] = fmt.Sprintf("req-%08x-%04d", uint32(i)*2654435761, i)
 	}
 	for _, mode := range []string{"repeated", "unique"} {
 		b.Run(mode, func(b *testing.B) {
