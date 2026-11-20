@@ -102,7 +102,7 @@ func TestBenchmarkTable(t *testing.T) {
 	}
 	printLine("\n</details>\n")
 	syncDocTable(t, "../doc/benchmarks.md", "benchmarks", table.String())
-	summary := "![Time per log event](doc/images/log-event-time.svg)\n\nembargo with email and card rules runs against masq and go-masker given the same rules, and embargo's default scanner against pii-shield's default policy. [Configurations, medians and allocations](doc/comparison.md) · [Full scanner benchmark plot](doc/benchmarks.md).\n"
+	summary := "![Time per log event](doc/images/log-event-time.svg)\n\n[Configurations, medians and allocations](doc/comparison.md) · [Full scanner benchmark plot](doc/benchmarks.md).\n"
 	syncReadmeTable(t, "benchmarks", summary)
 }
 

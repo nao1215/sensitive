@@ -225,7 +225,7 @@ func TestCompatibilityTable(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) { t.Parallel(); tc.check(t) })
 		writeTable("| [" + tc.name + "](" + outputSource(t, tc.source, tc.symbol) + ") | `" + tc.result + "` |\n")
 	}
-	syncReadmeTable(t, "tested-outputs", table.String())
+	syncDocTable(t, "README.md", "tested-outputs", table.String())
 }
 
 func checkHTTPOutput(t *testing.T) {

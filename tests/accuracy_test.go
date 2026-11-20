@@ -124,9 +124,6 @@ func scoreAccuracyTable(t *testing.T, set string, threshold float64) {
 		summaries = append(summaries, accuracySummary{Detector: name, Positive: inputs[name][0], Negative: inputs[name][1], TP: count.tp, FP: count.fp, FN: count.fn, Precision: accuracyRatio(count.tp, count.tp+count.fp), Recall: accuracyRatio(count.tp, count.tp+count.fn)})
 	}
 	syncAccuracySnapshot(t, set, threshold, summaries)
-	if set == heldAccuracySet && threshold == 0 {
-		syncReadmeTable(t, "accuracy", accuracyEntrance(t, names))
-	}
 }
 
 func syncReadmeTable(t *testing.T, name, table string) {
@@ -217,13 +214,6 @@ type accuracySummary struct {
 	FN        int    `json:"fn"`
 }
 
-func writeAccuracyText(t *testing.T, out *strings.Builder, value string) {
-	t.Helper()
-	if _, err := out.WriteString(value); err != nil {
-		t.Fatal(err)
-	}
-}
-
 func syncAccuracySnapshot(t *testing.T, set string, threshold float64, rows []accuracySummary) {
 	t.Helper()
 	//nolint:errchkjson // Keep encoding failure handling explicit for future snapshot fields.
@@ -253,32 +243,6 @@ func syncAccuracySnapshot(t *testing.T, set string, threshold float64, rows []ac
 	if !bytes.Equal(bytes.ReplaceAll(actual, []byte("\r\n"), []byte("\n")), data) {
 		t.Fatal("accuracy snapshot differs from scored corpus; run make accuracy-doc")
 	}
-}
-
-func accuracyEntrance(t *testing.T, names []string) string {
-	t.Helper()
-	var entrance strings.Builder
-	if _, err := entrance.WriteString("[Per-detector precision, recall and charts](doc/accuracy.md).\n\n| Detector details | | |\n|---|---|---|\n"); err != nil {
-		t.Fatal(err)
-	}
-	for index, name := range names {
-		if index%3 == 0 {
-			writeAccuracyText(t, &entrance, "|")
-		}
-		if _, err := fmt.Fprintf(&entrance, " [%s](doc/accuracy.md#%s) |", name, strings.ReplaceAll(name, "_", "-")); err != nil {
-			t.Fatal(err)
-		}
-		if index%3 == 2 {
-			writeAccuracyText(t, &entrance, "\n")
-		}
-	}
-	if len(names)%3 != 0 {
-		for index := len(names) % 3; index < 3; index++ {
-			writeAccuracyText(t, &entrance, " |")
-		}
-		writeAccuracyText(t, &entrance, "\n")
-	}
-	return entrance.String()
 }
 
 // Each table has one immutable scanner per kind and threshold; fixtures never change its options.

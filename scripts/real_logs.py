@@ -248,7 +248,7 @@ def main():
     readme = ROOT/'README.md'
     original = readme.read_text(encoding='utf-8')
     count, _, lines, mb = corpus_size(manifest['datasets'])
-    synopsis = f'[Public-log chart and measured results](doc/real-logs.md).\n\n{count} public datasets, {mb}, {lines:,} lines: LogHub system logs plus web access, Kubernetes audit and CloudTrail logs. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.\n'
+    synopsis = f'{count} public datasets, {mb}, {lines:,} lines of LogHub system logs plus web access, Kubernetes audit and CloudTrail logs. [Measured false positives](doc/real-logs.md) are sample estimates on previously seen splits, with no recall claim. [Licenses and classification rules](doc/accuracy.md#public-system-logs)\n'
     readme_pattern = r'(?s)(<!-- real-logs-summary:start -->\n).*?(<!-- real-logs-summary:end -->)'
     if len(re.findall(readme_pattern,original)) != 1:
         raise ValueError('expected one README real-log block')
