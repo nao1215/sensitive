@@ -12,7 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
-- A card number or My Number after a short number and a space, as in `retry 3 4111111111111111`, was left unmasked.
+- A card number or My Number next to another number across a space, as in `retry 3 4111111111111111` or two cards side by side, was left unmasked.
+- A My Number is read only as 12 digits together or three groups of four, so a date and time such as `081111 045623` is no longer one.
 
 ### Changed
 
