@@ -349,7 +349,7 @@ Coverage 99.4% · mutation score 89.18% · 13 fuzz targets, 2208636 executions.
 <!-- benchmarks:start -->
 ![Time per log event](doc/images/log-event-time.svg)
 
-The same event through slog alone, embargo with the email and card rules masq and go-masker are given, embargo's default scanner against pii-shield's default policy, masq and go-masker. [Configurations, medians and allocations](doc/comparison.md) · [Full scanner benchmark plot](doc/benchmarks.md).
+embargo with email and card rules runs against masq and go-masker given the same rules, and embargo's default scanner against pii-shield's default policy. [Configurations, medians and allocations](doc/comparison.md) · [Full scanner benchmark plot](doc/benchmarks.md).
 <!-- benchmarks:end -->
 
 <!-- narrowing-summary:start -->
@@ -378,8 +378,6 @@ The same scenarios, service probe and log events run against pii-shield, ferret-
 
 ![Scenario catch rate](doc/images/scenario-catch.svg)
 
-![Scenario catch rate](doc/images/scenario-catch.svg)
-
 <!-- leak-scenarios:start -->
 | Service output | embargo slog | embargo zap | pii-shield v3.0.0 | ferret-scan v2.4.3 | masq v0.2.3 | slog-formatter v1.3.0 | go-mask v0.6.2 | go-masker v0.6.1 | godlp v1.2.15 |
 |---|---|---|---|---|---|---|---|---|---|
@@ -396,7 +394,7 @@ The same scenarios, service probe and log events run against pii-shield, ferret-
 
 ## Contributing
 
-[Report a bug](https://github.com/nao1215/embargo/issues) → [add a synthetic regression](CONTRIBUTING.md) → open a pull request. You can also [sponsor maintenance](https://github.com/sponsors/nao1215).
+[Report a bug](https://github.com/nao1215/embargo/issues), or [add a synthetic regression](CONTRIBUTING.md) and open a pull request. You can also [sponsor maintenance](https://github.com/sponsors/nao1215).
 
 ## License
 
