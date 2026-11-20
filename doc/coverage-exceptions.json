@@ -99,8 +99,8 @@
   },
   {
     "file": "cmd/embargo/input.go",
-    "start": 278,
-    "end": 280,
+    "start": 274,
+    "end": 276,
     "sha256": "d4e76dd0ef49ab5cf048e3a2288895e5adaae1ba5b480fea275065e4b1a2ae54",
     "reason": "Closing a regular file that was only read does not fail on the supported platforms; the branch reports such a failure instead of ignoring it."
   },
