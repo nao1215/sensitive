@@ -32,6 +32,11 @@ func (d *BTC) Scan(data []byte) []Finding {
 	var findings []Finding
 
 	for i := 0; i < len(data); i++ {
+		// An address starts with bc1, 1 or 3 at a word boundary; checking it
+		// here keeps the digits inside words and numbers from costing a call.
+		if !btcLead(data, i) || !btcWordStart(data, i) {
+			continue
+		}
 		// Try bech32/bech32m first (most specific prefix).
 		if matchBech32Prefix(data, i) {
 			if f, end, ok := d.scanBech32(data, i); ok {
@@ -54,6 +59,11 @@ func (d *BTC) Scan(data []byte) []Finding {
 	return findings
 }
 
+// btcLead reports the first bytes of an address at i: bc1, 1 or 3.
+func btcLead(data []byte, i int) bool {
+	return data[i] == '1' || data[i] == '3' || matchBech32Prefix(data, i)
+}
+
 // matchBech32Prefix checks whether data[i:] starts with "bc1" or "BC1"
 // (case-insensitive, but bech32 addresses must be fully lowercase or uppercase).
 func matchBech32Prefix(data []byte, i int) bool {
@@ -67,12 +77,8 @@ func matchBech32Prefix(data []byte, i int) bool {
 
 // scanBech32 attempts to parse a bech32/bech32m Bitcoin address starting at position i.
 // Returns the Finding, end position, and success flag.
+// The caller has checked the word boundary before i.
 func (d *BTC) scanBech32(data []byte, i int) (Finding, int, bool) {
-	// Word boundary: preceding character must not be alphanumeric or underscore.
-	if !btcWordStart(data, i) {
-		return Finding{}, 0, false
-	}
-
 	// Determine case (bech32 must be all-lowercase or all-uppercase after HRP).
 	isUpper := data[i] == 'B'
 
@@ -164,14 +170,10 @@ func btcWordEnd(data []byte, j int) bool {
 
 // scanLegacy attempts to parse a legacy (P2PKH/P2SH) Bitcoin address starting at position i.
 // Returns the Finding, end position, and success flag.
+// The caller has checked the word boundary before i, which matches the
+// right-boundary check and prevents false positives from non-Base58
+// characters like 0, I, O, l that precede the address.
 func (d *BTC) scanLegacy(data []byte, i int) (Finding, int, bool) {
-	// Word boundary: preceding character must not be alphanumeric or underscore.
-	// This matches the right-boundary check and prevents false positives from
-	// non-Base58 characters like 0, I, O, l that precede the address.
-	if !btcWordStart(data, i) {
-		return Finding{}, 0, false
-	}
-
 	// Extract Base58 characters.
 	j := i
 	for j < len(data) && isBase58Char(data[j]) {

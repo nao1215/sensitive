@@ -250,3 +250,15 @@ func TestServiceTokenWebhookAndDSNBoundaries(t *testing.T) {
 		}
 	}
 }
+
+func TestPresentLayoutsFollowsTheLayoutOrder(t *testing.T) {
+	t.Parallel()
+	for k, marker := range layoutMarkers() {
+		if got := presentLayouts([]byte("x" + marker + "x")); got&(1<<k) == 0 {
+			t.Errorf("presentLayouts(%q) = %b, missing bit %d", marker, got, k)
+		}
+	}
+	if got := presentLayouts([]byte("GET /health 200")); got != 0 {
+		t.Errorf("a line without markers = %b", got)
+	}
+}

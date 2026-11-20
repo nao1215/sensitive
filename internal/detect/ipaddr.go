@@ -54,8 +54,9 @@ func (d *IPAddr) Scan(data []byte) []Finding {
 			// since decimal digits are also valid hex digits in IPv6 addresses.
 		}
 
-		// Try IPv6: hex digits or ':'.
-		if ascii.IsHexDigit(data[i]) || data[i] == ':' {
+		// Try IPv6: hex digits or ':' that do not continue an identifier,
+		// checked here so the letters a to f of a word cost no call.
+		if ipv6Lead(data[i]) && leadingBoundary(data, i, isIdentifierByte) {
 			f, adv, ok := d.tryIPv6(data, i)
 			if ok {
 				findings = append(findings, f)
@@ -84,9 +85,9 @@ func (d *IPAddr) tryIPv4(data []byte, i int) (Finding, int, bool) {
 		j++
 	}
 
-	candidate, ip := parseIPv4Run(data[i:j])
-	end := i + len(candidate)
-	if ip == nil || ip.To4() == nil || ip.To4()[0] == 0 || ip.IsLoopback() || versionNumber(data, i) {
+	n, first, ok := dottedQuad(data[i:j])
+	end := i + n
+	if !ok || first == 0 || first == loopbackOctet || versionNumber(data, i) {
 		return Finding{}, j, false
 	}
 
@@ -126,20 +127,20 @@ func isIPTokenSuffix(data []byte, at int) bool {
 
 // tryIPv6 attempts to parse an IPv6 address starting at data[i].
 // Returns the finding, the advance position, and whether a valid IPv6 was found.
-func (d *IPAddr) tryIPv6(data []byte, i int) (Finding, int, bool) {
-	// Word boundary: reject if preceded by alphanumeric or '_'.
-	if !leadingBoundary(data, i, isIdentifierByte) {
-		return Finding{}, i + 1, false
-	}
+// ipv6Lead reports a byte that can start an IPv6 address: a hex digit or ':'.
+func ipv6Lead(b byte) bool { return ascii.IsHexDigit(b) || b == ':' }
 
+// The caller has checked that data[i] does not continue an identifier.
+func (d *IPAddr) tryIPv6(data []byte, i int) (Finding, int, bool) {
 	// Consume hex digits and colons.
 	j := i
 	for j < len(data) && (ascii.IsHexDigit(data[j]) || data[j] == ':' || data[j] == '.') {
 		j++
 	}
 
-	// The colon of a JSON key such as "level":"info" ends here.
-	if bytes.Count(data[i:j], []byte{':'}) < minIPv6Colons {
+	// The colon of a JSON key such as "level":"info" ends here, and a time
+	// of day such as 12:34:56 here.
+	if !ipv6Shaped(data[i:j]) {
 		return Finding{}, j, false
 	}
 
@@ -163,52 +164,65 @@ func (d *IPAddr) tryIPv6(data []byte, i int) (Finding, int, bool) {
 	}, j, true
 }
 
-// Every IPv4 address has three dots and every IPv6 address at least two
-// colons, even after parseIPSentence trims sentence punctuation.
 const (
-	minIPv4Dots   = 3
+	// minIPv6Colons is the fewest colons of an IPv6 address, as in ::1.
 	minIPv6Colons = 2
+	// loopbackOctet starts every IPv4 loopback address, 127.0.0.0/8.
+	loopbackOctet = 127
 )
 
-// parseIPv4Run skips the address parse for a timestamp, a port or a counter,
-// whose digit run has fewer than three dots, so clean lines do not allocate.
-func parseIPv4Run(run []byte) (string, net.IP) {
-	if bytes.Count(run, []byte{'.'}) < minIPv4Dots {
-		return "", nil
+// ipv6Shaped reports whether a run of hex digits, colons and dots can hold an
+// address before its trailing punctuation: every form has two colons, eight
+// groups need seven, six groups and an IPv4 tail need six, and a shorter form
+// needs "::". A run whose only colons trail it may still hold an IPv4 address.
+func ipv6Shaped(run []byte) bool {
+	const minFullColons = 6
+	colons := bytes.Count(run, []byte{':'})
+	if colons < minIPv6Colons {
+		return false
 	}
-	candidate, ip := parseIPSentence(string(run))
-	if ip == nil {
-		return zeroPaddedIPv4(run)
+	if colons >= minFullColons || bytes.Contains(run, []byte("::")) {
+		return true
 	}
-	return candidate, ip
+	end := len(run)
+	for end > 0 && (run[end-1] == '.' || run[end-1] == ':') {
+		end--
+	}
+	return bytes.IndexByte(run[:end], ':') < 0
 }
 
-// zeroPaddedIPv4 accepts four decimal octets of up to three digits written
-// with leading zeros, as some firewall and appliance logs print them
-// (192.168.001.010). net.ParseIP rejects that form because other parsers read
-// it as octal; a log reader still sees the address.
-func zeroPaddedIPv4(run []byte) (string, net.IP) {
-	text := strings.TrimRight(string(run), ".")
-	parts := strings.Split(text, ".")
-	const octets, maxOctetLen = 4, 3
-	if len(parts) != octets {
-		return "", nil
+// dottedQuad reads four decimal octets from a run of digits and dots, as in
+// 10.0.0.1 or 10.0.0.1. at the end of a sentence, and returns the length
+// without trailing dots and the first octet. Octets may carry leading zeros
+// (192.168.001.010), as some firewall and appliance logs print them; a log
+// reader still sees the address. Timestamps, ports and counters fail without
+// allocating.
+func dottedQuad(run []byte) (n, first int, ok bool) {
+	n = len(run)
+	for n > 0 && run[n-1] == '.' {
+		n--
 	}
-	for i, part := range parts {
-		trimmed := strings.TrimLeft(part, "0")
-		if part == "" || len(part) > maxOctetLen || strings.Trim(part, "0123456789") != "" {
-			return "", nil
+	const octets, maxOctetLen, maxOctet, base = 4, 3, 255, 10
+	parts, value, digits := 0, 0, 0
+	for k := 0; k <= n; k++ {
+		if k < n && run[k] != '.' {
+			value = value*base + int(run[k]-'0')
+			digits++
+			if digits > maxOctetLen {
+				return 0, 0, false
+			}
+			continue
 		}
-		if trimmed == "" {
-			trimmed = "0"
+		if digits == 0 || value > maxOctet || parts == octets {
+			return 0, 0, false
 		}
-		parts[i] = trimmed
+		if parts == 0 {
+			first = value
+		}
+		parts++
+		value, digits = 0, 0
 	}
-	ip := net.ParseIP(strings.Join(parts, "."))
-	if ip == nil {
-		return "", nil
-	}
-	return text, ip
+	return n, first, parts == octets
 }
 
 // versionNumber reports an address-shaped number that a label or a product

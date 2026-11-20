@@ -60,11 +60,11 @@ func (s *Scanner) buildDispatch() {
 			buckets[b] = append(buckets[b], dispatchHint{hint: entry.lowered, mask: mask})
 		}
 	}
-	// A dense table lets selectDetectors skip most bytes without loading a
-	// bucket: follow holds the possible second bytes after each first byte,
-	// and is empty when no hint starts with that byte.
+	// A dense table lets selectDetectors skip most bytes without lowering
+	// them or loading a bucket: follow holds the possible second bytes after
+	// each first byte in either case, and is empty when no hint starts with it.
 	for b, bucket := range &buckets {
-		s.follow[b] = followingBytes(bucket)
+		s.follow[b] = followingBytes(buckets[ascii.ToLower(byte(b))])
 		s.hintIndex[b] = newDispatchBucket(bucket)
 	}
 }
@@ -78,8 +78,8 @@ func (set *byteSet) add(b byte) { set[b/wordBits] |= 1 << (b % wordBits) }
 
 func (set *byteSet) has(b byte) bool { return set[b/wordBits]&(1<<(b%wordBits)) != 0 }
 
-// followingBytes returns the lowered second bytes of a bucket's hints; a
-// one-byte or hintless entry can be followed by anything.
+// followingBytes returns the second bytes of a bucket's lowered hints in
+// either case; a one-byte or hintless entry can be followed by anything.
 func followingBytes(bucket []dispatchHint) byteSet {
 	var set byteSet
 	for _, entry := range bucket {
@@ -87,6 +87,9 @@ func followingBytes(bucket []dispatchHint) byteSet {
 			return byteSet{^uint64(0), ^uint64(0), ^uint64(0), ^uint64(0)}
 		}
 		set.add(entry.hint[1])
+		if ascii.IsLower(entry.hint[1]) {
+			set.add(entry.hint[1] - ('a' - 'A'))
+		}
 	}
 	return set
 }
@@ -101,10 +104,10 @@ func (s *Scanner) selectDetectors(data []byte) uint64 {
 	all := uint64(1)<<len(s.detectors) - 1
 	last := len(data) - 1
 	for i := 0; i < last && selected != all; i++ {
-		b, next := ascii.ToLower(data[i]), ascii.ToLower(data[i+1])
-		if !s.follow[b].has(next) {
+		if !s.follow[data[i]].has(data[i+1]) {
 			continue
 		}
+		b, next := ascii.ToLower(data[i]), ascii.ToLower(data[i+1])
 		bucket := &s.hintIndex[b]
 		selected |= bucket.short
 		// The second bytes are sorted, so the hints that can match sit together.

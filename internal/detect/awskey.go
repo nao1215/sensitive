@@ -1,6 +1,10 @@
 package detect
 
-import "github.com/nao1215/embargo/internal/ascii"
+import (
+	"bytes"
+
+	"github.com/nao1215/embargo/internal/ascii"
+)
 
 // AWSKey implements the public matching contract at
 // https://pkg.go.dev/github.com/nao1215/embargo@main#KindAWSKey.
@@ -30,7 +34,15 @@ func (d *AWSKey) Hints() [][]byte {
 func (d *AWSKey) Scan(data []byte) []Finding {
 	var findings []Finding
 
-	for i := 0; i < len(data)-19; i++ {
+	//nolint:mnd // A key is 20 bytes, so it cannot start in the last 19.
+	last := len(data) - 19
+	for i := 0; i < last; i++ {
+		// Every prefix starts with A, which IndexByte finds faster than a byte loop.
+		next := bytes.IndexByte(data[i:last], 'A')
+		if next < 0 {
+			break
+		}
+		i += next
 		if !matchAWSPrefix(data, i) {
 			continue
 		}

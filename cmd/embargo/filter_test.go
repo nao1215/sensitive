@@ -349,3 +349,15 @@ func TestFilterKeepsAUTF8ByteOrderMark(t *testing.T) {
 		t.Fatalf("got %q, want %q", out.String(), want)
 	}
 }
+
+//nolint:paralleltest // AllocsPerRun changes GOMAXPROCS while measuring.
+func TestMaskLineWritesACleanLineWithoutCopying(t *testing.T) {
+	lines := newLineScanner(embargo.NewScanner(), inputLines)
+	clean := []byte("GET /health 200 in 3 ms")
+	if allocs := testing.AllocsPerRun(100, func() { maskLine(lines, clean) }); allocs != 0 {
+		t.Fatalf("clean line allocated %v times", allocs)
+	}
+	if got := string(maskLine(lines, []byte("card "+filterPAN))); got != "card "+filterMarker {
+		t.Fatalf("masked line = %q", got)
+	}
+}

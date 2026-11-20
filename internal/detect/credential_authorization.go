@@ -129,10 +129,7 @@ func authSchemeByte(b byte) bool {
 // Quoted header values retain their scheme even without an assignment label.
 func quotedAuthorization(data []byte) []Finding {
 	var out []Finding
-	for i := 0; i < len(data); i++ {
-		if data[i] != '"' && data[i] != '\'' {
-			continue
-		}
+	for i := nextQuote(data, 0); i >= 0; i = nextQuote(data, i+1) {
 		// Without a key, arbitrary quoted prose is not an authorization value.
 		tail := data[i+1:]
 		if (len(tail) < len("Bearer ") || !strings.EqualFold(string(tail[:len("Bearer ")]), "Bearer ")) && (len(tail) < len("Basic ") || !strings.EqualFold(string(tail[:len("Basic ")]), "Basic ")) {

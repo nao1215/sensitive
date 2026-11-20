@@ -81,11 +81,16 @@ func urlDelimiter(b byte) bool {
 func formattedURLPasswords(data []byte) []Finding {
 	var out []Finding
 	for at := 0; at < len(data); {
-		found := bytes.Index(data[at:], []byte(" User:"))
+		// The rare U finds the field faster than the leading space would.
+		found := bytes.Index(data[at:], []byte("User:"))
 		if found < 0 {
 			break
 		}
-		start := at + found + len(" User:")
+		start := at + found + len("User:")
+		if found == 0 || data[at+found-1] != ' ' {
+			at = start
+			continue
+		}
 		end := start
 		for end < len(data) && data[end] != ' ' && data[end] != '\n' {
 			end++

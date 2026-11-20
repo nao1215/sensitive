@@ -125,7 +125,10 @@ func maskLine(lines *lineScanner, body []byte) []byte {
 			return masked
 		}
 	}
-	return []byte(embargo.Mask(string(body), lines.scan(body)))
+	if findings := lines.scan(body); len(findings) > 0 {
+		return []byte(embargo.Mask(string(body), findings))
+	}
+	return body
 }
 
 // utf8BOM is the UTF-8 byte order mark.
