@@ -1,6 +1,7 @@
 package detect
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -90,5 +91,50 @@ func TestNumericHasCandidate(t *testing.T) {
 	}
 	if hasWideDigits([]byte("\xef\xbc"), 1) || hasWideDigits([]byte("\xef\xbc\x9a"), 1) || hasWideDigits([]byte("\xef\xbd\x90"), 1) || hasWideDigits([]byte("\xef\xbc\x8f"), 1) {
 		t.Error("only U+FF10 to U+FF19 are full-width digits")
+	}
+}
+
+func TestSplitsRunOnlyShortMultiGroupRuns(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		group, digits int
+		want          bool
+	}{
+		{group: 1, digits: 17, want: true},
+		{group: 16, digits: 32, want: true},
+		{group: 4, digits: 33, want: false},
+		{group: 16, digits: 16, want: false},
+	} {
+		if got := splitsRun(tc.group, tc.digits, 13, 19); got != tc.want {
+			t.Errorf("splitsRun(%d, %d) = %v", tc.group, tc.digits, got)
+		}
+	}
+	if digitRun([]byte("12a3"), 0) != 2 || digitRun([]byte("12"), 2) != 0 {
+		t.Error("digitRun miscounts")
+	}
+}
+
+func TestLeadingGroupsLongestFirst(t *testing.T) {
+	t.Parallel()
+	data := []byte("12 345  6789-0")
+	var parts []string
+	leadingGroups(data, 0, len(data), 10, 2, func(end, count int) bool {
+		parts = append(parts, fmt.Sprintf("%s/%d", data[:end], count))
+		return false
+	})
+	if got := strings.Join(parts, ","); got != "12 345  6789/9,12 345/5,12/2" {
+		t.Fatalf("parts = %s", got)
+	}
+	var stopped []int
+	if !leadingGroups(data, 0, len(data), 10, 2, func(end, _ int) bool { stopped = append(stopped, end); return true }) || len(stopped) != 1 {
+		t.Fatal("leadingGroups did not stop at the accepted part")
+	}
+	if leadingGroups(data, 0, len(data), 10, 6, func(int, int) bool { return true }) == false {
+		t.Fatal("a part of 9 digits is at least 6")
+	}
+	calls := 0
+	leadingGroups(data, 0, len(data), 10, 10, func(int, int) bool { calls++; return false })
+	if calls != 0 {
+		t.Fatal("parts shorter than minDigits were tried")
 	}
 }

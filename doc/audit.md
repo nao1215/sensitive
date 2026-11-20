@@ -14,7 +14,18 @@ embargo --kinds pan,credential app.log
 
 [Releases](https://github.com/nao1215/embargo/releases) also carry archives for Linux, macOS and Windows on amd64 and arm64, plus deb, rpm and apk packages. `checksums.txt` is signed keylessly with cosign, every archive has an SBOM, and the SLSA provenance verifies with `slsa-verifier verify-artifact --provenance-path multiple.intoto.jsonl --source-uri github.com/nao1215/embargo --source-tag <tag> <archive>`.
 
-A line that holds one JSON object or array goes through MaskJSON, so keys, types, nesting and the sensitive-key rule are kept and the line is written compact; any other line, and JSON that MaskJSON rejects (invalid or over 1 MiB), is masked as text. Line endings, including CRLF and a missing final newline, are kept. Output is flushed whenever no more input is buffered, so `tail -f app.log | embargo` shows each line as it arrives. A read failure or a line over 4 MiB stops the output before that line and exits nonzero with a message that names only the line number. `--kinds` takes `all` or a comma-separated list, `--min-confidence` a number from 0 to 1; option errors name the flag and its allowed values and never repeat what was passed. Flags come before the files, a file named `-` reads stdin in its place, and `--` ends the flags so a file name may start with a hyphen.
+A line that holds one JSON object or array goes through MaskJSON, so keys, types, nesting and the sensitive-key rule are kept and the line is written compact; any other line, and JSON that MaskJSON rejects (invalid or over 1 MiB), is masked as text. Line endings, including CRLF and a missing final newline, are kept. Output is flushed whenever no more input is buffered, so `tail -f app.log | embargo` shows each line as it arrives. A read failure or a line over 4 MiB stops the output before that line and exits nonzero with a message that names only the line number. `--kinds` takes `all` or a comma-separated list, `--min-confidence` a number from 0 to 1; option errors name the flag and its allowed values and never repeat what was passed. Flags come before the files, a file named `-` reads stdin in its place, and `--` ends the flags so a file name may start with a hyphen. A UTF-8 byte order mark is kept and does not hide the JSON line after it. An input that starts with a UTF-16 byte order mark, which Windows PowerShell 5 writes for `>`, stops with an error instead of passing through unmasked.
+
+## Run a command
+
+`embargo run COMMAND [arg ...]` starts the command with embargo's stdin, masks its stdout onto stdout and its stderr onto stderr, and exits with the command's status. Flags go before `run`; everything after it belongs to the command.
+
+```sh
+embargo run sh app.sh >> app.log
+embargo --kinds all run sh app.sh
+```
+
+A command ended by a signal exits with 128 plus the signal number, as in a shell. SIGTERM and SIGHUP sent to embargo are passed to the command, and embargo keeps masking until the command's output ends. Ctrl-C reaches the command from the terminal directly. A child process that keeps the output open after the command exits keeps embargo running, as it would keep a shell pipe open.
 
 ## Measure the policy
 
@@ -41,7 +52,18 @@ embargo --format jsonl app.log
 out=$(embargo --format jsonl app.log) && test -z "$out"
 ```
 
-The exit status says whether embargo ran, not whether it found something: 0 when the input was read in full, findings or not, and 1 for a usage, input or output error. The CI line above fails on both a finding and an error. `! embargo --format jsonl app.log | grep -q .` would pass when embargo cannot read the file, because the error prints nothing.
+The exit status says whether embargo ran, not whether it found something:
+
+| Status | Meaning |
+|---|---|
+| 0 | the input was read in full, findings or not |
+| 1 | an input, output or masking error |
+| 2 | invalid flags or operands |
+| 126, 127 | `run` could not start the command, or did not find it |
+| 141 | the reader closed the output, as `head` does; nothing is printed |
+| other | `run` passes on the command's status |
+
+The CI line above fails on both a finding and an error. `! embargo --format jsonl app.log | grep -q .` would pass when embargo cannot read the file, because the error prints nothing.
 
 ## Compare settings on the same input
 

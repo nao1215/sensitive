@@ -1,6 +1,6 @@
 # gitleaks configuration. The default rules apply everywhere except the paths
-# below, which hold synthetic credentials that embargo's detectors are tested
-# and measured against. A real secret in library code, scripts, workflows or
+# below, which hold synthetic credentials that embargo's detectors and command
+# are tested and measured against. A real secret in library code, scripts, workflows or
 # prose documentation still fails the scan.
 
 [extend]
@@ -14,6 +14,7 @@ paths = [
   '''(^|/)[^/]+_test\.go$''',
   '''(^|/)testdata/''',
   '''^tests/''',
+  '''^e2e/atago/[^/]+\.atago\.yaml$''',
   '''^doc/performance/mutation-baseline\.json$''',
   '''^doc/quality-gates\.json$''',
 ]

@@ -5,6 +5,9 @@ import (
 	"testing"
 )
 
+// groupedMyNumber is a valid My Number in three groups of four, as printed.
+const groupedMyNumber = "1234 5678 9018"
+
 func TestMyNumberDetector_Scan(t *testing.T) {
 	t.Parallel()
 
@@ -34,9 +37,9 @@ func TestMyNumberDetector_Scan(t *testing.T) {
 		},
 		{
 			name:       "space-separated My Number",
-			input:      "1234 5678 9018",
+			input:      groupedMyNumber,
 			wantLen:    1,
-			wantRaw:    "1234 5678 9018",
+			wantRaw:    groupedMyNumber,
 			wantMinCon: 0.9,
 		},
 
@@ -223,5 +226,36 @@ func TestARNRequiresCompletePrefix(t *testing.T) {
 		if len(findings) != 1 || input[findings[0].Start:findings[0].End] != "123456789018" {
 			t.Fatalf("non-account ID lost: %+v", findings)
 		}
+	}
+}
+
+func TestMyNumberAfterAShortNumber(t *testing.T) {
+	t.Parallel()
+	d := NewMyNumber()
+	for input, start := range map[string]int{"7 123456789018": 2, "id 12 1234 5678 9018": 6} {
+		got := d.Scan([]byte(input))
+		if len(got) != 1 || got[0].Start != start || got[0].End != len(input) {
+			t.Errorf("Scan(%q) = %v, want one finding from %d", input, got, start)
+		}
+	}
+}
+
+func TestMyNumberTwoSideBySide(t *testing.T) {
+	t.Parallel()
+	got := NewMyNumber().Scan([]byte("123456789018 1234 5678 9018"))
+	if len(got) != 2 || got[0].End != 12 || got[1].Start != 13 {
+		t.Fatalf("Scan = %v", got)
+	}
+}
+
+func TestMyNumberLayout(t *testing.T) {
+	t.Parallel()
+	for input, want := range map[string]bool{"123456789018": true, groupedMyNumber: true, "1234-5678-9018": true, "081111 045623": false, "123 456 789 018": false, "12345678 9018": false} {
+		if got := myNumberLayout([]byte(input), 0, len(input)); got != want {
+			t.Errorf("myNumberLayout(%q) = %v", input, got)
+		}
+	}
+	if got := NewMyNumber().Scan([]byte("081111 045623 31 INFO dfs.FSNamesystem")); len(got) != 0 {
+		t.Fatalf("an HDFS date and time was read as a My Number: %v", got)
 	}
 }

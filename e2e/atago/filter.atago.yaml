@@ -1,0 +1,267 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nao1215/atago/v0.26.0/schema/atago.schema.json
+# The filter as bytes: line endings, byte order marks, the 4 MiB line limit,
+# JSON lines, private key blocks, streaming, and properties over generated input.
+version: "1"
+
+suite:
+  name: embargo filter
+
+scenarios:
+  - name: CRLF, LF and a missing final newline are kept byte for byte
+    steps:
+      - run:
+          command: embargo
+          stdin:
+            base64: Y2FyZD00MTExMTExMTExMTExMTExDQpwbGFpbgpsYXN0IGFsaWNlQGV4YW1wbGUuY29t
+          stdout_to: out.txt
+      - assert:
+          exit_code: 0
+      - assert:
+          file:
+            path: out.txt
+            equals: "card=[REDACTED]\r\nplain\nlast [REDACTED]"
+
+  - name: empty lines and a lone carriage return pass through
+    steps:
+      - run:
+          command: embargo
+          stdin:
+            base64: Cg0KDXgNCg==
+          stdout_to: out.txt
+      - assert:
+          file:
+            path: out.txt
+            equals: "\n\r\n\rx\r\n"
+
+  - name: a clean line is written unchanged, spaces and all
+    steps:
+      - run:
+          command: embargo
+          stdin: "  two  spaces\tand a tab  \n"
+          stdout_to: out.txt
+      - assert:
+          file:
+            path: out.txt
+            equals: "  two  spaces\tand a tab  \n"
+
+  - name: a UTF-8 byte order mark is kept before a JSON line
+    steps:
+      - run:
+          command: embargo
+          stdin: "﻿{\"password\":\"hunter2\",\"n\": 1}\n"
+          stdout_to: out.txt
+      - assert:
+          file:
+            path: out.txt
+            equals: "﻿{\"password\":\"[REDACTED]\",\"n\":1}\n"
+
+  - name: UTF-16 little endian input is refused
+    steps:
+      - run:
+          command: embargo
+          stdin:
+            base64: //5hAEAAYgAuAGMAbwBtAAoA
+      - assert:
+          exit_code: 1
+          stdout:
+            empty: true
+          stderr:
+            equals: |
+              embargo: the input is UTF-16; convert it to UTF-8
+
+  - name: UTF-16 big endian input is refused
+    steps:
+      - run:
+          command: embargo
+          stdin:
+            base64: /v8AYQBAAGIALgBjAG8AbQAK
+      - assert:
+          exit_code: 1
+          stdout:
+            empty: true
+          stderr:
+            equals: |
+              embargo: the input is UTF-16; convert it to UTF-8
+
+  - name: a line of exactly 4 MiB is masked and one byte more stops the output
+    steps:
+      - run:
+          command: sh -c '{ echo first alice@example.com; head -c 4194286 /dev/zero | tr "\000" a; echo " 4111111111111111"; } | embargo | tail -c 11'
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: "[REDACTED]\n"
+      - run:
+          command: sh -c '{ echo first alice@example.com; head -c 4194304 /dev/zero | tr "\000" a; echo; echo never 4111111111111111; } | embargo'
+      - assert:
+          exit_code: 1
+          stdout:
+            equals: |
+              first [REDACTED]
+          stderr:
+            equals: |
+              embargo: line 2 exceeds the 4 MiB limit; output stops before it
+
+  - name: JSON lines keep their shape and the sensitive key rule
+    matrix:
+      - case: nested object
+        input: '{"user": {"email": "alice@example.com", "id": 7}, "ok": true}'
+        want: '{"user":{"email":"[REDACTED]","id":7},"ok":true}'
+      - case: sensitive key with a short value
+        input: '{"password":"x","token":"y","level":"info"}'
+        want: '{"password":"[REDACTED]","token":"[REDACTED]","level":"info"}'
+      - case: array of values, a card number becomes a string
+        input: '  ["alice@example.com", 4111111111111111, null]'
+        want: '["[REDACTED]","[REDACTED]",null]'
+      - case: card in a string
+        input: '{"card":"4111111111111111","amount":12.5}'
+        want: '{"card":"[REDACTED]","amount":12.5}'
+      - case: invalid JSON is masked as text
+        input: '{"card":"4111111111111111"'
+        want: '{"card":"[REDACTED]"'
+      - case: text that starts with a brace
+        input: '{not json} alice@example.com'
+        want: '{not json} [REDACTED]'
+    steps:
+      - run:
+          command: embargo
+          stdin: "${input}\n"
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: "${want}\n"
+
+  - name: a JSON line over 1 MiB is masked as text and keeps its spacing
+    steps:
+      - fixture:
+          file: big.sh
+          content: |
+            {
+              printf '{"a": "alice@example.com", "pad": "'
+              head -c 1100000 /dev/zero | tr '\000' a
+              echo '"}'
+            } | embargo | head -c 30
+      - run:
+          command: sh big.sh
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: '{"a": "[REDACTED]", "pad": "aa'
+
+  - name: a private key block is masked until its END line, then masking stops
+    steps:
+      - run:
+          command: embargo
+          stdin: |
+            before
+            -----BEGIN OPENSSH PRIVATE KEY-----
+            b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+            QyNTUxOQAAACDH3xP0
+            -----END OPENSSH PRIVATE KEY-----
+            after
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              before
+              [REDACTED]
+              [REDACTED]
+              [REDACTED]
+              [REDACTED]
+              after
+
+  - name: each line is written before the input ends
+    steps:
+      - run:
+          command: sh -c '{ echo first alice@example.com; sleep 30; } | embargo'
+          timeout: 2s
+      - assert:
+          stdout:
+            equals: |
+              first [REDACTED]
+      - run:
+          command: sh -c '{ echo card 4111111111111111; sleep 30; } | embargo --format jsonl'
+          timeout: 2s
+      - assert:
+          stdout:
+            equals: |
+              {"kind":"pan","start":5,"end":21,"line":1,"column":5}
+
+  - name: text without digits or symbols passes through unchanged
+    forall:
+      vars:
+        text: {type: alpha, min: 1, max: 80}
+      runs: 40
+    steps:
+      - run:
+          command: embargo
+          stdin: "${text}\n"
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: "${text}\n"
+
+  - name: an email address never survives, whatever printable text is before it
+    forall:
+      vars:
+        prefix: {type: ascii, min: 0, max: 40}
+        user: {type: alphanumeric, min: 1, max: 20}
+      runs: 60
+    steps:
+      - run:
+          command: embargo
+          stdin: "${prefix} ${user}@example.com\n"
+      - assert:
+          exit_code: 0
+          stdout:
+            not_contains: "${user}@example.com"
+
+  - name: masking the masked output again changes nothing
+    forall:
+      vars:
+        prefix: {type: ascii, min: 0, max: 40}
+        digits: {one_of: ["4111111111111111", "5500005555555559", "340000000000009"]}
+      runs: 40
+    steps:
+      - fixture:
+          file: check.sh
+          content: |
+            printf '%s card %s\n' "$PREFIX" "$CARD" | embargo > once.txt
+            embargo once.txt > twice.txt
+            cmp once.txt twice.txt && ! grep -q "$CARD" once.txt
+      - run:
+          command: sh check.sh
+          env:
+            PREFIX: "${prefix}"
+            CARD: "${digits}"
+      - assert:
+          exit_code: 0
+
+  - name: a value after a short number is still masked (${input})
+    matrix:
+      - input: retry 3 4111111111111111
+        want: retry 3 [REDACTED]
+        kind: pan
+      - input: id 7 4111 1111 1111 1111
+        want: id 7 [REDACTED]
+        kind: pan
+      - input: 2026 11 20 4111-1111-1111-1111
+        want: 2026 11 20 [REDACTED]
+        kind: pan
+      - input: 4831-5327-6358-5683 4532015112830366
+        want: "[REDACTED] [REDACTED]"
+        kind: pan
+      - input: paid 4111111111111111 12 times
+        want: paid [REDACTED] 12 times
+        kind: pan
+      - input: user 42 7 123456789018
+        want: user 42 7 [REDACTED]
+        kind: mynumber
+    steps:
+      - run:
+          command: embargo --kinds ${kind}
+          stdin: "${input}\n"
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: "${want}\n"

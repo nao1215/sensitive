@@ -1,0 +1,132 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nao1215/atago/v0.26.0/schema/atago.schema.json
+# Flags: accepted boundaries, usage errors with status 2, help and version,
+# and that no error repeats a value passed on the command line.
+version: "1"
+
+suite:
+  name: embargo options
+
+scenarios:
+  - name: boundary values are accepted (${args})
+    matrix:
+      - args: --min-confidence 0
+      - args: --min-confidence 1
+      - args: --min-confidence 0.5
+      - args: --format json --samples 0
+      - args: --format json --samples 20
+      - args: --kinds all
+      - args: --kinds " pan , email "
+      - args: --format=jsonl
+      - args: -format text
+    steps:
+      - run:
+          command: embargo ${args}
+          stdin: |
+            clean
+      - assert:
+          exit_code: 0
+          stderr:
+            empty: true
+
+  - name: invalid usage exits 2 and never repeats the value (${args})
+    matrix:
+      - args: --min-confidence password=hunter2
+      - args: --min-confidence 1.01
+      - args: --min-confidence NaN
+      - args: --samples hunter2 --format json
+      - args: --format json --samples 21
+      - args: --kinds pan,hunter2
+      - args: --format hunter2
+      - args: --hunter2
+      - args: -x
+      - args: --kinds
+      - args: --version=hunter2
+      - args: a.log --kinds hunter2
+      - args: a.log -x
+    steps:
+      - run:
+          command: embargo ${args}
+          stdin: ""
+      - assert:
+          exit_code: 2
+          stdout:
+            empty: true
+          stderr:
+            not_contains: "hunter2"
+
+  - name: "-0 is a valid confidence and the other invalid values exit 2"
+    steps:
+      - run:
+          command: embargo --min-confidence -0
+          stdin: ""
+      - assert:
+          exit_code: 0
+      - run:
+          command: embargo --min-confidence 1.01
+      - assert:
+          exit_code: 2
+          stderr:
+            equals: |
+              embargo: --min-confidence must be a number from 0 to 1
+      - run:
+          command: embargo a.log -x
+      - assert:
+          exit_code: 2
+          stderr:
+            equals: |
+              embargo: flags must come before the files; see embargo --help
+      - run:
+          command: embargo -x
+      - assert:
+          exit_code: 2
+          stderr:
+            equals: |
+              embargo: unknown flag; the flags are --kinds, --min-confidence, --format, --samples and --version; see embargo --help
+
+  - name: an unknown kind gets a suggestion that names only built-in kinds
+    matrix:
+      - typo: emial
+        hint: email
+      - typo: pna
+        hint: pan
+      - typo: ipadr
+        hint: ipaddr
+    steps:
+      - run:
+          command: embargo --kinds ${typo}
+          stdin: ""
+      - assert:
+          exit_code: 2
+          stderr:
+            contains: 'did you mean "${hint}"?'
+
+  - name: help lists every flag, both forms and the exit statuses
+    matrix:
+      - flag: --help
+      - flag: -h
+    steps:
+      - run:
+          command: embargo ${flag}
+      - assert:
+          exit_code: 0
+          stderr:
+            empty: true
+          stdout:
+            contains:
+              - "Usage: embargo [--format text|json|jsonl]"
+              - "run COMMAND [arg ...]"
+              - "--kinds KIND,..."
+              - "--min-confidence N"
+              - "--samples N"
+              - "--version"
+              - "Exit status: 0 done, 1 failed, 2 invalid usage, 141 output closed"
+              - "https://pkg.go.dev/github.com/nao1215/embargo#Kind"
+
+  - name: version prints one line
+    steps:
+      - run:
+          command: embargo --version
+      - assert:
+          exit_code: 0
+          stdout:
+            matches: '^embargo (v[0-9]+\.[0-9]+\.[0-9]+.*|\(devel\))\n$'

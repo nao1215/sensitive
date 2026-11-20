@@ -50,7 +50,7 @@ func TestOptionErrorsNameTheFlagAndNeverEchoTheValue(t *testing.T) {
 	} {
 		var out, diagnostics bytes.Buffer
 		code := exitCode(tc.args, strings.NewReader(secretArgument), &out, &diagnostics)
-		if code != 1 || out.Len() != 0 || diagnostics.String() != tc.want+"\n" || strings.Contains(diagnostics.String(), "opaqueFixture") {
+		if code != statusUsage || out.Len() != 0 || diagnostics.String() != tc.want+"\n" || strings.Contains(diagnostics.String(), "opaqueFixture") {
 			t.Errorf("%v: exit=%d stdout=%q stderr=%q", tc.args, code, out.String(), diagnostics.String())
 		}
 	}
@@ -84,7 +84,7 @@ func TestFlagsAfterFilesAreRejected(t *testing.T) {
 	for _, args := range [][]string{{fileArgument, flagKinds, "email"}, {fileArgument, "-x"}, {fileArgument, flagFormat, formatJSON}} {
 		var out, diagnostics bytes.Buffer
 		code := exitCode(args, strings.NewReader(""), &out, &diagnostics)
-		if code != 1 || out.Len() != 0 || diagnostics.String() != "embargo: flags must come before the files; see embargo --help\n" {
+		if code != statusUsage || out.Len() != 0 || diagnostics.String() != "embargo: flags must come before the files; see embargo --help\n" {
 			t.Errorf("%v: exit=%d stdout=%q stderr=%q", args, code, out.String(), diagnostics.String())
 		}
 	}

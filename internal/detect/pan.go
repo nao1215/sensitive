@@ -108,10 +108,7 @@ func (d *PAN) candidate(orig, data []byte, posMap []int, i int) (Finding, int, b
 	}
 	// A run of fewer than panMinDigits digits that ends without a separator
 	// or a dot, such as the 2 of 2ms, is no card in any written form.
-	run := 1
-	for i+run < len(data) && ascii.IsDigit(data[i+run]) {
-		run++
-	}
+	run := digitRun(data, i)
 	if end := i + run; run < panMinDigits && (end == len(data) || (!cardSeparator(data[end]) && data[end] != '.')) {
 		return Finding{}, end, false
 	}
@@ -120,7 +117,27 @@ func (d *PAN) candidate(orig, data []byte, posMap []int, i int) (Finding, int, b
 	digits, end := cardDigits(data, i, stack[:0])
 	bounded := panBounded(orig, data, posMap, i, end)
 	f, ok := d.evaluateCandidate(orig, posMap, digits, len(digits), i, end)
-	return f, end, ok && bounded
+	if ok && bounded {
+		return f, end, true
+	}
+	if !splitsRun(run, len(digits), panMinDigits, panMaxDigits) {
+		return f, end, false
+	}
+	// The longest leading card is taken first, as in two cards side by side;
+	// otherwise the scan goes on from the next group.
+	var found Finding
+	at := 0
+	if leadingGroups(data, i, end, len(digits), panMinDigits, func(partEnd, count int) bool {
+		if count > panMaxDigits {
+			return false
+		}
+		f, ok := d.evaluateCandidate(orig, posMap, digits[:count], count, i, partEnd)
+		found, at = f, partEnd
+		return ok && panBounded(orig, data, posMap, i, partEnd)
+	}) {
+		return found, at, true
+	}
+	return Finding{}, i + run, false
 }
 
 // cardDigits extracts the digits of a candidate separated by spaces or

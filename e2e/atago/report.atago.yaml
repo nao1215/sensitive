@@ -1,0 +1,142 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nao1215/atago/v0.26.0/schema/atago.schema.json
+# --format json and jsonl: exact byte offsets over CRLF and multibyte text,
+# sample limits, empty input, failures, and that no matched value is printed.
+version: "1"
+
+suite:
+  name: embargo reports
+
+scenarios:
+  - name: jsonl gives byte offsets that count CRLF and multibyte characters
+    steps:
+      - run:
+          command: embargo --format jsonl
+          stdin: "card=4111111111111111\r\n東京 alice@example.com\n"
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              {"kind":"pan","start":5,"end":21,"line":1,"column":5}
+              {"kind":"email","start":30,"end":47,"line":2,"column":7}
+
+  - name: json counts every finding and keeps samples to the limit
+    steps:
+      - run:
+          command: embargo --format json --samples 1
+          stdin: |
+            a alice@example.com
+            b bob@example.com
+            c carol@example.com
+      - assert:
+          exit_code: 0
+          stdout:
+            json:
+              - path: $.lines
+                equals: 3
+              - path: $.bytes
+                equals: 58
+              - path: $.findings[0].kind
+                equals: email
+              - path: $.findings[0].count
+                equals: 3
+              - path: $.findings[0].samples
+                length: 1
+              - path: $.findings[0].samples[0].start
+                equals: 2
+      - assert:
+          stdout:
+            not_contains: ["alice@example.com", "bob@", "carol@"]
+
+  - name: --samples 0 keeps the counts and drops every location
+    steps:
+      - run:
+          command: embargo --format json --samples 0
+          stdin: |
+            x 4111111111111111
+      - assert:
+          exit_code: 0
+          stdout:
+            json:
+              - path: $.findings[0].count
+                equals: 1
+              - path: $.findings[0].samples
+                length: 0
+
+  - name: empty input gives an empty report
+    steps:
+      - run:
+          command: embargo --format json
+          stdin: ""
+      - assert:
+          exit_code: 0
+          stdout:
+            json:
+              - path: $.findings
+                length: 0
+              - path: $.lines
+                equals: 0
+      - run:
+          command: embargo --format jsonl
+          stdin: ""
+      - assert:
+          exit_code: 0
+          stdout:
+            empty: true
+
+  - name: an over-long line leaves json empty and jsonl with the earlier findings
+    steps:
+      - fixture:
+          file: long.sh
+          content: |
+            { echo "first 4111111111111111"; head -c 4194304 /dev/zero | tr '\000' a; echo; } | embargo --format "$1"
+      - run:
+          command: sh long.sh json
+      - assert:
+          exit_code: 1
+          stdout:
+            empty: true
+          stderr:
+            equals: |
+              embargo: line 2 exceeds the 4 MiB limit; no report is written
+      - run:
+          command: sh long.sh jsonl
+      - assert:
+          exit_code: 1
+          stdout:
+            equals: |
+              {"kind":"pan","start":6,"end":22,"line":1,"column":6}
+          stderr:
+            equals: |
+              embargo: line 2 exceeds the 4 MiB limit; output stops before it
+
+  - name: the report never prints a matched value
+    matrix:
+      - format: json
+      - format: jsonl
+    steps:
+      - run:
+          command: embargo --format ${format} --kinds all
+          stdin: |
+            password=hunter2 card=4111111111111111 key=AKIAIOSFODNN7EXAMPLE
+            {"email":"alice@example.com","iban":"DE89370400440532013000"}
+      - assert:
+          exit_code: 0
+          stdout:
+            not_contains: ["hunter2", "4111111111111111", "AKIAIOSFODNN7EXAMPLE", "alice@example.com", "DE89370400440532013000"]
+
+  - name: a closed output ends quietly in every format
+    matrix:
+      - format: text
+      - format: jsonl
+    steps:
+      - fixture:
+          file: closed.sh
+          content: |
+            (yes 'card 4111111111111111' | embargo --format "$1"; echo "status $?" >&2) | head -n 1 > /dev/null
+      - run:
+          command: sh closed.sh ${format}
+      - assert:
+          exit_code: 0
+          stderr:
+            equals: |
+              status 141

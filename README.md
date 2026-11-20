@@ -249,7 +249,7 @@ go install github.com/nao1215/embargo/cmd/embargo@v0.18.1
 
 | Where | Command |
 |---|---|
-| An application that prints secrets | `./app 2>&1 \| embargo >> app.log` |
+| An application that prints secrets | `embargo run ./app >> app.log` |
 | Logs shared in an issue or a chat | `kubectl logs deploy/api \| embargo > share.log` |
 | A live log before it is shipped | `tail -f app.log \| embargo \| your-shipper` |
 | A CI gate on a saved log | `out=$(embargo --format jsonl app.log) && test -z "$out"` |
@@ -300,7 +300,7 @@ Coverage 99.4% · mutation score 89.18% · 13 fuzz targets, 2208636 executions.
 ## Benchmarks
 
 <!-- speed-summary:start -->
-On the same five JSON slog events, embargo is 1.12 to 1.37 times faster than go-masker given the same email and card rules, and embargo's default scanner is 1.84 to 4.44 times faster than pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
+On the same five JSON slog events, embargo is 1.11 to 1.38 times faster than go-masker given the same email and card rules, and embargo's default scanner is 1.83 to 4.34 times faster than pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
 <!-- speed-summary:end -->
 
 <!-- benchmarks:start -->

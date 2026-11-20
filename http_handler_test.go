@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -243,6 +244,9 @@ func TestHTTPImplicitFlushSnapshotsCommittedHeaders(t *testing.T) {
 	}
 }
 
+// durationField matches the logged duration of an HTTP exchange.
+var durationField = regexp.MustCompile(`"duration":\d+`)
+
 func TestHTTPOriginalKeyContext(t *testing.T) {
 	t.Parallel()
 	for _, fixture := range []struct{ key, value string }{{"cvv", "731"}, {"client_secret", "opaque-client-value"}, {"bank account", "12345678"}, {"expiry", "12/29"}} {
@@ -261,7 +265,10 @@ func TestHTTPOriginalKeyContext(t *testing.T) {
 				w.WriteHeader(http.StatusFound)
 			})
 			embargo.NewHTTPHandler(next, slog.New(slog.NewJSONHandler(&out, &slog.HandlerOptions{ReplaceAttr: omitRecordTime})), embargo.NewScanner()).ServeHTTP(httptest.NewRecorder(), request)
-			if out.Len() == 0 || strings.Contains(out.String(), fixture.value) || strings.Contains(out.String(), url.QueryEscape(fixture.value)) {
+			// The duration varies from run to run and can contain the digits
+			// of a short value such as the CVV, so it is left out of the check.
+			logged := durationField.ReplaceAllString(out.String(), "")
+			if out.Len() == 0 || strings.Contains(logged, fixture.value) || strings.Contains(logged, url.QueryEscape(fixture.value)) {
 				t.Fatalf("context lost: %s", out.String())
 			}
 		})

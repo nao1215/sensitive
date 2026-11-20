@@ -1,6 +1,7 @@
 package detect
 
 import (
+	"fmt"
 	"math/rand/v2"
 	"os"
 	"slices"
@@ -552,10 +553,34 @@ func TestPANDottedGroupEnds(t *testing.T) {
 	}
 }
 
+// referencePANSplit tries every leading part of a rejected run that ends at a
+// digit, longest first, counting its digits again for each part.
+func referencePANSplit(d *PAN, orig, data []byte, posMap []int, digits []byte, start, end int) (Finding, int, bool) {
+	isDigit := func(c byte) bool { return c >= '0' && c <= '9' }
+	for j := end - 1; j > start; j-- {
+		if isDigit(data[j]) || !isDigit(data[j-1]) {
+			continue
+		}
+		count := 0
+		for _, c := range data[start:j] {
+			if isDigit(c) {
+				count++
+			}
+		}
+		if count > panMaxDigits {
+			continue
+		}
+		if f, ok := d.evaluateCandidate(orig, posMap, digits[:count], count, start, j); ok && panBounded(orig, data, posMap, start, j) {
+			return f, j, true
+		}
+	}
+	return Finding{}, start + digitRun(data, start), false
+}
+
 func TestPANShortRunSkipMatchesFullCandidate(t *testing.T) {
 	t.Parallel()
 	d := NewPAN()
-	// The candidate before short runs were skipped.
+	// The candidate without the short-run skip.
 	full := func(orig, data []byte, posMap []int, i int) (Finding, int, bool) {
 		if data[i] < '0' || data[i] > '9' {
 			return Finding{}, i + 1, false
@@ -564,7 +589,13 @@ func TestPANShortRunSkipMatchesFullCandidate(t *testing.T) {
 		digits, end := cardDigits(data, i, stack[:0])
 		bounded := panBounded(orig, data, posMap, i, end)
 		f, ok := d.evaluateCandidate(orig, posMap, digits, len(digits), i, end)
-		return f, end, ok && bounded
+		if ok && bounded {
+			return f, end, true
+		}
+		if !splitsRun(digitRun(data, i), len(digits), panMinDigits, panMaxDigits) {
+			return f, end, false
+		}
+		return referencePANSplit(d, orig, data, posMap, digits, i, end)
 	}
 	// #nosec G404 -- Fixed seed for reproducible synthetic tests.
 	rng := rand.New(rand.NewPCG(4111, 1111))
@@ -578,6 +609,50 @@ func TestPANShortRunSkipMatchesFullCandidate(t *testing.T) {
 		want := scanNumeric(nil, data, data, nil, full, true)
 		if got := d.Scan(data); !slices.Equal(got, want) {
 			t.Fatalf("Scan(%q) = %v, want %v", data, got, want)
+		}
+	}
+}
+
+func TestPANAfterAShortNumber(t *testing.T) {
+	t.Parallel()
+	d := NewPAN()
+	for _, tc := range []struct {
+		input      string
+		start, end int
+	}{
+		{"retry 3 4111111111111111", 8, 24},
+		{"7 4111 1111 1111 1111", 2, 21},
+		{"err 12 4111-1111-1111-1111", 7, 26},
+		{"2026 11 20 4111111111111111", 11, 27},
+	} {
+		got := d.Scan([]byte(tc.input))
+		if len(got) != 1 || got[0].Start != tc.start || got[0].End != tc.end {
+			t.Errorf("Scan(%q) = %v, want [%d,%d)", tc.input, got, tc.start, tc.end)
+		}
+	}
+	for _, input := range []string{"1234 5678 9012 3456", "1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6", strings.Repeat("1 ", 40) + "4111111111111111"} {
+		if got := d.Scan([]byte(input)); len(got) != 0 {
+			t.Errorf("Scan(%q) = %v, want none", input, got)
+		}
+	}
+}
+
+func TestPANTwoCardsOrACardAndANumber(t *testing.T) {
+	t.Parallel()
+	d := NewPAN()
+	for input, want := range map[string]string{
+		"4831-5327-6358-5683 4532015112830366": "[0,19) [20,36)",
+		"4111111111111111 12":                  "[0,16)",
+		"4111 1111 1111 1111 2026":             "[0,19)",
+		"1234567890123 4111111111111111":       "[14,30)",
+	} {
+		found := d.Scan([]byte(input))
+		spans := make([]string, 0, len(found))
+		for _, f := range found {
+			spans = append(spans, fmt.Sprintf("[%d,%d)", f.Start, f.End))
+		}
+		if got := strings.Join(spans, " "); got != want {
+			t.Errorf("Scan(%q) = %s, want %s", input, got, want)
 		}
 	}
 }

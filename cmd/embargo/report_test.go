@@ -18,7 +18,7 @@ func TestReportCountsOffsetsAndNeverEchoesInput(t *testing.T) {
 	const password = "private-fixture-value"
 	input := "受注 ok\r\ncard=" + pan + "\r\npassword=" + password + "\ncard=" + pan
 	var output bytes.Buffer
-	if err := run([]string{flagFormat, formatJSON}, strings.NewReader(input), &output); err != nil {
+	if err := run([]string{flagFormat, formatJSON}, strings.NewReader(input), &output, io.Discard); err != nil {
 		t.Fatal(err)
 	}
 	if strings.Contains(output.String(), pan) || strings.Contains(output.String(), password) || strings.Contains(output.String(), "受注") {
@@ -52,7 +52,7 @@ func TestReportSelectionAndSampleLimit(t *testing.T) {
 	t.Parallel()
 	input := strings.Repeat("card=4111111111111111\n", 10) + "alice@example.com\n"
 	var output bytes.Buffer
-	if err := run([]string{flagFormat, formatJSON, flagKinds, reportPAN, flagSamples, "1"}, strings.NewReader(input), &output); err != nil {
+	if err := run([]string{flagFormat, formatJSON, flagKinds, reportPAN, flagSamples, "1"}, strings.NewReader(input), &output, io.Discard); err != nil {
 		t.Fatal(err)
 	}
 	var got report
@@ -63,14 +63,14 @@ func TestReportSelectionAndSampleLimit(t *testing.T) {
 		t.Fatal("selection or sample cap ignored")
 	}
 	output.Reset()
-	if err := run([]string{flagFormat, formatJSON, flagKinds, kindsAll}, strings.NewReader("123-45-6789"), &output); err != nil {
+	if err := run([]string{flagFormat, formatJSON, flagKinds, kindsAll}, strings.NewReader("123-45-6789"), &output, io.Discard); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(output.String(), "us_ssn") {
 		t.Fatal("opt-in kinds missing")
 	}
 	output.Reset()
-	if err := run([]string{flagFormat, formatJSON, flagMinimum, "0.7"}, strings.NewReader("order_id=4111111111111111\n"), &output); err != nil || strings.Contains(output.String(), `"pan"`) {
+	if err := run([]string{flagFormat, formatJSON, flagMinimum, "0.7"}, strings.NewReader("order_id=4111111111111111\n"), &output, io.Discard); err != nil || strings.Contains(output.String(), `"pan"`) {
 		t.Fatalf("minimum confidence ignored: %v %s", err, output.String())
 	}
 }
@@ -79,16 +79,16 @@ func TestReportRejectsIncompleteInputAndOutputFailure(t *testing.T) {
 	t.Parallel()
 	for _, input := range []io.Reader{strings.NewReader(strings.Repeat("x", maximumLine+1)), &failingInput{}} {
 		var out bytes.Buffer
-		err := run([]string{flagFormat, formatJSON}, input, &out)
+		err := run([]string{flagFormat, formatJSON}, input, &out, io.Discard)
 		if err == nil || out.Len() != 0 || strings.Contains(err.Error(), "private-error") {
 			t.Fatal("incomplete report accepted or error echoed")
 		}
 	}
-	if run([]string{flagFormat, formatJSON}, strings.NewReader(""), failingOutput{}) == nil {
+	if run([]string{flagFormat, formatJSON}, strings.NewReader(""), failingOutput{}, io.Discard) == nil {
 		t.Fatal("output failure ignored")
 	}
 	var out bytes.Buffer
-	if err := run([]string{flagFormat, formatJSON}, strings.NewReader(""), &out); err != nil || !json.Valid(out.Bytes()) || !strings.Contains(out.String(), `"findings": []`) {
+	if err := run([]string{flagFormat, formatJSON}, strings.NewReader(""), &out, io.Discard); err != nil || !json.Valid(out.Bytes()) || !strings.Contains(out.String(), `"findings": []`) {
 		t.Fatalf("empty input report = %s, %v", out.String(), err)
 	}
 }
@@ -98,7 +98,7 @@ func TestJSONLPrintsEveryFindingWithoutItsValue(t *testing.T) {
 	pan := "4111111111111111"
 	input := "clean\r\ncard=" + pan + " again " + pan + "\nmail alice@example.com"
 	var out bytes.Buffer
-	if err := run([]string{flagFormat, formatJSONL}, strings.NewReader(input), &out); err != nil {
+	if err := run([]string{flagFormat, formatJSONL}, strings.NewReader(input), &out, io.Discard); err != nil {
 		t.Fatal(err)
 	}
 	if strings.Contains(out.String(), pan) || strings.Contains(out.String(), "alice") {
@@ -112,7 +112,7 @@ func TestJSONLPrintsEveryFindingWithoutItsValue(t *testing.T) {
 	}
 	out.Reset()
 	// No output means nothing was found, so a shell can test for any line.
-	if err := run([]string{flagFormat, formatJSONL}, strings.NewReader("clean\nlines\n"), &out); err != nil || out.Len() != 0 {
+	if err := run([]string{flagFormat, formatJSONL}, strings.NewReader("clean\nlines\n"), &out, io.Discard); err != nil || out.Len() != 0 {
 		t.Fatalf("clean input: err=%v output=%q", err, out.String())
 	}
 }
@@ -121,19 +121,19 @@ func TestJSONLStopsAtFailuresAfterEarlierFindings(t *testing.T) {
 	t.Parallel()
 	var out bytes.Buffer
 	failing := io.MultiReader(strings.NewReader("card=4111111111111111\n"), &failingInput{})
-	err := run([]string{flagFormat, formatJSONL}, failing, &out)
+	err := run([]string{flagFormat, formatJSONL}, failing, &out, io.Discard)
 	if err == nil || err.Error() != "embargo: input read failed at line 2; output stops before it" || !strings.Contains(out.String(), `"line":1`) {
 		t.Fatalf("read failure: err=%v output=%q", err, out.String())
 	}
-	if run([]string{flagFormat, formatJSONL}, strings.NewReader("card=4111111111111111\n"), failingOutput{}) == nil {
+	if run([]string{flagFormat, formatJSONL}, strings.NewReader("card=4111111111111111\n"), failingOutput{}, io.Discard) == nil {
 		t.Fatal("output failure ignored")
 	}
-	if run([]string{flagFormat, formatJSONL}, strings.NewReader("clean\n"), failingOutput{}) != nil {
+	if run([]string{flagFormat, formatJSONL}, strings.NewReader("clean\n"), failingOutput{}, io.Discard) != nil {
 		t.Fatal("nothing to write must not fail")
 	}
 	// One line whose findings overflow the output buffer fails while encoding.
 	crowded := strings.Repeat("card=4111111111111111 ", 4096) + "\n"
-	if err := run([]string{flagFormat, formatJSONL}, strings.NewReader(crowded), failingOutput{}); err == nil || err.Error() != outputWriteFailed {
+	if err := run([]string{flagFormat, formatJSONL}, strings.NewReader(crowded), failingOutput{}, io.Discard); err == nil || err.Error() != outputWriteFailed {
 		t.Fatalf("buffered output failure: %v", err)
 	}
 }
@@ -142,7 +142,7 @@ func TestJSONLFlushesWhenNoInputIsBuffered(t *testing.T) {
 	t.Parallel()
 	var out bytes.Buffer
 	reader := &pacedReader{output: &out, lines: []string{"card=4111111111111111\n", "mail alice@example.com\n"}, flushed: nil}
-	if err := run([]string{flagFormat, formatJSONL}, reader, &out); err != nil {
+	if err := run([]string{flagFormat, formatJSONL}, reader, &out, io.Discard); err != nil {
 		t.Fatal(err)
 	}
 	if len(reader.flushed) == 0 || !reader.flushed[0] {
@@ -167,7 +167,7 @@ func TestReportAndJSONLCountEveryLineOfAnOpenPEMBlock(t *testing.T) {
 	t.Parallel()
 	input := "-----BEGIN " + "PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASC\n-----END PRIVATE KEY-----\nplain\n"
 	var out bytes.Buffer
-	if err := run([]string{flagFormat, formatJSONL}, strings.NewReader(input), &out); err != nil {
+	if err := run([]string{flagFormat, formatJSONL}, strings.NewReader(input), &out, io.Discard); err != nil {
 		t.Fatal(err)
 	}
 	want := `{"kind":"private_key_pem","start":0,"end":27,"line":1,"column":0}` + "\n" +
@@ -177,7 +177,7 @@ func TestReportAndJSONLCountEveryLineOfAnOpenPEMBlock(t *testing.T) {
 		t.Fatalf("got\n%s\nwant\n%s", out.String(), want)
 	}
 	out.Reset()
-	if err := run([]string{flagFormat, formatJSON}, strings.NewReader(input), &out); err != nil {
+	if err := run([]string{flagFormat, formatJSON}, strings.NewReader(input), &out, io.Discard); err != nil {
 		t.Fatal(err)
 	}
 	var got report
@@ -204,10 +204,10 @@ func TestJSONLFindsEveryLineTheFilterChanges(t *testing.T) {
 	}
 	for _, line := range lines {
 		var masked, found bytes.Buffer
-		if err := run(nil, strings.NewReader(line+"\n"), &masked); err != nil {
+		if err := run(nil, strings.NewReader(line+"\n"), &masked, io.Discard); err != nil {
 			t.Fatal(err)
 		}
-		if err := run([]string{flagFormat, formatJSONL}, strings.NewReader(line+"\n"), &found); err != nil {
+		if err := run([]string{flagFormat, formatJSONL}, strings.NewReader(line+"\n"), &found, io.Discard); err != nil {
 			t.Fatal(err)
 		}
 		if changed := masked.String() != line+"\n"; changed != (found.Len() > 0) {

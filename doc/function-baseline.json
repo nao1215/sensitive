@@ -22,6 +22,13 @@
       "lines": 26
     },
     {
+      "file": "adapters/otel/values.go",
+      "name": "attributeValue",
+      "statements": 24,
+      "cyclomatic": 13,
+      "lines": 38
+    },
+    {
       "file": "adapters/sentry/adapter.go",
       "name": "NewBeforeSend",
       "statements": 31,
@@ -31,16 +38,16 @@
     {
       "file": "cmd/embargo/main.go",
       "name": "run",
-      "statements": 16,
-      "cyclomatic": 7,
-      "lines": 26
+      "statements": 18,
+      "cyclomatic": 8,
+      "lines": 29
     },
     {
       "file": "cmd/embargo/options.go",
       "name": "parseOptions",
-      "statements": 32,
-      "cyclomatic": 14,
-      "lines": 39
+      "statements": 29,
+      "cyclomatic": 13,
+      "lines": 35
     },
     {
       "file": "embargotest/guard_names.go",

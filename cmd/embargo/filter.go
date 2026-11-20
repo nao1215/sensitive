@@ -18,6 +18,19 @@ const (
 	ioBuffer    = 64 << 10
 )
 
+// errOutputClosed reports that the reader of the output has gone, as when the
+// output is piped into head; it ends the command quietly with status 141.
+var errOutputClosed = errors.New("embargo: output closed")
+
+// writeFailed returns errOutputClosed for a reader that has gone and a fixed
+// error for any other write failure, whose text could name a path.
+func writeFailed(err error) error {
+	if outputClosed(err) {
+		return errOutputClosed
+	}
+	return errors.New("embargo: output write failed")
+}
+
 // filterLines masks line by line. Output is flushed whenever the reader has no
 // buffered input left, so a pipe such as tail -f sees each line as it arrives.
 // A read failure or an over-long line stops before that line: nothing after a
@@ -35,8 +48,10 @@ func filterLines(input io.Reader, output io.Writer, scanner *embargo.Scanner) er
 			return err
 		}
 		done := errors.Is(readErr, io.EOF)
-		if (done || reader.Buffered() == 0) && writer.Flush() != nil {
-			return errors.New("embargo: output write failed")
+		if done || reader.Buffered() == 0 {
+			if err := writer.Flush(); err != nil {
+				return writeFailed(err)
+			}
 		}
 		if done {
 			return nil
@@ -68,14 +83,14 @@ func writeMaskedLine(writer *bufio.Writer, lines *lineScanner, line []byte) erro
 		_, err = writer.Write(ending)
 	}
 	if err != nil {
-		return errors.New("embargo: output write failed")
+		return writeFailed(err)
 	}
 	return nil
 }
 
 func flushThen(writer *bufio.Writer, err error) error {
 	if flushErr := writer.Flush(); flushErr != nil {
-		return errors.New("embargo: output write failed")
+		return writeFailed(flushErr)
 	}
 	return err
 }
@@ -116,8 +131,13 @@ func splitEnding(line []byte) (body, ending []byte) {
 // MaskJSON rejects, is masked as text: detected values are replaced, the
 // sensitive key policy does not apply, and a line without findings is written
 // unchanged.
-// A line inside an open PEM block is always masked as text.
+// A line inside an open PEM block is always masked as text. A UTF-8 byte
+// order mark, as Windows editors write before the first line, is kept and the
+// rest of the line is masked as if it were not there.
 func maskLine(lines *lineScanner, body []byte) []byte {
+	if bytes.HasPrefix(body, []byte(utf8BOM)) {
+		return append([]byte(utf8BOM), maskLine(lines, body[len(utf8BOM):])...)
+	}
 	if trimmed := bytes.TrimLeft(body, " \t"); !lines.open() && len(trimmed) > 0 && (trimmed[0] == '{' || trimmed[0] == '[') {
 		if masked, err := lines.scanner.MaskJSON(body); err == nil {
 			lines.observe(body)
@@ -126,6 +146,9 @@ func maskLine(lines *lineScanner, body []byte) []byte {
 	}
 	return []byte(embargo.Mask(string(body), lines.scan(body)))
 }
+
+// utf8BOM is the UTF-8 byte order mark.
+const utf8BOM = "\xef\xbb\xbf"
 
 // pemHeaderLimit bounds the retained start of an open PEM block; a header cut
 // at the limit still reads as an open block, so truncation only masks more.

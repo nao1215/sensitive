@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nao1215/atago/v0.26.0/schema/atago.schema.json
 # Black-box behaviour of the embargo command: the pipe filter, file input,
-# --format json and jsonl, a CI gate, exit codes and option errors. scripts/run_e2e.sh builds
+# --format json and jsonl, a CI gate, run, exit codes and option errors. scripts/run_e2e.sh builds
 # the command from this checkout and puts it first on PATH.
 # The first scenario pins the command output shown in the README.
 version: "1"
@@ -157,7 +157,7 @@ scenarios:
       - run:
           command: embargo app.log --kinds email
       - assert:
-          exit_code: 1
+          exit_code: 2
           stdout:
             empty: true
           stderr:
@@ -267,7 +267,7 @@ scenarios:
       - run:
           command: embargo --min-confidence password=hunter2
       - assert:
-          exit_code: 1
+          exit_code: 2
           stdout:
             empty: true
           stderr:
@@ -276,38 +276,124 @@ scenarios:
       - run:
           command: embargo --kinds password=hunter2
       - assert:
-          exit_code: 1
+          exit_code: 2
           stderr:
             equals: |
               embargo: --kinds must be all or a comma-separated list of kinds; see embargo --help
       - run:
           command: embargo --samples 2
       - assert:
-          exit_code: 1
+          exit_code: 2
           stderr:
             equals: |
               embargo: --samples requires --format json
       - run:
           command: embargo --format yaml
       - assert:
-          exit_code: 1
+          exit_code: 2
           stderr:
             equals: |
               embargo: --format must be text, json or jsonl
       - run:
           command: embargo --password=hunter2
       - assert:
-          exit_code: 1
+          exit_code: 2
           stderr:
             equals: |
               embargo: unknown flag; the flags are --kinds, --min-confidence, --format, --samples and --version; see embargo --help
       - run:
           command: embargo --kinds emial
       - assert:
-          exit_code: 1
+          exit_code: 2
           stderr:
             equals: |
               embargo: --kinds must be all or a comma-separated list of kinds; unknown kind "emial" (did you mean "email"?); see embargo --help
+
+  - name: run masks a command's stdout and stderr and keeps its status
+    steps:
+      - fixture:
+          file: app.sh
+          content: |
+            echo "user alice@example.com"
+            echo "card 4111111111111111" >&2
+            exit 3
+      - run:
+          command: sh -c 'embargo run sh app.sh >> app.log'
+      - assert:
+          exit_code: 3
+          stderr:
+            equals: |
+              card [REDACTED]
+      - run:
+          command: embargo --kinds all run sh app.sh
+      - assert:
+          exit_code: 3
+          stdout:
+            equals: |
+              user [REDACTED]
+      - run:
+          command: embargo app.log
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              user [REDACTED]
+      - run:
+          command: embargo run sh -c 'echo out alice@example.com; echo err 4111111111111111 >&2; exit 3'
+      - assert:
+          exit_code: 3
+          stdout:
+            equals: |
+              out [REDACTED]
+          stderr:
+            equals: |
+              err [REDACTED]
+      - run:
+          command: embargo run embargo-no-such-command
+      - assert:
+          exit_code: 127
+          stderr:
+            equals: |
+              embargo: the command was not found
+      - run:
+          command: embargo run
+      - assert:
+          exit_code: 2
+          stderr:
+            equals: |
+              embargo: run needs a command; see embargo --help
+
+  - name: a closed output ends quietly with status 141
+    steps:
+      - run:
+          command: sh -c '(embargo run yes alice@example.com; echo "status $?" >&2) | head -n 1'
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              [REDACTED]
+          stderr:
+            equals: |
+              status 141
+
+  - name: UTF-16 input is refused and a UTF-8 byte order mark is kept
+    steps:
+      - run:
+          command: sh -c 'printf "\377\376a\000\n\000" | embargo'
+      - assert:
+          exit_code: 1
+          stdout:
+            empty: true
+          stderr:
+            equals: |
+              embargo: the input is UTF-16; convert it to UTF-8
+      - run:
+          command: embargo
+          stdin: "\uFEFF{\"password\":\"hunter2\",\"n\": 1}\n"
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: "\uFEFF{\"password\":\"[REDACTED]\",\"n\":1}\n"
 
   - name: help and version exit successfully
     steps:

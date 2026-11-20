@@ -15,18 +15,42 @@ import (
 
 const kindsHelp = "Kinds and matching rules: https://pkg.go.dev/github.com/nao1215/embargo#Kind\n"
 
+// Exit statuses besides a command's own: closedOutput is what a shell reports
+// for a filter that SIGPIPE ended, as when the reader is head.
+const (
+	statusFailed       = 1
+	statusUsage        = 2
+	statusClosedOutput = 141
+)
+
 func main() { os.Exit(exitCode(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)) }
 
+// exitCode runs the command line and turns its error into the exit status. A
+// closed output says nothing, since its reader has gone and the shell knows.
 func exitCode(args []string, input io.Reader, output, diagnostics io.Writer) int {
-	if err := run(args, input, output); err != nil {
-		_, _ = fmt.Fprintln(diagnostics, err) //nolint:errcheck // The status is already 1; a failed diagnostic write cannot change it.
-		return 1
+	err := run(args, input, output, diagnostics)
+	if err == nil {
+		return 0
 	}
-	return 0
+	if errors.Is(err, errOutputClosed) {
+		return statusClosedOutput
+	}
+	code := statusFailed
+	if status, ok := errors.AsType[statusError](err); ok {
+		if status.cause == nil {
+			return status.code
+		}
+		code, err = status.code, status.cause
+	} else if errors.As(err, new(usageError)) {
+		code = statusUsage
+	}
+	_, _ = fmt.Fprintln(diagnostics, err) //nolint:errcheck // The status is already set; a failed diagnostic write cannot change it.
+	return code
 }
 
-// run masks lines by default; --format json and jsonl report findings instead.
-func run(args []string, input io.Reader, output io.Writer) error {
+// run masks lines by default; --format json and jsonl report findings
+// instead, and run masks what a command prints to output and diagnostics.
+func run(args []string, input io.Reader, output, diagnostics io.Writer) error {
 	parsed, err := parseOptions(args)
 	if errors.Is(err, flag.ErrHelp) {
 		return writeUsage(output)
@@ -40,6 +64,9 @@ func run(args []string, input io.Reader, output io.Writer) error {
 	scanner, err := selectedScanner(parsed.kinds, parsed.minimum)
 	if err != nil {
 		return err
+	}
+	if parsed.command != nil {
+		return runCommand(parsed.command, scanner, input, output, diagnostics)
 	}
 	source, closeInputs := openInputs(parsed.files, input)
 	defer closeInputs()
@@ -55,10 +82,12 @@ func run(args []string, input io.Reader, output io.Writer) error {
 
 func writeUsage(output io.Writer) error {
 	if _, err := io.WriteString(output, usage); err != nil {
-		return err
+		return writeFailed(err)
 	}
-	_, err := io.WriteString(output, kindsHelp)
-	return err
+	if _, err := io.WriteString(output, kindsHelp); err != nil {
+		return writeFailed(err)
+	}
+	return nil
 }
 
 func writeVersion(output io.Writer) error {
@@ -66,8 +95,10 @@ func writeVersion(output io.Writer) error {
 	if info, ok := debug.ReadBuildInfo(); ok {
 		version = cmp.Or(info.Main.Version, version)
 	}
-	_, err := fmt.Fprintln(output, "embargo", version)
-	return err
+	if _, err := fmt.Fprintln(output, "embargo", version); err != nil {
+		return writeFailed(err)
+	}
+	return nil
 }
 
 // selectedScanner builds the scanner for --kinds: empty is the default set and
@@ -87,15 +118,13 @@ func selectedScanner(kinds string, minimum float64) (*embargo.Scanner, error) {
 		}
 		option, message := kindsOption(selection)
 		if option == nil {
-			return nil, errors.New("embargo: --kinds must be all or a comma-separated list of kinds" + message + "; see embargo --help")
+			return nil, usageError("embargo: --kinds must be all or a comma-separated list of kinds" + message + "; see embargo --help")
 		}
 		options = append(options, option)
 	}
 	return embargo.NewScanner(options...), nil
 }
 
-// kindsOption returns embargo.WithKinds(selection), or false when it rejects
-// an unknown kind.
 // kindsOption returns the selection, or nil and the part of WithKinds' panic
 // that names the unknown kind, such as ` "emial"`.
 func kindsOption(selection []embargo.Kind) (option embargo.ScannerOption, unknown string) {

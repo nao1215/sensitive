@@ -61,6 +61,48 @@ func appendSeparatedDigits(data []byte, start int, digits []byte, separator func
 	return digits, end
 }
 
+// digitRun returns the number of ASCII digits starting at start.
+func digitRun(data []byte, start int) int {
+	n := 0
+	for start+n < len(data) && ascii.IsDigit(data[start+n]) {
+		n++
+	}
+	return n
+}
+
+// splitsRun reports whether a rejected run of digit groups, whose first group
+// has group digits, is tried again in parts: it has more than one group and
+// at most digits enough for a value of maxDigits next to a shorter number.
+// Two values, or a value and a short number, then touch across a separator,
+// as in "retry 3 4111 1111 1111 1111". Longer runs are skipped whole, which
+// keeps the scan linear.
+func splitsRun(group, digits, minDigits, maxDigits int) bool {
+	return group < digits && digits <= maxDigits+minDigits
+}
+
+// leadingGroups calls try with the end and digit count of each part of the
+// run [start, end) that ends with one of its digit groups, longest first,
+// leaving out the whole run and parts of fewer than minDigits digits. It
+// reports whether try accepted one; digits is the run's digit count.
+func leadingGroups(data []byte, start, end, digits, minDigits int, try func(end, count int) bool) bool {
+	for j := end - 1; j > start; j-- {
+		if ascii.IsDigit(data[j]) {
+			digits--
+			continue
+		}
+		if !ascii.IsDigit(data[j-1]) {
+			continue
+		}
+		if digits < minDigits {
+			return false
+		}
+		if try(j, digits) {
+			return true
+		}
+	}
+	return false
+}
+
 // hasWideDigits reports whether data holds at least n digits, counting the
 // full-width forms that the numeric detectors normalize as well as ASCII.
 func hasWideDigits(data []byte, n int) bool {
