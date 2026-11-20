@@ -47,7 +47,7 @@ func (d *MyNumber) candidate(orig, data []byte, posMap []int, i int) (Finding, i
 	}
 	digits, end := appendSeparatedDigits(data, i, make([]byte, 0, phoneDigitCapacity), cardSeparator)
 	// Must be exactly 12 digits, not followed by more digits.
-	if !myNumberWhole(data, digits, end) || !isValidMyNumber(digits) || arnAccount(data, i, end) || identifierLabeled(data, i) {
+	if !myNumberWhole(data, digits, end) || !myNumberLayout(data, i, end) || !isValidMyNumber(digits) || arnAccount(data, i, end) || identifierLabeled(data, i) {
 		return d.split(data, posMap, digits, i, end)
 	}
 	//nolint:mnd // The detector contract documents this heuristic score.
@@ -64,12 +64,33 @@ func (d *MyNumber) split(data []byte, posMap []int, digits []byte, start, end in
 	at := 0
 	if leadingGroups(data, start, end, len(digits), myNumberDigits, func(partEnd, count int) bool {
 		at = partEnd
-		return count == myNumberDigits && isValidMyNumber(digits[:count]) && !arnAccount(data, start, partEnd) && !identifierLabeled(data, start)
+		return count == myNumberDigits && myNumberLayout(data, start, partEnd) && isValidMyNumber(digits[:count]) && !arnAccount(data, start, partEnd) && !identifierLabeled(data, start)
 	}) {
 		//nolint:mnd // The detector contract documents this heuristic score.
 		return viewFinding(d.Name(), posMap, start, at, 0.95), at, true
 	}
 	return Finding{}, start + group, false
+}
+
+// myNumberLayout reports whether the digits in [start, end) are written as
+// a My Number is printed: 12 digits together or three groups of four. Other
+// groupings, such as the date and time "081111 045623" in HDFS logs, are not.
+func myNumberLayout(data []byte, start, end int) bool {
+	const group = 4
+	groups := 0
+	for i := start; i < end; {
+		n := digitRun(data, i)
+		if n == 0 {
+			i++
+			continue
+		}
+		if n != group && n != myNumberDigits {
+			return false
+		}
+		groups++
+		i += n
+	}
+	return groups == 1 || groups == myNumberDigits/group
 }
 
 // normalizedIdentifierStart reports whether position i of a normalized view

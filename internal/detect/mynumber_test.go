@@ -244,3 +244,15 @@ func TestMyNumberTwoSideBySide(t *testing.T) {
 		t.Fatalf("Scan = %v", got)
 	}
 }
+
+func TestMyNumberLayout(t *testing.T) {
+	t.Parallel()
+	for input, want := range map[string]bool{"123456789018": true, "1234 5678 9018": true, "1234-5678-9018": true, "081111 045623": false, "123 456 789 018": false, "12345678 9018": false} {
+		if got := myNumberLayout([]byte(input), 0, len(input)); got != want {
+			t.Errorf("myNumberLayout(%q) = %v", input, got)
+		}
+	}
+	if got := NewMyNumber().Scan([]byte("081111 045623 31 INFO dfs.FSNamesystem")); len(got) != 0 {
+		t.Fatalf("an HDFS date and time was read as a My Number: %v", got)
+	}
+}
