@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"compress/bzip2"
+	"compress/gzip"
 	"errors"
 	"fmt"
 	"io"
@@ -17,9 +20,10 @@ const stdinName = "-"
 // among the named files, such as "input file 2 cannot be opened: no such file",
 // but does not repeat its name. An input that starts with a UTF-16 byte order
 // mark, as Windows PowerShell 5 writes for a redirection, stops with an error
-// instead of passing through unmasked.
+// instead of passing through unmasked. A gzip or bzip2 input is decompressed;
+// other compressed formats stop with an error.
 func openInputs(names []string, stdin io.Reader) (source io.Reader, closeAll func()) {
-	files := &fileSequence{names: names, stdin: stdin, current: nil, file: nil, closeErr: nil, unnamed: len(names) == 0}
+	files := &fileSequence{names: names, stdin: stdin, current: nil, file: nil, closeErr: nil, format: "", unnamed: len(names) == 0}
 	if files.unnamed {
 		files.names = []string{stdinName}
 	}
@@ -50,8 +54,11 @@ type fileSequence struct {
 	closeErr error
 	names    []string
 	opened   int
-	started  bool
-	unnamed  bool
+	// format names the compression of the current input, if compressed.
+	format     string
+	started    bool
+	unnamed    bool
+	compressed bool
 }
 
 // Read reads the files in order and reports io.EOF after the last one.
@@ -83,32 +90,167 @@ func (f *fileSequence) Read(p []byte) (int, error) {
 	}
 }
 
-// readCurrent reads the current input, checking its first bytes for a UTF-16
-// byte order mark.
+// readCurrent reads the current input. Its first read decides the format: a
+// gzip or bzip2 input is decompressed, as rotated logs are, and a UTF-16 or
+// other compressed input stops with an error, since its text would pass
+// through unmasked.
 func (f *fileSequence) readCurrent(p []byte) (int, error) {
-	if f.started {
-		return f.current.Read(p)
-	}
-	f.started = true
-	n, err := io.ReadAtLeast(f.current, p, min(len(p), len(utf16LittleEndian)))
-	if head := string(p[:min(n, len(utf16LittleEndian))]); head == utf16LittleEndian || head == utf16BigEndian {
-		if f.unnamed {
-			return 0, inputError("embargo: the input is UTF-16; convert it to UTF-8")
+	if !f.started {
+		f.started = true
+		decoded, err := f.decode(f.current)
+		if err != nil {
+			return 0, err
 		}
-		return 0, inputError(fmt.Sprintf("embargo: input file %d is UTF-16; convert it to UTF-8", f.opened))
+		f.current = decoded
 	}
-	if errors.Is(err, io.ErrUnexpectedEOF) {
-		// The short input ends with the next read.
-		err = nil
+	n, err := f.current.Read(p)
+	if err != nil && !errors.Is(err, io.EOF) && f.compressed {
+		return n, f.failure("is not valid " + f.format)
 	}
 	return n, err
 }
+
+// decode returns input as text, decompressing a gzip or bzip2 stream once.
+func (f *fileSequence) decode(input io.Reader) (io.Reader, error) {
+	head, text, err := sniff(input)
+	if err != nil {
+		return nil, err
+	}
+	switch format := compression(head); format {
+	case "":
+		return f.checkText(head, text)
+	case gzipFormat:
+		f.compressed, f.format = true, format
+		reader, err := gzip.NewReader(text)
+		if err != nil {
+			return nil, f.failure("is not valid gzip")
+		}
+		return f.decodeText(reader)
+	case bzip2Format:
+		f.compressed, f.format = true, format
+		return f.decodeText(bzip2.NewReader(text))
+	default:
+		return nil, f.failure("is " + format + "-compressed; decompress it first")
+	}
+}
+
+// decodeText checks decompressed text for UTF-16 and nested compression.
+func (f *fileSequence) decodeText(reader io.Reader) (io.Reader, error) {
+	head, text, err := sniff(reader)
+	if err != nil {
+		return nil, f.failure("is not valid " + f.format)
+	}
+	if compression(head) != "" {
+		return nil, f.failure("is compressed twice; decompress it first")
+	}
+	return f.checkText(head, text)
+}
+
+// checkText stops a UTF-16 input, which no detector reads.
+func (f *fileSequence) checkText(head []byte, text io.Reader) (io.Reader, error) {
+	if bytes.HasPrefix(head, []byte(utf16LittleEndian)) || bytes.HasPrefix(head, []byte(utf16BigEndian)) {
+		return nil, f.failure("is UTF-16; convert it to UTF-8")
+	}
+	return text, nil
+}
+
+// sniff reads the first bytes of input, reading more only while they could
+// still start a signature, so a short first line of a slow pipe is passed on
+// at once. text reads the whole input, head included.
+func sniff(input io.Reader) (head []byte, text io.Reader, err error) {
+	// The first read keeps all it returns, so a pipe's first line is never split.
+	buffer := make([]byte, sniffBytes)
+	n := 0
+	for n == 0 || (n < signatureBytes && partialSignature(buffer[:n])) {
+		read, readErr := input.Read(buffer[n:])
+		n += read
+		if errors.Is(readErr, io.EOF) {
+			break
+		}
+		if readErr != nil {
+			return nil, nil, readErr
+		}
+	}
+	head = buffer[:n]
+	return head, io.MultiReader(bytes.NewReader(head), input), nil
+}
+
+// failure returns the message for the current input, naming its position
+// among the files but never its name.
+func (f *fileSequence) failure(problem string) error {
+	if f.unnamed {
+		return inputError("embargo: the input " + problem)
+	}
+	return inputError(fmt.Sprintf("embargo: input file %d %s", f.opened, problem))
+}
+
+// signatureBytes is the longest signature: "BZh", a block size digit and the
+// block magic.
+const signatureBytes = 10
+
+// sniffBytes is the most the first read takes before the filter's buffer.
+const sniffBytes = 4 << 10
 
 // The UTF-16 byte order marks, little endian first.
 const (
 	utf16LittleEndian = "\xff\xfe"
 	utf16BigEndian    = "\xfe\xff"
 )
+
+const (
+	gzipFormat  = "gzip"
+	bzip2Format = "bzip2"
+)
+
+// signatures are the starts of the compressed formats, with the byte order
+// marks of UTF-16. A '?' in the bzip2 signature is its block size digit.
+var signatures = []struct{ name, magic string }{
+	{gzipFormat, "\x1f\x8b"},
+	{bzip2Format, "BZh?1AY&SY"},
+	{"zstd", "\x28\xb5\x2f\xfd"},
+	{"xz", "\xfd7zXZ\x00"},
+	{"zip", "PK\x03\x04"},
+	{"7z", "7z\xbc\xaf\x27\x1c"},
+	{"lz4", "\x04\x22\x4d\x18"},
+	{"", utf16LittleEndian},
+	{"", utf16BigEndian},
+}
+
+// compression names the format whose signature starts head, or "" for text.
+func compression(head []byte) string {
+	for _, signature := range signatures {
+		if len(head) >= len(signature.magic) && signatureMatch(head, signature.magic) {
+			return signature.name
+		}
+	}
+	return ""
+}
+
+// partialSignature reports whether head is shorter than a signature it starts.
+func partialSignature(head []byte) bool {
+	for _, signature := range signatures {
+		if len(head) < len(signature.magic) && signatureMatch(head, signature.magic) {
+			return true
+		}
+	}
+	return false
+}
+
+// signatureMatch compares the bytes head and magic have in common.
+func signatureMatch(head []byte, magic string) bool {
+	for i := range min(len(head), len(magic)) {
+		if magic[i] == '?' {
+			if head[i] < '1' || head[i] > '9' {
+				return false
+			}
+			continue
+		}
+		if head[i] != magic[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // advance opens the next file when none is open, returning io.EOF after the
 // last one and a fixed error for a file that cannot be opened or closed.
@@ -157,5 +299,5 @@ func (f *fileSequence) close() {
 	if f.file != nil {
 		f.closeErr = f.file.Close()
 	}
-	f.current, f.file, f.started = nil, nil, false
+	f.current, f.file, f.started, f.compressed, f.format = nil, nil, false, false, ""
 }
