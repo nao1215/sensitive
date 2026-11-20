@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - The command decompresses gzip and bzip2 input; zstd, xz, zip, 7z and lz4 input stops with an error instead of passing through unmasked.
-- `--input csv` and `--input tsv` read the first line as column names that work as keys, so a `password` column is masked; files ending in `.csv` or `.tsv` are read this way by default.
+- `--input` with `csv` or `tsv` reads the first line as column names that work as keys, so a `password` column is masked; files ending in `.csv` or `.tsv` are read this way by default.
 - The command masks a value whose key is on an earlier line of pretty-printed JSON, the lines of a YAML block scalar or list under a sensitive key, and CEF custom fields by their label.
 
 ### Changed

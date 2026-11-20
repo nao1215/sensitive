@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/nao1215/embargo"
 )
@@ -447,11 +449,10 @@ func cefValueEnd(body []byte, i int) int {
 	return min(i, len(body))
 }
 
-// cefKeyAlphabet holds the bytes of a CEF extension key.
-const cefKeyAlphabet = "_.0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
+// cefKeyByte reports an ASCII letter, digit, underscore or dot, the bytes of
+// a CEF extension key.
 func cefKeyByte(c byte) bool {
-	return strings.IndexByte(cefKeyAlphabet, c) >= 0
+	return c < utf8.RuneSelf && (unicode.IsLetter(rune(c)) || unicode.IsDigit(rune(c)) || c == '_' || c == '.')
 }
 
 // nextCEFKey reports whether a key followed by = starts at i.
