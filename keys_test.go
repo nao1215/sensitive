@@ -11,10 +11,12 @@ import (
 	"github.com/nao1215/embargo/internal/saferecord"
 )
 
-// statusKey is a clean field name and tokenKey a credential one.
+// statusKey is a clean field name and tokenKey a credential one;
+// acceptedValue is a clean value.
 const (
-	statusKey = "status"
-	tokenKey  = "token"
+	statusKey     = "status"
+	tokenKey      = "token"
+	acceptedValue = "accepted"
 )
 
 func TestMaskKeyCacheHitMatchesScan(t *testing.T) {
@@ -168,7 +170,7 @@ func TestValueCacheHitMatchesScan(t *testing.T) {
 	t.Parallel()
 	cached, fresh := NewScanner(), NewScanner()
 	fresh.values = nil
-	pairs := [][2]string{{statusKey, "accepted"}, {"ok", "true"}, {"count", "17"}, {tokenKey, "accepted"}, {statusKey, documentedEmail}, {"card", "4111111111111111"}, {"", "accepted"}, {statusKey, "YWxpY2VAZXhhbXBsZS5jb20="}}
+	pairs := [][2]string{{statusKey, acceptedValue}, {"ok", strconv.FormatBool(true)}, {"count", "17"}, {tokenKey, acceptedValue}, {statusKey, documentedEmail}, {"pan", "4111111111111111"}, {"", acceptedValue}, {statusKey, "YWxpY2VAZXhhbXBsZS5jb20="}}
 	for range 3 {
 		for _, pair := range pairs {
 			hit := eventScanner{scanner: cached, remaining: maxScanBytes}
@@ -183,7 +185,7 @@ func TestValueCacheHitMatchesScan(t *testing.T) {
 	if !cached.values.has([]byte("status: accepted"), len("status: ")) {
 		t.Fatal("a repeated clean value was not cached")
 	}
-	for _, text := range []string{"status: " + documentedEmail, "card: 4111111111111111", "token: accepted"} {
+	for _, text := range []string{"status: " + documentedEmail, "pan: 4111111111111111", "token: accepted"} {
 		if cached.values.has([]byte(text), strings.Index(text, " ")+1) {
 			t.Fatalf("%q has findings and must not be cached", text)
 		}
@@ -218,11 +220,11 @@ func TestValueCacheKeepsATextSeenTwiceAtItsSlot(t *testing.T) {
 		t.Fatal("a text at the length limit was not kept")
 	}
 	// A second text at the same slot replaces the first only once it repeats.
-	slot, _ := cache.slot(text, 8)
+	slot, _ := cache.slot(text)
 	var other []byte
 	for i := 0; other == nil; i++ {
 		candidate := []byte("status: " + strconv.Itoa(i))
-		if index, _ := cache.slot(candidate, 8); index == slot {
+		if index, _ := cache.slot(candidate); index == slot {
 			other = candidate
 		}
 	}
@@ -244,7 +246,7 @@ func TestValueCacheConcurrentEvents(t *testing.T) {
 		go func() {
 			for i := range 200 {
 				scan := eventScanner{scanner: scanner, remaining: maxScanBytes}
-				value := "accepted"
+				value := acceptedValue
 				if (i+worker)%3 == 0 {
 					value = documentedEmail
 				}

@@ -3,7 +3,6 @@ package embargo_test
 import (
 	"context"
 	"fmt"
-	"io"
 	"log/slog"
 	"strings"
 	"testing"
@@ -292,7 +291,7 @@ func BenchmarkSlogValues(b *testing.B) {
 	}
 	for _, mode := range []string{"repeated", "unique"} {
 		b.Run(mode, func(b *testing.B) {
-			logger := slog.New(embargo.NewSlogHandler(slog.NewJSONHandler(io.Discard, nil), embargo.NewScanner()))
+			logger := slog.New(embargo.NewSlogHandler(slog.DiscardHandler, embargo.NewScanner()))
 			ctx := context.Background()
 			b.ReportAllocs()
 			i := 0

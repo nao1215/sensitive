@@ -16,6 +16,12 @@ embargo --kinds pan,credential app.log
 
 A line that holds one JSON object or array goes through MaskJSON, so keys, types, nesting and the sensitive-key rule are kept and the line is written compact; any other line, and JSON that MaskJSON rejects (invalid or over 1 MiB), is masked as text. Line endings, including CRLF and a missing final newline, are kept. Output is flushed whenever no more input is buffered, so `tail -f app.log | embargo` shows each line as it arrives. A read failure or a line over 4 MiB stops the output before that line and exits nonzero with a message that names only the line number. `--kinds` takes `all` or a comma-separated list, `--min-confidence` a number from 0 to 1; option errors name the flag and its allowed values and never repeat what was passed. Flags come before the files, a file named `-` reads stdin in its place, and `--` ends the flags so a file name may start with a hyphen. A UTF-8 byte order mark is kept and does not hide the JSON line after it. An input that starts with a UTF-16 byte order mark, which Windows PowerShell 5 writes for `>`, stops with an error instead of passing through unmasked.
 
+gzip and bzip2 input, including rotated logs such as `app.log.1.gz`, is decompressed; zstd, xz, zip, 7z and lz4 input stops with an error, since no detector reads compressed bytes. Lines are scanned on every CPU in batches and written in input order.
+
+A value whose key is on an earlier line is masked when its key decides it: the value after `"token":` in pretty-printed JSON, everything in an array or object under a sensitive key, the lines of a YAML block scalar (`password: |`) or list under a sensitive key, and a CEF custom field such as `cs1=` whose `cs1Label=` names a sensitive key. A nested YAML mapping is decided by its own keys.
+
+`--input csv` and `--input tsv` read the first line as column names, which work as keys for every field below them, as a JSON key does: a `password` or `cvv` column is masked although its values look like any text. A quoted field may hold the delimiter, doubled quotes and line breaks, and a line equal to the header, as when files are concatenated, is a header again. Files that all end in `.csv` or `.tsv`, optionally followed by `.gz` or `.bz2`, are read this way by default; `--input lines` turns it off.
+
 ## Run a command
 
 `embargo run COMMAND [arg ...]` starts the command with embargo's stdin, masks its stdout onto stdout and its stderr onto stderr, and exits with the command's status. Flags go before `run`; everything after it belongs to the command.

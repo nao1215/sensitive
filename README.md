@@ -260,7 +260,7 @@ $ printf '%s\n' 'login failed for alice@example.com from 203.0.113.7' | embargo
 login failed for [REDACTED] from [REDACTED]
 ```
 
-A JSON line keeps its keys, types and nesting. `--format json` prints per-kind counts and `--format jsonl` one line per finding; neither prints a matched value. [Flags, limits and CI use](doc/audit.md)
+A JSON line keeps its keys, types and nesting; gzip and bzip2 files are decompressed, and CSV and TSV column names work as keys. `--format json` prints per-kind counts and `--format jsonl` one line per finding; neither prints a matched value. [Flags, limits and CI use](doc/audit.md)
 
 ## Accuracy
 

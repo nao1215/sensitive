@@ -224,9 +224,9 @@ const (
 )
 
 type valueCache struct {
-	seed  maphash.Seed
-	seen  [cachedValueSlots]atomic.Uint64
 	clean [cachedValueSlots]atomic.Pointer[cleanValue]
+	seen  [cachedValueSlots]atomic.Uint64
+	seed  maphash.Seed
 }
 
 // cleanValue is a clean "key: value" text and the length of its "key: "
@@ -238,9 +238,10 @@ type cleanValue struct {
 
 func newValueCache() *valueCache { return &valueCache{seed: maphash.MakeSeed()} }
 
-// slot returns the table index of text and a nonzero fingerprint of it.
-func (c *valueCache) slot(text []byte, prefix int) (int, uint64) {
-	sum := maphash.Bytes(c.seed, text) ^ uint64(prefix)
+// slot returns the table index of text and a nonzero fingerprint of it. The
+// same text with another prefix shares the slot, which compares the prefix.
+func (c *valueCache) slot(text []byte) (index int, fingerprint uint64) {
+	sum := maphash.Bytes(c.seed, text)
 	return int(sum % cachedValueSlots), sum | 1
 }
 
@@ -249,7 +250,7 @@ func (c *valueCache) has(text []byte, prefix int) bool {
 	if len(text) > maxCachedValueBytes {
 		return false
 	}
-	index, _ := c.slot(text, prefix)
+	index, _ := c.slot(text)
 	entry := c.clean[index].Load()
 	return entry != nil && entry.prefix == prefix && entry.text == string(text)
 }
@@ -260,7 +261,7 @@ func (c *valueCache) store(text []byte, prefix int) {
 	if len(text) > maxCachedValueBytes {
 		return
 	}
-	index, fingerprint := c.slot(text, prefix)
+	index, fingerprint := c.slot(text)
 	if c.seen[index].Swap(fingerprint) == fingerprint {
 		c.clean[index].Store(&cleanValue{text: string(text), prefix: prefix})
 	}
