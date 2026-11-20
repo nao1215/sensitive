@@ -53,6 +53,8 @@ func TestStructureMasksValuesWhoseKeyIsOnAnotherLine(t *testing.T) {
 		{"cef value with a spaced equals", []string{`CEF:0|A|B|1|2|n|5|cs1Label=token cs1=a =b c=d`}, []string{`CEF:0|A|B|1|2|n|5|cs1Label=token cs1=` + filterMarker + ` c=d`}},
 		{"cef three pairs", []string{`CEF:0|A|B|1|2|n|5|a=1 cs1=x cs1Label=token`}, []string{`CEF:0|A|B|1|2|n|5|a=1 cs1=` + filterMarker + ` cs1Label=token`}},
 		{"cef empty labeled value", []string{`CEF:0|A|B|1|2|n|5|cs1Label=token cs1= cs2=x`}, []string{`CEF:0|A|B|1|2|n|5|cs1Label=token cs1= cs2=x`}},
+		{"a number before a spaced colon stops the document", []string{"{", "  17 : 1", tokenMember, nextValue}, []string{"{", "  17 : 1", tokenMember, "    " + filterMarker}},
+		{"a key with an invalid escape stops the document", []string{"{", `  "\q": 1`, tokenMember, nextValue}, []string{"{", `  "\q": 1`, tokenMember, "    " + filterMarker}},
 		{"json closes an inner object and goes on", []string{"{", `  "a": {`, closeObject, tokenMember, nextValue, "}"}, []string{"{", `  "a": {`, closeObject, tokenMember, `    "` + filterMarker + `"`, "}"}},
 		{"json number followed by a comma", []string{"{", cvvMember, "    123,", tokenMember, nextValue, "}"}, []string{"{", cvvMember, "    " + filterMarker + ",", tokenMember, `    "` + filterMarker + `"`, "}"}},
 		{"json ends and a comma after it stops the line", []string{"{", plainMember, "}, {", tokenMember, nextValue}, []string{"{", plainMember, "}, {", tokenMember, "    " + filterMarker}},
