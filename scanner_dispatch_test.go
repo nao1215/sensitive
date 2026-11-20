@@ -77,7 +77,7 @@ func TestDispatchSecondByteFilter(t *testing.T) {
 	for _, input := range []string{
 		"|", "x|", "Q~", "q", "PUL-" + strings.Repeat("0a", 20), "pul-" + strings.Repeat("0a", 20), "end with s", "sk", "SK",
 		"ask task disk", "a|b", "token => " + documentedEmail, "<password>opaque12</password>", "curl -u user:opaque12 https://example.com",
-		"=", "e", "eyJ", "%7C", "Ｑ~",
+		"=", "e", "eyJ", "%7C", "Ｑ~", "EYJ", "Bearer ", "BEARER ", "PaSsWoRd=" + documentedEmail,
 	} {
 		got, want := scanner.ScanString(input), referenceScan(scanner, []byte(input))
 		if !slices.Equal(got, want) {
@@ -90,7 +90,7 @@ func TestFollowingBytes(t *testing.T) {
 	t.Parallel()
 	set := followingBytes([]dispatchHint{{hint: []byte("ab")}, {hint: []byte("a-c")}})
 	for b := range 256 {
-		want := b == 'b' || b == '-'
+		want := b == 'b' || b == 'B' || b == '-'
 		if got := set.has(byte(b)); got != want {
 			t.Errorf("has(%q) = %v, want %v", byte(b), got, want)
 		}

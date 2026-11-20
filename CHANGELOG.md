@@ -14,8 +14,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- The command scans lines on every CPU and keeps their order: 113 MB of public logs take 0.50 s instead of 2.80 s on 8 cores.
-- A scalar value that repeats with the same key, such as a status or a flag, skips the detectors after it was found clean, so small slog events take up to a quarter less time.
+- The command scans lines on every CPU and keeps their order: 113 MB of public logs take 0.42 s instead of 2.75 s on 8 cores.
+- A scalar value that repeats with the same key, such as a status or a flag, skips the detectors and the base64 check after it was found clean, so small slog events take up to a quarter less time.
+- The IP address, credential, service token, AWS key and Bitcoin detectors skip text that cannot hold their format, so a line of log text is scanned about a sixth faster.
 
 ## [0.19.0] - 2026-11-20
 

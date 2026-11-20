@@ -229,11 +229,13 @@ type valueCache struct {
 	seed  maphash.Seed
 }
 
-// cleanValue is a clean "key: value" text and the length of its "key: "
-// prefix, which decides the key context of the same bytes.
+// cleanValue is a clean "key: value" text, the length of its "key: " prefix,
+// which decides the key context of the same bytes, and the scan budget that
+// the value's encoded-text check charged, which a repeat charges again.
 type cleanValue struct {
-	text   string
-	prefix int
+	text    string
+	prefix  int
+	encoded int
 }
 
 func newValueCache() *valueCache { return &valueCache{seed: maphash.MakeSeed()} }
@@ -245,24 +247,27 @@ func (c *valueCache) slot(text []byte) (index int, fingerprint uint64) {
 	return int(sum % cachedValueSlots), sum | 1
 }
 
-// has reports whether text with the given prefix was found clean.
-func (c *valueCache) has(text []byte, prefix int) bool {
+// lookup returns the entry of text with the given prefix when it was found
+// clean, and nil otherwise.
+func (c *valueCache) lookup(text []byte, prefix int) *cleanValue {
 	if len(text) > maxCachedValueBytes {
-		return false
+		return nil
 	}
 	index, _ := c.slot(text)
-	entry := c.clean[index].Load()
-	return entry != nil && entry.prefix == prefix && entry.text == string(text)
+	if entry := c.clean[index].Load(); entry != nil && entry.prefix == prefix && entry.text == string(text) {
+		return entry
+	}
+	return nil
 }
 
 // store records that text with the given prefix has no findings. The first
 // sighting at a slot keeps only its fingerprint; the next one keeps the text.
-func (c *valueCache) store(text []byte, prefix int) {
+func (c *valueCache) store(text []byte, prefix, encoded int) {
 	if len(text) > maxCachedValueBytes {
 		return
 	}
 	index, fingerprint := c.slot(text)
 	if c.seen[index].Swap(fingerprint) == fingerprint {
-		c.clean[index].Store(&cleanValue{text: string(text), prefix: prefix})
+		c.clean[index].Store(&cleanValue{text: string(text), prefix: prefix, encoded: encoded})
 	}
 }

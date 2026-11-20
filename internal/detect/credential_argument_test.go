@@ -35,3 +35,26 @@ func TestCredentialQuotedArgumentsAndSubscripts(t *testing.T) {
 		}
 	}
 }
+
+func TestNextQuote(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		data string
+		from int
+		want int
+	}{
+		{`"a"`, 0, 0},
+		{`'a'`, 0, 0},
+		{`ab"c'd`, 0, 2},
+		{`ab'c"d`, 0, 2},
+		{`ab"c'd`, 3, 4},
+		{`xyz`, 0, -1},
+		{`a"`, 2, -1},
+		{`a"`, 3, -1},
+	} {
+		if got := nextQuote([]byte(tt.data), tt.from); got != tt.want {
+			t.Errorf("nextQuote(%q, %d) = %d, want %d", tt.data, tt.from, got, tt.want)
+		}
+	}
+}

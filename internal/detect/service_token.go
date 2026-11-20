@@ -49,11 +49,12 @@ func (d *ServiceToken) Scan(data []byte) []Finding {
 		index = newProviderIndex()
 	}
 	var out []Finding
+	present := presentLayouts(data)
 	for i := 0; i < len(data); i++ {
 		if i > 0 && isIdentifierByte(data[i-1]) && !telegramBotPath(data, i) {
 			continue
 		}
-		start, end := serviceTokenSpan(index, data, i)
+		start, end := serviceTokenSpan(index, data, i, present)
 		if end <= start {
 			continue
 		}
@@ -65,17 +66,25 @@ func (d *ServiceToken) Scan(data []byte) []Finding {
 }
 
 // serviceTokenSpan returns the credential span that begins its layout at
-// position i; webhook URLs report only their secret path.
-func serviceTokenSpan(index *providerIndex, data []byte, i int) (start, end int) {
+// position i; webhook URLs report only their secret path. present holds the
+// layouts whose marker data contains, from presentLayouts.
+func serviceTokenSpan(index *providerIndex, data []byte, i int, present uint16) (start, end int) {
 	if end, ok := index.match(data, i); ok {
 		return i, end
 	}
-	for _, layout := range specialTokenEnds() {
+	specials := specialTokenEnds()
+	for k, layout := range specials {
+		if present&(1<<k) == 0 {
+			continue
+		}
 		if end, ok := layout(data, i); ok {
 			return i, end
 		}
 	}
-	for _, layout := range secretPathSpans() {
+	for k, layout := range secretPathSpans() {
+		if present&(1<<(len(specials)+k)) == 0 {
+			continue
+		}
 		if start, end, ok := layout(data, i); ok {
 			return start, end
 		}
@@ -83,15 +92,37 @@ func serviceTokenSpan(index *providerIndex, data []byte, i int) (start, end int)
 	return i, i
 }
 
+// The layouts that specialTokenEnds and secretPathSpans return, which
+// layoutMarkers lists in that order.
+const specialLayouts, pathLayouts = 6, 4
+
+// layoutMarkers returns a substring that every match of each layout contains,
+// in the order of specialTokenEnds and then secretPathSpans.
+func layoutMarkers() [specialLayouts + pathLayouts]string {
+	return [...]string{".atlasv1.", "Q~", ":A", "_mmk", "-us", "|", "hooks.slack", ".webhook.office.com/webhookb2/", "/api/webhooks/", ".sentry.io/"}
+}
+
+// presentLayouts returns one bit per layout whose marker occurs in data, so
+// a line without any marker tries none of them at each position.
+func presentLayouts(data []byte) uint16 {
+	var present uint16
+	for k, marker := range layoutMarkers() {
+		if bytes.Contains(data, []byte(marker)) {
+			present |= 1 << k
+		}
+	}
+	return present
+}
+
 // specialTokenEnds returns the layouts the prefix table cannot express, each
 // reporting the end of a token that starts at the given position.
-func specialTokenEnds() [6]func([]byte, int) (int, bool) {
+func specialTokenEnds() [specialLayouts]func([]byte, int) (int, bool) {
 	return [...]func([]byte, int) (int, bool){terraformTokenEnd, azureClientSecretEnd, telegramBotTokenEnd, maxMindLicenseKeyEnd, mailchimpKeyEnd, facebookAppTokenEnd}
 }
 
 // secretPathSpans returns the URL layouts that start at the given position and
 // report only the secret part of the URL.
-func secretPathSpans() [4]func([]byte, int) (int, int, bool) {
+func secretPathSpans() [pathLayouts]func([]byte, int) (int, int, bool) {
 	return [...]func([]byte, int) (int, int, bool){slackWebhookSpan, teamsWebhookSpan, discordWebhookSpan, sentryDSNSpan}
 }
 

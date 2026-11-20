@@ -1,6 +1,9 @@
 package detect
 
-import "strings"
+import (
+	"bytes"
+	"strings"
+)
 
 // quotedArgumentPairs finds a quoted value passed right after a quoted
 // credential key in an argument or initializer list, as in Java's
@@ -8,10 +11,7 @@ import "strings"
 // Map.of("password", "x"). The key opens the list or follows a comma.
 func (d *Credential) quotedArgumentPairs(data []byte) []Finding {
 	var out []Finding
-	for i := 0; i < len(data); i++ {
-		if data[i] != '"' && data[i] != '\'' {
-			continue
-		}
+	for i := nextQuote(data, 0); i >= 0; i = nextQuote(data, i+1) {
 		keyEnd := credentialQuoteEnd(data, i+1, data[i])
 		if keyEnd == len(data) {
 			break
@@ -54,4 +54,22 @@ func argumentListItem(data []byte, open int) bool {
 		before--
 	}
 	return before > 0 && strings.ContainsRune("({,", rune(data[before-1]))
+}
+
+// nextQuote returns the index of the first double or single quote at or after
+// from, or -1. The single quote is searched only before the double quote, so a
+// loop over every quote in data reads each byte a bounded number of times.
+func nextQuote(data []byte, from int) int {
+	rest := data[min(from, len(data)):]
+	end := bytes.IndexByte(rest, '"')
+	if end < 0 {
+		end = len(rest)
+	}
+	if single := bytes.IndexByte(rest[:end], '\''); single >= 0 {
+		end = single
+	}
+	if end == len(rest) {
+		return -1
+	}
+	return from + end
 }

@@ -2,6 +2,8 @@ package detect
 
 import (
 	"fmt"
+	"math/rand/v2"
+	"net"
 	"strings"
 	"testing"
 )
@@ -428,4 +430,79 @@ func TestIPAddrProductVersion(t *testing.T) {
 			t.Errorf("Scan(%q) found %v, want %v", input, got, want)
 		}
 	}
+}
+
+// referenceDottedQuad is the net.ParseIP reading that dottedQuad replaces:
+// the run without trailing dots, strictly or with zero-padded octets.
+func referenceDottedQuad(run string) (n, first int, ok bool) {
+	text := strings.TrimRight(run, ".")
+	parts := strings.Split(text, ".")
+	if len(parts) != 4 {
+		return 0, 0, false
+	}
+	for i, part := range parts {
+		if part == "" || len(part) > 3 {
+			return 0, 0, false
+		}
+		if parts[i] = strings.TrimLeft(part, "0"); parts[i] == "" {
+			parts[i] = "0"
+		}
+	}
+	ip := net.ParseIP(strings.Join(parts, ".")).To4()
+	if ip == nil {
+		return 0, 0, false
+	}
+	return len(text), int(ip[0]), true
+}
+
+func TestDottedQuadMatchesParseIP(t *testing.T) {
+	t.Parallel()
+
+	// #nosec G404 -- Fixed seed for reproducible synthetic tests.
+	rng := rand.New(rand.NewPCG(3, 41))
+	runs := append(make([]string, 0, 20014), "", ".", "1.2.3.4", "1.2.3.4.", "1.2.3.4..", "255.255.255.255", "256.1.1.1", "1.2.3.256", "001.002.003.004", "0001.2.3.4", "1.2.3", "1.2.3.4.5", "1..2.3", "10.0.0.1")
+	for range 20000 {
+		runs = append(runs, randomRun(rng, "0123456789....", 1+rng.IntN(16)))
+	}
+	for _, run := range runs {
+		n, first, ok := dottedQuad([]byte(run))
+		wantN, wantFirst, wantOK := referenceDottedQuad(run)
+		if ok != wantOK || (ok && (n != wantN || first != wantFirst)) {
+			t.Fatalf("dottedQuad(%q) = %d, %d, %v, want %d, %d, %v", run, n, first, ok, wantN, wantFirst, wantOK)
+		}
+	}
+}
+
+func TestIPv6ShapedKeepsEveryParsableRun(t *testing.T) {
+	t.Parallel()
+
+	// #nosec G404 -- Fixed seed for reproducible synthetic tests.
+	rng := rand.New(rand.NewPCG(5, 43))
+	runs := append(make([]string, 0, 50009), "12:34:56", "12:34:56.789", "1.2.3.4:.:", "1.2.3.4::", "fe80::2", "a:b:c:d:e:f:1.2.3.4", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8:", "::")
+	for range 50000 {
+		runs = append(runs, randomRun(rng, "0123456789abcdef::::....", 2+rng.IntN(24)))
+	}
+	for _, run := range runs {
+		// A run with fewer colons never reached the parser.
+		if strings.Count(run, ":") < minIPv6Colons {
+			continue
+		}
+		if _, ip := parseIPSentence(run); ip != nil && !ipv6Shaped([]byte(run)) {
+			t.Fatalf("ipv6Shaped(%q) = false, but %v parses", run, ip)
+		}
+	}
+	for _, run := range []string{"12:34:56", "a:b", "1:2:3:4:5", "level:info"} {
+		if ipv6Shaped([]byte(run)) {
+			t.Errorf("ipv6Shaped(%q) = true; the address parser must not see it", run)
+		}
+	}
+}
+
+// randomRun returns n bytes drawn from alphabet.
+func randomRun(rng *rand.Rand, alphabet string, n int) string {
+	run := make([]byte, n)
+	for k := range run {
+		run[k] = alphabet[rng.IntN(len(alphabet))]
+	}
+	return string(run)
 }

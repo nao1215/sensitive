@@ -118,12 +118,12 @@ func canonicalInteger(text string) bool {
 func (s *eventScanner) scanScalar(ctx context.Context, value, key string) (masked, asNumber string, err error) {
 	scratch := s.takeScratch()
 	defer s.returnScratch(scratch)
-	findings, err := scalarFindings(ctx, s, scratch, value, key)
+	findings, cached, err := scalarFindings(ctx, s, scratch, value, key)
 	if err != nil {
 		return "", "", err
 	}
 	if len(findings) == 0 {
-		if hidden, err := encodedTextSensitive(ctx, s, value, key); err != nil || hidden {
+		if hidden, err := cleanScalar(ctx, s, scratch.text, value, key, cached); err != nil || hidden {
 			return redactionMarker, redactionMarker, err
 		}
 	}
@@ -146,12 +146,12 @@ func (s *eventScanner) maskBytes(ctx context.Context, value []byte, key string) 
 	}
 	scratch := s.takeScratch()
 	defer s.returnScratch(scratch)
-	findings, err := scalarFindings(ctx, s, scratch, value, key)
+	findings, cached, err := scalarFindings(ctx, s, scratch, value, key)
 	if err != nil {
 		return "", false, err
 	}
 	if len(findings) == 0 {
-		hidden, err := encodedTextSensitive(ctx, s, value, key)
+		hidden, err := cleanScalar(ctx, s, scratch.text, value, key, cached)
 		return redactionMarker, hidden, err
 	}
 	if s.scanner.maskFunc == nil && slices.ContainsFunc(findings, func(f Finding) bool { return f.Start == 0 && f.End == len(value) }) {
@@ -172,17 +172,18 @@ func (s *eventScanner) knownField(key string) *fieldKey {
 }
 
 // scalarFindings scans "key: value" and returns the value's findings in value
-// offsets. The budget is charged before any buffer is filled or detector runs.
-func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scratch *scanScratch, value T, key string) ([]Finding, error) {
+// offsets, and the cache entry when the text was found clean before. The
+// budget is charged before any buffer is filled or detector runs.
+func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scratch *scanScratch, value T, key string) ([]Finding, *cleanValue, error) {
 	if ctx.Err() != nil {
-		return nil, saferecord.ErrCanceled
+		return nil, nil, saferecord.ErrCanceled
 	}
 	prefixBytes := 0
 	if key != "" {
 		prefixBytes = len(key) + len(": ")
 	}
 	if prefixBytes > s.remaining || len(value) > s.remaining-prefixBytes {
-		return nil, saferecord.ErrSizeLimit
+		return nil, nil, saferecord.ErrSizeLimit
 	}
 	s.remaining -= prefixBytes + len(value)
 	text := slices.Grow(scratch.text[:0], prefixBytes+len(value))
@@ -190,9 +191,9 @@ func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scr
 		text = append(append(text, key...), ": "...)
 	}
 	text = append(text, value...)
-	findings, err := s.scanText(ctx, scratch, text, prefixBytes, key)
+	findings, cached, err := s.scanText(ctx, scratch, text, prefixBytes, key)
 	if err != nil || prefixBytes == 0 {
-		return findings, err
+		return findings, cached, err
 	}
 	// Findings are fresh validated results; shift the value's spans in place.
 	spans := findings[:0]
@@ -204,27 +205,52 @@ func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scr
 		finding.End -= prefixBytes
 		spans = append(spans, finding)
 	}
-	return spans, nil
+	return spans, cached, nil
 }
 
 // scanText returns the findings in the "key: value" text, skipping the
-// detectors for a text found clean before.
-func (s *eventScanner) scanText(ctx context.Context, scratch *scanScratch, text []byte, prefixBytes int, key string) ([]Finding, error) {
-	values := s.scanner.values
-	if values != nil && values.has(text, prefixBytes) {
-		scratch.text = text
-		return nil, nil
+// detectors for a text found clean before and returning its cache entry.
+func (s *eventScanner) scanText(ctx context.Context, scratch *scanScratch, text []byte, prefixBytes int, key string) ([]Finding, *cleanValue, error) {
+	if values := s.scanner.values; values != nil {
+		if cached := values.lookup(text, prefixBytes); cached != nil {
+			scratch.text = text
+			return nil, cached, nil
+		}
 	}
 	findings := s.scanner.scanFieldInto(scratch.findings[:0], &scratch.detected, text, prefixBytes, s.knownField(key), ctx.Err)
 	// Keep grown storage for the next user; the returned spans alias findings.
 	scratch.text, scratch.findings = text, findings
 	if ctx.Err() != nil {
-		return nil, saferecord.ErrCanceled
+		return nil, nil, saferecord.ErrCanceled
 	}
-	if values != nil && len(findings) == 0 {
-		values.store(text, prefixBytes)
+	return findings, nil, nil
+}
+
+// cleanScalar finishes a scalar without findings in text, its "key: value"
+// form. A text found clean before charges the budget its encoded-text check
+// charged then, so a repeat skips the decoding with the same budget. Any other
+// runs the check and is remembered when it passes.
+func cleanScalar[T string | []byte](ctx context.Context, s *eventScanner, text []byte, value T, key string, cached *cleanValue) (bool, error) {
+	if cached != nil {
+		return false, s.charge(ctx, cached.encoded)
 	}
-	return findings, nil
+	hidden, charged, err := encodedTextSensitive(ctx, s, value, key)
+	if values := s.scanner.values; values != nil && err == nil && !hidden {
+		values.store(text, len(text)-len(value), charged)
+	}
+	return hidden, err
+}
+
+// charge takes n bytes from the scan budget, as the scan that n records did.
+func (s *eventScanner) charge(ctx context.Context, n int) error {
+	if ctx.Err() != nil {
+		return saferecord.ErrCanceled
+	}
+	if n > s.remaining {
+		return saferecord.ErrSizeLimit
+	}
+	s.remaining -= n
+	return nil
 }
 
 // A finding must cross the last join; detecting an ancestor alone does not hide descendants.
@@ -267,21 +293,22 @@ const maxEncodedText = 8 << 10
 
 // encodedTextSensitive reports findings in value decoded as padded standard
 // base64, charged to the scan budget, when the decoded bytes are printable
-// UTF-8 text.
-func encodedTextSensitive[T string | []byte](ctx context.Context, s *eventScanner, value T, key string) (bool, error) {
+// UTF-8 text, and the bytes it charged.
+func encodedTextSensitive[T string | []byte](ctx context.Context, s *eventScanner, value T, key string) (hidden bool, charged int, err error) {
 	const quantum = 4
 	if len(value) == 0 || len(value) > maxEncodedText || len(value)%quantum != 0 || !printableStart(value) || !standardBase64(value) {
-		return false, nil
+		return false, 0, nil
 	}
 	decoded := make([]byte, base64.StdEncoding.DecodedLen(len(value)))
 	n, err := base64.StdEncoding.Decode(decoded, []byte(value))
 	if err != nil || !printableText(decoded[:n]) {
-		return false, nil
+		return false, 0, nil
 	}
 	scratch := s.takeScratch()
 	defer s.returnScratch(scratch)
-	findings, err := scalarFindings(ctx, s, scratch, decoded[:n], key)
-	return len(findings) > 0, err
+	before := s.remaining
+	findings, _, err := scalarFindings(ctx, s, scratch, decoded[:n], key)
+	return len(findings) > 0, before - s.remaining, err
 }
 
 // standardBase64 reports an alphabet that padded standard base64 can have;

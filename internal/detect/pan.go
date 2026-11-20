@@ -84,7 +84,7 @@ func (d *PAN) appendScan(dst []Finding, data []byte) []Finding {
 	if digits < panMinDigits {
 		return dst
 	}
-	return d.appendNormalized(dst, data, data, nil)
+	return scanNumeric(dst, data, data, nil, d.candidate, true)
 }
 
 // appendNormalized appends the PAN findings of normalized (half-width) data
