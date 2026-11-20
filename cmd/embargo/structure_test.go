@@ -19,6 +19,7 @@ const (
 	openObject  = "  {"
 	plainMember = `  "a": 1`
 	closeObject = "  },"
+	closeLast   = "  }"
 )
 
 // filtered runs the filter over the lines joined with newlines.
@@ -39,7 +40,7 @@ func TestStructureMasksValuesWhoseKeyIsOnAnotherLine(t *testing.T) {
 	}{
 		{"json value on the next line", []string{"{", tokenMember, `    "opaque-value",`, `  "count":`, "    17", "}"}, []string{"{", tokenMember, `    "` + filterMarker + `",`, `  "count":`, "    17", "}"}},
 		{"json number under a key-hinted name", []string{"{", cvvMember, "    123", "}"}, []string{"{", cvvMember, "    " + filterMarker, "}"}},
-		{"json array and object under a sensitive key", []string{"[", openObject, `    "secret": [`, `      "one",`, "      {", `        "inner": "two", "n": 3`, "      }", "    ],", `    "name": "public"`, "  }", "]"}, []string{"[", openObject, `    "secret": [`, `      "` + filterMarker + `",`, "      {", `        "inner": "` + filterMarker + `", "n": ` + filterMarker, "      }", "    ],", `    "name": "public"`, "  }", "]"}},
+		{"json array and object under a sensitive key", []string{"[", openObject, `    "secret": [`, `      "one",`, "      {", `        "inner": "two", "n": 3`, "      }", "    ],", `    "name": "public"`, closeLast, "]"}, []string{"[", openObject, `    "secret": [`, `      "` + filterMarker + `",`, "      {", `        "inner": "` + filterMarker + `", "n": ` + filterMarker, "      }", "    ],", `    "name": "public"`, closeLast, "]"}},
 		{"json array under a public key", []string{"{", `  "names": [`, `    "public"`, closeArray, "}"}, []string{"{", `  "names": [`, `    "public"`, closeArray, "}"}},
 		{"json escapes in a key and a value", []string{"{", `  "password":`, `    "a\"b",`, `  "x": "y"`, "}"}, []string{"{", `  "password":`, `    "` + filterMarker + `",`, `  "x": "y"`, "}"}},
 		{"json document ends and text follows", []string{"{", plainMember, "}", `"token":`, `  "public"`}, []string{"{", plainMember, "}", `"token":`, "  " + filterMarker}},
@@ -55,7 +56,7 @@ func TestStructureMasksValuesWhoseKeyIsOnAnotherLine(t *testing.T) {
 		{"json closes an inner object and goes on", []string{"{", `  "a": {`, closeObject, tokenMember, nextValue, "}"}, []string{"{", `  "a": {`, closeObject, tokenMember, `    "` + filterMarker + `"`, "}"}},
 		{"json number followed by a comma", []string{"{", cvvMember, "    123,", tokenMember, nextValue, "}"}, []string{"{", cvvMember, "    " + filterMarker + ",", tokenMember, `    "` + filterMarker + `"`, "}"}},
 		{"json ends and a comma after it stops the line", []string{"{", plainMember, "}, {", tokenMember, nextValue}, []string{"{", plainMember, "}, {", tokenMember, "    " + filterMarker}},
-		{"json a top-level array starts at its object", []string{"[", openObject, tokenMember, nextValue, closeObject, openObject, tokenMember, nextValue, "  }", "]"}, []string{"[", openObject, tokenMember, `    "` + filterMarker + `"`, closeObject, openObject, tokenMember, `    "` + filterMarker + `"`, "  }", "]"}},
+		{"json a top-level array starts at its object", []string{"[", openObject, tokenMember, nextValue, closeObject, openObject, tokenMember, nextValue, closeLast, "]"}, []string{"[", openObject, tokenMember, `    "` + filterMarker + `"`, closeObject, openObject, tokenMember, `    "` + filterMarker + `"`, closeLast, "]"}},
 		{"json finding inside a longer value", []string{"{", `  "note":`, `    "mail ` + filterEmail + ` now"`, "}"}, []string{"{", `  "note":`, `    "mail ` + filterMarker + ` now"`, "}"}},
 		{"yaml literal block", []string{"password: |", "  first line", "", "  second line", "user: bob"}, []string{"password: " + filterMarker, "  " + filterMarker, "", "  " + filterMarker, "user: bob"}},
 		{"yaml folded block with indicators and a comment", []string{`"api_key": >-2 # note`, "    folded # kept", "next: public"}, []string{`"api_key": ` + filterMarker + " # note", "    " + filterMarker, "next: public"}},
