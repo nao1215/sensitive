@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-11-20
+
 ### Added
 
 - The command decompresses gzip and bzip2 input; zstd, xz, zip, 7z and lz4 input stops with an error instead of passing through unmasked.
