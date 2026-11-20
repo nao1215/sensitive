@@ -300,7 +300,7 @@ func TestSiteMenuListsEveryPage(t *testing.T) {
 		t.Fatal(err)
 	}
 	menu := map[string]bool{}
-	for _, match := range regexp.MustCompile(`(?m)^pageRef = "(/[a-z-]+)"$`).FindAllStringSubmatch(string(config), -1) {
+	for _, match := range regexp.MustCompile(`(?m)^pageRef = "(/[a-z-]+)"$`).FindAllStringSubmatch(strings.ReplaceAll(string(config), "\r\n", "\n"), -1) {
 		menu[match[1]+"/"] = true
 	}
 	for path := range sitePages(t) {
