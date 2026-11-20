@@ -2,6 +2,7 @@ package embargo
 
 import (
 	"context"
+	"hash/maphash"
 	"maps"
 	"sync"
 	"sync/atomic"
@@ -209,4 +210,58 @@ func (s *Scanner) cachedSensitiveKey(key string) bool {
 		}
 	}
 	return s.sensitiveKey(key)
+}
+
+// Scalar values repeat across events as keys do: statuses, booleans, small
+// counts and method names. valueCache remembers "key: value" texts the
+// built-in detectors found clean, so a repeat skips the detectors. It is a
+// fixed table that a new text overwrites, so values that never repeat cannot
+// fill it for good, and a text is kept only when it is seen twice in a row at
+// its slot, so values that never repeat cost no copy.
+const (
+	cachedValueSlots    = 1024
+	maxCachedValueBytes = 128
+)
+
+type valueCache struct {
+	seed  maphash.Seed
+	seen  [cachedValueSlots]atomic.Uint64
+	clean [cachedValueSlots]atomic.Pointer[cleanValue]
+}
+
+// cleanValue is a clean "key: value" text and the length of its "key: "
+// prefix, which decides the key context of the same bytes.
+type cleanValue struct {
+	text   string
+	prefix int
+}
+
+func newValueCache() *valueCache { return &valueCache{seed: maphash.MakeSeed()} }
+
+// slot returns the table index of text and a nonzero fingerprint of it.
+func (c *valueCache) slot(text []byte, prefix int) (int, uint64) {
+	sum := maphash.Bytes(c.seed, text) ^ uint64(prefix)
+	return int(sum % cachedValueSlots), sum | 1
+}
+
+// has reports whether text with the given prefix was found clean.
+func (c *valueCache) has(text []byte, prefix int) bool {
+	if len(text) > maxCachedValueBytes {
+		return false
+	}
+	index, _ := c.slot(text, prefix)
+	entry := c.clean[index].Load()
+	return entry != nil && entry.prefix == prefix && entry.text == string(text)
+}
+
+// store records that text with the given prefix has no findings. The first
+// sighting at a slot keeps only its fingerprint; the next one keeps the text.
+func (c *valueCache) store(text []byte, prefix int) {
+	if len(text) > maxCachedValueBytes {
+		return
+	}
+	index, fingerprint := c.slot(text, prefix)
+	if c.seen[index].Swap(fingerprint) == fingerprint {
+		c.clean[index].Store(&cleanValue{text: string(text), prefix: prefix})
+	}
 }

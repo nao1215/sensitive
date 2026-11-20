@@ -24,7 +24,9 @@ type Scanner struct {
 	scratch   *sync.Pool
 	keys      *keyCache
 	// paths holds joined key paths that had no findings, as keys does.
-	paths         *keyCache
+	paths *keyCache
+	// values holds scalar texts that had no findings.
+	values        *valueCache
 	credential    detect.Detector
 	hintIndex     [256]dispatchBucket
 	follow        [256]byteSet
@@ -88,6 +90,7 @@ func NewScanner(opts ...ScannerOption) *Scanner {
 		s.scratch = &sync.Pool{New: func() any { return &scanScratch{text: nil, findings: nil, keys: nil, members: nil} }}
 		s.keys = &keyCache{}
 		s.paths = &keyCache{}
+		s.values = newValueCache()
 	}
 	return s
 }

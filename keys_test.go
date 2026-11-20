@@ -163,3 +163,103 @@ func TestKeyCachePublishesPendingKeysInDoublingBatches(t *testing.T) {
 		t.Fatalf("a repeated store replaced the pending result: %+v", result)
 	}
 }
+
+func TestValueCacheHitMatchesScan(t *testing.T) {
+	t.Parallel()
+	cached, fresh := NewScanner(), NewScanner()
+	fresh.values = nil
+	pairs := [][2]string{{statusKey, "accepted"}, {"ok", "true"}, {"count", "17"}, {tokenKey, "accepted"}, {statusKey, documentedEmail}, {"card", "4111111111111111"}, {"", "accepted"}, {statusKey, "YWxpY2VAZXhhbXBsZS5jb20="}}
+	for range 3 {
+		for _, pair := range pairs {
+			hit := eventScanner{scanner: cached, remaining: maxScanBytes}
+			miss := eventScanner{scanner: fresh, remaining: maxScanBytes}
+			got, gotErr := hit.maskScalar(context.Background(), pair[1], pair[0])
+			want, wantErr := miss.maskScalar(context.Background(), pair[1], pair[0])
+			if got != want || !errors.Is(gotErr, wantErr) || hit.remaining != miss.remaining {
+				t.Fatalf("%q: %q: cached %q, %v, charged %d; want %q, %v, charged %d", pair[0], pair[1], got, gotErr, maxScanBytes-hit.remaining, want, wantErr, maxScanBytes-miss.remaining)
+			}
+		}
+	}
+	if !cached.values.has([]byte("status: accepted"), len("status: ")) {
+		t.Fatal("a repeated clean value was not cached")
+	}
+	for _, text := range []string{"status: " + documentedEmail, "card: 4111111111111111", "token: accepted"} {
+		if cached.values.has([]byte(text), strings.Index(text, " ")+1) {
+			t.Fatalf("%q has findings and must not be cached", text)
+		}
+	}
+	if NewScanner(WithDetector(&retainingDetector{})).values != nil {
+		t.Fatal("custom detectors may answer differently, so their scanner must not cache values")
+	}
+}
+
+func TestValueCacheKeepsATextSeenTwiceAtItsSlot(t *testing.T) {
+	t.Parallel()
+	cache := newValueCache()
+	text := []byte("status: accepted")
+	cache.store(text, 8)
+	if cache.has(text, 8) {
+		t.Fatal("a text seen once was kept")
+	}
+	cache.store(text, 8)
+	if !cache.has(text, 8) || cache.has(text, 0) || cache.has([]byte("status: rejected"), 8) {
+		t.Fatal("the cache must match the text and its prefix")
+	}
+	long := []byte(strings.Repeat("v", maxCachedValueBytes+1))
+	cache.store(long, 0)
+	cache.store(long, 0)
+	if cache.has(long, 0) {
+		t.Fatal("a text over the length limit was kept")
+	}
+	edge := long[:maxCachedValueBytes]
+	cache.store(edge, 0)
+	cache.store(edge, 0)
+	if !cache.has(edge, 0) {
+		t.Fatal("a text at the length limit was not kept")
+	}
+	// A second text at the same slot replaces the first only once it repeats.
+	slot, _ := cache.slot(text, 8)
+	var other []byte
+	for i := 0; other == nil; i++ {
+		candidate := []byte("status: " + strconv.Itoa(i))
+		if index, _ := cache.slot(candidate, 8); index == slot {
+			other = candidate
+		}
+	}
+	cache.store(other, 8)
+	if !cache.has(text, 8) || cache.has(other, 8) {
+		t.Fatal("one sighting of another text replaced the kept one")
+	}
+	cache.store(other, 8)
+	if cache.has(text, 8) || !cache.has(other, 8) {
+		t.Fatal("a repeated text did not replace the one at its slot")
+	}
+}
+
+func TestValueCacheConcurrentEvents(t *testing.T) {
+	t.Parallel()
+	scanner := NewScanner()
+	done := make(chan string)
+	for worker := range 8 {
+		go func() {
+			for i := range 200 {
+				scan := eventScanner{scanner: scanner, remaining: maxScanBytes}
+				value := "accepted"
+				if (i+worker)%3 == 0 {
+					value = documentedEmail
+				}
+				masked, err := scan.maskScalar(context.Background(), value, statusKey)
+				if err != nil || (value == documentedEmail) == (masked == value) {
+					done <- value + " became " + masked
+					return
+				}
+			}
+			done <- ""
+		}()
+	}
+	for range 8 {
+		if failure := <-done; failure != "" {
+			t.Fatal(failure)
+		}
+	}
+}
