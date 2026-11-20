@@ -138,7 +138,7 @@ func (t *table) fieldEnd(body []byte, i int) int {
 // starts at i, skipping doubled quotes, or the line's length and false when
 // the field continues on the next line.
 func quotedEnd(body []byte, i int) (int, bool) {
-	for i < len(body) {
+	for {
 		next := bytes.IndexByte(body[i:], '"')
 		if next < 0 {
 			return len(body), false
@@ -150,5 +150,4 @@ func quotedEnd(body []byte, i int) (int, bool) {
 		}
 		return i, true
 	}
-	return len(body), false
 }

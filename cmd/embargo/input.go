@@ -176,7 +176,7 @@ func sniff(input io.Reader) (head []byte, text io.Reader, err error) {
 	// The first read keeps all it returns, so a pipe's first line is never split.
 	buffer := make([]byte, sniffBytes)
 	n := 0
-	for n == 0 || (n < signatureBytes && partialSignature(buffer[:n])) {
+	for n == 0 || partialSignature(buffer[:n]) {
 		read, readErr := input.Read(buffer[n:])
 		n += read
 		if errors.Is(readErr, io.EOF) {
@@ -198,10 +198,6 @@ func (f *fileSequence) failure(problem string) error {
 	}
 	return inputError(fmt.Sprintf("embargo: input file %d %s", f.opened, problem))
 }
-
-// signatureBytes is the longest signature: "BZh", a block size digit and the
-// block magic.
-const signatureBytes = 10
 
 // sniffBytes is the most the first read takes before the filter's buffer.
 const sniffBytes = 4 << 10

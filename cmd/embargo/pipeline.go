@@ -12,9 +12,8 @@ import (
 
 // Batches bound what one worker takes at a time and how much input waits.
 const (
-	batchBytes  = 256 << 10
-	readBuffer  = 1 << 20
-	batchFactor = 2
+	batchBytes = 256 << 10
+	readBuffer = 1 << 20
 )
 
 // batch is a run of consecutive lines read together. Workers scan batches in
@@ -65,8 +64,8 @@ type pipeline struct {
 // any, comes after every batch before it.
 func (p *pipeline) run(input io.Reader, emit func(*batch) error) error {
 	workers := runtime.GOMAXPROCS(0)
-	work := make(chan *batch, batchFactor*workers)
-	ordered := make(chan *batch, batchFactor*workers)
+	work := make(chan *batch, workers)
+	ordered := make(chan *batch, workers)
 	quit := make(chan struct{})
 	defer close(quit)
 	for range workers {

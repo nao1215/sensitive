@@ -176,6 +176,7 @@ func TestCompressedInputIsDecompressedOrStops(t *testing.T) {
 		{"cut gzip", member[:len(member)-6], "", invalidGzip},
 		{"cut after the first read", large[:len(large)/2], "", invalidGzip},
 		{"broken bzip2", "BZh91AY&SY" + strings.Repeat("x", 40), "", "embargo: the input is not valid bzip2"},
+		{"broken bzip2 of block size 1", "BZh11AY&SY" + strings.Repeat("x", 40), "", "embargo: the input is not valid bzip2"},
 		{"gzip in gzip", gzipped(t, member), "", "embargo: the input is compressed twice; decompress it first"},
 		{"UTF-16 in gzip", gzipped(t, "\xff\xfea\x00"), "", "embargo: the input is UTF-16; convert it to UTF-8"},
 		{"zstd", "\x28\xb5\x2f\xfd\x00", "", "embargo: the input is zstd-compressed; decompress it first"},

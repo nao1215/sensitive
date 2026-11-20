@@ -15,6 +15,10 @@ const (
 	tokenMember = `  "token":`
 	nextValue   = `    "next"`
 	closeArray  = "  ]"
+	cvvMember   = `  "cvv":`
+	openObject  = "  {"
+	plainMember = `  "a": 1`
+	closeObject = "  },"
 )
 
 // filtered runs the filter over the lines joined with newlines.
@@ -34,17 +38,25 @@ func TestStructureMasksValuesWhoseKeyIsOnAnotherLine(t *testing.T) {
 		input, want []string
 	}{
 		{"json value on the next line", []string{"{", tokenMember, `    "opaque-value",`, `  "count":`, "    17", "}"}, []string{"{", tokenMember, `    "` + filterMarker + `",`, `  "count":`, "    17", "}"}},
-		{"json number under a key-hinted name", []string{"{", `  "cvv":`, "    123", "}"}, []string{"{", `  "cvv":`, "    " + filterMarker, "}"}},
-		{"json array and object under a sensitive key", []string{"[", "  {", `    "secret": [`, `      "one",`, "      {", `        "inner": "two", "n": 3`, "      }", "    ],", `    "name": "public"`, "  }", "]"}, []string{"[", "  {", `    "secret": [`, `      "` + filterMarker + `",`, "      {", `        "inner": "` + filterMarker + `", "n": ` + filterMarker, "      }", "    ],", `    "name": "public"`, "  }", "]"}},
+		{"json number under a key-hinted name", []string{"{", cvvMember, "    123", "}"}, []string{"{", cvvMember, "    " + filterMarker, "}"}},
+		{"json array and object under a sensitive key", []string{"[", openObject, `    "secret": [`, `      "one",`, "      {", `        "inner": "two", "n": 3`, "      }", "    ],", `    "name": "public"`, "  }", "]"}, []string{"[", openObject, `    "secret": [`, `      "` + filterMarker + `",`, "      {", `        "inner": "` + filterMarker + `", "n": ` + filterMarker, "      }", "    ],", `    "name": "public"`, "  }", "]"}},
 		{"json array under a public key", []string{"{", `  "names": [`, `    "public"`, closeArray, "}"}, []string{"{", `  "names": [`, `    "public"`, closeArray, "}"}},
 		{"json escapes in a key and a value", []string{"{", `  "password":`, `    "a\"b",`, `  "x": "y"`, "}"}, []string{"{", `  "password":`, `    "` + filterMarker + `",`, `  "x": "y"`, "}"}},
-		{"json document ends and text follows", []string{"{", `  "a": 1`, "}", `"token":`, `  "public"`}, []string{"{", `  "a": 1`, "}", `"token":`, "  " + filterMarker}},
+		{"json document ends and text follows", []string{"{", plainMember, "}", `"token":`, `  "public"`}, []string{"{", plainMember, "}", `"token":`, "  " + filterMarker}},
 		{"text that only looks like json", []string{"[INFO] started", "  value", "[2026-11-20] {", tokenMember, `    "x"`}, []string{"[INFO] started", "  value", "[2026-11-20] {", tokenMember, "    " + filterMarker}},
 		{"a string cut at the line end stops the document", []string{"{", `  "note": "open`, tokenMember, nextValue}, []string{"{", `  "note": "open`, tokenMember, "    " + filterMarker}},
 		{"a mismatched close stops the document", []string{"{", closeArray, tokenMember, nextValue}, []string{"{", closeArray, tokenMember, "    " + filterMarker}},
 		{"a key that is not a string stops the document", []string{"{", "  17: 1", tokenMember, nextValue}, []string{"{", "  17: 1", tokenMember, "    " + filterMarker}},
 		{"yaml comment after an item marker", []string{"token:", "  -  # c", "  -  item"}, []string{"token:", "  -  # c", "  -  " + filterMarker}},
+		{"cef value with a space at the line end", []string{`CEF:0|A|B|1|2|n|5|cs1Label=token cs1=two words`}, []string{`CEF:0|A|B|1|2|n|5|cs1Label=token cs1=` + filterMarker}},
+		{"cef value with a spaced equals", []string{`CEF:0|A|B|1|2|n|5|cs1Label=token cs1=a =b c=d`}, []string{`CEF:0|A|B|1|2|n|5|cs1Label=token cs1=` + filterMarker + ` c=d`}},
+		{"cef three pairs", []string{`CEF:0|A|B|1|2|n|5|a=1 cs1=x cs1Label=token`}, []string{`CEF:0|A|B|1|2|n|5|a=1 cs1=` + filterMarker + ` cs1Label=token`}},
 		{"cef empty labeled value", []string{`CEF:0|A|B|1|2|n|5|cs1Label=token cs1= cs2=x`}, []string{`CEF:0|A|B|1|2|n|5|cs1Label=token cs1= cs2=x`}},
+		{"json closes an inner object and goes on", []string{"{", `  "a": {`, closeObject, tokenMember, nextValue, "}"}, []string{"{", `  "a": {`, closeObject, tokenMember, `    "` + filterMarker + `"`, "}"}},
+		{"json number followed by a comma", []string{"{", cvvMember, "    123,", tokenMember, nextValue, "}"}, []string{"{", cvvMember, "    " + filterMarker + ",", tokenMember, `    "` + filterMarker + `"`, "}"}},
+		{"json ends and a comma after it stops the line", []string{"{", plainMember, "}, {", tokenMember, nextValue}, []string{"{", plainMember, "}, {", tokenMember, "    " + filterMarker}},
+		{"json a top-level array starts at its object", []string{"[", openObject, tokenMember, nextValue, closeObject, openObject, tokenMember, nextValue, "  }", "]"}, []string{"[", openObject, tokenMember, `    "` + filterMarker + `"`, closeObject, openObject, tokenMember, `    "` + filterMarker + `"`, "  }", "]"}},
+		{"json finding inside a longer value", []string{"{", `  "note":`, `    "mail ` + filterEmail + ` now"`, "}"}, []string{"{", `  "note":`, `    "mail ` + filterMarker + ` now"`, "}"}},
 		{"yaml literal block", []string{"password: |", "  first line", "", "  second line", "user: bob"}, []string{"password: " + filterMarker, "  " + filterMarker, "", "  " + filterMarker, "user: bob"}},
 		{"yaml folded block with indicators and a comment", []string{`"api_key": >-2 # note`, "    folded # kept", "next: public"}, []string{`"api_key": ` + filterMarker + " # note", "    " + filterMarker, "next: public"}},
 		{"yaml items and continuation under an empty value", []string{"secret:", "  - one # c", "  - nested: public", "  plain words", "  # comment", "done: public"}, []string{"secret:", "  - " + filterMarker + " # c", "  - nested: public", "  " + filterMarker, "  # comment", "done: public"}},
@@ -165,7 +177,10 @@ func TestCEFPairs(t *testing.T) {
 	if pairs := cefPairs([]byte("novalue"), 0); len(pairs) != 0 {
 		t.Fatalf("got %v", pairs)
 	}
-	if unescapedPipe([]byte(`a\|b|c`), 0) != 4 || unescapedPipe([]byte("abc"), 0) != -1 {
-		t.Fatal("unescapedPipe")
+	if at, ok := unescapedPipe([]byte(`a\|b|c`), 0); at != 4 || !ok {
+		t.Fatal("unescapedPipe found no pipe")
+	}
+	if _, ok := unescapedPipe([]byte(`abc\|`), 0); ok {
+		t.Fatal("unescapedPipe found an escaped pipe")
 	}
 }

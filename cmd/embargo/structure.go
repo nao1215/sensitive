@@ -79,6 +79,7 @@ func (s *structure) value(found []embargo.Finding, key string, value []byte, sta
 	text := make([]byte, 0, prefix+len(value))
 	text = append(append(append(text, key...), ": "...), value...)
 	for _, f := range s.scanner.Scan(text) {
+		// A finding in the key alone ends before the value.
 		if f.End > prefix {
 			f.Start, f.End = start+max(f.Start-prefix, 0), start+f.End-prefix
 			found = append(found, f)
@@ -119,7 +120,7 @@ type jsonFrame struct {
 }
 
 // jsonDocument tracks a JSON document that spans lines. It starts at a line
-// that opens an object or array without closing it and stops at its end or
+// that opens an object without closing it and stops at its end or
 // at the first byte that is not JSON, after which lines are text again.
 type jsonDocument struct {
 	frames []jsonFrame
@@ -152,11 +153,12 @@ func (d *jsonDocument) line(s *structure, body []byte, found []embargo.Finding) 
 	return added
 }
 
-// startsDocument reports whether body opens an object or array, possibly
-// after a key, that it does not close on the same line.
+// startsDocument reports whether body opens an object that it does not close
+// on the same line. A document that is an array starts at its first object,
+// since a value outside an object has no key.
 func startsDocument(body []byte) bool {
 	trimmed := bytes.TrimSpace(body)
-	return len(trimmed) > 0 && (trimmed[0] == '{' || trimmed[0] == '[') && !json.Valid(trimmed)
+	return bytes.HasPrefix(trimmed, []byte("{")) && !json.Valid(trimmed)
 }
 
 // token reads the token at i and returns the index after it, or false when
@@ -173,14 +175,14 @@ func (d *jsonDocument) token(s *structure, body []byte, i int, found *[]embargo.
 	case ',', ':':
 		return i + 1, len(d.frames) > 0
 	case '"':
-		end := stringEnd(body, i)
-		if end < 0 || len(d.frames) == 0 {
+		end, closed := stringEnd(body, i)
+		if !closed || len(d.frames) == 0 {
 			return 0, false
 		}
 		return end, d.scalar(s, body, i, end, true, found)
 	default:
 		end := i
-		for end < len(body) && strings.IndexByte("+-.0123456789eEtruefalsn", body[end]) >= 0 {
+		for end < len(body) && strings.IndexByte(",]} \t\r", body[end]) < 0 {
 			end++
 		}
 		if end == i || len(d.frames) == 0 || !json.Valid(body[i:end]) {
@@ -241,17 +243,17 @@ func (d *jsonDocument) scalar(s *structure, body []byte, start, end int, quoted 
 }
 
 // stringEnd returns the index after the closing quote of the string that
-// starts at body[i], or -1 when the line ends inside it.
-func stringEnd(body []byte, i int) int {
+// starts at body[i], or false when the line ends inside it.
+func stringEnd(body []byte, i int) (int, bool) {
 	for j := i + 1; j < len(body); j++ {
 		switch body[j] {
 		case '\\':
 			j++
 		case '"':
-			return j + 1
+			return j + 1, true
 		}
 	}
-	return -1
+	return 0, false
 }
 
 // yamlBlock tracks the lines under a sensitive YAML key whose value is a
@@ -285,8 +287,8 @@ func (b *yamlBlock) line(s *structure, body []byte, found []embargo.Finding) []e
 		return found
 	}
 	value := content[valueStart:]
-	if comment := bytes.Index(value, []byte(" #")); comment >= 0 {
-		value = bytes.TrimSpace(value[:comment])
+	if before, _, commented := bytes.Cut(value, []byte(" #")); commented {
+		value = bytes.TrimSpace(before)
 	}
 	switch {
 	case len(value) == 0:
@@ -311,8 +313,8 @@ func (b *yamlBlock) inside(line []byte, start int, found []embargo.Finding) []em
 			// is decided by its own keys.
 			return found
 		}
-		if comment := bytes.Index(line[start:], []byte(" #")); comment >= 0 {
-			end = start + comment
+		if before, _, commented := bytes.Cut(line[start:], []byte(" #")); commented {
+			end = start + len(before)
 		}
 	}
 	return append(found, embargo.Finding{Kind: embargo.KindCredential, Start: start, End: end, Confidence: keyConfidence})
@@ -330,18 +332,18 @@ func leadingSpaces(body []byte) int {
 // where the value starts in content with its trailing comment removed; the
 // value is empty when only a comment follows.
 func yamlKey(content []byte) (key string, valueStart int, ok bool) {
-	colon := bytes.IndexByte(content, ':')
-	if colon <= 0 || (colon+1 < len(content) && content[colon+1] != ' ') {
+	rawName, rest, found := bytes.Cut(content, []byte(":"))
+	if !found || (len(rest) > 0 && rest[0] != ' ') {
 		return "", 0, false
 	}
-	name := bytes.TrimSpace(content[:colon])
+	name := bytes.TrimSpace(rawName)
 	if len(name) >= 2 && (name[0] == '"' || name[0] == '\'') && name[len(name)-1] == name[0] {
 		name = name[1 : len(name)-1]
 	}
 	if len(name) == 0 || bytes.ContainsAny(name, " \t{}[],") {
 		return "", 0, false
 	}
-	valueStart = colon + 1 + leadingSpaces(content[colon+1:])
+	valueStart = len(rawName) + 1 + leadingSpaces(rest)
 	if bytes.HasPrefix(content[valueStart:], []byte("#")) {
 		valueStart = len(content)
 	}
@@ -374,8 +376,8 @@ func cefFindings(s *structure, body []byte, found []embargo.Finding) []embargo.F
 	}
 	extension := header
 	for range cefHeaderFields {
-		next := unescapedPipe(body, extension)
-		if next < 0 {
+		next, ok := unescapedPipe(body, extension)
+		if !ok {
 			return found
 		}
 		extension = next + 1
@@ -383,7 +385,7 @@ func cefFindings(s *structure, body []byte, found []embargo.Finding) []embargo.F
 	pairs := cefPairs(body, extension)
 	labels := make(map[string]string)
 	for _, pair := range pairs {
-		if name, ok := bytes.CutSuffix(pair.key, []byte("Label")); ok && len(name) > 0 {
+		if name, ok := bytes.CutSuffix(pair.key, []byte("Label")); ok {
 			labels[string(name)] = string(body[pair.start:pair.end])
 		}
 	}
@@ -396,17 +398,17 @@ func cefFindings(s *structure, body []byte, found []embargo.Finding) []embargo.F
 }
 
 // unescapedPipe returns the index of the next "|" at or after i that no
-// backslash escapes, or -1.
-func unescapedPipe(body []byte, i int) int {
+// backslash escapes, or false.
+func unescapedPipe(body []byte, i int) (int, bool) {
 	for ; i < len(body); i++ {
 		switch body[i] {
 		case '\\':
 			i++
 		case '|':
-			return i
+			return i, true
 		}
 	}
-	return -1
+	return 0, false
 }
 
 // cefPair is one key=value of a CEF extension; the value is body[start:end].
@@ -416,25 +418,28 @@ type cefPair struct {
 }
 
 // cefPairs splits a CEF extension into its pairs. A value runs to the space
-// before the next key=, as an unescaped = only starts a key.
+// before the next key=, as an unescaped = only starts a key, so one space
+// separates a value from the next key.
 func cefPairs(body []byte, i int) []cefPair {
 	var pairs []cefPair
-	for i < len(body) {
-		for i < len(body) && body[i] == ' ' {
-			i++
-		}
-		equals := i
-		for equals < len(body) && cefKeyByte(body[equals]) {
-			equals++
-		}
-		if equals == i || equals >= len(body) || body[equals] != '=' {
+	for {
+		equals := keyEnd(body, i)
+		if equals == i || equals == len(body) || body[equals] != '=' {
 			return pairs
 		}
-		start, end := equals+1, cefValueEnd(body, equals+1)
+		start := equals + 1
+		end := cefValueEnd(body, start)
 		pairs = append(pairs, cefPair{key: body[i:equals], start: start, end: end})
-		i = end
+		i = end + 1
 	}
-	return pairs
+}
+
+// keyEnd returns the index after the key bytes that start at i.
+func keyEnd(body []byte, i int) int {
+	for i < len(body) && cefKeyByte(body[i]) {
+		i++
+	}
+	return i
 }
 
 // cefValueEnd returns where the value that starts at i ends: at the space
@@ -457,9 +462,6 @@ func cefKeyByte(c byte) bool {
 
 // nextCEFKey reports whether a key followed by = starts at i.
 func nextCEFKey(body []byte, i int) bool {
-	j := i
-	for j < len(body) && cefKeyByte(body[j]) {
-		j++
-	}
+	j := keyEnd(body, i)
 	return j > i && j < len(body) && body[j] == '='
 }
