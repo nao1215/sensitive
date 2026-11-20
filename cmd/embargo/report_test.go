@@ -140,9 +140,9 @@ func TestJSONLStopsAtFailuresAfterEarlierFindings(t *testing.T) {
 
 func TestJSONLFlushesWhenNoInputIsBuffered(t *testing.T) {
 	t.Parallel()
-	var out bytes.Buffer
-	reader := &pacedReader{output: &out, lines: []string{"card=4111111111111111\n", "mail alice@example.com\n"}, flushed: nil}
-	if err := run([]string{flagFormat, formatJSONL}, reader, &out, io.Discard); err != nil {
+	out := newSyncBuffer()
+	reader := &pacedReader{output: out, lines: []string{"card=4111111111111111\n", "mail alice@example.com\n"}, flushed: nil, given: false}
+	if err := run([]string{flagFormat, formatJSONL}, reader, out, io.Discard); err != nil {
 		t.Fatal(err)
 	}
 	if len(reader.flushed) == 0 || !reader.flushed[0] {

@@ -5,7 +5,9 @@ import (
 	"errors"
 	"io"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/nao1215/embargo"
 )
@@ -136,31 +138,75 @@ func TestReadLineAndSplitEnding(t *testing.T) {
 	}
 }
 
-// pacedReader hands out one line per Read and records, on the next Read,
-// whether the previous line had already reached the output.
+// syncBuffer is an output that a test reads while the filter writes it;
+// wrote receives after each write.
+type syncBuffer struct {
+	wrote  chan struct{}
+	buffer bytes.Buffer
+	mu     sync.Mutex
+}
+
+func newSyncBuffer() *syncBuffer { return &syncBuffer{wrote: make(chan struct{}, 1)} }
+
+func (b *syncBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	defer func() {
+		select {
+		case b.wrote <- struct{}{}:
+		default:
+		}
+	}()
+	return b.buffer.Write(p)
+}
+
+func (b *syncBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buffer.String()
+}
+
+// pacedReader hands out one line per Read, as a slow pipe does. Each later
+// Read first waits a while for the output to show the earlier lines and
+// records whether it did, so a line must reach the output while the filter
+// waits for the next.
 type pacedReader struct {
-	output  *bytes.Buffer
+	output  *syncBuffer
 	lines   []string
 	flushed []bool
+	given   bool
 }
 
 func (r *pacedReader) Read(p []byte) (int, error) {
-	if len(r.flushed) > 0 || len(r.lines) < 2 {
-		r.flushed = append(r.flushed, r.output.Len() > 0)
+	if r.given {
+		r.flushed = append(r.flushed, r.waitForLines(len(r.flushed)+1))
 	}
 	if len(r.lines) == 0 {
 		return 0, io.EOF
 	}
 	n := copy(p, r.lines[0])
-	r.lines = r.lines[1:]
+	r.lines, r.given = r.lines[1:], true
 	return n, nil
+}
+
+// waitForLines reports whether the output reaches count lines in time.
+func (r *pacedReader) waitForLines(count int) bool {
+	deadline := time.After(5 * time.Second)
+	for strings.Count(r.output.String(), "\n") < count {
+		select {
+		case <-r.output.wrote:
+		case <-deadline:
+			return false
+		}
+	}
+	return true
 }
 
 func TestFilterFlushesWhenNoInputIsBuffered(t *testing.T) {
 	t.Parallel()
-	var out bytes.Buffer
-	reader := &pacedReader{output: &out, lines: []string{"first\n", "second\n"}, flushed: nil}
-	if err := run(nil, reader, &out, io.Discard); err != nil {
+	out := newSyncBuffer()
+	reader := &pacedReader{output: out, lines: []string{"first\n", "second\n"}, flushed: nil, given: false}
+	if err := run(nil, reader, out, io.Discard); err != nil {
 		t.Fatal(err)
 	}
 	if len(reader.flushed) == 0 || !reader.flushed[0] {

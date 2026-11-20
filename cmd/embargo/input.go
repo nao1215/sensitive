@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"sync"
 )
 
 // stdinName is the file name that reads stdin, as in cat.
@@ -27,7 +28,7 @@ func openInputs(names []string, stdin io.Reader) (source io.Reader, closeAll fun
 	if files.unnamed {
 		files.names = []string{stdinName}
 	}
-	return files, files.close
+	return files, files.closeAll
 }
 
 // inputError is a message about the named input files; it holds at most a
@@ -59,10 +60,23 @@ type fileSequence struct {
 	started    bool
 	unnamed    bool
 	compressed bool
+	ended      bool
+	mu         sync.Mutex
 }
 
-// Read reads the files in order and reports io.EOF after the last one.
+// Read reads the files in order and reports io.EOF after the last one, or
+// after closeAll.
 func (f *fileSequence) Read(p []byte) (int, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.ended {
+		return 0, io.EOF
+	}
+	return f.readFiles(p)
+}
+
+// readFiles is Read with the lock held.
+func (f *fileSequence) readFiles(p []byte) (int, error) {
 	for {
 		if err := f.advance(); err != nil {
 			return 0, err
@@ -295,6 +309,17 @@ func openReason(err error) string {
 		return ": permission denied"
 	default:
 		return ""
+	}
+}
+
+// closeAll ends the input and releases the current file. The reader of the
+// input stops in its own time; while one of its reads waits, as on a quiet
+// pipe after the output failed, the file is left to the exiting process.
+func (f *fileSequence) closeAll() {
+	if f.mu.TryLock() {
+		f.ended = true
+		f.close()
+		f.mu.Unlock()
 	}
 }
 

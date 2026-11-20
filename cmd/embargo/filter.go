@@ -36,26 +36,31 @@ func writeFailed(err error) error {
 // A read failure or an over-long line stops before that line: nothing after a
 // failure is written, and the error names only the line number.
 func filterLines(input io.Reader, output io.Writer, lines *lineScanner) error {
-	reader := bufio.NewReaderSize(input, ioBuffer)
 	writer := bufio.NewWriterSize(output, ioBuffer)
-	for number := 1; ; number++ {
-		line, tooLong, readErr := readLine(reader)
-		if failure := readFailure(tooLong, readErr, number, "output stops before it"); failure != nil {
-			return flushThen(writer, failure)
-		}
-		if err := writeMaskedLine(writer, lines, line); err != nil {
-			return err
-		}
-		done := errors.Is(readErr, io.EOF)
-		if done || reader.Buffered() == 0 {
-			if err := writer.Flush(); err != nil {
-				return writeFailed(err)
-			}
-		}
-		if done {
-			return nil
+	masked := &pipeline{base: lines, render: renderMasked, consequence: "output stops before it", lines: 0, size: 0}
+	return masked.run(input, func(b *batch) error { return writeBatch(writer, b) })
+}
+
+// renderMasked writes each masked line followed by its original ending.
+func renderMasked(lines *lineScanner, b *batch) {
+	b.each(func(_ int, _ int64, line []byte) {
+		body, ending := splitEnding(line)
+		b.out = append(append(b.out, maskLine(lines, body)...), ending...)
+	})
+}
+
+// writeBatch writes the output of b, flushing when b is the last input
+// buffered.
+func writeBatch(writer *bufio.Writer, b *batch) error {
+	if _, err := writer.Write(b.out); err != nil {
+		return writeFailed(err)
+	}
+	if b.flush {
+		if err := writer.Flush(); err != nil {
+			return writeFailed(err)
 		}
 	}
+	return nil
 }
 
 // readFailure turns a stopped read into the message for line number, ending
@@ -69,29 +74,6 @@ func readFailure(tooLong bool, readErr error, number int, consequence string) er
 		return safeInputError(readErr, fmt.Sprintf("embargo: input read failed at line %d; %s", number, consequence))
 	}
 	return nil
-}
-
-// writeMaskedLine writes one masked line followed by its original ending.
-func writeMaskedLine(writer *bufio.Writer, lines *lineScanner, line []byte) error {
-	if len(line) == 0 {
-		return nil
-	}
-	body, ending := splitEnding(line)
-	_, err := writer.Write(maskLine(lines, body))
-	if err == nil {
-		_, err = writer.Write(ending)
-	}
-	if err != nil {
-		return writeFailed(err)
-	}
-	return nil
-}
-
-func flushThen(writer *bufio.Writer, err error) error {
-	if flushErr := writer.Flush(); flushErr != nil {
-		return writeFailed(flushErr)
-	}
-	return err
 }
 
 // readLine returns one line including its newline, or the final unterminated
