@@ -290,11 +290,8 @@ func (b *yamlBlock) line(s *structure, body []byte, found []embargo.Finding) []e
 	if before, _, commented := bytes.Cut(value, []byte(" #")); commented {
 		value = bytes.TrimSpace(before)
 	}
-	switch {
-	case len(value) == 0:
-		b.indent, b.open, b.literal = indent, true, false
-	case blockIndicator(value):
-		b.indent, b.open, b.literal = indent, true, true
+	if len(value) == 0 || blockIndicator(value) {
+		b.indent, b.open, b.literal = indent, true, len(value) > 0
 	}
 	return found
 }
