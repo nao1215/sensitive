@@ -61,6 +61,27 @@ func appendSeparatedDigits(data []byte, start int, digits []byte, separator func
 	return digits, end
 }
 
+// digitRun returns the number of ASCII digits starting at start.
+func digitRun(data []byte, start int) int {
+	n := 0
+	for start+n < len(data) && ascii.IsDigit(data[start+n]) {
+		n++
+	}
+	return n
+}
+
+// nextGroup returns where scanning resumes after a rejected run of digit
+// groups whose first group has group digits: after that group when it is too
+// short to be the value and the run is short enough that a value of up to
+// maxDigits digits may follow it, as in "retry 3 4111 1111 1111 1111".
+// Longer runs are skipped whole, which keeps the scan linear.
+func nextGroup(start, group, digits, minDigits, maxDigits int) (next int, ok bool) {
+	if group < minDigits && group < digits && digits <= maxDigits+minDigits {
+		return start + group, true
+	}
+	return 0, false
+}
+
 // hasWideDigits reports whether data holds at least n digits, counting the
 // full-width forms that the numeric detectors normalize as well as ASCII.
 func hasWideDigits(data []byte, n int) bool {

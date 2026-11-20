@@ -48,6 +48,10 @@ func (d *MyNumber) candidate(orig, data []byte, posMap []int, i int) (Finding, i
 	digits, end := appendSeparatedDigits(data, i, make([]byte, 0, phoneDigitCapacity), cardSeparator)
 	// Must be exactly 12 digits, not followed by more digits.
 	if !myNumberWhole(data, digits, end) || !isValidMyNumber(digits) || arnAccount(data, i, end) || identifierLabeled(data, i) {
+		// A short number before the value joins its digits; try the value on its own.
+		if next, retry := nextGroup(i, digitRun(data, i), len(digits), myNumberDigits, myNumberDigits); retry {
+			return Finding{}, next, false
+		}
 		return Finding{}, end, false
 	}
 	//nolint:mnd // The detector contract documents this heuristic score.

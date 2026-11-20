@@ -1,0 +1,233 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nao1215/atago/v0.26.0/schema/atago.schema.json
+# embargo run: exit statuses, signals, stdin, arguments, both streams under
+# load, and what happens when masking or the output fails.
+version: "1"
+
+suite:
+  name: embargo run
+
+scenarios:
+  - name: run exits with the command's own status ${code}
+    matrix:
+      - code: 0
+      - code: 1
+      - code: 2
+      - code: 42
+      - code: 255
+    steps:
+      - fixture:
+          file: status.sh
+          content: |
+            embargo run sh -c 'echo alice@example.com; exit "$1"' sh "$1"
+            echo "status $?"
+      - run:
+          command: sh status.sh ${code}
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: "[REDACTED]\nstatus ${code}\n"
+
+  - name: stdout and stderr stay on their own streams
+    steps:
+      - run:
+          command: embargo run sh -c 'echo out alice@example.com; echo err 4111111111111111 >&2; echo out2'
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              out [REDACTED]
+              out2
+          stderr:
+            equals: |
+              err [REDACTED]
+
+  - name: the command gets embargo's stdin and its arguments unchanged
+    steps:
+      - run:
+          command: embargo run sh -c 'cat; printf "[%s]\n" "$@"' sh "two words" '' alice@example.com
+          stdin: |
+            in 4111111111111111
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              in [REDACTED]
+              [two words]
+              []
+              [[REDACTED]]
+
+  - name: flags before run apply and -- after run is dropped
+    steps:
+      - run:
+          command: embargo --kinds pan run -- sh -c 'echo alice@example.com 4111111111111111'
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              alice@example.com [REDACTED]
+
+  - name: a lot of output on both streams does not block
+    steps:
+      - fixture:
+          file: loud.sh
+          content: |
+            i=0
+            while [ $i -lt 20000 ]; do
+              echo "out $i user$i@example.com"
+              echo "err $i: 4111111111111111" >&2
+              i=$((i+1))
+            done
+      - fixture:
+          file: check.sh
+          content: |
+            embargo run sh loud.sh > out.txt 2> err.txt
+            status=$?
+            echo "status $status"
+            grep -c '^out [0-9]* \[REDACTED\]$' out.txt
+            grep -c '^err [0-9]*: \[REDACTED\]$' err.txt
+            grep -c '@example.com\|4111111111111111' out.txt err.txt
+      - run:
+          command: sh check.sh
+          timeout: 60s
+      - assert:
+          stdout:
+            equals: |
+              status 0
+              20000
+              20000
+              out.txt:0
+              err.txt:0
+
+  - name: an over-long line from the command is reported after it ends
+    steps:
+      - fixture:
+          file: long.sh
+          content: |
+            echo first alice@example.com
+            head -c 4194304 /dev/zero | tr '\000' a
+            echo
+            exit "$1"
+      - run:
+          command: embargo run sh long.sh 0
+      - assert:
+          exit_code: 1
+          stdout:
+            equals: |
+              first [REDACTED]
+          stderr:
+            equals: |
+              embargo: line 2 exceeds the 4 MiB limit; output stops before it
+      - run:
+          command: embargo run sh long.sh 3
+      - assert:
+          exit_code: {in: [3, 141]}
+          stderr:
+            contains: "embargo: line 2 exceeds the 4 MiB limit"
+
+  - name: commands that cannot start get 126 and 127
+    steps:
+      - run:
+          command: embargo run embargo-no-such-command
+      - assert:
+          exit_code: 127
+          stdout:
+            empty: true
+          stderr:
+            equals: |
+              embargo: the command was not found
+
+  - name: a file without execute permission cannot be run
+    skip:
+      os: windows
+    steps:
+      - fixture:
+          file: plain.sh
+          content: |
+            echo never
+          mode: "0644"
+      - run:
+          command: embargo run ./plain.sh
+      - assert:
+          exit_code: 126
+          stdout:
+            empty: true
+          stderr:
+            equals: |
+              embargo: the command cannot be run: permission denied
+
+  - name: a command ended by a signal exits with 128 plus the signal
+    skip:
+      os: windows
+    matrix:
+      - signal: TERM
+        code: 143
+      - signal: KILL
+        code: 137
+      - signal: HUP
+        code: 129
+    steps:
+      - fixture:
+          file: signal.sh
+          content: |
+            embargo run sh -c 'echo alice@example.com; kill -"$1" $$' sh "$1"
+            echo "status $?"
+      - run:
+          command: sh signal.sh ${signal}
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: "[REDACTED]\nstatus ${code}\n"
+
+  - name: SIGTERM to embargo reaches the command, whose last words are masked
+    skip:
+      os: windows
+    services:
+      - name: wrapped
+        command: sh -c 'exec embargo run sh -c "trap \"echo stopping alice@example.com; exit 0\" TERM; echo started; while :; do sleep 0.1; done" > out.txt'
+        ready:
+          file: out.txt
+    steps:
+      - signal:
+          service: wrapped
+          signal: TERM
+          wait:
+            timeout: 5s
+      - assert:
+          file:
+            path: out.txt
+            equals: "started\nstopping [REDACTED]\n"
+
+  - name: run with a closed output ends quietly with 141
+    steps:
+      - run:
+          command: sh -c '(embargo run sh -c "while :; do echo alice@example.com; done"; echo "status $?" >&2) | head -n 2'
+          timeout: 20s
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              [REDACTED]
+              [REDACTED]
+          stderr:
+            equals: |
+              status 141
+
+  - name: run does not take report formats or a missing command
+    matrix:
+      - args: --format json run true
+        message: "embargo: run writes text only; --format cannot be used with it"
+      - args: --format jsonl run true
+        message: "embargo: run writes text only; --format cannot be used with it"
+      - args: run
+        message: "embargo: run needs a command; see embargo --help"
+      - args: run --
+        message: "embargo: run needs a command; see embargo --help"
+    steps:
+      - run:
+          command: embargo ${args}
+      - assert:
+          exit_code: 2
+          stdout:
+            empty: true
+          stderr:
+            equals: "${message}\n"

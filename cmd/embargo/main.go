@@ -29,18 +29,19 @@ func main() { os.Exit(exitCode(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)) }
 // closed output says nothing, since its reader has gone and the shell knows.
 func exitCode(args []string, input io.Reader, output, diagnostics io.Writer) int {
 	err := run(args, input, output, diagnostics)
-	code := statusFailed
-	switch status, isStatus := errors.AsType[statusError](err); {
-	case err == nil:
+	if err == nil {
 		return 0
-	case errors.Is(err, errOutputClosed):
+	}
+	if errors.Is(err, errOutputClosed) {
 		return statusClosedOutput
-	case isStatus:
+	}
+	code := statusFailed
+	if status, ok := errors.AsType[statusError](err); ok {
 		if status.cause == nil {
 			return status.code
 		}
 		code, err = status.code, status.cause
-	case errors.As(err, new(usageError)):
+	} else if errors.As(err, new(usageError)) {
 		code = statusUsage
 	}
 	_, _ = fmt.Fprintln(diagnostics, err) //nolint:errcheck // The status is already set; a failed diagnostic write cannot change it.

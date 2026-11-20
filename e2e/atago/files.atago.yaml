@@ -1,0 +1,168 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nao1215/atago/v0.26.0/schema/atago.schema.json
+# File operands: order, stdin in the middle, missing and unreadable files,
+# names that look like flags, and messages that never repeat a file name.
+version: "1"
+
+suite:
+  name: embargo files
+
+scenarios:
+  - name: "- reads stdin between two files"
+    steps:
+      - fixture:
+          file: a.log
+          content: |
+            a alice@example.com
+      - fixture:
+          file: b.log
+          content: |
+            b 4111111111111111
+      - run:
+          command: embargo a.log - b.log
+          stdin: |
+            stdin 203.0.113.7
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              a [REDACTED]
+              stdin [REDACTED]
+              b [REDACTED]
+
+  - name: a missing second file stops after the first and names only its position
+    steps:
+      - fixture:
+          file: a.log
+          content: |
+            a alice@example.com
+      - run:
+          command: embargo a.log alice@example.com.log
+      - assert:
+          exit_code: 1
+          stdout:
+            equals: |
+              a [REDACTED]
+          stderr:
+            equals: |
+              embargo: input file 2 cannot be opened: no such file
+
+  - name: an unreadable file reports permission denied
+    skip:
+      os: windows
+    steps:
+      - fixture:
+          file: secret.log
+          content: |
+            a alice@example.com
+          mode: "0000"
+      - run:
+          command: embargo secret.log
+      - assert:
+          exit_code: 1
+          stdout:
+            empty: true
+          stderr:
+            equals: |
+              embargo: input file 1 cannot be opened: permission denied
+
+  - name: a directory is not read as a file
+    steps:
+      - fixture:
+          file: logs/a.log
+          content: |
+            a
+      - run:
+          command: embargo logs
+      - assert:
+          exit_code: 1
+          stdout:
+            empty: true
+          stderr:
+            matches: '^embargo: (an )?input file (1 )?cannot be (opened|read)'
+
+  - name: empty files add nothing and a file without a final newline keeps it missing
+    steps:
+      - fixture:
+          file: empty.log
+          content: ""
+      - fixture:
+          file: last.log
+          content: "end 4111111111111111"
+      - run:
+          command: embargo empty.log last.log empty.log
+          stdout_to: out.txt
+      - assert:
+          exit_code: 0
+      - assert:
+          file:
+            path: out.txt
+            equals: "end [REDACTED]"
+
+  - name: after -- a file may start with a hyphen or be named run
+    steps:
+      - fixture:
+          file: -dash.log
+          content: |
+            dash alice@example.com
+      - fixture:
+          file: run
+          content: |
+            run 4111111111111111
+      - run:
+          command: embargo -- -dash.log run
+      - assert:
+          exit_code: 0
+          stdout:
+            equals: |
+              dash [REDACTED]
+              run [REDACTED]
+
+  - name: a CRLF file comes out with CRLF
+    steps:
+      - fixture:
+          file: windows.log
+          base64: dXNlcj1hbGljZUBleGFtcGxlLmNvbQ0KZG9uZQ0K
+      - run:
+          command: embargo windows.log
+          stdout_to: out.txt
+      - assert:
+          file:
+            path: out.txt
+            equals: "user=[REDACTED]\r\ndone\r\n"
+
+  - name: a UTF-16 second file stops after the first file's output
+    steps:
+      - fixture:
+          file: a.log
+          content: |
+            a alice@example.com
+      - fixture:
+          file: wide.log
+          base64: //5hAEAAYgAuAGMAbwBtAAoA
+      - run:
+          command: embargo a.log wide.log
+      - assert:
+          exit_code: 1
+          stdout:
+            equals: |
+              a [REDACTED]
+          stderr:
+            equals: |
+              embargo: input file 2 is UTF-16; convert it to UTF-8
+
+  - name: many files are read in order
+    steps:
+      - fixture:
+          file: make.sh
+          content: |
+            i=1
+            while [ $i -le 50 ]; do echo "file $i user$i@example.com" > "f$i.log"; i=$((i+1)); done
+            i=1; set --
+            while [ $i -le 50 ]; do set -- "$@" "f$i.log"; i=$((i+1)); done
+            embargo "$@" > out.txt
+            i=1
+            while [ $i -le 50 ]; do echo "file $i [REDACTED]"; i=$((i+1)); done | cmp - out.txt
+      - run:
+          command: sh make.sh
+      - assert:
+          exit_code: 0

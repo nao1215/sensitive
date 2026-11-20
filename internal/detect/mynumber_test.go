@@ -225,3 +225,14 @@ func TestARNRequiresCompletePrefix(t *testing.T) {
 		}
 	}
 }
+
+func TestMyNumberAfterAShortNumber(t *testing.T) {
+	t.Parallel()
+	d := NewMyNumber()
+	for input, start := range map[string]int{"7 123456789018": 2, "id 12 1234 5678 9018": 6} {
+		got := d.Scan([]byte(input))
+		if len(got) != 1 || got[0].Start != start || got[0].End != len(input) {
+			t.Errorf("Scan(%q) = %v, want one finding from %d", input, got, start)
+		}
+	}
+}

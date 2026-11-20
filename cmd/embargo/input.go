@@ -86,11 +86,11 @@ func (f *fileSequence) Read(p []byte) (int, error) {
 // readCurrent reads the current input, checking its first bytes for a UTF-16
 // byte order mark.
 func (f *fileSequence) readCurrent(p []byte) (int, error) {
-	if f.started || len(p) < len(utf16LittleEndian) {
+	if f.started {
 		return f.current.Read(p)
 	}
 	f.started = true
-	n, err := io.ReadAtLeast(f.current, p, len(utf16LittleEndian))
+	n, err := io.ReadAtLeast(f.current, p, min(len(p), len(utf16LittleEndian)))
 	if head := string(p[:min(n, len(utf16LittleEndian))]); head == utf16LittleEndian || head == utf16BigEndian {
 		if f.unnamed {
 			return 0, inputError("embargo: the input is UTF-16; convert it to UTF-8")

@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - `embargo run COMMAND [arg ...]` runs a command, masks its stdout and stderr separately and exits with its status.
 
+### Fixed
+
+- A card number or My Number after a short number and a space, as in `retry 3 4111111111111111`, was left unmasked.
+
 ### Changed
 
 - The command exits with status 2 for invalid flags, 141 without a message when the reader closes the output (on Windows too), and 126 or 127 when `run` cannot start a command.

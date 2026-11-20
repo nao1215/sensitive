@@ -143,21 +143,17 @@ func commandStreams(command *exec.Cmd) (*commandPipes, error) {
 
 // closeChildEnds closes this process's copies of the write ends once the
 // command holds its own, so each read ends when the command closes them.
+// A pipe end that was never made is nil, and closing it only returns an error.
 func (p *commandPipes) closeChildEnds() {
-	for i, write := range p.write {
-		if write != nil {
-			_ = write.Close() //nolint:errcheck // The command holds its own copy; nothing was written here.
-			p.write[i] = nil
-		}
+	for _, write := range p.write {
+		_ = write.Close() //nolint:errcheck // The command holds its own copy; nothing was written here.
 	}
 }
 
 func (p *commandPipes) close() {
 	p.closeChildEnds()
 	for _, read := range p.read {
-		if read != nil {
-			_ = read.Close() //nolint:errcheck // Nothing is read from a pipe that is closed unused.
-		}
+		_ = read.Close() //nolint:errcheck // Nothing is read from a pipe that is closed unused.
 	}
 }
 

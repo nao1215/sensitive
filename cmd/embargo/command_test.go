@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"time"
 )
 
 // childArgument makes the test binary act as the command that run starts,
@@ -39,10 +41,20 @@ func child(mode string) int {
 	case "term":
 		process, _ := os.FindProcess(os.Getpid()) //nolint:errcheck // The own process is always found.
 		_ = process.Signal(syscall.SIGTERM)       //nolint:errcheck // The test checks the status.
-		select {}
+		return waitForSignal()
+	case "wait":
+		return waitForSignal()
 	default:
 		return 0
 	}
+}
+
+// waitForSignal blocks until a signal ends the child, or a minute passes.
+func waitForSignal() int {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	<-ctx.Done()
+	return 0
 }
 
 func runChild(t *testing.T, stdin, mode string) (code int, stdout, stderr string) {
@@ -83,6 +95,30 @@ func TestRunReportsASignalAsAShellDoes(t *testing.T) {
 	}
 	if code, _, _ := runChild(t, "", "term"); code != signalBase+int(syscall.SIGTERM) {
 		t.Fatalf("code=%d", code)
+	}
+}
+
+func TestRelaySignalsPassesTermButNotInterrupt(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows has no signals")
+	}
+	waiting := exec.CommandContext(t.Context(), os.Args[0], childArgument, "wait") // #nosec G204 G702 -- The test binary runs itself.
+	if err := waiting.Start(); err != nil {
+		t.Fatal(err)
+	}
+	signals := make(chan os.Signal, 2)
+	// A passed-on interrupt would end the child first, with SIGINT.
+	signals <- os.Interrupt
+	signals <- syscall.SIGTERM
+	close(signals)
+	relaySignals(waiting.Process, signals)
+	exit, ok := errors.AsType[*exec.ExitError](waiting.Wait())
+	if !ok {
+		t.Fatal("the child was not ended by a signal")
+	}
+	if status, isWait := exit.Sys().(syscall.WaitStatus); !isWait || !status.Signaled() || status.Signal() != syscall.SIGTERM {
+		t.Fatalf("child status = %v", exit)
 	}
 }
 

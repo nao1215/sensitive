@@ -555,7 +555,7 @@ func TestPANDottedGroupEnds(t *testing.T) {
 func TestPANShortRunSkipMatchesFullCandidate(t *testing.T) {
 	t.Parallel()
 	d := NewPAN()
-	// The candidate before short runs were skipped.
+	// The candidate without the short-run skip.
 	full := func(orig, data []byte, posMap []int, i int) (Finding, int, bool) {
 		if data[i] < '0' || data[i] > '9' {
 			return Finding{}, i + 1, false
@@ -564,7 +564,13 @@ func TestPANShortRunSkipMatchesFullCandidate(t *testing.T) {
 		digits, end := cardDigits(data, i, stack[:0])
 		bounded := panBounded(orig, data, posMap, i, end)
 		f, ok := d.evaluateCandidate(orig, posMap, digits, len(digits), i, end)
-		return f, end, ok && bounded
+		if ok && bounded {
+			return f, end, true
+		}
+		if next, retry := nextGroup(i, digitRun(data, i), len(digits), panMinDigits, panMaxDigits); retry {
+			return Finding{}, next, false
+		}
+		return f, end, false
 	}
 	// #nosec G404 -- Fixed seed for reproducible synthetic tests.
 	rng := rand.New(rand.NewPCG(4111, 1111))
@@ -578,6 +584,30 @@ func TestPANShortRunSkipMatchesFullCandidate(t *testing.T) {
 		want := scanNumeric(nil, data, data, nil, full, true)
 		if got := d.Scan(data); !slices.Equal(got, want) {
 			t.Fatalf("Scan(%q) = %v, want %v", data, got, want)
+		}
+	}
+}
+
+func TestPANAfterAShortNumber(t *testing.T) {
+	t.Parallel()
+	d := NewPAN()
+	for _, tc := range []struct {
+		input      string
+		start, end int
+	}{
+		{"retry 3 4111111111111111", 8, 24},
+		{"7 4111 1111 1111 1111", 2, 21},
+		{"err 12 4111-1111-1111-1111", 7, 26},
+		{"2026 11 20 4111111111111111", 11, 27},
+	} {
+		got := d.Scan([]byte(tc.input))
+		if len(got) != 1 || got[0].Start != tc.start || got[0].End != tc.end {
+			t.Errorf("Scan(%q) = %v, want [%d,%d)", tc.input, got, tc.start, tc.end)
+		}
+	}
+	for _, input := range []string{"1234 5678 9012 3456", "1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6", strings.Repeat("1 ", 40) + "4111111111111111"} {
+		if got := d.Scan([]byte(input)); len(got) != 0 {
+			t.Errorf("Scan(%q) = %v, want none", input, got)
 		}
 	}
 }

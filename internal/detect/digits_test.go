@@ -92,3 +92,26 @@ func TestNumericHasCandidate(t *testing.T) {
 		t.Error("only U+FF10 to U+FF19 are full-width digits")
 	}
 }
+
+func TestNextGroupRetriesOnlyAShortLeadingGroup(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		group, digits, next int
+		ok                  bool
+	}{
+		{group: 1, digits: 17, next: 11, ok: true},
+		{group: 12, digits: 28, next: 22, ok: true},
+		{group: 13, digits: 29, ok: false},
+		{group: 16, digits: 16, ok: false},
+		{group: 4, digits: 32, next: 14, ok: true},
+		{group: 4, digits: 33, ok: false},
+	} {
+		next, ok := nextGroup(10, tc.group, tc.digits, 13, 19)
+		if ok != tc.ok || (ok && next != tc.next) {
+			t.Errorf("nextGroup(group=%d, digits=%d) = %d, %v", tc.group, tc.digits, next, ok)
+		}
+	}
+	if digitRun([]byte("12a3"), 0) != 2 || digitRun([]byte("12"), 2) != 0 {
+		t.Error("digitRun miscounts")
+	}
+}

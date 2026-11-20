@@ -135,7 +135,7 @@ func splitEnding(line []byte) (body, ending []byte) {
 // order mark, as Windows editors write before the first line, is kept and the
 // rest of the line is masked as if it were not there.
 func maskLine(lines *lineScanner, body []byte) []byte {
-	if len(body) >= len(utf8BOM) && string(body[:len(utf8BOM)]) == utf8BOM {
+	if bytes.HasPrefix(body, []byte(utf8BOM)) {
 		return append([]byte(utf8BOM), maskLine(lines, body[len(utf8BOM):])...)
 	}
 	if trimmed := bytes.TrimLeft(body, " \t"); !lines.open() && len(trimmed) > 0 && (trimmed[0] == '{' || trimmed[0] == '[') {

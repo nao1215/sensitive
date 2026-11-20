@@ -117,5 +117,19 @@
     "end": 254,
     "sha256": "b45ebdaa2c7a8af741b5c79292984e9cd92ff56b67d58965ad1576f9c1de0f9f",
     "reason": "The pool's New function stores only *[]slog.Attr values, so the type assertion cannot fail; the panic keeps the invariant explicit."
+  },
+  {
+    "file": "cmd/embargo/command.go",
+    "start": 52,
+    "end": 54,
+    "sha256": "4c63e515625497fd092ecc672735174b6144915130d17a9a9096531b2490dbd9",
+    "reason": "commandStreams fails only when the operating system cannot create a pipe, which a test cannot cause without exhausting descriptors for the whole test binary."
+  },
+  {
+    "file": "cmd/embargo/command.go",
+    "start": 134,
+    "end": 137,
+    "sha256": "6baf4284f9f342abebe7912c9cf1f2406d92fba9c9b3151b869f490d4ff8c92b",
+    "reason": "os.Pipe fails only when the process runs out of file descriptors; the branch closes the pipes already made and reports a fixed error."
   }
 ]
