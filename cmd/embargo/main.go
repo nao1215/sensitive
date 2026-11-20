@@ -70,13 +70,14 @@ func run(args []string, input io.Reader, output, diagnostics io.Writer) error {
 	}
 	source, closeInputs := openInputs(parsed.files, input)
 	defer closeInputs()
+	lines := newLineScanner(scanner, inputMode(parsed.input, parsed.files))
 	switch parsed.format {
 	case formatJSON:
-		return writeReport(source, output, scanner, parsed.samples)
+		return writeReport(source, output, lines, parsed.samples)
 	case formatJSONL:
-		return writeFindings(source, output, scanner)
+		return writeFindings(source, output, lines)
 	default:
-		return filterLines(source, output, scanner)
+		return filterLines(source, output, lines)
 	}
 }
 

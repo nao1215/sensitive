@@ -223,7 +223,7 @@ func TestSniffWaitsOnlyForAPossibleSignature(t *testing.T) {
 	}{
 		{"plain line\n", []string{"plain line\n", "more\n"}},
 		{"\x1f\x8b", []string{"\x1f", "\x8b", "rest"}},
-		{"BZh91AY&SY", []string{"BZ", "h9", "1AY&SY", "data"}},
+		{"BZh91AY&SY", []string{"BZ", "h9", "1AY&SY", dataColumn}},
 		{"BZx", []string{"BZ", "x"}},
 	} {
 		chunks := make([]io.Reader, len(tc.chunks))

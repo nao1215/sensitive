@@ -35,10 +35,9 @@ func writeFailed(err error) error {
 // buffered input left, so a pipe such as tail -f sees each line as it arrives.
 // A read failure or an over-long line stops before that line: nothing after a
 // failure is written, and the error names only the line number.
-func filterLines(input io.Reader, output io.Writer, scanner *embargo.Scanner) error {
+func filterLines(input io.Reader, output io.Writer, lines *lineScanner) error {
 	reader := bufio.NewReaderSize(input, ioBuffer)
 	writer := bufio.NewWriterSize(output, ioBuffer)
-	lines := newLineScanner(scanner)
 	for number := 1; ; number++ {
 		line, tooLong, readErr := readLine(reader)
 		if failure := readFailure(tooLong, readErr, number, "output stops before it"); failure != nil {
@@ -138,7 +137,7 @@ func maskLine(lines *lineScanner, body []byte) []byte {
 	if bytes.HasPrefix(body, []byte(utf8BOM)) {
 		return append([]byte(utf8BOM), maskLine(lines, body[len(utf8BOM):])...)
 	}
-	if trimmed := bytes.TrimLeft(body, " \t"); !lines.open() && len(trimmed) > 0 && (trimmed[0] == '{' || trimmed[0] == '[') {
+	if trimmed := bytes.TrimLeft(body, " \t"); lines.table == nil && !lines.open() && len(trimmed) > 0 && (trimmed[0] == '{' || trimmed[0] == '[') {
 		if masked, err := lines.scanner.MaskJSON(body); err == nil {
 			lines.observe(body)
 			return masked
@@ -170,11 +169,21 @@ const pemProbe = "\nx"
 type lineScanner struct {
 	scanner   *embargo.Scanner
 	structure *structure
-	header    []byte
+	// table reads CSV or TSV records instead of the structures, when set.
+	table  *table
+	header []byte
 }
 
-func newLineScanner(scanner *embargo.Scanner) *lineScanner {
-	return &lineScanner{scanner: scanner, structure: newStructure(scanner), header: nil}
+// newLineScanner scans lines of the given --input mode.
+func newLineScanner(scanner *embargo.Scanner, mode string) *lineScanner {
+	lines := &lineScanner{scanner: scanner, structure: newStructure(scanner), table: nil, header: nil}
+	switch mode {
+	case inputCSV:
+		lines.table = newTable(scanner, ',')
+	case inputTSV:
+		lines.table = newTable(scanner, '\t')
+	}
+	return lines
 }
 
 // open reports whether an earlier line left a PEM block, a JSON document or
@@ -191,6 +200,9 @@ func (l *lineScanner) observe(body []byte) {
 // scan returns line-relative findings for body, including the part of an open
 // PEM block that covers it.
 func (l *lineScanner) scan(body []byte) []embargo.Finding {
+	if l.table != nil {
+		return mergeFindings(l.scanPEM(body), l.table.findings(body))
+	}
 	return mergeFindings(l.scanPEM(body), l.structure.findings(body))
 }
 

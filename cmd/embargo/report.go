@@ -34,8 +34,8 @@ type report struct {
 // writeReport prints per-kind counts and finding locations for --format json. Each line is
 // discarded after scanning, so memory stays bounded, and input bytes are never
 // printed. Incomplete input produces no report.
-func writeReport(input io.Reader, output io.Writer, scanner *embargo.Scanner, sampleLimit int) error {
-	result, err := collectReport(input, scanner, sampleLimit)
+func writeReport(input io.Reader, output io.Writer, scanned *lineScanner, sampleLimit int) error {
+	result, err := collectReport(input, scanned, sampleLimit)
 	if err != nil {
 		return err
 	}
@@ -47,9 +47,8 @@ func writeReport(input io.Reader, output io.Writer, scanner *embargo.Scanner, sa
 	return nil
 }
 
-func collectReport(input io.Reader, scanner *embargo.Scanner, sampleLimit int) (report, error) {
+func collectReport(input io.Reader, scanned *lineScanner, sampleLimit int) (report, error) {
 	groups := make(map[embargo.Kind]*kindReport)
-	scanned := newLineScanner(scanner)
 	lines, size, err := eachLine(bufio.NewReaderSize(input, ioBuffer), "no report is written", func(number int, offset int64, body []byte) error {
 		for _, finding := range scanned.scan(body) {
 			addFinding(groups, finding, offset, number, sampleLimit)
@@ -74,11 +73,10 @@ type foundValue struct {
 // writeFindings prints one JSON object per finding as each line is scanned and
 // flushes whenever no more input is buffered, so tail -f works as with the
 // filter. A read failure stops before that line, after the earlier findings.
-func writeFindings(input io.Reader, output io.Writer, scanner *embargo.Scanner) error {
+func writeFindings(input io.Reader, output io.Writer, scanned *lineScanner) error {
 	reader := bufio.NewReaderSize(input, ioBuffer)
 	writer := bufio.NewWriterSize(output, ioBuffer)
 	encoder := json.NewEncoder(writer)
-	scanned := newLineScanner(scanner)
 	_, _, err := eachLine(reader, "output stops before it", func(number int, offset int64, body []byte) error {
 		for _, f := range scanned.scan(body) {
 			at := newLocation(f, offset, number)

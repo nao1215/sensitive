@@ -90,7 +90,7 @@ func TestStructureKeepsJSONLinesWholeOutsideDocuments(t *testing.T) {
 func TestKeySensitiveRemembersABoundedNumberOfKeys(t *testing.T) {
 	t.Parallel()
 	s := newStructure(embargo.NewScanner())
-	if !s.keySensitive("password") || s.keySensitive("status") || !s.keySensitive("pass") {
+	if !s.keySensitive(passwordColumn) || s.keySensitive("status") || !s.keySensitive("pass") {
 		t.Fatal("keySensitive disagrees with MaskJSON")
 	}
 	if !s.keySensitive(filterEmail) {
@@ -102,7 +102,7 @@ func TestKeySensitiveRemembersABoundedNumberOfKeys(t *testing.T) {
 	if len(s.sensitive) != maxProbedKeys {
 		t.Fatalf("remembered %d keys, want %d", len(s.sensitive), maxProbedKeys)
 	}
-	if s.keySensitive("password") != true {
+	if s.keySensitive(passwordColumn) != true {
 		t.Fatal("a remembered key changed")
 	}
 }

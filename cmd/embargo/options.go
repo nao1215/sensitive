@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	usage = `Usage: embargo [--format text|json|jsonl] [--kinds all|KIND,...] [--min-confidence 0] [--samples 3] [file ...]
+	usage = `Usage: embargo [--format text|json|jsonl] [--input lines|csv|tsv] [--kinds all|KIND,...] [--min-confidence 0] [--samples 3] [file ...]
        embargo [--kinds all|KIND,...] [--min-confidence 0] run COMMAND [arg ...]
 
 Masks secrets and personal data in each line of the files, or of stdin. No format prints a matched value.
@@ -21,9 +21,12 @@ run starts COMMAND with this stdin, masks its stdout and stderr separately and e
   json   one document with per-kind counts and up to --samples locations per kind.
   jsonl  one object per finding with its line, column, byte offsets and kind, as each line is read.
 
-A read failure or a line longer than 4 MiB stops the output with an error.
+A read failure or a line longer than 4 MiB stops the output with an error. gzip and bzip2 input is
+decompressed. A value whose key is on an earlier line of a JSON document or YAML block is masked too.
 
   --format F            output format: text, json or jsonl (default text)
+  --input I             lines, or csv or tsv to read the first line as column names that work as keys
+                        (default: csv or tsv when every file has that extension, otherwise lines)
   --kinds KIND,...      detect only these kinds; all selects every kind (default: the NewScanner defaults)
   --min-confidence N    drop findings below N, from 0 to 1 (default 0)
   --samples N           locations per kind with --format json, from 0 to 20 (default 3)
@@ -52,6 +55,7 @@ func (e usageError) Error() string { return string(e) }
 type options struct {
 	kinds   string
 	format  string
+	input   string
 	files   []string
 	command []string
 	minimum float64
@@ -62,13 +66,14 @@ type options struct {
 // parseOptions decodes flags with the standard flag package. Errors name the
 // flag and its allowed values but never repeat what was passed.
 func parseOptions(args []string) (*options, error) {
-	parsed := &options{kinds: "", files: nil, command: nil, minimum: 0, samples: defaultSamples, format: formatText, version: false}
+	parsed := &options{kinds: "", input: "", files: nil, command: nil, minimum: 0, samples: defaultSamples, format: formatText, version: false}
 	var minimumText, samplesText string
 	flags := flag.NewFlagSet("embargo", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
 	flags.StringVar(&parsed.kinds, "kinds", "", "")
 	flags.StringVar(&minimumText, "min-confidence", "0", "")
 	flags.StringVar(&parsed.format, "format", formatText, "")
+	flags.StringVar(&parsed.input, "input", "", "")
 	flags.StringVar(&samplesText, "samples", strconv.Itoa(defaultSamples), "")
 	flags.BoolVar(&parsed.version, "version", false, "")
 	if err := flags.Parse(args); err != nil {
@@ -85,8 +90,8 @@ func parseOptions(args []string) (*options, error) {
 	if err != nil || samples < 0 || samples > maximumSamples {
 		return nil, usageError("embargo: --samples must be an integer from 0 to 20")
 	}
-	if parsed.format != formatText && parsed.format != formatJSON && parsed.format != formatJSONL {
-		return nil, usageError("embargo: --format must be text, json or jsonl")
+	if err := checkChoices(parsed); err != nil {
+		return nil, err
 	}
 	samplesSet := false
 	flags.Visit(func(f *flag.Flag) { samplesSet = samplesSet || f.Name == "samples" })
@@ -95,6 +100,17 @@ func parseOptions(args []string) (*options, error) {
 	}
 	parsed.minimum, parsed.samples = minimum, samples
 	return parsed, operands(parsed, args, flags.Args())
+}
+
+// checkChoices checks the flags that take one of a few words.
+func checkChoices(parsed *options) error {
+	if parsed.format != formatText && parsed.format != formatJSON && parsed.format != formatJSONL {
+		return usageError("embargo: --format must be text, json or jsonl")
+	}
+	if parsed.input != "" && parsed.input != inputLines && parsed.input != inputCSV && parsed.input != inputTSV {
+		return usageError("embargo: --input must be lines, csv or tsv")
+	}
+	return nil
 }
 
 // operands reads what follows the flags: the files, or run and its command.
@@ -130,6 +146,9 @@ func commandUsage(parsed *options) error {
 	if parsed.format != formatText {
 		return usageError("embargo: run writes text only; --format cannot be used with it")
 	}
+	if parsed.input != "" {
+		return usageError("embargo: run reads lines only; --input cannot be used with it")
+	}
 	return nil
 }
 
@@ -155,7 +174,7 @@ func parseConfidence(text string) (float64, bool) {
 // is not repeated and the defined flags are listed instead.
 func flagError(err error) error {
 	text := err.Error()
-	for _, name := range []string{"kinds", "min-confidence", "format", "samples", "version"} {
+	for _, name := range []string{"kinds", "min-confidence", "format", "input", "samples", "version"} {
 		if strings.HasSuffix(text, ": -"+name) || strings.Contains(text, " for -"+name+":") {
 			if strings.HasPrefix(text, "flag needs an argument") {
 				return usageError("embargo: --" + name + " needs a value; see embargo --help")
@@ -163,5 +182,5 @@ func flagError(err error) error {
 			return usageError("embargo: --" + name + " has an invalid value; see embargo --help")
 		}
 	}
-	return usageError("embargo: unknown flag; the flags are --kinds, --min-confidence, --format, --samples and --version; see embargo --help")
+	return usageError("embargo: unknown flag; the flags are --kinds, --min-confidence, --format, --input, --samples and --version; see embargo --help")
 }
