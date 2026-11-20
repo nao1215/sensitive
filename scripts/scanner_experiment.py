@@ -55,20 +55,15 @@ def render(check):
     updated = re.sub(pattern,lambda m:m[1]+table+m[2],original)
     readme = ROOT/'README.md'
     existing = readme.read_text(encoding="utf-8")
-    synopsis = 'Recorded scanner medians (ten interleaved samples):\n\n'+table+'\n[kinds1/3/8 definitions, input sizes and uncertainty](doc/benchmarks.md#choose-the-kinds-the-application-needs). Narrower selection avoids irrelevant detections and gives up their recall.\n'
-    readme_pattern = r'(?s)(<!-- narrowing-summary:start -->\n).*?(<!-- narrowing-summary:end -->)'
-    if len(re.findall(readme_pattern,existing)) != 1:
-        raise ValueError('expected one README narrowing block')
-    changed = re.sub(readme_pattern,lambda m:m[1]+synopsis+m[2],existing)
     # The README prose quotes the same medians, so it is generated with the table.
     line = f"Pick the kinds you need: on 2.7 KB of log lines with no secret, `WithKinds(KindEmail)` returns in {values['kinds1','clean']/1000:.2f} µs because there is no `@` to inspect, while `WithAll()` takes {values['all','clean']/1000:.0f} µs. [Per-detector benchmarks](doc/benchmarks.md)\n"
     line_pattern = r'(?s)(<!-- narrowing-line:start -->\n).*?(<!-- narrowing-line:end -->)'
-    if len(re.findall(line_pattern,changed)) != 1:
+    if len(re.findall(line_pattern,existing)) != 1:
         raise ValueError('expected one README narrowing sentence')
-    changed = re.sub(line_pattern,lambda m:m[1]+line+m[2],changed)
+    changed = re.sub(line_pattern,lambda m:m[1]+line+m[2],existing)
     if check:
         if existing != changed:
-            raise SystemExit('stale README narrowing table')
+            raise SystemExit('stale README narrowing sentence')
         if original != updated:
             raise SystemExit('stale narrowing table: run python3 scripts/scanner_experiment.py')
     else:

@@ -61,7 +61,7 @@ fmt.Println(key)
 // Output: [REDACTED]
 ```
 
-`key.Reveal()` returns the value; `Input` decodes one from JSON, config files and SQL rows. [Secret, Input and your own types](doc/values.md) · [Compared with go-masker's Sensitive](doc/comparison.md#keeping-a-known-secret-out-typed-wrappers)
+`key.Reveal()` returns the value; `Input` decodes one from JSON, config files and SQL rows. [Secret, Input and your own types](doc/values.md)
 
 ## Mask structs without changing their types
 
@@ -97,17 +97,17 @@ Clean values keep their JSON types; a detected number becomes a marker string. [
 
 ## Loggers and services
 
-| Logger | Wrap it with | Module |
-|---|---|---|
-| log/slog: TextHandler, JSONHandler or any other slog.Handler | `embargo.NewSlogHandler(next, scanner)` | root, standard library only |
-| go.uber.org/zap | [`embargozap.NewWriteSyncer(next, scanner)`](adapters/zap/example_test.go) | `adapters/zap` |
-| github.com/rs/zerolog | [`embargozerolog.NewWriter(next, scanner)`](adapters/zerolog/example_test.go) | `adapters/zerolog` |
-| github.com/sirupsen/logrus | [`embargologrus.NewFormatter(next, scanner)`](adapters/logrus/example_test.go) | `adapters/logrus` |
-| net/http server access log | [`embargo.NewHTTPHandler(next, logger, scanner)`](example_test.go) | root, standard library only |
-| gRPC server, unary and stream | [`embargogrpc.NewUnaryServerInterceptor(logger, scanner)`](adapters/grpc/example_test.go) | `adapters/grpc` |
-| OpenTelemetry SDK logs and spans | [`embargootel.NewLogExporter(next, scanner)`](adapters/otel/example_test.go) | `adapters/otel` |
-| Sentry events | [`embargosentry.NewBeforeSend(scanner)`](adapters/sentry/example_test.go) | `adapters/sentry` |
-| log, fmt and anything else | `Secret` values, or `embargo.Mask` on the text before writing | root |
+| Logger | Wrap it with |
+|---|---|
+| log/slog, any slog.Handler | `embargo.NewSlogHandler(next, scanner)` |
+| go.uber.org/zap | [`embargozap.NewWriteSyncer(next, scanner)`](adapters/zap/example_test.go) |
+| github.com/rs/zerolog | [`embargozerolog.NewWriter(next, scanner)`](adapters/zerolog/example_test.go) |
+| github.com/sirupsen/logrus | [`embargologrus.NewFormatter(next, scanner)`](adapters/logrus/example_test.go) |
+| net/http server access log | [`embargo.NewHTTPHandler(next, logger, scanner)`](example_test.go) |
+| gRPC server, unary and stream | [`embargogrpc.NewUnaryServerInterceptor(logger, scanner)`](adapters/grpc/example_test.go) |
+| OpenTelemetry SDK logs and spans | [`embargootel.NewLogExporter(next, scanner)`](adapters/otel/example_test.go) |
+| Sentry events | [`embargosentry.NewBeforeSend(scanner)`](adapters/sentry/example_test.go) |
+| log, fmt and anything else | `Secret` values, or `embargo.Mask` on the text before writing |
 
 Access logs usually need the client address. Select kinds without `KindIPAddr`:
 
@@ -123,13 +123,9 @@ fmt.Println(embargo.Mask(line, scanner.ScanString(line)))
 
 The HTTP and gRPC hooks mask what they log, not the request or response. [Adapters](doc/adapters.md) · [Size limits and failure records](doc/logging.md#bounds-and-failures)
 
-<!-- speed-summary:start -->
-On the same five JSON slog events, embargo is 1.11 to 1.38 times faster than go-masker given the same email and card rules, and embargo's default scanner is 1.83 to 4.34 times faster than pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
-<!-- speed-summary:end -->
-
 ## Find and mask sensitive text
 
-embargo has 39 built-in detectors (19 run by default). The default covers values that are secret or personal in every country, in formats every country uses. One country's formats, such as My Number or US routing numbers, are opt-in: `WithMoreKinds` adds them to the default, and `WithAll` turns on everything.
+embargo has 39 built-in detectors (19 run by default). Formats used in only one country, such as My Number or US routing numbers, are opt-in: `WithMoreKinds` adds them to the default, and `WithAll` turns on everything.
 
 <!-- example: example_test.go:ExampleKindCredential -->
 ```go
@@ -223,7 +219,7 @@ Add one line to a package's tests:
 
 Guard reruns the package tests and fails when a fake secret, in any common encoding, or a detected value appears in stdout, stderr, default slog output or child processes. [ExampleGuard](embargotest/example_test.go)
 
-For one test, build the logger the way the service does; the recorder checks that the expected output exists and that the canary did not escape:
+For one test, a recorder checks that the expected output exists and the canary did not escape:
 
 <!-- test: doc_test.go:TestReadmeCheckOutput -->
 ```go
@@ -245,7 +241,7 @@ func TestReadmeCheckOutput(t *testing.T) {
 
 ## Command line
 
-The `embargo` command reads lines and writes them masked. It sends nothing anywhere, so it can sit in front of anything that stores or ships text.
+The `embargo` command reads lines and writes them masked, with no network access.
 
 ```sh
 go install github.com/nao1215/embargo/cmd/embargo@v0.18.1
@@ -255,7 +251,6 @@ go install github.com/nao1215/embargo/cmd/embargo@v0.18.1
 |---|---|
 | An application that prints secrets | `embargo run ./app >> app.log` |
 | Logs shared in an issue or a chat | `kubectl logs deploy/api \| embargo > share.log` |
-| A CI step's output, keeping its exit status | `embargo run make test` |
 | A live log before it is shipped | `tail -f app.log \| embargo \| your-shipper` |
 | A CI gate on a saved log | `out=$(embargo --format jsonl app.log) && test -z "$out"` |
 
@@ -267,54 +262,12 @@ login failed for [REDACTED] from [REDACTED]
 
 A JSON line keeps its keys, types and nesting. `--format json` prints per-kind counts and `--format jsonl` one line per finding; neither prints a matched value. [Flags, limits and CI use](doc/audit.md)
 
-## Tested outputs
-
-Each link opens the test that produces and checks the shown output.
-
-<!-- tested-outputs:start -->
-| Output | Actual output (excerpt for SDKs) |
-|---|---|
-| [fmt](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L149-L149) | `embargo.Secret[string]([REDACTED])` |
-| [slog TextHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L150-L153) | `level=INFO msg=event token=[REDACTED] nested.again=[REDACTED]` |
-| [slog JSONHandler](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L154-L157) | `{"level":"INFO","msg":"event","token":"[REDACTED]","nested":{"again":"[REDACTED]"}}` |
-| [encoding/json](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L158-L158) | `"[REDACTED]"` |
-| [encoding/xml](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L159-L164) | `<record><token>[REDACTED]</token></record>` |
-| [text/template](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L165-L171) | `[REDACTED]` |
-| [zap JSON core](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L172-L178) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
-| [zerolog JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L179-L183) | `{"level":"info","token":"[REDACTED]","message":"event"}` |
-| [logrus JSON](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L184-L190) | `{"level":"info","msg":"event","token":"[REDACTED]"}` |
-| [OTel SDK](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L989-L1077) | `{"Key":"key","Value":{"Type":"STRING","Value":"[REDACTED]"}}` |
-| [Sentry](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L651-L736) | `"signing":{"key":"[REDACTED]"}` |
-| [HTTP](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L231-L253) | `[REDACTED]` |
-| [Child panic](https://github.com/nao1215/embargo/blob/main/tests/integrations_test.go#L255-L265) | `panic: [REDACTED]` |
-<!-- tested-outputs:end -->
-
-[Complete integration checks](tests/README.md).
-
 ## Accuracy
 
-Held-out synthetic set, default minimum confidence 0. [Generation, test cases and observed misses](doc/accuracy.md) · [Credential detectors](doc/credentials-accuracy.md) · [Audit your own logs](doc/audit.md)
-
-<!-- accuracy:start -->
-[Per-detector precision, recall and charts](doc/accuracy.md).
-
-| Detector details | | |
-|---|---|---|
-| [aba_routing](doc/accuracy.md#aba-routing) | [ach_trace](doc/accuracy.md#ach-trace) | [awskey](doc/accuracy.md#awskey) |
-| [bank_account](doc/accuracy.md#bank-account) | [btc](doc/accuracy.md#btc) | [card_expiry](doc/accuracy.md#card-expiry) |
-| [cvv](doc/accuracy.md#cvv) | [email](doc/accuracy.md#email) | [eth](doc/accuracy.md#eth) |
-| [github_token](doc/accuracy.md#github-token) | [google_api_key](doc/accuracy.md#google-api-key) | [iban](doc/accuracy.md#iban) |
-| [ipaddr](doc/accuracy.md#ipaddr) | [jwt](doc/accuracy.md#jwt) | [merchant_id](doc/accuracy.md#merchant-id) |
-| [mynumber](doc/accuracy.md#mynumber) | [pan](doc/accuracy.md#pan) | [payment_token](doc/accuracy.md#payment-token) |
-| [phone](doc/accuracy.md#phone) | [phone_jp](doc/accuracy.md#phone-jp) | [phone_us](doc/accuracy.md#phone-us) |
-| [private_key_pem](doc/accuracy.md#private-key-pem) | [slack_token](doc/accuracy.md#slack-token) | [swiftbic](doc/accuracy.md#swiftbic) |
-| [uk_sortcode](doc/accuracy.md#uk-sortcode) | | |
-<!-- accuracy:end -->
+[Per-detector precision and recall on a held-out synthetic set](doc/accuracy.md) · [Credential detectors](doc/credentials-accuracy.md)
 
 <!-- real-logs-summary:start -->
-[Public-log chart and measured results](doc/real-logs.md).
-
-15 public datasets, 239.9 MB, 1,048,835 lines: LogHub system logs plus web access, Kubernetes audit and CloudTrail logs. [Licenses, classification rules, per-kind and per-configuration FP/GB](doc/accuracy.md#public-system-logs). Rates are sample estimates on previously seen splits; contact and endpoint references count as sensitive data, and no recall claim is made.
+15 public datasets, 239.9 MB, 1,048,835 lines of LogHub system logs plus web access, Kubernetes audit and CloudTrail logs. [Measured false positives](doc/real-logs.md) are sample estimates on previously seen splits, with no recall claim. [Licenses and classification rules](doc/accuracy.md#public-system-logs)
 <!-- real-logs-summary:end -->
 
 ## Testing
@@ -342,39 +295,23 @@ Held-out synthetic set, default minimum confidence 0. [Generation, test cases an
 Coverage 99.4% · mutation score 89.18% · 13 fuzz targets, 2208636 executions.
 <!-- testing-metrics:end -->
 
-[Commands, measurement scope and conditions](doc/testing.md).
+[Commands, measurement scope and conditions](doc/testing.md). [Real output of each logger and SDK](tests/README.md#tested-outputs).
 
 ## Benchmarks
+
+<!-- speed-summary:start -->
+On the same five JSON slog events, embargo is 1.11 to 1.38 times faster than go-masker given the same email and card rules, and embargo's default scanner is 1.83 to 4.34 times faster than pii-shield's default policy. [Time per event](doc/comparison.md#time-and-allocations)
+<!-- speed-summary:end -->
 
 <!-- benchmarks:start -->
 ![Time per log event](doc/images/log-event-time.svg)
 
-embargo with email and card rules runs against masq and go-masker given the same rules, and embargo's default scanner against pii-shield's default policy. [Configurations, medians and allocations](doc/comparison.md) · [Full scanner benchmark plot](doc/benchmarks.md).
+[Configurations, medians and allocations](doc/comparison.md) · [Full scanner benchmark plot](doc/benchmarks.md).
 <!-- benchmarks:end -->
-
-<!-- narrowing-summary:start -->
-Recorded scanner medians (ten interleaved samples):
-
-| Selection | Clean ns/op | Dirty ns/op | Clean / dirty speedup over WithAll |
-|---|---:|---:|---|
-| all | 64,763 | 6,837,398 | 1.00× / 1.00× |
-| kinds1 | 101 | 22,310 | 641.22× / 306.47× |
-| kinds3 | 8,648 | 496,620 | 7.49× / 13.77× |
-| kinds8 | 10,174 | 1,541,042 | 6.37× / 4.44× |
-
-[kinds1/3/8 definitions, input sizes and uncertainty](doc/benchmarks.md#choose-the-kinds-the-application-needs). Narrower selection avoids irrelevant detections and gives up their recall.
-<!-- narrowing-summary:end -->
 
 ## Compared with other Go libraries
 
-The same scenarios, service probe and log events run against pii-shield, ferret-scan, masq, go-masker, slog-formatter, go-mask and godlp. A catch means the planted value was removed; partial masks count.
-
-| Job | Strongest measured option | Where others win or tie |
-|---|---|---|
-| Keep a known secret from printing | embargo `Secret`, hidden on every tested path including unexported fields | [ggwhite/go-masker v3](https://github.com/ggwhite/go-masker) `Sensitive` ties on fmt, JSON, XML and slog ([table](doc/comparison.md#keeping-a-known-secret-out-typed-wrappers)) |
-| Log existing structs and JSON with their shape | embargo: keys, groups and custom JSON output are scanned as structure | [pii-shield](https://github.com/pii-shield/pii-shield) and [ferret-scan](https://github.com/awslabs/ferret-scan) rewrite any logger's encoded line |
-| Catch values nobody declared | embargo removes the most planted values below and, with pii-shield, every logged service leak | Tag-only values: [masq](https://github.com/m-mizutani/masq), [go-masker](https://github.com/icntswm/go-masker) and go-mask catch the one embargo misses |
-| Prove in CI that nothing leaked | embargo `embargotest`, with canaries in logs, responses and child processes | None of the measured libraries; embargotest [works with any of them](doc/keep-your-masking.md) |
+Each library logs the same service scenarios. A catch means the planted value was removed; partial masks count. go-masker v3 `Sensitive` ties `Secret` on fmt, JSON, XML and slog, and masq, go-masker and go-mask catch a tag-only value that embargo misses.
 
 ![Scenario catch rate](doc/images/scenario-catch.svg)
 
