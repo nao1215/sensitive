@@ -5,6 +5,9 @@ import (
 	"testing"
 )
 
+// groupedMyNumber is a valid My Number in three groups of four, as printed.
+const groupedMyNumber = "1234 5678 9018"
+
 func TestMyNumberDetector_Scan(t *testing.T) {
 	t.Parallel()
 
@@ -34,9 +37,9 @@ func TestMyNumberDetector_Scan(t *testing.T) {
 		},
 		{
 			name:       "space-separated My Number",
-			input:      "1234 5678 9018",
+			input:      groupedMyNumber,
 			wantLen:    1,
-			wantRaw:    "1234 5678 9018",
+			wantRaw:    groupedMyNumber,
 			wantMinCon: 0.9,
 		},
 
@@ -247,7 +250,7 @@ func TestMyNumberTwoSideBySide(t *testing.T) {
 
 func TestMyNumberLayout(t *testing.T) {
 	t.Parallel()
-	for input, want := range map[string]bool{"123456789018": true, "1234 5678 9018": true, "1234-5678-9018": true, "081111 045623": false, "123 456 789 018": false, "12345678 9018": false} {
+	for input, want := range map[string]bool{"123456789018": true, groupedMyNumber: true, "1234-5678-9018": true, "081111 045623": false, "123 456 789 018": false, "12345678 9018": false} {
 		if got := myNumberLayout([]byte(input), 0, len(input)); got != want {
 			t.Errorf("myNumberLayout(%q) = %v", input, got)
 		}
