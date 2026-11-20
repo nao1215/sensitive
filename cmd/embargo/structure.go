@@ -353,7 +353,7 @@ func blockIndicator(value []byte) bool {
 		return false
 	}
 	for _, c := range value[1:] {
-		if c != '-' && c != '+' && (c < '1' || c > '9') {
+		if strings.IndexByte("-+123456789", c) < 0 {
 			return false
 		}
 	}
@@ -447,8 +447,11 @@ func cefValueEnd(body []byte, i int) int {
 	return min(i, len(body))
 }
 
+// cefKeyAlphabet holds the bytes of a CEF extension key.
+const cefKeyAlphabet = "_.0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
 func cefKeyByte(c byte) bool {
-	return c == '_' || c == '.' || c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
+	return strings.IndexByte(cefKeyAlphabet, c) >= 0
 }
 
 // nextCEFKey reports whether a key followed by = starts at i.

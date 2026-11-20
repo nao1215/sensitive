@@ -68,6 +68,11 @@ func run(args []string, input io.Reader, output, diagnostics io.Writer) error {
 	if parsed.command != nil {
 		return runCommand(parsed.command, scanner, input, output, diagnostics)
 	}
+	return readInputs(parsed, scanner, input, output)
+}
+
+// readInputs masks or reports the named files, or input when there are none.
+func readInputs(parsed *options, scanner *embargo.Scanner, input io.Reader, output io.Writer) error {
 	source, closeInputs := openInputs(parsed.files, input)
 	defer closeInputs()
 	lines := newLineScanner(scanner, inputMode(parsed.input, parsed.files))

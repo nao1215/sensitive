@@ -68,14 +68,7 @@ type options struct {
 func parseOptions(args []string) (*options, error) {
 	parsed := &options{kinds: "", input: "", files: nil, command: nil, minimum: 0, samples: defaultSamples, format: formatText, version: false}
 	var minimumText, samplesText string
-	flags := flag.NewFlagSet("embargo", flag.ContinueOnError)
-	flags.SetOutput(io.Discard)
-	flags.StringVar(&parsed.kinds, "kinds", "", "")
-	flags.StringVar(&minimumText, "min-confidence", "0", "")
-	flags.StringVar(&parsed.format, "format", formatText, "")
-	flags.StringVar(&parsed.input, "input", "", "")
-	flags.StringVar(&samplesText, "samples", strconv.Itoa(defaultSamples), "")
-	flags.BoolVar(&parsed.version, "version", false, "")
+	flags := defineFlags(parsed, &minimumText, &samplesText)
 	if err := flags.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return nil, err
@@ -100,6 +93,20 @@ func parseOptions(args []string) (*options, error) {
 	}
 	parsed.minimum, parsed.samples = minimum, samples
 	return parsed, operands(parsed, args, flags.Args())
+}
+
+// defineFlags registers the flags, which fill parsed and the two texts that
+// parseOptions checks as numbers.
+func defineFlags(parsed *options, minimumText, samplesText *string) *flag.FlagSet {
+	flags := flag.NewFlagSet("embargo", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+	flags.StringVar(&parsed.kinds, "kinds", "", "")
+	flags.StringVar(minimumText, "min-confidence", "0", "")
+	flags.StringVar(&parsed.format, "format", formatText, "")
+	flags.StringVar(&parsed.input, "input", "", "")
+	flags.StringVar(samplesText, "samples", strconv.Itoa(defaultSamples), "")
+	flags.BoolVar(&parsed.version, "version", false, "")
+	return flags
 }
 
 // checkChoices checks the flags that take one of a few words.

@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -259,7 +260,7 @@ func partialSignature(head []byte) bool {
 func signatureMatch(head []byte, magic string) bool {
 	for i := range min(len(head), len(magic)) {
 		if magic[i] == '?' {
-			if head[i] < '1' || head[i] > '9' {
+			if strings.IndexByte("123456789", head[i]) < 0 {
 				return false
 			}
 			continue

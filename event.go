@@ -190,6 +190,26 @@ func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scr
 		text = append(append(text, key...), ": "...)
 	}
 	text = append(text, value...)
+	findings, err := s.scanText(ctx, scratch, text, prefixBytes, key)
+	if err != nil || prefixBytes == 0 {
+		return findings, err
+	}
+	// Findings are fresh validated results; shift the value's spans in place.
+	spans := findings[:0]
+	for _, finding := range findings {
+		if finding.End <= prefixBytes {
+			continue
+		}
+		finding.Start = max(0, finding.Start-prefixBytes)
+		finding.End -= prefixBytes
+		spans = append(spans, finding)
+	}
+	return spans, nil
+}
+
+// scanText returns the findings in the "key: value" text, skipping the
+// detectors for a text found clean before.
+func (s *eventScanner) scanText(ctx context.Context, scratch *scanScratch, text []byte, prefixBytes int, key string) ([]Finding, error) {
 	values := s.scanner.values
 	if values != nil && values.has(text, prefixBytes) {
 		scratch.text = text
@@ -204,20 +224,7 @@ func scalarFindings[T string | []byte](ctx context.Context, s *eventScanner, scr
 	if values != nil && len(findings) == 0 {
 		values.store(text, prefixBytes)
 	}
-	if prefixBytes == 0 {
-		return findings, nil
-	}
-	// Findings are fresh validated results; shift the value's spans in place.
-	spans := findings[:0]
-	for _, finding := range findings {
-		if finding.End <= prefixBytes {
-			continue
-		}
-		finding.Start = max(0, finding.Start-prefixBytes)
-		finding.End -= prefixBytes
-		spans = append(spans, finding)
-	}
-	return spans, nil
+	return findings, nil
 }
 
 // A finding must cross the last join; detecting an ancestor alone does not hide descendants.
