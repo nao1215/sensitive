@@ -422,16 +422,22 @@ func TestCancellationAfterMaskingIsWithheld(t *testing.T) {
 		event.Message = plantedMessage
 		return event
 	}
-	// The first events fill the key cache, so later events check the same points.
-	for range 2 {
-		before(event(), nil)
-	}
-	probe := &countingContext{Context: t.Context()}
-	if after := before(event(), &sentry.EventHint{Context: probe}); after == nil || after.Message != plantedMessage {
-		t.Fatal("probe event changed")
+	// The scanner caches keys and repeated clean values, so the number of
+	// cancellation checks falls while those caches fill. Probe until two
+	// events in a row make the same number of checks.
+	calls := -1
+	for range 8 {
+		probe := &countingContext{Context: t.Context()}
+		if after := before(event(), &sentry.EventHint{Context: probe}); after == nil || after.Message != plantedMessage {
+			t.Fatal("probe event changed")
+		}
+		if probe.calls == calls {
+			break
+		}
+		calls = probe.calls
 	}
 	// Canceling at the last check, after masking succeeded, still withholds.
-	late := &countingContext{Context: t.Context(), limit: probe.calls}
+	late := &countingContext{Context: t.Context(), limit: calls}
 	after := before(event(), &sentry.EventHint{Context: late})
 	if after == nil || after.Message != canceledDiagnostic {
 		t.Fatalf("late cancellation = %+v", after)
