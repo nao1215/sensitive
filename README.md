@@ -4,6 +4,7 @@
 [![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 [![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/embargo.svg)](https://pkg.go.dev/github.com/nao1215/embargo)
+[![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/nao1215/embargo/total)](https://github.com/nao1215/embargo/releases)
 [![MultiPlatformUnitTest](https://github.com/nao1215/embargo/actions/workflows/unit_test.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/unit_test.yml)
 [![reviewdog](https://github.com/nao1215/embargo/actions/workflows/reviewdog.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/reviewdog.yml)
 [![Gosec](https://github.com/nao1215/embargo/actions/workflows/gosec.yml/badge.svg)](https://github.com/nao1215/embargo/actions/workflows/gosec.yml)
@@ -16,7 +17,7 @@
   <img src="doc/images/logo-small.png" alt="Go gopher peeking over the embargo title, with email and token values blacked out" width="320">
 </p>
 
-embargo keeps secrets and personal data out of what a Go program writes: logs, error reports, HTTP access logs and traces. It works inside the application, where the value is written, and the root module has no dependencies outside the standard library.
+embargo keeps secrets and personal data out of what a Go program writes: logs, error reports, HTTP access logs and traces. It works inside the application, where the value is written, and the root module has no dependencies outside the standard library. The [`embargo` command](#command-line) masks the output of any program.
 
 It exists for four jobs:
 
@@ -244,13 +245,19 @@ func TestReadmeCheckOutput(t *testing.T) {
 
 ## Command line
 
-The `embargo` command masks a log file or a pipe line by line and keeps JSON lines' shape.
+The `embargo` command reads lines and writes them masked. It sends nothing anywhere, so it can sit in front of anything that stores or ships text.
 
 ```sh
 go install github.com/nao1215/embargo/cmd/embargo@v0.18.1
-kubectl logs deploy/api | embargo
-embargo --format jsonl app.log
 ```
+
+| Where | Command |
+|---|---|
+| An application that prints secrets | `./app 2>&1 \| embargo >> app.log` |
+| Logs shared in an issue or a chat | `kubectl logs deploy/api \| embargo > share.log` |
+| A CI step's output | `make test 2>&1 \| embargo` |
+| A live log before it is shipped | `tail -f app.log \| embargo \| your-shipper` |
+| A CI gate on a saved log | `out=$(embargo --format jsonl app.log) && test -z "$out"` |
 
 <!-- cli-example: e2e/atago/cli.atago.yaml -->
 ```text
@@ -258,7 +265,7 @@ $ printf '%s\n' 'login failed for alice@example.com from 203.0.113.7' | embargo
 login failed for [REDACTED] from [REDACTED]
 ```
 
-`--format json` prints per-kind counts and `--format jsonl` one line per finding; neither prints a matched value. [Flags, limits and CI use](doc/audit.md)
+A JSON line keeps its keys, types and nesting. `--format json` prints per-kind counts and `--format jsonl` one line per finding; neither prints a matched value. [Flags, limits and CI use](doc/audit.md)
 
 ## Tested outputs
 
