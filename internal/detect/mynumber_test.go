@@ -236,3 +236,11 @@ func TestMyNumberAfterAShortNumber(t *testing.T) {
 		}
 	}
 }
+
+func TestMyNumberTwoSideBySide(t *testing.T) {
+	t.Parallel()
+	got := NewMyNumber().Scan([]byte("123456789018 1234 5678 9018"))
+	if len(got) != 2 || got[0].End != 12 || got[1].Start != 13 {
+		t.Fatalf("Scan = %v", got)
+	}
+}

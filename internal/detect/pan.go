@@ -120,12 +120,24 @@ func (d *PAN) candidate(orig, data []byte, posMap []int, i int) (Finding, int, b
 	if ok && bounded {
 		return f, end, true
 	}
-	// A short number before a card joins the card's digits; the card is then
-	// tried on its own from the next group.
-	if next, retry := nextGroup(i, run, len(digits), panMinDigits, panMaxDigits); retry {
-		return Finding{}, next, false
+	if !splitsRun(run, len(digits), panMinDigits, panMaxDigits) {
+		return f, end, false
 	}
-	return f, end, false
+	// The longest leading card is taken first, as in two cards side by side;
+	// otherwise the scan goes on from the next group.
+	var found Finding
+	at := 0
+	if leadingGroups(data, i, end, len(digits), panMinDigits, func(partEnd, count int) bool {
+		if count > panMaxDigits {
+			return false
+		}
+		f, ok := d.evaluateCandidate(orig, posMap, digits[:count], count, i, partEnd)
+		found, at = f, partEnd
+		return ok && panBounded(orig, data, posMap, i, partEnd)
+	}) {
+		return found, at, true
+	}
+	return Finding{}, i + run, false
 }
 
 // cardDigits extracts the digits of a candidate separated by spaces or

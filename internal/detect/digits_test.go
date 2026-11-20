@@ -1,6 +1,7 @@
 package detect
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -93,25 +94,47 @@ func TestNumericHasCandidate(t *testing.T) {
 	}
 }
 
-func TestNextGroupRetriesOnlyAShortLeadingGroup(t *testing.T) {
+func TestSplitsRunOnlyShortMultiGroupRuns(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
-		group, digits, next int
-		ok                  bool
+		group, digits int
+		want          bool
 	}{
-		{group: 1, digits: 17, next: 11, ok: true},
-		{group: 12, digits: 28, next: 22, ok: true},
-		{group: 13, digits: 29, ok: false},
-		{group: 16, digits: 16, ok: false},
-		{group: 4, digits: 32, next: 14, ok: true},
-		{group: 4, digits: 33, ok: false},
+		{group: 1, digits: 17, want: true},
+		{group: 16, digits: 32, want: true},
+		{group: 4, digits: 33, want: false},
+		{group: 16, digits: 16, want: false},
 	} {
-		next, ok := nextGroup(10, tc.group, tc.digits, 13, 19)
-		if ok != tc.ok || (ok && next != tc.next) {
-			t.Errorf("nextGroup(group=%d, digits=%d) = %d, %v", tc.group, tc.digits, next, ok)
+		if got := splitsRun(tc.group, tc.digits, 13, 19); got != tc.want {
+			t.Errorf("splitsRun(%d, %d) = %v", tc.group, tc.digits, got)
 		}
 	}
 	if digitRun([]byte("12a3"), 0) != 2 || digitRun([]byte("12"), 2) != 0 {
 		t.Error("digitRun miscounts")
+	}
+}
+
+func TestLeadingGroupsLongestFirst(t *testing.T) {
+	t.Parallel()
+	data := []byte("12 345  6789-0")
+	var parts []string
+	leadingGroups(data, 0, len(data), 10, 2, func(end, count int) bool {
+		parts = append(parts, fmt.Sprintf("%s/%d", data[:end], count))
+		return false
+	})
+	if got := strings.Join(parts, ","); got != "12 345  6789/9,12 345/5,12/2" {
+		t.Fatalf("parts = %s", got)
+	}
+	var stopped []int
+	if !leadingGroups(data, 0, len(data), 10, 2, func(end, _ int) bool { stopped = append(stopped, end); return true }) || len(stopped) != 1 {
+		t.Fatal("leadingGroups did not stop at the accepted part")
+	}
+	if leadingGroups(data, 0, len(data), 10, 6, func(int, int) bool { return true }) == false {
+		t.Fatal("a part of 9 digits is at least 6")
+	}
+	calls := 0
+	leadingGroups(data, 0, len(data), 10, 10, func(int, int) bool { calls++; return false })
+	if calls != 0 {
+		t.Fatal("parts shorter than minDigits were tried")
 	}
 }

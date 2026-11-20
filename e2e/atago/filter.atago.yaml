@@ -241,15 +241,25 @@ scenarios:
     matrix:
       - input: retry 3 4111111111111111
         want: retry 3 [REDACTED]
+        kind: pan
       - input: id 7 4111 1111 1111 1111
         want: id 7 [REDACTED]
+        kind: pan
       - input: 2026 11 20 4111-1111-1111-1111
         want: 2026 11 20 [REDACTED]
+        kind: pan
+      - input: 4831-5327-6358-5683 4532015112830366
+        want: "[REDACTED] [REDACTED]"
+        kind: pan
+      - input: paid 4111111111111111 12 times
+        want: paid [REDACTED] 12 times
+        kind: pan
       - input: user 42 7 123456789018
         want: user 42 7 [REDACTED]
+        kind: mynumber
     steps:
       - run:
-          command: embargo --kinds pan,mynumber
+          command: embargo --kinds ${kind}
           stdin: "${input}\n"
       - assert:
           exit_code: 0

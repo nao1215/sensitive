@@ -48,14 +48,28 @@ func (d *MyNumber) candidate(orig, data []byte, posMap []int, i int) (Finding, i
 	digits, end := appendSeparatedDigits(data, i, make([]byte, 0, phoneDigitCapacity), cardSeparator)
 	// Must be exactly 12 digits, not followed by more digits.
 	if !myNumberWhole(data, digits, end) || !isValidMyNumber(digits) || arnAccount(data, i, end) || identifierLabeled(data, i) {
-		// A short number before the value joins its digits; try the value on its own.
-		if next, retry := nextGroup(i, digitRun(data, i), len(digits), myNumberDigits, myNumberDigits); retry {
-			return Finding{}, next, false
-		}
-		return Finding{}, end, false
+		return d.split(data, posMap, digits, i, end)
 	}
 	//nolint:mnd // The detector contract documents this heuristic score.
 	return viewFinding(d.Name(), posMap, i, end, 0.95), end, true
+}
+
+// split tries a rejected run of digit groups in parts, for a number next to
+// the value: the leading 12 digits first, then the run from its next group.
+func (d *MyNumber) split(data []byte, posMap []int, digits []byte, start, end int) (Finding, int, bool) {
+	group := digitRun(data, start)
+	if !splitsRun(group, len(digits), myNumberDigits, myNumberDigits) {
+		return Finding{}, end, false
+	}
+	at := 0
+	if leadingGroups(data, start, end, len(digits), myNumberDigits, func(partEnd, count int) bool {
+		at = partEnd
+		return count == myNumberDigits && isValidMyNumber(digits[:count]) && !arnAccount(data, start, partEnd) && !identifierLabeled(data, start)
+	}) {
+		//nolint:mnd // The detector contract documents this heuristic score.
+		return viewFinding(d.Name(), posMap, start, at, 0.95), at, true
+	}
+	return Finding{}, start + group, false
 }
 
 // normalizedIdentifierStart reports whether position i of a normalized view
